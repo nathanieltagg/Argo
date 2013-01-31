@@ -19,14 +19,16 @@ LIBS := -L/usr/X11R6/lib -lTreePlayer $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/
 
 #Sources
 SOURCES = $(notdir $(wildcard *.cpp))
+BINSOURCES = $(notdir $(wildcard *.cc))
 #SOURCES = root_server.cpp SocketServer.cpp Timer.cpp make_xml.cpp
 OBJ = $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) )
+BINOBJ = $(addprefix tmp/, $(patsubst %.cc,%.o,$(BINSOURCES)) )
 DEPS= $(addprefix tmp/, $(patsubst %.cpp,%.d,$(SOURCES)) )
 
 #Headers:
 ALLHEADERS = $(wildcard *.h)
-RHEADERS = $(filter-out LinkDef.h, $(ALLHEADERS)) 
-
+#RHEADERS = $(filter-out LinkDef.h, $(ALLHEADERS)) 
+RHEADERS = JsonElement.h XmlElement.h
 #Add Rootcint
 CINTOBJ = /tmp/Cint.o
 
@@ -52,8 +54,14 @@ $(OBJ) : tmp/%.o : %.cpp
 	g++ $(CPPFLAGS) -o $@ -c $<
 
 
+$(BINOBJ) : tmp/%.o : %.cc
+	@mkdir -p tmp
+	@echo "compiling $@ $<"
+	g++ $(CPPFLAGS) -o $@ -c $<
+
+
 #Rootcint rule:
-tmp/Cint.cpp : $(RHEADERS)
+tmp/Cint.cpp : $(RHEADERS) LinkDef.h
 	@echo "Running rootcint... " $(RHEADERS) LinkDef.h
 	rootcint -v3 -f $@ -c $(CPPFLAGS) $(RHEADERS) LinkDef.h
 
@@ -63,10 +71,14 @@ $(CINTOBJ): tmp/Cint.cpp
 
 
 .PHONY: bin
-bin: ntuple-server
-ntuple-server: $(OBJ) Makefile
-	@echo "Building " $@
-	g++ $(LDFLAGS) $(OBJ) $(LIBS) $(LIBS) -o $@
+bin: ntuple-server myroot
+ntuple-server: $(OBJ) tmp/ntuple-server-main.o Makefile
+	@echo "Building " $@ $(OBJ)
+	g++ $(LDFLAGS) $(OBJ) tmp/ntuple-server-main.o $(LIBS) $(LIBS) -o $@
+
+myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
+	@echo "Building " $@ $(OBJ)
+	g++ $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
 
 depend: $(DEPS)

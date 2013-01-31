@@ -1,94 +1,70 @@
-#ifndef XML_FUNCTIONS_H
-#define XML_FUNCTIONS_H
+#ifndef JSONELEMENT_H_OHORH0IJ
+#define JSONELEMENT_H_OHORH0IJ
 
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <iomanip>
 
-// Automatic template function to aid streaming, make code slightly tighter.
+class JsonElement;
+class JsonObject;
+class JsonArray;
 
-
-
-class XmlElement;
-
-class XmlElement 
-{
-  public:
-  XmlElement() { fixed(); }; // null element.
-  XmlElement(const std::string& tag) : fTag(tag) { fixed(); };
-  // XmlElement(XmlElement& o) : fTag(o.fTag), fAttributes(o.fAttributes), fContent(o.fContent) {};
-
-  template<typename T> XmlElement(const std::string& tag, const T& val) 
-  : fTag(tag) { fixed(); fContent << val; };
-
-  XmlElement(const XmlElement& o) : fTag(o.fTag), fAttributes(o.fAttributes.str()), fContent(o.fContent.str()) {fixed();};
-  
-  template<typename T>
-  void addAttr(const std::string& attr, const T& val) {
-    fAttributes << " " << attr << "=\"" << val << "\"";
-  }
-  
-  virtual void fixed(int decimals=2) {
-    fContent << std::fixed << std::setprecision(decimals); 
-    fAttributes << std::fixed << std::setprecision(decimals); 
-  }
-  
-  virtual const std::string str() const {
-    if(fTag.length()==0) return "";
-
-    std::string out = "<" + fTag;
-    std::string attrstr = fAttributes.str();
-    if(attrstr.length()>0) out += attrstr;
-    std::string content = fContent.str();
-    if(content.length()>0){
-      out += ">" + content+ "</" + fTag + ">";
-    } else {
-      out += "/>";
+// A JsonElement is anything that goes to the right of a colon in an assignment.
+class JsonElement
+{  
+public: 
+    JsonElement() { fixed() ; }; // Null element.
+    JsonElement(const JsonElement& c) { fixed(); fContent << c.str(); }; // Copy constructor.
+    JsonElement(const std::string& value) { fixed(); fContent << quotestring(value)}; 
+    JsonElement(const unsigned int value) { fixed(); fContent << value; }
+    JsonElement(const  int value) { fixed(); fContent << value; }
+    JsonElement(const float value) { fixed(); fContent << value; }
+    JsonElement(const double value) { fixed(); fContent << value; }
+    virtual const std::string str() const { return fContent.str(); }
+    
+    virtual void fixed(int decimals=2) {
+      fContent << std::fixed << std::setprecision(decimals); 
     }
-    return out;
-  }
-  
-  template<typename T>
-  XmlElement& operator<<(const T& val) {
-    fContent << val;
-    return *this;
-  }
-
-  std::string       tag() const { return fTag; }
-  std::string       content() const { return fContent.str(); }
-  std::string       attributes() const { return fAttributes.str(); }
-  
-  protected:
-  std::string        fTag;
-  std::ostringstream fAttributes;
-  std::ostringstream fContent;
+    
+    static bool sfPrettyPrint;
+protected:
+    virtual const std::string quotestring( const str::string& s );
+    std::ostringstream fContent;
+    
 };
 
-class XmlRootElement : public XmlElement
+// A JsonObject is anything that is inside curly braces {}.
+class JsonObject : public JsonElement
 {
 public:
-  XmlRootElement(const std::string& tag) : XmlElement(tag) {};
-
-  virtual const std::string str() const {
-    std::string out = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
-    out += XmlElement::str();
-    return out;
-  }
+  JsonObject() : JsonElement() , fElements(0) {};
+  
+  virtual JsonObject& add(const std::string& key,const JsonElement& value);
+    
+  template<typename T>
+    JsonObject& add(const std::string& key, const T& val) { add(key,JsonElement(val)); };
+  JsonObject& add(const std::string& key, const char* val) { add(key,JsonElement(val)); };
+  
+  virtual const std::string str() const;
+protected:
+  int fElements;
+};
+  
+class JsonArray : public JsonElement
+{
+public:
+  JsonArray() : JsonElement(), fElements(0) {};
+  
+  virtual JsonArray& add(const JsonElement& value);
+  virtual const std::string str() const;  
+protected:
+  int fElements;
   
 };
 
-std::ostream& operator<< (std::ostream& out, const XmlElement& e);
+std::ostream& operator<< (std::ostream& out, const JsonElement& e);
 
 
-/**
- * Escape characters that will interfere with xml.
- *
- * @param sSrc The src string to escape.
- * @return sSrc encoded for insertion into xml.
- */
-std::string encodeForXml( const std::string &sSrc );
-
-
-#endif /* XML_FUNCTIONS_H */
+#endif 
 
