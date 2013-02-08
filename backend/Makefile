@@ -1,6 +1,9 @@
 pwd := $(shell pwd)
 export ROOTSYS := ${pwd}/root
 
+CPP = clang++ -std=c++11
+LD = clang++
+
 PATH+=:${ROOTSYS}/bin
 # My includes
 LDFLAGS = -g 
@@ -41,7 +44,7 @@ $(DEPS) : tmp/%.d : %.cpp
 	@echo "Building dependency $@ $< %.o"
 	echo "ROOTSYS is $$ROOTSYS"
 	@echo $(CPPFLAGS)
-	g++ -M -MT $(patsubst %.cpp,tmp/%.o,$<) $(CPPFLAGS) -o $@ -c $<
+	$(CPP) -M -MT $(patsubst %.cpp,tmp/%.o,$<) $(CPPFLAGS) -o $@ -c $<
 
 ifneq ($(DEPS),)
 -include $(DEPS)
@@ -51,13 +54,13 @@ endif
 $(OBJ) : tmp/%.o : %.cpp
 	@mkdir -p tmp
 	@echo "compiling $@ $<"
-	g++ $(CPPFLAGS) -o $@ -c $<
+	$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 
 $(BINOBJ) : tmp/%.o : %.cc
 	@mkdir -p tmp
 	@echo "compiling $@ $<"
-	g++ $(CPPFLAGS) -o $@ -c $<
+	$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 
 #Rootcint rule:
@@ -67,18 +70,18 @@ tmp/Cint.cpp : $(RHEADERS) LinkDef.h
 
 	
 $(CINTOBJ): tmp/Cint.cpp
-	g++ $(CPPFLAGS) -o $@ -c $<
+	$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 
 .PHONY: bin
 bin: ntuple-server myroot
 ntuple-server: $(OBJ) tmp/ntuple-server-main.o Makefile
 	@echo "Building " $@ $(OBJ)
-	g++ $(LDFLAGS) $(OBJ) tmp/ntuple-server-main.o $(LIBS) $(LIBS) -o $@
+	$(CPP) $(LDFLAGS) $(OBJ) tmp/ntuple-server-main.o $(LIBS) $(LIBS) -o $@
 
 myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
-	g++ $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
 
 depend: $(DEPS)

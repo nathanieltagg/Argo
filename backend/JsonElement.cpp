@@ -16,13 +16,29 @@ bool JsonElement::sfPrettyPrint = true;
 std::ostream& operator<< (std::ostream& out, const JsonElement& e)
 {
   out << e.str();
+  return out;
 }
 
 
-virtual const std::string JsonElement::quotestring( const str::string& s )
+const std::string JsonElement::quotestring( const std::string& input )
 {
-  // Enclose the provided string in quotes, and escape it properly.
-  
+  std::ostringstream ss;
+   for (auto iter = input.begin(); iter != input.end(); iter++) {
+   //C++98/03:
+   //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+       switch (*iter) {
+           case '\\': ss << "\\\\"; break;
+           case '"': ss << "\\\""; break;
+           case '/': ss << "\\/"; break;
+           case '\b': ss << "\\b"; break;
+           case '\f': ss << "\\f"; break;
+           case '\n': ss << "\\n"; break;
+           case '\r': ss << "\\r"; break;
+           case '\t': ss << "\\t"; break;
+           default: ss << *iter; break;
+       }
+   }
+   return ss.str();
 }
 
 
