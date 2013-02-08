@@ -16,7 +16,7 @@ class JsonElement
 public: 
     JsonElement() { fixed() ; }; // Null element.
     JsonElement(const JsonElement& c) { fixed(); fContent << c.str(); }; // Copy constructor.
-    JsonElement(const std::string& value) { fixed(); fContent << quotestring(value)}; 
+    JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const unsigned int value) { fixed(); fContent << value; }
     JsonElement(const  int value) { fixed(); fContent << value; }
     JsonElement(const float value) { fixed(); fContent << value; }
@@ -27,9 +27,10 @@ public:
       fContent << std::fixed << std::setprecision(decimals); 
     }
     
-    static bool sfPrettyPrint;
+    static void SetPrettyPrint(bool onf) { sfPrettyPrint = onf; }
 protected:
-    virtual const std::string quotestring( const str::string& s );
+    static bool sfPrettyPrint;
+    virtual const std::string quotestring( const std::string& s );
     std::ostringstream fContent;
     
 };
@@ -43,8 +44,8 @@ public:
   virtual JsonObject& add(const std::string& key,const JsonElement& value);
     
   template<typename T>
-    JsonObject& add(const std::string& key, const T& val) { add(key,JsonElement(val)); };
-  JsonObject& add(const std::string& key, const char* val) { add(key,JsonElement(val)); };
+    JsonObject& add(const std::string& key, const T& val) { add(key,JsonElement(val)); return *this; };
+  JsonObject& add(const std::string& key, const char* val) { add(key,JsonElement(val)); return *this; };
   
   virtual const std::string str() const;
 protected:
