@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-package ArachneServerTools;
+package ArgoServerTools;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 use CGI qw/:standard/;
@@ -8,21 +8,60 @@ use POSIX qw(setsid);
 use IO::Socket;
 use IO::Select;
 use Cwd;
+use Encode qw(encode_utf8);
 
-our $ntuple_server_port = 64667;
+use JSON::XS qw(encode_json);
+use Exporter 'import';
+@EXPORT = qw(setup myerror serve request); # symbols to export
+
+
+our $ntuple_server_port = 9092;
 our $ntuple_server_host = 'localhost';
-our $exec_name = 'minos-ntuple-server';
+our $exec_name = 'argo-backend';
 
 do("../config/server_config.pl"); #|| die; # load file if present.
 
-# subroutine to print errors to xml stream
+
+our $msglog;
+our $oldout;
+our $olderr;
+
+sub setup
+{
+  # Before we begin, capture all the usual stdout stuff and stuff it into a variable, so we can ship it inside the JSON.
+  open($oldout, ">&STDOUT") or die "Can't dup STDOUT: $!";;
+  open($olderr, ">&STDERR") or die "Can't dup STDERR: $!";;
+  close STDOUT;
+  open(STDOUT, ">", \$msglog);  
+  open(STDERR, ">", \$msglog);
+  print "testing\n";
+}
+
+sub serve
+{
+  # print to the stored version of $stdout to actually get it out the door.
+  # Note that we encode everything that nominally went to stdout/stderr and ship it as the 'serve_event_log'.
+  
+  print $oldout header(-type => 'application/json',
+               -Access_Control_Allow_Origin => "*");
+  print $oldout '{';
+  print $oldout '"record":';
+  print $oldout @_;
+  # Convert $msglog to something printable in html.
+  $msglog =~ s/\n/\<br\/\>/g;
+  print $oldout ',"serve_event_log":"';
+  print $oldout encode_utf8 "$msglog";
+  print $oldout '"}';
+}
+
 sub myerror
 {
-    my $err = shift();
-    print "]]></serve_event_logging><error>";
-    print $err;
-    print '</error></serving>';
-    exit;
+  # subroutine to print errors to json stream
+  print $oldout header(-type => 'application/json',
+               -Access_Control_Allow_Origin => "*");
+  my $err = shift();
+  print $oldout encode_json({serve_event_log=> $msglog, error => $err});
+  exit;
 }
 
 sub kill_running_server
@@ -75,7 +114,7 @@ sub start_server
   #     # my $pwd = getcwd;
   #     # system("echo $pwd >> ntuple-server.pid");
   #     # print  $pwd . "\n";
-      my $cmd = "../ntuple_server/$exec_name $ntuple_server_port >> ntuple-server.log 2>&1";
+      my $cmd = "../backend/$exec_name $ntuple_server_port >> ntuple-server.log 2>&1";
       print  "Running: $cmd<br/>\n";
       $val = system($cmd);
       $pid = $!;
