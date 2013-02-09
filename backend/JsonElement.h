@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <TString.h>
 
 class JsonElement;
 class JsonObject;
@@ -14,14 +15,19 @@ class JsonArray;
 class JsonElement
 {  
 public: 
-    JsonElement() { fixed(); fContent << "null"; }; // Null element.
+    JsonElement() { fixed(); }; // Null element.
     JsonElement(const JsonElement& c) { fixed(); fContent << c.fContent.str(); }; // Copy constructor.
     JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
+    JsonElement(const char*        value) { fixed(); fContent << quotestring(value); }; 
+    JsonElement(const TString& value) { fixed(); fContent << quotestring(value.Data()); }; 
     JsonElement(const unsigned int value) { fixed(); fContent << value; }
-    JsonElement(const  int value) { fixed(); fContent << value; }
+    JsonElement(const       int value) { fixed(); fContent << value; }
+    JsonElement(const      long value) { fixed(); fContent << value; }
+    JsonElement(const long long value) { fixed(); fContent << value; }
     JsonElement(const float value) { fixed(); fContent << value; }
     JsonElement(const double value) { fixed(); fContent << value; }
-    virtual const std::string str() const { return fContent.str(); }
+
+    virtual const std::string str() const {  return (fContent.str().length()<1)?"null":fContent.str(); }
     
     virtual void fixed(int decimals=2) {
       fContent << std::fixed << std::setprecision(decimals); 
@@ -39,13 +45,15 @@ protected:
 class JsonObject : public JsonElement
 {
 public:
-  JsonObject() : JsonElement() , fElements(0) {};
+  JsonObject() : JsonElement() , fElements(0) {fContent.str(""); };
   JsonObject(const JsonObject& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
   virtual JsonObject& add(const std::string& key,const JsonElement& value);
+  virtual JsonObject& add(const std::string& key,const JsonArray& value);
+  
     
-  template<typename T>
-    JsonObject& add(const std::string& key, const T& val) { add(key,JsonElement(val)); return *this; };
-  JsonObject& add(const std::string& key, const char* val) { add(key,JsonElement(val)); return *this; };
+  // template<typename T>
+  //   JsonObject& add(const std::string& key, const T& val) { add(key,JsonElement(val)); return *this; };
+  // JsonObject& add(const std::string& key, const char* val) { add(key,JsonElement(val)); return *this; };
   
   virtual const std::string str() const;
 protected:
@@ -55,10 +63,13 @@ protected:
 class JsonArray : public JsonElement
 {
 public:
-  JsonArray() : JsonElement(), fElements(0) {};
+  JsonArray() : JsonElement(), fElements(0) { fContent.str(""); };
   JsonArray(const JsonArray& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
   
+  virtual JsonArray& add(const JsonObject& value);
   virtual JsonArray& add(const JsonElement& value);
+  virtual int        length() const { return fElements; };
+
   virtual const std::string str() const;  
 protected:
   int fElements;

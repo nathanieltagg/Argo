@@ -6,7 +6,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class XmlElement+;
 #pragma link C++ class JsonElement+;
 #pragma link C++ class JsonObject+;
 #pragma link C++ class JsonArray+;
