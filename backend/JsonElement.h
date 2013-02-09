@@ -15,7 +15,7 @@ class JsonElement
 {  
 public: 
     JsonElement() { fixed() ; }; // Null element.
-    JsonElement(const JsonElement& c) { fixed(); fContent << c.str(); }; // Copy constructor.
+    JsonElement(const JsonElement& c) { fixed(); fContent << c.fContent.str(); }; // Copy constructor.
     JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const unsigned int value) { fixed(); fContent << value; }
     JsonElement(const  int value) { fixed(); fContent << value; }
@@ -40,7 +40,7 @@ class JsonObject : public JsonElement
 {
 public:
   JsonObject() : JsonElement() , fElements(0) {};
-  
+  JsonObject(const JsonObject& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
   virtual JsonObject& add(const std::string& key,const JsonElement& value);
     
   template<typename T>
@@ -56,6 +56,7 @@ class JsonArray : public JsonElement
 {
 public:
   JsonArray() : JsonElement(), fElements(0) {};
+  JsonArray(const JsonArray& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
   
   virtual JsonArray& add(const JsonElement& value);
   virtual const std::string str() const;  

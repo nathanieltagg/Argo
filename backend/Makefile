@@ -31,9 +31,9 @@ DEPS= $(addprefix tmp/, $(patsubst %.cpp,%.d,$(SOURCES)) )
 #Headers:
 ALLHEADERS = $(wildcard *.h)
 #RHEADERS = $(filter-out LinkDef.h, $(ALLHEADERS)) 
-RHEADERS = JsonElement.h XmlElement.h
+RHEADERS = JsonElement.h XmlElement.h FormulaLooter.h
 #Add Rootcint
-CINTOBJ = /tmp/Cint.o
+CINTOBJ = tmp/Cint.o
 
 .PHONY: all
 all: depend bin
@@ -70,6 +70,7 @@ tmp/Cint.cpp : $(RHEADERS) LinkDef.h
 
 	
 $(CINTOBJ): tmp/Cint.cpp
+	@echo "Compiling Cint object"
 	$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 
