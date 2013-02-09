@@ -14,7 +14,7 @@ class JsonArray;
 class JsonElement
 {  
 public: 
-    JsonElement() { fixed() ; }; // Null element.
+    JsonElement() { fixed(); fContent << "null"; }; // Null element.
     JsonElement(const JsonElement& c) { fixed(); fContent << c.fContent.str(); }; // Copy constructor.
     JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const unsigned int value) { fixed(); fContent << value; }
