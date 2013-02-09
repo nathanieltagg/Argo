@@ -20,7 +20,7 @@
 #include <TError.h>
 
 #include "SocketServer.h"
-#include "make_xml.h"
+#include "ComposeResult.h"
 
 using namespace std;
 
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 {
   try{
 
-  int tcpPortNumber = 9090;
+  int tcpPortNumber = 9092;
   if(argc>1) {
     sscanf(argv[1],"%d",&tcpPortNumber);
   }
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
         cout << "    Options:  --" << options << endl;
 
         // Now do your stuff.
-        std::string xml = make_xml(options,filename,selection,entrystart,entryend);
+        std::string xml = ComposeResult(options,filename,selection,entrystart,entryend);
 
         // Send it out.
         ss.SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );

@@ -23,6 +23,7 @@ std::ostream& operator<< (std::ostream& out, const JsonElement& e)
 const std::string JsonElement::quotestring( const std::string& input )
 {
   std::ostringstream ss;
+  ss << "\"";
    for (auto iter = input.begin(); iter != input.end(); iter++) {
    //C++98/03:
    //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
@@ -38,6 +39,7 @@ const std::string JsonElement::quotestring( const std::string& input )
            default: ss << *iter; break;
        }
    }
+   ss << "\"";
    return ss.str();
 }
 
@@ -45,6 +47,18 @@ const std::string JsonElement::quotestring( const std::string& input )
 // ----------------------------------------------------------------------------------
 // JsonObject
 JsonObject& JsonObject::add(const std::string& key,const JsonElement& value)
+{
+  if(fElements++>0) {
+    fContent << ",";
+  }
+  if(sfPrettyPrint) fContent << std::endl << "  ";
+  fContent << "\"" << key << "\":";
+  fContent << value.str();
+  return *this;
+}
+
+
+JsonObject& JsonObject::add(const std::string& key,const JsonArray& value)
 {
   if(fElements++>0) {
     fContent << ",";
@@ -79,12 +93,21 @@ JsonArray& JsonArray::add(const JsonElement& value)
   return *this;  
 }
 
+JsonArray& JsonArray::add(const JsonObject& value)
+{
+  if(fElements++>0) {
+    fContent << ",";
+  }
+  if(sfPrettyPrint) fContent << std::endl << "  ";
+  fContent << value;
+  return *this;  
+}
+
 const std::string JsonArray::str() const
 {
   std::string out = "[";
   out += fContent.str();
   out += "]";
-  if(sfPrettyPrint) {out += "\n  ";};  
   return out;
         
         
@@ -92,9 +115,9 @@ const std::string JsonArray::str() const
  // Removes linker errors by demanding the templates get resolved.
  // see http://www.parashift.com/c++-faq-lite/templates.html
  // section 35.8 and 35.9
-template JsonObject& JsonObject::add <double>(const std::string&, const double&);
-template JsonObject& JsonObject::add <float> (const std::string&, const float&);
-template JsonObject& JsonObject::add <unsigned int>(const std::string&, const unsigned int&);
-template JsonObject& JsonObject::add <int>         (const std::string&, const int&);
-template JsonObject& JsonObject::add <std::string>         (const std::string&, const std::string&);
+// template JsonObject& JsonObject::add <double>(const std::string&, const double&);
+// template JsonObject& JsonObject::add <float> (const std::string&, const float&);
+// template JsonObject& JsonObject::add <unsigned int>(const std::string&, const unsigned int&);
+// template JsonObject& JsonObject::add <int>         (const std::string&, const int&);
+// template JsonObject& JsonObject::add <std::string>         (const std::string&, const std::string&);
 

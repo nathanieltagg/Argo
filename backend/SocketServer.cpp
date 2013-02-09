@@ -260,6 +260,7 @@ int SocketServer::Close( int i )
 {
   close(i); // bye!
   FD_CLR(i, &mClients); // remove from master set  
+  return 0;
 }
 
 
