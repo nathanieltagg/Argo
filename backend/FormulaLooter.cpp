@@ -18,6 +18,15 @@ using std::string;
 // }
 
 
+JsonElement FormulaMakeElement(TTree* tree, const std::string& formula)
+{
+  TTreeFormula ttf("tmp",formula.c_str(),tree);
+  if(ttf.GetNdata()<1) return JsonElement();
+  double v = ttf.EvalInstance(0);
+  if(ttf.IsInteger()) return JsonElement((int)v);
+  return JsonElement(v);
+}
+
 template <class ...B> 
 JsonArray FormulaMakeArray(TTree* tree, std::vector<std::pair< std::string,std::string> >& key_formula_pairs, 
                            const std::string& k, const std::string& f,  B... argTail)
@@ -58,6 +67,9 @@ JsonArray FormulaMakeArray(TTree* tree, const vector<pair< string,string> >& key
       else t.add(formula->GetName(),v);
     }
     retval.add(t);    
+  }
+  for(auto formula : formulae) {
+    delete formula; formula = 0;
   }
   return retval;
 }

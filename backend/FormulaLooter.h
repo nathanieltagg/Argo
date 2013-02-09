@@ -5,6 +5,8 @@
 
 class TTree;
 
+JsonElement FormulaMakeElement(TTree* tree, const std::string& formula);
+
 
 JsonArray FormulaMakeArray(TTree* tree, const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
 

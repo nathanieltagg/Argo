@@ -11,6 +11,8 @@
 #pragma link C++ class JsonObject+;
 #pragma link C++ class JsonArray+;
 
+#pragma link C++ function FormulaMakeElement;
+
 #pragma link C++ function FormulaMakeArray;
 #pragma link C++ funciton test_fma;
 
