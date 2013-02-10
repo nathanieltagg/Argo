@@ -176,6 +176,9 @@ function StartEvent()
   $('#inFilename').val(gFile);
   
   
+  // Do initial data indexing and bookmarking.
+  DoInitialBookmarking();
+  
   // Set global hit structures.
   //FindImportantXmlHandles(); // Put this into a function for better profiling.
   //gHoverTrack = gSelectedTrack = null;

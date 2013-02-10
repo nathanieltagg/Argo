@@ -56,12 +56,14 @@
 
 
 <!-- My classes for doing histograming and other displays-->
+<script type="text/javascript" src="libs/Configuration.js"></script> 
 <script type="text/javascript" src="libs/HitMap.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
 <script type="text/javascript" src="libs/MOTD.js"></script> 
 <script type="text/javascript" src="libs/QueryServer.js"></script> 
+<script type="text/javascript" src="libs/ArgoData.js"></script> 
 
 <!-- Main scripts. Start here. -->
 <script type="text/javascript" src="libs/argo.js" ></script>
