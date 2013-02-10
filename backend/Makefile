@@ -75,7 +75,7 @@ $(CINTOBJ): tmp/Cint.cpp
 
 
 .PHONY: bin
-bin: argo-backend myroot
+bin: argo-backend myroot 
 argo-backend: $(OBJ) tmp/ntuple-server-main.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(OBJ) tmp/ntuple-server-main.o $(LIBS) $(LIBS) -o $@

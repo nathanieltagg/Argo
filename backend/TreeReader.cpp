@@ -14,6 +14,7 @@
 #include <TError.h>
 #include <TClass.h>
 #include <sstream>
+#include <iostream>
 
 using std::string;
 using std::vector;
@@ -75,6 +76,24 @@ string TreeReader::getStr(TLeaf* leaf, int index, int second_index)
   return out.str();
 }
 
+JsonElement TreeReader::getJson(const std::string& leafname, int index, int second_index)
+{  
+  TLeaf* leaf = fTree->GetLeaf(leafname.c_str());
+  return getJson(leaf,index,second_index);
+}
+  
+JsonElement TreeReader::getJson(TLeaf* leaf, int index, int second_index)
+{
+  if(!leaf) return JsonElement(); // null element.
+
+  Double_t v = getVal(leaf,index,second_index);
+  
+  string type = leaf->GetTypeName();
+  if((type == "Double_t") || (type == "Float_t") )
+    return JsonElement(v);
+
+  return JsonElement((Int_t)v);
+}
 
 Double_t TreeReader::getF(const std::string& formula, int index)
 {
@@ -96,7 +115,37 @@ JsonElement TreeReader::jsonF(const std::string& formula, int index)
 // Make array of objects using formulae.
 
 
-JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_formula_pairs)
+JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_leaf_pairs)
+{  
+  // Find the leaves.
+  if(key_leaf_pairs.size()<1) return JsonArray(); 
+  vector<TLeaf*> leaves;
+  Int_t count = 0;
+  for(auto row : key_leaf_pairs ) {
+    const string& key = row.first;
+    const string& leafname = row.second;
+    TLeaf* lf = fTree->GetLeaf(leafname.c_str());
+    leaves.push_back(lf);
+    if(!lf) {
+      Info("TreeReader::getVal","tried to get value for nonexistent leaf named %s",leafname.c_str());
+    } else {
+      Int_t n = lf->GetLen();
+      if(n>count) count=n;
+    }
+  }
+  // Create the results.
+  JsonArray retval;
+  for(Int_t jj=0; jj< count; jj++) {
+    JsonObject t;    
+    for(size_t i=0;i<key_leaf_pairs.size(); i++) {
+      t.add(key_leaf_pairs[i].first, getJson(leaves[i],jj)); // TODO: get multiple indexing right.
+    }
+    retval.add(t);
+  }
+  return retval;
+}
+
+JsonArray TreeReader::makeFArray(const vector<pair< string,string> >& key_formula_pairs)
 {
   // Build the formula objects
   if(key_formula_pairs.size()<1) return JsonArray(); 
@@ -106,8 +155,12 @@ JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_formula
     const string& formula = row.second;
     formulae.push_back(new TTreeFormula(key.c_str(),formula.c_str(),fTree));    
   }
+  // Make sure tree is reloaded so this will work. Expensive!
+  Int_t n =formulae[0]->GetNdata();
+  fTree->GetEntry(fTree->GetReadEntry(),1);
+
   // Make sure that all the formulas yield the same number of entries.
-  Int_t n = formulae[0]->GetNdata();
+  n = formulae[0]->GetNdata();
   for(auto formula : formulae) {
     if(formula->GetNdata() != n) {
       Info("TreeReader::makeArray"," Problem building array: Formula %s does not match entries to %s",
@@ -134,8 +187,6 @@ JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_formula
   }
   return retval;
 }
-
-
 
 
 
