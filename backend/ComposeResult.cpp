@@ -80,7 +80,6 @@ string ComposeResult(
     return result.str();
   }
   
-  
   // Scan through entries, looking for specified selection.
   TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
   if (!select) {
@@ -142,7 +141,7 @@ string ComposeResult(
     rootfile->Close(); delete rootfile;
     return result.str();
   } 
-
+  
 
   // This is a good time to figure out the software version information.
   
@@ -188,7 +187,7 @@ string ComposeResult(
   // 
   // Get it.
   //
-  Int_t bytesRead = tree->GetEntry(jentry);
+  Int_t bytesRead = tree->GetEntry(jentry,1);
   if(bytesRead<0) {
     cout << "Error: I/O error on GetEntry trying to read entry " << jentry;
     result.add("error","I/O error on GetEntry");

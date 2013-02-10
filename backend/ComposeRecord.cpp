@@ -18,6 +18,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
+#include <TTreeFormula.h>
 
 #include "ComposeRecord.h"
 #include "JsonElement.h"
@@ -34,10 +35,9 @@ JsonObject ComposeHeaderData(TreeReader& t)
 JsonObject ComposeHits(TreeReader& t) 
 {
   JsonObject r;
-  
-  r.add("hits",t.makeArray(
-        "plane",    "recob::Hits_ffthit__Reco.obj.fWireID.Plane"
-      , "wire",     "recob::Hits_ffthit__Reco.obj.fWireID.Wire"
+  JsonArray arr = t.makeArray(
+        "wire",     "recob::Hits_ffthit__Reco.obj.fWireID.Wire"
+      , "plane",    "recob::Hits_ffthit__Reco.obj.fWireID.Plane"
       , "view",     "recob::Hits_ffthit__Reco.obj.fView"
       , "m",        "recob::Hits_ffthit__Reco.obj.fMultiplicity"
       , "q",        "recob::Hits_ffthit__Reco.obj.fCharge"
@@ -46,7 +46,10 @@ JsonObject ComposeHits(TreeReader& t)
       , "σt",       "recob::Hits_ffthit__Reco.obj.fSigmaPeakTime"
       , "t1",       "recob::Hits_ffthit__Reco.obj.fStartTime"
       , "t2",       "recob::Hits_ffthit__Reco.obj.fEndTime"
-    ));
+    );
+  std::cout << "makeArray got " << arr.length() << std::endl;
+  r.add("n",arr.length());
+  r.add("hits",arr);
 
   return r;
 }
@@ -55,7 +58,7 @@ void ComposeRecord(JsonObject& result, TTree* inTree, Long64_t inEntry)
 {
   result.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
   
-  inTree->GetEntry(inEntry);
+  // inTree->GetEntry(inEntry,1);
   TreeReader t(inTree);
   TObjArray* leafList = inTree->GetListOfLeaves();
   
