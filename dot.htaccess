@@ -1,4 +1,4 @@
-Options +ExecCGI -Indexes +Includes +FollowSymLinks
+Options +ExecCGI -Indexes +Includes
 AddHandler cgi-script .cgi
 AddHandler server-parsed .html
 AddHandler server-parsed .inc
@@ -6,7 +6,7 @@ AddHandler server-parsed .inc
 # This bit changes a request like "get blah.1231231.css" into "get blah.css"
 # This removes the versioning information I put in using subversion.
 RewriteEngine on
-RewriteBase /~tagg/Arachne
+RewriteBase /~tagg/Argo
 #RewriteRule ^(ajs|libs|css)/(.+)\.(.+)\.(js|css)$ $1/$2.$4 [L]
 RewriteRule ^(.*)\.[\d]{10}\.(css|js)$ $1.$2 [PT]
 #AliasMatch  ^(.*)\.[\d]{10}\.(css|js)$ $1.$2 

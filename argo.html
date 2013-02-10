@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:svg="http://www.w3.org/2000/svg"
+     xml:lang="en">
+<head> 
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+ 
+<title>Argo</title>
+
+<!-- My little icon in the link url -->
+<link rel="icon"  type="image/png" href="front_page/a" />  
+
+<!-- Activate some overrides to basic configuration. -->
+<!--#set var="PageStyle" value="standard" -->
+<script type="text/javascript" charset="utf-8">
+gPageName='standard';
+</script>
+
+
+<!-- Javascript libraries and code. -->
+<!--(#)include virtual="html/libraries.inc"-->
+<!--#include virtual="libraries.cgi"-->
+
+
+<!-- Main CSS sheet for basic layout, custom mods. -->
+<link rel="stylesheet" href="Argo.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="local.css" type="text/css" media="all"/>
+
+</head>
+
+
+<body>
+<div id='everything'>
+
+  <div id="header" >
+    <center>
+      <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span>
+    </center>
+    <div class="header-links"><center>
+            <a class="align-left" id="Print" href='#'>Print</a>
+            <div class="align-right"><span class="align-right" id="link-to-this-event">Link to this event</span>
+              <br/><span class="align-right" id="email-this-event">Email this event</span>
+            </div>
+    </center>
+    </div>
+    
+    <table style="clear: both;" border="0" width="100%"><tr>
+    <td width="5%">Status:</td><td><div id="status">Script loading...</div></td>
+    </tr></table>
+  </div> <!-- header -->
+
+  <div id="expando-target" style="z-index:998;"></div>
+
+  <div id="content">
+  <div id="content-top">
+    <!-- INPUT -->
+    <!--#include virtual="html/data-source-portlet.inc" -->
+  </div> <!-- content-top -->
+
+  <div style="clear:both;"></div>
+  <div id="content-right" class="dock">   
+     
+    
+  </div> <!-- content-right -->
+
+  <div id="content-main">
+  <div id="content-wide" class="dock">
+    <!--#include virtual="html/hit-map-portlet.inc">
+  </div> <!-- content-wide -->
+  <div id="content-left" class="dock">
+    
+  </div> <!-- content-left -->
+
+  <div id="content-middle" class="dock">
+  </div> <!-- content-middle -->
+
+  </div> <!-- content-main -->
+  
+
+
+</div> <!-- content -->
+  
+  <!-- <div style="clear: both;"></div> -->
+
+
+  <div id="footer">
+    <!--#include virtual="html/expert-portlet.inc" -->
+    
+  <!--#include virtual="html/credits.inc" -->
+  
+  </div> <!-- footer -->
+  
+  <!-- hidden stuff. -->
+</div> <!-- Everything -->
+</body>
+</html>

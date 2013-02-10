@@ -1,0 +1,465 @@
+/*
+Main style sheet for arachne.html
+*/
+
+img {  border-style: none; }
+
+.align-left{
+  float: left;
+}
+.align-right{
+  float: right;
+}
+
+body {
+/*  background: #EEEEEE;*/
+}
+
+#header { 
+	width: 650px;
+	margin: auto; 
+	margin-top: 20px;
+}
+
+#content {
+  width: auto;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+#content-main{
+  width: auto;
+  margin-right: 240px;
+}
+
+
+#content-left {
+  float: left;
+  width: 48%;
+}
+#content-middle{
+  width: 48%;
+  margin-left: 50%;
+}
+
+#content-wide{
+  width: auto;
+}
+
+#footer {
+  clear:both;
+  width: 1000px;
+  margin: auto;
+}
+
+#content-top {
+	width: 800px;
+	margin: auto;
+}
+
+#content-right {
+	float: right;
+	width: 230px;
+	margin: 0 0 0 0;
+        
+}
+
+
+#mag-sliders label {
+}
+
+#mag-sliders {
+  display: inline-block;
+  width: 160px;
+}
+
+#blob-opacity {
+  display: inline-block;
+  width: 160px;
+}
+
+#hitmaps 
+{
+  background-color: white;
+}
+
+.pad canvas{
+  cursor: crosshair;
+  margin: 0 0 0 0;
+}
+
+div.pad {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+}
+
+div.boxed {
+  border: 1px solid #666;
+  margin-bottom: 5px;
+}
+ 
+/*individual tunings*/
+#phhist-div {
+  height: 175px;
+}
+
+#timehist-div { 
+   height: 175px;
+}
+
+#energy-profile-div {
+  height: 150px;
+}
+
+span.reset-button {
+  float:right;
+}
+
+#bigXZ{
+  width:100%; 
+  height:400px;
+}
+
+#mri-view, #minos-mri-view{
+  height: 420px;
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	font-family:Arial,Verdana;
+}
+
+table {
+  border-collapse:collapse
+}
+
+
+.header-links {
+  font-size: 0.875em;
+}
+
+#column-bl {
+  background: #C0C0C0;
+  width: 400px; 
+}
+
+#triD-view {
+  height: 380px;
+}
+
+#column-br {
+  float: right;
+  width: 400px;
+}
+
+#inFileUpload {
+  width: 200px;
+  margin: auto;
+  font-size: 1.2em;
+}
+
+#output {
+  overflow: auto;
+  height : 500px;
+}
+
+div.elecview{
+  height:440px;
+}
+
+div.vetoview{
+  height:300px;
+}
+
+#tabs {
+  font-size: 0.7em;
+}
+
+div.event-info {
+  font-size: 0.7em;
+}
+
+table.mc-info {
+  font-size: 0.8em;
+}
+table.mc-fs {
+  font-size: 0.8em;
+  width: 100%;
+}
+
+table.mc-fs td {
+   vertical-align:top;
+}
+
+table.slice-info {
+  border: 2px solid #000000; 
+}
+
+table.beam-info {
+  font-size: 0.8em;
+}
+
+
+.slice-color {
+  color: white;
+/*  text-shadow: #444444 1px -1px 1px;*/
+}
+
+#slice-navigation button{
+  text-align: left;
+  min-width:80px;
+/*  margin-right: 30px;*/
+}
+span.keypress-hint {
+  float: right;
+  font-weight:bold;
+  color: black;
+}
+
+#hit-info {
+  font-size: 0.8em;
+  overflow: hidden;
+/*  opacity: 0.7;*/
+}
+
+.ui-dialog{
+  opacity: 1.0;
+}
+
+
+.portlet-content button {
+  font-family: Arial, Verdana;
+  font-size: auto;
+}
+
+#event-info div.collapsible {
+  vertical-align: top;
+  display:inline-block;
+  max-width: 200px;  
+}
+#event-info div.subtable {
+  vertical-align: top;
+  display:inline-block;
+  max-width: 250px;  
+}
+
+
+#minos-info-table {
+  width: 100%;
+  border: 1px solid black;
+  background: white;
+  text-align: center;
+}
+
+table.event-info{
+  vertical-align: top;
+  display:inline-block;
+  max-width: 250px;
+}
+
+td.event-info-caption{
+  vertical-align: top;
+  width: 100px;
+}
+
+table.slice-info td {
+  vertical-align: top;
+}
+
+
+
+td.gate-info-caption, td.slice-info-caption{
+/*  text-align: right;*/
+}
+
+span.scan-input {    white-space: nowrap; }
+span.scan-input-label{ width: 30em; }
+
+#track-info {
+  font-size: 1em;
+  font-family: "Times New Roman", Times, serif;
+}
+
+td.track-info-break {
+}
+
+.track-info tr {
+  border-top-width: 2px;
+  border-top-color: black;
+  border-top-style: solid;
+  
+}
+
+div.floating { postion: absolute; zIndex: 999;}
+
+.triangle-isosceles {
+	position:relative;
+	padding:15px;
+	margin:1em 0 3em;
+	color:#000;
+	background:#f3961c; /* default background for browsers without gradient support */
+	
+	/* css3 */
+	-moz-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;
+	/* NOTE: webkit gradient implementation is not as per spec */
+	background:-webkit-gradient(linear, left top, left bottom, from(#f9d835), to(#f3961c));
+	background:-moz-linear-gradient(top, #f9d835, #f3961c);
+	background:-o-linear-gradient(top, #f9d835, #f3961c);
+	background:linear-gradient(top, #f9d835, #f3961c);
+}
+
+/* creates triangle */
+.triangle-isosceles:after {
+	content:"\00a0";
+	display:block; /* reduce the damage in FF3.0 */
+	position:absolute;
+	z-index:-1;
+	bottom:-30px; /* value = - border-top-width - border-bottom-width */
+	left:50px; /* controls horizontal position */
+	width:0;
+	height:0;
+	border-width:15px 15px; /* vary these values to change the angle of the vertex */
+	border-style:solid;
+	border-color:#F1B54F transparent transparent;
+}
+
+.triangle-isosceles.left {
+	margin-left:30px;
+	background:#F1B54F;
+}
+.triangle-isosceles.left:after {
+	top:16px; /* controls vertical position */
+	left:-80px; /* value = - border-left-width - border-right-width */
+	bottom:auto;
+	border-width:30px 50px;
+	border-color:transparent #F1B54F transparent transparent;
+}
+
+
+
+.scan-input
+{
+   font-size: 0.8em;
+}
+
+.scanner-info
+{
+   font-size: 0.7em;
+}
+
+th.scanner-info
+{
+   text-align: right;
+}
+
+.scanner-info-cur-slice
+{
+  color: blue;
+}
+.scanner-info-diff-slice
+{
+  color: #101010;
+}
+
+/* Glowing buttons */
+.glowbutton {
+  cursor: pointer;
+  text-align: center;
+  border: 1px solid #cccccc; 
+  width: 75%;
+  background: url(images/bg3.jpg) repeat 0 0;
+}
+
+/* MRI view */
+.ui-slider .ui-slider-handle { width:1.8em; text-decoration:none; text-align: center;}
+
+#ctl-color-scale{font-size: 0.7em;}
+
+
+/*collapsible:*/
+.collapsible-title .ui-icon { float: left; }
+
+/*portlet:*/
+
+.portlet { margin: 0 0 1em 0;  overflow: hidden;  }
+.portlet-header { margin: 0.3em; padding-bottom: 4px; padding-left: 0.2em; font-size: 0.8em; cursor: pointer; }
+.portlet-header .ui-icon { float: right; }
+.portlet-content { padding: 0.4em;  overflow: hidden; font-size: 0.8em; height: 100%;
+/*                    background: #FFFFFF;*/
+                    }
+.ui-sortable-placeholder { border: 1px dotted black; visibility: visible !important; height: 100px !important; }
+.ui-sortable-placeholder * { visibility: hidden; }
+
+.portlet-fullscreen {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+}
+
+div.spacer {}
+
+.dialog { font-size: 0.7em; }
+div.ui-dialog { font-size: 0.9em;}
+.help-text.dialog { font-size: 1.1em;}
+
+
+/*make checked boxes easier to see.*/
+.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active { border: 1px solid #fbd850; background: #e3d6bf url(css/ui-lightness/images/ui-bg_glass_65_ffffff_1x400.png) 50% 50% repeat-x; font-weight: bold; color: #eb8f00; }
+
+
+.vertical-text {
+	color:#333;
+	zIndex:-1;
+  background-color: white;
+	border:0px solid red;
+	writing-mode:tb-rl;
+	-webkit-transform:rotate(270deg);
+	-moz-transform:rotate(270deg);
+	-o-transform: rotate(270deg);
+	white-space:nowrap;
+	display:block;
+	bottom:0;
+	width:40px;
+	height:40px;
+	font-family: ‘Trebuchet MS’, Helvetica, sans-serif;
+	font-variant: small-caps;
+	font-size:14px;
+	font-weight:normal;
+/*  text-shadow: 0px 0px 1px #333;*/
+  vertical-align: bottom;
+  text-align: right;
+}
+
+/*status flags*/
+.status-transition {
+  background-color:white;
+}
+.status-ok
+{
+  background-color:MediumSpringGreen;
+}
+.status-error
+{
+  background-color:red;
+}
+.status-warning
+{
+  background-color:Orange;
+}
+
+.keyhint
+{
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+tr.rowstripe
+{
+  background-color: #FBE9CA;
+}
