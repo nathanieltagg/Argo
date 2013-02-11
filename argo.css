@@ -83,6 +83,23 @@ body {
   background-color: white;
 }
 
+#input-fe label.tbfill
+{
+  float:left;
+}
+#input-fe input.tbfill
+{
+  width: 100%;
+}
+
+#input-fe span
+{
+    display: block;
+    overflow: hidden;
+    padding-right: 5px;
+    padding-left: 10px;
+}
+
 .pad canvas{
   cursor: crosshair;
   margin: 0 0 0 0;
