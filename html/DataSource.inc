@@ -9,8 +9,9 @@
       &nbsp;&nbsp;&nbsp; <label>Entry:  </label><input class="inEntry ui-state-default" type="text" size="5" id="inFeEntry" name="inFeEntry" value="1"/>
       <input class="ui-state-default ui-corner-all" type="button" id="go_fe" value="Go!" /> <br/>
      </form> 
-     <input type="button" class='next-event ui-state-default ui-corner-all' value='Next Event'/>
-     <input type="button" class='prev-event ui-state-default ui-corner-all' value='Prev Event'/>
+     
+     <button class='next-event ui-state-default ui-corner-all styled-button'>(N)ext Event</button>
+     <button class='prev-event ui-state-default ui-corner-all styled-button'>(P)rev Event</button>
      
 </div>
 </div>  <!-- portlet -->

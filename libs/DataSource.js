@@ -13,6 +13,8 @@ function DataSource()
   $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { QueryServer('fe'); }});
   $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { QueryServer('fe'); }});
   $('#go_fe').click(function(){QueryServer('fe'); return false;});
+  $('button.next-event').click(DoNextEvent);
+  $('button.prev-event').click(DoPrevEvent);
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");  
 }
@@ -33,13 +35,12 @@ DataSource.prototype.NewRecord = function()
   $('#link-to-this-event').html('<a href="'+gUrlToThisEvent+'">Link to this event</a>');
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Arachne Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
   
-  $('input.next-event').click(DoNextEvent);
-  $('input.prev-event').click(DoPrevEvent);
 }                                         
 
 
 function DoNextEvent()
 {
+  console.log("DoNextEvent");
   // Check bounds - are we about to hit end of file?
   var n = gRecord.source.numEntriesInFile;
   if(gEntry+1 >= n) {
