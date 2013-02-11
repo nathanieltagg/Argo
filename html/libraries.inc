@@ -57,6 +57,9 @@
 
 <!-- My classes for doing histograming and other displays-->
 <script type="text/javascript" src="libs/Configuration.js"></script> 
+<script type="text/javascript" src="libs/DataSource.js"></script> 
+<script type="text/javascript" src="libs/Keyboard.js"></script> 
+
 <script type="text/javascript" src="libs/HitMap.js"></script> 
 
 
