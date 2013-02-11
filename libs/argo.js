@@ -57,7 +57,6 @@ $(function(){
   var recFilename = GetUrlParameter("filename");  
   if(recFilename){
       $('#inFilename').val(recFilename);
-      $('#inFilenameMenu').val(recFilename);
   } else {
       // This is the default action on load. Currently it will load run 580, rubrun 4, event 12.
       QueryServer('fe');
