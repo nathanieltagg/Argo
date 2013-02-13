@@ -59,6 +59,6 @@ print "serve_event.cgi found " . scalar(@files) . " files\n<br/>\n";
 
 $filename = $files[0];
 
-my $resp = ArgoServerTools::request($filename,$selection,$entrystart,$entryend);
+my $resp = ArgoServerTools::request($filename,$selection,$entrystart,$entryend,param(options));
 
 ArgoServerTools::serve($resp);
