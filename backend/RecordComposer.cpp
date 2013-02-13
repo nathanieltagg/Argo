@@ -120,13 +120,20 @@ void RecordComposer::composeWires()
     ladd = pointer+offset;
     ptr = (std::vector<float> *)ladd;
     // std::string signal("[");
+    float max = 0;
+    float min = 1;
     for(size_t k = 0; k<width; k++) {
-      float o = (500 + (*ptr)[k])/3000.;
+      float o = (200. + (*ptr)[k])/400.;
       if(o<0) o=0;
       if(o>1) o=1;
-      normalized[k]=0;
+      if(o>max) max = o;
+      if(o<min) min = o;
+      if(k>1000) o=0;
+      if(i>1000) o=0;
+      normalized[k]=o;
       // signal += Form("%.2f,",k);
     }
+    cout << i << " " << min << " " << max << endl;
     // if (signal.size ()>0)  signal.erase(signal.size()-1,1); // Remove trailing comma.
     // signal += "]";
     // wire.add("signal",signal);
@@ -137,6 +144,7 @@ void RecordComposer::composeWires()
     arr.add(wire);
   }
   png.Finish();
+  png.writeToFile("wires.png");
   fOutput.add("wires",arr);
   
   fOutput.add("wireimg",png.getBase64Encoded());

@@ -61,6 +61,7 @@
 <script type="text/javascript" src="libs/Keyboard.js"></script> 
 
 <script type="text/javascript" src="libs/HitMap.js"></script> 
+<script type="text/javascript" src="libs/WireImg.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
