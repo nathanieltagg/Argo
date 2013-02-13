@@ -147,7 +147,7 @@ sub request
   my $selection = shift() || 1;
   my $entrystart = shift() || 0;
   my $entryend = shift() || 0;
-  my $options = shift || "-";
+  my $options = shift || "none";
 
   #Cover up some possible blanks by user or upstream error.
   if($entrystart eq "") { $entrystart = "0"; };
