@@ -98,7 +98,7 @@ JsonElement TreeReader::getJson(TLeaf* leaf, int index, int second_index)
 Double_t TreeReader::getF(const std::string& formula, int index)
 {
   TTreeFormula ttf("tff",formula.c_str(),fTree);
-  if(ttf.GetNdata()>index) return fDefaultValue;
+  if(ttf.GetNdata()<index) return fDefaultValue;
   return ttf.EvalInstance(index);
 }
 
@@ -186,6 +186,22 @@ JsonArray TreeReader::makeFArray(const vector<pair< string,string> >& key_formul
     delete formula; formula = 0;
   }
   return retval;
+}
+
+
+JsonArray TreeReader::makeSimpleFArray(const std::string& formula)
+{
+  TTreeFormula ttf("tff",formula.c_str(),fTree);
+  JsonArray arr;
+  int n = ttf.GetNdata();
+  std::cout << formula << " " << n << std::endl;
+  for(int i=0;i<ttf.GetNdata();i++) {
+    Double_t v = ttf.EvalInstance(i);
+    std::cout << formula << " " << i << " " << v << std::endl;
+    if(ttf.IsInteger()) arr.add(JsonElement((int)v));
+    else arr.add(JsonElement(v));
+  }
+  return arr;
 }
 
 

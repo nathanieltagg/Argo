@@ -49,6 +49,7 @@ public:
   JsonObject(const JsonObject& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
   virtual JsonObject& add(const std::string& key,const JsonElement& value);
   virtual JsonObject& add(const std::string& key,const JsonArray& value);
+  virtual JsonObject& addBare(const std::string& key,const std::string& value);
   
     
   // template<typename T>
