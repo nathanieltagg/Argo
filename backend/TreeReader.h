@@ -41,6 +41,8 @@ public:
   JsonArray   makeArray(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs);
   JsonArray   makeFArray(const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
 
+  JsonArray   makeSimpleFArray(const std::string& k);
+
 
   // Commands to get values via TTreeFormulas.
   Double_t    getF(const std::string& formula, int index = 0);

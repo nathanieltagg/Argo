@@ -17,8 +17,9 @@ ifeq ($(platform),Darwin)
 endif
 
 # ROOT
-CPPFLAGS := -g -I./ $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags)
-LIBS := -L/usr/X11R6/lib -lTreePlayer $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs --cflags)  # add any other desired libs here
+CPPFLAGS := -g -I./ $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
+LIBS := -L/usr/X11R6/lib -lTreePlayer $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs --cflags)\
+        -L/opt/X11/lib -lpng # add any other desired libs here
 
 #Sources
 SOURCES = $(notdir $(wildcard *.cpp))
@@ -75,7 +76,7 @@ $(CINTOBJ): tmp/Cint.cpp
 
 
 .PHONY: bin
-bin: argo-backend myroot 
+bin: argo-backend myroot testx
 argo-backend: $(OBJ) tmp/ntuple-server-main.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(OBJ) tmp/ntuple-server-main.o $(LIBS) $(LIBS) -o $@
@@ -84,6 +85,9 @@ myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(LD) $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
+testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
+	@echo "Building " $@ $(OBJ)
+	$(LD) $(LDFLAGS) $(OBJ) tmp/test-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
 depend: $(DEPS)
 

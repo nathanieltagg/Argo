@@ -7,7 +7,7 @@
 // you're free to modify and use it as you like.
 //
 
-#include "ComposeResult.h"
+#include "RecordComposer.h"
 #include <TTree.h>
 #include <TFile.h>
 #include <TROOT.h>
@@ -16,7 +16,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "ComposeRecord.h"
 
 
 using namespace std; 
@@ -151,6 +150,7 @@ string ComposeResult(
   source.add("start",inStart);
   source.add("end",inEnd);
   source.add("entry",jentry);
+  source.add("options",options);
   source.add("numEntriesInFile",nentries);
   result.add("source",source);
 
@@ -187,25 +187,12 @@ string ComposeResult(
   // 
   // Get it.
   //
-  Int_t bytesRead = tree->GetEntry(jentry,1);
-  if(bytesRead<0) {
-    cout << "Error: I/O error on GetEntry trying to read entry " << jentry;
-    result.add("error","I/O error on GetEntry");
-    rootfile->Close(); delete rootfile;
-    return result.str();
-  }
-  if(bytesRead==0) {
-    cout << "Error: Nonexistent entry reported by GetEntry trying to read entry " << jentry;
-    result.add("error","Entry does not exist on tree");
-    rootfile->Close(); delete rootfile;
-    return result.str();
-
-  }
 
 
   // Here's where all the joy happens.
-  ComposeRecord(result,tree,jentry);
-
+  RecordComposer composer(result,tree,jentry,options);
+  composer.compose();
+  
   // Always close the file - let's see if this stops memory leaks.
   rootfile->Close(); delete rootfile;
   

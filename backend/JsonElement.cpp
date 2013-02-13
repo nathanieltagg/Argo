@@ -9,7 +9,7 @@
 
 #include "JsonElement.h"
 
-bool JsonElement::sfPrettyPrint = true;
+bool JsonElement::sfPrettyPrint = false;
 
 
 
@@ -66,6 +66,17 @@ JsonObject& JsonObject::add(const std::string& key,const JsonArray& value)
   if(sfPrettyPrint) fContent << std::endl << "  ";
   fContent << "\"" << key << "\":";
   fContent << value.str();
+  return *this;
+}
+
+JsonObject& JsonObject::addBare(const std::string& key,const std::string& value)
+{
+  if(fElements++>0) {
+    fContent << ",";
+  }
+  if(sfPrettyPrint) fContent << std::endl << "  ";
+  fContent << "\"" << key << "\":";
+  fContent << value;
   return *this;
 }
 
