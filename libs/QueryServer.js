@@ -46,7 +46,8 @@ function QueryServer( querytype )
       var selection = encodeURIComponent($('#inFeSelection').val());
       data = { filename: file, 
                   selection: selection,
-                  entry: entry };
+                  entry: entry,
+                  options: "_WIRES_" };
     } else {
       $('#status').attr('class', 'status-error');
       $("#status").text("Unknown request type "+ querytype);
