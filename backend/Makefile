@@ -1,10 +1,16 @@
 pwd := $(shell pwd)
 export ROOTSYS := ${pwd}/root
 
+UNAME := $(shell uname -s)
+
+
 CPP = g++44 --std=c++0x
 LD = g++44
-#CPP = clang++ -std=c++11
-#LD = clang++
+
+ifeq ($(UNAME),Darwin)
+  CPP = clang++ -std=c++11
+  LD = clang++
+endif
 
 PATH+=:${ROOTSYS}/bin
 export LD_LIBRARY_PATH=${ROOTSYS}/lib
