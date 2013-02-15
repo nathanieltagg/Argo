@@ -154,11 +154,16 @@ function QuerySuccess(data,textStatus,jqxhr)
     StartEvent();
     gFinishedDrawTime = (new Date).getTime();
     DoPerformanceStats();
-  }
+  } 
 }
 
 function StartEvent()
 {
+  if(!gRecord.source) {
+    $('#status').attr('class', 'status-error');
+    $("#status").text("Problem with data: " + gRecord.error);
+    return;
+  }
   $("#status").text("Drawing...");
   console.log(gRecord);
   gEventsLoadedThisSession +=1;

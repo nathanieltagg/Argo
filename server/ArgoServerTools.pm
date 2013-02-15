@@ -95,7 +95,7 @@ sub start_server
   } elsif($pid==0) {
     # This is the forked process.
     
-      $ROOTSYS="../ntuple_server/root";
+      $ROOTSYS="../backend/root";
       $ENV{"ROOTSYS"}="$ROOTSYS";
       $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib";
 

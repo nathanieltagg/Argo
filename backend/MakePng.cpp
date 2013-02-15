@@ -134,9 +134,9 @@ void MakePng::writeToFile(const std::string& filename)
 std::string MakePng::writeToUniqueFile(const std::string& path)
 {
   char* buffer = new char[path.length()+20];
-  std::string tmplate= path + "/XXXXXXXX.png";
+  std::string tmplate= path + "/XXXXXXXX";
   strcpy(buffer,tmplate.c_str());
-  int fp = mkstemps(buffer,4);
+  int fp = mkstemp(buffer);
   if(fp<0) {
     std::cerr << "MakePng::Couldn't open unique temporary file!" << std::endl;
     return "error";
@@ -145,7 +145,11 @@ std::string MakePng::writeToUniqueFile(const std::string& path)
   // Make world-readable
   fchmod(fp, 0000644);
   close(fp);
-  return string(buffer+path.length()); // REturns basename only
+  // Move the file to something more useful.
+  std::string newname(buffer);
+  newname+=".png";
+  rename(buffer,newname.c_str());
+  return newname.substr(path.length(),string::npos); // REturns basename only
 }
 
 std::string MakePng::getBase64Encoded()
