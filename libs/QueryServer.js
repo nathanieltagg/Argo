@@ -92,11 +92,10 @@ function QueryServer( querytype )
     // }
 
     // User feedback that we are querying
-    var msg = '<p><img src="images/busy.gif" /> &nbsp;&nbsp;Querying server for event data...</p>'+gMOTD;
     $.blockUI({ 
               theme:     true, 
               title:    'Please wait', 
-              message:   msg
+              message:    $('#MOTD')
               // ,timeout:   2000 
           });
     

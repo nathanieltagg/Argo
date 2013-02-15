@@ -44,7 +44,14 @@ function WireImg( element, options )
 WireImg.prototype.NewRecord = function()
 {
   $(this.element).html("<img/>");
-  $('img',this.element).attr('src',gRecord.wireimg);
+  var myimg = $('img',this.element)[0];
+  myimg.src = gRecord.wireimg_url;
+  $(myimg).attr("style","width:100%; height: auto;");
+  // mimg.alt = "WTF?";
+  // mimg.src = 'data:image/png;base64, '+gRecord.wireimg;
+  // $(this.element).append("<textarea rows='50' cols='80'>");
+  // $('textarea',this.element).val(gRecord.wireimg_url);
+  
 }
 
 WireImg.prototype.Draw = function()
