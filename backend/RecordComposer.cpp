@@ -32,6 +32,9 @@
 
 using namespace std;
 
+std::string RecordComposer::sfFileStoragePath = "../datacache/";
+std::string RecordComposer::sfUrlToFileStorage = "datacache/";
+
 void RecordComposer::composeHeaderData() 
 {
   // Header data. Alas, this is the stuff that's nearly impossible to get!  
@@ -72,6 +75,69 @@ void RecordComposer::composeHits()
   fOutput.add("hits",r);
 }
 
+
+class TreeStlElementLooter {
+
+  // special code to try to get, for example,  vector<float> out of a leaf.
+  // Copied liberally from TBranchElement::PrintValue and GetCollectionProxy()->PrintValueSTL
+
+public:
+  TTree* fTree;
+  std::string fName;
+  TBranchElement *fBranch;
+  std::string fError;
+  TVirtualCollectionProxy*	fProxy;
+  TVirtualCollectionProxy::TPushPop* fHelper;
+  Int_t eoffset;
+  Int_t offset;
+  Bool_t ok;
+  
+  TreeStlElementLooter(TTree* t, const std::string& branchname) : fTree(t), fName(branchname), fBranch(0), fHelper(0), ok(false) {};
+  int Setup() {
+    TBranch* b = fTree->GetBranch(fName.c_str());
+    if(!b) {
+      fError = "TreeStlElementLooter: Couldn't find branch " + fName;  
+      std::cerr << fError << std::endl;
+      return 1;
+    }
+
+    fBranch = dynamic_cast<TBranchElement*>(b);
+    if(!fBranch) {
+      fError = "TreeStlElementLooter: Branch " + fName + " couldn't be cast to TBranchElement";  
+      std::cerr << fError << std::endl;
+      return 1;
+    }
+      
+    fHelper = new TVirtualCollectionProxy::TPushPop(fBranch->GetCollectionProxy(), fBranch->GetObject());    
+    fProxy = fBranch->GetCollectionProxy();
+    if (!(fProxy)) {
+      fError = "TreeStlElementLooter: Couldn't GetCollectionProxy() on " + fName;
+      std::cerr << fError << std::endl;
+      return 1;
+    }
+    
+    if (!(fBranch->GetInfo())) {
+      fError = "TreeStlElementLooter: Couldn't GetInfo() on " + fName;
+      std::cerr << fError << std::endl;
+      return 1;
+    }
+      
+    eoffset = fBranch->GetOffset();
+    offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
+    ok = true;
+  }
+
+  template<typename T> const T* get(UInt_t row) 
+  {
+    if(!ok) return 0;
+    char* pointer = (char*)fProxy->At(row);
+    char* ladd = pointer+offset;
+    return (T*)(ladd);      // Unchecked cast!
+  }
+  
+  ~TreeStlElementLooter(){ if(fHelper) delete fHelper; }
+};
+
 void RecordComposer::composeWires() 
 {
   JsonObject r;
@@ -81,31 +147,35 @@ void RecordComposer::composeWires()
   // special code to try to get vector<float> out of a leaf.
   // Copied liberally from TBranchElement::PrintValue and GetCollectionProxy()->PrintValueSTL
   
-  TBranchElement* be = (TBranchElement*) fTree->GetBranch("recob::Wires_caldata__Reco.obj.fSignal");
-  if(!be) {
-    fOutput.add("composeWires-error","Couldn't get wires caldata branch");  
-    return;
-  }
+  // TBranchElement* be = (TBranchElement*) fTree->GetBranch("recob::Wires_caldata__Reco.obj.fSignal");
+  // if(!be) {
+  //   fOutput.add("composeWires-error","Couldn't get wires caldata branch");  
+  //   return;
+  // }
+  // 
+  // TVirtualCollectionProxy::TPushPop helper(be->GetCollectionProxy(), be->GetObject());    
+  // auto cont = be->GetCollectionProxy();
+  // if (!(be->GetInfo())) {
+  //   fOutput.add("composeWires-error","Couldn't GetInfo on wires caldata branch"); 
+  //   return;
+  // }
+  // Int_t eoffset = be->GetOffset();
+  // Int_t offset = eoffset + be->GetInfo()->GetOffsets()[be->GetID()];
+  // 
+  // // Get first row.
+  // char* pointer = (char*)cont->At(0);
+  // char* ladd = pointer+offset;
+  // 
+
+  TreeStlElementLooter l(fTree,"recob::Wires_caldata__Reco.obj.fSignal");
+  l.Setup();
+  const std::vector<float> *ptr = l.get<std::vector<float>>(0);
   
-  TVirtualCollectionProxy::TPushPop helper(be->GetCollectionProxy(), be->GetObject());    
-  auto cont = be->GetCollectionProxy();
-  if (!(be->GetInfo())) {
-    fOutput.add("composeWires-error","Couldn't GetInfo on wires caldata branch"); 
-    return;
-  }
-  Int_t eoffset = be->GetOffset();
-  Int_t offset = eoffset + be->GetInfo()->GetOffsets()[be->GetID()];
-  
-  // Get first row.
-  char* pointer = (char*)cont->At(0);
-  char* ladd = pointer+offset;
-  std::vector<float> *ptr = (std::vector<float> *)ladd;
   
   size_t width = ptr->size();
   std::vector<float> normalized(width);
   // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
   MakePng png(width,nwires,16,"wires");
-  
   
   JsonArray arr;
   for(long i=0;i<nwires;i++) {
@@ -116,9 +186,10 @@ void RecordComposer::composeWires()
     wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
 
     // Get signal pointer.  This is ROOT magic crap I dont' understand, but it works. 
-    pointer = (char*)cont->At(i);
-    ladd = pointer+offset;
-    ptr = (std::vector<float> *)ladd;
+    // pointer = (char*)cont->At(i);
+    // ladd = pointer+offset;
+    // ptr = (std::vector<float> *)ladd;
+    ptr = l.get<std::vector<float>>(i);
     // std::string signal("[");
     float max = 0;
     float min = 1;
@@ -128,8 +199,6 @@ void RecordComposer::composeWires()
       if(o>1) o=1;
       if(o>max) max = o;
       if(o<min) min = o;
-      if(k>1000) o=0;
-      if(i>1000) o=0;
       normalized[k]=o;
       // signal += Form("%.2f,",k);
     }
@@ -144,10 +213,18 @@ void RecordComposer::composeWires()
     arr.add(wire);
   }
   png.Finish();
-  png.writeToFile("wires.png");
   fOutput.add("wires",arr);
+
   
-  fOutput.add("wireimg",png.getBase64Encoded());
+  fOutput.add("wireimg_url",sfUrlToFileStorage+
+                            png.writeToUniqueFile(sfFileStoragePath)
+                            );
+  
+  // fOutput.add("wireimg",png.getBase64Encoded());
+  // ofstream out("wires.b64");
+  // out << png.getBase64Encoded();
+  // out.close();
+  
 }
 
 void RecordComposer::compose()

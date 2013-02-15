@@ -4,8 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <TString.h>
 #include "cencode.h"
+#include <iostream>
 
 using std::vector;
 using std::string;
@@ -127,6 +131,22 @@ void MakePng::writeToFile(const std::string& filename)
   fclose(fp);
 }
 
+std::string MakePng::writeToUniqueFile(const std::string& path)
+{
+  char* buffer = new char[path.length()+20];
+  std::string tmplate= path + "/XXXXXXXX.png";
+  strcpy(buffer,tmplate.c_str());
+  int fp = mkstemps(buffer,4);
+  if(fp<0) {
+    std::cerr << "MakePng::Couldn't open unique temporary file!" << std::endl;
+    return "error";
+  }
+  write(fp,outdata,outdatalen);
+  // Make world-readable
+  fchmod(fp, 0000644);
+  close(fp);
+  return string(buffer+path.length()); // REturns basename only
+}
 
 std::string MakePng::getBase64Encoded()
 {
@@ -134,8 +154,7 @@ std::string MakePng::getBase64Encoded()
   base64_init_encodestate(&state);
   char* code_out = new char[2*outdatalen+1];
   int codelength =base64_encode_block((char*)outdata, outdatalen, code_out, &state);
-  string r("data:image/png;base64,");
-  r+=code_out;
+  string r(code_out);
   codelength+= base64_encode_blockend(code_out,&state);
   // r+= code_out;
   delete [] code_out;

@@ -9,7 +9,7 @@
 <title>Argo</title>
 
 <!-- My little icon in the link url -->
-<link rel="icon"  type="image/png" href="front_page/a" />  
+<link rel="icon"  type="image/png" href="images/icon" />  
 
 <!-- Activate some overrides to basic configuration. -->
 <!--#set var="PageStyle" value="standard" -->
@@ -67,9 +67,8 @@ gPageName='standard';
 
   <div id="content-main">
   <div id="content-wide" class="dock">
-    <!--#include virtual="html/HitMap.inc">
-     <!-- WTF? -->
-    <!--#include virtual="html/WireImg.inc">
+    <!--#include virtual="html/HitMap.inc" -->
+    <!--#include virtual="html/WireImg.inc" -->
 
   </div> <!-- content-wide -->
   <div id="content-left" class="dock">
@@ -96,6 +95,8 @@ gPageName='standard';
   </div> <!-- footer -->
   
   <!-- hidden stuff. -->
+  <!--#include virtual="html/MOTD.inc" -->
+  
   <div id="warning-dialog" title="Warning">
      <p id="warning-dialog-message"></p>
    </div>

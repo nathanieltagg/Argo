@@ -14,6 +14,7 @@ public:
   unsigned char* getData() { return (unsigned char*) outdata; };
   size_t         getDataLen() { return outdatalen; };
   void           writeToFile(const std::string& filename);
+  std::string    writeToUniqueFile(const std::string& path);
   std::string    getBase64Encoded(); 
   ~MakePng();
   

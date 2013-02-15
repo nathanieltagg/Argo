@@ -11,9 +11,6 @@
 <script type="text/javascript" src="js/modernizr.js"></script>
 <script type="text/javascript" src="libs/check_browser.js"></script>
 
-<!--[if lt IE 9]>
-<script type="text/javascript" src="js/flashcanvas.js"></script>
-<![endif]-->
 
 <script type="text/javascript" src="js/jquery.mousewheel.min.js"></script>
 <script type="text/javascript" src="js/ajax-upload.3.5.js"></script>
@@ -22,7 +19,6 @@
 <script type="text/javascript" src="js/jquery.ba-resize.min.js"></script>
 <script type="text/javascript" src="js/sylvester.js"></script>
 <script type="text/javascript" src="js/canvas.text.js"></script>
-<!-- <script type="text/javascript" src="js/jquery.svg.min.js"></script> -->
 
 <!-- firebug lite, for debugging on random browswers. -->
 <!-- <script type='text/javascript' 
@@ -44,6 +40,7 @@
     if (!window.console['error']     ) window.console.error       = function(){};
   }
 </script>
+
 <!--Core. -->
 <script type="text/javascript" src="core/Pad.js"></script>
 <script type="text/javascript" src="core/ColorScale.js"></script>
@@ -65,7 +62,6 @@
 
 
 <!-- My classes for talking to the back-end and other displays-->
-<script type="text/javascript" src="libs/MOTD.js"></script> 
 <script type="text/javascript" src="libs/QueryServer.js"></script> 
 <script type="text/javascript" src="libs/ArgoData.js"></script> 
 

@@ -25,6 +25,9 @@ public:
   Long64_t fEntry;
   std::string fOptions;
   TreeReader ftr;
+  
+  static std::string sfFileStoragePath;
+  static std::string sfUrlToFileStorage;
 };
 
 
