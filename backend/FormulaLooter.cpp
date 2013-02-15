@@ -46,30 +46,30 @@ JsonArray FormulaMakeArray(TTree* tree, const vector<pair< string,string> >& key
 {
   if(key_formula_pairs.size()<1) return JsonArray(); 
   vector<TTreeFormula*> formulae;
-  for(auto row : key_formula_pairs ) {
-    const string& key = row.first;
-    const string& formula = row.second;
+  for(size_t i=0;i<key_formula_pairs.size();i++ ) {
+    const string& key = key_formula_pairs[i].first;
+    const string& formula = key_formula_pairs[i].second;
     formulae.push_back(new TTreeFormula(key.c_str(),formula.c_str(),tree));    
   }
   Int_t n = formulae[0]->GetNdata();
-  for(auto formula : formulae) {
-    if(formula->GetNdata() != n) {
-      std::cerr <<" Error!  Formula  " << formula->GetName() << " does not match entries to " << formulae[0]->GetName() << std::endl;
+  for(size_t i=0;i<formulae.size();i++ ) {
+    if(formulae[i]->GetNdata() != n) {
+      std::cerr <<" Error!  Formula  " << formulae[i]->GetName() << " does not match entries to " << formulae[0]->GetName() << std::endl;
       return JsonArray();
     }
   }
   JsonArray retval;
   for(Int_t i=0; i< n; i++) {
     JsonObject t;
-    for(auto formula : formulae) {
-      double v = formula->EvalInstance(i);
-      if(formula->IsInteger()) { t.add(formula->GetName(),(int)v);}
-      else t.add(formula->GetName(),v);
+    for(size_t j=0;j<formulae.size();j++ ) {
+      double v = formulae[j]->EvalInstance(i);
+      if(formulae[j]->IsInteger()) { t.add(formulae[j]->GetName(),(int)v);}
+      else t.add(formulae[j]->GetName(),v);
     }
     retval.add(t);    
   }
-  for(auto formula : formulae) {
-    delete formula; formula = 0;
+  for(size_t j=0;j<formulae.size();j++ ) {
+    delete formulae[j]; formulae[j] = 0;
   }
   return retval;
 }

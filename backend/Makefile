@@ -1,10 +1,13 @@
 pwd := $(shell pwd)
 export ROOTSYS := ${pwd}/root
 
-CPP = clang++ -std=c++11
-LD = clang++
+CPP = g++44 --std=c++0x
+LD = g++44
+#CPP = clang++ -std=c++11
+#LD = clang++
 
 PATH+=:${ROOTSYS}/bin
+export LD_LIBRARY_PATH=${ROOTSYS}/lib
 # My includes
 LDFLAGS = -g 
 
@@ -67,6 +70,7 @@ $(BINOBJ) : tmp/%.o : %.cc
 #Rootcint rule:
 tmp/Cint.cpp : $(RHEADERS) LinkDef.h
 	@echo "Running rootcint... " $(RHEADERS) LinkDef.h
+	LD_LIBRARY_FLAGS=${ROOTSYS}/lib
 	rootcint -v3 -f $@ -c $(CPPFLAGS) $(RHEADERS) LinkDef.h
 
 	

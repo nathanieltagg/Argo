@@ -121,9 +121,9 @@ JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_leaf_pa
   if(key_leaf_pairs.size()<1) return JsonArray(); 
   vector<TLeaf*> leaves;
   Int_t count = 0;
-  for(auto row : key_leaf_pairs ) {
-    const string& key = row.first;
-    const string& leafname = row.second;
+  for(int i=0;i<key_leaf_pairs.size();i++ ) {
+    const string& key = key_leaf_pairs[i].first;
+    const string& leafname = key_leaf_pairs[i].second;
     TLeaf* lf = fTree->GetLeaf(leafname.c_str());
     leaves.push_back(lf);
     if(!lf) {
@@ -150,9 +150,9 @@ JsonArray TreeReader::makeFArray(const vector<pair< string,string> >& key_formul
   // Build the formula objects
   if(key_formula_pairs.size()<1) return JsonArray(); 
   vector<TTreeFormula*> formulae;
-  for(auto row : key_formula_pairs ) {
-    const string& key = row.first;
-    const string& formula = row.second;
+  for(int i=0;i<key_formula_pairs.size();i++ ) {
+    const string& key = key_formula_pairs[i].first;
+    const string& formula = key_formula_pairs[i].second;
     formulae.push_back(new TTreeFormula(key.c_str(),formula.c_str(),fTree));    
   }
   // Make sure tree is reloaded so this will work. Expensive!
@@ -161,10 +161,10 @@ JsonArray TreeReader::makeFArray(const vector<pair< string,string> >& key_formul
 
   // Make sure that all the formulas yield the same number of entries.
   n = formulae[0]->GetNdata();
-  for(auto formula : formulae) {
-    if(formula->GetNdata() != n) {
+  for(int i=0;i<formulae.size();i++) {
+    if(formulae[i]->GetNdata() != n) {
       Info("TreeReader::makeArray"," Problem building array: Formula %s does not match entries to %s",
-        formula->GetName(),formulae[0]->GetName());
+        formulae[i]->GetName(),formulae[0]->GetName());
       return JsonArray();
       
     }
@@ -174,16 +174,16 @@ JsonArray TreeReader::makeFArray(const vector<pair< string,string> >& key_formul
   JsonArray retval;
   for(Int_t i=0; i< n; i++) {
     JsonObject t;
-    for(auto formula : formulae) {
-      double v = formula->EvalInstance(i);
-      if(formula->IsInteger()) { t.add(formula->GetName(),(int)v);}
-      else t.add(formula->GetName(),v);
+    for(int j=0;j<formulae.size();j++) {
+      double v = formulae[j]->EvalInstance(i);
+      if(formulae[j]->IsInteger()) { t.add(formulae[j]->GetName(),(int)v);}
+      else t.add(formulae[j]->GetName(),v);
     }
     retval.add(t);    
   }
   // Clean up.
-  for(auto formula : formulae) {
-    delete formula; formula = 0;
+  for(int j=0;j<formulae.size();j++) {
+    delete formulae[j]; formulae[j] = 0;
   }
   return retval;
 }
