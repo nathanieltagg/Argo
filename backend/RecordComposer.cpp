@@ -125,6 +125,7 @@ public:
     eoffset = fBranch->GetOffset();
     offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
     ok = true;
+    return 0;
   }
 
   template<typename T> const T* get(UInt_t row) 
