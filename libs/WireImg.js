@@ -146,17 +146,24 @@ WireImg.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   this.Clear();
 
   this.ctx.save();
-  // this.ctx.rotate(90);
-  this.ctx.drawImage(this.wireimg, 
-      0, swath.y, // Source x,y
-      this.wireimg.width,swath.h, // Source width, height
-      this.GetX(this.min_u), this.GetY(this.max_v), // destination coord, upper left
-      this.GetX(this.max_u)-this.GetX(this.min_u), this.GetY(this.min_v)-this.GetY(this.max_v) // destination, width and height
+  this.ctx.translate(this.GetX(this.min_u),this.GetY(this.min_v));
+  this.ctx.rotate(-Math.PI/2);
+  
+  this.ctx.drawImage(this.wireimg
+    , 0, swath.y
+    , this.wireimg.width, swath.h // Source width, height
+    ,0,0
+    // ,this.GetX(this.min_u), this.GetY(this.max_v) // destination coord, upper left
+      
+     ,this.span_y //,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
+     ,this.span_x //,this.GetX(this.max_u)-this.GetX(this.min_u)// width and height
     );
-  console.log(      0, swath.y, // Source x,y
-      this.wireimg.width,swath.h, // Source width, height
-      this.GetX(this.min_u), this.GetY(this.max_v), // destination coord, upper left
-      this.GetX(this.max_u)-this.GetX(this.min_u), this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
+  console.log(      0, swath.y // Source x,y
+      ,this.wireimg.width,swath.h // Source width, height
+      ,this.GetX(this.min_u), this.GetY(this.max_v) // destination coord, upper left
+             ,this.GetX(this.max_u)-this.GetX(this.min_u)
+       ,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
+
     );
   this.ctx.restore();
      
