@@ -9,6 +9,7 @@
 
 #include "TreeReader.h"
 #include <TTree.h>
+#include <TBranch.h>
 #include <TLeaf.h>
 #include <TTreeFormula.h>
 #include <TError.h>

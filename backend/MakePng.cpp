@@ -27,17 +27,13 @@ void my_user_write_data(
  
  
   
-MakePng::MakePng(int width, int height, int depth, const std::string title)
+MakePng::MakePng(int width, int height, Color_Mode_t c, const std::string title)
   : width(width)
     , height(height)
-    , depth(depth)
-      , outdata(NULL)
-        , outdatalen(0)
+    , colormode(c)
+    , outdata(NULL)
+    , outdatalen(0)
 {
-  fp=NULL;
-  // Only for writing to file:
-  // fp = fopen("my.png", "wb");
-  // assert(fp);
   png_ptr = NULL;
   info_ptr = NULL;
 
@@ -60,13 +56,19 @@ MakePng::MakePng(int width, int height, int depth, const std::string title)
   // png_init_io(png_ptr, fp);
   png_set_write_fn(png_ptr, this, my_user_write_data, NULL);
 
+  png_byte color_type = PNG_COLOR_TYPE_GRAY;
+  switch(colormode) {
+    case gray: color_type = PNG_COLOR_TYPE_GRAY; break;
+    case rgb : color_type = PNG_COLOR_TYPE_RGB; break;
+    case rgba: color_type = PNG_COLOR_TYPE_RGBA; break;
+  }
   /* Set image attributes. */
   png_set_IHDR(png_ptr,
                info_ptr,
                width,
                height,
-               depth,
-               PNG_COLOR_TYPE_GRAY,
+               8, // No point in using 16-bit, since it gets truncated in browser anyway.
+               color_type,
                PNG_INTERLACE_NONE,
                PNG_COMPRESSION_TYPE_DEFAULT,
                PNG_FILTER_TYPE_DEFAULT);
@@ -81,34 +83,36 @@ MakePng::MakePng(int width, int height, int depth, const std::string title)
   png_write_info(png_ptr, info_ptr);
 
   /* Initialize rows of PNG. */
-  int bytes_per_pixel = depth/8;
+  int bytes_per_pixel = (int)colormode;
   if(bytes_per_pixel<1) bytes_per_pixel=1;
   bytes_per_row = width * bytes_per_pixel * sizeof(png_byte); //
   // Allocate memory for one row (3 bytes per pixel - RGB)
-  rowdata = (png_bytep) malloc(bytes_per_row);
+  // rowdata = (png_bytep) malloc(bytes_per_row);
   rows_done = 0;
 }
 
-void MakePng::AddRow(const vector<float>& floatrow)
+void MakePng::AddRow(const std::vector<unsigned char>& data)
 {
   assert(rows_done++ < height);
-  // copy data into 16-bit grayscale.
-  uint16_t* row_as_short = (uint16_t*)(rowdata);
-  for(int i=0;i<width;i++) {
-    uint16_t word = (uint16_t)(floatrow[i]*65535);
-    row_as_short[i] = (word >> 8) | (word << 8); // Magic byte swap.
-  }
-  png_write_row(png_ptr, rowdata);
+  assert(data.size() >= bytes_per_row);
+  png_write_row(png_ptr,&data[0]);
+
+  // // copy data into 16-bit grayscale.
+  // uint16_t* row_as_short = (uint16_t*)(rowdata);
+  // for(int i=0;i<width;i++) {
+  //   uint16_t word = (uint16_t)(floatrow[i]*65535);
+  //   row_as_short[i] = (word >> 8) | (word << 8); // Magic byte swap.
+  // }
+  // png_write_row(png_ptr, rowdata);
 
 }
 
 void MakePng::Finish()
 {
   png_write_end(png_ptr, NULL);
-  if (fp != NULL) fclose(fp);  
   if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
   if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-  if (rowdata != NULL) free(rowdata);  
+  // if (rowdata != NULL) free(rowdata);  
 }
 
 
