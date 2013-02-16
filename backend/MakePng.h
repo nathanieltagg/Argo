@@ -5,11 +5,19 @@
 #include <string>
 #include <png.h>
 
+
 class MakePng
 {
 public:
-  MakePng(int width, int height, int depth, const std::string title = "blah");
-  void AddRow(const std::vector<float>& floatrow); // normalized
+  typedef enum colortype {
+    gray = 1, // Grayscale, 1 byte per pixel
+    rgb  = 3, // color, red-green-blue, 3 bytes per pixel
+    rgba = 4  // color and alpha channel, 4 bytes per pixel  
+  } Color_Mode_t;
+
+  MakePng(int width, int height, Color_Mode_t colormode, // colors: either 1 or 3 colors for grayscale or bitmap.
+     const std::string title = "blah");
+  void AddRow(const std::vector<unsigned char>& data); // normalized
   void Finish();
   unsigned char* getData() { return (unsigned char*) outdata; };
   size_t         getDataLen() { return outdatalen; };
@@ -24,12 +32,11 @@ private:
   friend void my_user_write_data( png_structp png_ptr,  png_bytep   data,   png_size_t  length);
   int width;
   int height;
-  int depth; // bit depth of one image channels. 1,2,4,8, or 16.
-  FILE* fp;
+  Color_Mode_t colormode;
   png_structp png_ptr;
   png_infop   info_ptr;
   size_t bytes_per_row;
-  png_bytep rowdata;
+  // png_bytep rowdata;
   int rows_done;
   
   png_bytep   outdata;

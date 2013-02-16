@@ -28,12 +28,42 @@
 #include "RecordComposer.h"
 #include "JsonElement.h"
 #include "TreeReader.h"
+#include "TreeElementLooter.h"
 #include "MakePng.h"
 
 using namespace std;
 
 std::string RecordComposer::sfFileStoragePath = "../datacache/";
 std::string RecordComposer::sfUrlToFileStorage = "datacache/";
+
+static void hsvToRgb(unsigned char* out, float h, float s, float v){
+    float r, g, b;
+
+    int i = floor(h * 6);
+    float f = h * 6 - i;
+    float p = v * (1 - s);            // 0
+    float q = v * (1 - f * s);        // 1-f
+    float t = v * (1 - (1 - f) * s);  // f
+
+    switch(i % 6){
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    
+    // cout << (int)(r*255) << "\t"
+    //     << (int)(g*255) << "\t"
+    //     << (int)(b*255) << "\n";
+    // return rgbToHsv(int(r*255),int(g*255),int(b*255));
+    // return [r * 255, g * 255, b * 255];
+    *(out   ) = (unsigned int)(r*255);
+    *(out+1 ) = (unsigned int)(g*255);
+    *(out+2 ) = (unsigned int)(b*255);
+}
+
 
 void RecordComposer::composeHeaderData() 
 {
@@ -76,68 +106,7 @@ void RecordComposer::composeHits()
 }
 
 
-class TreeStlElementLooter {
 
-  // special code to try to get, for example,  vector<float> out of a leaf.
-  // Copied liberally from TBranchElement::PrintValue and GetCollectionProxy()->PrintValueSTL
-
-public:
-  TTree* fTree;
-  std::string fName;
-  TBranchElement *fBranch;
-  std::string fError;
-  TVirtualCollectionProxy*	fProxy;
-  TVirtualCollectionProxy::TPushPop* fHelper;
-  Int_t eoffset;
-  Int_t offset;
-  Bool_t ok;
-  
-  TreeStlElementLooter(TTree* t, const std::string& branchname) : fTree(t), fName(branchname), fBranch(0), fHelper(0), ok(false) {};
-  int Setup() {
-    TBranch* b = fTree->GetBranch(fName.c_str());
-    if(!b) {
-      fError = "TreeStlElementLooter: Couldn't find branch " + fName;  
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-
-    fBranch = dynamic_cast<TBranchElement*>(b);
-    if(!fBranch) {
-      fError = "TreeStlElementLooter: Branch " + fName + " couldn't be cast to TBranchElement";  
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-      
-    fHelper = new TVirtualCollectionProxy::TPushPop(fBranch->GetCollectionProxy(), fBranch->GetObject());    
-    fProxy = fBranch->GetCollectionProxy();
-    if (!(fProxy)) {
-      fError = "TreeStlElementLooter: Couldn't GetCollectionProxy() on " + fName;
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-    
-    if (!(fBranch->GetInfo())) {
-      fError = "TreeStlElementLooter: Couldn't GetInfo() on " + fName;
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-      
-    eoffset = fBranch->GetOffset();
-    offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
-    ok = true;
-    return 0;
-  }
-
-  template<typename T> const T* get(UInt_t row) 
-  {
-    if(!ok) return 0;
-    char* pointer = (char*)fProxy->At(row);
-    char* ladd = pointer+offset;
-    return (T*)(ladd);      // Unchecked cast!
-  }
-  
-  ~TreeStlElementLooter(){ if(fHelper) delete fHelper; }
-};
 
 void RecordComposer::composeWires() 
 {
@@ -145,38 +114,16 @@ void RecordComposer::composeWires()
   TLeaf* lf = fTree->GetLeaf("recob::Wires_caldata__Reco.obj.fView");
   int nwires = lf->GetLen();
 
-  // special code to try to get vector<float> out of a leaf.
-  // Copied liberally from TBranchElement::PrintValue and GetCollectionProxy()->PrintValueSTL
-  
-  // TBranchElement* be = (TBranchElement*) fTree->GetBranch("recob::Wires_caldata__Reco.obj.fSignal");
-  // if(!be) {
-  //   fOutput.add("composeWires-error","Couldn't get wires caldata branch");  
-  //   return;
-  // }
-  // 
-  // TVirtualCollectionProxy::TPushPop helper(be->GetCollectionProxy(), be->GetObject());    
-  // auto cont = be->GetCollectionProxy();
-  // if (!(be->GetInfo())) {
-  //   fOutput.add("composeWires-error","Couldn't GetInfo on wires caldata branch"); 
-  //   return;
-  // }
-  // Int_t eoffset = be->GetOffset();
-  // Int_t offset = eoffset + be->GetInfo()->GetOffsets()[be->GetID()];
-  // 
-  // // Get first row.
-  // char* pointer = (char*)cont->At(0);
-  // char* ladd = pointer+offset;
-  // 
-
-  TreeStlElementLooter l(fTree,"recob::Wires_caldata__Reco.obj.fSignal");
+  TreeElementLooter l(fTree,"recob::Wires_caldata__Reco.obj.fSignal");
   l.Setup();
   const std::vector<float> *ptr = l.get<std::vector<float>>(0);
   
   
   size_t width = ptr->size();
-  std::vector<float> normalized(width);
+  std::vector<unsigned char> imagedata(width*3);
   // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-  MakePng png(width,nwires,16,"wires");
+  // MakePng png(width,nwires,MakePng::gray,"wires");
+  MakePng png(width,nwires,MakePng::rgb,"wires");
   
   JsonArray arr;
   for(long i=0;i<nwires;i++) {
@@ -195,19 +142,23 @@ void RecordComposer::composeWires()
     float max = 0;
     float min = 1;
     for(size_t k = 0; k<width; k++) {
-      float o = (200. + (*ptr)[k])/400.;
-      if(o<0) o=0;
-      if(o>1) o=1;
-      if(o>max) max = o;
-      if(o<min) min = o;
-      normalized[k]=o;
+      // convert to 8-bit value.
+      // float o = 127. + ((*ptr)[k])*0.5; // 100 ADC -> grayscale of 177. Max at 255 is ADC=256, which covers a fair range. (About 2 MIP)
+      // if(o<0) o=0;
+      // if(o>255) o=255;
+      // unsigned char c = (unsigned char)(floor(o));
+      // imagedata[k]=c;
+      
+      float adc = (*ptr)[k];
+      float h = adc/1000.+0.5;
+      hsvToRgb(&imagedata[k*3],h,1,1);
+      
       // signal += Form("%.2f,",k);
     }
-    cout << i << " " << min << " " << max << endl;
     // if (signal.size ()>0)  signal.erase(signal.size()-1,1); // Remove trailing comma.
     // signal += "]";
     // wire.add("signal",signal);
-    png.AddRow(normalized);
+    png.AddRow(imagedata);
     
     // This works, but is WAAYYYYYY TOO SLOW
     //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
@@ -221,11 +172,31 @@ void RecordComposer::composeWires()
                             png.writeToUniqueFile(sfFileStoragePath)
                             );
   
-  // fOutput.add("wireimg",png.getBase64Encoded());
-  // ofstream out("wires.b64");
-  // out << png.getBase64Encoded();
-  // out.close();
+}
+
+void RecordComposer::composeRaw()
+{
+  /*
+  JsonObject r;
   
+  // Fixme: 
+  // This probably changes depending upon simulation method. This should work for now.
+  std::string rawdigit_obj_name = "raw::RawDigits_daq__GenieGen.obj";
+  
+  TLeaf* lf = fTree->GetLeaf(rawdigit_obj_name+".fChannel");
+  int ndig = lf->GetLen();
+  
+  TreeElementLooter l(fTree,rawdigit_obj_name+".fADC");
+  l.Setup();
+  const std::vector<short> *ptr = l.get<std::vector<short>>(0);
+  int width = ptr->size();
+  // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
+  
+  // Seperate by views. FIXME: use better geometry.
+  for(int i=0;i<ndig;i++) {
+    ptr= l.get<std::vector<short>>(i);
+    
+  }*/
 }
 
 void RecordComposer::compose()
@@ -234,6 +205,7 @@ void RecordComposer::compose()
 
   // parse options.
   int doCalWires = 0;
+  int doRaw = 1;
   if( std::string::npos != fOptions.find("_WIRES_")) doCalWires = 1;
 
   // Set branches to read here.
@@ -264,6 +236,7 @@ void RecordComposer::compose()
   composeHits();
   
   if(doCalWires) composeWires();
+  if(doRaw) composeRaw();
   
   
   

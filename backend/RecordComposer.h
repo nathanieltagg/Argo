@@ -17,6 +17,7 @@ public:
   void  composeHeaderData();
   void  composeHits();
   void  composeWires();
+  void  composeRaw();
   
   
   
