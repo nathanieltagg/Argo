@@ -1,0 +1,5 @@
+The .htaccess file (which you create by copying dot.htaccess) will redirect all image requests to
+the read.cgi file. This in turn serves up the data, then deletes the file.
+
+TODO: have the read.cgi file clean up very old files that may have gone unrequested.
+TODO: serve more than one type of file (PNG)
