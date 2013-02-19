@@ -1,17 +1,23 @@
 #!/usr/bin/perl -w
-use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody end_tbody *div/;
-use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
+use CGI::Pretty;
+# use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
+use Data::Dumper;
 
-$filename = param('file');
+open STDERR, ">>", "read.log";
+
+my $query = new CGI;
+# print STDERR $query->Dump;
+
+
+$filename = $query->param('filename');
 $filename=~s/\//___/g;
 
-open (LOG,">>","read.log");
-print LOG "Serving $filename\n";
+print STDERR "Serving $filename\n";
 #escape all slashes so user can't muck up my filesystem.
 if(-r $filename) {
   my $length = (stat($filename)) [10];
   my $type = 'image/png';
-  print CGI::header({type=>$type,
+  print $query->header({type=>$type,
                      expires=>'+1m',
                      content_length=>$length});
   binmode STDOUT;
@@ -20,5 +26,5 @@ if(-r $filename) {
   while(read(FH,$buff,20240)) { print $buff; }
   close(FH);
   unlink $filename;       
-  print LOG "Deleted $filename\n";
+  print STDERR "Deleted $filename\n";
 }
