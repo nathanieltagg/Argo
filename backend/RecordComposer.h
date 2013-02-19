@@ -10,9 +10,8 @@ class TTree;
 
 class RecordComposer {
 public:
-  RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options):
-    fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree) {};
-    
+  RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options);
+  ~RecordComposer();
   void compose();
   void  composeHeaderData();
   void  composeHits();
@@ -26,7 +25,6 @@ public:
   Long64_t fEntry;
   std::string fOptions;
   TreeReader ftr;
-  
   static std::string sfFileStoragePath;
   static std::string sfUrlToFileStorage;
 };
