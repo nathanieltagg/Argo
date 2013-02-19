@@ -29,12 +29,26 @@
 #include "JsonElement.h"
 #include "TreeReader.h"
 #include "TreeElementLooter.h"
+#include "ColorMap.h"
 #include "MakePng.h"
 
 using namespace std;
 
 std::string RecordComposer::sfFileStoragePath = "../datacache/";
 std::string RecordComposer::sfUrlToFileStorage = "datacache/";
+
+
+
+
+RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
+  : fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree)
+{
+  
+};
+  
+RecordComposer::~RecordComposer()
+{
+}
 
 static void hsvToRgb(unsigned char* out, float h, float s, float v){
     float r, g, b;
@@ -120,10 +134,13 @@ void RecordComposer::composeWires()
   
   
   size_t width = ptr->size();
-  std::vector<unsigned char> imagedata(width*3);
   // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-  // MakePng png(width,nwires,MakePng::gray,"wires");
   MakePng png(width,nwires,MakePng::rgb,"wires");
+  MakePng encoded(width,nwires,MakePng::rgb,"wires");
+  ColorMap colormap;
+  
+  std::vector<unsigned char> imagedata(width*3);
+  std::vector<unsigned char> encodeddata(width*3);
   
   JsonArray arr;
   for(long i=0;i<nwires;i++) {
@@ -148,10 +165,47 @@ void RecordComposer::composeWires()
       // if(o>255) o=255;
       // unsigned char c = (unsigned char)(floor(o));
       // imagedata[k]=c;
-      
+
+      /*
       float adc = (*ptr)[k];
-      float h = adc/1000.+0.5;
-      hsvToRgb(&imagedata[k*3],h,1,1);
+      int iadc = (int)adc;
+      // Scale up so it's an absolute number.
+      int aadc = iacdc 0x8000;
+      if(aadc<0) aadc = 0;
+      if(aadc>0xFFFF) aadc = 0xFFFF;
+      int high = aadc >> 8;
+      int low  = aadc & 0xFF;
+
+      int mid = iadc >> 3; + 0x80;  // Lose factor of 8 in resolution, factor of 8(?) in dynamic range as a tradeoff
+      //Other way to do it: make a lookup table for true adc->mid and inverse lookup table for the client.
+      if(mid > 0xFF) mid = 0xFF;
+      if(mid < 0   ) mid = 0;
+      */
+      
+      /*
+      float adc = (*ptr)[k];
+      int iadc = (int) adc;
+      int aadc = abs(iadc);
+      if (aadc>0xFFFF) aadc = 0xFFFF; // Shouldn't happen too often
+      int low = aadc &0xFF;
+      int high = (aadc >> 8)&0xFF;
+      imagedata[k*3] = 0xFF-(unsigned char)low;
+      imagedata[k*3+1] = 0xFF-(unsigned char)high;
+      imagedata[k*3+2] =(iadc>0)?0xFF:0xFE;
+      */
+      
+      //Color map.
+      float adc = (*ptr)[k];
+      colormap.get(&imagedata[k*3],adc/4000.);
+      
+      // Save bitpacked data as image map.
+      int fadc = adc + float(0x8000);
+      int iadc = fadc;
+      encodeddata[k*3]   = 0xFF&(iadc>>8);
+      encodeddata[k*3+1] = iadc&0xFF;
+      encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
+      
+      //hsvToRgb(&imagedata[k*3],h,1,1);
       
       // signal += Form("%.2f,",k);
     }
@@ -159,44 +213,58 @@ void RecordComposer::composeWires()
     // signal += "]";
     // wire.add("signal",signal);
     png.AddRow(imagedata);
+    encoded.AddRow(encodeddata);
     
     // This works, but is WAAYYYYYY TOO SLOW
     //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
     arr.add(wire);
   }
   png.Finish();
+  encoded.Finish();
   fOutput.add("wires",arr);
 
   
   fOutput.add("wireimg_url",sfUrlToFileStorage+
                             png.writeToUniqueFile(sfFileStoragePath)
                             );
+  fOutput.add("wireimg_encoded_url",sfUrlToFileStorage+
+                            encoded.writeToUniqueFile(sfFileStoragePath)
+                            );
   
 }
 
 void RecordComposer::composeRaw()
 {
-  /*
+  
   JsonObject r;
   
   // Fixme: 
   // This probably changes depending upon simulation method. This should work for now.
   std::string rawdigit_obj_name = "raw::RawDigits_daq__GenieGen.obj";
-  
+  /*
   TLeaf* lf = fTree->GetLeaf(rawdigit_obj_name+".fChannel");
   int ndig = lf->GetLen();
   
   TreeElementLooter l(fTree,rawdigit_obj_name+".fADC");
   l.Setup();
   const std::vector<short> *ptr = l.get<std::vector<short>>(0);
-  int width = ptr->size();
   // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
+  int width = ptr->size();
+
+  size_t width = ptr->size();
+
+  MakePng png(width,nwires,MakePng::rgb,"wires");
+  std::vector<unsigned char> imagedata(width*3);
+   
   
-  // Seperate by views. FIXME: use better geometry.
   for(int i=0;i<ndig;i++) {
     ptr= l.get<std::vector<short>>(i);
-    
-  }*/
+    for(size_t k = 0; k<width; k++) {
+      short raw = (*ptr)[k];
+      raw += 0x8000;
+      raw >> 3;
+  }
+  */
 }
 
 void RecordComposer::compose()
