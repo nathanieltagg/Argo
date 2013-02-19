@@ -31,6 +31,16 @@ function WireImg( element, options )
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
   
+  this.swath = {};
+  switch(this.view) {
+    case 0: this.swath={y: 4797, h: 8254-4797}; break;
+    case 1: this.swath={y: 2399, h: 4798-2399}; break;
+    case 2: this.swath={y: 0,    h: 2398-0}; break; 
+  }
+  console.log(this.view,this.swath);
+  this.min_u = this.swath.y;
+  this.max_u = this.swath.y+this.swath.h;
+  
   var self = this;
   this.fMousing = false;
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
@@ -56,7 +66,7 @@ WireImg.prototype.NewRecord = function()
   // var myimg = $('img',this.element)[0];
   // $(myimg).attr("style","width:100%; height: auto;");
 
-  this.wireimg.src = gRecord.wireimg_url;
+  this.wireimg.src = gRecord[this.imgtag];
   // Callback when the png is actually there...
   var self = this;
   this.wireimg.onload = function() {
@@ -105,17 +115,12 @@ WireImg.prototype.Draw = function()
   
 }
 
+gDoThisOnce = false;
+
 WireImg.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
 {
   if(!this.wireimg) return;
   // Called when image is loaded.
-  var swath = {};
-  switch(this.view) {
-    case 0: swath={y: 4797, h: 8254-4797}; break;
-    case 1: swath={y: 2399, h: 4798-2399}; break;
-    case 2: swath={y: 0,    h: 2398-0}; break; 
-  }
-  console.log(this.view,swath);
   
   // rows:
   // 4798 to 8253 is view 0 (U) (plane 2)  total 3456 -> Collection plane
@@ -123,43 +128,61 @@ WireImg.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   // 0 to 2398 is view 2 (W)    (plane 0) total 2398 ->Induction plane.q
   // copy these subsets to 3 views.
 
+  /*
+  if(!gDoThisOnce) {
+    gDoThisOnce = true;
   // console.log(this.wireimg);
-  // this.bigCanvas = document.createElement("canvas");
-  // console.log(this.bigCanvas);
-  // this.bigCanvas.width  = this.wireimg.width;
-  // this.bigCanvas.height = this.wireimg.height;
-  // var ctx = this.bigCanvas.getContext("2d");
-  // ctx.drawImage(this.wireimg,0,0);
+  this.bigCanvas = document.createElement("canvas");
+  console.log(this.bigCanvas);
+  this.bigCanvas.width  = this.wireimg.width;
+  this.bigCanvas.height = this.wireimg.height;
+  var ctx = this.bigCanvas.getContext("2d");
+  ctx.drawImage(this.wireimg,0,0);
 
-  // this.ctx.width = this.wireimg.width;
-  // this.ctx.height = swath.h;
 
   // Let's look at some raw data.
-  // var imgdata = ctx.getImageData(0,0,this.bigCanvas.width,this.bigCanvas.height);
-  // for(var x = 0; x<this.bigCanvas.width; x++ ){
-  //   for(var y = 0; y<this.bigCanvas.height; y++ ){
-  //     var i = (x+y*this.bigCanvas.width) * 4;
-  //     if(i<10) console.log(imgdata.data[i],imgdata.data[i+1],imgdata.data[i+2],imgdata.data[i+3]);
-  //   }
-  // }
+  this.ghRed = new Histogram(255,0,255);
+  this.ghGrn = new Histogram(255,0,255);
+  this.ghBlu = new Histogram(255,0,255);
+
+  
+  // Get the data row-by-row
+  for(var y = 0; y<this.bigCanvas.height; y+=100 ){
+    console.log("Doing row y=",y);
+    var imgdata = ctx.getImageData(0,y,this.bigCanvas.width,1);
+    for(var x = 0; x<this.bigCanvas.width; x++ ){
+      var i = (x) * 4;
+      // console.log(imgdata.data[i]);
+      this.ghRed.Fill(imgdata.data[i],1.0);
+      this.ghGrn.Fill(imgdata.data[i+1],1.0);
+      this.ghBlu.Fill(imgdata.data[i+2],1.0);
+    }
+  }
+  console.log(this.ghRed.Dump());
+  console.log(this.ghRed,this.ghGrn,this.ghBlu);
+  }
+  */
   
   this.Clear();
 
+  this.min_v = 0;
+  this.max_v = this.wireimg.width;
   this.ctx.save();
   this.ctx.translate(this.GetX(this.min_u),this.GetY(this.min_v));
   this.ctx.rotate(-Math.PI/2);
   
+  
   this.ctx.drawImage(this.wireimg
-    , 0, swath.y
-    , this.wireimg.width, swath.h // Source width, height
+    , 0, this.swath.y
+    , this.wireimg.width, this.swath.h // Source width, height
     ,0,0
     // ,this.GetX(this.min_u), this.GetY(this.max_v) // destination coord, upper left
       
      ,this.span_y //,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
      ,this.span_x //,this.GetX(this.max_u)-this.GetX(this.min_u)// width and height
     );
-  console.log(      0, swath.y // Source x,y
-      ,this.wireimg.width,swath.h // Source width, height
+  console.log(      0, this.swath.y // Source x,y
+      ,this.wireimg.width,this.swath.h // Source width, height
       ,this.GetX(this.min_u), this.GetY(this.max_v) // destination coord, upper left
              ,this.GetX(this.max_u)-this.GetX(this.min_u)
        ,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
@@ -174,12 +197,21 @@ WireImg.prototype.DoMouse = function(ev)
 {
   if(ev.type === 'mouseout' || ev.type == 'touchend') {
     this.fMousing = false;
-    // TODO: clear hovered objects
+    
+    gHoverWire = null;
+
   } else {
     this.fMousing = true;
     var offset = getAbsolutePosition(this.element);
     this.fMouseX = ev.pageX - offset.x;
     this.fMouseY = ev.pageY - offset.y; 
+    this.fMouseU = this.GetU(this.fMouseX);
+    this.fMouseV = this.GetV(this.fMouseY);
+    gHoverWire = {channel:this.fMouseU};
+    gHoverWireSample = this.fMouseV;
+    
   }
+  gStateMachine.Trigger('hoverWireChange');
   this.Draw();
+  
 }

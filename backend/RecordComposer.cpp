@@ -34,8 +34,8 @@
 
 using namespace std;
 
-std::string RecordComposer::sfFileStoragePath = "../datacache/";
-std::string RecordComposer::sfUrlToFileStorage = "datacache/";
+std::string RecordComposer::sfFileStoragePath = "../datacache";
+std::string RecordComposer::sfUrlToFileStorage = "datacache";
 
 
 
@@ -241,30 +241,44 @@ void RecordComposer::composeRaw()
   // Fixme: 
   // This probably changes depending upon simulation method. This should work for now.
   std::string rawdigit_obj_name = "raw::RawDigits_daq__GenieGen.obj";
-  /*
-  TLeaf* lf = fTree->GetLeaf(rawdigit_obj_name+".fChannel");
+  TLeaf* lf = fTree->GetLeaf((rawdigit_obj_name+".fChannel").c_str());
   int ndig = lf->GetLen();
+  ColorMap colormap;
   
   TreeElementLooter l(fTree,rawdigit_obj_name+".fADC");
   l.Setup();
   const std::vector<short> *ptr = l.get<std::vector<short>>(0);
   // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
-  int width = ptr->size();
-
   size_t width = ptr->size();
 
-  MakePng png(width,nwires,MakePng::rgb,"wires");
+  MakePng png(width,ndig,MakePng::rgb,"wires");
+  MakePng epng(width,ndig,MakePng::rgb,"wires");
   std::vector<unsigned char> imagedata(width*3);
+  std::vector<unsigned char> encodeddata(width*3);
    
   
   for(int i=0;i<ndig;i++) {
     ptr= l.get<std::vector<short>>(i);
     for(size_t k = 0; k<width; k++) {
       short raw = (*ptr)[k];
-      raw += 0x8000;
-      raw >> 3;
+      colormap.get(&imagedata[k*3],float(raw)/4000.);
+      
+      // Save bitpacked data as image map.
+      int iadc = raw + 0x8000;
+      encodeddata[k*3]   = 0xFF&(iadc>>8);
+      encodeddata[k*3+1] = iadc&0xFF;
+      encodeddata[k*3+2] = 0;
+    }
+    png.AddRow(imagedata);
+    epng.AddRow(encodeddata);
   }
-  */
+  fOutput.add("raw_wire_img_url",sfUrlToFileStorage+
+                            png.writeToUniqueFile(sfFileStoragePath)
+                            );
+  fOutput.add("raw_wire_encoded_img_url",sfUrlToFileStorage+
+                            epng.writeToUniqueFile(sfFileStoragePath)
+                            );
+  
 }
 
 void RecordComposer::compose()
@@ -278,7 +292,7 @@ void RecordComposer::compose()
 
   // Set branches to read here.
   fTree->SetBranchStatus("*",1);  // By default, read all.
-  fTree->SetBranchStatus("raw::RawDigits*",0); // Don't know how to read these yet.
+  fTree->SetBranchStatus("raw::RawDigits*",1); // Don't know how to read these yet.
   fTree->SetBranchStatus("recob::Wires_caldata",doCalWires);
 
   //

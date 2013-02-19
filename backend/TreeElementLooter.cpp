@@ -68,4 +68,5 @@ TreeElementLooter::~TreeElementLooter(){
 // Make sure templates are instantiated
 using std::vector;
 template const vector<float>* TreeElementLooter::get< vector<float> >(UInt_t row);
+template const vector<short>* TreeElementLooter::get< vector<short> >(UInt_t row);
 
