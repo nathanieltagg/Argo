@@ -59,6 +59,7 @@
 
 <script type="text/javascript" src="libs/HitMap.js"></script> 
 <script type="text/javascript" src="libs/WireImg.js"></script> 
+<script type="text/javascript" src="libs/WireInfo.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
