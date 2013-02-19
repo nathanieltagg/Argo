@@ -1,0 +1,11 @@
+Options +ExecCGI -Indexes +Includes
+AddHandler cgi-script .cgi
+AddHandler server-parsed .html
+AddHandler server-parsed .inc
+
+RewriteEngine On
+RewriteBase /~tagg/Arachne/roundup
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule (.*)$ read.cgi?$1
