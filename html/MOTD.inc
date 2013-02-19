@@ -9,6 +9,10 @@
   <ul>
     <li> Hit backend </li>
     <li> Hit basic frontend, needs zoom, color scale, selection, etc </li>
-    <li> Calibrated wire data backend via png </li>
+    <li> Calibrated wire data viewable imagevia png </li>
+    <li> Calibrated wire data, encoded values via png </li>
+    <li> Raw wire data, both encoded and human-viewable </li>
+    <li> Data cleanup on backend </li>
+    <li> Prototype zoom-on-wire waveform via histogram - proof of principle works! </li>
   </ul>
 </div> 
