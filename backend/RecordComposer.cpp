@@ -42,8 +42,12 @@ std::string RecordComposer::sfUrlToFileStorage = "datacache";
 
 RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
   : fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree)
+    ,fPalette(256*3) 
 {
-  
+  unsigned char vv[] =   { 
+    #include "palette.inc" 
+  };
+  fPalette.assign(&vv[0], &vv[0]+sizeof(vv));
 };
   
 RecordComposer::~RecordComposer()
@@ -135,11 +139,11 @@ void RecordComposer::composeWires()
   
   size_t width = ptr->size();
   // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-  MakePng png(width,nwires,MakePng::rgb,"wires");
-  MakePng encoded(width,nwires,MakePng::rgb,"wires");
+  MakePng png(width,nwires,MakePng::palette,fPalette);
+  MakePng encoded(width,nwires,MakePng::rgb);
   ColorMap colormap;
   
-  std::vector<unsigned char> imagedata(width*3);
+  std::vector<unsigned char> imagedata(width);
   std::vector<unsigned char> encodeddata(width*3);
   
   JsonArray arr;
@@ -196,7 +200,8 @@ void RecordComposer::composeWires()
       
       //Color map.
       float adc = (*ptr)[k];
-      colormap.get(&imagedata[k*3],adc/4000.);
+      // colormap.get(&imagedata[k*3],adc/4000.);
+      imagedata[k] = tanscale(adc);
       
       // Save bitpacked data as image map.
       int fadc = adc + float(0x8000);
@@ -251,9 +256,9 @@ void RecordComposer::composeRaw()
   // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
   size_t width = ptr->size();
 
-  MakePng png(width,ndig,MakePng::rgb,"wires");
-  MakePng epng(width,ndig,MakePng::rgb,"wires");
-  std::vector<unsigned char> imagedata(width*3);
+  MakePng png(width,ndig,MakePng::palette,fPalette);
+  MakePng epng(width,ndig,MakePng::rgb);
+  std::vector<unsigned char> imagedata(width);
   std::vector<unsigned char> encodeddata(width*3);
    
   
@@ -261,7 +266,8 @@ void RecordComposer::composeRaw()
     ptr= l.get<std::vector<short>>(i);
     for(size_t k = 0; k<width; k++) {
       short raw = (*ptr)[k];
-      colormap.get(&imagedata[k*3],float(raw)/4000.);
+      // colormap.get(&imagedata[k*3],float(raw)/4000.);
+      imagedata[k] = tanscale(raw);
       
       // Save bitpacked data as image map.
       int iadc = raw + 0x8000;
