@@ -38,6 +38,18 @@ std::string RecordComposer::sfFileStoragePath = "../datacache";
 std::string RecordComposer::sfUrlToFileStorage = "datacache";
 
 
+inline unsigned char tanscale(float adc) 
+{
+  return (unsigned char)(atan(adc/50.)/M_PI*256.) + 127;  
+}
+
+inline float inv_tanscale(unsigned char y) 
+{
+  return tan((y-127)*M_PI/256.)*50.;
+}
+ 
+
+
 
 
 RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
@@ -264,6 +276,7 @@ void RecordComposer::composeRaw()
   
   for(int i=0;i<ndig;i++) {
     ptr= l.get<std::vector<short>>(i);
+    std::vector<short>::iterator it;
     for(size_t k = 0; k<width; k++) {
       short raw = (*ptr)[k];
       // colormap.get(&imagedata[k*3],float(raw)/4000.);

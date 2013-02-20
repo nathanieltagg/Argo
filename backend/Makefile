@@ -8,8 +8,8 @@ CPP = g++44 --std=c++0x
 LD = g++44
 
 ifeq ($(UNAME),Darwin)
-  CPP = clang++ -std=c++11 -g
-  LD = clang++
+  CPP = clang++ -std=c++11 -g -O
+  LD = clang++ -O
 endif
 
 PATH+=:${ROOTSYS}/bin
