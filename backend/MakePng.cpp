@@ -81,6 +81,14 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   // Configure for encoding speed:
   png_set_compression_level(png_ptr, 1);
   
+  // Try a simple filtering
+  // filters = PNG_FILTER_NONE | PNG_FILTER_SUB
+  //               PNG_FILTER_UP | PNG_FILTER_AVE |
+  //               PNG_FILTER_PAETH | PNG_ALL_FILTERS;
+
+
+  // Surprisingly, this turns out to be faster than the default, and generates slightly _smaller_ images.
+  png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_NONE);
 
   // png_text title_text;
   // title_text.compression = PNG_TEXT_COMPRESSION_NONE;
