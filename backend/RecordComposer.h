@@ -6,6 +6,7 @@
 #include "JsonElement.h"
 #include "TreeReader.h"
 #include "TObject.h"
+#include <math.h>
 class TTree;
 
 class RecordComposer {
@@ -18,6 +19,15 @@ public:
   void  composeWires();
   void  composeRaw();
   
+  int tanscale(float adc) 
+  {
+    return int(atan(adc/50.)/M_PI*256.) + 127;  
+  }
+
+  float inv_tanscale(int y) 
+  {
+    return tan((y-127)*M_PI/256)*50.;
+  }
   
   
   JsonObject& fOutput; // Top-level output object
@@ -27,6 +37,8 @@ public:
   TreeReader ftr;
   static std::string sfFileStoragePath;
   static std::string sfUrlToFileStorage;
+  
+  std::vector<unsigned char> fPalette;
 };
 
 

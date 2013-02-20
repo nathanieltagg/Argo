@@ -27,7 +27,9 @@ void my_user_write_data(
  
  
   
-MakePng::MakePng(int width, int height, Color_Mode_t c, const std::string title)
+MakePng::MakePng(int width, int height, Color_Mode_t c, 
+                  const std::vector<unsigned char>& inPalette,
+                  const std::string title)
   : width(width)
     , height(height)
     , colormode(c)
@@ -61,7 +63,9 @@ MakePng::MakePng(int width, int height, Color_Mode_t c, const std::string title)
     case gray: color_type = PNG_COLOR_TYPE_GRAY; break;
     case rgb : color_type = PNG_COLOR_TYPE_RGB; break;
     case rgba: color_type = PNG_COLOR_TYPE_RGBA; break;
+    case palette: color_type = PNG_COLOR_TYPE_PALETTE; break;
   }
+  
   /* Set image attributes. */
   png_set_IHDR(png_ptr,
                info_ptr,
@@ -71,25 +75,39 @@ MakePng::MakePng(int width, int height, Color_Mode_t c, const std::string title)
                color_type,
                PNG_INTERLACE_NONE,
                PNG_COMPRESSION_TYPE_DEFAULT,
-               PNG_FILTER_TYPE_DEFAULT);
+               PNG_FILTER_TYPE_DEFAULT
+  );
+
+  // Configure for encoding speed:
+  png_set_compression_level(png_ptr, 1);
+  
 
   // png_text title_text;
   // title_text.compression = PNG_TEXT_COMPRESSION_NONE;
   // title_text.key =  Form("title");
   // title_text.text = Form(title.c_str());
   // png_set_text(png_ptr, info_ptr, &title_text, 1);
+   
+  if(colormode == palette)
+    png_set_PLTE(png_ptr, info_ptr, (const png_color_struct*)(&inPalette[0]), inPalette.size()/3 );  
 
 
   png_write_info(png_ptr, info_ptr);
 
   /* Initialize rows of PNG. */
   int bytes_per_pixel = (int)colormode;
+  if(colormode == palette) bytes_per_pixel = 1;
   if(bytes_per_pixel<1) bytes_per_pixel=1;
   bytes_per_row = width * bytes_per_pixel * sizeof(png_byte); //
   // Allocate memory for one row (3 bytes per pixel - RGB)
   // rowdata = (png_bytep) malloc(bytes_per_row);
   rows_done = 0;
 }
+
+void MakePng::SetPalette(const std::vector<unsigned char>& data)
+{
+}
+
 
 void MakePng::AddRow(const std::vector<unsigned char>& data)
 {

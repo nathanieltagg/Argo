@@ -306,17 +306,6 @@ void hsvToRgbFloat(float& r, float& g, float& b, float h, float s, float v){
     b*=255;
 }
 
-int tanscale(float adc) 
-{
-  return int(atan(adc/50.)/M_PI*256.) + 127;  
-}
-
-float inv_tanscale(int y) 
-{
-  return tan((y-127)*M_PI/256)*50.;
-}
-
-
 int main(int argc, char **argv)
 {
 
@@ -326,46 +315,34 @@ int main(int argc, char **argv)
   // cout << "<html><head></head><body><img alt='Embedded Image' src='" << endl;
   // Test PNG:
   {
-    // Create a custom palette.
-    LookupTable t;
-    
-    std::vector<unsigned char> palette(256*3);
-    for(int i=0;i<256;i++) 
-    {
-      // here, i represents the palette lookup code
-      // Convert to a raw ADC value using the inverse lookup:
-      float adc = inv_tanscale(i);
-      float x = -atan(adc/300.)/3.70;//3.14159;
-      x+=0.15;
-      float h,s,v;
-      float xx = fmod(fmod(x,1.0)+1.0,1.0);
-      h = xx;
-      s = 0.9;
-      v = 1;
-      // t.hsl(xx,h,s,v);
-      if(fabs(adc)<30) {s *= (fabs(adc/30.));};
-      // if(fabs(adc)>95 && fabs(adc)<100) {v=0;}
-      if(fabs(adc)>1000) {v=0.8;}
-      float r,g,b;
-      hsvToRgbFloat(r,g,b,h,s,v);
-      palette[i*3] = (int)r;
-      palette[i*3+1] = (int)g;
-      palette[i*3+2] = (int)b;
-      cout  << int(r) << "," << int(g) << "," << int(b) << "," << " // " << i << endl;
-    }
-    
-    // Test it against a wide range of ADC values.
     int width = 4000;
-    MakePng png(width,10,MakePng::palette,palette);
-    png.SetPalette(palette);
-    
-    vector<unsigned char> vec(width);
+    MakePng png(width,10,MakePng::rgb);
+    LookupTable t;
+    vector<unsigned char> vec(width*3);
     for(int j=0;j<10;j++){
       for(int i=0;i<width;i++) {
         float adc = (i-(float)width/2.)*8000./float(width);
+        float x = -atan(adc/300.)/3.70;//3.14159;
+        x+=0.15;
+        float h,s,v;
+        float xx = fmod(fmod(x,1.0)+1.0,1.0);
+        h = xx;
+        s = 0.9;
+        v = 1;
+        // t.hsl(xx,h,s,v);
+        if(fabs(adc)<30) {s *= (0.1+fabs(adc/30.)*0.9);};
+        if(fabs(adc)>95 && fabs(adc)<100) {v=0;}
+        float r,g,b;
+        hsvToRgbFloat(r,g,b,h,s,v);
+        cout.precision(2);
+        cout <<  std::fixed;
+        if(j==4 && (i%10==0)) cout  << r <<" , " << g << " , " << b << endl;
+        hsvToRgb(&vec[i*3],h,s,v);
+        // if(j==4 && (i%5==0)) cout << i << " "<< adc << " " << x << " " << fmod(x,1.0) << " hsl=(" << h << " "<< s << " " << v << ") "<< (int)vec[i*3] << " " << (int)vec[i*3+1] << " " << (int)vec[i*3+2] << endl;
+        // if(j==4 && (i%3==0)) cout  << (int)vec[i*3] << " " << (int)vec[i*3+1] << " " << (int)vec[i*3+2] << endl;
         
-        int val = tanscale(adc);
-        vec[i] = val;
+        // Black marker lines.
+        if(j<4 || j > 5) {vec[i*3]=255; vec[i*3+1]=255; vec[i*3+2]=255; }
       }
       png.AddRow(vec);
     }
