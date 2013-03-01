@@ -135,7 +135,7 @@ void MakePng::AddRow(const std::vector<unsigned char>& data)
 
 void MakePng::Finish()
 {
-  png_write_end(png_ptr, NULL);
+  png_write_end(png_ptr, info_ptr);
   if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
   if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
   // if (rowdata != NULL) free(rowdata);  

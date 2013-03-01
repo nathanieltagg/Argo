@@ -16,7 +16,7 @@ public:
   void compose();
   void  composeHeaderData();
   void  composeHits();
-  void  composeWires();
+  void  composeCal();
   void  composeRaw();
   
   int tanscale(float adc) 

@@ -11,6 +11,8 @@
 #include <TLeaf.h>
 #include <TFile.h>
 #include <TROOT.h>
+#include <TH1F.h>
+#include <TH1D.h>
 #include "TBranchElement.h"
 #include "TStreamerInfo.h"
 
@@ -31,11 +33,48 @@
 #include "TreeElementLooter.h"
 #include "ColorMap.h"
 #include "MakePng.h"
+#include <stdlib.h>
 
 using namespace std;
 
 std::string RecordComposer::sfFileStoragePath = "../datacache";
 std::string RecordComposer::sfUrlToFileStorage = "datacache";
+
+void BuildThumbnail(const std::string& pathname, const std::string& thumbname)
+{
+  // Compose a thumbnail image using external application. 
+  // Fork a background process for more speed.
+  std::string cmd = "PATH=$PATH:/usr/local/bin convert ";
+  cmd += pathname;
+  cmd += " -sample 20% ";
+  cmd += thumbname;
+  cmd += " &";
+  std::cerr << "BuildThumbnail: " << cmd << std::endl;
+  system(cmd.c_str());
+}
+
+
+JsonObject TH1ToHistogram( TH1* hist )
+{
+  JsonObject h;
+  if(!hist) return h;
+  h.add("n",hist->GetNbinsX());
+  h.add("min",hist->GetXaxis()->GetXmin());
+  h.add("max",hist->GetXaxis()->GetXmax());
+  h.add("underflow",hist->GetBinContent(0));
+  h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
+  double tot = hist->GetSumOfWeights();
+  h.add("total",tot);
+  h.add("sum_x",tot*hist->GetMean());
+  h.add("max_content",hist->GetMaximum());
+  h.add("min_content",hist->GetMinimum());
+  JsonArray data;
+  for(int i=1; i <= hist->GetNbinsX();i++) {
+    data.add(hist->GetBinContent(i));
+  }
+  h.add("data",data);
+  return h;
+}
 
 
 inline unsigned char tanscale(float adc) 
@@ -110,6 +149,11 @@ void RecordComposer::composeHeaderData()
   header.add("isRealData",ftr.jsonF("EventAuxiliary.isRealData_"));
   header.add("experimentType",ftr.jsonF("EventAuxiliary.experimentType_"));
   
+  // Add my own things. 
+  // FIXME: this should come from the event data, not be hardcoded, but this will have to do for the moment.
+  header.add("TDCStart",0);
+  header.add("TDCEnd",3200);
+  
   fOutput.add("header",header);
 }
 
@@ -138,7 +182,7 @@ void RecordComposer::composeHits()
 
 
 
-void RecordComposer::composeWires() 
+void RecordComposer::composeCal() 
 {
   JsonObject r;
   TLeaf* lf = fTree->GetLeaf("recob::Wires_caldata__Reco.obj.fView");
@@ -157,14 +201,16 @@ void RecordComposer::composeWires()
   
   std::vector<unsigned char> imagedata(width);
   std::vector<unsigned char> encodeddata(width*3);
+
+  TH1D timeProfile("timeProfile","timeProfile",width,0,width);
   
-  JsonArray arr;
+  // JsonArray arr;
   for(long i=0;i<nwires;i++) {
     // std::cout << "Doing wire " << i << std::endl;
-    JsonObject wire;
-    wire.add("view",ftr.getJson("recob::Wires_caldata__Reco.obj.fView",i));
-    wire.add("signalType",ftr.getJson("recob::Wires_caldata__Reco.obj.fSignalType",i));
-    wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
+    // JsonObject wire;
+    // wire.add("view",ftr.getJson("recob::Wires_caldata__Reco.obj.fView",i));
+    // wire.add("signalType",ftr.getJson("recob::Wires_caldata__Reco.obj.fSignalType",i));
+    // wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
 
     // Get signal pointer.  This is ROOT magic crap I dont' understand, but it works. 
     // pointer = (char*)cont->At(i);
@@ -175,43 +221,9 @@ void RecordComposer::composeWires()
     float max = 0;
     float min = 1;
     for(size_t k = 0; k<width; k++) {
-      // convert to 8-bit value.
-      // float o = 127. + ((*ptr)[k])*0.5; // 100 ADC -> grayscale of 177. Max at 255 is ADC=256, which covers a fair range. (About 2 MIP)
-      // if(o<0) o=0;
-      // if(o>255) o=255;
-      // unsigned char c = (unsigned char)(floor(o));
-      // imagedata[k]=c;
-
-      /*
+      // Color map.
       float adc = (*ptr)[k];
-      int iadc = (int)adc;
-      // Scale up so it's an absolute number.
-      int aadc = iacdc 0x8000;
-      if(aadc<0) aadc = 0;
-      if(aadc>0xFFFF) aadc = 0xFFFF;
-      int high = aadc >> 8;
-      int low  = aadc & 0xFF;
-
-      int mid = iadc >> 3; + 0x80;  // Lose factor of 8 in resolution, factor of 8(?) in dynamic range as a tradeoff
-      //Other way to do it: make a lookup table for true adc->mid and inverse lookup table for the client.
-      if(mid > 0xFF) mid = 0xFF;
-      if(mid < 0   ) mid = 0;
-      */
-      
-      /*
-      float adc = (*ptr)[k];
-      int iadc = (int) adc;
-      int aadc = abs(iadc);
-      if (aadc>0xFFFF) aadc = 0xFFFF; // Shouldn't happen too often
-      int low = aadc &0xFF;
-      int high = (aadc >> 8)&0xFF;
-      imagedata[k*3] = 0xFF-(unsigned char)low;
-      imagedata[k*3+1] = 0xFF-(unsigned char)high;
-      imagedata[k*3+2] =(iadc>0)?0xFF:0xFE;
-      */
-      
-      //Color map.
-      float adc = (*ptr)[k];
+      timeProfile.Fill(k,adc);
       // colormap.get(&imagedata[k*3],adc/4000.);
       imagedata[k] = tanscale(adc);
       
@@ -221,33 +233,29 @@ void RecordComposer::composeWires()
       encodeddata[k*3]   = 0xFF&(iadc>>8);
       encodeddata[k*3+1] = iadc&0xFF;
       encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
-      
-      //hsvToRgb(&imagedata[k*3],h,1,1);
-      
-      // signal += Form("%.2f,",k);
     }
-    // if (signal.size ()>0)  signal.erase(signal.size()-1,1); // Remove trailing comma.
-    // signal += "]";
-    // wire.add("signal",signal);
     png.AddRow(imagedata);
     encoded.AddRow(encodeddata);
     
     // This works, but is WAAYYYYYY TOO SLOW
     //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
-    arr.add(wire);
+    // arr.add(wire);
   }
   png.Finish();
   encoded.Finish();
-  fOutput.add("wires",arr);
+  // r.add("wires",arr);
+  // Create histogram:
+  r.add("timeHist",TH1ToHistogram(&timeProfile));
 
-  
-  fOutput.add("wireimg_url",sfUrlToFileStorage+
-                            png.writeToUniqueFile(sfFileStoragePath)
-                            );
-  fOutput.add("wireimg_encoded_url",sfUrlToFileStorage+
+  std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
+  std::string wireimg_thumb = wireimg+".thumb.png";
+  BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
+  r.add("wireimg_url",sfUrlToFileStorage+wireimg);
+  r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
+  r.add("wireimg_encoded_url",sfUrlToFileStorage+
                             encoded.writeToUniqueFile(sfFileStoragePath)
                             );
-  
+  fOutput.add("cal",r);
 }
 
 void RecordComposer::composeRaw()
@@ -291,13 +299,18 @@ void RecordComposer::composeRaw()
     png.AddRow(imagedata);
     epng.AddRow(encodeddata);
   }
-  fOutput.add("raw_wire_img_url",sfUrlToFileStorage+
-                            png.writeToUniqueFile(sfFileStoragePath)
-                            );
-  fOutput.add("raw_wire_encoded_img_url",sfUrlToFileStorage+
+  png.Finish();
+  epng.Finish();
+  
+  std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
+  std::string wireimg_thumb = wireimg+".thumb.png";
+  BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
+  r.add("wireimg_url",sfUrlToFileStorage+wireimg);
+  r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
+  r.add("wireimg_encoded_url",sfUrlToFileStorage+
                             epng.writeToUniqueFile(sfFileStoragePath)
                             );
-  
+  fOutput.add("raw",r);
 }
 
 void RecordComposer::compose()
@@ -305,14 +318,14 @@ void RecordComposer::compose()
   fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
 
   // parse options.
-  int doCalWires = 0;
+  int doCal = 1;
   int doRaw = 1;
-  if( std::string::npos != fOptions.find("_WIRES_")) doCalWires = 1;
+  if( std::string::npos != fOptions.find("_WIRES_")) doCal = 1;
 
   // Set branches to read here.
   fTree->SetBranchStatus("*",1);  // By default, read all.
-  fTree->SetBranchStatus("raw::RawDigits*",1); // Don't know how to read these yet.
-  fTree->SetBranchStatus("recob::Wires_caldata",doCalWires);
+  fTree->SetBranchStatus("raw::RawDigits*",doRaw); // Don't know how to read these yet.
+  fTree->SetBranchStatus("recob::Wires_caldata",doCal);
 
   //
   // Load the tree element.
@@ -336,7 +349,7 @@ void RecordComposer::compose()
   composeHeaderData();
   composeHits();
   
-  if(doCalWires) composeWires();
+  if(doCal) composeCal();
   if(doRaw) composeRaw();
   
   
