@@ -103,6 +103,12 @@ body {
 .pad canvas{
   cursor: crosshair;
   margin: 0 0 0 0;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
 }
 
 div.pad {
@@ -480,3 +486,9 @@ tr.rowstripe
 {
   background-color: #FBE9CA;
 }
+
+/*cursors*/
+.cursor-nwse-resize .cursor-nwse-resize:active { cursor: nwse-resize; }
+.cursor-nesw-resize .cursor-nesw-resize:active { cursor: nesw-resize; }
+.cursor-ew-resize   .cursor-ew-resize:active   { cursor: ew-resize;   }
+.cursor-move        .cursor-move:active        { cursor: move;   }

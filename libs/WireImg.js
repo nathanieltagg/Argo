@@ -1,13 +1,12 @@
 // Subclass of Pad.
 WireImg.prototype = new Pad;           
-WireImg.prototype.constructor = HitMap;
 
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
   $('div.A-WireImg').each(function(){
     var o = new WireImg(this);
-    console.log("Creating WireImg ",o);
+    // console.log("Creating WireImg ",o);
   });  
 });
 
@@ -23,23 +22,18 @@ function WireImg( element, options )
   }
   
   var settings = {
-    margin_bottom : 10,
-    margin_top    : 10,
-    margin_right  : 10,
-    margin_left   : 10
+    margin_bottom : 40,
+    margin_top    : 5,
+    margin_right  : 5,
+    margin_left   : 40,
+    xlabel : "Wire",
+    ylabel : "TDC",
+    zooming: true
+    
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
   
-  this.swath = {};
-  switch(this.view) {
-    case 0: this.swath={y: 4797, h: 8254-4797}; break;
-    case 1: this.swath={y: 2399, h: 4798-2399}; break;
-    case 2: this.swath={y: 0,    h: 2398-0}; break; 
-  }
-  console.log(this.view,this.swath);
-  this.min_u = this.swath.y;
-  this.max_u = this.swath.y+this.swath.h;
   
   var self = this;
   this.fMousing = false;
@@ -54,6 +48,9 @@ function WireImg( element, options )
   $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.NewRecord(); });
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
+  gStateMachine.BindObj('TimeCutChange',this,"Draw");
+  if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
+  if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
 }
 
 
@@ -61,12 +58,14 @@ WireImg.prototype.NewRecord = function()
 {
   // ofscreen image.
   this.wireimg = new Image();
+  this.wireimg_thumb = new Image();
   
   // $(this.element).html("<img/>");
   // var myimg = $('img',this.element)[0];
   // $(myimg).attr("style","width:100%; height: auto;");
 
-  this.wireimg.src = gRecord[this.imgtag];
+  this.wireimg.src       = gRecord[this.obj].wireimg_url;
+  this.wireimg_thumb.src = gRecord[this.obj].wireimg_url_thumb;
   // Callback when the png is actually there...
   var self = this;
   this.wireimg.onload = function() {
@@ -75,7 +74,12 @@ WireImg.prototype.NewRecord = function()
   
 }
 
-WireImg.prototype.Draw = function()
+WireImg.prototype.DrawFast = function()
+{
+  this.Draw(true);
+}
+
+WireImg.prototype.Draw = function(fast)
 {
   if($(this.element).is(":hidden")) return;
 
@@ -106,88 +110,88 @@ WireImg.prototype.Draw = function()
     var vmax = this.GetV(this.fMouseY-mag_radius);
     var vmin = this.GetV(this.fMouseY+mag_radius);
     
-    this.DrawOne(umin,umax,vmin,vmax);
+    this.DrawOne(umin,umax,vmin,vmax,fast);
     this.ctx.restore();
   } else {
     this.magnifying = false;
-    this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v);
+    this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v,fast);
   }  
   
 }
 
-gDoThisOnce = false;
-
-WireImg.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
+WireImg.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 {
   if(!this.wireimg) return;
-  // Called when image is loaded.
-  
-  // rows:
-  // 4798 to 8253 is view 0 (U) (plane 2)  total 3456 -> Collection plane
-  // 2399 to 4797 is view 1 (V) (plane 1) total 2398 ->Induction plane
-  // 0 to 2398 is view 2 (W)    (plane 0) total 2398 ->Induction plane.q
-  // copy these subsets to 3 views.
-
-  /*
-  if(!gDoThisOnce) {
-    gDoThisOnce = true;
-  // console.log(this.wireimg);
-  this.bigCanvas = document.createElement("canvas");
-  console.log(this.bigCanvas);
-  this.bigCanvas.width  = this.wireimg.width;
-  this.bigCanvas.height = this.wireimg.height;
-  var ctx = this.bigCanvas.getContext("2d");
-  ctx.drawImage(this.wireimg,0,0);
-
-
-  // Let's look at some raw data.
-  this.ghRed = new Histogram(255,0,255);
-  this.ghGrn = new Histogram(255,0,255);
-  this.ghBlu = new Histogram(255,0,255);
-
-  
-  // Get the data row-by-row
-  for(var y = 0; y<this.bigCanvas.height; y+=100 ){
-    console.log("Doing row y=",y);
-    var imgdata = ctx.getImageData(0,y,this.bigCanvas.width,1);
-    for(var x = 0; x<this.bigCanvas.width; x++ ){
-      var i = (x) * 4;
-      // console.log(imgdata.data[i]);
-      this.ghRed.Fill(imgdata.data[i],1.0);
-      this.ghGrn.Fill(imgdata.data[i+1],1.0);
-      this.ghBlu.Fill(imgdata.data[i+2],1.0);
-    }
-  }
-  console.log(this.ghRed.Dump());
-  console.log(this.ghRed,this.ghGrn,this.ghBlu);
-  }
-  */
+  if(fast)
+     if(!this.wireimg_thumb) return;
   
   this.Clear();
-
+  
+  // Top and bottom determined by TDC bounds.
   this.min_v = 0;
   this.max_v = this.wireimg.width;
+  if(gTimeCut) {
+    this.min_v = gTimeCut[0];
+    this.max_v = gTimeCut[1];
+  }
+  
+  // Left and right determined either by number of wires, or by zoom region.
+  
+  // FIXME: The problem with this solution is that aspect ratio is NOT maintained between 
+  // the three views, since single views crop the range. Better would be to honor the gZoomRegion limits,
+  // and paste the image into the right place, then put a 'gray zone' in the area that isn't actually instrumented.
+  if(this.zooming) {
+    this.min_u = Math.max(gZoomRegion.plane[this.plane][0],0); 
+    this.max_u = Math.min(gZoomRegion.plane[this.plane][1],gGeo.numWires(this.plane)); 
+  } else {
+    this.min_u = 0;
+    this.max_u = gGeo.numWires(this.plane);    
+  }
+  this.DrawFrame();
+
   this.ctx.save();
   this.ctx.translate(this.GetX(this.min_u),this.GetY(this.min_v));
   this.ctx.rotate(-Math.PI/2);
   
+  var min_channel = gGeo.channelOfWire(this.plane,this.min_u);
+  var max_channel = gGeo.channelOfWire(this.plane,this.max_u);
   
-  this.ctx.drawImage(this.wireimg
-    , 0, this.swath.y
-    , this.wireimg.width, this.swath.h // Source width, height
-    ,0,0
-    // ,this.GetX(this.min_u), this.GetY(this.max_v) // destination coord, upper left
-      
-     ,this.span_y //,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
-     ,this.span_x //,this.GetX(this.max_u)-this.GetX(this.min_u)// width and height
-    );
-  console.log(      0, this.swath.y // Source x,y
-      ,this.wireimg.width,this.swath.h // Source width, height
-      ,this.GetX(this.min_u), this.GetY(this.max_v) // destination coord, upper left
-             ,this.GetX(this.max_u)-this.GetX(this.min_u)
-       ,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
-
-    );
+  if(fast) {
+    // Draw from the thumbnail, which is reduced by a factor of 5.
+    this.ctx.drawImage(
+      this.wireimg_thumb      // Source image.
+      ,Math.floor(this.min_v/5), Math.floor(min_channel/5)     // Source x, y
+      ,Math.floor(this.max_v-this.min_v)/5, Math.floor(this.max_u-this.min_u)/5 // Source width, height
+      ,0,0 // Destination corner coordinates (taken care of by translate above)
+      ,this.span_y  // destination width (Swap due to rotation, above)
+      ,this.span_x //  destination height (swap due to rotation, above)
+      );
+    
+  } else {
+    this.ctx.drawImage(
+      this.wireimg      // Source image.
+      , Math.floor(this.min_v), Math.floor(min_channel)     // Source x, y
+      ,Math.floor(this.max_v-this.min_v), Math.floor(this.max_u-this.min_u) // Source width, height
+      ,0,0 // Destination corner coordinates (taken care of by translate above)
+      ,this.span_y  // destination width (Swap due to rotation, above)
+      ,this.span_x //  destination height (swap due to rotation, above)
+      );
+    
+  }
+    
+    
+    // this.ctx.drawImage(
+    //   // Source image.
+    //   this.wireimg 
+    //   // Source x, 
+    //   // ,Math.floor(this.min_v), this.swath.y
+    // //   ,Math.floor(this.max_v), this.swath.h // Source width, height
+    //   ,Math.floor(this.min_v), this.swath.y
+    //   ,Math.floor(this.max_v-this.min_v), this.swath.h // Source width, height
+    //   ,0,0
+    //   ,this.span_y //,this.GetY(this.min_v)-this.GetY(this.max_v) // destination, 
+    //   ,this.span_x //,this.GetX(this.max_u)-this.GetX(this.min_u)// width and height
+    //   );
   this.ctx.restore();
      
 
@@ -207,7 +211,7 @@ WireImg.prototype.DoMouse = function(ev)
     this.fMouseY = ev.pageY - offset.y; 
     this.fMouseU = this.GetU(this.fMouseX);
     this.fMouseV = this.GetV(this.fMouseY);
-    gHoverWire = {channel:this.fMouseU};
+    gHoverWire = {channel: gGeo.channelOfWire(this.plane,this.fMouseU)};
     gHoverWireSample = this.fMouseV;
     
   }
