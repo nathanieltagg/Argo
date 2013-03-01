@@ -179,7 +179,22 @@ void RecordComposer::composeHits()
   fOutput.add("hits",r);
 }
 
-
+void wireOfChannel(int channel, int& plane, int& wire)
+{
+  if(channel < 2399) {
+    plane = 0; wire= channel; return;
+  }
+  else if(channel <4798) {
+    plane = 1; 
+    wire = channel - 2399;
+    return;
+  }
+  else{
+    plane = 2;
+    wire= channel-4798;
+    return;
+  }
+}
 
 
 void RecordComposer::composeCal() 
@@ -203,7 +218,11 @@ void RecordComposer::composeCal()
   std::vector<unsigned char> encodeddata(width*3);
 
   TH1D timeProfile("timeProfile","timeProfile",width,0,width);
-  
+  std::vector<TH1*> planeProfile;
+  planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
+  planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
+  planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+
   // JsonArray arr;
   for(long i=0;i<nwires;i++) {
     // std::cout << "Doing wire " << i << std::endl;
@@ -220,10 +239,12 @@ void RecordComposer::composeCal()
     // std::string signal("[");
     float max = 0;
     float min = 1;
+    double wiresum = 0;
     for(size_t k = 0; k<width; k++) {
       // Color map.
       float adc = (*ptr)[k];
       timeProfile.Fill(k,adc);
+      wiresum+=adc;
       // colormap.get(&imagedata[k*3],adc/4000.);
       imagedata[k] = tanscale(adc);
       
@@ -234,6 +255,10 @@ void RecordComposer::composeCal()
       encodeddata[k*3+1] = iadc&0xFF;
       encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
     }
+    int wire, plane;
+    wireOfChannel(i,plane,wire);
+    planeProfile[plane]->Fill(wire,wiresum);
+    
     png.AddRow(imagedata);
     encoded.AddRow(encodeddata);
     
@@ -245,7 +270,6 @@ void RecordComposer::composeCal()
   encoded.Finish();
   // r.add("wires",arr);
   // Create histogram:
-  r.add("timeHist",TH1ToHistogram(&timeProfile));
 
   std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
   std::string wireimg_thumb = wireimg+".thumb.png";
@@ -255,6 +279,17 @@ void RecordComposer::composeCal()
   r.add("wireimg_encoded_url",sfUrlToFileStorage+
                             encoded.writeToUniqueFile(sfFileStoragePath)
                             );
+
+  r.add("timeHist",TH1ToHistogram(&timeProfile));
+  JsonArray jPlaneHists;
+  jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
+  jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
+  jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
+  r.add("planeHists",jPlaneHists);
+
+  delete planeProfile[0];
+  delete planeProfile[1];
+  delete planeProfile[2];
   fOutput.add("cal",r);
 }
 
