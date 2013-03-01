@@ -56,10 +56,10 @@ int SocketServer::Setup( void )
 
   // lose the pesky "address already in use" error message
   // int yes= 1;
-  // if (setsockopt(mListener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-  //   cout << Form("SocketServer::Setup Cannot modify socket options: %s\n",strerror(errno));
-  //   return 1;
-  // }
+//   if (setsockopt(mListener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+//     cout << Form("SocketServer::Setup Cannot modify socket options: %s\n",strerror(errno));
+//     return 1;
+//   }
 
   // bind
   mMyAddress.sin_family = AF_INET;
@@ -68,7 +68,18 @@ int SocketServer::Setup( void )
   memset(&(mMyAddress.sin_zero), '\0', 8);
   if (bind(mListener, (struct sockaddr *)&mMyAddress, sizeof(mMyAddress)) == -1) {
     cout << Form("SocketServer::Setup Cannot bind socket: %s\n",strerror(errno));
-    return 1;
+
+    cout << "  SocketServer::Setup What the heck, I'm going to force a bind() anyway..." << endl;
+    int yes= 1;
+    if (setsockopt(mListener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      cout << Form("  SocketServer::Setup Cannot modify socket options: %s\n",strerror(errno));
+      return 1;
+    }
+    if (bind(mListener, (struct sockaddr *)&mMyAddress, sizeof(mMyAddress)) == -1) {
+      cout << Form("  SocketServer::Setup Cannot bind socket: %s\n",strerror(errno));
+      return 1;
+    }
+    cout << "  SocketServer::Setup Looks good. Continuing." << endl;
   }
 
   // listen
