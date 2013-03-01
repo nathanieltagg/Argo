@@ -61,6 +61,8 @@ function HitMap( element, options )
   gStateMachine.BindObj('timeCutChange',this,"TrimData");
   gStateMachine.BindObj('phColorChange',this,"Draw");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
+  if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
+  if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"Draw");
 }
 
 
@@ -73,7 +75,7 @@ HitMap.prototype.NewRecord = function()
   
   // Go through gHits, and find hits that match our view.
   for(var i=0;i<gHits.length;i++) {
-    if(gHits[i].view == this.view) this.myHits.push(gHits[i]);
+    if(gHits[i].plane == this.plane) this.myHits.push(gHits[i]);
   }
   this.TrimData();
 }
@@ -105,10 +107,15 @@ HitMap.prototype.Draw = function()
   if($(this.element).is(":hidden")) return;
 
   // Reset bounds if appropriate
-  if(gTimeCut) {
-    this.min_v = gTimeCut[0];
-    this.max_v = gTimeCut[1];
+  if(this.zooming) {
+    if(gTimeCut) {
+      this.min_v = gTimeCut[0];
+      this.max_v = gTimeCut[1];
+    }
+    this.min_u = gZoomRegion.plane[this.plane][0];
+    this.max_u = gZoomRegion.plane[this.plane][1];
   }
+  
 
   if((this.fMousing) && ($('#ctl-magnifying-glass').is(':checked')) )
   {
