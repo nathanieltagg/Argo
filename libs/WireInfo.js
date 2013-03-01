@@ -64,8 +64,8 @@ WireInfo.prototype.NewRecord = function()
   
   var self = this;
 
-  this.cal_wire_img.src = gRecord.wireimg_encoded_url;
-  this.raw_wire_img.src = gRecord.raw_wire_encoded_img_url;
+  this.cal_wire_img.src = gRecord.cal.wireimg_encoded_url;
+  this.raw_wire_img.src = gRecord.raw.wireimg_encoded_url;
   this.cal_wire_img.onload = function() {   // Callback when the png is actually there...
     self.MapCalData();
   }
@@ -93,7 +93,6 @@ WireInfo.prototype.MapRawData = function()
   this.raw_loaded = true;
   // Load up the bitmap.
 
-  console.log(this.bigCanvas);
   this.raw_offscreenCanvas.width  = this.raw_wire_img.width;
   this.raw_offscreenCanvas.height = this.raw_wire_img.height;
   this.raw_offscreenCtx = this.raw_offscreenCanvas.getContext("2d");

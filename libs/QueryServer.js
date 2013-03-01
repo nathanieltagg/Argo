@@ -92,10 +92,12 @@ function QueryServer( querytype )
     // }
 
     // User feedback that we are querying
+    $.blockUI.defaults.themedCSS.top = '25%'; 
     $.blockUI({ 
               theme:     true, 
               title:    'Please wait', 
               message:    $('#MOTD')
+              
               // ,timeout:   2000 
           });
     

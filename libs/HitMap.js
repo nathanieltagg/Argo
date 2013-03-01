@@ -60,7 +60,7 @@ function HitMap( element, options )
   gStateMachine.BindObj('phCutChange',this,"TrimData");
   gStateMachine.BindObj('timeCutChange',this,"TrimData");
   gStateMachine.BindObj('phColorChange',this,"Draw");
-  gStateMachine.BindObj('selectedHitChange',this,"Draw");  
+  gStateMachine.BindObj('TimeCutChange',this,"Draw");
 }
 
 
@@ -104,6 +104,12 @@ HitMap.prototype.Draw = function()
 {
   if($(this.element).is(":hidden")) return;
 
+  // Reset bounds if appropriate
+  if(gTimeCut) {
+    this.min_v = gTimeCut[0];
+    this.max_v = gTimeCut[1];
+  }
+
   if((this.fMousing) && ($('#ctl-magnifying-glass').is(':checked')) )
   {
     this.magnifying = true;
@@ -143,6 +149,7 @@ HitMap.prototype.Draw = function()
 HitMap.prototype.DrawOne = function(min_u,max_u, min_v, max_v)
 {
   this.Clear();
+  
   this.DrawFrame();
   if ($('#ctl-hitmap-show-hits').is(':checked')) {
     this.DrawHits(min_u,max_u, min_v, max_v);

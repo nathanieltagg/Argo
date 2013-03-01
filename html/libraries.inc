@@ -53,13 +53,16 @@
 
 
 <!-- My classes for doing histograming and other displays-->
+<script type="text/javascript" src="libs/Geometry.js"></script> 
 <script type="text/javascript" src="libs/Configuration.js"></script> 
 <script type="text/javascript" src="libs/DataSource.js"></script> 
 <script type="text/javascript" src="libs/Keyboard.js"></script> 
 
+<script type="text/javascript" src="libs/TimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/HitMap.js"></script> 
 <script type="text/javascript" src="libs/WireImg.js"></script> 
 <script type="text/javascript" src="libs/WireInfo.js"></script> 
+<script type="text/javascript" src="libs/ZoomControl.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
