@@ -116,10 +116,12 @@ JsonElement TreeReader::jsonF(const std::string& formula, int index)
 // Make array of objects using formulae.
 
 
-JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_leaf_pairs)
-{  
+std::vector<JsonObject> TreeReader::makeVector(const vector<pair< string,string> >& key_leaf_pairs)
+{ 
+  std::vector<JsonObject> retval; 
   // Find the leaves.
-  if(key_leaf_pairs.size()<1) return JsonArray(); 
+
+  if(key_leaf_pairs.size()<1) return retval;
   vector<TLeaf*> leaves;
   Int_t count = 0;
   for(int i=0;i<key_leaf_pairs.size();i++ ) {
@@ -135,16 +137,27 @@ JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_leaf_pa
     }
   }
   // Create the results.
-  JsonArray retval;
   for(Int_t jj=0; jj< count; jj++) {
     JsonObject t;    
     for(size_t i=0;i<key_leaf_pairs.size(); i++) {
       t.add(key_leaf_pairs[i].first, getJson(leaves[i],jj)); // TODO: get multiple indexing right.
     }
-    retval.add(t);
+    retval.push_back(t);
   }
   return retval;
 }
+
+
+JsonArray TreeReader::makeArray(const vector<pair< string,string> >& key_leaf_pairs)
+{ 
+  JsonArray r;
+  std::vector<JsonObject> arr = makeVector(key_leaf_pairs); 
+  for(size_t i=0;i<arr.size();i++) {
+    r.add(arr[i]);
+  }
+  return r;
+}
+
 
 JsonArray TreeReader::makeFArray(const vector<pair< string,string> >& key_formula_pairs)
 {

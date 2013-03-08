@@ -13,6 +13,7 @@
 #include <TROOT.h>
 #include <TH1F.h>
 #include <TH1D.h>
+#include <TLorentzVector.h>
 #include "TBranchElement.h"
 #include "TStreamerInfo.h"
 
@@ -348,6 +349,120 @@ void RecordComposer::composeRaw()
   fOutput.add("raw",r);
 }
 
+
+
+void RecordComposer::composeMC()
+{
+  
+  // Fixme: 
+  // This probably changes depending upon simulation method. This should work for now.
+  std::string gtruth_obj_name = "simb::GTruths_generator__GenieGen.obj.";
+
+  JsonArray gtruth_arr = ftr.makeArray(
+      "fGint"                             ,  gtruth_obj_name+"fGint"                           
+     ,"fGscatter"                         ,  gtruth_obj_name+"fGscatter"                       
+     ,"fweight"                           ,  gtruth_obj_name+"fweight"                         
+     ,"fprobability"                      ,  gtruth_obj_name+"fprobability"                    
+     ,"fXsec"                             ,  gtruth_obj_name+"fXsec"                           
+     ,"fDiffXsec"                         ,  gtruth_obj_name+"fDiffXsec"                       
+     ,"fNumPiPlus"                        ,  gtruth_obj_name+"fNumPiPlus"                      
+     ,"fNumPiMinus"                       ,  gtruth_obj_name+"fNumPiMinus"                     
+     ,"fNumPi0"                           ,  gtruth_obj_name+"fNumPi0"                         
+     ,"fNumProton"                        ,  gtruth_obj_name+"fNumProton"                      
+     ,"fNumNeutron"                       ,  gtruth_obj_name+"fNumNeutron"                     
+     ,"fIsCharm"                          ,  gtruth_obj_name+"fIsCharm"                        
+     ,"fResNum"                           ,  gtruth_obj_name+"fResNum"                         
+     ,"fgQ2"                              ,  gtruth_obj_name+"fgQ2"                            
+     ,"fgq2"                              ,  gtruth_obj_name+"fgq2"                            
+     ,"fgW"                               ,  gtruth_obj_name+"fgW"                             
+     ,"fgT"                               ,  gtruth_obj_name+"fgT"                             
+     ,"fgX"                               ,  gtruth_obj_name+"fgX"                             
+     ,"fgY"                               ,  gtruth_obj_name+"fgY"                             
+     ,"fFShadSystP4_fP_fBits"             ,  gtruth_obj_name+"fFShadSystP4.fP.fBits"           
+     ,"fFShadSystP4_fP_fX"                ,  gtruth_obj_name+"fFShadSystP4.fP.fX"              
+     ,"fFShadSystP4_fP_fY"                ,  gtruth_obj_name+"fFShadSystP4.fP.fY"              
+     ,"fFShadSystP4_fP_fZ"                ,  gtruth_obj_name+"fFShadSystP4.fP.fZ"              
+     ,"fFShadSystP4_fE"                   ,  gtruth_obj_name+"fFShadSystP4.fE"                 
+     ,"fIsSeaQuark"                       ,  gtruth_obj_name+"fIsSeaQuark"                     
+     ,"fHitNucP4_fP_fBits"                ,  gtruth_obj_name+"fHitNucP4.fP.fBits"              
+     ,"fHitNucP4_fP_fX"                   ,  gtruth_obj_name+"fHitNucP4.fP.fX"                 
+     ,"fHitNucP4_fP_fY"                   ,  gtruth_obj_name+"fHitNucP4.fP.fY"                 
+     ,"fHitNucP4_fP_fZ"                   ,  gtruth_obj_name+"fHitNucP4.fP.fZ"                 
+     ,"fHitNucP4_fE"                      ,  gtruth_obj_name+"fHitNucP4.fE"                    
+     ,"ftgtZ"                             ,  gtruth_obj_name+"ftgtZ"                           
+     ,"ftgtA"                             ,  gtruth_obj_name+"ftgtA"                           
+     ,"ftgtPDG"                           ,  gtruth_obj_name+"ftgtPDG"                         
+     ,"fProbePDG"                         ,  gtruth_obj_name+"fProbePDG"                       
+     ,"fProbeP4_fP_fBits"                 ,  gtruth_obj_name+"fProbeP4.fP.fBits"               
+     ,"fProbeP4_fP_fX"                    ,  gtruth_obj_name+"fProbeP4.fP.fX"                  
+     ,"fProbeP4_fP_fY"                    ,  gtruth_obj_name+"fProbeP4.fP.fY"                  
+     ,"fProbeP4_fP_fZ"                    ,  gtruth_obj_name+"fProbeP4.fP.fZ"                  
+     ,"fProbeP4_fE"                       ,  gtruth_obj_name+"fProbeP4.fE"                     
+     ,"fVertex_fP_fX"                     ,  gtruth_obj_name+"fVertex.fP.fX"                   
+     ,"fVertex_fP_fY"                     ,  gtruth_obj_name+"fVertex.fP.fY"                   
+     ,"fVertex_fP_fZ"                     ,  gtruth_obj_name+"fVertex.fP.fZ"                   
+     ,"fVertex_fE"                        ,  gtruth_obj_name+"fVertex.fE"                      
+  );
+  
+  // Fixme: 
+  // This probably changes depending upon simulation method. This should work for now.
+  JsonArray gparticle_arr;
+  std::string gpart_obj_name = "simb::MCParticles_largeant__GenieGen.obj.";
+ 
+  vector<pair< string,string> > key_leaf_pairs;
+  key_leaf_pairs.push_back(make_pair<string,string>("fdaughters"                 , gpart_obj_name+"fdaughters"               ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fE"                   , gpart_obj_name+"fGvtx.fE"                 ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fX"                , gpart_obj_name+"fGvtx.fP.fX"              ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fY"                , gpart_obj_name+"fGvtx.fP.fY"              ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fZ"                , gpart_obj_name+"fGvtx.fP.fZ"              ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fmass"                      , gpart_obj_name+"fmass"                    ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fmother"                    , gpart_obj_name+"fmother"                  ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fpdgCode"                   , gpart_obj_name+"fpdgCode"                 ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fX"           , gpart_obj_name+"fpolarization.fX"         ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fY"           , gpart_obj_name+"fpolarization.fY"         ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fZ"           , gpart_obj_name+"fpolarization.fZ"         ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fprocess"                   , gpart_obj_name+"fprocess"                 ));
+  key_leaf_pairs.push_back(make_pair<string,string>("frescatter"                 , gpart_obj_name+"frescatter"               ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , gpart_obj_name+"fstatus"                  ));
+  key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , gpart_obj_name+"ftrackId"                 ));
+  key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , gpart_obj_name+"fWeight"                  ));
+  std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs);
+  TreeElementLooter l(fTree,gpart_obj_name+"ftrajectory.ftrajectory");
+  l.Setup();
+  
+  JsonArray j_particles;
+  for(int i=0;i<v_particles.size();i++) {
+    // Add  the trajectory points.
+    const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
+    traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
+    JsonArray jtraj;
+    for(int j=0;j<traj->size();j++){
+      JsonObject trajpoint;
+      const TLorentzVector& pos = (*traj)[j].first;
+      const TLorentzVector& mom = (*traj)[j].second;
+      trajpoint.add("x",pos.X());
+      trajpoint.add("y",pos.Y());
+      trajpoint.add("z",pos.Z());
+      trajpoint.add("t",pos.T());
+      trajpoint.add("px",mom.X());
+      trajpoint.add("py",mom.Y());
+      trajpoint.add("pz",mom.Z());
+      trajpoint.add("E" ,mom.T());
+      jtraj.add(trajpoint);
+    }
+    v_particles[i].add("trajectory",jtraj);
+    j_particles.add(v_particles[i]);
+  }
+  
+  
+  JsonObject mc;
+  mc.add("gtruth",gtruth_arr);
+  mc.add("particles",j_particles);
+  fOutput.add("mc",mc);
+  
+}
+
+
 void RecordComposer::compose()
 {
   fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
@@ -386,6 +501,7 @@ void RecordComposer::compose()
   
   if(doCal) composeCal();
   if(doRaw) composeRaw();
+  composeMC();
   
   
   

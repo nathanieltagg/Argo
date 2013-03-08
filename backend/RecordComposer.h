@@ -18,6 +18,7 @@ public:
   void  composeHits();
   void  composeCal();
   void  composeRaw();
+  void  composeMC();
   
   int tanscale(float adc) 
   {

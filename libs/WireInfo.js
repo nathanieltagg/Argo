@@ -37,7 +37,7 @@ function WireInfo( element  )
   this.txt_element   = $(".WireInfo-text",this.element)[0];
   this.graph_element = $(".WireInfo-graph",this.element)[0];
 
-  this.graph = new HistCanvas( this.graph_element );
+  this.graph = new GraphCanvas( this.graph_element );
   this.graphdata = new Histogram(50,0,50);
   this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
   this.graph.ResetDefaultRange();
@@ -160,8 +160,10 @@ WireInfo.prototype.Draw = function()
     var end = start+nbins;
     if(end > imgdata.width) { end = imgdata.width; start = end-nbins;}
     
+    this.graphdata.min = start;
+    this.graphdata.max = end;
     for(var i=start;i<end;i++) {
-      this.graphdata.Fill(i-start,getEncodedPngVal(imgdata,i));
+      this.graphdata.Fill(i,getEncodedPngVal(imgdata,i));
     }
   }
   

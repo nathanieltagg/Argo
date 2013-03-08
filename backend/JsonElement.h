@@ -6,6 +6,7 @@
 #include <string>
 #include <iomanip>
 #include <TString.h>
+#include <math.h>
 
 class JsonElement;
 class JsonObject;
@@ -16,7 +17,8 @@ class JsonElement
 {  
 public: 
     JsonElement() { fixed(); }; // Null element.
-    JsonElement(const JsonElement& c) { fixed(); fContent << c.fContent.str(); }; // Copy constructor.
+    JsonElement(const JsonElement& c) { fixed(); fContent.str(c.fContent.str()); }; // Copy constructor.
+    void operator=(const JsonElement& c) { fixed(); fContent.str(c.fContent.str()); }; // Copy constructor.
     JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const char*        value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const TString& value) { fixed(); fContent << quotestring(value.Data()); }; 
@@ -24,8 +26,9 @@ public:
     JsonElement(const       int value) { fixed(); fContent << value; }
     JsonElement(const      long value) { fixed(); fContent << value; }
     JsonElement(const long long value) { fixed(); fContent << value; }
-    JsonElement(const float value) { fixed(); fContent << value; }
-    JsonElement(const double value) { fixed(); fContent << value; }
+    JsonElement(const float value) { fixed(); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
+    JsonElement(const double value) { fixed(); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
+    JsonElement(const bool value) { fixed(); fContent << ((value)?("true"):("false"));  }
 
     virtual const std::string str() const {  return (fContent.str().length()<1)?"null":fContent.str(); }
     
@@ -47,6 +50,7 @@ class JsonObject : public JsonElement
 public:
   JsonObject() : JsonElement() , fElements(0) {fContent.str(""); };
   JsonObject(const JsonObject& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
+  void operator=(const JsonObject& c) { fixed(); fContent.str(c.fContent.str());fElements = c.fElements; }; // Copy constructor.
   virtual JsonObject& add(const std::string& key,const JsonElement& value);
   virtual JsonObject& add(const std::string& key,const JsonArray& value);
   virtual JsonObject& addBare(const std::string& key,const std::string& value);
