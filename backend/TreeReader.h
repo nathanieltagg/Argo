@@ -39,6 +39,7 @@ public:
   JsonElement getJson(TLeaf* leaf, int index = 0, int second_index = -1);
   
   JsonArray   makeArray(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs);
+  std::vector<JsonObject>   makeVector(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs);
   JsonArray   makeFArray(const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
 
   JsonArray   makeSimpleFArray(const std::string& k);

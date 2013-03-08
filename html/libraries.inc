@@ -47,6 +47,7 @@
 <script type="text/javascript" src="core/StateMachine.js"></script>
 <script type="text/javascript" src="core/Histogram.js"></script>
 <script type="text/javascript" src="core/HistCanvas.js"></script>
+<script type="text/javascript" src="core/GraphCanvas.js"></script>
 <script type="text/javascript" src="core/Pad3d.js"></script>
 <script type="text/javascript" src="core/Printing.js"></script> 
 <script type="text/javascript" src="core/GeometryUtils.js"></script> 
@@ -59,8 +60,7 @@
 <script type="text/javascript" src="libs/Keyboard.js"></script> 
 
 <script type="text/javascript" src="libs/TimeHistogram.js"></script> 
-<script type="text/javascript" src="libs/HitMap.js"></script> 
-<script type="text/javascript" src="libs/WireImg.js"></script> 
+<script type="text/javascript" src="libs/WireView.js"></script> 
 <script type="text/javascript" src="libs/WireInfo.js"></script> 
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
 
