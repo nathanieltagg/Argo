@@ -202,6 +202,10 @@ void RecordComposer::composeCal()
 {
   JsonObject r;
   TLeaf* lf = fTree->GetLeaf("recob::Wires_caldata__Reco.obj.fView");
+  if(!lf) {
+    fOutput.add("cal","no leaf named recob::Wires_caldata__Reco.obj.fView");
+    return;
+  }
   int nwires = lf->GetLen();
 
   TreeElementLooter l(fTree,"recob::Wires_caldata__Reco.obj.fSignal");
