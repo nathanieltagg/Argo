@@ -43,8 +43,18 @@ function TimeHistogram( element  )
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj("hoverWireChange",this,"Draw");
+  gStateMachine.BindObj('zoomChange',this,"Change");
+  gStateMachine.BindObj('zoomChangeFast',this,"Change");
   
 }
+
+TimeHistogram.prototype.Change = function()
+{
+  this.min_u = gTimeCut[0];
+  this.max_u = gTimeCut[1];
+  this.Draw();
+}
+
 
 TimeHistogram.prototype.NewRecord = function()
 {

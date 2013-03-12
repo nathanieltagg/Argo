@@ -15,12 +15,59 @@ ZoomControl.prototype.constructor = Pad;
 
 // Global
 gZoomControl = null;
+gZoomRegion = new ZoomRegion();
 
-gZoomRegion = {
-  plane: [  [ gGeo.numWires(0)/2-250, gGeo.numWires(0)/2+250 ],
-            [ gGeo.numWires(1)/2-250, gGeo.numWires(1)/2+250 ],
-            [ gGeo.numWires(2)/2-250, gGeo.numWires(2)/2+250 ] ]
-};
+function ZoomRegion() {
+  this.plane= [  [ gGeo.numWires(0)/2-250, gGeo.numWires(0)/2+250 ],
+                 [ gGeo.numWires(1)/2-250, gGeo.numWires(1)/2+250 ],
+                 [ gGeo.numWires(2)/2-250, gGeo.numWires(2)/2+250 ] ];
+
+                 
+  this.copy = function() {
+    return $.extend(true,{},this);
+  }
+  
+  this.getCenter = function(){
+    return [ (this.plane[0][0]+this.plane[0][1])/2. ,
+             (this.plane[1][0]+this.plane[1][1])/2. ,
+             (this.plane[2][0]+this.plane[2][1])/2. ];
+  }
+
+   
+  this.getDWire = function(plane,deltaWire){
+    var dwire = [0,0,0];
+    switch(plane) {
+      case 0: dwire = [ deltaWire        ,-deltaWire*kcos60, deltaWire*kcos60 ]; break;
+      case 1: dwire = [-deltaWire*kcos60 , deltaWire       , deltaWire*kcos60 ]; break;
+      case 2: dwire = [ deltaWire*kcos60 , deltaWire*kcos60, deltaWire        ]; break;
+    }
+    return dwire;
+  }
+
+  this.moveZoomCenter = function(plane,deltaWire)
+  {
+    var dwire = this.getDWire(plane,deltaWire);
+    for(var ip=0;ip<3;ip++) {
+      for(var il=0;il<2;il++) this.plane[ip][il]+=dwire[ip];
+    }
+  }
+  
+  this.setLimits = function(plane,wireLow,wireHigh)
+  {
+    // Jump to a new set of coordinates.
+    var oldCenter = this.getCenter();
+    var halfWidth = (wireHigh - wireLow)/2;
+    var newWire = (wireHigh+wireLow)/2.;  
+    var dcenter = this.getDWire(plane,newWire-oldCenter[plane]);
+    
+    for(var ip=0;ip<3;ip++) {
+      this.plane[ip][0] = oldCenter[ip]+dcenter[ip] - halfWidth;
+      this.plane[ip][1] = oldCenter[ip]+dcenter[ip] + halfWidth;
+    }
+  }
+  
+  
+};  
 
 
 function ZoomControl( element, options )
@@ -33,14 +80,19 @@ function ZoomControl( element, options )
     margin_top    : 2,
     margin_right  : 2,
     margin_left   : 2,
-    buttress_min_u :     0,    // cm
-    buttress_max_u :  1040,
-    buttress_min_v :  -120,
-    buttress_max_v :   120,
-    min_u :     0,    // cm
-    max_u :  1040,
-    min_v :  -120,
-    max_v :   120    
+    // buttress_min_u :     0,    // cm
+    // buttress_max_u :  1040,
+    // buttress_min_v :  -120,
+    // buttress_max_v :   120,
+    buttress_min_u :     -50,    // cm
+    buttress_max_u :  1090,
+    buttress_min_v :  -150,
+    buttress_max_v :   150,
+    min_u :     -50,    // cm
+    max_u :  1090,
+    min_v :  -150,
+    max_v :   150,
+    draw_frame:false
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
@@ -61,6 +113,9 @@ function ZoomControl( element, options )
   $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
  
   gStateMachine.BindObj('recordChange',this,"NewRecord");
+  gStateMachine.BindObj('zoomChange',this,"Draw");
+  gStateMachine.BindObj('zoomChangeFast',this,"Draw");
+  
 }
 
 ZoomControl.prototype.Resize = function()
@@ -128,13 +183,16 @@ ZoomControl.prototype.Draw = function()
       case 2:     this.ctx.strokeStyle = "rgb(0,0,255)"; break;
 
     }
-    for(var wire=0;wire<gGeo.numWires(plane);wire+=50) {
+    this.ctx.save();
+    for(var wire=0;wire<gGeo.numWires(plane);wire+=100) {
       var geowire = gGeo.getWire(plane,wire);
+      this.ctx.lineWidth=0.2;
       this.ctx.beginPath();
       this.ctx.moveTo(this.GetX(geowire.z1), this.GetY(geowire.y1));
       this.ctx.lineTo(this.GetX(geowire.z2), this.GetY(geowire.y2));
       this.ctx.stroke();
     }
+    this.ctx.restore();
   }
   
   // Draw the zoom region.
@@ -226,7 +284,11 @@ ZoomControl.prototype.DoMouse = function(ev)
     this.fMousedWires = [];
     for(var plane = 0; plane<3; plane++) {
       this.fMousedWires[plane] = gGeo.yzToWire(plane,this.fMouseV,this.fMouseU);
+      
+      if(this.fMousedWires[plane]<0) this.fMousedWires[plane] = 0;
+      if(this.fMousedWires[plane] >= gGeo.numWires(plane)-1) this.fMousedWires[plane] = gGeo.numWires(plane)-1;
     }
+    console.log(this.fMousedWires);
 
     var lineHover = null;
     var inside_hex = false;
@@ -237,7 +299,8 @@ ZoomControl.prototype.DoMouse = function(ev)
         var gwires = [];
         for(var iminmax=0;iminmax<2;iminmax++) {
           var gwire = gGeo.getWire(plane,gZoomRegion.plane[plane][iminmax]);
-          gwires[iminmax] = gwire;
+          gwires[iminmax] = Math.round(gwire);
+          
           // Is the mouse near one of these wires?
           var dist_to_line = GeoUtils.line_to_point(this.fMouseX,this.fMouseY,
               this.GetX(gwire.z1),this.GetY(gwire.y1),

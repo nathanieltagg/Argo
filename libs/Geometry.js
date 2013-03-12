@@ -1,10 +1,13 @@
+kcos60 = Math.cos(Math.PI/3);
+ksin60 = Math.sin(Math.PI/3);
+
 
 gGeo = new Geometry();
 
 function Geometry()
 {
-  this.kU = [Math.cos(Math.PI/3), -Math.sin(Math.PI/3)];
-  this.kV = [Math.cos(Math.PI/3),  Math.sin(Math.PI/3)];
+  this.kU = [kcos60, -ksin60];
+  this.kV = [kcos60,  ksin60];
 }
 
 
