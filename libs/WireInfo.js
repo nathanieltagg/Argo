@@ -117,9 +117,9 @@ WireInfo.prototype.Draw = function()
   if(!gHoverWire) return;
   
 
-  var h = "Channel: " + gHoverWire.channel + '<br/>';
+  var h = "Channel: " +  Math.floor(gHoverWire.channel); + '<br/>';
   if(gHoverWireSample) {
-    h += gHoverWireSample + '<br/>';
+    h += "TDC: " +Math.floor(gHoverWireSample) + '<br/>';
   }
   
   var nbins = this.graphdata.n;
