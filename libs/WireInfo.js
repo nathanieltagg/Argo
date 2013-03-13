@@ -37,7 +37,7 @@ function WireInfo( element  )
   this.txt_element   = $(".WireInfo-text",this.element)[0];
   this.graph_element = $(".WireInfo-graph",this.element)[0];
 
-  this.graph = new GraphCanvas( this.graph_element );
+  this.graph = new GraphCanvas( this.graph_element, {xlabel:"TDC", ylabel:"ADC", margin_left: 40} );
   this.graphdata = new Histogram(50,0,50);
   this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
   this.graph.ResetDefaultRange();
@@ -117,54 +117,39 @@ WireInfo.prototype.Draw = function()
   if(!gHoverWire) return;
   
 
-  var h = "Channel: " +  Math.floor(gHoverWire.channel); + '<br/>';
-  if(gHoverWireSample) {
-    h += "TDC: " +Math.floor(gHoverWireSample) + '<br/>';
-  }
+  var h = "";
+  var tdc = Math.max(Math.floor(gHoverWireSample),0);
+  var chan = Math.floor(gHoverWire.channel);
+  h += "Channel: " +  chan + '<br/>';
+  var planewire = gGeo.wireOfChannel(chan);
+  h += "Plane: " + planewire.plane + "  Wire: " +  planewire.wire + '<br/>';
+  h += "TDC: " +tdc + '<br/>';
   
   var nbins = this.graphdata.n;
   this.graphdata.Clear();
   
   // Get imagedata for this wire.
-  if(this.cal_loaded) {
-    var y = Math.floor(gHoverWire.channel);
-    var imgdata = this.cal_offscreenCtx.getImageData(0,y,this.cal_offscreenCanvas.width,1);
-    var x = Math.floor(gHoverWireSample);
-
-    h += "val" + getEncodedPngVal(imgdata,gHoverWireSample) + "<br/>";
-    // Pull this wire.
-
-    var start = gHoverWireSample-nbins/2;
-    if(start<0) start = 0;
-    var end = start+nbins;
-    if(end > imgdata.width) { end = imgdata.width; start = end-nbins;}
-    // this.graphdata.Clear();
-    for(var i=start;i<end;i++) {
-      //h+= x + " " + getEncodedPngVal(imgdata,i) + "<br/>";
-      //this.graphdata.Fill(i-start,getEncodedPngVal(imgdata,i));
-      
-    }
-  }
+  var imgdata = null;
+  var y = chan;
   
-  // Get imagedata for this wire.
-  if(this.raw_loaded) {
-    var y = Math.floor(gHoverWire.channel);
-    var imgdata = this.raw_offscreenCtx.getImageData(0,y,this.raw_offscreenCanvas.width,1);
-    var x = Math.floor(gHoverWireSample);
-
-    h += "val" + getEncodedPngVal(imgdata,gHoverWireSample) + "<br/>";
-    // Pull this wire.
-
-    var start = gHoverWireSample-nbins/2;
-    if(start<0) start = 0;
-    var end = start+nbins;
-    if(end > imgdata.width) { end = imgdata.width; start = end-nbins;}
+  // Pull a single horizontal line from the png.
+  if(this.cal_loaded) {
+    imgdata = this.cal_offscreenCtx.getImageData(0,y,this.cal_offscreenCanvas.width,1);
+    this.graph.ylabel="Cal ADC";
+  } else if(this.raw_loaded) {
+    imgdata = this.raw_offscreenCtx.getImageData(0,y,this.raw_offscreenCanvas.width,1);
+    this.graph.ylabel="Raw ADC";
     
-    this.graphdata.min = start;
-    this.graphdata.max = end;
-    for(var i=start;i<end;i++) {
-      this.graphdata.Fill(i,getEncodedPngVal(imgdata,i));
-    }
+  }
+  var start = tdc-nbins/2;
+  if(start<0) start = 0;
+  var end = start+nbins;
+  if(end > imgdata.width) { end = imgdata.width; start = end-nbins;}
+    
+  this.graphdata.min = start;
+  this.graphdata.max = end;
+  for(var i=start;i<end;i++) {
+    this.graphdata.Fill(i,getEncodedPngVal(imgdata,i));
   }
   
   

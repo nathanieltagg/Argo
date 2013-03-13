@@ -338,7 +338,6 @@ WireView.prototype.DoMouse = function(ev)
   
   /// Mousedown, mouseup OR mousemove
     
-  console.warn(ev.type,ev);
   this.fMousing = true;
   var offset = getAbsolutePosition(this.element);
   this.fMouseX = ev.pageX - offset.x;
@@ -353,7 +352,6 @@ WireView.prototype.DoMouse = function(ev)
       var du = dx * (this.max_u-this.min_u)/(this.span_x);
       
       gZoomRegion.setLimits(this.plane,this.min_u - du, this.max_u - du);
-      console.log(du,gZoomRegion.plane[0],gZoomRegion.plane[1],gZoomRegion.plane[2]);
       
       var dy = this.fMouseY - this.fMouseLastY;
       var dv = dy * (this.max_v-this.min_v)/(this.span_y);
