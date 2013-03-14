@@ -2,14 +2,14 @@
 <div id="MOTD" style="display:none;"> 
   <img style='float:left; padding: 10px;' src="images/busy.gif" /> 
   <p>Querying server for event data...</p>
-  <p><em>Message of the day:</em><br/>
-    Welcome to the new MicroBoone Event Display.<br/>
-    This is an alpha-stage prototype, so please wear appropriate personal safety equipment.<br/>
+  <p><em>Message of the day:</em></p>
+  <p>Welcome to the new MicroBoone Event Display.</p>
+  <p>This is an beta-test software, so please wear appropriate personal safety equipment.</p>
   </p>
-  Recent goodies: <br/>
+  Recent updates: <br/>
   <ul>
-    <li> Zoom interface </li>
-    <li> TDC histogram </li>
+    <li> Wire views now allow active panning and scaling </li>
+    <li> Basic Monte-Carlo info now shown </li>
     <li> Thumbnail-based fast scrolling </li>
   </ul>
 </div> 
