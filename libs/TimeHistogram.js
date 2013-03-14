@@ -45,6 +45,7 @@ function TimeHistogram( element  )
   gStateMachine.BindObj("hoverWireChange",this,"Draw");
   gStateMachine.BindObj('zoomChange',this,"Change");
   gStateMachine.BindObj('zoomChangeFast',this,"Change");
+  gStateMachine.BindObj("TimeCutChange",this,"Change");
   
 }
 

@@ -8,6 +8,7 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> Auto-zoom on event load. Fix artifacts at corners of zoom control. </li>
     <li> Wire views now allow active panning and scaling </li>
     <li> Basic Monte-Carlo info now shown </li>
     <li> Thumbnail-based fast scrolling </li>
