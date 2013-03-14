@@ -345,6 +345,25 @@ WireView.prototype.DoMouse = function(ev)
   this.fMouseU = this.GetU(this.fMouseX);
   this.fMouseV = this.GetV(this.fMouseY);
 
+  // Which area is mouse start in?
+  var mouse_area;
+  if(this.fMouseY > this.origin_y ) {
+    mouse_area = "xscale";
+  } else if(this.fMouseX < this.origin_x) {
+    mouse_area = "yscale";
+  } else {
+    mouse_area = "body";
+  }
+  if(!this.fDragging) {
+    // Change cursor.
+    switch(mouse_area) {
+      case "body":         this.canvas.style.cursor = "move";      break;
+      case "xscale":       this.canvas.style.cursor = "e-resize";  break;
+      case "yscale":       this.canvas.style.cursor = "n-resize"; break;
+    }
+  }
+  
+
   if(this.fDragging) {
       // Update new zoom position or extent...
     if(this.fMouseStartArea == "body"){
@@ -391,14 +410,7 @@ WireView.prototype.DoMouse = function(ev)
       this.fMouseLastX = this.fMouseX;
       this.fMouseLastY = this.fMouseY;
       // Which area is mouse start in?
-      if(this.fMouseStartY > this.origin_y ) {
-        this.fMouseStartArea = "xscale";
-      } else if(this.fMouseStartX < this.origin_x) {
-        this.fMouseStartArea = "yscale";
-      } else {
-        this.fMouseStartArea = "body";
-      }
-      
+      this.fMouseStartArea = mouse_area;
   } else if(ev.type === 'mousemove' ) {
     // Update quick.
     if(this.fDragging){

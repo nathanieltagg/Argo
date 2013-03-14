@@ -7,6 +7,135 @@
 // you're free to modify and use it as you like.
 //
 
+$(function(){
+  $('div.A-MCInfo').each(function(){
+    var o = new MCInfo(this);
+  });  
+});
+
+function MCInfo( element )
+{
+  // console.debug("MCInfo::ctor",element);
+  this.fElement = element;
+  $(".accordion",this.fElement).accordion({
+     collapsible: true
+  });
+    
+  gStateMachine.BindObj("recordChange",this,"NewRecord");
+
+}
+
+
+  
+MCInfo.prototype.NewRecord = function() 
+{
+  // console.debug("MCInfo::Build()");
+  $(".accordion",this.fElement).empty();
+  $(".accordion",this.fElement).accordion("destroy");
+  
+  var mc = gRecord.mc;
+  if(!mc) return;
+
+  var h="";
+
+  var ints = mc.gtruth;
+  for(var whichint=0;whichint<ints.length;whichint++) {
+    var inter = ints[whichint];
+    console.log(inter.index);
+    h += "<h3 interaction='" + whichint+"'>";
+    h += "<a href='#' >Interaction " + whichint + "</a></h3>";
+    h += "<div>";
+    
+    //var incE = parseFloat($('incoming4p',inter).text().split(',')[3])/1000.;
+    var incE = inter.fProbeP4_fE;
+    
+    h+="<span>" +  incE.toFixed(3)  + " GeV  " + GetParticle(inter.fProbePDG) +"</span><br/>";
+
+    h+= "<span style='font-size: smaller'>" + InteractionCode[inter.fGint] + "("+inter.fGint+") / " 
+       + ScatterCode[inter.fGscatter] + "("+inter.fGscatter+")" + "</span>";
+    
+    
+    h += '<table border="0" class="mc-info" >';
+    var r1 = '<tr><td width="100px" class="mc-info-caption">';
+    var r2 = '</td><td class="mc-info-el">';
+    var r3 = '</td></tr>';
+
+    h+= r1 + "Target" + r2 + "<sup>" + inter.ftgtA + "</sup>" + ElementName[inter.ftgtZ] + r3;
+    // h+= r1 + "Target Nucleon" + r2 + "<sup>" + GetParticle(inter.tgtNucleon) + r3;
+    // h+= r1 + "Process Type" + r2 + inter.processType + r3;
+    // h+= r1 + "Inc Particle" + r2 + GetParticle(inter.incomingPDG)  + r3;
+    h+= r1 + "Q<sup>2</sup>" + r2 + inter.fgQ2 + r3;
+    h+= r1 + "X" + r2 + inter.fgX + r3;
+    h+= r1 + "Y" + r2 + inter.fgY + r3;
+    h+= r1 + "W" + r2 + inter.fgW + r3;
+    //vtx = inter.vtx;
+    // h+= r1 + "Vertex (mm)" + r2 + "x:"+Math.round(vtx[0])+ "<br/>"
+    //                        + "y:"+Math.round(vtx[1])+ "<br/>"
+    //                        + "z:"+Math.round(vtx[2])
+    //                        + r3;
+
+    h += '</table>';
+
+    h += "Final State: <br/>";
+    var fss = [];
+    for(var i =0; i< mc.particles.length; i++) {
+      console.log(mc.particles[i],mc.particles[i].fmother);
+      if(mc.particles[i].fmother==0) fss.push(mc.particles[i]);
+    }
+    h+= "<table border='0' class='mc-fs'>";
+    for(var j=0;j<fss.length;j++) {
+      var fs = fss[j];
+      // Extract and convert to MeV for convenience.
+      var px = fs.trajectory[0].px*1000;
+      var py = fs.trajectory[0].py*1000;
+      var pz = fs.trajectory[0].pz*1000;
+      var etot = fs.trajectory[0].E*1000;
+      var p2 = px*px + py*py + pz*pz;
+      var p  = Math.sqrt(p2);
+      var m = fs.fmass*1000;
+      var ke = (etot - m);
+      h+="<tr>";
+      h+="<td class='mc-fs-particle'>"
+        + GetParticle(fs.fpdgCode) 
+        + "</td><td class='mc-fs-energy'>"
+        + '<div class="collapsible-title" revealed="false">'
+        + "KE=" + ke.toFixed(1) + " MeV" 
+        + '</div>'
+         + '<div class="collapsible">'
+        + "  p=" + p.toFixed(1)  + " MeV/c<br/>"
+        + " px=" + px.toFixed(1) + " MeV/c<br/>"
+        + " py=" + py.toFixed(1) + " MeV/c<br/>"
+        + " pz=" + pz.toFixed(1) + " MeV/c<br/>"
+        + " E =" + etot.toFixed(1) + " MeV<br/>"
+        + " &theta;: " + (Math.acos(pz/p)*180/Math.PI).toFixed(1) +  "&deg;<br/>"
+        + " &phi;:   " + (Math.atan2(py,px)*180/Math.PI).toFixed(1) +  "&deg;<br/>"
+        + '</div>'
+        + "</td>";
+      h+="</tr>";
+    }
+    h+= "</table>";
+    
+    h += '</div>';
+    
+  
+  }  
+  $(".accordion",this.fElement).html(h);
+  make_collapsibles(this.fElement);
+
+
+  console.log($(".accordion",this.fElement));
+  $(".accordion",this.fElement).accordion({
+      collapsible: true
+     })
+    .bind('accordionchange', function(event, ui) {	
+  console.log("accordian selection: ",ui.newHeader.attr('interaction'));  
+  gInteraction = ui.newHeader.attr('interaction');
+  gStateMachine.Trigger('selectedMcChange');
+  // alert("interaction " + $(ui.newHeader).attr('interaction')); // jQuery object, activated header
+    });
+
+}
+
 function overbar(a) { return "<span style='text-decoration: overline'>"+a+"</span>"; }
 
 PdgCodes = [];
@@ -209,8 +338,6 @@ ScatterCode[11] =  "InverseBetaDecay";
 ScatterCode[12] =  "GlashowResonanc";
 
 
-
-
 function GetParticle(code)
 {
   ///
@@ -240,130 +367,3 @@ function GetParticle(code)
   return code;
 }
 
-
-$(function(){
-  $('div.A-MCInfo').each(function(){
-    var o = new MCInfo(this);
-  });  
-});
-
-function MCInfo( element )
-{
-  // console.debug("MCInfo::ctor",element);
-  this.fElement = element;
-  $(".accordion",this.fElement).accordion({
-     collapsible: true
-  });
-    
-  gStateMachine.BindObj("recordChange",this,"NewRecord");
-
-}
-
-
-  
-MCInfo.prototype.NewRecord = function() 
-{
-  // console.debug("MCInfo::Build()");
-  $(".accordion",this.fElement).empty();
-  $(".accordion",this.fElement).accordion("destroy");
-  
-  var mc = gRecord.mc;
-  if(!mc) return;
-
-  var h="";
-
-  var ints = mc.gtruth;
-  for(var whichint=0;whichint<ints.length;whichint++) {
-    var inter = ints[whichint];
-    console.log(inter.index);
-    h += "<h3 interaction='" + whichint+"'>";
-	  h += "<a href='#' >Interaction " + whichint + "</a></h3>";
-    h += "<div>";
-    
-    //var incE = parseFloat($('incoming4p',inter).text().split(',')[3])/1000.;
-    var incE = inter.fProbeP4_fE;
-    
-    h+="<span>" +  incE.toFixed(3)  + " GeV  " + GetParticle(inter.fProbePDG) +"</span><br/>";
-
-    h+= "<span style='font-size: smaller'>" + InteractionCode[inter.fGint] + "("+inter.fGint+") / " 
-       + ScatterCode[inter.fGscatter] + "("+inter.fGscatter+")" + "</span>";
-    
-    
-    h += '<table border="0" class="mc-info" >';
-    var r1 = '<tr><td width="100px" class="mc-info-caption">';
-    var r2 = '</td><td class="mc-info-el">';
-    var r3 = '</td></tr>';
-
-    h+= r1 + "Target" + r2 + "<sup>" + inter.ftgtA + "</sup>" + ElementName[inter.ftgtZ] + r3;
-    // h+= r1 + "Target Nucleon" + r2 + "<sup>" + GetParticle(inter.tgtNucleon) + r3;
-    // h+= r1 + "Process Type" + r2 + inter.processType + r3;
-    // h+= r1 + "Inc Particle" + r2 + GetParticle(inter.incomingPDG)  + r3;
-    h+= r1 + "Q<sup>2</sup>" + r2 + inter.fgQ2 + r3;
-    h+= r1 + "X" + r2 + inter.fgX + r3;
-    h+= r1 + "Y" + r2 + inter.fgY + r3;
-    h+= r1 + "W" + r2 + inter.fgW + r3;
-    //vtx = inter.vtx;
-    // h+= r1 + "Vertex (mm)" + r2 + "x:"+Math.round(vtx[0])+ "<br/>"
-    //                        + "y:"+Math.round(vtx[1])+ "<br/>"
-    //                        + "z:"+Math.round(vtx[2])
-    //                        + r3;
-
-    h += '</table>';
-
-    // h += "Final State: <br/>";
-    // var fss = inter.FSParticles;
-    // h+= "<table border='0' class='mc-fs'>";
-    // for(var j=0;j<fss.length;j++) {
-    //   var fs = fss[j];
-    //   var pdg = fs.Pdg;
-    //   var px = fs.Px;
-    //   var py = fs.Py
-    //   var pz = fs.Pz
-    //   var etot = fs.E;
-    //   var p2 = px*px + py*py + pz*pz;
-    //   var p  = Math.sqrt(p2);
-    //   var m2 = etot*etot - p2;
-    //   var m = 0;
-    //   if(m2>0) m =  Math.sqrt(m2);
-    //   var ke = etot - m;
-    //   h+="<tr>";
-    //   h+="<td class='mc-fs-particle'>"
-    //     + GetParticle(pdg) 
-    //     + "</td><td class='mc-fs-energy'>"
-    //     
-    //     + '<div class="collapsible-title" revealed="false">'
-    //     + "KE=" + ke.toFixed(1) + " MeV" 
-    //     + '</div>'
-    //     + '<div class="collapsible">'
-    //     + "  p=" + p.toFixed(1)  + " MeV/c<br/>"
-    //     + " px=" + px.toFixed(1) + " MeV/c<br/>"
-    //     + " py=" + py.toFixed(1) + " MeV/c<br/>"
-    //     + " pz=" + pz.toFixed(1) + " MeV/c<br/>"
-    //     + " E =" + etot.toFixed(1) + " MeV<br/>"
-    //     + " &theta;: " + (Math.acos(pz/p)*180/Math.PI).toFixed(1) +  "&deg;<br/>"
-    //     + " &phi;:   " + (Math.atan2(py,px)*180/Math.PI).toFixed(1) +  "&deg;<br/>"
-    //     + '</div>'
-    //     + "</td>";
-    //   h+="</tr>";
-    // }
-    // h+= "</table>";
-    // 
-    h += '</div>';
-  
-  }  
-  $(".accordion",this.fElement).html(h);
-  make_collapsibles(this.fElement);
-
-
-  console.log($(".accordion",this.fElement));
-  $(".accordion",this.fElement).accordion({
-      collapsible: true
-    })
-   .bind('accordionchange', function(event, ui) {	
-	  console.log("accordian selection: ",ui.newHeader.attr('interaction'));  
-	  gInteraction = ui.newHeader.attr('interaction');
-	  gStateMachine.Trigger('selectedHitChange');
-	  // alert("interaction " + $(ui.newHeader).attr('interaction')); // jQuery object, activated header
-    });
-
-}

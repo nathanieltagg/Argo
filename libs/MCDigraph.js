@@ -8,14 +8,21 @@
 //
 
 
+$(function(){
+  $('div.A-MCDigraph').each(function(){
+    var o = new MCDigraph(this);
+  });  
+});
+
+
 function MCDigraph( element )
 {
   this.fElement = element;
     
   // gStateMachine.BindObj("mcChange",this,"Build");
-  gStateMachine.BindObj("gateChange",this,"Build");
+  gStateMachine.BindObj("recordChange",this,"NewRecord");
   var self = this;
-  $(this.fElement).resize( function(ev){ self.Build(); });                                               
+  $(this.fElement).resize( function(ev){ self.NewRecord(); });                                               
   
 }
 
@@ -36,22 +43,22 @@ MCDigraph.prototype.DoClick = function(node,label)
   gStateMachine.Trigger("changeSelectedTrajectories");
 }
 
-MCDigraph.prototype.Build = function() 
+MCDigraph.prototype.NewRecord = function() 
 {
   $(this.fElement).empty();
   this.st = null;
   if(!gRecord) return;
   if(!gRecord.mc) return;
-  var trajs = gRecord.mc.trajectories;
+  var particles = []; //gRecord.mc.particles;
   
-  if(trajs.length == 0) {
+  if(particles.length == 0) {
     $(this.fElement).hide();
     return;
   } else {
     $(this.fElement).show();
   }
 
-  // interpret XML.
+  var trajs =[];
   var trajectories={};
   for(var it=0;it<trajs.length;it++){
     var traj = trajs[it];
