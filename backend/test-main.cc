@@ -357,7 +357,6 @@ int main(int argc, char **argv)
     // Test it against a wide range of ADC values.
     int width = 4000;
     MakePng png(width,10,MakePng::palette,palette);
-    png.SetPalette(palette);
     
     vector<unsigned char> vec(width);
     for(int j=0;j<10;j++){

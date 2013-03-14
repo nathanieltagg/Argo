@@ -97,7 +97,7 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   // png_set_text(png_ptr, info_ptr, &title_text, 1);
    
   if(colormode == palette)
-    png_set_PLTE(png_ptr, info_ptr, (const png_color_struct*)(&inPalette[0]), inPalette.size()/3 );  
+    png_set_PLTE(png_ptr, info_ptr, (png_color*)(&inPalette[0]), inPalette.size()/3 );  
 
 
   png_write_info(png_ptr, info_ptr);
@@ -112,16 +112,13 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   rows_done = 0;
 }
 
-void MakePng::SetPalette(const std::vector<unsigned char>& data)
-{
-}
 
 
 void MakePng::AddRow(const std::vector<unsigned char>& data)
 {
   assert(rows_done++ < height);
   assert(data.size() >= bytes_per_row);
-  png_write_row(png_ptr,&data[0]);
+  png_write_row(png_ptr,(png_byte*)&data[0]);
 
   // // copy data into 16-bit grayscale.
   // uint16_t* row_as_short = (uint16_t*)(rowdata);
