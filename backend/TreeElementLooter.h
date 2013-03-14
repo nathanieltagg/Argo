@@ -2,7 +2,7 @@
 #define TREEELEMENTLOOTER_H
 
 #include <string>
-#include <RTypes.h>
+#include <Rtypes.h>
 
 // Forward declarations.
 class TTree;
