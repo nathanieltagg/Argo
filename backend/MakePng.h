@@ -19,7 +19,6 @@ public:
   MakePng(int width, int height, Color_Mode_t colormode, // colors: either 1 or 3 colors for grayscale or bitmap.
       const std::vector<unsigned char>& palette=std::vector<unsigned char>(),
       const std::string title = "blah");
-  void SetPalette(const std::vector<unsigned char>& data);
   void AddRow(const std::vector<unsigned char>& data); // normalized
   void Finish();
   unsigned char* getData() { return (unsigned char*) outdata; };
