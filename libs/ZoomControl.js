@@ -152,9 +152,33 @@ ZoomControl.prototype.Resize = function()
   // console.log("ZoomControl.Resize",aspect_ratio,this.min_u,this.max_u,this.min_v,this.max_v);
 }
 
+
+ZoomControl.prototype.AutoZoom = function()
+{
+  var timeHist = $.extend(true,new Histogram(1,0,1), gRecord.cal.timeHist);
+  var time_bounds = timeHist.GetROI(0.01);
+  gTimeCut[0] = time_bounds[0]-20;
+  gTimeCut[1] = time_bounds[1]+20;
+  
+  var plane0Hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[0]);
+  var plane0_bounds = plane0Hist.GetROI(0.01);
+  gZoomRegion.setLimits(0,plane0_bounds[0],plane0_bounds[1]);
+
+  var plane1Hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[1]);
+  var plane1_bounds = plane1Hist.GetROI(0.01);
+  gZoomRegion.setLimits(0,plane1_bounds[0],plane1_bounds[1]);
+
+  var plane2Hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[2]);
+  var plane2_bounds = plane2Hist.GetROI(0.01);
+  // Add 10 wires to either side.
+  gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+  
+  gStateMachine.Trigger("zoomeChange");
+}
+
 ZoomControl.prototype.NewRecord = function()
 {
-  this.Draw();
+  this.AutoZoom();
 }
 
 
@@ -176,6 +200,7 @@ ZoomControl.prototype.Draw = function()
   this.ctx.lineTo(x1,y1);
   this.ctx.stroke();
   
+  // Draw some wires.
   for(var plane=0;plane<3;plane++) {
     switch(plane) {
       case 0:     this.ctx.strokeStyle = "rgb(255,0,0)"; break;
@@ -196,7 +221,18 @@ ZoomControl.prototype.Draw = function()
   }
   
   // Draw the zoom region.
-  // First, do some transparent boxes.
+  // First, do some semi-transparent boxes.
+  
+  // Clip to the actual view area.
+  this.ctx.save();
+  this.ctx.beginPath();
+  this.ctx.moveTo(x1,y1);
+  this.ctx.lineTo(x1,y2);
+  this.ctx.lineTo(x2,y2);
+  this.ctx.lineTo(x2,y1);
+  this.ctx.lineTo(x1,y1);
+  this.ctx.clip();
+  
   for(var plane=0;plane<3;plane++) {
     switch(plane) {
       case 0:     this.ctx.fillStyle = "rgba(255,0,0,0.5)"; break;
@@ -226,6 +262,7 @@ ZoomControl.prototype.Draw = function()
     
     this.ctx.fill();
   }
+  this.ctx.restore();
   
   if(this.fMousing)
   for(var plane=0;plane<3;plane++) {

@@ -24,7 +24,12 @@ function WireInfo( element  )
   gWireInfo = this;
   this.element = element;
   var settings = {
+    show_nwires_below: 0,
+    show_nwires_above: 0
+    // show_nwires_below: 2,
+    // show_nwires_above: 2
   };
+  $.extend(true,this,settings);
   
   // Merge in options from element
   var element_settings = $(element).attr('settings');
@@ -39,6 +44,11 @@ function WireInfo( element  )
 
   this.graph = new GraphCanvas( this.graph_element, {xlabel:"TDC", ylabel:"ADC", margin_left: 40} );
   this.graphdata = new Histogram(50,0,50);
+  this.graph_data = [];
+  for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
+    this.graph_data[i] = new Histogram(50,0,50); 
+  };
+
   this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
   this.graph.ResetDefaultRange();
   this.graph.Draw();
@@ -111,6 +121,29 @@ function getEncodedPngVal(imgdata, x)
   return (r*256. + g ) - 0x8000;
 }
 
+
+WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc)
+{
+  
+  var y = channel;
+  var x = tdc;
+  var width = offScreenCtx.canvas.width;
+  var x1 = Math.round(tdc - histogram.n/2);
+  if(x1<0) x1 = 0;
+  var x2 = x1 + histogram.n;
+  if(x2>width) {x2 = width; x1 = width - histogram.n;}
+
+  // Pull a single horizontal line from the png.
+  var imgdata = offScreenCtx.getImageData(x1,y,x2-x1,1);
+  histogram.Clear();
+  histogram.min = x1;
+  histogram.max = x2;
+  for(var i=0;i<x2-x1;i++) {
+    histogram.SetBinContent(i,getEncodedPngVal(imgdata,i));
+  }
+  
+}
+
 WireInfo.prototype.Draw = function()
 {
   $(this.txt_element).html('');
@@ -124,37 +157,38 @@ WireInfo.prototype.Draw = function()
   var planewire = gGeo.wireOfChannel(chan);
   h += "Plane: " + planewire.plane + "  Wire: " +  planewire.wire + '<br/>';
   h += "TDC: " +tdc + '<br/>';
+    
   
-  var nbins = this.graphdata.n;
-  this.graphdata.Clear();
-  
-  // Get imagedata for this wire.
-  var imgdata = null;
-  var y = chan;
-  
-  // Pull a single horizontal line from the png.
+  // Pull a single horizontal line from the png into the histogram
+  var offscreenCtx;
   if(this.cal_loaded) {
-    imgdata = this.cal_offscreenCtx.getImageData(0,y,this.cal_offscreenCanvas.width,1);
+    offscreenCtx = this.cal_offscreenCtx;
     this.graph.ylabel="Cal ADC";
   } else if(this.raw_loaded) {
-    imgdata = this.raw_offscreenCtx.getImageData(0,y,this.raw_offscreenCanvas.width,1);
-    this.graph.ylabel="Raw ADC";
-    
+    offscreenCtx = this.raw_offscreenCtx;
+    this.graph.ylabel="Raw ADC";    
   }
-  var start = tdc-nbins/2;
-  if(start<0) start = 0;
-  var end = start+nbins;
-  if(end > imgdata.width) { end = imgdata.width; start = end-nbins;}
-    
-  this.graphdata.min = start;
-  this.graphdata.max = end;
-  for(var i=start;i<end;i++) {
-    this.graphdata.Fill(i,getEncodedPngVal(imgdata,i));
+
+  this.graph.hists = [];
+  this.graph.colorscales = [];
+  var maxwire = gGeo.numWires(planewire.plane);
+  for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
+    var c = i+chan;
+    var wire = planewire.plane+i;    
+    if(c<0) continue;
+    if(wire>maxwire) continue;
+    this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
+    var color =i;
+    if(i<0) color = 10-color;
+    this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(color)); 
+    console.warn("added",i,c);   
   }
-  
-  
+  if(this.graph.min_v > -100) this.graph.min_v = -100;
+  if(this.graph.max_v <  100) this.graph.max_v =  100;
+  // this.LoadHistogramWithWireData(this.graphdata,offscreenCtx,chan,tdc);
+  console.log(this);
   $(this.txt_element).html(h);
-  this.graph.ResetToHist(this.graphdata);
+  // this.graph.ResetToHist(this.graphdata);
   this.graph.Draw();
   
 }

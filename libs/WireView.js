@@ -32,7 +32,6 @@ function WireView( element, options )
     tick_pixels_y: 30,
     show_image:   false, // can be false, 'raw', or 'cal'
     show_hits:    false,
-    
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
