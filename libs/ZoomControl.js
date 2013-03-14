@@ -241,9 +241,9 @@ ZoomControl.prototype.Draw = function()
     this.ctx.stroke();
   }
   
-  var txt = gZoomRegion.plane[0][0] + "-" + gZoomRegion.plane[0][1] + "  /  "
-          + gZoomRegion.plane[1][0] + "-" + gZoomRegion.plane[1][1] + "  /  "
-          + gZoomRegion.plane[2][0] + "-" + gZoomRegion.plane[2][1] ;
+  var txt = Math.round(gZoomRegion.plane[0][0]) + "-" + Math.round(gZoomRegion.plane[0][1]) + "  /  "
+          + Math.round(gZoomRegion.plane[1][0]) + "-" + Math.round(gZoomRegion.plane[1][1]) + "  /  "
+          + Math.round(gZoomRegion.plane[2][0]) + "-" + Math.round(gZoomRegion.plane[2][1]) ;
         
   $('span.ZoomControl-Info').text(txt);
   
@@ -288,7 +288,6 @@ ZoomControl.prototype.DoMouse = function(ev)
       if(this.fMousedWires[plane]<0) this.fMousedWires[plane] = 0;
       if(this.fMousedWires[plane] >= gGeo.numWires(plane)-1) this.fMousedWires[plane] = gGeo.numWires(plane)-1;
     }
-    console.log(this.fMousedWires);
 
     var lineHover = null;
     var inside_hex = false;

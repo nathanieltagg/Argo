@@ -64,6 +64,7 @@
 <script type="text/javascript" src="libs/WireInfo.js"></script> 
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
+<script type="text/javascript" src="libs/MCDigraph.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
