@@ -173,7 +173,7 @@ ZoomControl.prototype.AutoZoom = function()
   // Add 10 wires to either side.
   gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
   
-  gStateMachine.Trigger("zoomeChange");
+  gStateMachine.Trigger("zoomChange");
 }
 
 ZoomControl.prototype.NewRecord = function()
