@@ -10,7 +10,7 @@
 #include "JsonElement.h"
 
 bool JsonElement::sfPrettyPrint = false;
-
+int  JsonElement::sfDecimals = 2;
 
 
 std::ostream& operator<< (std::ostream& out, const JsonElement& e)

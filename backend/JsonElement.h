@@ -26,17 +26,24 @@ public:
     JsonElement(const       int value) { fixed(); fContent << value; }
     JsonElement(const      long value) { fixed(); fContent << value; }
     JsonElement(const long long value) { fixed(); fContent << value; }
-    JsonElement(const float value) { fixed(); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
-    JsonElement(const double value) { fixed(); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
+    JsonElement(const float value, int prec=-999) { fixed(prec); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
+    JsonElement(const double value,int prec=-999) { fixed(prec); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
     JsonElement(const bool value) { fixed(); fContent << ((value)?("true"):("false"));  }
 
     virtual const std::string str() const {  return (fContent.str().length()<1)?"null":fContent.str(); }
     
-    virtual void fixed(int decimals=2) {
+    virtual void fixed() {
+      fContent << std::fixed << std::setprecision(sfDecimals); 
+    }
+    
+    virtual void fixed(int decimals) {
+      if(decimals==-999) decimals=JsonElement::sfDecimals;
       fContent << std::fixed << std::setprecision(decimals); 
     }
     
     static void SetPrettyPrint(bool onf) { sfPrettyPrint = onf; }
+
+    static int  sfDecimals;
 protected:
     static bool sfPrettyPrint;
     virtual const std::string quotestring( const std::string& s );
