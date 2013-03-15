@@ -59,7 +59,10 @@ TimeHistogram.prototype.Change = function()
 
 TimeHistogram.prototype.NewRecord = function()
 {
-  this.hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.timeHist);
+  if(gRecord.cal && gRecord.cal.timeHist)
+    this.hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.timeHist);
+  else if(gRecord.raw && gRecord.raw.timeHist)
+    this.hist = $.extend(true,new Histogram(1,0,1), gRecord.raw.timeHist);
   this.SetHist(this.hist,new ColorScaleIndexed(0));
   this.ResetToHist(this.hist);
   this.bound_u_min = gRecord.header.TDCStart;

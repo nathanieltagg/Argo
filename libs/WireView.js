@@ -95,7 +95,8 @@ WireView.prototype.NewRecord_image = function()
   // Build offscreen image(s)
   this.wireimg = new Image();
   this.wireimg_thumb = new Image();
-  
+
+  if(!gRecord[this.show_image]) return;
   this.wireimg.src       = gRecord[this.show_image].wireimg_url;
   this.wireimg_thumb.src = gRecord[this.show_image].wireimg_url_thumb;
   // Callback when the png is actually there...
