@@ -155,23 +155,36 @@ ZoomControl.prototype.Resize = function()
 
 ZoomControl.prototype.AutoZoom = function()
 {
-  var timeHist = $.extend(true,new Histogram(1,0,1), gRecord.cal.timeHist);
-  var time_bounds = timeHist.GetROI(0.01);
-  gTimeCut[0] = time_bounds[0]-20;
-  gTimeCut[1] = time_bounds[1]+20;
+  var source = gRecord.cal;
+  if(!source) source = gRecord.raw;
+  if(!source) return;
   
-  var plane0Hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[0]);
-  var plane0_bounds = plane0Hist.GetROI(0.01);
-  gZoomRegion.setLimits(0,plane0_bounds[0],plane0_bounds[1]);
+  if(source.timeHist){
+    var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
+    var time_bounds = timeHist.GetROI(0.01);
+    gTimeCut[0] = time_bounds[0]-20;
+    gTimeCut[1] = time_bounds[1]+20;  
+  } else {
+    gTimeCut[0] = 0;
+    gTimeCut[1] = 3200;
+  }
+  
+  if(source.planeHists) {
+    var plane0Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[0]);
+    var plane0_bounds = plane0Hist.GetROI(0.01);
+    gZoomRegion.setLimits(0,plane0_bounds[0],plane0_bounds[1]);
 
-  var plane1Hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[1]);
-  var plane1_bounds = plane1Hist.GetROI(0.01);
-  gZoomRegion.setLimits(0,plane1_bounds[0],plane1_bounds[1]);
+    var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
+    var plane1_bounds = plane1Hist.GetROI(0.01);
+    gZoomRegion.setLimits(0,plane1_bounds[0],plane1_bounds[1]);
 
-  var plane2Hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[2]);
-  var plane2_bounds = plane2Hist.GetROI(0.01);
-  // Add 10 wires to either side.
-  gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+    var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
+    var plane2_bounds = plane2Hist.GetROI(0.01);
+    // Add 10 wires to either side.
+    gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+  } else {
+    gZoomRegion.setLimits(2,0,3456);
+  };
   
   gStateMachine.Trigger("zoomChange");
 }
