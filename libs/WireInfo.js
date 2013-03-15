@@ -74,8 +74,8 @@ WireInfo.prototype.NewRecord = function()
   
   var self = this;
 
-  this.cal_wire_img.src = gRecord.cal.wireimg_encoded_url;
-  this.raw_wire_img.src = gRecord.raw.wireimg_encoded_url;
+  if(gRecord.cal) this.cal_wire_img.src = gRecord.cal.wireimg_encoded_url;
+  if(gRecord.raw) this.raw_wire_img.src = gRecord.raw.wireimg_encoded_url;
   this.cal_wire_img.onload = function() {   // Callback when the png is actually there...
     self.MapCalData();
   }

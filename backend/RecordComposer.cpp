@@ -203,7 +203,7 @@ void RecordComposer::composeCal()
   JsonObject r;
   TLeaf* lf = fTree->GetLeaf("recob::Wires_caldata__Reco.obj.fView");
   if(!lf) {
-    fOutput.add("cal","no leaf named recob::Wires_caldata__Reco.obj.fView");
+    // fOutput.add("cal","no leaf named recob::Wires_caldata__Reco.obj.fView");
     return;
   }
   int nwires = lf->GetLen();
@@ -320,11 +320,19 @@ void RecordComposer::composeRaw()
   MakePng epng(width,ndig,MakePng::rgb);
   std::vector<unsigned char> imagedata(width);
   std::vector<unsigned char> encodeddata(width*3);
-   
+  
+  TH1D timeProfile("timeProfile","timeProfile",width,0,width);
+  std::vector<TH1*> planeProfile;
+  planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
+  planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
+  planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+  
   
   for(int i=0;i<ndig;i++) {
     ptr= l.get<std::vector<short>>(i);
     std::vector<short>::iterator it;
+    double wiresum = 0;
+    
     for(size_t k = 0; k<width; k++) {
       short raw = (*ptr)[k];
       // colormap.get(&imagedata[k*3],float(raw)/4000.);
@@ -335,9 +343,17 @@ void RecordComposer::composeRaw()
       encodeddata[k*3]   = 0xFF&(iadc>>8);
       encodeddata[k*3+1] = iadc&0xFF;
       encodeddata[k*3+2] = 0;
+      double val = fabs(raw);
+      wiresum += val;
+      timeProfile.Fill(k,val);
     }
     png.AddRow(imagedata);
     epng.AddRow(encodeddata);
+
+    int wire, plane;
+    wireOfChannel(i,plane,wire);
+    planeProfile[plane]->Fill(wire,wiresum);
+
   }
   png.Finish();
   epng.Finish();
@@ -350,6 +366,17 @@ void RecordComposer::composeRaw()
   r.add("wireimg_encoded_url",sfUrlToFileStorage+
                             epng.writeToUniqueFile(sfFileStoragePath)
                             );
+
+  r.add("timeHist",TH1ToHistogram(&timeProfile));
+  JsonArray jPlaneHists;
+  jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
+  jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
+  jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
+  r.add("planeHists",jPlaneHists);
+
+  delete planeProfile[0];
+  delete planeProfile[1];
+  delete planeProfile[2];
   fOutput.add("raw",r);
 }
 
