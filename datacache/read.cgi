@@ -28,3 +28,15 @@ if(-r $filename) {
   unlink $filename;       
   print STDERR "Deleted $filename\n";
 }
+
+#do cleanup. Look for any .png files that are too old
+
+foreach $file (glob("*.png")) {
+  print STDERR "Considering old file $file: " . (-M $file) . " days old\n";
+  if( (-M $file) > 3 ) {
+	unlink $file; 
+        print STDERR "Deleting old file $file.\n"; 
+  }
+}
+
+
