@@ -186,6 +186,17 @@ void RecordComposer::composeHits()
   fOutput.add("hits",r);
 }
 
+// Utility function for composeCluster
+JsonObject GetClusterWireAndTDC(TreeElementLooter& l, int row) {
+  JsonObject o;
+  if(!l.ok()) return o;
+  const vector<double>* v = l.get<vector<double> >(row);
+  if(v->size()<2) return o;
+  o.add("wire", (*v)[0]);
+  o.add("tdc" , (*v)[1]);
+  return o;
+}
+
 void RecordComposer::composeClusters()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Cluster>>");
@@ -198,7 +209,8 @@ void RecordComposer::composeClusters()
   } 
   
   
-  for(string name : leafnames) {    
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
     std::cout << "Looking at cluster object " << (name+"obj_").c_str() << endl;
     JsonArray jClusters;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -220,18 +232,16 @@ void RecordComposer::composeClusters()
       jclus.add("ID"         ,ftr.getJson(name+"obj.fID",i));
       jclus.add("view"       ,ftr.getJson(name+"obj.fView",i));
       
-      // auto-construct arrays; lots o' syntactic sugar here.
-      if(startPos.ok())       jclus.add("startPos",     JsonArray(*(startPos     .get<vector<double> >(i))));
-      if(endPos.ok())         jclus.add("endPos",       JsonArray(*(endPos       .get<vector<double> >(i))));
-      if(sigmaStartPos.ok())  jclus.add("sigmaStartPos",JsonArray(*(sigmaStartPos.get<vector<double> >(i))));
-      if(sigmaEndPos.ok())    jclus.add("sigmaEndPos",  JsonArray(*(sigmaEndPos  .get<vector<double> >(i))));
-      
+      jclus.add("startPos"      ,GetClusterWireAndTDC(startPos,i));
+      jclus.add("endPos"        ,GetClusterWireAndTDC(endPos,i));
+      jclus.add("sigmaStartPos" ,GetClusterWireAndTDC(sigmaStartPos,i));
+      jclus.add("sigmaEndPos"   ,GetClusterWireAndTDC(sigmaEndPos,i));
 
       jClusters.add(jclus);
     }
-    if(leafnames.size()==1) 
+    if(iname==0) 
       fOutput.add("clusters",jClusters);
-    else
+    if(leafnames.size()>1)
       fOutput.add(string("clusters_")+name,jClusters);
   }    
 }
@@ -248,7 +258,8 @@ void  RecordComposer::composeSpacepoints()
   } 
   
   
-  for(string name : leafnames) {    
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
     std::cout << "Looking at spacepoint object " << (name+"obj_").c_str() << endl;
     JsonArray jSpacepoints;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -275,9 +286,9 @@ void  RecordComposer::composeSpacepoints()
 
       jSpacepoints.add(jsp);
     }
-    if(leafnames.size()==1) 
+    if(iname==0) 
       fOutput.add("spacepoints",jSpacepoints);
-    else
+    if(leafnames.size()>1)
       fOutput.add(string("spacepoints_")+name,jSpacepoints);
   }  
 }
@@ -294,7 +305,8 @@ void  RecordComposer::composeTracks()
   } 
 
 
-  for(string name : leafnames) {    
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
     std::cout << "Looking at track object " << (name+"obj_").c_str() << endl;
     JsonArray jTracks;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -302,14 +314,6 @@ void  RecordComposer::composeTracks()
     int n = l->GetLen();
     cout << "Found " << n << " objects" << endl;
     
-
-    //          vector<TVector3> recob::Tracks_trackkalmanhit__Reco.obj.fXYZ
-    //          vector<TVector3> recob::Tracks_trackkalmanhit__Reco.obj.fDir
-    // vector<TMatrixT<double> > recob::Tracks_trackkalmanhit__Reco.obj.fCov
-    //   vector<vector<double> > recob::Tracks_trackkalmanhit__Reco.obj.fdQdx
-    //            vector<double> recob::Tracks_trackkalmanhit__Reco.obj.fFitMomentum
-    //                     Int_t recob::Tracks_trackkalmanhit__Reco.obj.fID
-
     TreeElementLooter tel_fXYZ         (fTree,name+"obj.fXYZ");
     TreeElementLooter tel_fDir         (fTree,name+"obj.fDir");
     TreeElementLooter tel_fCov         (fTree,name+"obj.fCov");
@@ -321,10 +325,10 @@ void  RecordComposer::composeTracks()
     
       jtrk.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
       const vector<TVector3>          *XYZ           = tel_fXYZ        .get<vector<TVector3>          >(i);
-      // const vector<TVector3>          *Dir           = tel_fDir        .get<vector<TVector3>          >(i);
+      const vector<TVector3>          *Dir           = tel_fDir        .get<vector<TVector3>          >(i);
       // const vector<TMatrixT<double> > *Cov           = tel_fCov        .get<vector<TMatrixT<double> > >(i);
       // const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
-      // const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
+      const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
       JsonArray jpoints;
       
       for(int j=0;j<XYZ->size();j++) {
@@ -332,6 +336,10 @@ void  RecordComposer::composeTracks()
         jpoint.add("x",(*XYZ)[j].x());
         jpoint.add("y",(*XYZ)[j].y());
         jpoint.add("z",(*XYZ)[j].z());
+        jpoint.add("vx",(*Dir)[j].x());
+        jpoint.add("vy",(*Dir)[j].y());
+        jpoint.add("vz",(*Dir)[j].z());
+        jpoint.add("fitP",(*FitMomentum)[j]);
         jpoints.add(jpoint);
       }
       jtrk.add("points",jpoints);
@@ -339,9 +347,9 @@ void  RecordComposer::composeTracks()
       jTracks.add(jtrk);
     }
 
-    if(leafnames.size()==1) 
+    if(iname==0) 
       fOutput.add("tracks",jTracks);
-    else
+    if(leafnames.size()>1)
       fOutput.add(string("tracks_")+name,jTracks);
   }  
 
@@ -349,10 +357,117 @@ void  RecordComposer::composeTracks()
   
 // Optical
 void  RecordComposer::composeOpFlashes()
-{}
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::OpFlash>");
+  if(leafnames.size()==0) {
+    fOutput.add("opflashes_warning","No opflashes branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("opflashes_warning","More than one opflash list found!");
+  } 
+  
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
+    std::cout << "Looking at opflash object " << (name+"obj_").c_str() << endl;
+    JsonArray jOpFlashes;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "flashes: " << n << endl;
+     //       Double_t recob::OpFlashs_opflash__Reco.obj.fTime
+     // vector<double> recob::OpFlashs_opflash__Reco.obj.fPEperOpDet
+     // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireCenter
+     // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireWidths
+     //       Double_t recob::OpFlashs_opflash__Reco.obj.fYCenter
+     //       Double_t recob::OpFlashs_opflash__Reco.obj.fYWidth
+     //       Double_t recob::OpFlashs_opflash__Reco.obj.fZCenter
+     //       Double_t recob::OpFlashs_opflash__Reco.obj.fZWidth
+     //          Int_t recob::OpFlashs_opflash__Reco.obj.fOnBeamTime
+    
+  
+    TreeElementLooter tel_fPEperOpDet(fTree,name+"obj.fPEperOpDet");
+    TreeElementLooter tel_fWireCenter(fTree,name+"obj.fWireCenter");
+    TreeElementLooter tel_fWireWidths(fTree,name+"obj.fWireWidths");
+
+    for(int i=0;i<n;i++) {
+      JsonObject jflash;
+      jflash.add("time"       ,ftr.getJson(name+"obj.fTime",i));
+      jflash.add("yCenter"    ,ftr.getJson(name+"obj.fYCenter",i));
+      jflash.add("yWidth"     ,ftr.getJson(name+"obj.fYWidth",i));
+      jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
+      jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
+      jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
+      
+      // auto-construct arrays; lots o' syntactic sugar here.
+      if(tel_fPEperOpDet.ok())  jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
+      if(tel_fWireCenter.ok())  jflash.add("wireCenter",     JsonArray(*(tel_fWireCenter .get<vector<double> >(i))));
+      if(tel_fWireWidths.ok())  jflash.add("wireWidths",     JsonArray(*(tel_fWireWidths .get<vector<double> >(i))));
+
+      jOpFlashes.add(jflash);
+    }
+    if(iname==0) 
+      fOutput.add("opflashes",jOpFlashes);
+    if(leafnames.size()>1)
+      fOutput.add(string("opflashes_")+name,jOpFlashes);
+  }   
+}
   
 void  RecordComposer::composeOpHits()
-{}
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::OpHit>");
+  if(leafnames.size()==0) {
+    fOutput.add("ophits_warning","No ophits branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("ophits_warning","More than one ophits list found!");
+  } 
+  
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
+    std::cout << "Looking at ophits object " << (name+"obj_").c_str() << endl;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "ophits: " << n << endl;
+    //    Int_t recob::OpHits_ophit__Reco.obj_
+    //    Int_t recob::OpHits_ophit__Reco.obj.fOpDetChannel
+    // Double_t recob::OpHits_ophit__Reco.obj.fPeakTime
+    // Double_t recob::OpHits_ophit__Reco.obj.fWidth
+    // Double_t recob::OpHits_ophit__Reco.obj.fArea
+    // Double_t recob::OpHits_ophit__Reco.obj.fAmplitude
+    // Double_t recob::OpHits_ophit__Reco.obj.fPE
+    // Double_t recob::OpHits_ophit__Reco.obj.fPeakTimeError
+    // Double_t recob::OpHits_ophit__Reco.obj.fWidthError
+    // Double_t recob::OpHits_ophit__Reco.obj.fAreaError
+    // Double_t recob::OpHits_ophit__Reco.obj.fAmplitudeError
+    // Double_t recob::OpHits_ophit__Reco.obj.fPEError
+  
+    JsonArray jophits = ftr.makeArray(
+       "opDetChan"     ,(name+"obj.fOpDetChannel") 
+      ,"peakTime"      ,(name+"obj.fPeakTime") 
+      ,"width"         ,(name+"obj.fWidth") 
+      ,"area"          ,(name+"obj.fArea") 
+      ,"amp"           ,(name+"obj.fAmplitude") 
+      ,"pe"            ,(name+"obj.fPE") 
+      ,"peakTimeErr"   ,(name+"obj.fPeakTimeError") 
+      ,"widthErr"      ,(name+"obj.fWidthError") 
+      ,"areaErr"       ,(name+"obj.fAreaError") 
+      ,"ampErr"        ,(name+"obj.fAmplitudeError") 
+      ,"peErr"         ,(name+"obj.fPEError") 
+      );
+      
+    if(iname==0) 
+      fOutput.add("ophits",jophits);
+    if(leafnames.size()>1)
+      fOutput.add(string("ophits_")+name,jophits);
+  }
+  
+  
+}
 
 
 void wireOfChannel(int channel, int& plane, int& wire)
@@ -710,14 +825,21 @@ void RecordComposer::compose()
   //
   composeHeaderData();
 
+  // Wire data.
+  // Start first so background image conversion tasks can be started as we build the rest.
+  if(doCal) composeCal();
+  if(doRaw) composeRaw();
+
   //reco
   composeHits();
   composeClusters();
   composeSpacepoints();
   composeTracks();
   
-  if(doCal) composeCal();
-  if(doRaw) composeRaw();
+  // Optical
+  composeOpFlashes();
+  composeOpHits();
+  
   composeMC();
   
   
