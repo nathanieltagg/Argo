@@ -15,10 +15,30 @@ public:
   ~RecordComposer();
   void compose();
   void  composeHeaderData();
+
+  // Reco
   void  composeHits();
+  void  composeClusters();
+  void  composeSpacepoints();
+  void  composeTracks();
+
+  // Optical
+  void  composeOpFlashes();
+  void  composeOpHits();
+
+  // Wires
   void  composeCal();
   void  composeRaw();
+  
+  // Monte carlo
   void  composeMC();
+
+
+  // Utility functions.
+  std::vector<std::string> findLeafOfType(std::string pattern);
+  
+  
+  // Mapping from any adc value onto an 8-bit integer for crude color purposes.
   
   int tanscale(float adc) 
   {
@@ -40,6 +60,7 @@ public:
   static std::string sfUrlToFileStorage;
   
   std::vector<unsigned char> fPalette;
+  std::vector<unsigned char> fPaletteTrans;
 };
 
 
