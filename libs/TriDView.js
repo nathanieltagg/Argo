@@ -43,8 +43,8 @@ function TriDView( element, options ){
     default_camera_distance: 800,
     camera_distance_max: 8000,
     camera_distance_min: 50,
-    default_theta: -0.1,
-    default_phi: 0.5,
+    default_theta: -0.25,
+    default_phi: 5.1,
   }
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad3d.call(this, element, settings); // Give settings to Pad contructor.
@@ -124,7 +124,6 @@ TriDView.prototype.CreateTracks = function()
       var p1 = points[i];
       var p2 = points[i+1];
       this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 2, curColor, trk);
-      console.log(p1,p2);
     }
   }
 }
