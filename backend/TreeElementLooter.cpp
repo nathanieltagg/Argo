@@ -16,7 +16,7 @@
 
 
 TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname) 
-  : fTree(t), fName(branchname), fBranch(0),  ok(false) 
+  : fTree(t), fName(branchname), fBranch(0),  fOK(false) 
 {
   TBranch* b = fTree->GetBranch(fName.c_str());
   if(!b) {
@@ -48,14 +48,23 @@ TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname)
     
   eoffset = fBranch->GetOffset();
   offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
-  ok = true;
+  fOK = true;
 };
 
 
   
 TreeElementLooter::~TreeElementLooter(){
-  if(fProxy && ok) fProxy->PopProxy();
+  if(fProxy && fOK) fProxy->PopProxy();
 }
+
+char* TreeElementLooter::getAddress(UInt_t row) 
+{
+  if(!fOK) return 0;
+  char* pointer = (char*)fProxy->At(row);
+  char* ladd = pointer+offset;
+  return ladd;
+}
+
 
 // Make sure templates are instantiated
 using std::vector;
