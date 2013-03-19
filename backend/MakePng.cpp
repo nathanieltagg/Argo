@@ -29,7 +29,7 @@ void my_user_write_data(
   
 MakePng::MakePng(int width, int height, Color_Mode_t c, 
                   const std::vector<unsigned char>& inPalette,
-                  const std::string title)
+                  const std::vector<unsigned char>& inPaletteTrans)
   : width(width)
     , height(height)
     , colormode(c)
@@ -63,7 +63,9 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
     case gray: color_type = PNG_COLOR_TYPE_GRAY; break;
     case rgb : color_type = PNG_COLOR_TYPE_RGB; break;
     case rgba: color_type = PNG_COLOR_TYPE_RGBA; break;
-    case palette: color_type = PNG_COLOR_TYPE_PALETTE; break;
+    case palette:
+    case palette_alpha: 
+              color_type = PNG_COLOR_TYPE_PALETTE; break;
   }
   
   /* Set image attributes. */
@@ -99,12 +101,22 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   if(colormode == palette)
     png_set_PLTE(png_ptr, info_ptr, (png_color*)(&inPalette[0]), inPalette.size()/3 );  
 
+  if(colormode == palette_alpha) {
+    png_set_PLTE(png_ptr, info_ptr, (png_color*)(&inPalette[0]), inPalette.size()/3 );  
+    png_color_16_struct bg_color;
+    bg_color.red = 0xFFFF;
+    bg_color.blue = 0xFFFF;
+    bg_color.green = 0xFFFF;
+    png_set_tRNS(png_ptr, info_ptr, (png_const_bytep)(&inPaletteTrans[0]),
+                 inPaletteTrans.size(), &bg_color);
+    
+  }
 
   png_write_info(png_ptr, info_ptr);
 
   /* Initialize rows of PNG. */
   int bytes_per_pixel = (int)colormode;
-  if(colormode == palette) bytes_per_pixel = 1;
+  if((colormode == palette) || (colormode == palette_alpha)) bytes_per_pixel = 1;
   if(bytes_per_pixel<1) bytes_per_pixel=1;
   bytes_per_row = width * bytes_per_pixel * sizeof(png_byte); //
   // Allocate memory for one row (3 bytes per pixel - RGB)

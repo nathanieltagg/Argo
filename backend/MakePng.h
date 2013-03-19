@@ -13,12 +13,13 @@ public:
     gray = 1, // Grayscale, 1 byte per pixel
     rgb  = 3, // color, red-green-blue, 3 bytes per pixel
     rgba = 4,  // color and alpha channel, 4 bytes per pixel  
-    palette = 10 // 1 byte per pixel
+    palette = 10, // 1 byte per pixel, using palette of RGB
+    palette_alpha = 11 // 1 byte per pixel using palette of RGBA
   } Color_Mode_t;
 
   MakePng(int width, int height, Color_Mode_t colormode, // colors: either 1 or 3 colors for grayscale or bitmap.
       const std::vector<unsigned char>& palette=std::vector<unsigned char>(),
-      const std::string title = "blah");
+      const std::vector<unsigned char>& palette_transparency=std::vector<unsigned char>() );
   void AddRow(const std::vector<unsigned char>& data); // normalized
   void Finish();
   unsigned char* getData() { return (unsigned char*) outdata; };

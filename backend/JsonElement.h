@@ -77,9 +77,14 @@ class JsonArray : public JsonElement
 public:
   JsonArray() : JsonElement(), fElements(0) { fContent.str(""); };
   JsonArray(const JsonArray& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
+  template<typename T>
+    JsonArray(const std::vector<T>& in);
   
   virtual JsonArray& add(const JsonObject& value);
   virtual JsonArray& add(const JsonElement& value);
+  // template<typename T>
+  //    JsonArray& add(const std::vector<T>& in);
+  
   virtual int        length() const { return fElements; };
 
   virtual const std::string str() const;  
@@ -89,6 +94,20 @@ protected:
 };
 
 std::ostream& operator<< (std::ostream& out, const JsonElement& e);
+
+
+
+///
+// Inlines
+
+// Add a vector as an object array. Works as long as there's a way to change it into a JsonElement.
+template<typename T>
+JsonArray::JsonArray(const std::vector<T>& in) :   fElements(0)
+{
+  fixed();
+  typename std::vector<T>::const_iterator itr;
+  for ( itr = in.begin(); itr != in.end(); ++itr ) this->add(JsonElement(*itr));
+}
 
 
 #endif 

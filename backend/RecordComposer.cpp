@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
@@ -95,11 +96,16 @@ inline float inv_tanscale(unsigned char y)
 RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
   : fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree)
     ,fPalette(256*3) 
+   ,fPaletteTrans(256) 
 {
   unsigned char vv[] =   { 
     #include "palette.inc" 
   };
   fPalette.assign(&vv[0], &vv[0]+sizeof(vv));
+  unsigned char vvt[] =   { 
+    #include "palette_trans.inc" 
+  };
+  fPaletteTrans.assign(&vvt[0], &vvt[0]+sizeof(vvt));
 };
   
 RecordComposer::~RecordComposer()
@@ -180,6 +186,175 @@ void RecordComposer::composeHits()
   fOutput.add("hits",r);
 }
 
+void RecordComposer::composeClusters()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::Cluster>>");
+  if(leafnames.size()==0) {
+    fOutput.add("cluster_warning","No cluster branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("cluster_warning","More than one cluster list found!");
+  } 
+  
+  
+  for(string name : leafnames) {    
+    std::cout << "Looking at cluster object " << (name+"obj_").c_str() << endl;
+    JsonArray jClusters;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int nclusters = l->GetLen();
+    cout << "clusters: " << nclusters << endl;
+    TreeElementLooter startPos     (fTree,name+"obj.fStartPos");
+    TreeElementLooter endPos       (fTree,name+"obj.fEndPos");
+    TreeElementLooter sigmaStartPos(fTree,name+"obj.fSigmaStartPos");
+    TreeElementLooter sigmaEndPos  (fTree,name+"obj.fSigmaEndPos");
+
+    for(int i=0;i<nclusters;i++) {
+      JsonObject jclus;
+      jclus.add("totalCharge",ftr.getJson(name+"obj.fTotalCharge",i));
+      jclus.add("dTdW"       ,ftr.getJson(name+"obj.fdTdW",i));
+      jclus.add("dQdW"       ,ftr.getJson(name+"obj.fdQdW",i));
+      jclus.add("sigmadTdW"  ,ftr.getJson(name+"obj.fSigmadTdW",i));
+      jclus.add("sigmadQdW"  ,ftr.getJson(name+"obj.fSigmadQdW",i));
+      jclus.add("ID"         ,ftr.getJson(name+"obj.fID",i));
+      jclus.add("view"       ,ftr.getJson(name+"obj.fView",i));
+      
+      // auto-construct arrays; lots o' syntactic sugar here.
+      if(startPos.ok())       jclus.add("startPos",     JsonArray(*(startPos     .get<vector<double> >(i))));
+      if(endPos.ok())         jclus.add("endPos",       JsonArray(*(endPos       .get<vector<double> >(i))));
+      if(sigmaStartPos.ok())  jclus.add("sigmaStartPos",JsonArray(*(sigmaStartPos.get<vector<double> >(i))));
+      if(sigmaEndPos.ok())    jclus.add("sigmaEndPos",  JsonArray(*(sigmaEndPos  .get<vector<double> >(i))));
+      
+
+      jClusters.add(jclus);
+    }
+    if(leafnames.size()==1) 
+      fOutput.add("clusters",jClusters);
+    else
+      fOutput.add(string("clusters_")+name,jClusters);
+  }    
+}
+
+void  RecordComposer::composeSpacepoints()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::SpacePoint> >");
+  if(leafnames.size()==0) {
+    fOutput.add("spacepoint_warning","No cluster branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("spacepoint_warning","More than one cluster list found!");
+  } 
+  
+  
+  for(string name : leafnames) {    
+    std::cout << "Looking at spacepoint object " << (name+"obj_").c_str() << endl;
+    JsonArray jSpacepoints;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "Found " << n << " objects" << endl;
+    TLeaf* lXYZ    = fTree->GetLeaf((name+"obj.fXYZ").c_str());
+    TLeaf* lErrXYZ = fTree->GetLeaf((name+"obj.fErrXYZ").c_str());
+
+    for(int i=0;i<n;i++) {
+      JsonObject jsp;
+      
+      jsp.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
+      jsp.add("chisq" ,ftr.getJson(name+"obj.fChisq"    ,i));
+      JsonArray xyz;
+      JsonArray errXyz;
+      for(int j=0;j<lXYZ->GetLenStatic();j++) 
+        xyz   .add(ftr.getJson(lXYZ,i,j));
+      for(int j=0;j<lErrXYZ->GetLenStatic();j++)       
+        errXyz.add(ftr.getJson(lErrXYZ,i,j));
+      
+      jsp.add("xyz",xyz);
+      jsp.add("errXyz",errXyz);
+
+      jSpacepoints.add(jsp);
+    }
+    if(leafnames.size()==1) 
+      fOutput.add("spacepoints",jSpacepoints);
+    else
+      fOutput.add(string("spacepoints_")+name,jSpacepoints);
+  }  
+}
+  
+void  RecordComposer::composeTracks()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::Track>");
+  if(leafnames.size()==0) {
+    fOutput.add("tracks_warning","No track branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("tracks_warning","More than one track list found!");
+  } 
+
+
+  for(string name : leafnames) {    
+    std::cout << "Looking at track object " << (name+"obj_").c_str() << endl;
+    JsonArray jTracks;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "Found " << n << " objects" << endl;
+    
+
+    //          vector<TVector3> recob::Tracks_trackkalmanhit__Reco.obj.fXYZ
+    //          vector<TVector3> recob::Tracks_trackkalmanhit__Reco.obj.fDir
+    // vector<TMatrixT<double> > recob::Tracks_trackkalmanhit__Reco.obj.fCov
+    //   vector<vector<double> > recob::Tracks_trackkalmanhit__Reco.obj.fdQdx
+    //            vector<double> recob::Tracks_trackkalmanhit__Reco.obj.fFitMomentum
+    //                     Int_t recob::Tracks_trackkalmanhit__Reco.obj.fID
+
+    TreeElementLooter tel_fXYZ         (fTree,name+"obj.fXYZ");
+    TreeElementLooter tel_fDir         (fTree,name+"obj.fDir");
+    TreeElementLooter tel_fCov         (fTree,name+"obj.fCov");
+    TreeElementLooter tel_fdQdx        (fTree,name+"obj.fdQdx");
+    TreeElementLooter tel_fFitMomentum (fTree,name+"obj.fFitMomentum");
+
+    for(int i=0;i<n;i++) {
+      JsonObject jtrk;
+    
+      jtrk.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
+      const vector<TVector3>          *XYZ           = tel_fXYZ        .get<vector<TVector3>          >(i);
+      // const vector<TVector3>          *Dir           = tel_fDir        .get<vector<TVector3>          >(i);
+      // const vector<TMatrixT<double> > *Cov           = tel_fCov        .get<vector<TMatrixT<double> > >(i);
+      // const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
+      // const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
+      JsonArray jpoints;
+      
+      for(int j=0;j<XYZ->size();j++) {
+        JsonObject jpoint;
+        jpoint.add("x",(*XYZ)[j].x());
+        jpoint.add("y",(*XYZ)[j].y());
+        jpoint.add("z",(*XYZ)[j].z());
+        jpoints.add(jpoint);
+      }
+      jtrk.add("points",jpoints);
+
+      jTracks.add(jtrk);
+    }
+
+    if(leafnames.size()==1) 
+      fOutput.add("tracks",jTracks);
+    else
+      fOutput.add(string("tracks_")+name,jTracks);
+  }  
+
+}
+  
+// Optical
+void  RecordComposer::composeOpFlashes()
+{}
+  
+void  RecordComposer::composeOpHits()
+{}
+
+
 void wireOfChannel(int channel, int& plane, int& wire)
 {
   if(channel < 2399) {
@@ -209,13 +384,13 @@ void RecordComposer::composeCal()
   int nwires = lf->GetLen();
 
   TreeElementLooter l(fTree,"recob::Wires_caldata__Reco.obj.fSignal");
-  l.Setup();
+  if(!l.ok()) return;
   const std::vector<float> *ptr = l.get<std::vector<float>>(0);
   
   
   size_t width = ptr->size();
   // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-  MakePng png(width,nwires,MakePng::palette,fPalette);
+  MakePng png(width,nwires,MakePng::palette_alpha,fPalette,fPaletteTrans);
   MakePng encoded(width,nwires,MakePng::rgb);
   ColorMap colormap;
   
@@ -305,18 +480,22 @@ void RecordComposer::composeRaw()
   
   // Fixme: 
   // This probably changes depending upon simulation method. This should work for now.
+  //   Idea: look through leaves for type of TLeafElement using  IsA() or dynamic cast.
+  //         Find an object which matches leaf->GetTypeName() of art::Wrapper<vector<raw::RawDigit> > 
+  //         or some crude regex match to that<
+  //         
   std::string rawdigit_obj_name = "raw::RawDigits_daq__GenieGen.obj";
   TLeaf* lf = fTree->GetLeaf((rawdigit_obj_name+".fChannel").c_str());
   int ndig = lf->GetLen();
   ColorMap colormap;
   
   TreeElementLooter l(fTree,rawdigit_obj_name+".fADC");
-  l.Setup();
+  if(!l.ok()) return;
   const std::vector<short> *ptr = l.get<std::vector<short>>(0);
   // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
   size_t width = ptr->size();
 
-  MakePng png(width,ndig,MakePng::palette,fPalette);
+  MakePng png(width,ndig, MakePng::palette_alpha,fPalette,fPaletteTrans);
   MakePng epng(width,ndig,MakePng::rgb);
   std::vector<unsigned char> imagedata(width);
   std::vector<unsigned char> encodeddata(width*3);
@@ -437,6 +616,7 @@ void RecordComposer::composeMC()
   
   // Fixme: 
   // This probably changes depending upon simulation method. This should work for now.
+  JsonElement::sfDecimals=5;
   JsonArray gparticle_arr;
   std::string gpart_obj_name = "simb::MCParticles_largeant__GenieGen.obj.";
  
@@ -459,32 +639,33 @@ void RecordComposer::composeMC()
   key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , gpart_obj_name+"fWeight"                  ));
   std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs);
   TreeElementLooter l(fTree,gpart_obj_name+"ftrajectory.ftrajectory");
-  l.Setup();
-  
   JsonArray j_particles;
-  for(int i=0;i<v_particles.size();i++) {
-    // Add  the trajectory points.
-    const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
-    traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
-    JsonArray jtraj;
-    for(int j=0;j<traj->size();j++){
-      JsonObject trajpoint;
-      const TLorentzVector& pos = (*traj)[j].first;
-      const TLorentzVector& mom = (*traj)[j].second;
-      trajpoint.add("x",pos.X());
-      trajpoint.add("y",pos.Y());
-      trajpoint.add("z",pos.Z());
-      trajpoint.add("t",pos.T());
-      trajpoint.add("px",mom.X());
-      trajpoint.add("py",mom.Y());
-      trajpoint.add("pz",mom.Z());
-      trajpoint.add("E" ,mom.T());
-      jtraj.add(trajpoint);
+  if(l.ok()){
+    for(int i=0;i<v_particles.size();i++) {
+      // Add  the trajectory points.
+      const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
+      traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
+      JsonArray jtraj;
+      for(int j=0;j<traj->size();j++){
+        JsonObject trajpoint;
+        const TLorentzVector& pos = (*traj)[j].first;
+        const TLorentzVector& mom = (*traj)[j].second;
+        trajpoint.add("x",pos.X());
+        trajpoint.add("y",pos.Y());
+        trajpoint.add("z",pos.Z());
+        trajpoint.add("t",pos.T());
+        trajpoint.add("px",JsonElement(mom.X(),4));
+        trajpoint.add("py",JsonElement(mom.Y(),4));
+        trajpoint.add("pz",JsonElement(mom.Z(),4));
+        trajpoint.add("E" ,JsonElement(mom.T(),6));
+        jtraj.add(trajpoint);
+      }
+      v_particles[i].add("trajectory",jtraj);
+      j_particles.add(v_particles[i]);
     }
-    v_particles[i].add("trajectory",jtraj);
-    j_particles.add(v_particles[i]);
   }
   
+  JsonElement::sfDecimals=2;
   
   JsonObject mc;
   mc.add("gtruth",gtruth_arr);
@@ -528,13 +709,45 @@ void RecordComposer::compose()
   // OK, now build the result.
   //
   composeHeaderData();
+
+  //reco
   composeHits();
+  composeClusters();
+  composeSpacepoints();
+  composeTracks();
   
   if(doCal) composeCal();
   if(doRaw) composeRaw();
   composeMC();
   
   
-  
 }
+
+
+// Utility functions.
+vector<string>  RecordComposer::findLeafOfType(std::string pattern)
+{
+  /// Look in the tree. Try to find a leafelement that matches 'pattern'.
+  /// Return the full name of that leaf.
+  vector<string> retval;
+  
+  // Strip whitespace from pattern.
+  pattern.erase(std::remove_if(pattern.begin(), pattern.end(), ::isspace), pattern.end());
+  
+  TObjArray* list = fTree->GetListOfLeaves();
+  for(int i=0;i<list->GetEntriesFast();i++) {
+    TObject* o = list->At(i);
+    TLeaf* le = (TLeaf*)o;
+    std::string name = le->GetTypeName();
+    // Strip whitespace from pattern.
+    name.erase(std::remove_if(name.begin(), name.end(), ::isspace), name.end());
+    size_t found = name.find(pattern);
+    if(found != std::string::npos) {
+      // Return this match.
+      retval.push_back(le->GetName());
+    }
+  }
+  return retval;
+}
+
 
