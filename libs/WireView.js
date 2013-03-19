@@ -32,6 +32,8 @@ function WireView( element, options )
     tick_pixels_y: 30,
     show_image:   false, // can be false, 'raw', or 'cal'
     show_hits:    false,
+    show_mc:      true,
+    show_blackout:true, // black in regions which aren't instrumented
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
@@ -58,12 +60,14 @@ function WireView( element, options )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
+  gStateMachine.BindObj('changeSelectedTrajectories',this,"Draw");
   
   gStateMachine.BindObj('phCutChange',this,"TrimHits");
   gStateMachine.BindObj('timeCutChange',this,"TrimHits");
   
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
+  
 }
 
 
@@ -75,6 +79,7 @@ WireView.prototype.NewRecord = function()
   if(!gRecord) return;
   if(this.show_hits) this.NewRecord_hits();
   if(this.show_image) this.NewRecord_image();
+  if(this.show_mc) this.NewRecord_mc();
 }
 
 WireView.prototype.NewRecord_hits = function()
@@ -106,6 +111,10 @@ WireView.prototype.NewRecord_image = function()
   }  
 }
 
+WireView.prototype.NewRecord_mc = function()
+{
+  
+}
 
 WireView.prototype.TrimHits = function()
 {
@@ -195,6 +204,16 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   this.DrawFrame();
 
+  // Set clipping region for all further calls, just to make things simpler.
+  this.ctx.save();
+  this.ctx.beginPath();
+  this.ctx.moveTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.clip();
+  
   if (this.show_image) {
     this.DrawImage(min_u,max_u, min_v, max_v, fast);
   }
@@ -203,7 +222,38 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     this.DrawHits(min_u,max_u, min_v, max_v, fast);
   }
   
+  if(this.show_mc) {
+    this.DrawMC(min_u,max_u, min_v, max_v, fast);
+  }  
+
+  if(this.show_blackout) {
+    // Clip out the region
+    this.ctx.fillStyle = "rgb(0,0,0)";
+    var nwires = gGeo.numWires(this.plane);
+    if(min_u < 0) 
+      this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
+                          this.GetX(0) - this.origin_x, this.span_y);
+
+    if(max_u > nwires) {
+      var xmax = this.GetX(nwires);
+      this.ctx.fillRect( xmax , this.origin_y-this.span_y, 
+                        this.span_x /*too much*/, this.span_y);
+    }
+
+    if(min_v < 0) {
+      this.ctx.fillRect( this.origin_x  , this.GetY(0), 
+                        this.span_x, this.span_y /*too much*/);
+    }
+
+    if(max_v > 3200) { // FIXME: Should be number of samples.!
+      this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
+                        this.span_x, this.GetY(3200)-(this.origin_y-this.span_y));
+    }
     
+    
+  }  
+  this.ctx.restore();
+  
 }
 
 
@@ -242,8 +292,6 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   if(fast)
      if(!this.wireimg_thumb) return;
 
-  this.ctx.fillStyle = "rgb(0,0,0)";
-  this.ctx.fillRect(this.origin_x , this.origin_y-this.span_y, this.span_x,this.span_y);
 
 
    var min_tdc     = Math.max(0,this.min_v);
@@ -308,10 +356,54 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     );
     
   }
-  this.ctx.restore();
-     
+  this.ctx.restore();   
 
 }
+
+
+WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
+{
+  if(!gRecord) return;
+  if(!gRecord.mc) return;
+  if(!gRecord.mc.particles) return;
+  for(var i=0;i<gRecord.mc.particles.length;i++)
+  {
+    var p= gRecord.mc.particles[i];
+    if(!p.trajectory || p.trajectory.length==0) continue;
+    
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle="rgba(0,0,255,0.5)";
+    for(var k=0;k<gSelectedTrajectories.length;k++) {
+      if(p.ftrackId == gSelectedTrajectories[k]) {
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle="rgba(255,255,20,1)";        
+      }
+    }
+    if(gHoverMCParticle == p.ftrackId) {
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle="rgba(255,20,20,1)";
+    }
+    
+    this.ctx.beginPath();
+    for(var j=0;j<p.trajectory.length;j++) {
+      var point = p.trajectory[j];
+      // Convert particle X coordinate to TDC value.
+      var tdc = gGeo.getTDCofX(this.plane,point.x);
+      // Convert YZ into wire number.
+      var wire = gGeo.yzToWire(this.plane,point.y,point.z);
+      var x = this.GetX(wire);
+      var y = this.GetY(tdc);
+      if(j==0)this.ctx.moveTo(x,y);
+      else    this.ctx.lineTo(x,y);
+    }
+    this.ctx.stroke();
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+// Mouse
+////////////////////////////////////////////////////////////////////////////////////////
+
 
 WireView.prototype.DoMouse = function(ev)
 {

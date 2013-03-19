@@ -14,15 +14,20 @@ $(function(){
   });  
 });
 
+gMCDigraph = null;
+gHoverMCParticle = null;
+gSelectedTrajectories = [];
 
 function MCDigraph( element )
 {
-  this.fElement = element;
-    
+  if(!element) return;
+  this.element = element;
+  gMCDigraph = this;
+   
   // gStateMachine.BindObj("mcChange",this,"Build");
   gStateMachine.BindObj("recordChange",this,"NewRecord");
   var self = this;
-  $(this.fElement).resize( function(ev){ self.NewRecord(); });                                               
+  $(this.element).resize( function(ev){ self.NewRecord(); });                                               
   
 }
 
@@ -36,7 +41,7 @@ MCDigraph.prototype.DoClick = function(node,label)
       // Run this on every node.
       if(node.selected) {
         console.log(node.name);
-        gSelectedTrajectories.push(node.data.trajectory);
+        gSelectedTrajectories.push(node.data.ftrackId);
       }
     }
   );
@@ -45,81 +50,80 @@ MCDigraph.prototype.DoClick = function(node,label)
 
 MCDigraph.prototype.NewRecord = function() 
 {
-  $(this.fElement).empty();
+  $(this.element).empty();
   this.st = null;
   if(!gRecord) return;
   if(!gRecord.mc) return;
-  var particles = []; //gRecord.mc.particles;
+  var particles = gRecord.mc.particles;
   
   if(particles.length == 0) {
-    $(this.fElement).hide();
+    $(this.element).hide();
     return;
   } else {
-    $(this.fElement).show();
+    $(this.element).show();
   }
 
-  var trajs =[];
-  var trajectories={};
-  for(var it=0;it<trajs.length;it++){
-    var traj = trajs[it];
-    var trkid = traj.trkid;
-    trajectories[trkid] = {
-      traj:   traj,
-      trkid:  trkid,
-      parent: traj.parentid
-    };
-  };
-  trajectories[0] = { interaction: gRecord.mc.interactions[0], trkid: 0 };
+  // var particle_by_track_id=[];
+  // for(var it=0;it<particles.length;it++){
+  //   particle_by_track_id[particles[it].ftrackId] = particles[it];
+  //   console.log(particles[it].ftrackId,"->",particles[it].fmother);
+  // };
+  // particle_by_track_id[0] =  gRecord.mc.gtruth[0];
   
-  function buildNestedObject(trkid) 
+  function buildNestedObject(p) 
   {
-    // console.log("Building node",trkid);
-    var traj = trajectories[trkid];
-    var node = { id: trkid,
+    var trkid = p.ftrackId;
+    console.log("Building node",trkid);
+    // var p = particle_by_track_id[trkid];
+    var node = { id: "particle-track-"+trkid,
                  name: "unknown",
                  data: {},
                  children: []
                };
-    if(traj && traj.traj) {
-      var particle = GetParticle(traj.traj.pdg);
-      var start =  traj.traj.trajpoint[0];
+    if(p && p.trajectory && p.trajectory[0]) {
+      var particle_name = GetParticle(p.fpdgCode);
+      var start =  p.trajectory[0];
       var E = start.E;
       var px = start.px;
       var py = start.py;
       var pz = start.pz;
       var p2 = px*px + py*py + pz*pz;
-      var m2 = E*E - p2;
-      var ke = E
-      if(m2>0)  ke = E-Math.sqrt(m2);
-      var eround = Math.round(ke);
+      var ke = E - p.fmass;
+      var eround = Math.round(ke*1000);
       var etext = eround + " MeV";
-      if(eround == 0 ) {
-        etext = Math.round(ke*1000) + " keV";
+      if(eround < 1 ) {
+        etext = Math.round(ke*1e6) + " keV";
       } 
-      node.name = "<span style='float:left;'>" + particle + "</span><span style='float:right;'>"+etext+"</span>";
-      node.data = {trajectory: traj.traj};
+      node.name = "<span style='float:left;'>" + particle_name + "</span><span style='float:right;'>"+etext+"</span>";
+      node.data = p;
     }
     
-
-    for(var i in trajectories) {
-      if(trajectories[i].parent == trkid) { 
-        node.children.push(buildNestedObject(i));
+    for(var i=0;i<particles.length; i++) {
+      if(particles[i].fmother === trkid) { 
+        node.children.push(buildNestedObject(particles[i]));
       };
     }
     return node;
   }
   
-  var root = buildNestedObject(0);
-  // Modify the root object to be the interaction.
-  var inter = gRecord.mc.interactions[0];
-  var incE = inter.incomingE/1000;
-  var channel = inter.channel;
-  var current = inter.current;
+  // build root node.
+  var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
+   // Modify the root object to be the interaction.
+  var inter = gRecord.mc.gtruth[0];
+  var incE = inter.fProbeP4_fE;
   root.name = incE.toFixed(3)  + " GeV" 
-            + " " + GetParticle(inter.incomingPDG)
-            + " " + CurrentCode[current]
-            + " " + ChannelCode[channel];  
-    
+            + " " + GetParticle(inter.fProbePDG)
+            + " " + InteractionCode[inter.fGint]
+            + " " + ScatterCode[inter.fGscatter];  
+
+  for(var i=0;i<particles.length; i++) {
+    if(particles[i].fmother === 0){
+      console.log("adding to root:",particles[i],particles[i].ftrackId);
+      root.children.push(buildNestedObject(particles[i]));
+    }
+  }
+  
+  // var root = buildNestedObject(0);
     
   console.warn(root);
   
@@ -128,7 +132,7 @@ MCDigraph.prototype.NewRecord = function()
   var self = this;
   this.st = new $jit.ST({
     //id of viz container element
-    injectInto: 'mc-digraph',
+    injectInto: this.element.id,
     //set duration for the animation
     duration: 300,
     //set animation transition type
@@ -172,11 +176,11 @@ MCDigraph.prototype.NewRecord = function()
     onCreateLabel: function(label, node){
         label.id = node.id;            
         label.innerHTML = node.name;
+        //set label styles
         label.onclick = function(){
             self.st.onClick(node.id);
             self.DoClick(node,label);
         };
-        //set label styles
         var style = label.style;
         style.width = 70 + 'px';
         style.height = 17 + 'px';            
@@ -226,6 +230,25 @@ MCDigraph.prototype.NewRecord = function()
             delete adj.data.$color;
             delete adj.data.$lineWidth;
         }
+    },
+    Events:{
+      enable: true,
+      onMouseEnter: function(node,eventInfo, e) {
+        gHoverMCParticle = node.data.ftrackId;
+        $(eventInfo.target).addClass("mc-jit-node-hover");
+        // console.log("HOVER:",node,eventInfo, e);
+        gStateMachine.Trigger('changeSelectedTrajectories');
+      },
+      onMouseLeave: function(node,eventInfo, e) {
+        if(gHoverMCParticle == node.data.ftrackId) gHoverMCParticle = null;
+        $(eventInfo.target).removeClass("mc-jit-node-hover");        
+        gStateMachine.Trigger('changeSelectedTrajectories');
+      },
+      // onClick:function(node){
+      //     self.st.onClick(node.id);
+      //     self.DoClick(node);
+      // }
+      
     }
     
   });

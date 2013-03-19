@@ -167,7 +167,7 @@ WireInfo.prototype.Draw = function()
   } else if(this.raw_loaded) {
     offscreenCtx = this.raw_offscreenCtx;
     this.graph.ylabel="Raw ADC";    
-  }
+  } else return;
 
   this.graph.hists = [];
   this.graph.colorscales = [];
