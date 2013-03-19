@@ -15,55 +15,46 @@
 // Copied liberally from TBranchElement::PrintValue and GetCollectionProxy()->PrintValueSTL
 
 
-TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname) : fTree(t), fName(branchname), fBranch(0),  ok(false) {};
-
-int TreeElementLooter::Setup() 
+TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname) 
+  : fTree(t), fName(branchname), fBranch(0),  ok(false) 
 {
-    TBranch* b = fTree->GetBranch(fName.c_str());
-    if(!b) {
-      fError = "TreeStlElementLooter: Couldn't find branch " + fName;  
-      std::cerr << fError << std::endl;
-      return 1;
-    }
+  TBranch* b = fTree->GetBranch(fName.c_str());
+  if(!b) {
+    fError = "TreeStlElementLooter: Couldn't find branch " + fName;  
+    std::cerr << fError << std::endl;
+    return;
+  }
 
-    fBranch = dynamic_cast<TBranchElement*>(b);
-    if(!fBranch) {
-      fError = "TreeStlElementLooter: Branch " + fName + " couldn't be cast to TBranchElement";  
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-      
-    fProxy = fBranch->GetCollectionProxy();
-    if (!(fProxy)) {
-      fError = "TreeStlElementLooter: Couldn't GetCollectionProxy() on " + fName;
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-    fProxy->PushProxy(fBranch->GetObject());
+  fBranch = dynamic_cast<TBranchElement*>(b);
+  if(!fBranch) {
+    fError = "TreeStlElementLooter: Branch " + fName + " couldn't be cast to TBranchElement";  
+    std::cerr << fError << std::endl;
+    return;
+  }
     
-    if (!(fBranch->GetInfo())) {
-      fError = "TreeStlElementLooter: Couldn't GetInfo() on " + fName;
-      std::cerr << fError << std::endl;
-      return 1;
-    }
-      
-    eoffset = fBranch->GetOffset();
-    offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
-    ok = true;
-    return 0;
-}
+  fProxy = fBranch->GetCollectionProxy();
+  if (!(fProxy)) {
+    fError = "TreeStlElementLooter: Couldn't GetCollectionProxy() on " + fName;
+    std::cerr << fError << std::endl;
+    return;
+  }
+  fProxy->PushProxy(fBranch->GetObject());
+  
+  if (!(fBranch->GetInfo())) {
+    fError = "TreeStlElementLooter: Couldn't GetInfo() on " + fName;
+    std::cerr << fError << std::endl;
+    return;
+  }
+    
+  eoffset = fBranch->GetOffset();
+  offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
+  ok = true;
+};
 
-template<typename T> 
-const T* TreeElementLooter::get(UInt_t row) 
-{
-    if(!ok) return 0;
-    char* pointer = (char*)fProxy->At(row);
-    char* ladd = pointer+offset;
-    return (T*)(ladd);      // Unchecked cast!
-}
+
   
 TreeElementLooter::~TreeElementLooter(){
-  if(fProxy) fProxy->PopProxy();
+  if(fProxy && ok) fProxy->PopProxy();
 }
 
 // Make sure templates are instantiated

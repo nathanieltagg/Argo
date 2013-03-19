@@ -3,6 +3,8 @@
 
 #include <string>
 #include <Rtypes.h>
+#include <TBranchElement.h>
+#include <TVirtualCollectionProxy.h>
 
 // Forward declarations.
 class TTree;
@@ -18,8 +20,7 @@ public:
  
   TreeElementLooter(TTree* t, const std::string& branchname);
   ~TreeElementLooter();
-  
-  int Setup();
+
   template<typename T> const T* get(UInt_t row);
   
 
@@ -33,6 +34,17 @@ public:
   Bool_t ok;
  
 };
+
+
+
+template<typename T> 
+const T* TreeElementLooter::get(UInt_t row) 
+{
+    if(!ok) return 0;
+    char* pointer = (char*)fProxy->At(row);
+    char* ladd = pointer+offset;
+    return (T*)(ladd);      // Unchecked cast!
+}
 
 #endif /* end of include guard: TREEELEMENTLOOTER_H_WC45LB9D */
 
