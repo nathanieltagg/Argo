@@ -107,7 +107,7 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
     bg_color.red = 0xFFFF;
     bg_color.blue = 0xFFFF;
     bg_color.green = 0xFFFF;
-    png_set_tRNS(png_ptr, info_ptr, (png_const_bytep)(&inPaletteTrans[0]),
+    png_set_tRNS(png_ptr, info_ptr, (unsigned char*)(&inPaletteTrans[0]),
                  inPaletteTrans.size(), &bg_color);
     
   }
