@@ -277,6 +277,24 @@ ZoomControl.prototype.Draw = function()
   }
   this.ctx.restore();
   
+  // Draw tracks.
+  for(var itrk =0;itrk<gTracks.length;itrk++) {
+    var points = gTracks[itrk].points;
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeStyle = "black";
+    this.ctx.beginPath();
+    
+    for(var i=0;i<points.length;i++) {
+      var p = points[i];
+      var x = this.GetX(p.z);
+      var y = this.GetY(p.y);
+      if(i==0) this.ctx.moveTo(x,y);
+      else     this.ctx.lineTo(x,y);
+    }
+    this.ctx.stroke();
+  }
+  
+  
   if(this.fMousing)
   for(var plane=0;plane<3;plane++) {
     switch(plane) {
