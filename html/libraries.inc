@@ -66,7 +66,7 @@
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
 <script type="text/javascript" src="libs/MCDigraph.js"></script> 
-<script type="text/javascript" src="libs/TridView.js"></script> 
+<script type="text/javascript" src="libs/TriDView.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
