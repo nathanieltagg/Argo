@@ -21,6 +21,7 @@ body {
         image-rendering: crisp-edges;
         -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
 
+        font-size: 10pt;
 }
 
 #header { 
@@ -258,12 +259,20 @@ span.keypress-hint {
   opacity: 1.0;
 }
 
+.ui-tabs { 
+  font-size: 80% !important; 
+}
+.ui-tabs-panel{
+  padding: 0.1em !important;  
+  
+}
 
-.portlet-content button {
+
+/*.portlet-content button {
   font-family: Arial, Verdana;
   font-size: auto;
 }
-
+*/
 #event-info div.collapsible {
   vertical-align: top;
   display:inline-block;
@@ -500,3 +509,7 @@ tr.rowstripe
 .cursor-nesw-resize .cursor-nesw-resize:active { cursor: nesw-resize; }
 .cursor-ew-resize   .cursor-ew-resize:active   { cursor: ew-resize;   }
 .cursor-move        .cursor-move:active        { cursor: move;   }
+
+.mc-jit-node-hover {
+  background-color: red;
+}

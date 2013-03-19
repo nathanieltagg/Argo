@@ -19,6 +19,7 @@
 <script type="text/javascript" src="js/jquery.ba-resize.min.js"></script>
 <script type="text/javascript" src="js/sylvester.js"></script>
 <script type="text/javascript" src="js/canvas.text.js"></script>
+<script type="text/javascript" src="js/jit.js"></script>
 
 <!-- firebug lite, for debugging on random browswers. -->
 <!-- <script type='text/javascript' 
@@ -65,6 +66,7 @@
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
 <script type="text/javascript" src="libs/MCDigraph.js"></script> 
+<script type="text/javascript" src="libs/TridView.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->

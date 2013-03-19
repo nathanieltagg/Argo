@@ -94,6 +94,11 @@ $(function(){
   make_collapsibles($('body'));
 });
 
+
+$(function(){
+  $(".BuildTabs").tabs();
+});
+
 ///
 /// Code that sets up portlets.
 ///

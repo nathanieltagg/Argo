@@ -82,3 +82,14 @@ TimeHistogram.prototype.FinishRangeChange = function()
             ];
   gStateMachine.Trigger("TimeCutChange");
 }
+
+TimeHistogram.prototype.FastRangeChange = function()
+{
+  // Select our time window so it's compatible with the 
+  // TDC bounds
+  gTimeCut = [ 
+              Math.max(this.min_u, gRecord.header.TDCStart)
+            , Math.min(this.max_u, gRecord.header.TDCEnd )
+            ];
+  gStateMachine.Trigger("zoomChangeFast");
+}

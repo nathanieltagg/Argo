@@ -4,6 +4,9 @@
 
 // Global bookmarks into data record.
 gHits = [];
+gTracks = [];
+
+gSelectedTrack = null;
 
 function DoInitialBookmarking()
 {
@@ -13,4 +16,6 @@ function DoInitialBookmarking()
       gHits = gRecord.hits.hits;
     }
   }
+  gTracks = null;
+  if(gRecord.tracks) gTracks=gRecord.tracks;
 }
