@@ -8,7 +8,9 @@
   </p>
   Recent updates: <br/>
   <ul>
-    <li> Backend nearly complete </li>
+    <li> Event info </li>
+    <li> Improved backend data looter</li>
+    <li> Reorganize wire views; include 'large' view. Controls active.</li>
     <li> 3D tracks </li>
     <li> Sophisticated MC Digraph; MC on hitmaps </li>
     <li> Auto-zoom on event load. Fix artifacts at corners of zoom control. </li>
