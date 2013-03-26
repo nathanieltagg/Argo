@@ -73,7 +73,7 @@ MCDigraph.prototype.NewRecord = function()
   function buildNestedObject(p) 
   {
     var trkid = p.ftrackId;
-    console.log("Building node",trkid);
+    // console.log("Building node",trkid);
     // var p = particle_by_track_id[trkid];
     var node = { id: "particle-track-"+trkid,
                  name: "unknown",
@@ -118,14 +118,14 @@ MCDigraph.prototype.NewRecord = function()
 
   for(var i=0;i<particles.length; i++) {
     if(particles[i].fmother === 0){
-      console.log("adding to root:",particles[i],particles[i].ftrackId);
+      // console.log("adding to root:",particles[i],particles[i].ftrackId);
       root.children.push(buildNestedObject(particles[i]));
     }
   }
   
   // var root = buildNestedObject(0);
     
-  console.warn(root);
+  // console.warn(root);
   
   // EXTREME COOLNESS: http://philogb.github.com/jit/
   
@@ -235,13 +235,14 @@ MCDigraph.prototype.NewRecord = function()
       enable: true,
       onMouseEnter: function(node,eventInfo, e) {
         gHoverMCParticle = node.data.ftrackId;
-        $(eventInfo.target).addClass("mc-jit-node-hover");
-        // console.log("HOVER:",node,eventInfo, e);
+        $('.mc-jit-node-hover').removeClass("mc-jit-node-hover");
+        $('#'+node.id).addClass("mc-jit-node-hover");
+        console.log("HOVER:",node,eventInfo, e);
         gStateMachine.Trigger('changeSelectedTrajectories');
       },
       onMouseLeave: function(node,eventInfo, e) {
         if(gHoverMCParticle == node.data.ftrackId) gHoverMCParticle = null;
-        $(eventInfo.target).removeClass("mc-jit-node-hover");        
+        $('#'+node.id).removeClass("mc-jit-node-hover");        
         gStateMachine.Trigger('changeSelectedTrajectories');
       },
       // onClick:function(node){

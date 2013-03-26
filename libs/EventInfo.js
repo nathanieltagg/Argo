@@ -76,7 +76,6 @@ EventInfo.prototype.NewRecord = function()
   h += a + "Optical Hits" + b + (gRecord.ophits?gRecord.ophits.length:0) + c;
   
   h+= "</table>";
-  console.log(h);
   $(this.element).html(h);
 }
 
