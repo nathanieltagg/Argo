@@ -37,9 +37,31 @@ $(function() {
       case 110: // 'n'
         DoNextEvent(); return false;
       
-      case 104: // 'h'
-        $('#ctl-hitmap-show-hits').click(); gStateMachine.Trigger('phColorChange');
+      case 119: // 'w'
+        $('#ctl-show-wireimg').click();
         return false;
+
+      case 104: // 'h'
+        $('#ctl-show-hits').click();
+        return false;
+
+      case 99: // 'c'
+        $('#ctl-show-clus').click();
+        return false;
+
+      case 115: // 's'
+        $('#ctl-show-spoints').click();
+        return false;
+
+      case 116: // 't'
+        $('#ctl-show-tracks').click();
+        return false;
+
+        
+      case 109: // 'm'
+        $('#ctl-show-mc').click();
+        return false;
+        
       // case 98: // 'b'
       //   $('#ctl-show-hitmap-blobs').click(); gStateMachine.Trigger('phColorChange');
       //   return false;

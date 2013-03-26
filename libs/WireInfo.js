@@ -181,7 +181,6 @@ WireInfo.prototype.Draw = function()
     var color =i;
     if(i<0) color = 10-color;
     this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(color)); 
-    console.warn("added",i,c);   
   }
   if(this.graph.min_v > -100) this.graph.min_v = -100;
   if(this.graph.max_v <  100) this.graph.max_v =  100;

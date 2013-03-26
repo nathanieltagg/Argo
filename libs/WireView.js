@@ -1,14 +1,52 @@
 // Subclass of Pad.
 WireView.prototype = new Pad;           
 
+gWireViews = [];
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
   $('div.A-WireView').each(function(){
     var o = new WireView(this);
+    gWireViews.push(o);
     // console.log("Creating WireView ",o);
   });  
 });
+
+
+/// Utility function: ClosestMatch
+/// Find a DOM element matching the selector that has the closest common ancestor
+/// to the given element.
+
+function ClosestMatch( element, selector )
+{
+  var parents = $(element).parents();
+  for(var i = 0; i<parents.length; i++) {
+    var got = $(selector,parents[i]);
+    if(got.length>0) return got.first();
+  }
+  // no match.
+  return null;
+}
+
+function GetLocalControl( element, selector )
+{
+  // Is there one in our portlet?
+  var p = $(element).closest('.portlet')
+  if(p.length>0) {
+    var c = $(selector,p.first());
+    return c;
+  }
+  return $();
+}
+
+function GetBestControl( element, selector )
+{
+  var c = GetLocalControl(element,selector);
+  if(c.length>0) return c;
+  c = $(selector,$('#config-port'));
+  if(c.length>0) return c;
+  return ClosestMatch(element,selector);
+}
 
 function WireView( element, options )
 {
@@ -47,6 +85,9 @@ function WireView( element, options )
   this.myHits = [];
   this.visHits = [];
   
+  this.loaded_wireimg = false;
+  this.loaded_thumbnail = false;
+  
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('mouseout' ,function(ev) { return self.DoMouse(ev); });
@@ -67,7 +108,31 @@ function WireView( element, options )
   
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
-  
+ 
+  this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
+  this.ctl_show_wireimg =  GetBestControl(this.element,".show-wireimg");
+  this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
+  this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
+  this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
+  this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
+  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+
+  $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_clus)   .change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_wireimg_type).click(function(ev) { return self.NewRecord(); });
+
+  // Flip planes control (for big wireview
+  this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
+  this.ctl_plane.click(function(ev) { 
+    self.plane = parseInt( $(self.ctl_plane).filter(":checked").val() );
+    console.warn("changing plane",self,$(this.ctl_plane).filter(":checked").val(),self.plane);
+    
+    return self.NewRecord(); 
+  });
 }
 
 
@@ -77,9 +142,9 @@ WireView.prototype.NewRecord = function()
   // called on new record available.
   //
   if(!gRecord) return;
-  if(this.show_hits) this.NewRecord_hits();
-  if(this.show_image) this.NewRecord_image();
-  if(this.show_mc) this.NewRecord_mc();
+  this.NewRecord_hits();
+  this.NewRecord_image();
+  this.NewRecord_mc();
 }
 
 WireView.prototype.NewRecord_hits = function()
@@ -97,9 +162,14 @@ WireView.prototype.NewRecord_hits = function()
 
 WireView.prototype.NewRecord_image = function()
 {
+  this.loaded_wireimg = false;
+  this.loaded_thumbnail = false;
+  
   // Build offscreen image(s)
   this.wireimg = new Image();
   this.wireimg_thumb = new Image();
+  
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
 
   if(!gRecord[this.show_image]) return;
   this.wireimg.src       = gRecord[this.show_image].wireimg_url;
@@ -107,7 +177,11 @@ WireView.prototype.NewRecord_image = function()
   // Callback when the png is actually there...
   var self = this;
   this.wireimg.onload = function() {
+      self.loaded_wireimg = true;
       self.Draw();
+  }  
+  this.wireimg_thumb.onload = function() {
+      self.loaded_thumbnail = true;
   }  
 }
 
@@ -155,6 +229,11 @@ WireView.prototype.Draw = function(fast)
     }
     this.min_u = gZoomRegion.plane[this.plane][0];
     this.max_u = gZoomRegion.plane[this.plane][1];
+  } else {
+    this.min_v = 0;
+    this.max_v = 3200;
+    this.min_u = 0;
+    this.max_u = gGeo.numWires(this.plane);
   }
   
   
@@ -214,19 +293,32 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
   this.ctx.clip();
   
-  if (this.show_image) {
+  if ($(this.ctl_show_wireimg).is(":checked")) {
     this.DrawImage(min_u,max_u, min_v, max_v, fast);
   }
 
-  if (this.show_hits && $('#ctl-hitmap-show-hits').is(':checked')) {
+  if ($(this.ctl_show_hits).is(":checked")) {
     this.DrawHits(min_u,max_u, min_v, max_v, fast);
   }
   
-  if(this.show_mc) {
+  if ($(this.ctl_show_clus).is(":checked")) {
+    this.DrawClusters(min_u,max_u, min_v, max_v, fast);
+  }
+
+  if ($(this.ctl_show_spoints).is(":checked")) {
+    this.DrawSpacepoints(min_u,max_u, min_v, max_v, fast);
+  }
+
+  if ($(this.ctl_show_tracks).is(":checked")) {
+    this.DrawTracks(min_u,max_u, min_v, max_v, fast);
+  }
+
+  
+  if ($(this.ctl_show_mc).is(":checked")) {
     this.DrawMC(min_u,max_u, min_v, max_v, fast);
   }  
 
-  if(this.show_blackout) {
+  if(this.zooming) {
     // Clip out the region
     this.ctx.fillStyle = "rgb(0,0,0)";
     var nwires = gGeo.numWires(this.plane);
@@ -286,13 +378,18 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 }
 
 
+
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
-  if(!this.wireimg) return;
-  if(fast)
-     if(!this.wireimg_thumb) return;
-
-
+  
+  if(fast) {
+    if(!this.loaded_thumbnail) return;
+    if(!this.wireimg) return;
+  } else {
+    if(!this.loaded_wireimg) return;
+    if(!this.wireimg_thumb) return;
+  }
+    console.log(this,this.wireimg);
 
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
@@ -359,6 +456,15 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.restore();   
 
 }
+
+WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
+{}
+
+WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
+{}
+
+WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
+{}
 
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
