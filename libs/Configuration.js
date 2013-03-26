@@ -20,5 +20,24 @@ $(function(){
       slide: function(event, ui) {$("#ctl-magnifier-size").val(ui.value);}
     }
   );
+  
+  gStateMachine.Bind('recordChange',CheckWireData);
 
 });
+
+function CheckWireData()
+{
+  if(!gRecord) return;
+  if(gRecord.cal && gRecord.cal.wireimg_url) {
+    $('#ctl-show-wireimg-cal').prop('disabled', false);
+  } else {
+    $('#ctl-show-wireimg-cal').prop('disabled', true);
+  }
+
+  if(gRecord.raw && gRecord.raw.wireimg_url) {
+    $('#ctl-show-wireimg-raw').prop('disabled', false);
+  } else {
+    $('#ctl-show-wireimg-raw').prop('disabled', true);
+  }
+
+}
