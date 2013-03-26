@@ -490,19 +490,27 @@ void wireOfChannel(int channel, int& plane, int& wire)
 
 void RecordComposer::composeCal() 
 {
-  JsonObject r;
-  TLeaf* lf = fTree->GetLeaf("recob::Wires_caldata__Reco.obj.fView");
-  if(!lf) {
-    // fOutput.add("cal","no leaf named recob::Wires_caldata__Reco.obj.fView");
+  
+  vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
+  if(leafnames.size()==0) {
+    fOutput.add("cal_warning","No cal Wire branch found in file.");
     return;
-  }
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("cal_warning","More than one cal Wir list found!");
+  } 
+  
+  std::string name = leafnames[0];
+  std::cout << "Looking at cal Wires object " << (name+"obj_").c_str() << endl;
+  TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
+  if(!lf) return;
   int nwires = lf->GetLen();
-
-  TreeElementLooter l(fTree,"recob::Wires_caldata__Reco.obj.fSignal");
+  
+  TreeElementLooter l(fTree,name+"obj.fSignal");
   if(!l.ok()) return;
   const std::vector<float> *ptr = l.get<std::vector<float>>(0);
   
-  
+  JsonObject r;
   size_t width = ptr->size();
   // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
   MakePng png(width,nwires,MakePng::palette_alpha,fPalette,fPaletteTrans);
@@ -591,20 +599,26 @@ void RecordComposer::composeCal()
 void RecordComposer::composeRaw()
 {
   
-  JsonObject r;
   
-  // Fixme: 
-  // This probably changes depending upon simulation method. This should work for now.
-  //   Idea: look through leaves for type of TLeafElement using  IsA() or dynamic cast.
-  //         Find an object which matches leaf->GetTypeName() of art::Wrapper<vector<raw::RawDigit> > 
-  //         or some crude regex match to that<
-  //         
-  std::string rawdigit_obj_name = "raw::RawDigits_daq__GenieGen.obj";
-  TLeaf* lf = fTree->GetLeaf((rawdigit_obj_name+".fChannel").c_str());
+  vector<string> leafnames = findLeafOfType("vector<raw::RawDigit>");
+  if(leafnames.size()==0) {
+    fOutput.add("raw_warning","No raw::RawDigit branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("raw_warning","More than one raw::RawDigit list found!");
+  } 
+  
+  std::string name = leafnames[0];
+  std::cout << "Looking at raw::RawDigit object " << (name+"obj_").c_str() << endl;
+  TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
+  if(!lf) return;
   int ndig = lf->GetLen();
+    
+  JsonObject r;
   ColorMap colormap;
   
-  TreeElementLooter l(fTree,rawdigit_obj_name+".fADC");
+  TreeElementLooter l(fTree,name+"obj.fADC");
   if(!l.ok()) return;
   const std::vector<short> *ptr = l.get<std::vector<short>>(0);
   // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
