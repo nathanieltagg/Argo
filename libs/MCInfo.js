@@ -41,7 +41,7 @@ MCInfo.prototype.NewRecord = function()
   var ints = mc.gtruth;
   for(var whichint=0;whichint<ints.length;whichint++) {
     var inter = ints[whichint];
-    console.log(inter.index);
+    // console.log(inter.index);
     h += "<h3 interaction='" + whichint+"'>";
     h += "<a href='#' >Interaction " + whichint + "</a></h3>";
     h += "<div>";
@@ -79,7 +79,7 @@ MCInfo.prototype.NewRecord = function()
     h += "Final State: <br/>";
     var fss = [];
     for(var i =0; i< mc.particles.length; i++) {
-      console.log(mc.particles[i],mc.particles[i].fmother);
+      // console.log(mc.particles[i],mc.particles[i].fmother);
       if(mc.particles[i].fmother==0) fss.push(mc.particles[i]);
     }
     h+= "<table border='0' class='mc-fs'>";
@@ -123,7 +123,7 @@ MCInfo.prototype.NewRecord = function()
   make_collapsibles(this.fElement);
 
 
-  console.log($(".accordion",this.fElement));
+  // console.log($(".accordion",this.fElement));
   $(".accordion",this.fElement).accordion({
       collapsible: true
      })

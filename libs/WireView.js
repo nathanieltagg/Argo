@@ -389,7 +389,6 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     if(!this.loaded_wireimg) return;
     if(!this.wireimg_thumb) return;
   }
-    console.log(this,this.wireimg);
 
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
@@ -479,6 +478,11 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle="rgba(0,0,255,0.5)";
+
+    if(p.fpdgCode == 22 || p.fpdgCode == 2112) {
+      // Make photons and neutrons colorless.
+      this.ctx.strokeStyle="rgba(0,0,0,0)";      
+    }
     for(var k=0;k<gSelectedTrajectories.length;k++) {
       if(p.ftrackId == gSelectedTrajectories[k]) {
         this.ctx.lineWidth = 2;

@@ -367,3 +367,14 @@ art::Wrapper<art::Assns<recob::Track,recob::SpacePoint,void> > recob::SpacePoint
                                                      ULong_t recob::Wires_caldata__Reco.obj.fRawDigit.key_
                                                        Int_t recob::Wires_caldata__Reco.obj.fView
                                                        Int_t recob::Wires_caldata__Reco.obj.fSignalType
+                                                       
+                                                       
+                                                       
+class __art__Assns_simb__MCTruth_simb__GTruth_void_ {
+ public:
+ __art__Assns_simb__MCTruth_simb__GTruth_void_();
+ virtual ~__art__Assns_simb__MCTruth_simb__GTruth_void_() throw();
+ ::std::vector<std::pair<art::Ptr<simb::MCTruth>,art::Ptr<simb::GTruth> > > ptrs_;
+ ::std::vector<std::pair<art::RefCore,unsigned long> > ptr_data_1_;
+ ::std::vector<std::pair<art::RefCore,unsigned long> > ptr_data_2_;
+};

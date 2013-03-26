@@ -84,7 +84,7 @@ TriDView.prototype.CreateFrame = function()
   // console.log("TriDView CreateFrame.");
   
   /// Simple frame.
-  console.log("Creating frame");
+  // console.log("Creating frame");
   
   var dx = 128.175*2;
   var dz = 518.4  *2;
