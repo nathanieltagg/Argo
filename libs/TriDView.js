@@ -40,11 +40,11 @@ function TriDView( element, options ){
     default_look_at:    [128.175,
                          0  ,
                          518.4  ],
-    default_camera_distance: 800,
+    default_camera_distance: 1300,
     camera_distance_max: 8000,
     camera_distance_min: 50,
-    default_theta: -0.25,
-    default_phi: 5.1,
+    default_theta: -0.224,
+    default_phi: 5.72,
   }
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad3d.call(this, element, settings); // Give settings to Pad contructor.
@@ -108,6 +108,13 @@ TriDView.prototype.CreateFrame = function()
   this.AddLine( 0, dy, 0 ,  0 , dy, dz,  3, curColor);
   this.AddLine(dx, dy, 0 ,  dx, dy, dz,  3, curColor);
 
+  // Optical detectors.
+  var dets = gGeo.opDets.opticalDetectors;
+  this.ctx.strokeStyle = "black";
+  for(var i=0;i<dets.length;i++){
+    var det = dets[i];
+    this.AddArcYZ(det.x,det.y,det.z,15.2,10,0,Math.PI*2,1,curColor,det);
+  }
   
   
   
@@ -168,8 +175,8 @@ TriDView.prototype.HoverObject = function(selected)
 
 TriDView.prototype.Click = function()
 {
-  gSelectedVertex = gHoverVertex;
-  gSelectedTrack = gHoverTrack; 
-  gStateMachine.Trigger('selectedHitChange');
+  // gSelectedVertex = gHoverVertex;
+  // gSelectedTrack = gHoverTrack; 
+  // gStateMachine.Trigger('selectedHitChange');
 }
 

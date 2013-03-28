@@ -101,7 +101,7 @@ function WireView( element, options )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
-  gStateMachine.BindObj('hoverChange',this,"Draw");
+  gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");
   
   gStateMachine.BindObj('phCutChange',this,"TrimHits");
   gStateMachine.BindObj('timeCutChange',this,"TrimHits");

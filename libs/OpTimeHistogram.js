@@ -56,7 +56,7 @@ function OpTimeHistogram( element  )
   
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('hoverChange',this,"Draw");
+  gStateMachine.BindObj('hoverChange_opdet',this,"Draw");
   
 }
 
