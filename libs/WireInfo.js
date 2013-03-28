@@ -57,7 +57,8 @@ function WireInfo( element  )
 
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj("hoverChange",this,"Draw");
+  gStateMachine.BindObj("hoverChange_wire",this,"Draw");
+  
   
 }
 

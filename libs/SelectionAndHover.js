@@ -11,16 +11,17 @@ function ChangeHover( obj, type, collection )
       type: type, obj: obj, collection: collection
     };
     console.log("Hover: ",obj);
-    gStateMachine.Trigger("hoverChange");
+    gStateMachine.Trigger("hoverChange_"+type);
   }
 }
 
 function ClearHover()
 {
   if(gHoverState.obj != null) {
+    var type = gHoverState.type;
     gHoverState.obj = null;
     gHoverState.type = "none";
     gHoverState.collection = null;
-    gStateMachine.Trigger("hoverChange");
+    gStateMachine.Trigger("hoverChange_"+type);
   }
 }
