@@ -15,7 +15,6 @@ $(function(){
 });
 
 gMCDigraph = null;
-gHoverMCParticle = null;
 gSelectedTrajectories = [];
 
 function MCDigraph( element )
@@ -95,7 +94,7 @@ MCDigraph.prototype.NewRecord = function()
         etext = Math.round(ke*1e6) + " keV";
       } 
       node.name = "<span style='float:left;'>" + particle_name + "</span><span style='float:right;'>"+etext+"</span>";
-      node.data = p;
+      node.data = { particle: p };
     }
     
     for(var i=0;i<particles.length; i++) {
@@ -234,16 +233,14 @@ MCDigraph.prototype.NewRecord = function()
     Events:{
       enable: true,
       onMouseEnter: function(node,eventInfo, e) {
-        gHoverMCParticle = node.data.ftrackId;
         $('.mc-jit-node-hover').removeClass("mc-jit-node-hover");
         $('#'+node.id).addClass("mc-jit-node-hover");
         console.log("HOVER:",node,eventInfo, e);
-        gStateMachine.Trigger('changeSelectedTrajectories');
+        ChangeHover(node.data.particle,"mcparticle",gRecord.mc.particles);
       },
       onMouseLeave: function(node,eventInfo, e) {
-        if(gHoverMCParticle == node.data.ftrackId) gHoverMCParticle = null;
         $('#'+node.id).removeClass("mc-jit-node-hover");        
-        gStateMachine.Trigger('changeSelectedTrajectories');
+        if(gHoverState.obj == node.data.particle) ClearHover();
       },
       // onClick:function(node){
       //     self.st.onClick(node.id);

@@ -21,6 +21,8 @@ var gOpDetMode = {
 }
 
 
+
+
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
@@ -48,11 +50,13 @@ function OpTimeHistogram( element  )
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
 
-  this.hist = null;
+  this.hist = new Histogram(10,0,5000);
+  
+  this.blandColorScale = new ColorScaleRGB(220,220,220);
   
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('opHitScaleChange',this,"Draw");
+  gStateMachine.BindObj('hoverChange',this,"Draw");
   
 }
 
@@ -78,7 +82,7 @@ OpTimeHistogram.prototype.NewRecord = function()
   tmin -= width*0.05;
   tmax += width*0.05;
   var nbins = Math.floor((tmax-tmin));
-  while(nbins>1000) nbins = Math.floor(nbins/2);
+  while(nbins>100) nbins = Math.floor(nbins/2);
   
   this.hist = new Histogram(nbins,tmin,tmax);
   for(var i=0;i<gRecord.ophits.length;i++) {
@@ -98,6 +102,34 @@ OpTimeHistogram.prototype.NewRecord = function()
   gOpDetMode.cut.max = tmax;
   
   this.Draw();
+}
+
+
+OpTimeHistogram.prototype.Draw = function( )
+{
+  if(this.hist) {
+    if(gHoverState.type == "opdet") {
+      this.SetHist(this.hist,this.blandColorScale);
+      // new histogram 
+      this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
+      for(var i=0;i<gRecord.ophits.length;i++) {
+        var oh = gRecord.ophits[i];
+        if(oh.opDetChan == gHoverState.obj.chan) {
+          if(gOpDetMode.weight != 1)
+            this.highlight_hist.Fill(oh[gOpDetMode.variable]*gOpDetMode.variableScale,oh[gOpDetMode.weight]);
+          else  
+            this.highlight_hist.Fill(oh[gOpDetMode.variable]*gOpDetMode.variableScale);          
+        }
+      }
+      this.AddHist(this.highlight_hist,gOpDetColorScaler);
+      
+    } else {
+      this.SetHist(this.hist,gOpDetColorScaler);
+    }
+  }
+  
+  HistCanvas.prototype.Draw.call(this);
+  
 }
 
 OpTimeHistogram.prototype.ChangeRange = function( minu,maxu )
