@@ -101,7 +101,7 @@ function WireView( element, options )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
-  gStateMachine.BindObj('changeSelectedTrajectories',this,"Draw");
+  gStateMachine.BindObj('hoverChange',this,"Draw");
   
   gStateMachine.BindObj('phCutChange',this,"TrimHits");
   gStateMachine.BindObj('timeCutChange',this,"TrimHits");
@@ -489,7 +489,8 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
         this.ctx.strokeStyle="rgba(255,255,20,1)";        
       }
     }
-    if(gHoverMCParticle == p.ftrackId) {
+
+    if(gHoverState.obj && gHoverState.obj.ftrackId === p.ftrackId){
       this.ctx.lineWidth = 2;
       this.ctx.strokeStyle="rgba(255,20,20,1)";
     }
@@ -597,9 +598,10 @@ WireView.prototype.DoMouse = function(ev)
     }
     
   } else {
-        gHoverWire = {channel: gGeo.channelOfWire(this.plane,this.fMouseU)};
-        gHoverWireSample = this.fMouseV;
-        gStateMachine.Trigger('hoverWireChange');
+    ChangeHover(  {channel: gGeo.channelOfWire(this.plane,this.fMouseU), 
+                   sample:  this.fMouseV
+                   }
+                , "wire");
   }
 
     

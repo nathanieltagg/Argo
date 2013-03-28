@@ -39,6 +39,10 @@ function OpHitMap( element  )
   gStateMachine.BindObj('opHitScaleChange',this,"Draw");
   
   this.ophits = [];
+
+  $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
+  $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
+
 }
 
 
@@ -78,8 +82,8 @@ OpHitMap.prototype.Draw = function()
   this.ctx.lineTo(x1,y1);
   this.ctx.stroke();
   
-  var pmtRadius = 15.2; // Size of the TPB Coating, according to the root geometry file.
-  var r = pmtRadius * this.span_x/(this.max_u-this.min_u); // Radius in screen pixels.
+  this.pmtRadius = 15.2; // Size of the TPB Coating, according to the root geometry file.
+  var r = this.pmtRadius * this.span_x/(this.max_u-this.min_u); // Radius in screen pixels.
   
   var dets = gGeo.opDets.opticalDetectors;
   this.ctx.strokeStyle = "black";
@@ -111,4 +115,27 @@ OpHitMap.prototype.Draw = function()
     this.ctx.arc(x,y,r,0,Math.PI*2);
     this.ctx.fill();
   }
+}
+
+OpHitMap.prototype.DoMouse = function(ev)
+{
+  var offset = getAbsolutePosition(this.element);
+  this.fMouseX = ev.pageX - offset.x;
+  this.fMouseY = ev.pageY - offset.y; 
+  this.fMouseU = this.GetU(this.fMouseX);
+  this.fMouseV = this.GetV(this.fMouseY);
+ 
+  var r2 = this.pmtRadius* this.pmtRadius;
+  
+  var dets = gGeo.opDets.opticalDetectors;
+  var hoverdet = null;
+  for(var i=0;i<dets.length;i++){
+    var det = dets[i];
+    var dx = (det.z - this.fMouseU);
+    var dy = (det.y - this.fMouseV);
+    var d2 = dx*dx + dy*dy;
+    if(d2<r2) hoverdet = det;
+  }
+  if(hoverdet) ChangeHover(hoverdet,"opdet",gGeo.opDets.opticalDetectors);
+  else ClearHover();
 }

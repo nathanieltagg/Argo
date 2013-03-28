@@ -8,8 +8,6 @@
 //
 
 // Global used by this.
-gHoverWire = null;
-gHoverWireSample = null;
 
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
@@ -59,7 +57,7 @@ function WireInfo( element  )
 
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj("hoverWireChange",this,"Draw");
+  gStateMachine.BindObj("hoverChange",this,"Draw");
   
 }
 
@@ -147,12 +145,11 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
 WireInfo.prototype.Draw = function()
 {
   $(this.txt_element).html('');
-  if(!gHoverWire) return;
-  
+  if(gHoverState.type != "wire") return;
 
   var h = "";
-  var tdc = Math.max(Math.floor(gHoverWireSample),0);
-  var chan = Math.floor(gHoverWire.channel);
+  var tdc = Math.max(Math.floor(gHoverState.obj.sample),0);
+  var chan = Math.floor(gHoverState.obj.channel);
   h += "Channel: " +  chan + '<br/>';
   var planewire = gGeo.wireOfChannel(chan);
   h += "Plane: " + planewire.plane + "  Wire: " +  planewire.wire + '<br/>';

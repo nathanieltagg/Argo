@@ -61,6 +61,8 @@
 <script type="text/javascript" src="libs/DataSource.js"></script> 
 <script type="text/javascript" src="libs/Keyboard.js"></script> 
 
+<script type="text/javascript" src="libs/SelectionAndHover.js"></script> 
+
 <script type="text/javascript" src="libs/EventInfo.js"></script> 
 <script type="text/javascript" src="libs/TimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/WireView.js"></script> 
