@@ -44,6 +44,7 @@
 
 <!--Core. -->
 <script type="text/javascript" src="core/Pad.js"></script>
+<script type="text/javascript" src="core/ButtressedPad.js"></script>
 <script type="text/javascript" src="core/ColorScale.js"></script>
 <script type="text/javascript" src="core/StateMachine.js"></script>
 <script type="text/javascript" src="core/Histogram.js"></script>
@@ -68,6 +69,8 @@
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
 <script type="text/javascript" src="libs/MCDigraph.js"></script> 
 <script type="text/javascript" src="libs/TriDView.js"></script> 
+<script type="text/javascript" src="libs/OpTimeHistogram.js"></script> 
+<script type="text/javascript" src="libs/OpHitMap.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
