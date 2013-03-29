@@ -39,6 +39,7 @@ function OpHitMap( element  )
   gStateMachine.BindObj('opHitScaleChange',this,"Draw");
   
   this.ophits = [];
+  this.drawn_flashes = [];
 
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
@@ -82,20 +83,52 @@ OpHitMap.prototype.Draw = function()
   this.ctx.lineTo(x1,y1);
   this.ctx.stroke();
   
+  // Draw Flashes.
+  this.drawn_flashes = [];
+  if(gRecord && gRecord.opflashes){
+    for(var i=0;i<gRecord.opflashes.length;i++){
+      var flash = gRecord.opflashes[i];
+      var x = this.GetX(flash.zCenter);
+      var y = this.GetY(flash.yCenter);
+      var wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
+      var wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
+      var w = flash.time*gOpDetMode.variableScale;
+      if(w<gOpDetMode.cut.min) continue;
+      if(w>gOpDetMode.cut.max) continue;
+      
+      this.drawn_flashes.push(
+        { flash: flash,
+          x: x,
+          y: y,
+          wx: wx,
+          wy: wy}
+      );
+      var c = gOpDetColorScaler.GetColor(w);
+      if(gHoverState.obj == flash) c = "0,0,0";
+      var grad = this.ctx.createRadialGradient(0,0,0, 0,0,1);
+      grad.addColorStop(0,   'rgba('+c+',1)'); // red
+      grad.addColorStop(1,   'rgba('+c+',0)'); // Transparent
+      this.ctx.save();
+      this.ctx.translate(x,y);
+      this.ctx.scale(wx,wy);
+      this.ctx.beginPath();
+      this.ctx.arc(0,0,1,0,Math.PI*2,true);
+      this.ctx.fillStyle=grad;
+      this.ctx.strokeStyle="#AAAAAA";
+      this.ctx.lineWidth=1/wx;
+      
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.restore()
+    }
+  }
+  
   this.pmtRadius = 15.2; // Size of the TPB Coating, according to the root geometry file.
   var r = this.pmtRadius * this.span_x/(this.max_u-this.min_u); // Radius in screen pixels.
   
-  var dets = gGeo.opDets.opticalDetectors;
-  this.ctx.strokeStyle = "black";
-  for(var i=0;i<dets.length;i++){
-    var det = dets[i];
-    var x = this.GetX(det.z);
-    var y = this.GetY(det.y);
-    this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*2);
-    this.ctx.stroke();
-  }
   
+  
+  // Draw OpHits
   for(var i=0;i<this.ophits.length;i++) {
     var oh = this.ophits[i];
 
@@ -109,12 +142,28 @@ OpHitMap.prototype.Draw = function()
     }
     var x = this.GetX(det.z);
     var y = this.GetY(det.y);
-    c = gOpDetColorScaler.GetColor(w);
+    var c = gOpDetColorScaler.GetColor(w);
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.beginPath();
     this.ctx.arc(x,y,r,0,Math.PI*2);
     this.ctx.fill();
   }
+  
+  // Draw PMTs
+  
+  var dets = gGeo.opDets.opticalDetectors;
+  this.ctx.strokeStyle = "black";
+  for(var i=0;i<dets.length;i++){
+    var det = dets[i];
+    if(det == gHoverState.obj) { this.ctx.lineWidth = 2;} 
+    else                       { this.ctx.lineWidth = 1;} 
+    var x = this.GetX(det.z);
+    var y = this.GetY(det.y);
+    this.ctx.beginPath();
+    this.ctx.arc(x,y,r,0,Math.PI*2);
+    this.ctx.stroke();
+  }
+  
 }
 
 OpHitMap.prototype.DoMouse = function(ev)
@@ -136,6 +185,22 @@ OpHitMap.prototype.DoMouse = function(ev)
     var d2 = dx*dx + dy*dy;
     if(d2<r2) hoverdet = det;
   }
-  if(hoverdet) ChangeHover(hoverdet,"opdet",gGeo.opDets.opticalDetectors);
-  else ClearHover();
+  if(hoverdet){
+     ChangeHover(hoverdet,"opdet",gGeo.opDets.opticalDetectors);
+  } else {
+    var hoverflash = null;
+    for(var i=0;i<this.drawn_flashes.length;i++) {
+      var df = this.drawn_flashes[i];
+      var dx = (df.x - this.fMouseX)/df.wx;
+      var dy = (df.y - this.fMouseY)/df.wy;
+      var dr2 = dx*dx + dy*dy;
+      if(dr2<1) hoverflash = df.flash;
+    }
+    if(hoverflash) {
+      ChangeHover(hoverflash,"opflash",gRecord.opflashes);
+    } else {
+      ClearHover();
+    }
+  } 
+  this.Draw();
 }

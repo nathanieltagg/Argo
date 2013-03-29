@@ -56,6 +56,16 @@ function TriDView( element, options ){
   var self = this;
   $(this.element) .bind('click',  function(ev)     { return self.Click(); });
  
+ 
+  this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
+  this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
+  this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
+
+  $(this.ctl_show_spoints).change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
+ 
+ 
   this.ResetView();
 }
 
@@ -68,13 +78,12 @@ TriDView.prototype.Rebuild = function ()
   this.objects = [];
   
   this.CreateFrame();
-  this.CreateTracks();
-  // if ($('#ctl-show-hitmap-tracks').is(':checked')) {  this.CreateTracks(); }
-  // if (this.show_hits)                              {  this.CreateStrips(); }
-  // if (this.show_minos_hits)                        {  this.CreateMinosStrips(); }
-  // 
-  // if ($('#ctl-show-hitmap-vertices').is(':checked')) { this.CreateVertices(); }
-  // if ($('#ctl-show-hitmap-clusters').is(':checked')) { this.CreateClusters(); }
+  if(!gRecord) return;
+
+  if ($(this.ctl_show_spoints).is(":checked")) this.CreateSpacepoints();
+  if ($(this.ctl_show_tracks ).is(":checked")) this.CreateTracks();
+  if ($(this.ctl_show_mc     ).is(":checked")) this.CreateMC();
+  
   this.Draw();
 }
 
@@ -135,12 +144,17 @@ TriDView.prototype.CreateTracks = function()
   }
 }
 
-TriDView.prototype.CreateClusters = function()
-{
-
+TriDView.prototype.CreateSpacepoints = function()
+{  
+  if(!gRecord.spacepoints) return;
+  for(var i=0;i<gRecord.spacepoints.length;i++) {
+    var sp = gRecord.spacepoints[i];
+    var curColor = "rgba(0, 100, 50, 1)";
+    this.AddLine(sp.xyz[0], sp.xyz[1], sp.xyz[2],sp.xyz[0], sp.xyz[1], sp.xyz[2]+0.3, 2, curColor, sp);
+  }
 }
 
-TriDView.prototype.CreateStrips = function()
+TriDView.prototype.CreateMC = function()
 {
  
 }

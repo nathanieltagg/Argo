@@ -15,7 +15,7 @@ gTimeHistogram = null;
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
   $('div.A-TimeHistogram').each(function(){
-    var o = new TimeHistogram(this);
+    gTimeHistogram = new TimeHistogram(this);
   });  
 });
 
@@ -25,8 +25,6 @@ TimeHistogram.prototype = new HistCanvas();
 
 function TimeHistogram( element  )
 {
-  gTimeHistogram = this;
-  gWireInfo = this;
   this.element = element;
   var settings = {
     xlabel: "Time (TDC)",
