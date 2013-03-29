@@ -179,6 +179,7 @@ MCDigraph.prototype.NewRecord = function()
         label.onclick = function(){
             self.st.onClick(node.id);
             self.DoClick(node,label);
+            return false;
         };
         var style = label.style;
         style.width = 70 + 'px';

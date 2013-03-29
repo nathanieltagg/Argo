@@ -83,10 +83,10 @@ function ZoomControl( element, options )
     // buttress_max_u :  1040,
     // buttress_min_v :  -120,
     // buttress_max_v :   120,
-    buttress_min_u :     -50,    // cm
-    buttress_max_u :  1090,
-    buttress_min_v :  -150,
-    buttress_max_v :   150,
+    buttress_min_u :     -10,    // cm
+    buttress_max_u :  1050,
+    buttress_min_v :  -125,
+    buttress_max_v :   125,
     min_u :     -50,    // cm
     max_u :  1090,
     min_v :  -150,
@@ -110,6 +110,14 @@ function ZoomControl( element, options )
   $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
   $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
+ 
+  this.ctl_zoom_auto    =  GetBestControl(this.element,".zoom-auto");
+  this.ctl_zoom_full    =  GetBestControl(this.element,".zoom-full");
+
+  $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
+  $(this.ctl_zoom_full  ).click(function(ev) { return self.FullZoom(); }); 
+ 
+ 
  
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('zoomChange',this,"Draw");
@@ -150,6 +158,19 @@ ZoomControl.prototype.AutoZoom = function()
   } else {
     gZoomRegion.setLimits(2,0,3456);
   };
+  
+  gStateMachine.Trigger("zoomChange");
+}
+
+ZoomControl.prototype.FullZoom = function()
+{
+  gTimeCut[0] = 0;
+  gTimeCut[1] = 3200;
+  
+  var h = gGeo.numWires(2)/2;
+  gZoomRegion.setLimits(0,gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h);
+  gZoomRegion.setLimits(1,gGeo.numWires(1)/2-h,gGeo.numWires(1)/2+h);
+  gZoomRegion.setLimits(2,0,gGeo.numWires(2));
   
   gStateMachine.Trigger("zoomChange");
 }
@@ -274,11 +295,16 @@ ZoomControl.prototype.Draw = function()
     this.ctx.stroke();
   }
   
-  var txt = Math.round(gZoomRegion.plane[0][0]) + "-" + Math.round(gZoomRegion.plane[0][1]) + "  /  "
-          + Math.round(gZoomRegion.plane[1][0]) + "-" + Math.round(gZoomRegion.plane[1][1]) + "  /  "
-          + Math.round(gZoomRegion.plane[2][0]) + "-" + Math.round(gZoomRegion.plane[2][1]) ;
+  
+  // var txt = Math.round(gZoomRegion.plane[0][0]) + "-" + Math.round(gZoomRegion.plane[0][1]) + "  /  "
+  //         + Math.round(gZoomRegion.plane[1][0]) + "-" + Math.round(gZoomRegion.plane[1][1]) + "  /  "
+  //         + Math.round(gZoomRegion.plane[2][0]) + "-" + Math.round(gZoomRegion.plane[2][1]) ;
+  var txt = "";
+  txt += "<span style='color: red'  >Plane 0: Wire " + Math.round(gZoomRegion.plane[0][0]) + " to " + Math.round(gZoomRegion.plane[0][1]) + "</span>&nbsp;&nbsp;";
+  txt += "<span style='color: green'>Plane 1: Wire " + Math.round(gZoomRegion.plane[1][0]) + " to " + Math.round(gZoomRegion.plane[1][1]) + "</span>&nbsp;&nbsp;";
+  txt += "<span style='color: blue' >Plane 2: Wire " + Math.round(gZoomRegion.plane[2][0]) + " to " + Math.round(gZoomRegion.plane[2][1]) + "</span>&nbsp;&nbsp;";
         
-  $('span.ZoomControl-Info').text(txt);
+  $('span.ZoomControl-Info').html(txt);
   
 }
 
