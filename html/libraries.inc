@@ -65,6 +65,7 @@
 
 <script type="text/javascript" src="libs/EventInfo.js"></script> 
 <script type="text/javascript" src="libs/TimeHistogram.js"></script> 
+<script type="text/javascript" src="libs/WireHistogram.js"></script> 
 <script type="text/javascript" src="libs/WireView.js"></script> 
 <script type="text/javascript" src="libs/WireInfo.js"></script> 
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
