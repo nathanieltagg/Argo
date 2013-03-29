@@ -12,6 +12,11 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+///
+/// A bunch of work trying to get a nice false-color scale.
+///
+/// uses http://www.tinaja.com/glib/falseclr.pdf for inspiration if not outright theft.
+
 
 vector<float> return3vector(float a, float b, float c) {
   vector<float> v(3);

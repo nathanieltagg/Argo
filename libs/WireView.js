@@ -606,7 +606,7 @@ WireView.prototype.DoMouse = function(ev)
 
     
   if(ev.type === 'mousedown') {
-      this.fDragging = true;
+      if(this.zooming) this.fDragging = true;
       this.fMouseStartX = this.fMouseX;
       this.fMouseStartY = this.fMouseY;
       this.fMouseStartU = this.fMouseU;
