@@ -23,6 +23,16 @@ $(function(){
   
   gStateMachine.Bind('recordChange',CheckWireData);
 
+
+  $('#ctl-lock-aspect-ratio').change(function() {
+    // Force the zoom system to acknowledge the change, by 
+    // making a null zoom.
+    if($(this).is(":checked")) {
+      gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
+      gStateMachine.Trigger("zoomChange");
+    }
+  });
+
 });
 
 function CheckWireData()

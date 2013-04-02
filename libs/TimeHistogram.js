@@ -8,7 +8,6 @@
 //
 
 // Globals:
-gTimeCut = [0,3200];
 gTimeHistogram = null;
 
 // Automatic runtime configuration.
@@ -49,8 +48,8 @@ function TimeHistogram( element  )
 
 TimeHistogram.prototype.Change = function()
 {
-  this.min_u = gTimeCut[0];
-  this.max_u = gTimeCut[1];
+  this.min_u = gZoomRegion.tdc[0];
+  this.max_u = gZoomRegion.tdc[1];
   this.Draw();
 }
 
@@ -70,7 +69,7 @@ TimeHistogram.prototype.NewRecord = function()
   this.ResetToHist(this.hist);
   this.bound_u_min = gRecord.header.TDCStart;
   this.bound_u_max = gRecord.header.TDCEnd;
-  gTimeCut = [ gRecord.header.TDCStart, gRecord.header.TDCEnd ];
+  gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
   
   this.Draw();
 }
@@ -79,10 +78,10 @@ TimeHistogram.prototype.FinishRangeChange = function()
 {
   // Select our time window so it's compatible with the 
   // TDC bounds
-  gTimeCut = [ 
+  gZoomRegion.changeTimeRange( 
               Math.max(this.min_u, gRecord.header.TDCStart)
             , Math.min(this.max_u, gRecord.header.TDCEnd )
-            ];
+          );
   gStateMachine.Trigger("TimeCutChange");
 }
 
@@ -90,9 +89,9 @@ TimeHistogram.prototype.FastRangeChange = function()
 {
   // Select our time window so it's compatible with the 
   // TDC bounds
-  gTimeCut = [ 
+  gZoomRegion.changeTimeRange(
               Math.max(this.min_u, gRecord.header.TDCStart)
             , Math.min(this.max_u, gRecord.header.TDCEnd )
-            ];
+          );
   gStateMachine.Trigger("zoomChangeFast");
 }
