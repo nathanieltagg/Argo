@@ -21,6 +21,9 @@ function ZoomRegion() {
                  [ gGeo.numWires(1)/2-250, gGeo.numWires(1)/2+250 ],
                  [ gGeo.numWires(2)/2-250, gGeo.numWires(2)/2+250 ] ];
 
+  this.tdc = [0,3200];
+
+  this.wireview_aspect_ratio = 1.0;
                  
   this.copy = function() {
     return $.extend(true,{},this);
@@ -43,6 +46,22 @@ function ZoomRegion() {
     return dwire;
   }
 
+  this.changeTimeRange = function(low,high)
+  {
+    this.tdc=[low,high];
+    if($('#ctl-lock-aspect-ratio').is(":checked")) {
+      
+      var newWireWidth = (high-low) / (gGeo.fTdcWirePitch * this.wireview_aspect_ratio);    
+      console.log("adjusting for aspect ratio ",newWireWidth);
+      for(var ip=0;ip<3;ip++) {
+        var center = (this.plane[ip][0]+this.plane[ip][1])/2;
+        this.plane[ip][0] = center - newWireWidth/2;
+        this.plane[ip][1] = center + newWireWidth/2;
+      }
+
+    }    
+  }
+
   this.moveZoomCenter = function(plane,deltaWire)
   {
     var dwire = this.getDWire(plane,deltaWire);
@@ -62,6 +81,13 @@ function ZoomRegion() {
     for(var ip=0;ip<3;ip++) {
       this.plane[ip][0] = oldCenter[ip]+dcenter[ip] - halfWidth;
       this.plane[ip][1] = oldCenter[ip]+dcenter[ip] + halfWidth;
+    }
+    
+    if($('#ctl-lock-aspect-ratio').is(":checked")) {    
+      var newTDCHalfWidth = halfWidth * gGeo.fTdcWirePitch * this.wireview_aspect_ratio;    
+      var centerTdc = (this.tdc[0] + this.tdc[1])/2;
+      this.tdc[0] = centerTdc - newTDCHalfWidth;
+      this.tdc[1] = centerTdc + newTDCHalfWidth;    
     }
   }
   
@@ -135,11 +161,11 @@ ZoomControl.prototype.AutoZoom = function()
   if(source.timeHist){
     var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
     var time_bounds = timeHist.GetROI(0.01);
-    gTimeCut[0] = time_bounds[0]-20;
-    gTimeCut[1] = time_bounds[1]+20;  
+    gZoomRegion.tdc[0] = time_bounds[0]-20;
+    gZoomRegion.tdc[1] = time_bounds[1]+20;  
   } else {
-    gTimeCut[0] = 0;
-    gTimeCut[1] = 3200;
+    gZoomRegion.tdc[0] = 0;
+    gZoomRegion.tdc[1] = 3200;
   }
   
   if(source.planeHists) {
@@ -164,8 +190,7 @@ ZoomControl.prototype.AutoZoom = function()
 
 ZoomControl.prototype.FullZoom = function()
 {
-  gTimeCut[0] = 0;
-  gTimeCut[1] = 3200;
+  gZoomeRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
   
   var h = gGeo.numWires(2)/2;
   gZoomRegion.setLimits(0,gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h);

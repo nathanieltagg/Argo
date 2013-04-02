@@ -25,6 +25,7 @@
         </div>
         <div><input type="checkbox" id="ctl-show-labels" name="ctl-show-labels" checked="yes" class="saveable"/><label for="ctl-show-labels">Draw Axis Labels</label></div>
         <div><input type="checkbox" id="ctl-show-tick-labels" name="ctl-show-tick-labels" checked="yes" class="saveable"/><label for="ctl-show-tick-labels">Draw Tick Values</label></div>
+        <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio"             class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
         <div><input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" class="saveable show-wireimg" checked="yes"/><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>
         <div>&nbsp;&nbsp;&nbsp;&nbsp;
           <input type="radio" id="ctl-show-wireimg-raw" value="raw" name="show-wireimg-type" class="saveable show-wireimg-raw"              ><label for="show-wireimg-raw">Raw</label>

@@ -24,7 +24,6 @@ gPhColorScaler.max=10;
 
 // Global cuts
 gPhCut   = { min: null, max: null };
-gTimeCut = { min: null, max: null };
 gShowFlaggedHitsOnly = false;
 
 

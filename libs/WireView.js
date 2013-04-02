@@ -135,6 +135,12 @@ function WireView( element, options )
   });
 }
 
+WireView.prototype.Resize = function()
+{
+  Pad.prototype.Resize.call(this);
+  gZoomRegion.wireview_aspect_ratio = this.span_y/this.span_x;
+}
+
 
 WireView.prototype.NewRecord = function()
 {
@@ -223,10 +229,8 @@ WireView.prototype.Draw = function(fast)
 {
   // Reset bounds if appropriate
   if(this.zooming) {
-    if(gTimeCut) {
-      this.min_v = gTimeCut[0];
-      this.max_v = gTimeCut[1];
-    }
+    this.min_v = gZoomRegion.tdc[0];
+    this.max_v = gZoomRegion.tdc[1];
     this.min_u = gZoomRegion.plane[this.plane][0];
     this.max_u = gZoomRegion.plane[this.plane][1];
   } else {
@@ -557,7 +561,7 @@ WireView.prototype.DoMouse = function(ev)
   } else {
     mouse_area = "body";
   }
-  if(!this.fDragging) {
+  if(this.zooming) {
     // Change cursor.
     switch(mouse_area) {
       case "body":         this.canvas.style.cursor = "move";      break;
@@ -577,8 +581,7 @@ WireView.prototype.DoMouse = function(ev)
       
       var dy = this.fMouseY - this.fMouseLastY;
       var dv = dy * (this.max_v-this.min_v)/(this.span_y);
-      gTimeCut[0] += dv;
-      gTimeCut[1] += dv;
+      gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] + dv, gZoomRegion.tdc[1] + dv);
       
       this.fMouseLastX = this.fMouseX;
       this.fMouseLastY = this.fMouseY;
@@ -593,7 +596,7 @@ WireView.prototype.DoMouse = function(ev)
       var rely =  this.origin_y - this.fMouseY;
       if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
       var new_max_v = this.span_y * (this.fMouseStartV-this.min_v)/rely + this.min_v;
-      gTimeCut[1] = new_max_v;
+      gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] , new_max_v);
     
     }
     
