@@ -106,6 +106,8 @@ $(function(){
     <div class='portlet-header' id ='zooming'>    Zooming and Panning      </div>
     <div class='portlet-content'>
       
+      <div class="floatleft"><iframe width="320" height="180" src="http://www.youtube.com/embed/xZy68ZLe6PQ?autoplay=1&loop=1&playlist=xZy68ZLe6PQ" frameborder="0" allowfullscreen></iframe></div>
+      
       <h3> Histograms </h3>
       <p> To pan the histogram content left and right, click and drag in the histogram body. </p>
       <p> To change the scale of the histogram, click on the horizontal axis and drag left and right. </p>
@@ -118,8 +120,10 @@ $(function(){
       <p> Drag in the body of the image to pan in wire number or TDC.  Drag the axes to change the scale. </p>
       <p> The Time Histogram pane stays zoomed on the same region as the wire views.</p>
       <p> Note that the three wire views will all zoom together, so that the number of wires on the horizontal axes 
-        stay the same, and the TDC count all stays the same. (Note, however, the aspect ratio between wire and TDC is allowed to 
-        vary at present.) </p>
+        stay the same, and the TDC count all stays the same. If you click the checkbox marked <strong>Lock TDC?/Wire Aspect Ratio</strong>
+        then the TDC and Wire axes will stay locked so that views are proportional. This is useful for
+        estimating angles, which will otherwise be distorted.
+       </p>
         <img class='floatright' src='zoom-control.png' width='200px' />
       <p> The 'Zoom Control' pane shows a picture of which wires you are looking at, as looking at the back of the
         ZY wire plane. The red stripe indicates the wires you that are visible in plane 0 (view 0), the green is plane 1, and the blue is

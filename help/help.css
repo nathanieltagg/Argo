@@ -37,6 +37,10 @@ img {
   float: right;
 }
 
+.floatleft {
+  float: left;
+}
+
 table.keys td,th{
   text-align: left;
 }
