@@ -171,15 +171,19 @@ ZoomControl.prototype.AutoZoom = function()
   if(source.planeHists) {
     var plane0Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[0]);
     var plane0_bounds = plane0Hist.GetROI(0.01);
-    gZoomRegion.setLimits(0,plane0_bounds[0],plane0_bounds[1]);
+    console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1]);
 
     var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
     var plane1_bounds = plane1Hist.GetROI(0.01);
-    gZoomRegion.setLimits(0,plane1_bounds[0],plane1_bounds[1]);
+    console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1]);
 
     var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
     var plane2_bounds = plane2Hist.GetROI(0.01);
+    console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1]);
     // Add 10 wires to either side.
+
+    gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
+    gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
     gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
   } else {
     gZoomRegion.setLimits(2,0,3456);
@@ -328,7 +332,12 @@ ZoomControl.prototype.Draw = function()
   txt += "<span style='color: red'  >Plane 0: Wire " + Math.round(gZoomRegion.plane[0][0]) + " to " + Math.round(gZoomRegion.plane[0][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: green'>Plane 1: Wire " + Math.round(gZoomRegion.plane[1][0]) + " to " + Math.round(gZoomRegion.plane[1][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: blue' >Plane 2: Wire " + Math.round(gZoomRegion.plane[2][0]) + " to " + Math.round(gZoomRegion.plane[2][1]) + "</span>&nbsp;&nbsp;";
-        
+  if(this.fMousing) {
+    txt += "<br/><span style='color:black'>Mouse:</span> "
+        +"<span style='color: red'  >"+this.fMousedWires[0]+'</span> '
+        +"<span style='color: green'>"+this.fMousedWires[1]+'</span> '
+        +"<span style='color: blue' >"+this.fMousedWires[2]+'</span> ';
+  }
   $('span.ZoomControl-Info').html(txt);
   
 }

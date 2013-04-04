@@ -12,9 +12,9 @@ function DataSource()
   
   $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { QueryServer('fe'); }});
   $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { QueryServer('fe'); }});
-  $('#go_fe').click(function(){QueryServer('fe'); return false;});
-  $('button.next-event').click(DoNextEvent);
-  $('button.prev-event').click(DoPrevEvent);
+  $('#go_fe').button().click(function(){QueryServer('fe'); return false;});
+  $('button.next-event').button().click(DoNextEvent);
+  $('button.prev-event').button().click(DoPrevEvent);
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");  
 }

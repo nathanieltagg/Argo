@@ -297,30 +297,33 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
   this.ctx.clip();
   
-  if ($(this.ctl_show_wireimg).is(":checked")) {
-    this.DrawImage(min_u,max_u, min_v, max_v, fast);
-  }
+  if(gRecord) {
+    if ($(this.ctl_show_wireimg).is(":checked")) {
+      this.DrawImage(min_u,max_u, min_v, max_v, fast);
+    }
 
-  if ($(this.ctl_show_hits).is(":checked")) {
-    this.DrawHits(min_u,max_u, min_v, max_v, fast);
-  }
-  
-  if ($(this.ctl_show_clus).is(":checked")) {
-    this.DrawClusters(min_u,max_u, min_v, max_v, fast);
-  }
+    if ($(this.ctl_show_hits).is(":checked")) {
+      this.DrawHits(min_u,max_u, min_v, max_v, fast);
+    }
 
-  if ($(this.ctl_show_spoints).is(":checked")) {
-    this.DrawSpacepoints(min_u,max_u, min_v, max_v, fast);
-  }
+    if ($(this.ctl_show_clus).is(":checked")) {
+      this.DrawClusters(min_u,max_u, min_v, max_v, fast);
+    }
 
-  if ($(this.ctl_show_tracks).is(":checked")) {
-    this.DrawTracks(min_u,max_u, min_v, max_v, fast);
-  }
+    if ($(this.ctl_show_spoints).is(":checked")) {
+      this.DrawSpacepoints(min_u,max_u, min_v, max_v, fast);
+    }
 
-  
-  if ($(this.ctl_show_mc).is(":checked")) {
-    this.DrawMC(min_u,max_u, min_v, max_v, fast);
-  }  
+    if ($(this.ctl_show_tracks).is(":checked")) {
+      this.DrawTracks(min_u,max_u, min_v, max_v, fast);
+    }
+
+
+    if ($(this.ctl_show_mc).is(":checked")) {
+      this.DrawMC(min_u,max_u, min_v, max_v, fast);
+    }  
+
+  }
 
   if(this.zooming) {
     // Clip out the region
@@ -461,13 +464,102 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 }
 
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
-{}
+{
+  // ID: 0
+  // dQdW: -999
+  // dTdW: -999
+  // endPos: Object
+  // sigmaEndPos: Object
+  // sigmaStartPos: Object
+  // sigmadQdW: 0
+  // sigmadTdW: 0
+  // startPos: Object
+  // totalCharge: 279631.85
+  // view: 2
+  
+  var clusters = gRecord.clusters;
+  if(!clusters) return;
+  for(var i = 0; i<clusters.length;i++) {
+    var clus = clusters[i];
+    if(clus.view != this.plane) continue;
+    // console.log(
+    //   "clus on plane ",this.plane 
+    // ,clus.startPos.wire
+    // ,clus.endPos  .wire
+    // ,clus.startPos.tdc 
+    // ,clus.endPos  .tdc 
+    // )
+    var x1 = this.GetX(clus.startPos.wire);
+    var x2 = this.GetX(clus.endPos  .wire);
+    var y1 = this.GetY(clus.startPos.tdc );
+    var y2 = this.GetY(clus.endPos  .tdc );
+    this.ctx.fillStyle = "orange";
+    this.ctx.beginPath();
+    this.ctx.moveTo(x1,y1);
+    this.ctx.lineTo(x1,y2);
+    this.ctx.lineTo(x2,y2);
+    this.ctx.lineTo(x2,y1);
+    this.ctx.lineTo(x1,y1);
+    this.ctx.fill();
+  }
+  
+}
 
 WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
-{}
+{
+  var sps = gRecord.spacepoints;
+  if(!sps) return;
+  this.ctx.save();
+  for(var i = 0; i<sps.length;i++) {
+    var sp = sps[i];
+    this.ctx.fillStyle = "rgba(0, 150, 150, 1)";
+    this.ctx.strokeStyle = "rgba(0, 150, 150, 1)";
+    this.ctx.lineWidth = 1;
+    var u = gGeo.yzToWire(this.plane,sp.xyz[1],sp.xyz[2]);
+    var v = gGeo.getTDCofX(this.plane,sp.xyz[0]); // FIXME: Only true for beam MC events!
+    var ru = 1; // one wire.
+    if(i<5) console.warn("spacepoint plane",this.plane,u,v,ru);
+    var x = this.GetX(u);
+    var y = this.GetY(v);
+    var r = this.GetX(u+ru) - x;
+    this.ctx.beginPath();
+    this.ctx.arc(x,y,r,0,2*Math.PI);
+      if(i<5) console.warn("spacepoint plane",this.plane,x,y,r,0,2*Math.Pi);
+    
+    this.ctx.fill();
+    if(r>4) this.ctx.strokeStyle="black"; // Dots are big enough that showing the outline is worth it.
+    // Accidental visual cleverness: if the radius of the circle is too small to see,
+    // this will blow it up to ~2 pixels, the line width of the circle!
+    this.ctx.stroke();
+  }
+  this.ctx.restore();
+}
 
 WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
-{}
+{
+  var tracks = gRecord.tracks;
+  if(!tracks) return;
+  this.ctx.save();
+  for(var i=0;i<tracks.length;i++)
+  {
+    var trk = tracks[i];
+    var points = trk.points;
+    if(points.length<1) continue;
+    this.ctx.strokeStyle = "black";
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    for(var j=0;j<points.length;j++) {
+      var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
+      var v = gGeo.getTDCofX(this.plane,points[j].x);
+      var x = this.GetX(u);
+      var y = this.GetY(v);
+      if(j==0) this.ctx.moveTo(x,y);
+      else     this.ctx.lineTo(x,y);
+    }
+    this.ctx.stroke();
+  }
+  this.ctx.restore();
+}
 
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
