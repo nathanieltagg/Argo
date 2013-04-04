@@ -228,12 +228,11 @@ span.keypress-hint {
   
 }
 
+.ui-button .ui-button-text
+{
+   padding: 4px 4px 4px 4px !important;
+ }
 
-/*.portlet-content button {
-  font-family: Arial, Verdana;
-  font-size: auto;
-}
-*/
 #event-info div.collapsible {
   vertical-align: top;
   display:inline-block;

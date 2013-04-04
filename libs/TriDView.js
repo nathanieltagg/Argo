@@ -149,7 +149,7 @@ TriDView.prototype.CreateSpacepoints = function()
   if(!gRecord.spacepoints) return;
   for(var i=0;i<gRecord.spacepoints.length;i++) {
     var sp = gRecord.spacepoints[i];
-    var curColor = "rgba(0, 100, 50, 1)";
+    var curColor = "rgba(0, 150, 150, 1)";
     this.AddLine(sp.xyz[0], sp.xyz[1], sp.xyz[2],sp.xyz[0], sp.xyz[1], sp.xyz[2]+0.3, 2, curColor, sp);
   }
 }

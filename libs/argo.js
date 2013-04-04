@@ -295,7 +295,7 @@ $(function(){
     
   }
 
-  $('#ctl-save-config').click(function() {
+  $('#ctl-save-config').button().click(function() {
     SaveSettings("save");
   });
 
@@ -371,13 +371,13 @@ $(function(){
       });
   }
 
-  $('#ctl-load-config').click(function(){
+  $('#ctl-load-config').button().click(function(){
     RestoreSettings("save");
   });
 
   
   // Clear all cookies.
-  $("#ctl-restore-defaults").click(function(){
+  $("#ctl-restore-defaults").button().click(function(){
   	var Cookies = document.cookie.split(";");
 
   	for ( var Cnt=0; Cnt < Cookies.length; Cnt++ ) {

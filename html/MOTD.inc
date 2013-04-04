@@ -8,14 +8,6 @@
   </p>
   Recent updates: <br/>
   <ul>
-    <li> Event info </li>
-    <li> Improved backend data looter</li>
-    <li> Reorganize wire views; include 'large' view. Controls active.</li>
-    <li> 3D tracks </li>
-    <li> Sophisticated MC Digraph; MC on hitmaps </li>
-    <li> Auto-zoom on event load. Fix artifacts at corners of zoom control. </li>
-    <li> Wire views now allow active panning and scaling </li>
-    <li> Basic Monte-Carlo info now shown </li>
-    <li> Thumbnail-based fast scrolling </li>
+    <li> Clusters, spacepoints, and tracks in wireviews </li>
   </ul>
 </div> 
