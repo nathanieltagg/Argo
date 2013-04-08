@@ -27,6 +27,8 @@ body {
         image-rendering: crisp-edges;
         -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
 
+        -webkit-print-color-adjust:exact;  /* When printing in Chrome, include BG images in PDF*/
+
         font-size: 10pt;
 }
 
