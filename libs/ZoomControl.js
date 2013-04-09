@@ -337,8 +337,9 @@ ZoomControl.prototype.Draw = function()
   txt += "<span style='color: red'  >Plane 0: Wire " + Math.round(gZoomRegion.plane[0][0]) + " to " + Math.round(gZoomRegion.plane[0][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: green'>Plane 1: Wire " + Math.round(gZoomRegion.plane[1][0]) + " to " + Math.round(gZoomRegion.plane[1][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: blue' >Plane 2: Wire " + Math.round(gZoomRegion.plane[2][0]) + " to " + Math.round(gZoomRegion.plane[2][1]) + "</span>&nbsp;&nbsp;";
+  txt += "<br/>"
   if(this.fMousing) {
-    txt += "<br/><span style='color:black'>Mouse:</span> "
+    txt += "<span style='color:black'>Mouse:</span> "
         +"<span style='color: red'  >"+this.fMousedWires[0]+'</span> '
         +"<span style='color: green'>"+this.fMousedWires[1]+'</span> '
         +"<span style='color: blue' >"+this.fMousedWires[2]+'</span> ';
