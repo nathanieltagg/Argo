@@ -14,6 +14,7 @@
           <span class="trid-ctl trid-pan-downstream"  >Pan Downstream</span>
           <input type="checkbox" class="trid-ctl trid-autorotate" id="trid-check1" /><label for="trid-check1">AutoRotate</label>
           <span class="trid-ctl trid-reset"     >Reset</span>
+          <span class="trid-ctl trid-create-animation"     >Animate</span>
           <span class="trid-ctl-mouse-set">
           		<input type="radio" class="trid-ctl trid-ctl-mouse-rotate" name="trid-radio" id="trid-radio1" value="rotate" checked="yes"/><label for="trid-radio1">Mouse Rotate</label>
           		<input type="radio" class="trid-ctl trid-ctl-mouse-pan"    name="trid-radio" id="trid-radio2" value="pan" />             <label for="trid-radio2">Mouse Pan</label>

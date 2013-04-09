@@ -811,7 +811,8 @@ void RecordComposer::compose()
   // parse options.
   int doCal = 1;
   int doRaw = 1;
-  if( std::string::npos != fOptions.find("_WIRES_")) doCal = 1;
+  if( std::string::npos != fOptions.find("_NOCAL_")) doCal = 0;
+  if( std::string::npos != fOptions.find("_NORAW_")) doRaw = 0;
 
   // Set branches to read here.
   fTree->SetBranchStatus("*",1);  // By default, read all.

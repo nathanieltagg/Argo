@@ -21,6 +21,13 @@
 <script type="text/javascript" src="js/canvas.text.js"></script>
 <script type="text/javascript" src="js/jit.js"></script>
 
+<!-- for creating animated gifs. -->
+<script type="text/javascript" src="js/LZWEncoder.js"></script>
+<script type="text/javascript" src="js/NeuQuant.js"></script>
+<script type="text/javascript" src="js/GIFEncoder.js"></script>
+<script type="text/javascript" src="js/b64.js"></script>
+
+
 <!-- firebug lite, for debugging on random browswers. -->
 <!-- <script type='text/javascript' 
         src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
