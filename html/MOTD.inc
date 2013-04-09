@@ -8,6 +8,7 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> Fix up auto-zoom a bit. </li>
     <li> Clusters, spacepoints, and tracks in wireviews </li>
   </ul>
 </div> 
