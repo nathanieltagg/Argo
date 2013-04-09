@@ -57,10 +57,14 @@ function TriDView( element, options ){
   $(this.element) .bind('click',  function(ev)     { return self.Click(); });
  
  
+  this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
+  this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
 
+  $(this.ctl_show_hits).change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_clus).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_spoints).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
@@ -80,6 +84,8 @@ TriDView.prototype.Rebuild = function ()
   this.CreateFrame();
   if(!gRecord) return;
 
+  if ($(this.ctl_show_hits).is(":checked"))    this.CreateHits();
+  if ($(this.ctl_show_clus).is(":checked"))    this.CreateClusters();
   if ($(this.ctl_show_spoints).is(":checked")) this.CreateSpacepoints();
   if ($(this.ctl_show_tracks ).is(":checked")) this.CreateTracks();
   if ($(this.ctl_show_mc     ).is(":checked")) this.CreateMC();
@@ -128,6 +134,32 @@ TriDView.prototype.CreateFrame = function()
   
   
 }
+
+TriDView.prototype.CreateHits = function()
+{
+  if(!gHits) return;
+  var cs = new ColorScaler();  
+  cs.max = 2000;
+
+
+  for(var i=0;i<gHits.length;i++) {
+    var h = gHits[i];
+    if(h.t1 > gZoomRegion.tdc[1]) continue;
+    if(h.t2 < gZoomRegion.tdc[0]) continue;
+    var gwire = gGeo.getWire(h.plane,h.wire);
+    var c = cs.GetColor(h.q);
+    var color = "rgba(" + c + ",0.2)";
+    var x = gGeo.getXofTDC(h.plane,h.t);
+    // if(h.view<2) continue;
+    this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, h);    
+  }
+}
+
+TriDView.prototype.CreateClusters = function()
+{
+  
+}
+
 
 TriDView.prototype.CreateTracks = function()
 {

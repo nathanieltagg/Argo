@@ -8,6 +8,7 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> Add hits in 3d view. </li>
     <li> Fix up auto-zoom a bit. </li>
     <li> Clusters, spacepoints, and tracks in wireviews </li>
   </ul>
