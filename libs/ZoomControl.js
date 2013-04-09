@@ -160,7 +160,7 @@ ZoomControl.prototype.AutoZoom = function()
   
   if(source.timeHist){
     var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
-    var time_bounds = timeHist.GetROI(0.01);
+    var time_bounds = timeHist.GetROI(0.03);
     gZoomRegion.tdc[0] = time_bounds[0]-20;
     gZoomRegion.tdc[1] = time_bounds[1]+20;  
   } else {
@@ -199,7 +199,7 @@ ZoomControl.prototype.AutoZoom = function()
 
 ZoomControl.prototype.FullZoom = function()
 {
-  gZoomeRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
+  gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
   
   var h = gGeo.numWires(2)/2;
   gZoomRegion.setLimits(0,gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h);
