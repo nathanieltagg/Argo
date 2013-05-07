@@ -10,12 +10,12 @@ gSelectedTrack = null;
 
 function DoInitialBookmarking()
 {
-  gHits = null;
+  gHits = [];
   if(gRecord.hits) {
     if(gRecord.hits.hits) {
       gHits = gRecord.hits.hits;
     }
   }
-  gTracks = null;
+  gTracks = [];
   if(gRecord.tracks) gTracks=gRecord.tracks;
 }

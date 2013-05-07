@@ -481,7 +481,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   if(!clusters) return;
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
-    if(clus.view != this.plane) continue;
+    if(gGeo.planeOfView(clus.view) != this.plane) continue;
     // console.log(
     //   "clus on plane ",this.plane 
     // ,clus.startPos.wire

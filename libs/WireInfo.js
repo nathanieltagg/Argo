@@ -50,12 +50,14 @@ function WireInfo( element  )
   this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
   this.graph.ResetDefaultRange();
   this.graph.Draw();
+
+  var self=this;
   
-  
+  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  $(this.ctl_wireimg_type).click(function(ev) { return self.Draw(); });
   this.cal_offscreenCanvas = document.createElement("canvas");
   this.raw_offscreenCanvas = document.createElement("canvas");
 
-  var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj("hoverChange_wire",this,"Draw");
   
@@ -159,7 +161,9 @@ WireInfo.prototype.Draw = function()
   
   // Pull a single horizontal line from the png into the histogram
   var offscreenCtx;
-  if(this.cal_loaded) {
+  var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
+  
+  if(show_image == 'cal' && this.cal_loaded) {
     offscreenCtx = this.cal_offscreenCtx;
     this.graph.ylabel="Cal ADC";
   } else if(this.raw_loaded) {

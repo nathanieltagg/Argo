@@ -107,7 +107,32 @@ $(function(){
   var headers = $(".portlet").addClass("ui-widget ui-widget-content ui-helper-clearfix ui-corner-all")
                 .find(".portlet-header");
   headers.addClass("ui-widget-header ui-corner-all");
-  // headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
+  
+  // fullscreen
+  headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
+  $('.portlet-header .icon-explode').click(function() {
+      var element = $(this).parents(".portlet:first")[0];  
+      console.log("exploding",element);
+      if (element.requestFullscreen) {
+        console.log("requestFullscreen");
+        element.requestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        console.log("mozRequestFullscreen");
+        element.mozRequestFullScreen();
+      } else if (element.webkitRequestFullScreen) {
+        console.log("webkitRequestFullscreen");
+        element.webkitRequestFullScreen();
+           /*
+               *Kept here for reference: keyboard support in full screen
+               * marioVideo.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+           */
+       }
+       $(element).addClass("full-screen");
+       $(window).trigger('resize');      
+      
+  });
+
+  // print icon
   if(!isIOS()) {
     headers.each(function(){
       if($('#'+$(this).parents(".portlet:first").attr("id")+"-help-text").length>0)
@@ -115,6 +140,8 @@ $(function(){
     });
     headers.prepend('<span class="ui-icon ui-icon-print"></span>');                       
   }
+  
+  // Expand/collapse icon
   headers.each(function(){
     if($(this).parents(".portlet:first").find(".portlet-content").is(":hidden")) {
       // console.log($(this).text(),"is hidden");
@@ -124,32 +151,33 @@ $(function(){
       $(this).prepend('<span class="ui-icon ui-icon-minusthick icon-shrink"></span>');      
     }
   });
-  // Printable.
-  
-  $('#Print').click(function(){return DoPrint($('#everything'),true);});
 
   $(".portlet-header .ui-icon-print").click(function(){    
                                                       var portlet = $(this).parents(".portlet:first");
                                                       var content = $('.portlet-content',portlet);
                                                       return DoPrint(content);
                                                     } );
-                                                  
+
+                                     
+  // Printable.  
+  $('#Print').click(function(){return DoPrint($('#everything'),true);});
+
   $(".portlet").mouseover(function(event){
         // console.log("mouseover",this);
         gPortletHover = this;
   });
   
   // Explodeable.
-  $(".portlet-header .icon-explode").click(function(){
-    
-    var portlet = $(this).parents(".portlet:first");
-    var content = portlet.find(".portlet-content");
-
-    $(portlet).toggleClass("portlet-fullscreen");
-    content
-      .trigger("resize")
-      .find(".pad").trigger("resize");
-  });
+  // $(".portlet-header .icon-explode").click(function(){
+ //    
+ //    var portlet = $(this).parents(".portlet:first");
+ //    var content = portlet.find(".portlet-content");
+ // 
+ //    $(portlet).toggleClass("portlet-fullscreen");
+ //    content
+ //      .trigger("resize")
+ //      .find(".pad").trigger("resize");
+ //  });
 
 
   // Expandable and contractable.

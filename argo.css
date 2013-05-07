@@ -475,3 +475,14 @@ tr.rowstripe
 .mc-jit-node-hover {
   background-color: red;
 }
+
+:-webkit-full-screen .portlet {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.full-screen {
+  width: 100% !important;
+  height: 100% !important;  
+}
+
