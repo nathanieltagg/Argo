@@ -90,6 +90,16 @@ function Geometry()
     }]]];
 }
 
+Geometry.prototype.viewOfPlane = function(plane)
+{
+  return 2-plane;
+}
+
+Geometry.prototype.planeOfView = function(view)
+{
+  return 2-view;
+}
+
 
 Geometry.prototype.channelOfWire = function(plane,wire)
 {
