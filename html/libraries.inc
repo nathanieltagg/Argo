@@ -63,24 +63,7 @@
 
 
 <!-- My classes for doing histograming and other displays-->
-<script type="text/javascript" src="libs/Geometry.js"></script> 
-<script type="text/javascript" src="libs/Configuration.js"></script> 
-<script type="text/javascript" src="libs/DataSource.js"></script> 
-<script type="text/javascript" src="libs/Keyboard.js"></script> 
-
-<script type="text/javascript" src="libs/SelectionAndHover.js"></script> 
-
-<script type="text/javascript" src="libs/EventInfo.js"></script> 
-<script type="text/javascript" src="libs/TimeHistogram.js"></script> 
-<script type="text/javascript" src="libs/WireHistogram.js"></script> 
-<script type="text/javascript" src="libs/WireView.js"></script> 
-<script type="text/javascript" src="libs/WireInfo.js"></script> 
-<script type="text/javascript" src="libs/ZoomControl.js"></script> 
-<script type="text/javascript" src="libs/MCInfo.js"></script> 
-<script type="text/javascript" src="libs/MCDigraph.js"></script> 
-<script type="text/javascript" src="libs/TriDView.js"></script> 
-<script type="text/javascript" src="libs/OpTimeHistogram.js"></script> 
-<script type="text/javascript" src="libs/OpHitMap.js"></script> 
+<script type="text/javascript" src="libs/ChannelMap.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->

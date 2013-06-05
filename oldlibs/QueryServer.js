@@ -47,7 +47,7 @@ function QueryServer( querytype )
       data = { filename: file, 
                   selection: selection,
                   entry: entry,
-                  options: "_WIRES_" };
+                  options: "_NOCAL_" };
     } else {
       $('#status').attr('class', 'status-error');
       $("#status").text("Unknown request type "+ querytype);

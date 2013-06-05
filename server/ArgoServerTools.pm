@@ -15,9 +15,9 @@ use Exporter 'import';
 @EXPORT = qw(setup myerror serve request); # symbols to export
 
 
-our $ntuple_server_port = 9092;
+our $ntuple_server_port = 8013;
 our $ntuple_server_host = 'localhost';
-our $exec_name = 'argo-backend';
+our $exec_name = 'histserver';
 
 do("../config/server_config.pl"); #|| die; # load file if present.
 
@@ -100,12 +100,12 @@ sub start_server
       $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib";
 
       setsid();
-      rename "ntuple-server.log.4", "ntuple-server.log.5";
-      rename "ntuple-server.log.3", "ntuple-server.log.4";
-      rename "ntuple-server.log.2", "ntuple-server.log.3";
-      rename "ntuple-server.log.1", "ntuple-server.log.2";
-      rename "ntuple-server.log", "ntuple-server.log.1";
-      unlink "ntuple-server.log";
+      rename "$exec_name.log.4", "$exec_name.log.5";
+      rename "$exec_name.log.3", "$exec_name.log.4";
+      rename "$exec_name.log.2", "$exec_name.log.3";
+      rename "$exec_name.log.1", "$exec_name.log.2";
+      rename "$exec_name.log",   "$exec_name.log.1";
+      unlink "$exec_name.log";
       open STDIN,  '</dev/null';
       open STDOUT, '>ntuple-server.log';
       open STDERR, '>&STDOUT';
@@ -144,18 +144,11 @@ sub request
 {
   my $time_start = [gettimeofday];
   my $filename = shift() || "NO_FILENAME_SPECIFIED";
-  my $selection = shift() || 1;
-  my $entrystart = shift() || 0;
-  my $entryend = shift() || 0;
+  my $hists = shift() || "";
   my $options = shift || "none";
 
-  #Cover up some possible blanks by user or upstream error.
-  if($entrystart eq "") { $entrystart = "0"; };
-  if($selection eq "") { $selection = "1"; };
-  if($entryend eq "") { $entryend = "0"; };
-
  
-  print "<br/>ArachneServerTools::request() $filename $selection $entrystart $entryend $options\n<br/>";
+  print "<br/>ArgoServerTools::request() $filename $hists $options\n<br/>";
   print "From host: $ntuple_server_host port $ntuple_server_port\n<br/>";
   
   
@@ -188,7 +181,7 @@ sub request
   }
 
 
-  print $sock "$options,$filename,$selection,$entrystart,$entryend\n";
+  print $sock "$options,$filename,$hists\n";
 
   # print ("Query made.\n");
 
