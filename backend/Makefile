@@ -41,7 +41,7 @@ DEPS= $(addprefix tmp/, $(patsubst %.cpp,%.d,$(SOURCES)) )
 #Headers:
 ALLHEADERS = $(wildcard *.h)
 #RHEADERS = $(filter-out LinkDef.h, $(ALLHEADERS)) 
-RHEADERS = JsonElement.h  FormulaLooter.h
+RHEADERS = JsonElement.h  
 #Add Rootcint
 CINTOBJ = tmp/Cint.o
 
@@ -86,18 +86,15 @@ $(CINTOBJ): tmp/Cint.cpp
 
 
 .PHONY: bin
-bin: argo-backend myroot testx
-argo-backend: $(OBJ) tmp/ntuple-server-main.o Makefile
+bin: histserver myroot 
+histserver: $(OBJ) tmp/hist-server-main.o Makefile
 	@echo "Building " $@ $(OBJ)
-	$(CPP) $(LDFLAGS) $(OBJ) tmp/ntuple-server-main.o $(LIBS) $(LIBS) -o $@
+	$(CPP) $(LDFLAGS) $(OBJ) tmp/hist-server-main.o $(LIBS) $(LIBS) -o $@
 
 myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(LD) $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
-testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
-	@echo "Building " $@ $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) tmp/test-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
 depend: $(DEPS)
 
