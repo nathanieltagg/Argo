@@ -32,24 +32,24 @@ gPageName='standard';
 
 
 <body>
+  <input id="ctl-show-labels" type="hidden" name="" checked="yes" value="1" />
+  <input id="ctl-show-tick-labels" type="hidden" name="" checked="yes" value="1" />
+
 <div id='everything'>
 
   <div id="header" >
     <center>
-      <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span>
+      <span style="font-size: 3em;">&mu;Boone Online Monitor</span>
     </center>
     <div class="header-links"><center>
             <a href='help'>Help and Hints</a>
       
             <a class="align-left" id="Print" href='#'>Print</a>
-            <div class="align-right"><span class="align-right" id="link-to-this-event">Link to this event</span>
-              <br/><span class="align-right" id="email-this-event">Email this event</span>
-            </div>
     </center>
     </div>
     
     <table style="clear: both;" border="0" width="100%"><tr>
-    <td width="5%">Status:</td><td><div id="status">Script loading...</div></td>
+    <!-- <td width="5%">Status:</td><td><div id="status">Script loading...</div></td> -->
     </tr></table>
   </div> <!-- header -->
 
@@ -57,20 +57,20 @@ gPageName='standard';
 
   <div id="content">
   <div id="content-top">
-    <!-- INPUT -->
-    <!--#include virtual="html/DataSource.inc" -->
   </div> <!-- content-top -->
 
   <div style="clear:both;"></div>
+  <!--#include virtual="html/ChannelMap.inc" -->
+  
   <div id="content-right" class="dock">   
-    <!--#include virtual="html/EventInfo.inc" -->
+    <!--#include virtual="html/OmStatus.inc" -->
      
     
   </div> <!-- content-right -->
 
-  <div id="content-main">
+  <div id="content-main">    
+  
   <div id="content-wide" class="dock">
-    <!--#include virtual="html/ChannelMap.inc" -->
     
     
 

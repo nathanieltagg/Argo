@@ -63,12 +63,11 @@
 
 
 <!-- My classes for doing histograming and other displays-->
+<script type="text/javascript" src="libs/OmDataObj.js"></script> 
+
 <script type="text/javascript" src="libs/ChannelMap.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
-<script type="text/javascript" src="libs/QueryServer.js"></script> 
-<script type="text/javascript" src="libs/ArgoData.js"></script> 
+<script type="text/javascript" src="libs/om.js"></script> 
 
-<!-- Main scripts. Start here. -->
-<script type="text/javascript" src="libs/argo.js" ></script>
