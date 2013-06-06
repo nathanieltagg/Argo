@@ -86,10 +86,14 @@ $(CINTOBJ): tmp/Cint.cpp
 
 
 .PHONY: bin
-bin: histserver myroot 
+bin: histserver histquick myroot 
 histserver: $(OBJ) tmp/hist-server-main.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(OBJ) tmp/hist-server-main.o $(LIBS) $(LIBS) -o $@
+
+histquick: $(OBJ) tmp/hist-quick-main.o Makefile
+	@echo "Building " $@ $(OBJ)
+	$(CPP) $(LDFLAGS) $(OBJ) tmp/hist-quick-main.o $(LIBS) $(LIBS) -o $@
 
 myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
