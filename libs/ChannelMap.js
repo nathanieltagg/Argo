@@ -24,34 +24,78 @@ ChannelMap.prototype = new Pad(null);
 
 function ChannelMap( element  )
 {
-  this.element = element;
+  if(element==null) return;
+  this.top_element = element;
+  $(this.top_element).append("<h1>Pedestal RMS</h1>");
+  
+  $(this.top_element).append("<div class='pad main' />");
+  this.main_element = $('div.main',this.element).get(0);
+  $(this.main_element).css("height","500px");
+  $(this.main_element).css("width","100%");
   var settings = {
     log_y:false
     ,min_u:0
     ,max_u:2.9 // crate*20 + card;
     ,min_v:0
-    ,max_v:2.9 // channels
+    ,max_v:3 // channels
     
   };
-  Pad.call(this, element, settings); // Give settings to Pad contructor.
+  Pad.call(this, this.main_element, settings); // Give settings to Pad contructor.
+  
+  
+  // sub-pad.
+  $(this.top_element).append("<div class='pad adjunct' />");
+  this.adjunctpad = $('div.adjunct',this.top_element).get(0);
+  $(this.adjunctpad).css("height","150");
+  $(this.adjunctpad).css("width","50%");
+  
+  this.associate_hist = new HistCanvas(this.adjunctpad,{margin_left:50});
   
   this.crate_w = 0.9;
   this.crate_h = 0.9;
   this.card_w = this.crate_w/18;
-  this.card_h = this.crate_w-0.05;
+  this.card_h = this.crate_w-0.1;
   this.chan_w = this.card_w/2.5
   this.chan_h = this.card_h/40;
   
+  this.hist = new Histogram;
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  this.Draw();
+  // gStateMachine.BindObj('recordChange',this,"NewRecord");
+
+  this.omdata = new OmDataObj("tpc/mapccc/h_pedestal_width");
+  this.omdata.callback_newdata = function(){self.NewRecord()};
+  this.omdata.get();
 }
 
 
 
 ChannelMap.prototype.NewRecord = function()
 {
+  console.log("NewRecord");
+  var h= this.omdata.data.record["tpc/mapccc/h_pedestal_width"].data;
+  this.hist = new Histogram(50,h.min_content,h.max_content);
+  for(var crate=0;crate<9;crate++) {
+    for(var card=0;card<16;card++) {      
+      for(var channel=0;channel<64;channel++) {
+         var ccc = channel + 64*(card + 16*crate);
+         this.hist.Fill(h.data[ccc]);
+      }
+    }
+  }
+  this.cs = new ColorScaler("RedBluePalette");
+  this.cs.min = h.min_content;
+  this.cs.max = h.max_content;
+  this.associate_hist.xlabel = h.xlabel;
+  this.associate_hist.ylabel = "Num Channels";
+  this.associate_hist.min = h.min_content;
+  this.associate_hist.max = h.max_content;
+  this.associate_hist.SetHist(this.hist,this.cs);
+  this.associate_hist.ResetToHist(this.hist);
+  var self = this;
+  this.associate_hist.FinishRangeChange = function(){self.Draw();}
+  this.associate_hist.ChangeRange = function(minu,maxu){self.cs.min = minu; self.cs.max = maxu; HistCanvas.prototype.ChangeRange.call(this,minu,maxu);}
   this.Draw();
+  
 }
 
 
@@ -104,8 +148,12 @@ ChannelMap.prototype.ChannelBox = function(cardbox,channel)
 
 ChannelMap.prototype.Draw = function()
 {
-  var cs = new ColorScaleRedBlue;
-  ColorScale 
+  // cs.colorScale= new ColorScaleRedBlue;
+  console.log(this.omdata.data);
+  var h = this.omdata.data.record["tpc/mapccc/h_pedestal_width"].data;
+
+  // cs.min =500;
+  // cs.max = 600;
   this.Clear();
   // Crate boxes.
   for(var crate=0;crate<9;crate++) {
@@ -120,17 +168,15 @@ ChannelMap.prototype.Draw = function()
     this.ctx.lineTo(cratebox.x1,cratebox.y1);
     this.ctx.fill();
     this.ctx.stroke();
-    this.ctx.beginPath();    
-    this.ctx.moveTo();
     this.ctx.font = "12px sans-serif";
     this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'top';
+    this.ctx.textBaseline = 'bottom';
     this.ctx.fillStyle = "rgba(0,0,0,1)";    
-    this.ctx.fillText("Crate "+crate, (cratebox.x1+cratebox.x2)/2, cratebox.y1);
+    this.ctx.fillText("Crate "+crate, (cratebox.x1+cratebox.x2)/2, cratebox.y2);
     
-    for(var card=0;card<16;card++) {
+    for(var card=0;card<16;card++) {      
       var cardbox = this.CardBox(cratebox,card);
-      this.ctx.fillStyle = "rgba(0,250,0,0.2)";
+      this.ctx.fillStyle = "white";
       this.ctx.strokeStyle = "rgba(0,0,0,1)";
       this.ctx.beginPath();
       this.ctx.moveTo(cardbox.x1,cardbox.y1);
@@ -140,20 +186,32 @@ ChannelMap.prototype.Draw = function()
       this.ctx.lineTo(cardbox.x1,cardbox.y1);
       this.ctx.fill();
       this.ctx.stroke();
+      this.ctx.font = "11px serif";
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'bottom';
+      this.ctx.fillStyle = "rgba(0,0,0,1)";   
+      this.ctx.fillText(card, (cardbox.x1+cardbox.x2)/2, cardbox.y2);
+       
       
       for(var chan=0;chan<64;chan++) {
         var chanbox = this.ChannelBox(cardbox,chan);
-        var val = Math.random();
-        this.ctx.fillStyle = "rgba("+cs.GetColor(val) + ",1)";
-        this.ctx.beginPath();    
-        this.ctx.moveTo(chanbox.x1,chanbox.y1);
-        this.ctx.lineTo(chanbox.x1,chanbox.y2);
-        this.ctx.lineTo(chanbox.x2,chanbox.y2);
-        this.ctx.lineTo(chanbox.x2,chanbox.y1);
-        this.ctx.lineTo(chanbox.x1,chanbox.y1);
-        this.ctx.fill();
-        this.ctx.stroke();    
         
+        var ccc = chan + 64*(card + 16*crate);
+        var val = h.data[ccc];
+        // var val = Math.random();
+
+        if(val>=this.cs.min && val<=this.cs.max ) {
+          this.ctx.fillStyle = "rgb("+this.cs.GetColor(val) + ")";
+          // if(chan==0) console.log(ccc,val,this.cs.GetColor(val));
+          this.ctx.beginPath();    
+          this.ctx.moveTo(chanbox.x1,chanbox.y1);
+          this.ctx.lineTo(chanbox.x1,chanbox.y2);
+          this.ctx.lineTo(chanbox.x2,chanbox.y2);
+          this.ctx.lineTo(chanbox.x2,chanbox.y1);
+          this.ctx.lineTo(chanbox.x1,chanbox.y1);
+          this.ctx.fill();
+          // this.ctx.stroke();    
+        }
         // this.ctx.fillRect(chanbox.x1,chanbox.y1,chanbox.x2-chanbox.x1,chanbox.y1-chanbox.y2);
       }
       
