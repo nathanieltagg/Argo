@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <vector>
 #include <TString.h>
 #include <math.h>
 
