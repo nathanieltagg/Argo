@@ -128,7 +128,7 @@ TriDView.prototype.CreateFrame = function()
   this.ctx.strokeStyle = "black";
   for(var i=0;i<dets.length;i++){
     var det = dets[i];
-    this.AddArcYZ(det.x,det.y,det.z,15.2,10,0,Math.PI*2,1,curColor,det);
+    this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,det);
   }
   
   
@@ -188,6 +188,41 @@ TriDView.prototype.CreateSpacepoints = function()
 
 TriDView.prototype.CreateMC = function()
 {
+  if(!gRecord) return;
+  if(!gRecord.mc) return;
+  if(!gRecord.mc.particles) return;
+  for(var i=0;i<gRecord.mc.particles.length;i++)
+  {
+    var p= gRecord.mc.particles[i];
+    if(!p.trajectory || p.trajectory.length==0) continue;
+    
+    var lineWidth = 1;
+    var curColor = "rgba(0,0,255,0.5)";
+    
+
+    if(p.fpdgCode == 22 || p.fpdgCode == 2112) {
+      // Make photons and neutrons colorless.
+      curColor = "rgba(0,0,0,0)";      
+    }
+    for(var k=0;k<gSelectedTrajectories.length;k++) {
+      if(p.ftrackId == gSelectedTrajectories[k]) {
+        lineWidth = 2;
+        curColor = "rgba(255,255,20,1)";        
+      }
+    }
+
+    if(gHoverState.obj && gHoverState.obj.ftrackId === p.ftrackId){
+      lineWidth = 2;
+      curColor ="rgba(255,20,20,1)";
+    }
+    
+    for(var j=1;j<p.trajectory.length;j++) {
+      var p1 = p.trajectory[j-1];
+      var p2 = p.trajectory[j];
+
+      this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 2, curColor, p);
+    }
+  }
  
 }
   

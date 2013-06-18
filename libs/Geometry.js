@@ -41,6 +41,7 @@ function OpDetGeo ()
 
   this.opDetByChan = [];
   for(var i=0; i<this.opticalDetectors.length;i++) {
+    this.opticalDetectors[i].z-=30.;
     this.opDetByChan[this.opticalDetectors[i].chan] = this.opticalDetectors[i];
   }
   
