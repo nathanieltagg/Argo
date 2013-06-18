@@ -166,24 +166,40 @@ void RecordComposer::composeHeaderData()
 
 void RecordComposer::composeHits() 
 {
-  JsonObject r;
-  JsonArray arr = ftr.makeArray(
-        "wire",     "recob::Hits_ffthit__Reco.obj.fWireID.Wire"
-      , "plane",    "recob::Hits_ffthit__Reco.obj.fWireID.Plane"
-      , "view",     "recob::Hits_ffthit__Reco.obj.fView"
-      , "m",        "recob::Hits_ffthit__Reco.obj.fMultiplicity"
-      , "q",        "recob::Hits_ffthit__Reco.obj.fCharge"
-      , "σq",       "recob::Hits_ffthit__Reco.obj.fSigmaCharge"
-      , "t",        "recob::Hits_ffthit__Reco.obj.fPeakTime"
-      , "σt",       "recob::Hits_ffthit__Reco.obj.fSigmaPeakTime"
-      , "t1",       "recob::Hits_ffthit__Reco.obj.fStartTime"
-      , "t2",       "recob::Hits_ffthit__Reco.obj.fEndTime"
-          , "rdkey","recob::Hits_ffthit__Reco.obj.fRawDigit.key_"
-    );
-  r.add("n",arr.length());
-  r.add("hits",arr);
+  vector<string> leafnames = findLeafOfType("vector<recob::Hit>>");
+  if(leafnames.size()==0) {
+    fOutput.add("hit_warning","No hit branch found in file.");
+    return;
+  } 
+  if(leafnames.size()>1) {
+    fOutput.add("hit_warning","More than one hit list found!");
+  } 
+  
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {      
+    std::string name = leafnames[iname];
+    std::cout << "Looking at hits object " << (name+"obj_").c_str() << endl;
+    JsonObject r;
+        
+    JsonArray arr = ftr.makeArray(
+          "wire",     name+"obj.fWireID.Wire"
+        , "plane",    name+"obj.fWireID.Plane"
+        , "view",     name+"obj.fView"
+        , "m",        name+"obj.fMultiplicity"
+        , "q",        name+"obj.fCharge"
+        , "σq",       name+"obj.fSigmaCharge"
+        , "t",        name+"obj.fPeakTime"
+        , "σt",       name+"obj.fSigmaPeakTime"
+        , "t1",       name+"obj.fStartTime"
+        , "t2",       name+"obj.fEndTime"
+            , "rdkey",name+"obj.fRawDigit.key_"
+      );
+    r.add("n",arr.length());
+    r.add("hits",arr);
 
-  fOutput.add("hits",r);
+    if(iname==0) fOutput.add("hits",r);
+    else fOutput.add("hits_"+name,r);
+  }
 }
 
 // Utility function for composeCluster
@@ -606,10 +622,24 @@ void RecordComposer::composeRaw()
     return;
   } 
   if(leafnames.size()>1) {
-    fOutput.add("raw_warning","More than one raw::RawDigit list found!");
+    // Need to figure out which raw list is the "good" one.
+    // FIXME: SHOULD output all. Here we'll just dump the beam window one.
+
+    // Remove from the list anything which looks like a prespill or a postspill window.
+    for(vector<string>::iterator it=leafnames.begin();it!=leafnames.end();) {
+      if      ( string::npos != it->find("postSpill")) leafnames.erase(it);
+      else if ( string::npos != it->find("preSpill")) leafnames.erase(it);
+      else ++it;
+    }
+    
+    if(leafnames.size()>1) fOutput.add("raw_warning","More than one list of raw digits, even excluding pre and post spill windows!");
+    if(leafnames.size()==0) {
+      fOutput.add("raw_warning","Looks like there are ONLY pre- and post-spill windows.");
+      return;
+    }
   } 
-  
   std::string name = leafnames[0];
+  
   std::cout << "Looking at raw::RawDigit object " << (name+"obj_").c_str() << endl;
   TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
   if(!lf) return;
