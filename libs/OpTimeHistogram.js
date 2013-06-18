@@ -68,7 +68,7 @@ OpTimeHistogram.prototype.NewRecord = function()
   this.xlabel = gOpDetMode.variableName;
   this.ylabel = gOpDetMode.weightName;
   if(!gRecord.ophits) return;
-
+  if(!gRecord.ophits.length) return; // Zero-length.
   // First run through to get limits.
   var tmin = 1e99;
   var tmax = -1e99;

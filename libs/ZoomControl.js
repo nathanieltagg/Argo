@@ -194,6 +194,7 @@ ZoomControl.prototype.AutoZoom = function()
     gZoomRegion.setLimits(2,0,3456);
   };
   
+  console.log("zoomChange?");
   gStateMachine.Trigger("zoomChange");
 }
 
