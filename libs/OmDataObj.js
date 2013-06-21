@@ -1,6 +1,6 @@
 
 
-var gCurFile = "hists.root";
+var gCurFile = "current.root";
 
 function OmDataObj(path)
 {

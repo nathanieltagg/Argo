@@ -18,11 +18,27 @@
 #include <TSystem.h>
 #include <TTimeStamp.h>
 #include <TError.h>
+#include <TKey.h>
+#include <TClass.h>
+#include <TROOT.h>
 
 #include "JsonElement.h"
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
+
+TFile* getlocked(const char* filename, const char* mode)
+{
+  //open a dummy version of the file.
+  int fd = open(filename,O_RDONLY);
+  flock(fd,LOCK_SH);
+  // When we've got the lock open by ROOT...
+  TFile* f = new TFile(filename,mode);
+  flock(f->GetFd(),LOCK_SH);
+  // and now close our original file descriptor
+  close(fd);
+  return f;
+}
 
 JsonObject TH2ToHistogram( TH2* hist )
 {
@@ -101,18 +117,176 @@ vector<string> split(   /* Altered/returned value */
   return theStringVector;
 }
 
+// Toooo messy. 
+/*
 void getObjListing(TDirectory* dir, std::string path, JsonArray &arr)
 {
-  TList* l = dir->GetListOfKeys();
-  TObject *obj;
-  TIter nextobj(l);
-  while ((obj = (TObject *) nextobj())) {
-     TDirectory* subdir = 0;
-     dir->GetObject<TDirectory>(obj->GetName(),subdir);
-     if(subdir) getObjListing(subdir,path+obj->GetName()+"/",arr);
-     else       arr.add(path+obj->GetName());
+  TKey *key;
+  TIter nextobj(dir->GetListOfKeys());
+  while ((key = (TKey *) nextobj())) {
+    const char *classname = key->GetClassName();
+    TClass *cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom("TDirectory")) {
+      TDirectory* subdir = dir->GetDirectory(key->GetName());
+      if(subdir) getObjListing(subdir,path+key->GetName()+"/",arr);
+    } else {
+      arr.add(path+key->GetName());
+    }
  } 
+}*/
+
+void getObjHtmlListing(TDirectory* dir, std::string path, std::string &list)
+{
+  // Get a complete object tree, in the form required by jstree.jquery.js
+
+  // First, get a set of keys. Build a maps of key names. This lets us
+  //  - sort by directory first, then real items
+  //  - ignore cycle numbers.
+  
+  std::map<std::string,TKey*> map_subdirs;
+  std::map<std::string,TKey*> map_hists;
+
+
+  TKey *key;
+  TIter nextobj(dir->GetListOfKeys());
+  while ((key = (TKey *) nextobj())) {
+    const char *classname = key->GetClassName();
+    TClass *cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom("TDirectory")) {
+      map_subdirs[key->GetName()] = key;
+    } else if (cl->InheritsFrom("TH1")) {
+      map_hists[key->GetName()] = key;
+    }
+  }
+
+  std::map<std::string,TKey*>::iterator it;
+  
+  list = "<ul class='om_subdirlist' data-ompath='"+path+"'>";
+  
+  for(it = map_subdirs.begin(); it!=map_subdirs.end(); it++) {
+    key = it->second;
+    TDirectory* subdir = dir->GetDirectory(key->GetName());
+    if(subdir) {
+      std::string children;  
+      getObjHtmlListing(subdir,path+key->GetName()+"/",children);
+
+      list += "<li class='om-dir' data-ompath='"+path+key->GetName()+"'>";
+      list += "<a href='#"+path+key->GetName()+"'";
+      list += " class='om-dir-title'";
+      list += " data-ompath='"+path+key->GetName()+"'>" + key->GetName() + "</a>";
+      list += children;
+      list += "</li>";
+    }    
+  }
+  
+  for(it = map_hists.begin(); it!=map_hists.end(); it++) {
+    key = it->second;
+    list += std::string("<li><a href='#"+path+key->GetName()+"'"
+         +" class='om-elem root-")+key->GetClassName()+"'"
+         +" data-roottype='" + key->GetClassName() + "'"
+         +" data-ompath='"+path+key->GetName()+"'"           
+         + ">";
+    list += key->GetName();
+    list += "</a></li>";
+  }
+  list += "</ul>";
+  
 }
+
+void getObjListing(TDirectory* dir, std::string path, JsonArray &arr)
+{
+  // Get a complete object tree, in the form required by jstree.jquery.js
+
+  // First, get a set of keys. Build a maps of key names. This lets us
+  //  - sort by directory first, then real items
+  //  - ignore cycle numbers.
+  
+  std::map<std::string,TKey*> map_subdirs;
+  std::map<std::string,TKey*> map_hists;
+
+
+  TKey *key;
+  TIter nextobj(dir->GetListOfKeys());
+  while ((key = (TKey *) nextobj())) {
+    const char *classname = key->GetClassName();
+    TClass *cl = gROOT->GetClass(classname);
+    if (!cl) continue;
+    if (cl->InheritsFrom("TDirectory")) {
+      map_subdirs[key->GetName()] = key;
+    } else if (cl->InheritsFrom("TH1")) {
+      map_hists[key->GetName()] = key;
+    }
+  }
+
+  std::map<std::string,TKey*>::iterator it;
+  
+  for(it = map_subdirs.begin(); it!=map_subdirs.end(); it++) {
+    key = it->second;
+    TDirectory* subdir = dir->GetDirectory(key->GetName());
+    if(subdir) {     
+      JsonArray children;  
+      getObjListing(subdir,path+key->GetName()+"/",children);
+      JsonObject node;
+      node.add("data",key->GetName());
+      JsonObject metadata;
+      metadata.add("path",path+key->GetName()+"/");
+      metadata.add("title",key->GetTitle());
+      metadata.add("type",key->GetClassName());
+      node.add("metadata",metadata);
+      node.add("children",children);
+      arr.add(node);
+    }    
+  }
+  
+  for(it = map_hists.begin(); it!=map_hists.end(); it++) {
+    key = it->second;
+    JsonObject node;
+    node.add("data",key->GetName());
+    JsonObject metadata;
+    metadata.add("path",path+key->GetName()+"/");
+    metadata.add("title",key->GetTitle());
+    metadata.add("type",key->GetClassName());      
+    node.add("metadata",metadata);
+    arr.add(node);
+  }
+
+ //  TIter nextobj(dir->GetListOfKeys());
+ //  while ((key = (TKey *) nextobj())) {
+ //    const char *classname = key->GetClassName();
+ //    TClass *cl = gROOT->GetClass(classname);
+ //    if (!cl) continue;
+ //    if (cl->InheritsFrom("TDirectory")) {
+ //      map_subdirs[key->GetName()] = key;
+ //      TDirectory* subdir = dir->GetDirectory(key->GetName());
+ //      if(subdir) {     
+ //        JsonArray children;  
+ //        getObjListing(subdir,path+key->GetName()+"/",children);
+ //        JsonObject node;
+ //        node.add("data",key->GetName());
+ //        JsonObject metadata;
+ //        metadata.add("path",path+key->GetName()+"/");
+ //        metadata.add("title",key->GetTitle());
+ //        metadata.add("type",classname);
+ //        node.add("metadata",metadata);
+ //        node.add("children",children);
+ //        arr.add(node);
+ //      }
+ //    } else {
+ //      JsonObject node;
+ //      node.add("data",key->GetName());
+ //      JsonObject metadata;
+ //      metadata.add("path",path+key->GetName()+"/");
+ //      metadata.add("title",key->GetTitle());
+ //      metadata.add("type",classname);      
+ //      node.add("metadata",metadata);
+ //      arr.add(node);
+ //    }
+ // } 
+  
+}
+
 
 
 std::string ComposeResult(const std::string& filename, const std::string& histname, const std::string& options)
@@ -121,7 +295,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   
   // open file:
   JsonObject result;
-  TFile* f = new TFile(filename.c_str(),"READ");
+  TFile* f = getlocked(filename.c_str(),"READ");
   if(f->IsZombie()) {
     result.add("error","Could not find filename "+filename);
     delete f;
@@ -149,7 +323,15 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
     std::string hname = histnames[ih];
 
     // Handle special case requests
-    if(hname == "LIST") {
+    if(hname == "HLIST") {
+      std::string list;
+      getObjHtmlListing(f,"",list);
+      JsonObject thing;
+      thing.add("cycle",cycle);
+      thing.add("data",list);    
+      result.add("HLIST",thing);
+      
+     } else if(hname == "LIST") {
       JsonArray arr;
       getObjListing(f,"",arr);
       JsonObject thing;

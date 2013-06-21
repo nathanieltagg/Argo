@@ -9,7 +9,6 @@
 
 <!-- IE detection -->
 <script type="text/javascript" src="js/modernizr.js"></script>
-<script type="text/javascript" src="libs/check_browser.js"></script>
 
 
 <script type="text/javascript" src="js/jquery.mousewheel.min.js"></script>
@@ -19,13 +18,11 @@
 <script type="text/javascript" src="js/jquery.ba-resize.min.js"></script>
 <script type="text/javascript" src="js/sylvester.js"></script>
 <script type="text/javascript" src="js/canvas.text.js"></script>
-<script type="text/javascript" src="js/jit.js"></script>
+<script type="text/javascript" src="js/jquery.ba-hashchange.js"></script>
+<script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
 
-<!-- for creating animated gifs. -->
-<script type="text/javascript" src="js/LZWEncoder.js"></script>
-<script type="text/javascript" src="js/NeuQuant.js"></script>
-<script type="text/javascript" src="js/GIFEncoder.js"></script>
-<script type="text/javascript" src="js/b64.js"></script>
+<!-- <script type="text/javascript" src="js/jquery.jstree.js"></script>
+<script type="text/javascript" src="js/jquery.hotkeys.js"></script> -->
 
 
 <!-- firebug lite, for debugging on random browswers. -->
@@ -50,6 +47,7 @@
 </script>
 
 <!--Core. -->
+<script type="text/javascript" src="core/ABoundObject.js"></script>
 <script type="text/javascript" src="core/Pad.js"></script>
 <script type="text/javascript" src="core/ButtressedPad.js"></script>
 <script type="text/javascript" src="core/ColorScale.js"></script>
@@ -63,6 +61,8 @@
 
 
 <!-- My classes for doing histograming and other displays-->
+<script type="text/javascript" src="libs/Navigation.js"></script> 
+
 <script type="text/javascript" src="libs/OmDataObj.js"></script> 
 
 <script type="text/javascript" src="libs/ChannelMap.js"></script> 

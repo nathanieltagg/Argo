@@ -62,9 +62,13 @@ function ChannelMap( element  )
   var self=this;
   // gStateMachine.BindObj('recordChange',this,"NewRecord");
 
+  this.SetMagnify();
+  $(this.element).mousemove(this.DoMouse.bind(this));
+  $(this.element).click(this.DoMouse.bind(this));
   this.omdata = new OmDataObj("tpc/mapccc/h_pedestal_width");
   this.omdata.callback_newdata = function(){self.NewRecord()};
   this.omdata.get();
+
 }
 
 
@@ -74,10 +78,10 @@ ChannelMap.prototype.NewRecord = function()
   console.log("NewRecord");
   var h= this.omdata.data.record["tpc/mapccc/h_pedestal_width"].data;
   this.hist = new Histogram(50,h.min_content,h.max_content);
-  for(var crate=0;crate<9;crate++) {
-    for(var card=0;card<16;card++) {      
+  for(var crate=1;crate<10;crate++) {
+    for(var card=4;card<20;card++) {      
       for(var channel=0;channel<64;channel++) {
-         var ccc = channel + 64*(card + 16*crate);
+         var ccc = channel + 64*(card + 20*crate);
          this.hist.Fill(h.data[ccc]);
       }
     }
@@ -101,8 +105,8 @@ ChannelMap.prototype.NewRecord = function()
 
 ChannelMap.prototype.CrateBox = function(crate)
 {
-  var cratex = crate%3;
-  var cratey = 2-Math.floor(crate/3);
+  var cratex = (crate-1)%3;
+  var cratey = 2-Math.floor((crate-1)/3);
   return {
     u1: cratex,
     u2: cratex+this.crate_w,
@@ -117,7 +121,7 @@ ChannelMap.prototype.CrateBox = function(crate)
 
 ChannelMap.prototype.CardBox = function(cratebox,card)
 {
-  var cardu = card*this.crate_w/16;
+  var cardu = (card-4)*this.crate_w/16;
   return {
      u1: cratebox.u1 + cardu      
     ,u2: cratebox.u1 + cardu + this.card_w
@@ -146,18 +150,39 @@ ChannelMap.prototype.ChannelBox = function(cardbox,channel)
   }
 }
 
-ChannelMap.prototype.Draw = function()
+ChannelMap.prototype.BoxOverlap = function(a,b)
+{
+  if(a.u2 < b.u1) return false;
+  if(b.u2 < a.u1) return false;
+  if(a.v2 < b.v1) return false;
+  if(b.v2 < a.v1) return false;
+  return true;
+}
+
+ChannelMap.prototype.InBox = function(p,b)
+{
+  
+  if((p.u >= b.u1) && (p.u < b.u2)
+  &&(p.v >= b.v1) && (p.v < b.v2)) return true;
+  return false;
+}
+
+ChannelMap.prototype.DrawOne = function(umin,umax,vmin,vmax)
 {
   // cs.colorScale= new ColorScaleRedBlue;
   console.log(this.omdata.data);
+  if(!this.omdata.data) return;
   var h = this.omdata.data.record["tpc/mapccc/h_pedestal_width"].data;
 
+  var drawbox = {u1:umin,u2:umax,v1:vmin,v2:vmax};
   // cs.min =500;
   // cs.max = 600;
   this.Clear();
   // Crate boxes.
-  for(var crate=0;crate<9;crate++) {
+  for(var crate=1;crate<10;crate++) {
     var cratebox = this.CrateBox(crate);
+    // Clip for partical draw.
+    if(!this.BoxOverlap(drawbox,cratebox)) continue;
     this.ctx.fillStyle = "rgba(250,0,0,0.2)";
     this.ctx.strokeStyle = "rgba(0,0,0,1)";
     this.ctx.beginPath();
@@ -174,7 +199,7 @@ ChannelMap.prototype.Draw = function()
     this.ctx.fillStyle = "rgba(0,0,0,1)";    
     this.ctx.fillText("Crate "+crate, (cratebox.x1+cratebox.x2)/2, cratebox.y2);
     
-    for(var card=0;card<16;card++) {      
+    for(var card=4;card<20;card++) {      
       var cardbox = this.CardBox(cratebox,card);
       this.ctx.fillStyle = "white";
       this.ctx.strokeStyle = "rgba(0,0,0,1)";
@@ -196,7 +221,7 @@ ChannelMap.prototype.Draw = function()
       for(var chan=0;chan<64;chan++) {
         var chanbox = this.ChannelBox(cardbox,chan);
         
-        var ccc = chan + 64*(card + 16*crate);
+        var ccc = chan + 64*(card + 20*crate);
         var val = h.data[ccc];
         // var val = Math.random();
 
@@ -210,7 +235,10 @@ ChannelMap.prototype.Draw = function()
           this.ctx.lineTo(chanbox.x2,chanbox.y1);
           this.ctx.lineTo(chanbox.x1,chanbox.y1);
           this.ctx.fill();
-          // this.ctx.stroke();    
+          if((crate == this.fMouseInCrate ) 
+            && (card == this.fMouseInCard ) 
+            && (chan == this.fMouseInChannel) )
+           this.ctx.stroke();    
         }
         // this.ctx.fillRect(chanbox.x1,chanbox.y1,chanbox.x2-chanbox.x1,chanbox.y1-chanbox.y2);
       }
@@ -227,4 +255,42 @@ ChannelMap.prototype.Draw = function()
 
 ChannelMap.prototype.DoMouse = function(ev)
 {
+  var offset = getAbsolutePosition(this.canvas);
+  this.fMouseX = ev.pageX - offset.x;
+  this.fMouseY = ev.pageY - offset.y;
+  this.fMouseU = this.GetU(this.fMouseX);
+  this.fMouseV = this.GetV(this.fMouseY);
+  console.log(this.fMouseU,this.fMouseV);
+  // Find crate
+  var p = {u: this.fMouseU, v: this.fMouseV};
+  this.fMouseInCrate = null;
+  this.fMouseInCard = null;
+  this.fMouseInChannel = null;
+  for(var crate=1;crate<10;crate++) {
+    var cratebox = this.CrateBox(crate);
+    if(this.InBox(p,cratebox)) {
+      this.fMouseInCrate = crate;
+      for(var card=4;card<20;card++) {
+        var cardbox = this.CardBox(cratebox,card);
+        if(this.InBox(p,cardbox)) {
+          this.fMouseInCard = card;
+          for(var channel=0;channel<63;channel++) {
+            var chanbox = this.ChannelBox(cardbox,channel);
+            if(this.InBox(p,chanbox)) {
+              this.fMouseInChannel = channel;
+              break;
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+  }
+  console.log(this.fMouseInCrate,this.fMouseInCard,this.fMouseInChannel);
+  
+  if(ev.type === 'click') {
+    alert(this.fMouseInCrate+"/"+this.fMouseInCard+"/"+this.fMouseInChannel);
+  }
+
 }
