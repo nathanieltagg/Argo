@@ -181,21 +181,42 @@ void RecordComposer::composeHits()
     std::cout << "Looking at hits object " << (name+"obj_").c_str() << endl;
     JsonObject r;
         
-    JsonArray arr = ftr.makeArray(
-          "wire",     name+"obj.fWireID.Wire"
-        , "plane",    name+"obj.fWireID.Plane"
-        , "view",     name+"obj.fView"
-        , "m",        name+"obj.fMultiplicity"
-        , "q",        name+"obj.fCharge"
-        , "σq",       name+"obj.fSigmaCharge"
-        , "t",        name+"obj.fPeakTime"
-        , "σt",       name+"obj.fSigmaPeakTime"
-        , "t1",       name+"obj.fStartTime"
-        , "t2",       name+"obj.fEndTime"
-            , "rdkey",name+"obj.fRawDigit.key_"
-      );
+    // JsonArray arr = ftr.makeArray(
+   //        "wire",     name+"obj.fWireID.Wire"
+   //      , "plane",    name+"obj.fWireID.Plane"
+   //      , "view",     name+"obj.fView"
+   //      , "m",        name+"obj.fMultiplicity"
+   //      , "q",        name+"obj.fCharge"
+   //      , "σq",       name+"obj.fSigmaCharge"
+   //      , "t",        name+"obj.fPeakTime"
+   //      , "σt",       name+"obj.fSigmaPeakTime"
+   //      , "t1",       name+"obj.fStartTime"
+   //      , "t2",       name+"obj.fEndTime"
+   //          , "rdkey",name+"obj.fRawDigit.key_"
+   //    );
+   //  r.add("n",arr.length());
+   //  r.add("hits",arr);
+
+    JsonArray arr;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int nhits = l->GetLen();
+    cout << "nhits: " << nhits << endl;
+
+    for(int i=0;i<nhits;i++) {
+      JsonObject hit;
+      hit.add("wire",      ftr.getJson(name+"obj.fWireID.Wire",i));
+      hit.add("plane",     ftr.getJson(name+"obj.fWireID.Plane" ,i));
+      hit.add("view",      ftr.getJson(name+"obj.fView" ,i));
+      hit.add("m",         ftr.getJson(name+"obj.fMultiplicity",i));
+      hit.add("q",         ftr.getJson(name+"obj.fCharge",i));
+      hit.add("σq",        ftr.getJson(name+"obj.fSigmaCharge" ,i));
+      hit.add("t",         ftr.getJson(name+"obj.fPeakTime" ,i));
+      arr.add(hit);
+    }
     r.add("n",arr.length());
     r.add("hits",arr);
+
 
     if(iname==0) fOutput.add("hits",r);
     else fOutput.add("hits_"+name,r);

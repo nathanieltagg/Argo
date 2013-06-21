@@ -35,6 +35,9 @@ public:
     virtual void fixed() {
       fContent << std::fixed << std::setprecision(sfDecimals); 
     }
+    virtual void setfixed() {
+      fContent  << std::fixed; 
+    }
     
     virtual void fixed(int decimals) {
       if(decimals==-999) decimals=JsonElement::sfDecimals;
