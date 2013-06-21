@@ -42,7 +42,6 @@ sub get_filesize_str
         return sprintf("%.2f bytes", $size);
     }
 }
-my $title = "Arachne File Browser";
 if(! -d $default_path) { $default_path = `pwd`; chomp $default_path;}
 
 $cur_path = $default_path;

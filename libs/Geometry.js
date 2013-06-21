@@ -135,6 +135,10 @@ Geometry.prototype.numWires = function(plane)
 Geometry.prototype.getXofTDC = function(plane,tdc)
 {
   var calib = this.fXTicksOffsets[0][0][plane];
+  if(!calib){
+    calib = this.fXTicksOffsets[0][0][0];
+    console.warn("getXofTDC failure. ",plane,tdc);
+  } 
   return (tdc - calib.offset ) * calib.coeff;
 }
 

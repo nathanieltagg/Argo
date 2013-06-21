@@ -50,4 +50,13 @@ function CheckWireData()
     $('#ctl-show-wireimg-raw').prop('disabled', true);
   }
 
+  // Select the correct one.
+  if(gRecord.raw && !(gRecord.cal) && $('#ctl-show-wireimg-cal').is(":checked")) {
+    $('#ctl-show-wireimg-raw').prop("checked",true);
+  }
+
+  if(gRecord.cal && !(gRecord.raw) &&  $('#ctl-show-wireimg-raw').is(":checked")) {
+    $('#ctl-show-wireimg-cal').prop("checked",true);
+  }
+
 }
