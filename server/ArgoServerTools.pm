@@ -34,7 +34,6 @@ sub setup
   close STDOUT;
   open(STDOUT, ">", \$msglog);  
   open(STDERR, ">", \$msglog);
-  print "testing\n";
 }
 
 sub serve
@@ -107,7 +106,7 @@ sub start_server
       rename "$exec_name.log",   "$exec_name.log.1";
       unlink "$exec_name.log";
       open STDIN,  '</dev/null';
-      open STDOUT, '>ntuple-server.log';
+      open STDOUT, '>$exec_name.log';
       open STDERR, '>&STDOUT';
   #     my $pid = getppid();
   #     # system("echo $pid > ntuple-server.pid");

@@ -32,16 +32,7 @@ body {
         font-size: 10pt;
 }
 
-#BigWireView
-{
-  image-rendering: auto;  
-}
 
-/*Zoom Control*/
-span.ZoomControl-Info
-{
-  background-color: white;
-}
 
 #header { 
 	width: 650px;
@@ -55,24 +46,15 @@ span.ZoomControl-Info
   margin-right: 20px;
 }
 
-#content-main{
-  width: auto;
-  margin-right: 240px;
-}
-
-
-#content-left {
+#left-sidebar {
   float: left;
-  width: 48%;
-}
-#content-middle{
-  width: 48%;
-  margin-left: 50%;
+  width: 250px;
 }
 
-#content-wide{
-  width: auto;
+#display-region {
+  margin-left: 220px;
 }
+
 
 #footer {
   clear:both;
@@ -89,45 +71,26 @@ span.ZoomControl-Info
 #content-right {
 	float: right;
 	width: 230px;
-	margin: 0 0 0 0;
-        
+	margin: 0 0 0 0;  
+}
+
+.A-navtree {
+/*  background: white;*/
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 
-#mag-sliders label {
-}
+/* Navigation */
+.A-navtree a.om-dir-title .ui-icon { float: left; }
+.A-navtree li { list-style: none;}
+.A-navtree ul { margin:0; padding-left: 2em;}
 
-#mag-sliders {
-  display: inline-block;
-  width: 160px;
-}
 
-#blob-opacity {
-  display: inline-block;
-  width: 160px;
-}
-
-#hitmaps 
-{
-/*  background-color: white;*/
-}
-
-#input-fe label.tbfill
-{
-  float:left;
-}
-#input-fe input.tbfill
-{
-  width: 100%;
-}
-
-#input-fe span
-{
-    display: block;
-    overflow: hidden;
-    padding-right: 5px;
-    padding-left: 10px;
-}
 
 .pad canvas{
   cursor: crosshair;

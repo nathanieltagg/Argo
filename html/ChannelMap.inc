@@ -3,7 +3,7 @@
 <div class="portlet-content">
   
     <div id="ChannelMap" class="pad A-ChannelMap" style="width:100%; height:700px" 
-      settings="margin_left: 50, margin_bottom:50"></div>
+      data-options="{margin_left: 50, margin_bottom:100}"></div>
 </div> <!-- portlet-content -->
 
 </div>  <!-- portlet -->
