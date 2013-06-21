@@ -483,7 +483,8 @@ void  RecordComposer::composeOpHits()
     // Double_t recob::OpHits_ophit__Reco.obj.fAmplitudeError
     // Double_t recob::OpHits_ophit__Reco.obj.fPEError
   
-    JsonArray jophits = ftr.makeArray(
+    JsonArray jophits;
+    if(n>0)    jophits = ftr.makeArray(
        "opDetChan"     ,(name+"obj.fOpDetChannel") 
       ,"peakTime"      ,(name+"obj.fPeakTime") 
       ,"width"         ,(name+"obj.fWidth") 

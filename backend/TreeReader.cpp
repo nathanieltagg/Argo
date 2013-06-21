@@ -46,8 +46,8 @@ Double_t TreeReader::getVal(TLeaf* leaf, int index, int second_index)
       i = second_index + col_size*index;
     }
   }
-  if(i >= leaf->GetNdata()) {
-    Info("TreeReader::getVal","Requested element out of bounds. Leafname:%s index:%d index2:%d StaticLen:%d Ndata:%d",leaf->GetName(),index,second_index,leaf->GetLenStatic(),leaf->GetNdata());
+  if(i >= leaf->GetLen()) {
+    Info("TreeReader::getVal","Requested element out of bounds. Leafname:%s index:%d index2:%d StaticLen:%d Len:%d Ndata:%d",leaf->GetName(),index,second_index,leaf->GetLenStatic(),leaf->GetLen(),leaf->GetNdata());
     return fDefaultValue;
   }
   return leaf->GetValue(i);
