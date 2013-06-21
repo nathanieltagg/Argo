@@ -176,7 +176,6 @@ WireView.prototype.NewRecord_image = function()
   this.wireimg_thumb = new Image();
   
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
-
   if(!gRecord[this.show_image]) return;
   this.wireimg.src       = gRecord[this.show_image].wireimg_url;
   this.wireimg_thumb.src = gRecord[this.show_image].wireimg_url_thumb;
