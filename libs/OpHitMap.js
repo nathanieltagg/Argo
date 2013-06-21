@@ -139,6 +139,7 @@ OpHitMap.prototype.Draw = function()
     var det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
     if(!det) { 
       console.warn("Couldn't find optical detector geometry for hit",oh);
+      continue;
     }
     var x = this.GetX(det.z);
     var y = this.GetY(det.y);
