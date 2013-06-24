@@ -81,21 +81,22 @@ JsonObject TH1ToHistogram( TH1* hist )
   h.add("xlabel",hist->GetXaxis()->GetTitle());
   h.add("ylabel",hist->GetYaxis()->GetTitle());
   h.add("n",hist->GetNbinsX());
-  h.add("min",hist->GetXaxis()->GetXmin());
-  h.add("max",hist->GetXaxis()->GetXmax());
+  h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
+  h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
   h.add("underflow",hist->GetBinContent(0));
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
   double tot = hist->GetSumOfWeights();
-  h.add("total",tot);
-  h.add("sum_x",tot*hist->GetMean());
+  h.add("total",JsonElement(tot,5));
+  h.add("sum_x",JsonElement(tot*hist->GetMean(),5));
   h.add("max_content",hist->GetMaximum());
   h.add("min_content",hist->GetMinimum());
+  h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
   JsonArray data;
   for(int i=1; i <= hist->GetNbinsX();i++) {
     data.add(hist->GetBinContent(i));
   }
   h.add("data",data);
-  return h;
+  return h;  
 }
 
 using namespace std;
