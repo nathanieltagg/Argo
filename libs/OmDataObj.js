@@ -2,36 +2,52 @@
 
 var gCurFile = "current.root";
 
-function OmDataObj(path)
+var gOmData = new OmDataObj;
+
+function OmDataObj()
 {
-  this.path = path;
+  this.paths = [];
   this.cur_cycle = "";
   this.file = gCurFile;
-  this.status = "uninitialized";
-
-  
+  this.status = "uninitialized";  
 }
 
-OmDataObj.prototype.callback_error = function()
-{}
-OmDataObj.prototype.callback_newdata = function()
-{}
+
+OmDataObj.prototype.add = function(path)
+{
+  // Ensure not a duplicate entry.
+  if( $.inArray(path,this.paths)==-1)
+    this.paths.push(path);
+
+  console.log("OmDataObj::add",this.paths);
+}
+
+OmDataObj.prototype.remove = function(path)
+{
+  this.paths = $.grep(this.paths,function(elem,index){
+    return elem !==path;
+  });
+  console.log("OmDataObj::remove",this.paths);
+  
+}
 
 
 OmDataObj.prototype.get = function()
 {
-  var myurl = "server/serve_hists.cgi"; // Note relative url.
-  var param = $.param({
+  console.log("OmDataObj::get",this.paths);
+  
+  this.myurl = "server/serve_hists.cgi"; // Note relative url.
+  this.param = $.param({
     filename: this.file,
-    hists: this.path,
+    hists: this.paths.join(':'),
     options: "-",
     });
 
   var self = this;
   $.ajax({
           type: "GET",
-          url: myurl,
-          data: param,
+          url: this.myurl,
+          data: this.param,
           contentType: "application/json; charset=utf-8",
           dataType: "json",
           async: true,
@@ -44,7 +60,10 @@ OmDataObj.prototype.get = function()
 OmDataObj.prototype.QueryError = function()
 {
   this.status = "error";
-  this.callback_error();
+  $.event.trigger({
+    type: "OmDataError",
+    msg: "QueryError:"
+  })  ;
 }
 
 OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
@@ -54,9 +73,17 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   if(data.error) {
     this.status = error;
     console.warn("Got error when retrieving data"+data.error);
-    this.callback_error();
+    $.event.trigger({
+      type: "OmDataError",
+      msg: "Backend error: "+data.error
+    }) ;
     return;
   }
-  this.callback_newdata();
+
+  console.log("triggering");
+  $.event.trigger({
+    type: "OmDataRecieved",
+  }) ;
+
 }
 

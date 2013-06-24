@@ -64,6 +64,8 @@
 <script type="text/javascript" src="libs/Navigation.js"></script> 
 
 <script type="text/javascript" src="libs/OmDataObj.js"></script> 
+<script type="text/javascript" src="libs/OmHistCanvas.js"></script> 
+<script type="text/javascript" src="libs/OmStatus.js"></script> 
 
 <script type="text/javascript" src="libs/ChannelMap.js"></script> 
 
