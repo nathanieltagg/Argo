@@ -48,8 +48,7 @@ OmHist2Canvas.prototype.UpdateData = function()
   
   console.log("looking for ",this.path,' in ', gOmData.data.record,gOmData.data.record[this.path]);
   console.log(gOmData.data.record[this.path]);
-  this.hist = $.extend(true,new Histogram(1,0,1), 
-                gOmData.data.record[this.path].data);
+  this.hist = gOmData.data.record[this.path].data;
   // $("div.title",this.top_element).html(this.hist.title);
 
   $(".portlet-title",$(this.top_element).parent()).html(this.hist.title);
