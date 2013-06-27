@@ -149,6 +149,7 @@ Pad.prototype.Resize = function()
   if( !$(this.element).is(":hidden") ) {
     width = $(this.element).width();
     height = $(this.element).height(); 
+    console.log("Resize",width,height);
   }
   // console.log("Resize",$(this.element),width,height);
 
@@ -160,13 +161,13 @@ Pad.prototype.Resize = function()
     // Retina display! Cool!
     this.padPixelScaling = window.devicePixelRatio;
   }
-    // this.canvas.width = width * window.devicePixelRatio;
-    // this.canvas.height = height * window.devicePixelRatio;
-    this.canvas.setAttribute('width', width *  this.padPixelScaling);
-    this.canvas.setAttribute('height', height *  this.padPixelScaling);
-    $(this.canvas).css('width', width );
-    $(this.canvas).css('height', height );
-    this.ctx.scale(this.padPixelScaling,this.padPixelScaling);
+  // this.canvas.width = width * window.devicePixelRatio;
+  // this.canvas.height = height * window.devicePixelRatio;
+  this.canvas.setAttribute('width', width *  this.padPixelScaling);
+  this.canvas.setAttribute('height', height *  this.padPixelScaling);
+  $(this.canvas).css('width', width );
+  $(this.canvas).css('height', height );
+  this.ctx.scale(this.padPixelScaling,this.padPixelScaling);
     
   this.origin_x = this.margin_left;
   this.origin_y = height - this.margin_bottom;
@@ -252,7 +253,7 @@ Pad.prototype.Clear = function()
   //console.log("Pad.Clear()");
   if (!this.ctx) return;
   this.ctx.fillStyle = "rgb("+this.bg_color+")";
-  this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+  this.ctx.fillRect(0,0,this.width,this.height);
 }
 
 Pad.prototype.DrawFrame = function()
@@ -266,7 +267,7 @@ Pad.prototype.DrawFrame = function()
     
     if(this.draw_axes) {
     // Draw the axes.
-    this.ctx.fillRect(this.origin_x-2,this.origin_y,this.canvas.width-this.margin_right-this.origin_x,2);
+    this.ctx.fillRect(this.origin_x-2,this.origin_y,this.width-this.margin_right-this.origin_x,2);
     //ctx.fillStyle = "rgb(0,200,0)";
     this.ctx.fillRect(this.origin_x-2,this.margin_top,2,this.origin_y-this.margin_top);
     }
@@ -289,9 +290,11 @@ Pad.prototype.DrawFrame = function()
 
     if(this.xlabel && $('#ctl-show-labels').is(':checked')) {
       this.ctx.save();
-      this.ctx.translate(this.canvas.width-this.margin_right, this.canvas.height);
+      console.log(this.xlabel, this.width,this.margin_right, this.height);
+      this.ctx.translate(this.width-this.margin_right, this.height);
       this.ctx.textBaseline = 'bottom';
       this.ctx.fillText(this.xlabel, 0,0);
+      console.log("this.xlabel",this.xlabel);
       this.ctx.restore();
     }
     
@@ -315,7 +318,7 @@ Pad.prototype.DrawFrame = function()
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'top';
       var ticks;
-      if(this.time_on_x) {ticks = this.GetGoodTicksTime(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false); console.log("GoodTicksTime",ticks);}
+      if(this.time_on_x) {ticks = this.GetGoodTicksTime(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false); }
       else               ticks = this.GetGoodTicks(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false);
       //console.log(this.fName + " " + ticks + " " + this.min_u + " " + this.max_u);
       var nt = ticks.length;
