@@ -33,6 +33,11 @@ function zeropad(n, width) {
   return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
 }
 
+function scientific_notation(x)
+{
+  return x.toExponential();
+}
+
 ///
 /// Base class: Pad.
 /// This forms a 2-d drawing canvas with support for axes and things.
@@ -290,11 +295,9 @@ Pad.prototype.DrawFrame = function()
 
     if(this.xlabel && $('#ctl-show-labels').is(':checked')) {
       this.ctx.save();
-      console.log(this.xlabel, this.width,this.margin_right, this.height);
       this.ctx.translate(this.width-this.margin_right, this.height);
       this.ctx.textBaseline = 'bottom';
       this.ctx.fillText(this.xlabel, 0,0);
-      console.log("this.xlabel",this.xlabel);
       this.ctx.restore();
     }
     
@@ -371,7 +374,9 @@ Pad.prototype.DrawFrame = function()
           if(this.draw_tick_labels_y) {
             this.ctx.fillStyle = "rgba(20,20,20,1.0)";
             //this.ctx.drawTextRight(font,fontsize,this.origin_x-tickLen,y+asc/2,String(ftick));
-            this.ctx.fillText(String(ftick), this.origin_x-tickLen-1, y);
+            var stick = String(ftick);
+            if(stick.length>5) stick = scientific_notation(ftick);
+            this.ctx.fillText(stick, this.origin_x-tickLen-1, y);
           }
         }
         if(this.draw_grid_y) {
