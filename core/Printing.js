@@ -19,9 +19,7 @@ function DoPrint(objToPrint,execPrintOrder)
       console.log("Printing",objToPrint);
 
       // Make a unique name.
-      var strFrameName = "file"   +gFile
-                       + "entry"+ gEntry
-                       + "_" + $(objToPrint).attr("id");
+      var strFrameName = "_" + $(objToPrint).attr("id");
       
       console.log("printing "+strFrameName);
       

@@ -190,7 +190,8 @@ HistCanvas.prototype.ResetToHist = function( inHist ) {
   this.min_u = inHist.min; // Minimum value shown on x-axis  FIXME - make adjustable.
   this.max_u = inHist.max; // Maximum value shown on y-axis
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
-  this.max_v= inHist.max_content;  // maximum value shown on Y-axis
+  this.max_v= inHist.max_content*1.02;  // maximum value shown on Y-axis
+  if(this.min_v == this.max_v) this.max_v = this.min_v + 1.02; // If min and max are both 0, adjust the max to be 1 unit bigger
   this.SetLogy(this.log_y);
 }
 
