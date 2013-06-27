@@ -72,7 +72,7 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
   this.data = data;
   if(data.error) {
-    this.status = error;
+    this.status = data.error;
     console.warn("Got error when retrieving data"+data.error);
     $.event.trigger({
       type: "OmDataError",
