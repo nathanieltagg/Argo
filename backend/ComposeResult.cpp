@@ -52,9 +52,12 @@ JsonObject TH2ToHistogram( TH2* hist )
   h.add("n_x",hist->GetNbinsX());
   h.add("min_x",hist->GetXaxis()->GetXmin());
   h.add("max_x",hist->GetXaxis()->GetXmax());
-  h.add("n_x",hist->GetNbinsY());
+  h.add("n_y",hist->GetNbinsY());
   h.add("min_y",hist->GetYaxis()->GetXmin());
   h.add("max_y",hist->GetYaxis()->GetXmax());
+  h.add("max_content",hist->GetMaximum());
+  h.add("min_content",hist->GetMinimum());
+  
 
   double tot = hist->GetSumOfWeights();
   h.add("total",tot);
