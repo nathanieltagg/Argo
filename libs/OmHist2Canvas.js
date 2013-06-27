@@ -2,26 +2,26 @@
 
 
 // Subclass of Pad.
-OmHistCanvas.prototype = new HistCanvas(null);           
+OmHist2Canvas.prototype = new Hist2Canvas(null);           
 
-function OmHistCanvas( element, path )
+function OmHist2Canvas( element, path )
 {
   if(element==null) return;
   this.top_element = element;
   $(this.top_element).append("<div class='title' />");
   $(this.top_element).append("<div class='pad main' />");
   this.main_element = $('div.main',this.top_element).get(0);
-  $(this.main_element).css("height","200px");
-  $(this.main_element).css("width","100%");
+  $(this.main_element).css("height","300px");
+  $(this.main_element).css("width","300px");
 
   this.path = path;
   var settings = {
-    log_y:true,
-    margin_left:70,   
+    log_y:false,
+    margin_left:40,   
     first_draw:true
   };
   var element_settings = ($(element).data('options'));
-  HistCanvas.call(this, this.main_element, settings); // Give settings to Pad contructor.
+  Hist2Canvas.call(this, this.main_element, settings); // Give settings to Pad contructor.
 
 
 
@@ -31,18 +31,18 @@ function OmHistCanvas( element, path )
   $(this.top_element).on("remove."+this.mynamespace, function(){return self.Remove()});  
 
   console.log($(element).data("options"));
-  console.log("OmHistCanvas with path",this.path,"element",this.top_element);
+  console.log("OmHist2Canvas with path",this.path,"element",this.top_element);
   gOmData.add(this.path);
 } 
 
-OmHistCanvas.prototype.Remove = function()
+OmHist2Canvas.prototype.Remove = function()
 {
   console.log("Removing ",this.path);
   gOmData.remove(this.path);
   $(document).off("OmDataRecieved."+this.mynamespace);
 }
 
-OmHistCanvas.prototype.UpdateData = function()
+OmHist2Canvas.prototype.UpdateData = function()
 {
   console.timeStamp("Drawing "+this.path);
   
@@ -53,14 +53,15 @@ OmHistCanvas.prototype.UpdateData = function()
   // $("div.title",this.top_element).html(this.hist.title);
 
   $(".portlet-title",$(this.top_element).parent()).html(this.hist.title);
-  if(this.hist.max_content > 20) this.log_y = true;
-  else                           this.log_y = false;
   this.xlabel = this.hist.xlabel;
   this.ylabel = this.hist.ylabel;
   this.bound_u_min = this.hist.min;
   this.bound_u_max = this.hist.max;
   this.time_on_x   = this.hist.time_on_x;
-   this.SetHist(this.hist,new ColorScaleIndexed(0));
+  this.cs = new ColorScaler();
+  this.cs.min = this.hist.min_content;
+  this.cs.max = this.hist.max_content;
+  this.SetHist(this.hist,this.cs);
   if(this.first_draw){
     this.first_draw = false;
     this.ResetToHist(this.hist);

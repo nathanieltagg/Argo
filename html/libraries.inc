@@ -54,6 +54,7 @@
 <script type="text/javascript" src="core/StateMachine.js"></script>
 <script type="text/javascript" src="core/Histogram.js"></script>
 <script type="text/javascript" src="core/HistCanvas.js"></script>
+<script type="text/javascript" src="core/Hist2Canvas.js"></script>
 <script type="text/javascript" src="core/GraphCanvas.js"></script>
 <script type="text/javascript" src="core/Pad3d.js"></script>
 <script type="text/javascript" src="core/Printing.js"></script> 
@@ -65,6 +66,7 @@
 
 <script type="text/javascript" src="libs/OmDataObj.js"></script> 
 <script type="text/javascript" src="libs/OmHistCanvas.js"></script> 
+<script type="text/javascript" src="libs/OmHist2Canvas.js"></script> 
 <script type="text/javascript" src="libs/OmStatus.js"></script> 
 
 <script type="text/javascript" src="libs/ChannelMap.js"></script> 

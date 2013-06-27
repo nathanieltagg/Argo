@@ -2,15 +2,22 @@
 /// Code that sets up portlets.
 ///
 $(function(){
-  
+  SetupPortlets(window.body);
+  // Printable.  
+  $('#Print').click(function(){return DoPrint($('#everything'),true);});
+});
+
+
+function SetupPortlets(container)
+{
   // style portlets and add icons.
-  var headers = $(".portlet").addClass("ui-widget ui-widget-content ui-helper-clearfix ui-corner-all")
+  var headers = $(".portlet",container).addClass("ui-widget ui-widget-content ui-helper-clearfix ui-corner-all")
                 .find(".portlet-header");
   headers.addClass("ui-widget-header ui-corner-all");
   
   // fullscreen
   headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
-  $('.portlet-header .icon-explode').click(function() {
+  $('.portlet-header .icon-explode',container).click(function() {
       var element = $(this).parents(".portlet:first")[0];  
       console.log("exploding",element);
       if (element.requestFullscreen) {
@@ -52,17 +59,15 @@ $(function(){
     }
   });
 
-  $(".portlet-header .ui-icon-print").click(function(){    
+  $(".portlet-header .ui-icon-print",container).click(function(){    
                                                       var portlet = $(this).parents(".portlet:first");
                                                       var content = $('.portlet-content',portlet);
                                                       return DoPrint(content);
                                                     } );
 
                                      
-  // Printable.  
-  $('#Print').click(function(){return DoPrint($('#everything'),true);});
 
-  $(".portlet").mouseover(function(event){
+  $(".portlet",container).mouseover(function(event){
         // console.log("mouseover",this);
         gPortletHover = this;
   });
@@ -81,7 +86,7 @@ $(function(){
 
 
   // Expandable and contractable.
-  $(".portlet-header .icon-shrink").click(function() {
+  $(".portlet-header .icon-shrink",container).click(function() {
           $(this).toggleClass("ui-icon-minusthick");
           $(this).toggleClass("ui-icon-plusthick");
           $(this).parents(".portlet:first").find(".portlet-content")
@@ -89,11 +94,11 @@ $(function(){
             .trigger("resize")
             .find(".pad").trigger("resize");
   });
-  $(".portlet-header").dblclick(function() { $(".icon-shrink",this).trigger("click"); return false; });
+  $(".portlet-header",container).dblclick(function() { $(".icon-shrink",this).trigger("click"); return false; });
 
 
   // Help function:
-  $(".portlet-header .ui-icon-help").click(function() {
+  $(".portlet-header .ui-icon-help",container).click(function() {
     $('#'+$(this).parents(".portlet:first").attr("id")+"-help-text")
       .dialog({
             modal: true,
@@ -112,14 +117,14 @@ $(function(){
   // });  
 
   // Make portlets sortable.
-  $(".dock").sortable({
+  $(".dock",container).sortable({
                 connectWith: '.dock',
                 handle: '.portlet-header'
         });
         
   // Make portlets blow-up-able
   // Disabled above. I didn't like the effect.
-  $(".portlet-header .icon-expand").click(function() {
+  $(".portlet-header .icon-expand",container).click(function() {
     var portlet = $(this).parents(".portlet:first");
     if(!portlet.hasClass("portlet-fullscreen")) {
       // expand.
@@ -140,11 +145,11 @@ $(function(){
   });
 
   // Issue custom commands to resize inner content.
-  $(".dock").bind('sortstop', function(event, ui) {
+  $(".dock",container).bind('sortstop', function(event, ui) {
     $('.pad',ui.item).trigger("resize");
   });
   
-});
+}
 
 var gOM = null;
 $(function(){
