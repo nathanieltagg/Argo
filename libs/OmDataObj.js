@@ -10,6 +10,8 @@ function OmDataObj()
   this.cur_cycle = "";
   this.file = gCurFile;
   this.status = "uninitialized";  
+  $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
+  
 }
 
 
@@ -55,20 +57,19 @@ OmDataObj.prototype.get = function()
           success:  function(data,textStatus,jqxhr){self.QuerySuccess(data,textStatus,jqxhr)},
         }); 
   this.status = "getting";
+  $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
 }
 
 OmDataObj.prototype.QueryError = function()
 {
   this.status = "error";
-  $.event.trigger({
-    type: "OmDataError",
-    msg: "QueryError:"
-  })  ;
+  $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
 }
 
 OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
 {
   this.status = "success";
+  $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
   this.data = data;
   if(data.error) {
     this.status = error;
@@ -81,9 +82,7 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   }
 
   console.log("triggering");
-  $.event.trigger({
-    type: "OmDataRecieved",
-  }) ;
+  $.event.trigger({type: "OmDataRecieved"}) ;
 
 }
 

@@ -18,8 +18,16 @@ function OmStatus( element )
 
   var self = this;  
   this.mynamespace= "mns" + this.gUniqueIdCounter;
-  $(document).on("OmDataRecieved."+this.mynamespace, function(){return self.UpdateData()});
+  $(document).on("OmDataChangeState."+this.mynamespace, function(){return self.UpdateData()});
   $(this.element).on("remove."+this.mynamespace, function(){return self.Remove()});  
+
+  $(".refresh",this.element).click(function(){gOmData.get()});
+  $(".ctl-auto-refresh",this.element).click(function(){
+    var checked = $(this).is(":checked");
+    if(checked) self.auto_refresh_timer = setInterval(function(){$(".refresh",self.element).click();},30000);
+    else        clearInterval(self.auto_refresh_timer);
+  });
+  
 } 
 
 OmStatus.prototype.Remove = function()
@@ -59,6 +67,6 @@ OmStatus.prototype.UpdateData = function()
       break; // just do one cycle.
     }
   }
-  $(this.element).html(h);
+  $(".statusinfo",this.element).html(h);
 }
 

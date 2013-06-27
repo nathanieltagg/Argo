@@ -31,6 +31,8 @@ function Navigation(element, options)
   $.extend(true,defaults,options);
   ABoundObject.call(this, element, defaults); // Give settings to Pad contructor.
 
+  this.tree_element = $(".tree",this.element);
+
   var self = this;
   gOmData.add("HLIST");
   $(document).on("OmDataRecieved", function(){return self.GetListing()});
@@ -38,17 +40,21 @@ function Navigation(element, options)
   gOmData.get();
   
   $(window).hashchange( function(){self.HashChange()} );
+  $(".reload",this.element).click( function(){
+    gOmData.add("HLIST");
+    gOmData.get();
+    self.first_load = true;
+  })
 }
 
 Navigation.prototype.GetListing = function()
-{
-  console.timeStamp("GetListing.");
-  // console.log("GetListing");
-  gOmData.remove("HLIST");
-
-  var self = this;
+{  
   if(!gOmData.data.record.HLIST) return;
   var layout = $(gOmData.data.record.HLIST.data);
+  console.timeStamp("GetListing.");
+  gOmData.remove("HLIST");
+
+  // var self = this;
   // $("a.om-dir-title",layout).addClass('ui-helper-clearfix').prepend('<span class="collapsible-icon ui-icon ui-icon-triangle-1-e" />')
   //                        .click(function(){
   //                          $(".collapsible-icon",this).toggleClass('ui-icon-triangle-1-e')
@@ -63,15 +69,15 @@ Navigation.prototype.GetListing = function()
 
   // $("a",layout).click(function(){self.ItemClicked(this);});
   // console.timeStamp("Done adding click callback.");
-  $(this.element).html(layout);
-  $("li>ul",this.element).hide();
+  $(this.tree_element).html(layout);
+  $("li>ul",this.tree_element).hide();
   
   
   // Highlight whichever one was in the url.
   if(this.first_load) {
     this.first_load = false;
     this.HashChange();
-    // var item = $('a[href="'+window.location.hash+'"]', this.element);
+    // var item = $('a[href="'+window.location.hash+'"]', this.tree_element);
     // console.log(window.location.hash, 'a[href='+window.location.hash+']',item);
     // console.timeStamp("Calling ItemClicked with hashload.");    
     // if(item.length>0) this.ItemClicked(item.get(0));
@@ -84,19 +90,19 @@ Navigation.prototype.HashChange = function(item)
   console.log("HashChange");
   var hash = location.hash;
   if(hash.length <1) return;
-  var item = $('a[href="'+window.location.hash+'"]', this.element);
+  var item = $('a[href="'+window.location.hash+'"]', this.tree_element);
   if(item.length>0) this.ItemClicked(item.get(0));
 }
 
 Navigation.prototype.ItemClicked = function(item)
 {
-  $(".ui-state-highlight",this.element).removeClass("ui-state-highlight");
+  $(".ui-state-highlight",this.tree_element).removeClass("ui-state-highlight");
   $(item).parent().addClass("ui-state-highlight");
   
   // Reveal all elements above.
-  $("li>ul",this.element).hide();
+  $("li>ul",this.tree_element).hide();
   
-  $(item).parentsUntil(this.element).show();//.children(".collapsible-icon").addClass('ui-icon-triangle-1-s'.removeClass('ui-icon-triangle-1-e');
+  $(item).parentsUntil(this.tree_element).show();//.children(".collapsible-icon").addClass('ui-icon-triangle-1-s'.removeClass('ui-icon-triangle-1-e');
   
   // Do that mother. Is the selected thing an object?
   var items = [];
@@ -129,20 +135,27 @@ Navigation.prototype.ItemClicked = function(item)
     var item = items[i];
     console.log("Creating new object for ",item);
 
+    // Do portlet.
+    var portlet = $('<div class="portlet"></div>');
+    $("div.A-mainview").append(portlet);
+    // var portlet_header = $('<div class="portlet-header"><span class="portlet-title'>'"'+item.path+'<span></div>');
+    // var portlet_content = $('<div class="portlet-content" id="'+item.path+'"></div>');
+    $(portlet).append('<div class="portlet-header"></div>')
+    $(portlet).append('<div class="portlet-content" id="'+item.path+'"></div>');
+    $(".portlet-header",portlet).html('<span class="portlet-title">'+item.path+'</span>');
+    var portlet_content = $(".portlet-content",portlet);
+    console.log("Creating portlet",portlet," with content",portlet_content);
+
     if(item.path.match(/tpc\/mapccc/)) {
-      var e = $("<div class='A-OmHistCanvas' data-options='path:"+item.path+" style='clear:both;' />");
-      $("div.A-mainview").append(e);
-      new ChannelMap(e,item.path);
-      
+      new ChannelMap(portlet_content,item.path);      
+    } else if (item.roottype.match(/TH2/)){
+      new OmHist2Canvas(portlet_content,item.path);
     } else {
-    
-      // Default: for a TH1 object, which is most of them:
-      var e = $("<div class='A-OmHistCanvas' data-options='path:"+item.path+"'  style='clear:both;' />");
-      $("div.A-mainview").append(e);
-      new OmHistCanvas(e,item.path);
-      // $('div.A-OmHistCanvas').each(function(){ new OmHistCanvas(this) });
+      new OmHistCanvas(portlet_content,item.path);      
     }
   }
+  SetupPortlets($("div.A-mainview"));
+  
   // Activate the elements.
   console.timeStamp("New displays ready, calling get for data");
   

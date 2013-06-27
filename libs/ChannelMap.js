@@ -100,7 +100,9 @@ ChannelMap.prototype.NewRecord = function()
   if(!gOmData.data.record[this.path].data) return;
   this.map= gOmData.data.record[this.path].data;
 
-  $("div.title",this.top_element).html(this.map.title);
+  $(".portlet-title",$(this.top_element).parent()).html(this.map.title);
+
+  // $("div.title",this.top_element).html(this.map.title);
 
   this.hist = new Histogram(50,this.map.min_content,this.map.max_content);
   for(var crate=1;crate<10;crate++) {
