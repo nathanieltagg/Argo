@@ -246,14 +246,16 @@ WireView.prototype.Draw = function(fast)
 
   if($(this.element).is(":hidden")) return;
 
-  if((this.fMousing) && ($('#ctl-magnifying-glass').is(':checked')) )
+  this.magnifying = false;
+  this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v,fast);
+
+  if((this.fMousing) && ($('#ctl-magnifying-glass').is(':checked') && this.fMouseY < this.origin_y && this.fMouseX > this.origin_x) )
   {
     this.magnifying = true;
     // Cleverness:
     var mag_radius = parseFloat($('#ctl-magnifier-size').val());
     var mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
     
-    this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v);
     this.ctx.strokeStyle = "rgba(0,0,0,0.75)";
     this.ctx.beginPath();
     this.ctx.arc(this.fMouseX,this.fMouseY, mag_radius+1, 0,Math.PI*2,true);
@@ -275,10 +277,7 @@ WireView.prototype.Draw = function(fast)
     
     this.DrawOne(umin,umax,vmin,vmax,fast);
     this.ctx.restore();
-  } else {
-    this.magnifying = false;
-    this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v,fast);
-  }  
+  } 
   
 }
 
@@ -390,15 +389,21 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
+  var do_thumbnail = (fast);
+  if(!this.loaded_wireimg) do_thumbnail = true;
+  if(!this.wireimg) do_thumbnail = true;
   
-  if(fast) {
-    if(!this.loaded_thumbnail) return;
-    if(!this.wireimg) return;
-  } else {
-    if(!this.loaded_wireimg) return;
-    if(!this.wireimg_thumb) return;
+  if(do_thumbnail) {
+    if(!this.loaded_thumbnail) do_thumbnail = false; // fallback to full image
+    if(!this.wireimg_thumb) do_thumbnail = false;
   }
-
+  
+  if(!do_thumbnail) {
+    if(!this.loaded_wireimg) return; // no more fallbacks. 
+    if(!this.wireimg) return;
+  }
+  
+  console.warn("DrawImage",fast)
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
    var min_wire    = Math.max(this.min_u,0);
@@ -433,7 +438,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    // console.log("drawImg dest", dest_x,   dest_y,  dest_w, dest_h);
    // console.log("drawImg rot ", rot_dest_x,   rot_dest_y,  rot_dest_w, rot_dest_h);
   
-  if(fast) {
+  if(do_thumbnail) {
     // Draw from the thumbnail, which is resolution-reduced by a factor of 5.
     this.ctx.drawImage(
       this.wireimg_thumb      // Source image.
