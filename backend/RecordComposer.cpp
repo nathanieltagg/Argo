@@ -89,7 +89,13 @@ inline float inv_tanscale(unsigned char y)
   return tan((y-127)*M_PI/256.)*50.;
 }
  
-
+std::string stripdots(const std::string& s)
+{
+  std::string out = s;
+  size_t pos;
+  while((pos = out.find('.')) != std::string::npos)  out.erase(pos, 1);
+  return out;
+}
 
 
 
@@ -171,15 +177,12 @@ void RecordComposer::composeHits()
     fOutput.add("hit_warning","No hit branch found in file.");
     return;
   } 
-  if(leafnames.size()>1) {
-    fOutput.add("hit_warning","More than one hit list found!");
-  } 
   
+  JsonObject reco_list;
   
-  for(size_t iname = 0; iname<leafnames.size(); iname++) {      
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
     std::cout << "Looking at hits object " << (name+"obj_").c_str() << endl;
-    JsonObject r;
         
     // JsonArray arr = ftr.makeArray(
    //        "wire",     name+"obj.fWireID.Wire"
@@ -214,13 +217,10 @@ void RecordComposer::composeHits()
       hit.add("t",         ftr.getJson(name+"obj.fPeakTime" ,i));
       arr.add(hit);
     }
-    r.add("n",arr.length());
-    r.add("hits",arr);
-
-
-    if(iname==0) fOutput.add("hits",r);
-    else fOutput.add("hits_"+name,r);
+    
+    reco_list.add(stripdots(name),arr);
   }
+  fOutput.add("hits",reco_list);
 }
 
 // Utility function for composeCluster
@@ -241,10 +241,8 @@ void RecordComposer::composeClusters()
     fOutput.add("cluster_warning","No cluster branch found in file.");
     return;
   } 
-  if(leafnames.size()>1) {
-    fOutput.add("cluster_warning","More than one cluster list found!");
-  } 
   
+  JsonObject reco_list;
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
@@ -276,25 +274,16 @@ void RecordComposer::composeClusters()
 
       jClusters.add(jclus);
     }
-    if(iname==0) 
-      fOutput.add("clusters",jClusters);
-    if(leafnames.size()>1)
-      fOutput.add(string("clusters_")+name,jClusters);
-  }    
+    reco_list.add(stripdots(name),jClusters);
+  } 
+  fOutput.add("clusters",reco_list);
 }
 
 void  RecordComposer::composeSpacepoints()
 {
-  vector<string> leafnames = findLeafOfType("vector<recob::SpacePoint> >");
-  if(leafnames.size()==0) {
-    fOutput.add("spacepoint_warning","No cluster branch found in file.");
-    return;
-  } 
-  if(leafnames.size()>1) {
-    fOutput.add("spacepoint_warning","More than one cluster list found!");
-  } 
-  
-  
+  vector<string> leafnames = findLeafOfType("vector<recob::SpacePoint> >");  
+  JsonObject reco_list;
+    
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
     std::cout << "Looking at spacepoint object " << (name+"obj_").c_str() << endl;
@@ -323,24 +312,16 @@ void  RecordComposer::composeSpacepoints()
 
       jSpacepoints.add(jsp);
     }
-    if(iname==0) 
-      fOutput.add("spacepoints",jSpacepoints);
-    if(leafnames.size()>1)
-      fOutput.add(string("spacepoints_")+name,jSpacepoints);
+    reco_list.add(stripdots(name),jSpacepoints);
   }  
+  fOutput.add("spacepoints",reco_list);
 }
   
 void  RecordComposer::composeTracks()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Track>");
-  if(leafnames.size()==0) {
-    fOutput.add("tracks_warning","No track branch found in file.");
-    return;
-  } 
-  if(leafnames.size()>1) {
-    fOutput.add("tracks_warning","More than one track list found!");
-  } 
 
+  JsonObject reco_list;
 
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
@@ -384,11 +365,9 @@ void  RecordComposer::composeTracks()
       jTracks.add(jtrk);
     }
 
-    if(iname==0) 
-      fOutput.add("tracks",jTracks);
-    if(leafnames.size()>1)
-      fOutput.add(string("tracks_")+name,jTracks);
+    reco_list.add(stripdots(name),jTracks);
   }  
+  fOutput.add("tracks",reco_list);
 
 }
   
@@ -396,14 +375,7 @@ void  RecordComposer::composeTracks()
 void  RecordComposer::composeOpFlashes()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::OpFlash>");
-  if(leafnames.size()==0) {
-    fOutput.add("opflashes_warning","No opflashes branch found in file.");
-    return;
-  } 
-  if(leafnames.size()>1) {
-    fOutput.add("opflashes_warning","More than one opflash list found!");
-  } 
-  
+  JsonObject reco_list;
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
@@ -444,24 +416,15 @@ void  RecordComposer::composeOpFlashes()
 
       jOpFlashes.add(jflash);
     }
-    if(iname==0) 
-      fOutput.add("opflashes",jOpFlashes);
-    if(leafnames.size()>1)
-      fOutput.add(string("opflashes_")+name,jOpFlashes);
+    reco_list.add(stripdots(name),jOpFlashes);
   }   
+  fOutput.add("opflashes",reco_list);
 }
   
 void  RecordComposer::composeOpHits()
 {
-  vector<string> leafnames = findLeafOfType("vector<recob::OpHit>");
-  if(leafnames.size()==0) {
-    fOutput.add("ophits_warning","No ophits branch found in file.");
-    return;
-  } 
-  if(leafnames.size()>1) {
-    fOutput.add("ophits_warning","More than one ophits list found!");
-  } 
-  
+  vector<string> leafnames = findLeafOfType("vector<recob::OpHit>");  
+  JsonObject reco_list;
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
@@ -497,13 +460,10 @@ void  RecordComposer::composeOpHits()
       ,"ampErr"        ,(name+"obj.fAmplitudeError") 
       ,"peErr"         ,(name+"obj.fPEError") 
       );
-      
-    if(iname==0) 
-      fOutput.add("ophits",jophits);
-    if(leafnames.size()>1)
-      fOutput.add(string("ophits_")+name,jophits);
+    
+    reco_list.add(stripdots(name),jophits);
   }
-  
+  fOutput.add("ophits",reco_list);
   
 }
 
@@ -528,329 +488,327 @@ void wireOfChannel(int channel, int& plane, int& wire)
 
 void RecordComposer::composeCal() 
 {
-  
   vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
-  if(leafnames.size()==0) {
-    fOutput.add("cal_warning","No cal Wire branch found in file.");
-    return;
-  } 
-  if(leafnames.size()>1) {
-    fOutput.add("cal_warning","More than one cal Wir list found!");
-  } 
+  JsonObject reco_list;
   
-  std::string name = leafnames[0];
-  std::cout << "Looking at cal Wires object " << (name+"obj_").c_str() << endl;
-  TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
-  if(!lf) return;
-  int nwires = lf->GetLen();
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
   
-  TreeElementLooter l(fTree,name+"obj.fSignal");
-  if(!l.ok()) return;
-  const std::vector<float> *ptr = l.get<std::vector<float>>(0);
+    std::cout << "Looking at cal Wires object " << (name+"obj_").c_str() << endl;
+    TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
+    if(!lf) continue;
+    int nwires = lf->GetLen();
+    TreeElementLooter l(fTree,name+"obj.fSignal");
+    if(!l.ok()) return;
+    const std::vector<float> *ptr = l.get<std::vector<float>>(0);
   
-  JsonObject r;
-  size_t width = ptr->size();
-  // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-  MakePng png(width,nwires,MakePng::palette_alpha,fPalette,fPaletteTrans);
-  MakePng encoded(width,nwires,MakePng::rgb);
-  ColorMap colormap;
+    JsonObject r;
+    size_t width = ptr->size();
+    // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
+    MakePng png(width,nwires,MakePng::palette_alpha,fPalette,fPaletteTrans);
+    MakePng encoded(width,nwires,MakePng::rgb);
+    ColorMap colormap;
   
-  std::vector<unsigned char> imagedata(width);
-  std::vector<unsigned char> encodeddata(width*3);
+    std::vector<unsigned char> imagedata(width);
+    std::vector<unsigned char> encodeddata(width*3);
 
-  TH1D timeProfile("timeProfile","timeProfile",width,0,width);
-  std::vector<TH1*> planeProfile;
-  planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-  planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-  planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+    TH1D timeProfile("timeProfile","timeProfile",width,0,width);
+    std::vector<TH1*> planeProfile;
+    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
 
-  // JsonArray arr;
-  for(long i=0;i<nwires;i++) {
-    // std::cout << "Doing wire " << i << std::endl;
-    // JsonObject wire;
-    // wire.add("view",ftr.getJson("recob::Wires_caldata__Reco.obj.fView",i));
-    // wire.add("signalType",ftr.getJson("recob::Wires_caldata__Reco.obj.fSignalType",i));
-    // wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
+    // JsonArray arr;
+    for(long i=0;i<nwires;i++) {
+      // std::cout << "Doing wire " << i << std::endl;
+      // JsonObject wire;
+      // wire.add("view",ftr.getJson("recob::Wires_caldata__Reco.obj.fView",i));
+      // wire.add("signalType",ftr.getJson("recob::Wires_caldata__Reco.obj.fSignalType",i));
+      // wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
 
-    // Get signal pointer.  This is ROOT magic crap I dont' understand, but it works. 
-    // pointer = (char*)cont->At(i);
-    // ladd = pointer+offset;
-    // ptr = (std::vector<float> *)ladd;
-    ptr = l.get<std::vector<float>>(i);
-    // std::string signal("[");
-    float max = 0;
-    float min = 1;
-    double wiresum = 0;
-    for(size_t k = 0; k<width; k++) {
-      // Color map.
-      float adc = (*ptr)[k];
-      timeProfile.Fill(k,adc);
-      wiresum+=adc;
-      // colormap.get(&imagedata[k*3],adc/4000.);
-      imagedata[k] = tanscale(adc);
+      // Get signal pointer.  This is ROOT magic crap I dont' understand, but it works. 
+      // pointer = (char*)cont->At(i);
+      // ladd = pointer+offset;
+      // ptr = (std::vector<float> *)ladd;
+      ptr = l.get<std::vector<float>>(i);
+      // std::string signal("[");
+      float max = 0;
+      float min = 1;
+      double wiresum = 0;
+      for(size_t k = 0; k<width; k++) {
+        // Color map.
+        float adc = (*ptr)[k];
+        timeProfile.Fill(k,adc);
+        wiresum+=adc;
+        // colormap.get(&imagedata[k*3],adc/4000.);
+        imagedata[k] = tanscale(adc);
       
-      // Save bitpacked data as image map.
-      int fadc = adc + float(0x8000);
-      int iadc = fadc;
-      encodeddata[k*3]   = 0xFF&(iadc>>8);
-      encodeddata[k*3+1] = iadc&0xFF;
-      encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
+        // Save bitpacked data as image map.
+        int fadc = adc + float(0x8000);
+        int iadc = fadc;
+        encodeddata[k*3]   = 0xFF&(iadc>>8);
+        encodeddata[k*3+1] = iadc&0xFF;
+        encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
+      }
+      int wire, plane;
+      wireOfChannel(i,plane,wire);
+      planeProfile[plane]->Fill(wire,wiresum);
+    
+      png.AddRow(imagedata);
+      encoded.AddRow(encodeddata);
+    
+      // This works, but is WAAYYYYYY TOO SLOW
+      //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
+      // arr.add(wire);
     }
-    int wire, plane;
-    wireOfChannel(i,plane,wire);
-    planeProfile[plane]->Fill(wire,wiresum);
-    
-    png.AddRow(imagedata);
-    encoded.AddRow(encodeddata);
-    
-    // This works, but is WAAYYYYYY TOO SLOW
-    //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
-    // arr.add(wire);
+    png.Finish();
+    encoded.Finish();
+    // r.add("wires",arr);
+    // Create histogram:
+
+    std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
+    std::string wireimg_thumb = wireimg+".thumb.png";
+    BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
+    r.add("wireimg_url",sfUrlToFileStorage+wireimg);
+    r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
+    r.add("wireimg_encoded_url",sfUrlToFileStorage+
+                              encoded.writeToUniqueFile(sfFileStoragePath)
+                              );
+
+    r.add("timeHist",TH1ToHistogram(&timeProfile));
+    JsonArray jPlaneHists;
+    jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
+    jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
+    jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
+    r.add("planeHists",jPlaneHists);
+
+    delete planeProfile[0];
+    delete planeProfile[1];
+    delete planeProfile[2];
+    reco_list.add(stripdots(name),r);
   }
-  png.Finish();
-  encoded.Finish();
-  // r.add("wires",arr);
-  // Create histogram:
-
-  std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
-  std::string wireimg_thumb = wireimg+".thumb.png";
-  BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
-  r.add("wireimg_url",sfUrlToFileStorage+wireimg);
-  r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
-  r.add("wireimg_encoded_url",sfUrlToFileStorage+
-                            encoded.writeToUniqueFile(sfFileStoragePath)
-                            );
-
-  r.add("timeHist",TH1ToHistogram(&timeProfile));
-  JsonArray jPlaneHists;
-  jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-  jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-  jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-  r.add("planeHists",jPlaneHists);
-
-  delete planeProfile[0];
-  delete planeProfile[1];
-  delete planeProfile[2];
-  fOutput.add("cal",r);
+  fOutput.add("cal",reco_list);
 }
 
 void RecordComposer::composeRaw()
 {
-  
-  
   vector<string> leafnames = findLeafOfType("vector<raw::RawDigit>");
-  if(leafnames.size()==0) {
-    fOutput.add("raw_warning","No raw::RawDigit branch found in file.");
-    return;
-  } 
-  if(leafnames.size()>1) {
-    // Need to figure out which raw list is the "good" one.
-    // FIXME: SHOULD output all. Here we'll just dump the beam window one.
-
+  JsonObject reco_list;
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
+  
     // Remove from the list anything which looks like a prespill or a postspill window.
-    for(vector<string>::iterator it=leafnames.begin();it!=leafnames.end();) {
-      if      ( string::npos != it->find("postSpill")) leafnames.erase(it);
-      else if ( string::npos != it->find("preSpill")) leafnames.erase(it);
-      else ++it;
-    }
-    
-    if(leafnames.size()>1) fOutput.add("raw_warning","More than one list of raw digits, even excluding pre and post spill windows!");
-    if(leafnames.size()==0) {
-      fOutput.add("raw_warning","Looks like there are ONLY pre- and post-spill windows.");
-      return;
-    }
-  } 
-  std::string name = leafnames[0];
-  
-  std::cout << "Looking at raw::RawDigit object " << (name+"obj_").c_str() << endl;
-  TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
-  if(!lf) return;
-  int ndig = lf->GetLen();
-    
-  JsonObject r;
-  ColorMap colormap;
-  
-  TreeElementLooter l(fTree,name+"obj.fADC");
-  if(!l.ok()) return;
-  const std::vector<short> *ptr = l.get<std::vector<short>>(0);
-  // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
-  size_t width = ptr->size();
-
-  MakePng png(width,ndig, MakePng::palette_alpha,fPalette,fPaletteTrans);
-  MakePng epng(width,ndig,MakePng::rgb);
-  std::vector<unsigned char> imagedata(width);
-  std::vector<unsigned char> encodeddata(width*3);
-  
-  TH1D timeProfile("timeProfile","timeProfile",width,0,width);
-  std::vector<TH1*> planeProfile;
-  planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-  planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-  planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-  
-  
-  for(int i=0;i<ndig;i++) {
-    ptr= l.get<std::vector<short>>(i);
-    std::vector<short>::iterator it;
-    double wiresum = 0;
-    
-    for(size_t k = 0; k<width; k++) {
-      short raw = (*ptr)[k];
-      // colormap.get(&imagedata[k*3],float(raw)/4000.);
-      imagedata[k] = tanscale(raw);
+    if( std::string::npos != fOptions.find("_NoPreSpill_")) 
+      if(string::npos != name.find("preSpill")) {
+        reco_list.add(stripdots(name),JsonElement()); // null it out.
+        continue;
+      }
+    if( std::string::npos != fOptions.find("_NoPostSpill_"))
+      if(string::npos != name.find("postSpill")) {
+        reco_list.add(stripdots(name),JsonElement()); // null it out.
+        continue;
+      }
       
-      // Save bitpacked data as image map.
-      int iadc = raw + 0x8000;
-      encodeddata[k*3]   = 0xFF&(iadc>>8);
-      encodeddata[k*3+1] = iadc&0xFF;
-      encodeddata[k*3+2] = 0;
-      double val = fabs(raw);
-      wiresum += val;
-      timeProfile.Fill(k,val);
-    }
-    png.AddRow(imagedata);
-    epng.AddRow(encodeddata);
-
-    int wire, plane;
-    wireOfChannel(i,plane,wire);
-    planeProfile[plane]->Fill(wire,wiresum);
-
-  }
-  png.Finish();
-  epng.Finish();
+    std::cout << "Looking at raw::RawDigit object " << (name+"obj_").c_str() << endl;
+    TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
+    if(!lf) return;
+    int ndig = lf->GetLen();
+    
+    JsonObject r;
+    ColorMap colormap;
   
-  std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
-  std::string wireimg_thumb = wireimg+".thumb.png";
-  BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
-  r.add("wireimg_url",sfUrlToFileStorage+wireimg);
-  r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
-  r.add("wireimg_encoded_url",sfUrlToFileStorage+
-                            epng.writeToUniqueFile(sfFileStoragePath)
-                            );
+    TreeElementLooter l(fTree,name+"obj.fADC");
+    if(!l.ok()) return;
+    const std::vector<short> *ptr = l.get<std::vector<short>>(0);
+    // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
+    size_t width = ptr->size();
 
-  r.add("timeHist",TH1ToHistogram(&timeProfile));
-  JsonArray jPlaneHists;
-  jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-  jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-  jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-  r.add("planeHists",jPlaneHists);
+    MakePng png(width,ndig, MakePng::palette_alpha,fPalette,fPaletteTrans);
+    MakePng epng(width,ndig,MakePng::rgb);
+    std::vector<unsigned char> imagedata(width);
+    std::vector<unsigned char> encodeddata(width*3);
+  
+    TH1D timeProfile("timeProfile","timeProfile",width,0,width);
+    std::vector<TH1*> planeProfile;
+    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+  
+  
+    for(int i=0;i<ndig;i++) {
+      ptr= l.get<std::vector<short>>(i);
+      std::vector<short>::iterator it;
+      double wiresum = 0;
+    
+      for(size_t k = 0; k<width; k++) {
+        short raw = (*ptr)[k];
+        // colormap.get(&imagedata[k*3],float(raw)/4000.);
+        imagedata[k] = tanscale(raw);
+      
+        // Save bitpacked data as image map.
+        int iadc = raw + 0x8000;
+        encodeddata[k*3]   = 0xFF&(iadc>>8);
+        encodeddata[k*3+1] = iadc&0xFF;
+        encodeddata[k*3+2] = 0;
+        double val = fabs(raw);
+        wiresum += val;
+        timeProfile.Fill(k,val);
+      }
+      png.AddRow(imagedata);
+      epng.AddRow(encodeddata);
 
-  delete planeProfile[0];
-  delete planeProfile[1];
-  delete planeProfile[2];
-  fOutput.add("raw",r);
+      int wire, plane;
+      wireOfChannel(i,plane,wire);
+      planeProfile[plane]->Fill(wire,wiresum);
+
+    }
+    png.Finish();
+    epng.Finish();
+  
+    std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
+    std::string wireimg_thumb = wireimg+".thumb.png";
+    BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
+    r.add("wireimg_url",sfUrlToFileStorage+wireimg);
+    r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
+    r.add("wireimg_encoded_url",sfUrlToFileStorage+
+                              epng.writeToUniqueFile(sfFileStoragePath)
+                              );
+
+    r.add("timeHist",TH1ToHistogram(&timeProfile));
+    JsonArray jPlaneHists;
+    jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
+    jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
+    jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
+    r.add("planeHists",jPlaneHists);
+
+    delete planeProfile[0];
+    delete planeProfile[1];
+    delete planeProfile[2];
+    reco_list.add(stripdots(name),r);
+  }
+  fOutput.add("raw",reco_list);
 }
 
 
 
 void RecordComposer::composeMC()
 {
-  
-  // Fixme: 
-  // This probably changes depending upon simulation method. This should work for now.
-  std::string gtruth_obj_name = "simb::GTruths_generator__GenieGen.obj.";
 
-  JsonArray gtruth_arr = ftr.makeArray(
-      "fGint"                             ,  gtruth_obj_name+"fGint"                           
-     ,"fGscatter"                         ,  gtruth_obj_name+"fGscatter"                       
-     ,"fweight"                           ,  gtruth_obj_name+"fweight"                         
-     ,"fprobability"                      ,  gtruth_obj_name+"fprobability"                    
-     ,"fXsec"                             ,  gtruth_obj_name+"fXsec"                           
-     ,"fDiffXsec"                         ,  gtruth_obj_name+"fDiffXsec"                       
-     ,"fNumPiPlus"                        ,  gtruth_obj_name+"fNumPiPlus"                      
-     ,"fNumPiMinus"                       ,  gtruth_obj_name+"fNumPiMinus"                     
-     ,"fNumPi0"                           ,  gtruth_obj_name+"fNumPi0"                         
-     ,"fNumProton"                        ,  gtruth_obj_name+"fNumProton"                      
-     ,"fNumNeutron"                       ,  gtruth_obj_name+"fNumNeutron"                     
-     ,"fIsCharm"                          ,  gtruth_obj_name+"fIsCharm"                        
-     ,"fResNum"                           ,  gtruth_obj_name+"fResNum"                         
-     ,"fgQ2"                              ,  gtruth_obj_name+"fgQ2"                            
-     ,"fgq2"                              ,  gtruth_obj_name+"fgq2"                            
-     ,"fgW"                               ,  gtruth_obj_name+"fgW"                             
-     ,"fgT"                               ,  gtruth_obj_name+"fgT"                             
-     ,"fgX"                               ,  gtruth_obj_name+"fgX"                             
-     ,"fgY"                               ,  gtruth_obj_name+"fgY"                             
-     ,"fFShadSystP4_fP_fBits"             ,  gtruth_obj_name+"fFShadSystP4.fP.fBits"           
-     ,"fFShadSystP4_fP_fX"                ,  gtruth_obj_name+"fFShadSystP4.fP.fX"              
-     ,"fFShadSystP4_fP_fY"                ,  gtruth_obj_name+"fFShadSystP4.fP.fY"              
-     ,"fFShadSystP4_fP_fZ"                ,  gtruth_obj_name+"fFShadSystP4.fP.fZ"              
-     ,"fFShadSystP4_fE"                   ,  gtruth_obj_name+"fFShadSystP4.fE"                 
-     ,"fIsSeaQuark"                       ,  gtruth_obj_name+"fIsSeaQuark"                     
-     ,"fHitNucP4_fP_fBits"                ,  gtruth_obj_name+"fHitNucP4.fP.fBits"              
-     ,"fHitNucP4_fP_fX"                   ,  gtruth_obj_name+"fHitNucP4.fP.fX"                 
-     ,"fHitNucP4_fP_fY"                   ,  gtruth_obj_name+"fHitNucP4.fP.fY"                 
-     ,"fHitNucP4_fP_fZ"                   ,  gtruth_obj_name+"fHitNucP4.fP.fZ"                 
-     ,"fHitNucP4_fE"                      ,  gtruth_obj_name+"fHitNucP4.fE"                    
-     ,"ftgtZ"                             ,  gtruth_obj_name+"ftgtZ"                           
-     ,"ftgtA"                             ,  gtruth_obj_name+"ftgtA"                           
-     ,"ftgtPDG"                           ,  gtruth_obj_name+"ftgtPDG"                         
-     ,"fProbePDG"                         ,  gtruth_obj_name+"fProbePDG"                       
-     ,"fProbeP4_fP_fBits"                 ,  gtruth_obj_name+"fProbeP4.fP.fBits"               
-     ,"fProbeP4_fP_fX"                    ,  gtruth_obj_name+"fProbeP4.fP.fX"                  
-     ,"fProbeP4_fP_fY"                    ,  gtruth_obj_name+"fProbeP4.fP.fY"                  
-     ,"fProbeP4_fP_fZ"                    ,  gtruth_obj_name+"fProbeP4.fP.fZ"                  
-     ,"fProbeP4_fE"                       ,  gtruth_obj_name+"fProbeP4.fE"                     
-     ,"fVertex_fP_fX"                     ,  gtruth_obj_name+"fVertex.fP.fX"                   
-     ,"fVertex_fP_fY"                     ,  gtruth_obj_name+"fVertex.fP.fY"                   
-     ,"fVertex_fP_fZ"                     ,  gtruth_obj_name+"fVertex.fP.fZ"                   
-     ,"fVertex_fE"                        ,  gtruth_obj_name+"fVertex.fE"                      
-  );
-  
-  // Fixme: 
-  // This probably changes depending upon simulation method. This should work for now.
-  JsonElement::sfDecimals=5;
-  JsonArray gparticle_arr;
-  std::string gpart_obj_name = "simb::MCParticles_largeant__GenieGen.obj.";
- 
-  vector<pair< string,string> > key_leaf_pairs;
-  key_leaf_pairs.push_back(make_pair<string,string>("fdaughters"                 , gpart_obj_name+"fdaughters"               ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fE"                   , gpart_obj_name+"fGvtx.fE"                 ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fX"                , gpart_obj_name+"fGvtx.fP.fX"              ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fY"                , gpart_obj_name+"fGvtx.fP.fY"              ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fZ"                , gpart_obj_name+"fGvtx.fP.fZ"              ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fmass"                      , gpart_obj_name+"fmass"                    ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fmother"                    , gpart_obj_name+"fmother"                  ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fpdgCode"                   , gpart_obj_name+"fpdgCode"                 ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fX"           , gpart_obj_name+"fpolarization.fX"         ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fY"           , gpart_obj_name+"fpolarization.fY"         ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fZ"           , gpart_obj_name+"fpolarization.fZ"         ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fprocess"                   , gpart_obj_name+"fprocess"                 ));
-  key_leaf_pairs.push_back(make_pair<string,string>("frescatter"                 , gpart_obj_name+"frescatter"               ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , gpart_obj_name+"fstatus"                  ));
-  key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , gpart_obj_name+"ftrackId"                 ));
-  key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , gpart_obj_name+"fWeight"                  ));
-  std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs);
-  TreeElementLooter l(fTree,gpart_obj_name+"ftrajectory.ftrajectory");
-  JsonArray j_particles;
-  if(l.ok()){
-    for(int i=0;i<v_particles.size();i++) {
-      // Add  the trajectory points.
-      const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
-      traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
-      JsonArray jtraj;
-      for(int j=0;j<traj->size();j++){
-        JsonObject trajpoint;
-        const TLorentzVector& pos = (*traj)[j].first;
-        const TLorentzVector& mom = (*traj)[j].second;
-        trajpoint.add("x",pos.X());
-        trajpoint.add("y",pos.Y());
-        trajpoint.add("z",pos.Z());
-        trajpoint.add("t",pos.T());
-        trajpoint.add("px",JsonElement(mom.X(),4));
-        trajpoint.add("py",JsonElement(mom.Y(),4));
-        trajpoint.add("pz",JsonElement(mom.Z(),4));
-        trajpoint.add("E" ,JsonElement(mom.T(),6));
-        jtraj.add(trajpoint);
-      }
-      v_particles[i].add("trajectory",jtraj);
-      j_particles.add(v_particles[i]);
-    }
-  }
-  
-  JsonElement::sfDecimals=2;
-  
+  vector<string> leafnames = findLeafOfType("vector<simb::GTruth>");
   JsonObject mc;
-  mc.add("gtruth",gtruth_arr);
-  mc.add("particles",j_particles);
+
+  JsonObject truth_list;
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
+    
+    JsonArray gtruth_arr = ftr.makeArray(
+        "fGint"                             ,  name+"obj.fGint"                           
+       ,"fGscatter"                         ,  name+"obj.fGscatter"                       
+       ,"fweight"                           ,  name+"obj.fweight"                         
+       ,"fprobability"                      ,  name+"obj.fprobability"                    
+       ,"fXsec"                             ,  name+"obj.fXsec"                           
+       ,"fDiffXsec"                         ,  name+"obj.fDiffXsec"                       
+       ,"fNumPiPlus"                        ,  name+"obj.fNumPiPlus"                      
+       ,"fNumPiMinus"                       ,  name+"obj.fNumPiMinus"                     
+       ,"fNumPi0"                           ,  name+"obj.fNumPi0"                         
+       ,"fNumProton"                        ,  name+"obj.fNumProton"                      
+       ,"fNumNeutron"                       ,  name+"obj.fNumNeutron"                     
+       ,"fIsCharm"                          ,  name+"obj.fIsCharm"                        
+       ,"fResNum"                           ,  name+"obj.fResNum"                         
+       ,"fgQ2"                              ,  name+"obj.fgQ2"                            
+       ,"fgq2"                              ,  name+"obj.fgq2"                            
+       ,"fgW"                               ,  name+"obj.fgW"                             
+       ,"fgT"                               ,  name+"obj.fgT"                             
+       ,"fgX"                               ,  name+"obj.fgX"                             
+       ,"fgY"                               ,  name+"obj.fgY"                             
+       ,"fFShadSystP4_fP_fBits"             ,  name+"obj.fFShadSystP4.fP.fBits"           
+       ,"fFShadSystP4_fP_fX"                ,  name+"obj.fFShadSystP4.fP.fX"              
+       ,"fFShadSystP4_fP_fY"                ,  name+"obj.fFShadSystP4.fP.fY"              
+       ,"fFShadSystP4_fP_fZ"                ,  name+"obj.fFShadSystP4.fP.fZ"              
+       ,"fFShadSystP4_fE"                   ,  name+"obj.fFShadSystP4.fE"                 
+       ,"fIsSeaQuark"                       ,  name+"obj.fIsSeaQuark"                     
+       ,"fHitNucP4_fP_fBits"                ,  name+"obj.fHitNucP4.fP.fBits"              
+       ,"fHitNucP4_fP_fX"                   ,  name+"obj.fHitNucP4.fP.fX"                 
+       ,"fHitNucP4_fP_fY"                   ,  name+"obj.fHitNucP4.fP.fY"                 
+       ,"fHitNucP4_fP_fZ"                   ,  name+"obj.fHitNucP4.fP.fZ"                 
+       ,"fHitNucP4_fE"                      ,  name+"obj.fHitNucP4.fE"                    
+       ,"ftgtZ"                             ,  name+"obj.ftgtZ"                           
+       ,"ftgtA"                             ,  name+"obj.ftgtA"                           
+       ,"ftgtPDG"                           ,  name+"obj.ftgtPDG"                         
+       ,"fProbePDG"                         ,  name+"obj.fProbePDG"                       
+       ,"fProbeP4_fP_fBits"                 ,  name+"obj.fProbeP4.fP.fBits"               
+       ,"fProbeP4_fP_fX"                    ,  name+"obj.fProbeP4.fP.fX"                  
+       ,"fProbeP4_fP_fY"                    ,  name+"obj.fProbeP4.fP.fY"                  
+       ,"fProbeP4_fP_fZ"                    ,  name+"obj.fProbeP4.fP.fZ"                  
+       ,"fProbeP4_fE"                       ,  name+"obj.fProbeP4.fE"                     
+       ,"fVertex_fP_fX"                     ,  name+"obj.fVertex.fP.fX"                   
+       ,"fVertex_fP_fY"                     ,  name+"obj.fVertex.fP.fY"                   
+       ,"fVertex_fP_fZ"                     ,  name+"obj.fVertex.fP.fZ"                   
+       ,"fVertex_fE"                        ,  name+"obj.fVertex.fE"                      
+    );
+    truth_list.add(stripdots(name),gtruth_arr);
+  }
+  mc.add("gtruth",truth_list);
+  
+  JsonObject particle_list;
+  leafnames = findLeafOfType("vector<simb::MCParticle>");
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
+    
+    JsonElement::sfDecimals=5;
+    JsonArray gparticle_arr;
+  
+    vector<pair< string,string> > key_leaf_pairs;
+    key_leaf_pairs.push_back(make_pair<string,string>("fdaughters"                 , name+"obj.fdaughters"               ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fE"                   , name+"obj.fGvtx.fE"                 ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fX"                , name+"obj.fGvtx.fP.fX"              ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fY"                , name+"obj.fGvtx.fP.fY"              ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fZ"                , name+"obj.fGvtx.fP.fZ"              ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fmass"                      , name+"obj.fmass"                    ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fmother"                    , name+"obj.fmother"                  ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fpdgCode"                   , name+"obj.fpdgCode"                 ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fX"           , name+"obj.fpolarization.fX"         ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fY"           , name+"obj.fpolarization.fY"         ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fZ"           , name+"obj.fpolarization.fZ"         ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fprocess"                   , name+"obj.fprocess"                 ));
+    key_leaf_pairs.push_back(make_pair<string,string>("frescatter"                 , name+"obj.frescatter"               ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , name+"obj.fstatus"                  ));
+    key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , name+"obj.ftrackId"                 ));
+    key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , name+"obj.fWeight"                  ));
+    std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs);
+    TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
+    JsonArray j_particles;
+    if(l.ok()){
+      for(int i=0;i<v_particles.size();i++) {
+        // Add  the trajectory points.
+        const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
+        traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
+        JsonArray jtraj;
+        for(int j=0;j<traj->size();j++){
+          JsonObject trajpoint;
+          const TLorentzVector& pos = (*traj)[j].first;
+          const TLorentzVector& mom = (*traj)[j].second;
+          trajpoint.add("x",pos.X());
+          trajpoint.add("y",pos.Y());
+          trajpoint.add("z",pos.Z());
+          trajpoint.add("t",pos.T());
+          trajpoint.add("px",JsonElement(mom.X(),4));
+          trajpoint.add("py",JsonElement(mom.Y(),4));
+          trajpoint.add("pz",JsonElement(mom.Z(),4));
+          trajpoint.add("E" ,JsonElement(mom.T(),6));
+          jtraj.add(trajpoint);
+        }
+        v_particles[i].add("trajectory",jtraj);
+        j_particles.add(v_particles[i]);
+      }
+    }
+  
+    JsonElement::sfDecimals=2;
+
+    particle_list.add(stripdots(name),j_particles);
+  }
+  mc.add("particles",particle_list);
   fOutput.add("mc",mc);
   
 }
