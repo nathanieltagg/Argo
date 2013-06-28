@@ -53,9 +53,9 @@ MCDigraph.prototype.NewRecord = function()
   this.st = null;
   if(!gRecord) return;
   if(!gRecord.mc) return;
-  var particles = gRecord.mc.particles;
+  var particles = gRecord.mc.particles[gMCParticlesListName];
   
-  if(particles.length == 0) {
+  if(!particles || particles.length == 0) {
     $(this.element).hide();
     return;
   } else {
@@ -108,13 +108,14 @@ MCDigraph.prototype.NewRecord = function()
   // build root node.
   var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
    // Modify the root object to be the interaction.
-  var inter = gRecord.mc.gtruth[0];
-  var incE = inter.fProbeP4_fE;
-  root.name = incE.toFixed(3)  + " GeV" 
-            + " " + GetParticle(inter.fProbePDG)
-            + " " + InteractionCode[inter.fGint]
-            + " " + ScatterCode[inter.fGscatter];  
-
+  var inter = gRecord.mc.gtruth[gMCTruthListName][0];
+  if(inter) {
+    var incE = inter.fProbeP4_fE;
+    root.name = incE.toFixed(3)  + " GeV" 
+              + " " + GetParticle(inter.fProbePDG)
+              + " " + InteractionCode[inter.fGint]
+              + " " + ScatterCode[inter.fGscatter];  
+  }
   for(var i=0;i<particles.length; i++) {
     if(particles[i].fmother === 0){
       // console.log("adding to root:",particles[i],particles[i].ftrackId);

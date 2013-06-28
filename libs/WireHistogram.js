@@ -39,6 +39,7 @@ function WireHistogram( element  )
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
   this.hist = null;
+  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
@@ -57,10 +58,10 @@ WireHistogram.prototype.Change = function()
 
 WireHistogram.prototype.NewRecord = function()
 {
-  if(gRecord.cal && gRecord.cal.planeHists)
-    this.hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.planeHists[this.plane]);
-  else if(gRecord.raw && gRecord.raw.planeHists)
-    this.hist = $.extend(true,new Histogram(1,0,1), gRecord.raw.planeHists[this.plane]);
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
+  if(!gRecord[this.show_image]) return;
+  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+  this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
   this.SetHist(this.hist,new ColorScaleIndexed(0));
   this.ResetToHist(this.hist);
   this.bound_u_min = 0;

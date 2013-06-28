@@ -129,7 +129,7 @@ function WireView( element, options )
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
   this.ctl_plane.click(function(ev) { 
     self.plane = parseInt( $(self.ctl_plane).filter(":checked").val() );
-    console.warn("changing plane",self,$(this.ctl_plane).filter(":checked").val(),self.plane);
+    // console.warn("changing plane",self,$(this.ctl_plane).filter(":checked").val(),self.plane);
     
     return self.NewRecord(); 
   });
@@ -158,10 +158,12 @@ WireView.prototype.NewRecord_hits = function()
   this.myHits = [];
   this.visHits = [];
   this.hasContent = false;
-  
+
+  if(!gHitsListName) return;
+  var hits = gRecord.hits[gHitsListName];
   // Go through gHits, and find hits that match our view.
-  for(var i=0;i<gHits.length;i++) {
-    if(gHits[i].plane == this.plane) this.myHits.push(gHits[i]);
+  for(var i=0;i<hits.length;i++) {
+    if(hits[i].plane == this.plane) this.myHits.push(hits[i]);
   }
   this.TrimHits();
 }
@@ -175,10 +177,11 @@ WireView.prototype.NewRecord_image = function()
   this.wireimg = new Image();
   this.wireimg_thumb = new Image();
   
-  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
   if(!gRecord[this.show_image]) return;
-  this.wireimg.src       = gRecord[this.show_image].wireimg_url;
-  this.wireimg_thumb.src = gRecord[this.show_image].wireimg_url_thumb;
+  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+  this.wireimg.src       = wiredesc.wireimg_url;
+  this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;
   // Callback when the png is actually there...
   var self = this;
   this.wireimg.onload = function() {
@@ -476,7 +479,8 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   // totalCharge: 279631.85
   // view: 2
   
-  var clusters = gRecord.clusters;
+  if(!gClustersListName) return;
+  var clusters = gRecord.clusters[gClustersListName];
   if(!clusters) return;
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
@@ -506,7 +510,8 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 {
-  var sps = gRecord.spacepoints;
+  if(!gSpacepointsListName) return;
+  var sps = gRecord.spacepoints[gSpacepointsListName];
   if(!sps) return;
   this.ctx.save();
   for(var i = 0; i<sps.length;i++) {
@@ -517,13 +522,13 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     var u = gGeo.yzToWire(this.plane,sp.xyz[1],sp.xyz[2]);
     var v = gGeo.getTDCofX(this.plane,sp.xyz[0]); // FIXME: Only true for beam MC events!
     var ru = 1; // one wire.
-    if(i<5) console.warn("spacepoint plane",this.plane,u,v,ru);
+    // if(i<5) console.warn("spacepoint plane",this.plane,u,v,ru);
     var x = this.GetX(u);
     var y = this.GetY(v);
     var r = this.GetX(u+ru) - x;
     this.ctx.beginPath();
     this.ctx.arc(x,y,r,0,2*Math.PI);
-      if(i<5) console.warn("spacepoint plane",this.plane,x,y,r,0,2*Math.Pi);
+    // if(i<5) console.warn("spacepoint plane",this.plane,x,y,r,0,2*Math.Pi);
     
     this.ctx.fill();
     if(r>4) this.ctx.strokeStyle="black"; // Dots are big enough that showing the outline is worth it.
@@ -536,7 +541,8 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
-  var tracks = gRecord.tracks;
+  if(!gTracksListName) return;
+  var tracks = gRecord.tracks[gTracksListName];
   if(!tracks) return;
   this.ctx.save();
   for(var i=0;i<tracks.length;i++)
@@ -563,12 +569,15 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 {
+  // console.warn("DrawMC",gRecord);
+  
   if(!gRecord) return;
   if(!gRecord.mc) return;
-  if(!gRecord.mc.particles) return;
-  for(var i=0;i<gRecord.mc.particles.length;i++)
+  var particles = gRecord.mc.particles[gMCParticlesListName];
+  if(!particles) return;
+  for(var i=0;i<particles.length;i++)
   {
-    var p= gRecord.mc.particles[i];
+    var p= particles[i];
     if(!p.trajectory || p.trajectory.length==0) continue;
     
     this.ctx.lineWidth = 1;
