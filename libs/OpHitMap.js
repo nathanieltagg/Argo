@@ -51,11 +51,9 @@ function OpHitMap( element  )
 OpHitMap.prototype.NewRecord = function()
 {
   this.ophits = [];
-
-  if(!gRecord) return;
-  if(!gRecord.ophits) return;
+  if(!gOphitsListName) return;
   
-  this.ophits = gRecord.ophits.slice(0); // Copy
+  this.ophits = gRecord.ophits[gOphitsListName].slice(0); // Copy
 
   // Sort hits by time, earliest last. 
   this.ophits.sort(

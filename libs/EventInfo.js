@@ -65,15 +65,38 @@ EventInfo.prototype.NewRecord = function()
     // h += a + "File"    + b + gRecord.source.file + c;
     h += a + "Entry"    + b + gRecord.source.entry + "/" + gRecord.source.numEntriesInFile + c;    
   }
+
+  var t = "";
+  for(var i in gRecord.raw) { t += i + "<br/>";}
+  h += a + "Raw Wires" + b + (t.length?t:"Not present") + c;
+
+  t="";
+  for(var i in gRecord.cal) { t += i + "<br/>";}
+  h += a + "Cal Wires" + b + (t.length?t:"Not present") + c;
+
+  t="";
+  for(var i in gRecord.hits) { t += gRecord.hits[i].length + " " + i + "<br/>";}
+  h += a + "Hits" + b + (t.length?t:"Not present") + c;
+
+  t="";
+  for(var i in gRecord.clusters) { t += gRecord.clusters[i].length + " " + i + "<br/>";}
+  h += a + "Clusters" + b +  (t.length?t:"Not present") + c;
+
+  t="";
+  for(var i in gRecord.spacepoints) { t += gRecord.spacepoints[i].length + " " + i + "<br/>";}
+  h += a + "SpacePoints" + b + (t.length?t:"Not present") + c;
+
+  t="";
+  for(var i in gRecord.tracks) { t += gRecord.tracks[i].length + " " + i + "<br/>";}
+  h += a + "Tracks" + b + (t.length?t:"Not present") + c;
   
-  h += a + "Raw Wires" + b + (gRecord.raw?"Present":"Not present") + c;
-  h += a + "Cal Wires" + b + (gRecord.cal?"Present":"Not present") + c;
-  h += a + "Hits" + b + (gRecord.hits?gRecord.hits.hits.length:0) + c;
-  h += a + "Clusters" + b + (gRecord.clusters?gRecord.clusters.length:0) + c;
-  h += a + "SpacePoints" + b + (gRecord.spacepoints?gRecord.spacepoints.length:0) + c;
-  h += a + "Tracks" + b + (gRecord.tracks?gRecord.tracks.length:0) + c;
-  h += a + "Optical Flashes" + b + (gRecord.opflashes?gRecord.opflashes.length:0) + c;
-  h += a + "Optical Hits" + b + (gRecord.ophits?gRecord.ophits.length:0) + c;
+  t="";
+  for(var i in gRecord.ophits) { t += gRecord.ophits[i].length + " " + i + "<br/>";}
+  h += a + "Optical Hits" + b + (t.length?t:"Not present") + c;
+
+  t="";
+  for(var i in gRecord.opflashes) { t += gRecord.opflashes[i].length + " " + i + "<br/>";}
+  h += a + "Optical Flashes" + b + (t.length?t:"Not present") + c;
   
   h+= "</table>";
   $(this.element).html(h);

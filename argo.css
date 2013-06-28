@@ -235,6 +235,10 @@ span.keypress-hint {
    padding: 4px 4px 4px 4px !important;
  }
 
+div.A-EventInfo {
+  overflow: scroll;
+}
+
 #event-info div.collapsible {
   vertical-align: top;
   display:inline-block;

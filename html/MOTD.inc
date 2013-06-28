@@ -8,8 +8,7 @@
   </p>
   Recent updates: <br/>
   <ul>
-    <li> Add hits in 3d view. </li>
-    <li> Fix up auto-zoom a bit. </li>
-    <li> Clusters, spacepoints, and tracks in wireviews </li>
+    <li> Starting to more elegantly handle multiple data products in one file.</li>
+    <li> Fixed Ryan's problems seeing MC from particle cannon.</li>
   </ul>
 </div> 

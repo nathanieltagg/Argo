@@ -38,24 +38,24 @@ $(function(){
 function CheckWireData()
 {
   if(!gRecord) return;
-  if(gRecord.cal && gRecord.cal.wireimg_url) {
+  if(gCurName.cal && gRecord.cal[gCurName.cal].wireimg_url) {
     $('#ctl-show-wireimg-cal').prop('disabled', false);
   } else {
     $('#ctl-show-wireimg-cal').prop('disabled', true);
-  }
+  }    
 
-  if(gRecord.raw && gRecord.raw.wireimg_url) {
+  if(gCurName.raw && gRecord.raw[gCurName.raw].wireimg_url) {
     $('#ctl-show-wireimg-raw').prop('disabled', false);
   } else {
     $('#ctl-show-wireimg-raw').prop('disabled', true);
   }
 
   // Select the correct one.
-  if(gRecord.raw && !(gRecord.cal) && $('#ctl-show-wireimg-cal').is(":checked")) {
+  if(gCurName.raw && !gCurName.cal && $('#ctl-show-wireimg-cal').is(":checked")) {
     $('#ctl-show-wireimg-raw').prop("checked",true);
   }
 
-  if(gRecord.cal && !(gRecord.raw) &&  $('#ctl-show-wireimg-raw').is(":checked")) {
+  if(gCurName.cal && !gCurName.raw &&  $('#ctl-show-wireimg-raw').is(":checked")) {
     $('#ctl-show-wireimg-cal').prop("checked",true);
   }
 

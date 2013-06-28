@@ -36,7 +36,8 @@ function TimeHistogram( element  )
   
 
   this.hist = null;
-  
+  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+    
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj("hoverWireChange",this,"Draw");
@@ -56,10 +57,11 @@ TimeHistogram.prototype.Change = function()
 
 TimeHistogram.prototype.NewRecord = function()
 {
-  if(gRecord.cal && gRecord.cal.timeHist)
-    this.hist = $.extend(true,new Histogram(1,0,1), gRecord.cal.timeHist);
-  else if(gRecord.raw && gRecord.raw.timeHist)
-    this.hist = $.extend(true,new Histogram(1,0,1), gRecord.raw.timeHist);
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
+  if(!gRecord[this.show_image]) return;
+  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+  this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.timeHist);
+
   var cs = new ColorScaleIndexed(0);
   // Use this for testing out color schemes.
   // cs.colorScale = new HueColorScale(1.0,0.15);

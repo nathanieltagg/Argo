@@ -137,13 +137,14 @@ TriDView.prototype.CreateFrame = function()
 
 TriDView.prototype.CreateHits = function()
 {
-  if(!gHits) return;
+  if(!gHitsListName) return;
+  var hits = gRecord.hits[gHitsListName];
+
   var cs = new ColorScaler();  
   cs.max = 2000;
 
-
-  for(var i=0;i<gHits.length;i++) {
-    var h = gHits[i];
+  for(var i=0;i<hits.length;i++) {
+    var h = hits[i];
     if(h.t1 > gZoomRegion.tdc[1]) continue;
     if(h.t2 < gZoomRegion.tdc[0]) continue;
     var gwire = gGeo.getWire(h.plane,h.wire);
@@ -163,8 +164,11 @@ TriDView.prototype.CreateClusters = function()
 
 TriDView.prototype.CreateTracks = function()
 {
-  for(itrk in gTracks) {
-    var trk = gTracks[itrk];
+  if(!gTracksListName) return;
+  var tracks = gRecord.tracks[gTracksListName];
+  console.warn(tracks,gRecord.tracks,gTracksListName);
+  for(itrk in tracks) {
+    var trk = tracks[itrk];
     var points = trk.points;
     for(var i=0;i<points.length-1;i++) {
 
@@ -178,9 +182,10 @@ TriDView.prototype.CreateTracks = function()
 
 TriDView.prototype.CreateSpacepoints = function()
 {  
-  if(!gRecord.spacepoints) return;
-  for(var i=0;i<gRecord.spacepoints.length;i++) {
-    var sp = gRecord.spacepoints[i];
+  if(!gSpacepointsListName) return;
+  var spacepoints = gRecord.spacepoints[gSpacepointsListName];
+  for(var i=0;i<spacepoints.length;i++) {
+    var sp = spacepoints[i];
     var curColor = "rgba(0, 150, 150, 1)";
     this.AddLine(sp.xyz[0], sp.xyz[1], sp.xyz[2],sp.xyz[0], sp.xyz[1], sp.xyz[2]+0.3, 2, curColor, sp);
   }
@@ -190,10 +195,12 @@ TriDView.prototype.CreateMC = function()
 {
   if(!gRecord) return;
   if(!gRecord.mc) return;
-  if(!gRecord.mc.particles) return;
-  for(var i=0;i<gRecord.mc.particles.length;i++)
+  if(!gMCParticlesListName) return;
+  var particles = gRecord.mc.particles[gMCParticlesListName];
+  if(!particles) return;
+  for(var i=0;i<particles.length;i++)
   {
-    var p= gRecord.mc.particles[i];
+    var p= particles[i];
     if(!p.trajectory || p.trajectory.length==0) continue;
     
     var lineWidth = 1;
