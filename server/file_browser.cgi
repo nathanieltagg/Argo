@@ -97,6 +97,10 @@ foreach $parent (@breakdown)
 print end_div;
 print br. br;
 
+# Force open of critical paths.
+opendir(IMDTMP, "/uboone/app"); close(IMDTMP);
+opendir(IMDTMP, "/uboone/data"); close(IMDTMP);
+
 # read directory.
 if (! opendir(IMD, $cur_path) )
 { 
