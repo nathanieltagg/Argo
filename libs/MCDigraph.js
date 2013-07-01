@@ -108,8 +108,10 @@ MCDigraph.prototype.NewRecord = function()
   // build root node.
   var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
    // Modify the root object to be the interaction.
-  var inter = gRecord.mc.gtruth[gMCTruthListName][0];
-  if(inter) {
+  
+  var inters = gRecord.mc.gtruth[gMCTruthListName];
+  if(inters && inters[0]) {
+    var inter = inters[0];
     var incE = inter.fProbeP4_fE;
     root.name = incE.toFixed(3)  + " GeV" 
               + " " + GetParticle(inter.fProbePDG)
