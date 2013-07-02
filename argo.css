@@ -490,3 +490,23 @@ tr.rowstripe
   height: 100% !important;  
 }
 
+
+.shiftspinner {
+  overflow:hidden; 
+}
+
+.shiftspinner * {
+  -moz-user-select: none;-webkit-user-select: none;
+  cursor: pointer;
+}
+.shiftspinner ul {
+  margin:0; padding: 0;
+  overflow: hidden; position: relative;
+}
+.shiftspinner li {
+  float: left; 
+  display: inline; 
+  overflow: hidden;
+}
+
+

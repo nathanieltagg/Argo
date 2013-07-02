@@ -445,21 +445,39 @@ void  RecordComposer::composeOpHits()
     // Double_t recob::OpHits_ophit__Reco.obj.fAreaError
     // Double_t recob::OpHits_ophit__Reco.obj.fAmplitudeError
     // Double_t recob::OpHits_ophit__Reco.obj.fPEError
-  
+
     JsonArray jophits;
-    if(n>0)    jophits = ftr.makeArray(
-       "opDetChan"     ,(name+"obj.fOpDetChannel") 
-      ,"peakTime"      ,(name+"obj.fPeakTime") 
-      ,"width"         ,(name+"obj.fWidth") 
-      ,"area"          ,(name+"obj.fArea") 
-      ,"amp"           ,(name+"obj.fAmplitude") 
-      ,"pe"            ,(name+"obj.fPE") 
-      ,"peakTimeErr"   ,(name+"obj.fPeakTimeError") 
-      ,"widthErr"      ,(name+"obj.fWidthError") 
-      ,"areaErr"       ,(name+"obj.fAreaError") 
-      ,"ampErr"        ,(name+"obj.fAmplitudeError") 
-      ,"peErr"         ,(name+"obj.fPEError") 
-      );
+    for(int i=0;i<n;i++) {
+      JsonObject jobj;
+      
+      jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpDetChannel"         ,i));
+      jobj.add("peakTime"      ,ftr.getJson(name+"obj.fPeakTime"             ,i));
+      jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
+      jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
+      jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));
+      jobj.add("pe"            ,ftr.getJson(name+"obj.fPE"                   ,i));
+      jobj.add("peakTimeErr"   ,ftr.getJson(name+"obj.fPeakTimeError"        ,i));
+      jobj.add("widthErr"      ,ftr.getJson(name+"obj.fWidthError"           ,i));
+      jobj.add("areaErr"       ,ftr.getJson(name+"obj.fAreaError"            ,i));
+      jobj.add("ampErr"        ,ftr.getJson(name+"obj.fAmplitudeError"       ,i));
+      jobj.add("peErr"         ,ftr.getJson(name+"obj.fPEError"              ,i));
+      jophits.add(jobj);
+    }
+
+
+    // if(n>0)    jophits = ftr.makeArray(
+    //    "opDetChan"     ,(name+"obj.fOpDetChannel") 
+    //   ,"peakTime"      ,(name+"obj.fPeakTime") 
+    //   ,"width"         ,(name+"obj.fWidth") 
+    //   ,"area"          ,(name+"obj.fArea") 
+    //   ,"amp"           ,(name+"obj.fAmplitude") 
+    //   ,"pe"            ,(name+"obj.fPE") 
+    //   ,"peakTimeErr"   ,(name+"obj.fPeakTimeError") 
+    //   ,"widthErr"      ,(name+"obj.fWidthError") 
+    //   ,"areaErr"       ,(name+"obj.fAreaError") 
+    //   ,"ampErr"        ,(name+"obj.fAmplitudeError") 
+    //   ,"peErr"         ,(name+"obj.fPEError") 
+    //   );
     
     reco_list.add(stripdots(name),jophits);
   }

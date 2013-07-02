@@ -67,35 +67,35 @@ EventInfo.prototype.NewRecord = function()
   }
 
   var t = "";
-  for(var i in gRecord.raw) { t += i + "<br/>";}
+  for(var i in gRecord.raw) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Raw Wires" + b + (t.length?t:"Not present") + c;
 
   t="";
-  for(var i in gRecord.cal) { t += i + "<br/>";}
+  for(var i in gRecord.cal) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Cal Wires" + b + (t.length?t:"Not present") + c;
 
-  t="";
-  for(var i in gRecord.hits) { t += gRecord.hits[i].length + " " + i + "<br/>";}
+  t="";  
+  for(var i in gRecord.hits) { t += gRecord.hits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Hits" + b + (t.length?t:"Not present") + c;
 
   t="";
-  for(var i in gRecord.clusters) { t += gRecord.clusters[i].length + " " + i + "<br/>";}
+  for(var i in gRecord.clusters) { t += gRecord.clusters[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Clusters" + b +  (t.length?t:"Not present") + c;
 
   t="";
-  for(var i in gRecord.spacepoints) { t += gRecord.spacepoints[i].length + " " + i + "<br/>";}
+  for(var i in gRecord.spacepoints) { t += gRecord.spacepoints[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "SpacePoints" + b + (t.length?t:"Not present") + c;
 
   t="";
-  for(var i in gRecord.tracks) { t += gRecord.tracks[i].length + " " + i + "<br/>";}
+  for(var i in gRecord.tracks) { t += gRecord.tracks[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Tracks" + b + (t.length?t:"Not present") + c;
   
   t="";
-  for(var i in gRecord.ophits) { t += gRecord.ophits[i].length + " " + i + "<br/>";}
+  for(var i in gRecord.ophits) { t += gRecord.ophits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Optical Hits" + b + (t.length?t:"Not present") + c;
 
   t="";
-  for(var i in gRecord.opflashes) { t += gRecord.opflashes[i].length + " " + i + "<br/>";}
+  for(var i in gRecord.opflashes) { t += gRecord.opflashes[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Optical Flashes" + b + (t.length?t:"Not present") + c;
   
   h+= "</table>";

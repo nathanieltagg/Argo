@@ -154,9 +154,10 @@ function ZoomControl( element, options )
 
 ZoomControl.prototype.AutoZoom = function()
 {
-  var source = gRecord.cal;
-  if(!source) source = gCurName.raw;
-  if(!source) return;
+  var source = null;
+  if(gCurName.cal) source = gRecord.cal[gCurName.cal];
+  else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
+  else return;
   
   if(source.timeHist){
     var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
@@ -299,8 +300,8 @@ ZoomControl.prototype.Draw = function()
   this.ctx.restore();
   
   // Draw tracks.
-  if(gTracksListName) {
-    var tracks = gRecord.tracks[gTracksListName];
+  if($("#ctl-TrackLists").val()) {
+    var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
     for(var itrk =0;itrk<tracks.length;itrk++) {
       var points = tracks[itrk].points;
       this.ctx.lineWidth = 2;

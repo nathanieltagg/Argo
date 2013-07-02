@@ -75,9 +75,10 @@ function WireView( element, options )
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
-  
+  console.warn("Wireview",this);
   
   var self = this;
+  this.SetMagnify(true);
   
   this.fMousing = false;
   this.fDragging = false;
@@ -124,6 +125,8 @@ function WireView( element, options )
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev) { return self.NewRecord(); });
+  $('#ctl-TrackLists')      .change(function(ev) { console.warn("!!!!") ;return self.Draw(false); });
+  $('#ctl-SpacepointLists') .change(function(ev) { console.warn("!!!!") ;return self.Draw(false); });
 
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
@@ -227,22 +230,9 @@ WireView.prototype.DrawFast = function()
   this.Draw(true);
 }
 
+/*
 WireView.prototype.Draw = function(fast)
 {
-  // Reset bounds if appropriate
-  if(this.zooming) {
-    this.min_v = gZoomRegion.tdc[0];
-    this.max_v = gZoomRegion.tdc[1];
-    this.min_u = gZoomRegion.plane[this.plane][0];
-    this.max_u = gZoomRegion.plane[this.plane][1];
-  } else {
-    this.min_v = 0;
-    this.max_v = 3200;
-    this.min_u = 0;
-    this.max_u = gGeo.numWires(this.plane);
-  }
-  
-  
 
   if($(this.element).is(":hidden")) return;
 
@@ -280,10 +270,23 @@ WireView.prototype.Draw = function(fast)
   } 
   
 }
-
+*/
 
 WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 {
+  // Reset bounds if appropriate
+  if(this.zooming) {
+    this.min_v = gZoomRegion.tdc[0];
+    this.max_v = gZoomRegion.tdc[1];
+    this.min_u = gZoomRegion.plane[this.plane][0];
+    this.max_u = gZoomRegion.plane[this.plane][1];
+  } else {
+    this.min_v = 0;
+    this.max_v = 3200;
+    this.min_u = 0;
+    this.max_u = gGeo.numWires(this.plane);
+  }
+  
   this.Clear();
   
   this.DrawFrame();
@@ -515,8 +518,8 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 {
-  if(!gSpacepointsListName) return;
-  var sps = gRecord.spacepoints[gSpacepointsListName];
+  if(!$("#ctl-SpacepointLists").val()) return;
+  var sps = gRecord.spacepoints[$("#ctl-SpacepointLists").val()];
   if(!sps) return;
   this.ctx.save();
   for(var i = 0; i<sps.length;i++) {
@@ -546,8 +549,8 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
-  if(!gTracksListName) return;
-  var tracks = gRecord.tracks[gTracksListName];
+  if(!$("#ctl-TrackLists").val()) return;
+  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
   if(!tracks) return;
   this.ctx.save();
   for(var i=0;i<tracks.length;i++)

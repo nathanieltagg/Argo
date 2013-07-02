@@ -110,7 +110,7 @@ OpHitMap.prototype.Draw = function()
       this.ctx.translate(x,y);
       this.ctx.scale(wx,wy);
       this.ctx.beginPath();
-      this.ctx.arc(0,0,1,0,Math.PI*2,true);
+      this.ctx.arc(0,0,1,0,Math.PI*1.999,false);
       this.ctx.fillStyle=grad;
       this.ctx.strokeStyle="#AAAAAA";
       this.ctx.lineWidth=1/wx;
@@ -144,7 +144,7 @@ OpHitMap.prototype.Draw = function()
     var c = gOpDetColorScaler.GetColor(w);
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*2);
+    this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
     this.ctx.fill();
   }
   
@@ -159,7 +159,7 @@ OpHitMap.prototype.Draw = function()
     var x = this.GetX(det.z);
     var y = this.GetY(det.y);
     this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*2);
+    this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
     this.ctx.stroke();
   }
   
