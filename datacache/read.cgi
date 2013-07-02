@@ -3,7 +3,13 @@ use CGI::Pretty;
 # use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
 use Data::Dumper;
 
-open STDERR, ">>", "read.log";
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+                                                localtime(time);
+
+open STDERR, ">>", "read." . ($year+1900) . ($mon+1) . ($mday) . ".log";
+
+print STDERR "HI";
 
 my $query = new CGI;
 # print STDERR $query->Dump;
@@ -30,10 +36,11 @@ if(-r $filename) {
 }
 
 #do cleanup. Look for any .png files that are too old
+@files = glob("*.png *.log");
 
-foreach $file (glob("*.png")) {
+foreach $file (@files) {
   print STDERR "Considering old file $file: " . (-M $file) . " days old\n";
-  if( (-M $file) > 3 ) {
+  if( (-M $file) > 0.1 ) {
 	unlink $file; 
         print STDERR "Deleting old file $file.\n"; 
   }
