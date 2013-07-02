@@ -33,10 +33,14 @@
           </div>
         
         <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"    checked="yes"/><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>
+          <div><div id="ctl-HitLists"  class="align-right" style='width:100px'></div><div style="clear:both;"></div></div>
         <div><input type="checkbox" id="ctl-show-clus"    name="show-clus"    class="saveable show-clus"                 /><label for="ctl-show-clus">    <b>(c)</b> Show Clusters </label></div>
         <div><input type="checkbox" id="ctl-show-spoints" name="show-spoints" class="saveable show-spoints"              /><label for="ctl-show-spoints"> <b>(s)</b> Show Spacepoints </label></div>
+        <div><b>(shift-S)</b> <select id="ctl-SpacepointLists"  class="align-right"></select><div style="clear:both;"></div></div>
         <div><input type="checkbox" id="ctl-show-tracks"  name="show-tracks"  class="saveable show-tracks"  checked="yes"/><label for="ctl-show-tracks">  <b>(t)</b> Show Tracks </label></div>
+        <div><b>(shift-T)</b> <select id="ctl-TrackLists"  class="align-right"></select><div style="clear:both;"></div></div>
         <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      checked="yes"/><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>
+          <!-- <div class="align-right"><div id="ctl-MCLists"></div><div style="clear:both;"></div></div> -->
 
 		<br/>
         <button id='ctl-save-config'>Save</button>        

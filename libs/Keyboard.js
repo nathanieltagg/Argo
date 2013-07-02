@@ -1,7 +1,25 @@
+
+/// Code for cycling options in a drop-down <select> menu.
+
+(function( $ ) {
+    $.fn.cycle_dropdown = function() { 
+      var s = $("option:selected",this).last();
+      var n = $(s).next();
+      if(n.length == 0) n = $("option",this).first();
+      this.val(n.val());
+      return this;
+    }; 
+}( jQuery ));
+
 ///
 /// Code that sets up keyboard key equivalents.
 ///
 $(function() {
+
+  // crappy hotkey plugin doesn't work.
+  // $(document).on('keypress',null,'Shift+T',function(){  });
+  // $(document).bind('keydown','shift+s',function(){ $('#ctl-SpacepointLists').cycle_dropdown(); });
+
   $(window).keypress(function(event){
     if($(event.target).is(":input")) return true;
     if(event.ctrlKey || event.altKey || event.metaKey) return true; // Don't intercept control-N for new window.
@@ -53,8 +71,16 @@ $(function() {
         $('#ctl-show-spoints').click();
         return false;
 
-      case 116: // 't'
+      case 83: // 'S'
+        $('#ctl-SpacepointLists').cycle_dropdown().trigger("change");
+        return false;
+
+      case 116: // 't' 
         $('#ctl-show-tracks').click();
+        return false;
+        
+      case 84: // 'T'
+        $('#ctl-TrackLists').cycle_dropdown().trigger("change");
         return false;
 
         

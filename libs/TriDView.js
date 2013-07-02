@@ -68,6 +68,9 @@ function TriDView( element, options ){
   $(this.ctl_show_spoints).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
+
+  $('#ctl-TrackLists') .change(function(ev) { return self.Rebuild(); });
+  $('#ctl-SpacepointLists').change(function(ev) { return self.Rebuild(); });
  
  
   this.ResetView();
@@ -164,9 +167,9 @@ TriDView.prototype.CreateClusters = function()
 
 TriDView.prototype.CreateTracks = function()
 {
-  if(!gTracksListName) return;
-  var tracks = gRecord.tracks[gTracksListName];
-  console.warn(tracks,gRecord.tracks,gTracksListName);
+  if(!$("#ctl-TrackLists").val()) return;
+  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
+  console.warn(tracks,gRecord.tracks,$("#ctl-TrackLists").val());
   for(itrk in tracks) {
     var trk = tracks[itrk];
     var points = trk.points;
@@ -182,8 +185,8 @@ TriDView.prototype.CreateTracks = function()
 
 TriDView.prototype.CreateSpacepoints = function()
 {  
-  if(!gSpacepointsListName) return;
-  var spacepoints = gRecord.spacepoints[gSpacepointsListName];
+  if(!$("#ctl-SpacepointLists").val()) return;
+  var spacepoints = gRecord.spacepoints[$("#ctl-SpacepointLists").val()];
   for(var i=0;i<spacepoints.length;i++) {
     var sp = spacepoints[i];
     var curColor = "rgba(0, 150, 150, 1)";

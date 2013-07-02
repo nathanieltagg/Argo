@@ -17,9 +17,11 @@
 <script type="text/javascript" src="js/jquery.cookie.js"></script>
 <script type="text/javascript" src="js/jquery.blockUI.js"></script>
 <script type="text/javascript" src="js/jquery.ba-resize.min.js"></script>
+<script type="text/javascript" src="js/jquery.hotkeys.js"></script>
 <script type="text/javascript" src="js/sylvester.js"></script>
 <script type="text/javascript" src="js/canvas.text.js"></script>
 <script type="text/javascript" src="js/jit.js"></script>
+
 
 <!-- for creating animated gifs. -->
 <script type="text/javascript" src="js/LZWEncoder.js"></script>
@@ -50,6 +52,7 @@
 </script>
 
 <!--Core. -->
+<script type="text/javascript" src="core/ABoundObject.js"></script>
 <script type="text/javascript" src="core/Pad.js"></script>
 <script type="text/javascript" src="core/ButtressedPad.js"></script>
 <script type="text/javascript" src="core/ColorScale.js"></script>

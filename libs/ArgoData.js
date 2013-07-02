@@ -9,8 +9,6 @@ gCurObjNames = {
 };
 gHitsListName = null;
 gClustersListName = null;
-gSpacepointsListName = null;
-gTracksListName = null;
 gMCParticlesListName = null;
 gMCTruthListName = null;
 gSelectedTrack = null;
@@ -23,8 +21,6 @@ function DoInitialBookmarking()
   };
   gHitsListName = null;
   gClustersListName = null;
-  gSpacepointsListName = null;
-  gTracksListName = null;
   gOphitsListName=null;
   gOpflashesListName=null;
   
@@ -62,19 +58,18 @@ function DoInitialBookmarking()
     }
   }
 
-  if(gRecord.spacepoints) {
-    for(var i in gRecord.spacepoints) { 
-      gSpacepointsListName = i;
-      if(gRecord.spacepoints[i].length > 0) break; // Select the first list that has nonzero entries.
-    }
+  $('#ctl-SpacepointLists').empty();
+  for(var i in gRecord.spacepoints) { 
+    // Sanitize name a little: remove everything before and including first underscore.
+    $('#ctl-SpacepointLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
 
-  if(gRecord.tracks) {
-    for(var i in gRecord.tracks) { 
-      gTracksListName = i;
-      if(gRecord.tracks[i].length > 0) break; // Select the first list that has nonzero entries.
-    }
+  $('#ctl-TrackLists').empty();
+  for(var i in gRecord.tracks) { 
+    $('#ctl-TrackLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
+  
+  
 
   if(gRecord.ophits) {
     for(var i in gRecord.ophits) { 

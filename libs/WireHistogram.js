@@ -48,8 +48,7 @@ function WireHistogram( element  )
 }
 
 WireHistogram.prototype.Change = function()
-{
-  
+{  
   this.min_u = gZoomRegion.plane[this.plane][0];
   this.max_u = gZoomRegion.plane[this.plane][1];
   this.Draw();
