@@ -98,7 +98,7 @@ function WireView( element, options )
   $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
   $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
 
-  $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.NewRecord(); });
+  $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.Draw(); });
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
@@ -229,48 +229,6 @@ WireView.prototype.DrawFast = function()
 {
   this.Draw(true);
 }
-
-/*
-WireView.prototype.Draw = function(fast)
-{
-
-  if($(this.element).is(":hidden")) return;
-
-  this.magnifying = false;
-  this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v,fast);
-
-  if((this.fMousing) && ($('#ctl-magnifying-glass').is(':checked') && this.fMouseY < this.origin_y && this.fMouseX > this.origin_x) )
-  {
-    this.magnifying = true;
-    // Cleverness:
-    var mag_radius = parseFloat($('#ctl-magnifier-size').val());
-    var mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
-    
-    this.ctx.strokeStyle = "rgba(0,0,0,0.75)";
-    this.ctx.beginPath();
-    this.ctx.arc(this.fMouseX,this.fMouseY, mag_radius+1, 0,Math.PI*2,true);
-    this.ctx.stroke();
-    
-    this.ctx.save();
-    this.ctx.beginPath();
-    this.ctx.arc(this.fMouseX,this.fMouseY, mag_radius, 0,Math.PI*2,true);
-    this.ctx.clip();
-    
-    this.ctx.translate((1-mag_scale)*this.fMouseX,(1-mag_scale)*this.fMouseY);
-    this.ctx.scale(mag_scale,mag_scale);
-    
-    // Find new draw limits in u/v coords:
-    var umin = this.GetU(this.fMouseX-mag_radius);
-    var umax = this.GetU(this.fMouseX+mag_radius);
-    var vmax = this.GetV(this.fMouseY-mag_radius);
-    var vmin = this.GetV(this.fMouseY+mag_radius);
-    
-    this.DrawOne(umin,umax,vmin,vmax,fast);
-    this.ctx.restore();
-  } 
-  
-}
-*/
 
 WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 {
