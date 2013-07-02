@@ -215,6 +215,10 @@ void RecordComposer::composeHits()
       hit.add("q",         ftr.getJson(name+"obj.fCharge",i));
       hit.add("σq",        ftr.getJson(name+"obj.fSigmaCharge" ,i));
       hit.add("t",         ftr.getJson(name+"obj.fPeakTime" ,i));
+      hit.add("σt",        ftr.getJson(name+"obj.fSigmaPeakTime" ,i));
+      hit.add("t1",         ftr.getJson(name+"obj.fStartTime" ,i));
+      hit.add("t2",         ftr.getJson(name+"obj.fEndTime" ,i));
+      
       arr.add(hit);
     }
     
