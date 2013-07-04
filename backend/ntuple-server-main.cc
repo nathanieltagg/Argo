@@ -22,11 +22,18 @@
 #include "SocketServer.h"
 #include "ComposeResult.h"
 
+#include <signal.h>
+
+
 using namespace std;
 
 VoidFuncPtr_t initfuncs[] = { 0 };
 TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg);
+void TerminationHandler(int signal);
+
+
+
 
 class MySocketServer : public SocketServer{
 public:
@@ -48,75 +55,86 @@ public:
 };
 
 
+MySocketServer* ss = 0;
+
 int main(int argc, char **argv)
 {
+  
+  // termination handling.
+  signal (SIGINT, TerminationHandler);
+  signal (SIGHUP, TerminationHandler);
+  signal (SIGTERM, TerminationHandler);
+    
   try{
 
-  int tcpPortNumber = 9092;
-  if(argc>1) {
-    sscanf(argv[1],"%d",&tcpPortNumber);
-  }
-  cout << "ntuple-server starting up at " <<  TTimeStamp().AsString() << " on port " << tcpPortNumber << endl;
+    int tcpPortNumber = 9092;
+    if(argc>1) {
+      sscanf(argv[1],"%d",&tcpPortNumber);
+    }
+    cout << argv[0] << " starting up at " <<  TTimeStamp().AsString() << " on port " << tcpPortNumber << endl;
   
-  SetErrorHandler(MyErrorHandler);
+    SetErrorHandler(MyErrorHandler);
 
-  MySocketServer ss(tcpPortNumber);
-  if(ss.Setup()) exit(1);  // Quit if socket won't bind.
+    ss = new MySocketServer(tcpPortNumber);
+    if(ss->Setup()) exit(1);  // Quit if socket won't bind.
 
-  // write a PID file.
-  {
-    ofstream pidfile("ntuple-server.pid");
-    pidfile << gSystem->GetPid();
-    pidfile.close();
-  }
-
-  gTimeStart = gSystem->Now();
-
-  while (1) {
-    //cout << ".";
-    //cout.flush();
-    ss.CheckForBadClients();
-    
-    unsigned char* dataRecvd;
-    int   client;
-    bool  newClient;
-    ss.Listen(100., // seconds timeout
-              1000, // bytes max
-              dataRecvd, // data recieved in message
-              client,    // fd number of client.
-              newClient  // true if a new client connected.
-              );
-    if(newClient) {
-      cout << "New client " << client << endl;
+    // write a PID file.
+    {
+      std::string pidfilename(argv[0]);
+      pidfilename+=".pid";
+      ofstream pidfile(pidfilename.c_str());
+      pidfile << gSystem->GetPid();
+      pidfile.close();
     }
+
+    gTimeStart = gSystem->Now();
+
+    while (1) {
+      //cout << ".";
+      //cout.flush();
+      ss->CheckForBadClients();
     
-    if(dataRecvd) {
-      // Try to parse format of FILENAME,GATE\n
-      char options[100];
-      char filename[990];
-      char selection[990];
-      Long64_t entrystart;
-      Long64_t entryend;
-      int r =  sscanf((char*)dataRecvd,"%99[^,\n],%900[^,\n],%900[^,\n],%lld,%lld\n",options,filename,selection,&entrystart,&entryend);
-      if(r==5) {
-        //Successful conversion. Give it a try.
-        cout << "Got a valid request at " << TTimeStamp().AsString() << endl;
-        cout << "    Filename: --" << filename << "--" << endl;
-        cout << "    Selection:--" << selection << "--" << endl;
-        cout << "    From:     --" << entrystart << " to " << entryend << endl;
-        cout << "    Options:  --" << options << endl;
-
-        // Now do your stuff.
-        std::string xml = ComposeResult(options,filename,selection,entrystart,entryend);
-
-        // Send it out.
-        ss.SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
-        cout << "Request served." << endl;
-        ss.Close(client);
+      unsigned char* dataRecvd;
+      int   client;
+      bool  newClient;
+      ss->Listen(100., // seconds timeout
+                1000, // bytes max
+                dataRecvd, // data recieved in message
+                client,    // fd number of client.
+                newClient  // true if a new client connected.
+                );
+      if(newClient) {
+        cout << "New client " << client << endl;
       }
+    
+      if(dataRecvd) {
+        // Try to parse format of FILENAME,GATE\n
+        char options[100];
+        char filename[990];
+        char selection[990];
+        Long64_t entrystart;
+        Long64_t entryend;
+        int r =  sscanf((char*)dataRecvd,"%99[^,\n],%900[^,\n],%900[^,\n],%lld,%lld\n",options,filename,selection,&entrystart,&entryend);
+        if(r==5) {
+          //Successful conversion. Give it a try.
+          cout << "Got a valid request at " << TTimeStamp().AsString() << endl;
+          cout << "    Filename: --" << filename << "--" << endl;
+          cout << "    Selection:--" << selection << "--" << endl;
+          cout << "    From:     --" << entrystart << " to " << entryend << endl;
+          cout << "    Options:  --" << options << endl;
 
+          // Now do your stuff.
+          std::string xml = ComposeResult(options,filename,selection,entrystart,entryend);
+
+          // Send it out.
+          ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
+          cout << "Request served." << endl;
+          ss->Close(client);
+        }
+
+      }
     }
-  }
+    delete ss;
   }
   catch(...) {
     cout << "Exception!" << endl;
@@ -124,6 +142,11 @@ int main(int argc, char **argv)
   }
 }
 
+void TerminationHandler(int signal)
+{
+  cout << "Kill signal. Shutting down the server.\n";
+  if(ss) delete ss; // Shut down the socket server cleanly.
+}
 
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
 {
