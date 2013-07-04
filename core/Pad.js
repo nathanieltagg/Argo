@@ -76,6 +76,7 @@ function Pad( element, options )
     draw_ticks_y:true,
     draw_grid_y:true,
     draw_tick_labels_y:true,
+    tick_label_font: "12px sans-serif",
     time_on_x: false,
     tick_pixels_x : 40,
     tick_pixels_y : 40,
@@ -83,7 +84,9 @@ function Pad( element, options )
     xlabel : null,
     ylabel : null,
     label_font : "16px sans-serif",
-    fMagMousing : false
+    fMagnifierOn: false,
+    fMousePos : {x:-1e99,y:-1e99,u:-1e99,v:-1e99},
+    fMouseInContentArea : false
     
   };
   // override defaults with options.
@@ -103,12 +106,14 @@ function Pad( element, options )
   } else {
     this.canvas = $('canvas',this.element).get(0);    
   }
+  $(this.canvas).css("height",0);
 
   // Build the drawing context.
   this.ctx = this.canvas.getContext('2d');
   if(initCanvas) this.ctx = initCanvas(this.canvas).getContext('2d');
   if(!this.ctx) console.log("Problem getting context!");
   
+  console.warn("Pad created canvas with ", $(this.canvas).css("height"),$(this.canvas).height());
   // Resize the canvas to the coordinates specified, either in html, the css, or options provided.
   this.Resize();
    
@@ -125,6 +130,24 @@ function Pad( element, options )
                         self.PrintHQ(); 
                         });                                               
 
+  // mouse callbacks.
+  var fn = this.MouseCallBack.bind(this);
+  if(!isIOS()){
+    $(this.element).on('click.'     +this.NameSpace, fn);
+    $(this.element).on('mousedown.' +this.NameSpace, fn);
+    $(this.element).on('mouseenter.'+this.NameSpace, fn);
+    $(this.element).on('mouseout.'  +this.NameSpace, fn);
+    $(window)      .on('mousemove.' +this.NameSpace, fn);
+    $(window)      .on('mouseup.'   +this.NameSpace, fn);
+  }
+
+  $(this.element).on('touchstart.'+this.NameSpace, fn);
+  $(this.element).on('touchend.'  +this.NameSpace, fn);
+  $(this.element).on('touchmove.' +this.NameSpace, fn);
+  $(this.element).on('touchenter.'+this.NameSpace, fn);
+  $(this.element).on('touchout.'  +this.NameSpace, fn);
+
+
   // Bind the magnifier draw commands.
   this.Clear();
 }
@@ -134,17 +157,66 @@ Pad.prototype.SetMagnify = function()
   // Turns on magnifying glass effect.
   // Can't be turned off.
   this.Draw = this.MagnifierDraw;
-  var self = this;
-  $(this.element).mouseout(function() { self.fMagMousing = false; self.Draw(); });
-  $(this.element).mousemove(function(ev) { 
-      self.fMagMousing = true; 
-      var offset = getAbsolutePosition(self.element);
-      self.fMagMouseX = ev.pageX - offset.x;
-      self.fMagMouseY = ev.pageY - offset.y; 
-      self.Draw();
-  });
+  this.fMagnifierOn = true;
+  // var self = this;
+  // $(this.element).mouseout(function(ev) { 
+  //   self.fMouseInContentArea = false; 
+  //   self.DoMouse(ev);
+  //   self.Draw(); 
+  // });
+  // $(this.element).mousemove(function(ev) { 
+  //     self.fMouseInContentArea = true; 
+  //     var offset = getAbsolutePosition(self.element);
+  //     self.fMagMouseX = ev.pageX - offset.x;
+  //     self.fMagMouseY = ev.pageY - offset.y; 
+  //     self.DoMouse(ev);
+  //     self.Draw();
+  // });
     
 }
+
+
+Pad.prototype.MouseCallBack = function(ev)
+{
+  // All mouse-related callbacks are routed through here.
+  this.dirty = false;  // flag that tells us if we need a draw or not.
+
+  // Set a redraw if we've moved inside the pad.
+  if(ev.type === 'mousemove' || ev.type === 'touchenter') { 
+    if(this.fMouseInContentArea) {
+      if(this.fMagnifierOn) this.dirty=true;
+    } else {
+      if(!ev.which) return; // No reason the object needs to know about mouse moves when mouse is up.
+    }
+    console.warn("Pad mousemove",this.fMouseInContentArea,this.plane);
+    
+  }
+  // If the mouse enters or leaves (or element) then flag the correct thing to do.
+  if(ev.type === 'mouseout' || ev.type == 'touchend')     { 
+    this.fMouseInContentArea = false;
+    if(this.fMagnifierOn) this.dirty=true; 
+  }
+  if(ev.type === 'mouseenter' || ev.type === 'touchenter') { 
+
+    this.fMouseInContentArea = true;
+    // Don't redraw unless there's a mousemove event. if(this.fMagnifierOn) this.dirty=true; 
+  }
+
+  // Do computations once for the subclass.
+  var offset = getAbsolutePosition(this.element);
+  this.fMousePos = {
+    x: ev.pageX - offset.x,
+    y: ev.pageY - offset.y,
+  };
+  this.fMousePos.u = this.GetU(this.fMousePos.x);
+  this.fMousePos.v = this.GetV(this.fMousePos.y);
+  
+  this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
+  // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);
+
+  if(this.dirty) this.Draw();
+}
+
 
 Pad.prototype.Resize = function()
 {
@@ -154,7 +226,7 @@ Pad.prototype.Resize = function()
   if( !$(this.element).is(":hidden") ) {
     width = $(this.element).width();
     height = $(this.element).height(); 
-    console.log("Resize",width,height);
+    console.log("Resize",this,width,height);
   }
   // console.log("Resize",$(this.element),width,height);
 
@@ -317,7 +389,7 @@ Pad.prototype.DrawFrame = function()
     {
       // Do the X-axis.
       var tickLen = 8;
-      this.ctx.font = "12px sans-serif";
+      this.ctx.font = this.tick_label_font;
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'top';
       var ticks;
@@ -358,7 +430,7 @@ Pad.prototype.DrawFrame = function()
     {
       // Draw Y ticks
       var tickLen = 8;
-      this.ctx.font = "12px sans-serif";
+      this.ctx.font = this.tick_label_font;
       this.ctx.textAlign = 'right';
       this.ctx.textBaseline = 'middle';
       var ticks = this.GetGoodTicks(this.min_v, this.max_v, Math.round(this.span_y/this.tick_pixels_y), this.log_y);
@@ -464,43 +536,47 @@ Pad.prototype.MagnifierDraw = function(arg)
 
   this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
   this.magnifying = false;
-
-  if((this.fMagMousing) && ($('#ctl-magnifying-glass').is(':checked')) )
+  if((this.fMouseInContentArea) && ($('#ctl-magnifying-glass').is(':checked')) )
   {
-    if(this.fMagMouseX < this.origin_x) return;
-    if(this.fMagMouseY > this.origin_y) return;
+    if(this.fMousePos.x < this.origin_x) return;
+    if(this.fMousePos.y > this.origin_y) return;
+    
     this.magnifying = true;
     // Cleverness:
     var mag_radius = parseFloat($('#ctl-magnifier-size').val());
     var mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
+    
 
     this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = "rgba(0,0,0,0.75)";
-    this.ctx.fillStyle = "rgba(0,0,0,0)";
+    this.ctx.strokeStyle = "black";
     
     this.ctx.beginPath();
-    this.ctx.arc(this.fMagMouseX,this.fMagMouseY, mag_radius+1, 0,1.9999*Math.PI,false);
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, mag_radius+1, 0,1.9999*Math.PI,false);
     this.ctx.stroke();
 
     this.ctx.save();
     this.ctx.beginPath();
-    this.ctx.arc(this.fMagMouseX,this.fMagMouseY, mag_radius, 0,Math.PI*2,true);
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, mag_radius, 0,Math.PI*2,true);
     this.ctx.clip();
 
-    this.ctx.translate((1-mag_scale)*this.fMagMouseX,(1-mag_scale)*this.fMagMouseY);
+    this.ctx.translate((1-mag_scale)*this.fMousePos.x,(1-mag_scale)*this.fMousePos.y);
     this.ctx.scale(mag_scale,mag_scale);
 
     // Find new draw limits in u/v coords:
-    var umin = this.GetU(this.fMagMouseX-mag_radius);
-    var umax = this.GetU(this.fMagMouseX+mag_radius);
-    var vmax = this.GetV(this.fMagMouseY-mag_radius);
-    var vmin = this.GetV(this.fMagMouseY+mag_radius);
+    var umin = this.GetU(this.fMousePos.x-mag_radius);
+    var umax = this.GetU(this.fMousePos.x+mag_radius);
+    var vmax = this.GetV(this.fMousePos.y-mag_radius);
+    var vmin = this.GetV(this.fMousePos.y+mag_radius);
 
     this.DrawOne(umin,umax,vmin,vmax,arg);
     this.ctx.restore();
   } 
 }
 
+Pad.prototype.DoMouse = function(ev)
+{
+  // Override me to read the mouse position.
+}
 
 
 

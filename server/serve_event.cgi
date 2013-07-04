@@ -64,6 +64,4 @@ my $resp = ArgoServerTools::request($filename,$selection,$entrystart,$entryend,p
 ArgoServerTools::serve($resp);
 
 
-#trick: see if closing STDOUT will force the session to end.
-close(STDOUT);
 

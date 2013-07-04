@@ -112,6 +112,11 @@ $(function(){
   headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
   $('.portlet-header .icon-explode').click(function() {
       var element = $(this).parents(".portlet:first")[0];  
+      var oldheight = $(element).height();
+      var oldheights = [];
+      var pads = $("div.pad",element);
+      for(var i =0 ;i<pads.length;i++) oldheights[i] = $(pads[i]).height();
+      
       console.log("exploding",element);
       if (element.requestFullscreen) {
         console.log("requestFullscreen");
@@ -128,6 +133,13 @@ $(function(){
            */
        }
        $(element).addClass("full-screen");
+      //  var newheight =window.innerHeight;
+      //  for(var i =0 ;i<pads.length;i++) {
+      //    var h = oldheights[i] * newheight / oldheight;
+      //    console.log("Exploding.",oldheight,newheight,oldheights[i],h);
+      //    $(pads[i]).height(h*2);
+      //    $(pads[i]).trigger('resize');
+      //  }
        $(window).trigger('resize');      
       
   });

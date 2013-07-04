@@ -57,6 +57,8 @@ function WireView( element, options )
     return;
   }
   
+  console.warn("WireView created with element:",$(element).css("height"),$(element).height());
+  
   var settings = {
     plane: 0, // default, override this
     margin_bottom : 40,
@@ -68,6 +70,7 @@ function WireView( element, options )
     zooming: true, // set false to lock view on starting coordinates
     tick_pixels_x: 50,
     tick_pixels_y: 30,
+    tick_label_font: "10px serif",
     show_image:   false, // can be false, 'raw', or 'cal'
     show_hits:    false,
     show_mc:      true,
@@ -75,30 +78,32 @@ function WireView( element, options )
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
-  console.warn("Wireview",this);
+  console.warn("WireView created with element:",$(element).css("height"),$(element).height());
   
   var self = this;
   this.SetMagnify(true);
-  
+  this.fMouseStart  = {}; this.fMouseLast = {};
   this.fMousing = false;
   this.fDragging = false;
   this.hasContent = false;
   this.myHits = [];
   this.visHits = [];
   
+  this.mouseable = [];
+  
   this.loaded_wireimg = false;
   this.loaded_thumbnail = false;
   
-  $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('mouseout' ,function(ev) { return self.DoMouse(ev); });
-  $(document    ).bind('mouseup' ,function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('mouseout' ,function(ev) { return self.DoMouse(ev); });
+  // $(document    ).bind('mouseup' ,function(ev) { return self.DoMouse(ev); });
+  // 
+  // $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
+  // $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
 
-  $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
-  $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
-
-  $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.Draw(); });
+  // $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.Draw(); });
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
@@ -125,8 +130,8 @@ function WireView( element, options )
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev) { return self.NewRecord(); });
-  $('#ctl-TrackLists')      .change(function(ev) { console.warn("!!!!") ;return self.Draw(false); });
-  $('#ctl-SpacepointLists') .change(function(ev) { console.warn("!!!!") ;return self.Draw(false); });
+  $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
+  $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
 
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
@@ -259,6 +264,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
   this.ctx.clip();
   
+  this.mouseable = [];
   if(gRecord) {
     if ($(this.ctl_show_wireimg).is(":checked")) {
       this.DrawImage(min_u,max_u, min_v, max_v, fast);
@@ -318,33 +324,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 }
 
 
-WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
-{
-  // Temp:
-  var cs = new ColorScaler();
-  cs.max = 2000;
 
-  this.cellWidth = this.span_x/this.num_u;
-  this.cellHeight = this.span_y/this.num_v;
-
-  for(var i=0;i<this.visHits.length;i++) {
-    var h = this.visHits[i];
-    var u = h.u;
-    if(u<min_u) continue;
-    if(u>max_u) continue;
-    var v = h.v;         
-    if(v<min_v) continue;
-    if(v>max_v) continue;
-    var x = this.GetX(u);
-    var dx = this.GetX(u+1) - x;
-    
-    var y = this.GetY(h.v1);
-    var dy = this.GetY(h.v2) - y;    
-    var c = cs.GetColor(h.c);
-    this.ctx.fillStyle = "rgb(" + c + ")";;
-    this.ctx.fillRect(x,y,dx,dy);      
-  }
-}
 
 
 
@@ -364,7 +344,6 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     if(!this.wireimg) return;
   }
   
-  console.warn("DrawImage",fast)
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
    var min_wire    = Math.max(this.min_u,0);
@@ -429,6 +408,65 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   }
   this.ctx.restore();   
 
+}
+
+
+WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
+{
+  // Temp:
+  var cs = new ColorScaler();
+  cs.max = 2000;
+
+  this.cellWidth = this.span_x/this.num_u;
+  this.cellHeight = this.span_y/this.num_v;
+  
+  console.warn("DrawHits",this.plane,min_u,max_u,min_v,max_v, gHoverState.obj);
+
+  var hoverVisHit = null;
+  for(var i=0;i<this.visHits.length;i++) {
+    var h = this.visHits[i];
+    var u = h.u;
+    if(u<min_u) continue;
+    if(u>max_u) continue;
+    var v = h.v;         
+    if(v<min_v) continue;
+    if(v>max_v) continue;
+    var x = this.GetX(u);
+    var dx = this.GetX(u+1) - x;
+    
+    var y = this.GetY(h.v1);
+    var dy = this.GetY(h.v2) - y;    
+    var c = cs.GetColor(h.c);
+
+    this.ctx.fillStyle = "rgb(" + c + ")";
+    this.ctx.fillRect(x,y,dx,dy);      
+  
+    if(gHoverState.obj == h.hit) hoverVisHit = h;
+    this.mouseable.push({type:"hit", x1:x, x2:x, y1:y, y2:y+dy, r:dx, obj: h.hit});
+  }
+  
+  if(hoverVisHit) {
+    console.warn("hoverhit!",hoverVisHit);
+      var h = hoverVisHit;
+      var u = h.u;
+      var v = h.v;         
+      var x = this.GetX(u);
+      var dx = this.GetX(u) - x;
+    
+      var y = this.GetY(h.v2);
+      var dy = this.GetY(h.v1) - y;    
+      var c = cs.GetColor(h.c);
+      this.ctx.fillStyle = "black";
+
+      this.ctx.fillStyle = "rgb(" + c + ")";
+      this.ctx.fillRect(x,y,dx,dy);      
+      
+      // // Hovering this hit.
+      this.ctx.strokeStyle = "black";
+      var w = 1.5;
+      this.ctx.lineWidth = w;
+      this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);      
+    }
 }
 
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
@@ -496,11 +534,20 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.arc(x,y,r,0,2*Math.PI);
     // if(i<5) console.warn("spacepoint plane",this.plane,x,y,r,0,2*Math.Pi);
     
+    if(gHoverState.obj == sp) {
+      this.ctx.arc(x,y,r*5,0,2*Math.PI);      
+    }
+    
     this.ctx.fill();
     if(r>4) this.ctx.strokeStyle="black"; // Dots are big enough that showing the outline is worth it.
     // Accidental visual cleverness: if the radius of the circle is too small to see,
     // this will blow it up to ~2 pixels, the line width of the circle!
     this.ctx.stroke();
+    
+    
+    this.mouseable.push({type:"sp", x1:x, x2:x, y1:y, y2:y, r:ru, obj: sp});
+    
+    
   }
   this.ctx.restore();
 }
@@ -519,6 +566,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.strokeStyle = "black";
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
+    var lastx, lasty;
     for(var j=0;j<points.length;j++) {
       var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
       var v = gGeo.getTDCofX(this.plane,points[j].x);
@@ -526,6 +574,11 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
       var y = this.GetY(v);
       if(j==0) this.ctx.moveTo(x,y);
       else     this.ctx.lineTo(x,y);
+      if(j>0)
+        this.mouseable.push({type:"trk", x1:lastx, x2:x, y1:lasty, y2:y, r:2, obj: trk});
+      lastx = x;
+      lasty = y;
+
     }
     this.ctx.stroke();
   }
@@ -566,6 +619,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     }
     
     this.ctx.beginPath();
+    var lastx,lasty;
     for(var j=0;j<p.trajectory.length;j++) {
       var point = p.trajectory[j];
       // Convert particle X coordinate to TDC value.
@@ -576,6 +630,21 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
       var y = this.GetY(tdc);
       if(j==0)this.ctx.moveTo(x,y);
       else    this.ctx.lineTo(x,y);
+
+      // if(j>0) 
+      //   GeoUtils.draw_highlighted_line(
+      //     this.ctx,
+      //     lastx,lasty,
+      //     x,y,
+      //     
+      //     x1,y1,x2,y2,width,style,highlight_style,outline_style,do_highlight,do_outline)
+      
+
+      if(j>0)
+        this.mouseable.push({type:"mcparticle", x1:lastx, x2:x, y1:lasty, y2:y, r:2, obj: p});
+      
+      lastx = x;
+      lasty = y;
     }
     this.ctx.stroke();
   }
@@ -588,7 +657,15 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DoMouse = function(ev)
 {
+  ///
+  /// Called by ::Pad for any mouse event that might be relevant,
+  /// including mousemove, mousedown, click in the element
+  /// and mousee move, up outside.
+  
   // First, deal with mouse-ups that are probably outside my region.
+  if(ev.type === 'mouseenter') return; // dont need to deal with this.
+  if(ev.type === 'mouseout') return;   // dont need to deal with this.
+
   if(ev.type === 'mouseup') {
     if( this.fDragging) {
       this.fDragging = false;
@@ -605,24 +682,24 @@ WireView.prototype.DoMouse = function(ev)
     this.fMousing = false;
     gHoverWire = null;
     // gStateMachine.Trigger('hoverWireChange');    
-    this.Draw();
+    this.dirty = true;
     return;
   }
   
   /// Mousedown, mouseup OR mousemove
-    
   this.fMousing = true;
-  var offset = getAbsolutePosition(this.element);
-  this.fMouseX = ev.pageX - offset.x;
-  this.fMouseY = ev.pageY - offset.y; 
-  this.fMouseU = this.GetU(this.fMouseX);
-  this.fMouseV = this.GetV(this.fMouseY);
+
+  // var offset = getAbsolutePosition(this.element);
+  // this.fMouseX = ev.pageX - offset.x;
+  // this.fMousePos.y = ev.pageY - offset.y; 
+  // this.fMouseU = this.GetU(this.fMouseX);
+  // this.fMouseV = this.GetV(this.fMousePos.y);
 
   // Which area is mouse start in?
   var mouse_area;
-  if(this.fMouseY > this.origin_y ) {
+  if(this.fMousePos.y > this.origin_y ) {
     mouse_area = "xscale";
-  } else if(this.fMouseX < this.origin_x) {
+  } else if(this.fMousePos.x < this.origin_x) {
     mouse_area = "yscale";
   } else {
     mouse_area = "body";
@@ -639,57 +716,71 @@ WireView.prototype.DoMouse = function(ev)
 
   if(this.fDragging) {
       // Update new zoom position or extent...
-    if(this.fMouseStartArea == "body"){
-      var dx = this.fMouseX - this.fMouseLastX;
+    if(this.fMouseStart.area == "body"){
+      var dx = this.fMousePos.x - this.fMouseLast.x;
       var du = dx * (this.max_u-this.min_u)/(this.span_x);
       
       gZoomRegion.setLimits(this.plane,this.min_u - du, this.max_u - du);
       
-      var dy = this.fMouseY - this.fMouseLastY;
+      var dy = this.fMousePos.y - this.fMouseLast.y;
       var dv = dy * (this.max_v-this.min_v)/(this.span_y);
       gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] + dv, gZoomRegion.tdc[1] + dv);
       
-      this.fMouseLastX = this.fMouseX;
-      this.fMouseLastY = this.fMouseY;
-    } else if(this.fMouseStartArea == "xscale") {
-      var relx = this.fMouseX - this.origin_x;
+      this.fMouseLast = {};
+      $.extend(this.fMouseLast,this.fMousePos); // copy.
+      
+    } else if(this.fMouseStart.area == "xscale") {
+      var relx = this.fMousePos.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
-      var new_max_u = this.span_x * (this.fMouseStartU-this.min_u)/relx + this.min_u;
+      var new_max_u = this.span_x * (this.fMouseStart.u-this.min_u)/relx + this.min_u;
       gZoomRegion.setLimits(this.plane,this.min_u, new_max_u);
       
-    } else if(this.fMouseStartArea == "yscale") {
-      var rely =  this.origin_y - this.fMouseY;
+    } else if(this.fMouseStart.area == "yscale") {
+      var rely =  this.origin_y - this.fMousePos.y;
       if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
-      var new_max_v = this.span_y * (this.fMouseStartV-this.min_v)/rely + this.min_v;
+      var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
       gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] , new_max_v);
     
     }
     
   } else {
-    ChangeHover(  {channel: gGeo.channelOfWire(this.plane,this.fMouseU), 
-                   sample:  this.fMouseV
-                   }
-                , "wire");
+    if(this.fMouseInContentArea) {
+      // Find the first good match
+      var match = null;
+      for(var i =this.mouseable.length-1 ; i>=0; i--) {
+        var m = this.mouseable[i];
+        if (GeoUtils.line_is_close_to_point(
+          this.fMousePos.x,this.fMousePos.y, m.x1,m.y1,m.x2,m.y2,m.r)) 
+          {
+            match = m;
+            break;
+          };
+      }
+      ClearHover();
+      if(match) ChangeHover(match.obj,match.type);
+      else      ChangeHover(  {channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
+                               sample:  this.fMousePos.v
+                               }
+                              , "wire");
+    }
+                  
   }
 
     
   if(ev.type === 'mousedown') {
       if(this.zooming) this.fDragging = true;
-      this.fMouseStartX = this.fMouseX;
-      this.fMouseStartY = this.fMouseY;
-      this.fMouseStartU = this.fMouseU;
-      this.fMouseStartV = this.fMouseV;
-      this.fMouseLastX = this.fMouseX;
-      this.fMouseLastY = this.fMouseY;
+      $.extend(this.fMouseStart,this.fMousePos); // copy.
+      $.extend(this.fMouseLast ,this.fMousePos); // copy.
       // Which area is mouse start in?
-      this.fMouseStartArea = mouse_area;
+      this.fMouseStart.area = mouse_area;
+      console.log("dragstart",this.fMouseStart);
   } else if(ev.type === 'mousemove' ) {
     // Update quick.
     if(this.fDragging){
       gStateMachine.Trigger("zoomChangeFast"); 
     }
-    this.Draw(false); // Do a slow draw in this view.    
+    this.dirty=true; // Do a slow draw in this view.    
   } 
   
 }
