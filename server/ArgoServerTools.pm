@@ -43,6 +43,7 @@ sub serve
   # Note that we encode everything that nominally went to stdout/stderr and ship it as the 'serve_event_log'.
   
   print $oldout header(-type => 'application/json',
+               -charset => "UTF-8",
                -Access_Control_Allow_Origin => "*");
   print $oldout '{';
   print $oldout '"record":';
@@ -52,6 +53,9 @@ sub serve
   print $oldout ',"serve_event_log":"';
   print $oldout encode_utf8 "$msglog";
   print $oldout '"}';
+
+  #trick: see if closing STDOUT will force the session to end.
+  close $oldout;
 }
 
 sub myerror
@@ -100,22 +104,23 @@ sub start_server
       $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib";
 
       setsid();
-      rename "ntuple-server.log.4", "ntuple-server.log.5";
-      rename "ntuple-server.log.3", "ntuple-server.log.4";
-      rename "ntuple-server.log.2", "ntuple-server.log.3";
-      rename "ntuple-server.log.1", "ntuple-server.log.2";
-      rename "ntuple-server.log", "ntuple-server.log.1";
-      unlink "ntuple-server.log";
-      open STDIN,  '</dev/null';
-      open STDOUT, '>ntuple-server.log';
-      open STDERR, '>&STDOUT';
+      rename "$exec_name.log.4", "$exec_name.log.5";
+      rename "$exec_name.log.3", "$exec_name.log.4";
+      rename "$exec_name.log.2", "$exec_name.log.3";
+      rename "$exec_name.log.1", "$exec_name.log.2";
+      rename "$exec_name.log",   "$exec_name.log.1";
+      unlink "$exec_name.log";
+      open (STDIN,  '</dev/null');
+      open (STDOUT, ">$exec_name.log");
+      open (STDERR, '>&STDOUT');
+      print "Starting a new job...<br/>\n";
   #     my $pid = getppid();
   #     # system("echo $pid > ntuple-server.pid");
   #     # my $pwd = getcwd;
   #     # system("echo $pwd >> ntuple-server.pid");
   #     # print  $pwd . "\n";
-      my $cmd = "../backend/$exec_name $ntuple_server_port >> ntuple-server.log 2>&1";
-      print  "Running: $cmd<br/>\n";
+      my $cmd = "../backend/$exec_name $ntuple_server_port >>$exec_name.log 2>&1";
+      print "Running: $cmd\n";
       $val = system($cmd);
       $pid = $!;
       # unlink "ntuple-server.pid";
@@ -142,6 +147,7 @@ sub get_sock
 
 sub request
 {
+  open(REQUESTLOG, ">>argo_backend_request.log");
   my $time_start = [gettimeofday];
   my $filename = shift() || "NO_FILENAME_SPECIFIED";
   my $selection = shift() || 1;
@@ -169,11 +175,12 @@ sub request
     start_server();
     
     print "Looking for socket on newly restarted process.\n";
-    my $startup_timeout_tries = 1;
+    my $startup_timeout_tries = 10;
     
     my $startup_time = 0;
     while($startup_time < $startup_timeout_tries) {
-      sleep(10);
+      sleep(1);
+      print "Trying...";
       undef $sock;
       $sock = get_sock();
       last if ($sock); # exit if we have it.
@@ -200,10 +207,14 @@ sub request
   
   @ready = $sel->can_read($timeout_seconds);
   if(@ready) {
+    print REQUESTLOG "Got a read hit.\n";
     $result = "";
     while(<$sock>) {
+      print REQUESTLOG "Got " . length($_) . " bytes\n";
       $result .= $_;
     }
+    print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
+    
     print "Got result from ntuple-server. Length: " . length($result) . " bytes\n<br/>";
     print "Time to get response: " . tv_interval( $time_start, [gettimeofday])*1000 . " ms\n<br/>";
     
@@ -216,6 +227,7 @@ sub request
     goto RESTART;
   }
 
+ 
 }
 
 1;
