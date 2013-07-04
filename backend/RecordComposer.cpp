@@ -213,11 +213,13 @@ void RecordComposer::composeHits()
       hit.add("view",      ftr.getJson(name+"obj.fView" ,i));
       hit.add("m",         ftr.getJson(name+"obj.fMultiplicity",i));
       hit.add("q",         ftr.getJson(name+"obj.fCharge",i));
-      hit.add("σq",        ftr.getJson(name+"obj.fSigmaCharge" ,i));
+      hit.add("\u03C3q",   ftr.getJson(name+"obj.fSigmaCharge" ,i));
       hit.add("t",         ftr.getJson(name+"obj.fPeakTime" ,i));
-      hit.add("σt",        ftr.getJson(name+"obj.fSigmaPeakTime" ,i));
-      hit.add("t1",         ftr.getJson(name+"obj.fStartTime" ,i));
-      hit.add("t2",         ftr.getJson(name+"obj.fEndTime" ,i));
+      hit.add("\u03C3t",   ftr.getJson(name+"obj.fSigmaPeakTime" ,i));
+      hit.add("t1",        ftr.getJson(name+"obj.fStartTime" ,i));
+      hit.add("t2",        ftr.getJson(name+"obj.fEndTime" ,i));
+      // \u03C3 is the UTF-8 encoding for \sigma. See http://www.fileformat.info/info/unicode/char/03c3/index.htm
+      
       
       arr.add(hit);
     }
@@ -535,6 +537,7 @@ void RecordComposer::composeCal()
     std::vector<unsigned char> encodeddata(width*3);
 
     TH1D timeProfile("timeProfile","timeProfile",width,0,width);
+    std::vector<Double_t> timeProfileData(width+2,0);
     std::vector<TH1*> planeProfile;
     planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
@@ -560,7 +563,9 @@ void RecordComposer::composeCal()
       for(size_t k = 0; k<width; k++) {
         // Color map.
         float adc = (*ptr)[k];
-        timeProfile.Fill(k,adc);
+        //timeProfile.Fill(k,adc);
+        timeProfileData[k+1] += adc;
+        
         wiresum+=adc;
         // colormap.get(&imagedata[k*3],adc/4000.);
         imagedata[k] = tanscale(adc);
@@ -583,6 +588,7 @@ void RecordComposer::composeCal()
       //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
       // arr.add(wire);
     }
+    timeProfile.SetContent(&timeProfileData[0]);
     png.Finish();
     encoded.Finish();
     // r.add("wires",arr);
@@ -653,6 +659,7 @@ void RecordComposer::composeRaw()
   
     TH1D timeProfile("timeProfile","timeProfile",width,0,width);
     std::vector<TH1*> planeProfile;
+    std::vector<Double_t> timeProfileData(width+2,0);
     planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
@@ -675,7 +682,8 @@ void RecordComposer::composeRaw()
         encodeddata[k*3+2] = 0;
         double val = fabs(raw);
         wiresum += val;
-        timeProfile.Fill(k,val);
+        //timeProfile.Fill(k,val);
+        timeProfileData[k+1] += val;
       }
       png.AddRow(imagedata);
       epng.AddRow(encodeddata);
@@ -685,6 +693,7 @@ void RecordComposer::composeRaw()
       planeProfile[plane]->Fill(wire,wiresum);
 
     }
+    timeProfile.SetContent(&timeProfileData[0]);
     png.Finish();
     epng.Finish();
   
