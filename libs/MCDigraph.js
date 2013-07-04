@@ -27,6 +27,7 @@ function MCDigraph( element )
   gStateMachine.BindObj("recordChange",this,"NewRecord");
   var self = this;
   $(this.element).resize( function(ev){ self.NewRecord(); });                                               
+  gStateMachine.BindObj('hoverChange_mcparticle',this,"HoverChanged");
   
 }
 
@@ -45,6 +46,19 @@ MCDigraph.prototype.DoClick = function(node,label)
     }
   );
   gStateMachine.Trigger("changeSelectedTrajectories");
+}
+
+MCDigraph.prototype.HoverChanged = function() 
+{
+  // console.warn("MCDigraph::HoverChanged()",gHoverState.type);
+  if(!this.st) return;
+  $('.mc-jit-node-hover').removeClass("mc-jit-node-hover"); // clear on any hover change.
+  // this.st.clearNodesInPath();
+  if(gHoverState.type!="mcparticle") return;
+  var id = "particle-track-"+gHoverState.obj.ftrackId;
+  // this.st.addNodeInPath(id);
+   $('#'+id).addClass("mc-jit-node-hover");
+//   
 }
 
 MCDigraph.prototype.NewRecord = function() 
@@ -262,3 +276,5 @@ MCDigraph.prototype.NewRecord = function()
   this.st.onClick(this.st.root);
   
 }
+
+

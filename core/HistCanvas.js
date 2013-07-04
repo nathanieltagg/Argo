@@ -64,16 +64,6 @@ function HistCanvas( element, options )
   // This should work to rebind the event handler to this particular instance of the HistCanvas.
   // This gives us a mousedown in our region, mousemove or mouseup anywhere.
   var self = this;
-  if(!isIOS()){
-    $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
-    $(window)    .bind('mousemove',function(ev) { return self.DoMouse(ev); });
-    $(window)    .bind('mouseup',  function(ev) { return self.DoMouse(ev); });
-  }
-   
-  $(this.element).bind('touchstart', function(ev)   { return self.DoTouch(ev); });
-  $(this.element).bind('touchend',   function(ev)   { return self.DoTouch(ev); });
-  $(this.element).bind('touchmove',  function(ev)   { return self.DoTouch(ev); });
-  $(this.element).unbind('click');
   
   $(".reset-button"     ,$(this.element).parent(".portlet-content:first"))
     // .button({icons: {primary: 'ui-icon-seek-first'},text: false})          
@@ -89,7 +79,7 @@ HistCanvas.prototype.ResetDefaultRange = function()
 
 HistCanvas.prototype.Draw = function()
 {
-  console.log("HistCanvas::Draw",this);
+  // console.log("HistCanvas::Draw",this);
   this.Clear();
   this.DrawFrame();
   this.DrawRegions();

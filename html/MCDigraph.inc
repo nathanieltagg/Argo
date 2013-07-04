@@ -2,6 +2,8 @@
     <!-- <link rel="stylesheet" href="digraph.css" type="text/css" media="all"/> -->
     
     <div class="portlet-header"><span class="title">MC Digraph<span></div>
-    <div  id="MCDigraph-1" class="A-MCDigraph portlet-content" style='height: 200px; background-color:white'>
+      <div class="portlet-content" >
+        <div  id="MCDigraph-1" class="A-MCDigraph" style='height: 300px; background-color:white'>
+      </div>
     </div> 
   </div>

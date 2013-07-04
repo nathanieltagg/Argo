@@ -128,14 +128,14 @@ function ZoomControl( element, options )
   this.fPulling  = false; // Mouse is changing size of zoome region
   this.fMousedWires = [];
   
-  $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
-  $(window      ).bind('mouseup',function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('mouseout' ,function(ev) { return self.DoMouse(ev); });
-
-  $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
-  $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
+  // $(window      ).bind('mouseup',function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('mouseout' ,function(ev) { return self.DoMouse(ev); });
+  // 
+  // $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
+  // $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
+  // $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
  
   this.ctl_zoom_auto    =  GetBestControl(this.element,".zoom-auto");
   this.ctl_zoom_full    =  GetBestControl(this.element,".zoom-full");
@@ -354,6 +354,7 @@ ZoomControl.prototype.Draw = function()
 
 ZoomControl.prototype.DoMouse = function(ev)
 {
+  
   ev.originalEvent.preventDefault();
   
   
@@ -363,6 +364,8 @@ ZoomControl.prototype.DoMouse = function(ev)
 
     this.canvas.style.cursor="auto";
     document.onselectstart = null;  // Keep stupid I-bar from appearing on drag.
+    this.dirty=true;
+    return;
     // TODO: clear hovered objects
 
   } else  if (ev.type === 'mouseup') {
@@ -371,22 +374,19 @@ ZoomControl.prototype.DoMouse = function(ev)
 
     this.fPulling = false;
     this.fDragging = false;
+    return;
     // Finish the range change.
   } else {
+    if(!this.fMouseInContentArea) return;
+
     this.fMousing = true; // mouse is inside canvas.
     document.onselectstart = function(){ return false; }// Keep stupid I-bar from appearing on drag.
     
-    var offset = getAbsolutePosition(this.canvas);
-    this.fMouseX = ev.pageX - offset.x;
-    this.fMouseY = ev.pageY - offset.y; 
-    this.fMouseU = this.GetU(this.fMouseX);
-    this.fMouseV = this.GetV(this.fMouseY);
-
     // Exact mouse location, in wire space
     // Find moused wires.
     this.fMousedWires = [];
     for(var plane = 0; plane<3; plane++) {
-      this.fMousedWires[plane] = gGeo.yzToWire(plane,this.fMouseV,this.fMouseU);
+      this.fMousedWires[plane] = gGeo.yzToWire(plane,this.fMousePos.v,this.fMousePos.u);
       
       if(this.fMousedWires[plane]<0) this.fMousedWires[plane] = 0;
       if(this.fMousedWires[plane] >= gGeo.numWires(plane)-1) this.fMousedWires[plane] = gGeo.numWires(plane)-1;
@@ -404,7 +404,7 @@ ZoomControl.prototype.DoMouse = function(ev)
           gwires[iminmax] = Math.round(gwire);
           
           // Is the mouse near one of these wires?
-          var dist_to_line = GeoUtils.line_to_point(this.fMouseX,this.fMouseY,
+          var dist_to_line = GeoUtils.line_to_point(this.fMousePos.x,this.fMousePos.y,
               this.GetX(gwire.z1),this.GetY(gwire.y1),
               this.GetX(gwire.z2),this.GetY(gwire.y2));
           if (dist_to_line < 4) { lineHover = {plane: plane, wire: gZoomRegion.plane[plane][iminmax], minmax: iminmax};}
@@ -452,7 +452,7 @@ ZoomControl.prototype.DoMouse = function(ev)
       } else if(inside_hex) {
         // start move zoom center
         this.fDragging = true;
-        this.fDragStartMouse = [this.fMouseU, this.fMouseV];
+        this.fDragStartMouse = [this.fMousePos.u, this.fMousePos.v];
         this.fDragStartWires = $.extend(true,{},this.fMousedWires);
         this.fDragStartZoom = $.extend(true,{},gZoomRegion);
       }
@@ -471,6 +471,7 @@ ZoomControl.prototype.DoMouse = function(ev)
           gZoomRegion.plane[plane][0] = this.fPullStartZoom.plane[plane][0] + delta_wire;          
           gZoomRegion.plane[plane][1] = this.fPullStartZoom.plane[plane][1] - delta_wire;          
         }
+        this.dirty=true;
         gStateMachine.Trigger("zoomChangeFast"); // Live zooming doesn't work well.
         
               
@@ -481,11 +482,12 @@ ZoomControl.prototype.DoMouse = function(ev)
           gZoomRegion.plane[plane][0] = this.fDragStartZoom.plane[plane][0] + delta_wire;
           gZoomRegion.plane[plane][1] = this.fDragStartZoom.plane[plane][1] + delta_wire;
         }
+        this.dirty=true;        
         gStateMachine.Trigger("zoomChangeFast");
       }
     }
   }
-  this.Draw();
+  
   
   
 }

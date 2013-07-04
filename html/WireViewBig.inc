@@ -1,4 +1,4 @@
-<div class="portlet" id="wireimg-port"> 
+<div class="portlet" id="bigwireimg-port"> 
 <div class="portlet-header">Big Wire View</div>
 <div class="portlet-content">
   

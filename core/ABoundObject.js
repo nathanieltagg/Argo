@@ -29,6 +29,7 @@ function ABoundObject(element, options)
   if($(element).length<1) {return;} // Jquery object with zero length used.
   this.element = $(element).get(0); // Get first bound object;
   this.UniqueId = gUniqueIdCounter++;
+  this.NameSpace = "ns" + this.UniqueId;
 
   // Merge in the options.
   $.extend(true,this,options);
@@ -40,7 +41,16 @@ function ABoundObject(element, options)
     // console.log(element_settings, element_settings_obj);
     $.extend(true,this,element_settings); // Change default settings by provided overrides.  
   }
+  $(this.element).on("remove."+this.mynamespace, this.Remove.bind(this) ); 
   
+}
+
+ABoundObject.prototype.Remove = function(ev)
+{
+  // Remove all event handlers from this object, the document, and the window.
+  $(this.element) .off("."+this.NameSpace);
+  $(this.window)  .off("."+this.NameSpace);
+  $(this.document).off("."+this.NameSpace);
 }
 
 //

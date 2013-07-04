@@ -4,12 +4,20 @@ var gHoverState = {
   collection: null
 };
 
+var gSelectState = {
+  obj:  null,
+  type: "none",
+  collection: null
+};
+
+
 function ChangeHover( obj, type, collection )
 {
   if(obj!=gHoverState.obj) {
-    gHoverState = {
-      type: type, obj: obj, collection: collection
-    };
+    gHoverState.obj = obj;
+    gHoverState.type = type;
+    gHoverState.collection = collection;
+
     console.log("Hover: ",obj);
     gStateMachine.Trigger("hoverChange_"+type);
     gStateMachine.Trigger("hoverChange");
@@ -52,6 +60,22 @@ HoverInfo.prototype.Draw = function ()
     $(this.element).html("");
     return;
   }
+
+  function HTMLEncode(str){
+    var i = str.length,
+        aRet = [];
+
+    while (i--) {
+      var iC = str[i].charCodeAt();
+      if (iC < 65 || iC > 127 || (iC>90 && iC<97)) {
+        aRet[i] = '&#'+iC+';';
+      } else {
+        aRet[i] = str[i];
+      }
+     }
+    return aRet.join('');    
+  }
+
   
   var h = "";
   h += "<h3>"+gHoverState.type+"</h3>";
@@ -64,8 +88,7 @@ HoverInfo.prototype.Draw = function ()
   switch(gHoverState.type) {
     default:    
       for(var k in gHoverState.obj) {
-        console.log(gHoverState.obj,k,gHoverState.obj[k]);
-        h+= a + k + b + gHoverState.obj[k] + c;
+        h+= a + HTMLEncode(k) + b + gHoverState.obj[k] + c;
       }
   }
   
