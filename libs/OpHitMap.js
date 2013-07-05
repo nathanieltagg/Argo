@@ -175,6 +175,8 @@ OpHitMap.prototype.DoMouse = function(ev)
  
   var r2 = this.pmtRadius* this.pmtRadius;
   
+  if(! this.fMouseInContentArea) return true; // keep bubbling, this isnt' for us.
+
   var dets = gGeo.opDets.opticalDetectors;
   var hoverdet = null;
   for(var i=0;i<dets.length;i++){
@@ -185,7 +187,7 @@ OpHitMap.prototype.DoMouse = function(ev)
     if(d2<r2) hoverdet = det;
   }
   if(hoverdet){
-     ChangeHover(hoverdet,"opdet",gGeo.opDets.opticalDetectors);
+     ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
   } else {
     var hoverflash = null;
     for(var i=0;i<this.drawn_flashes.length;i++) {
@@ -196,7 +198,7 @@ OpHitMap.prototype.DoMouse = function(ev)
       if(dr2<1) hoverflash = df.flash;
     }
     if(hoverflash) {
-      ChangeHover(hoverflash,"opflash",gRecord.opflashes);
+      ChangeHover({obj: hoverflash, type: "opflash", collection: gRecord.opflashes});
     } else {
       ClearHover();
     }

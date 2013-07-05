@@ -214,12 +214,12 @@ TriDView.prototype.CreateMC = function()
       // Make photons and neutrons colorless.
       curColor = "rgba(0,0,0,0)";      
     }
-    for(var k=0;k<gSelectedTrajectories.length;k++) {
-      if(p.ftrackId == gSelectedTrajectories[k]) {
-        lineWidth = 2;
-        curColor = "rgba(255,255,20,1)";        
-      }
-    }
+    // for(var k=0;k<gSelectedTrajectories.length;k++) {
+    //   if(p.ftrackId == gSelectedTrajectories[k]) {
+    //     lineWidth = 2;
+    //     curColor = "rgba(255,255,20,1)";        
+    //   }
+    // }
 
     if(gHoverState.obj && gHoverState.obj.ftrackId === p.ftrackId){
       lineWidth = 2;

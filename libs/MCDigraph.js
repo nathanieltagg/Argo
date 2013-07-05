@@ -35,17 +35,19 @@ function MCDigraph( element )
 MCDigraph.prototype.DoClick = function(node,label) 
 {
   // Look at the current graph, and see which trajectories are selected.
-  gSelectedTrajectories = [];
-  $jit.Graph.Util.eachNode(this.st.graph, 
-    function(node) {
-      // Run this on every node.
-      if(node.selected) {
-        console.log(node.name);
-        gSelectedTrajectories.push(node.data.ftrackId);
-      }
-    }
-  );
-  gStateMachine.Trigger("changeSelectedTrajectories");
+  // gSelectedTrajectories = [];
+ //  $jit.Graph.Util.eachNode(this.st.graph, 
+ //    function(node) {
+ //      // Run this on every node.
+ //      if(node.selected) {
+ //        console.log(node.name);
+ //        gSelectedTrajectories.push(node.data.ftrackId);
+ //      }
+ //    }
+ //  );
+ //  gStateMachine.Trigger("changeSelectedTrajectories");
+  ChangeSelection({obj: node.data.particle, type: "mcparticle", collection: gRecord.mc.particles});
+  
 }
 
 MCDigraph.prototype.HoverChanged = function() 
@@ -254,7 +256,7 @@ MCDigraph.prototype.NewRecord = function()
         $('.mc-jit-node-hover').removeClass("mc-jit-node-hover");
         $('#'+node.id).addClass("mc-jit-node-hover");
         console.log("HOVER:",node,eventInfo, e);
-        ChangeHover(node.data.particle,"mcparticle",gRecord.mc.particles);
+        ChangeHover({obj: node.data.particle, type: "mcparticle", collection: gRecord.mc.particles});
       },
       onMouseLeave: function(node,eventInfo, e) {
         $('#'+node.id).removeClass("mc-jit-node-hover");        

@@ -107,7 +107,9 @@ function WireView( element, options )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
-  gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");
+  gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");  
+  gStateMachine.BindObj('hoverChange_track',this,"Draw");  
+  gStateMachine.BindObj('selectChange',this,"Draw");
   
   gStateMachine.BindObj('phCutChange',this,"TrimHits");
   gStateMachine.BindObj('timeCutChange',this,"TrimHits");
@@ -562,24 +564,48 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   {
     var trk = tracks[i];
     var points = trk.points;
-    if(points.length<1) continue;
-    this.ctx.strokeStyle = "black";
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    var lastx, lasty;
+    if(points.length<2) continue;
+    // compile points
+    var pts = [];
     for(var j=0;j<points.length;j++) {
+      // Fixme: bezier
       var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
       var v = gGeo.getTDCofX(this.plane,points[j].x);
-      var x = this.GetX(u);
-      var y = this.GetY(v);
-      if(j==0) this.ctx.moveTo(x,y);
-      else     this.ctx.lineTo(x,y);
-      if(j>0)
-        this.mouseable.push({type:"trk", x1:lastx, x2:x, y1:lasty, y2:y, r:2, obj: trk});
-      lastx = x;
-      lasty = y;
-
+      pts.push([this.GetX(u),this.GetY(v)]);
     }
+    
+    this.ctx.strokeStyle = "black";
+    this.ctx.lineWidth = 2;
+    
+    // Draw underlay
+    // Draw underlay for a selected track.
+    if(gSelectState.obj && (gSelectState.obj == trk)){      
+      this.ctx.lineWidth = 4;
+      this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(pts[0][0],pts[0][1]);
+      for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+      this.ctx.stroke();
+      this.ctx.lineWidth =2;
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+      
+    }
+  
+    if(gHoverState.obj && (gHoverState.obj == trk)){ // hovering
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+    }
+        
+    // Draw it.
+    this.ctx.beginPath();
+    this.ctx.moveTo(pts[0][0],pts[0][1]);
+    for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+    this.ctx.stroke();
+
+
+    // for mouseovering
+    for(var j=1;j<pts.length;j++) 
+      this.mouseable.push({type:"track", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: trk});
+
     this.ctx.stroke();
   }
   this.ctx.restore();
@@ -587,9 +613,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
-{
-  // console.warn("DrawMC",gRecord);
-  
+{  
   if(!gRecord) return;
   if(!gRecord.mc) return;
   var particles = gRecord.mc.particles[gMCParticlesListName];
@@ -598,55 +622,56 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   {
     var p= particles[i];
     if(!p.trajectory || p.trajectory.length==0) continue;
-    
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle="rgba(0,0,255,0.5)";
 
-    if(p.fpdgCode == 22 || p.fpdgCode == 2112) {
-      // Make photons and neutrons colorless.
-      this.ctx.strokeStyle="rgba(0,0,0,0)";      
-    }
-    for(var k=0;k<gSelectedTrajectories.length;k++) {
-      if(p.ftrackId == gSelectedTrajectories[k]) {
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle="rgba(255,255,20,1)";        
-      }
-    }
-
-    if(gHoverState.obj && gHoverState.obj.ftrackId === p.ftrackId){
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeStyle="rgba(255,20,20,1)";
-    }
-    
-    this.ctx.beginPath();
-    var lastx,lasty;
+    // compile points
+    var pts = [];
     for(var j=0;j<p.trajectory.length;j++) {
       var point = p.trajectory[j];
       // Convert particle X coordinate to TDC value.
       var tdc = gGeo.getTDCofX(this.plane,point.x);
       // Convert YZ into wire number.
       var wire = gGeo.yzToWire(this.plane,point.y,point.z);
-      var x = this.GetX(wire);
-      var y = this.GetY(tdc);
-      if(j==0)this.ctx.moveTo(x,y);
-      else    this.ctx.lineTo(x,y);
-
-      // if(j>0) 
-      //   GeoUtils.draw_highlighted_line(
-      //     this.ctx,
-      //     lastx,lasty,
-      //     x,y,
-      //     
-      //     x1,y1,x2,y2,width,style,highlight_style,outline_style,do_highlight,do_outline)
-      
-
-      if(j>0)
-        this.mouseable.push({type:"mcparticle", x1:lastx, x2:x, y1:lasty, y2:y, r:2, obj: p});
-      
-      lastx = x;
-      lasty = y;
+      pts.push([this.GetX(wire), this.GetY(tdc)]);
     }
+    
+    this.ctx.lineWidth =1;
+    this.ctx.strokeStyle ="rgba(0,0,255,0.5)";
+
+    // Draw underlay for a selected track.
+    if(gSelectState.obj && (gSelectState.obj.ftrackId == p.ftrackId)){      
+      this.ctx.lineWidth = 4;
+      this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(pts[0][0],pts[0][1]);
+      for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+      this.ctx.stroke();
+      this.ctx.lineWidth =2;
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+      
+    }
+  
+    if(p.fpdgCode == 22 || p.fpdgCode == 2112) {
+      // Make photons and neutrons colorless.
+      this.ctx.strokeStyle = "rgba(0,0,0,0)";      
+    }
+    // Note direct object compare doesn't work with MCDigraph. Don't know why; spacetree must clone instead of link objects.
+    if(gHoverState.obj && (gHoverState.obj.ftrackId == p.ftrackId)){ // hovering
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+    }
+    
+
+    // Draw main track.
+    this.ctx.beginPath();
+    this.ctx.moveTo(pts[0][0],pts[0][1]);
+    for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
     this.ctx.stroke();
+    
+    
+    // for mouseovering
+    for(var j=1;j<pts.length;j++) 
+      this.mouseable.push({type:"mcparticle", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: p});
+  
   }
 }
 
@@ -747,7 +772,7 @@ WireView.prototype.DoMouse = function(ev)
   } else {
     if(this.fMouseInContentArea) {
       // Find the first good match
-      var match = null;
+      var match = {obj: null, type:"none"};
       for(var i =this.mouseable.length-1 ; i>=0; i--) {
         var m = this.mouseable[i];
         if (GeoUtils.line_is_close_to_point(
@@ -757,12 +782,17 @@ WireView.prototype.DoMouse = function(ev)
             break;
           };
       }
-      ClearHover();
-      if(match) ChangeHover(match.obj,match.type);
-      else      ChangeHover(  {channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
-                               sample:  this.fMousePos.v
-                               }
-                              , "wire");
+      if(ev.type=='click') {
+        ChangeSelection(match);
+      } else {
+        // mousemove.
+        ClearHover();
+        if(match) ChangeHover(match);
+        else      ChangeHover(  { obj:{channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
+                                 sample:  this.fMousePos.v
+                                 }
+                                , type: "wire"});
+      }
     }
                   
   }
@@ -782,5 +812,5 @@ WireView.prototype.DoMouse = function(ev)
     }
     this.dirty=true; // Do a slow draw in this view.    
   } 
-  
+    
 }

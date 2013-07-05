@@ -11,15 +11,11 @@ var gSelectState = {
 };
 
 
-function ChangeHover( obj, type, collection )
+function ChangeHover( arg )
 {
-  if(obj!=gHoverState.obj) {
-    gHoverState.obj = obj;
-    gHoverState.type = type;
-    gHoverState.collection = collection;
-
-    console.log("Hover: ",obj);
-    gStateMachine.Trigger("hoverChange_"+type);
+  if(arg.obj!=gHoverState.obj) {
+    gHoverState = $.extend({},arg);
+    gStateMachine.Trigger("hoverChange_"+arg.type);
     gStateMachine.Trigger("hoverChange");
     
   }
@@ -27,6 +23,7 @@ function ChangeHover( obj, type, collection )
 
 function ClearHover()
 {
+  // console.trace();
   if(gHoverState.obj != null) {
     var type = gHoverState.type;
     gHoverState.obj = null;
@@ -37,6 +34,26 @@ function ClearHover()
     
   }
 }
+
+
+
+function ChangeSelection( arg )
+{
+  if(arg.obj && arg.obj==gSelectState.obj) {
+    // Untoggle.
+    gSelectState = {obj:  null, type: "none", collection: null};
+  } else {
+    gSelectState = $.extend({},arg);
+    console.warn("Selecting new object",gSelectState.obj,gSelectState.type," gHover is ",gHoverState.type);
+  }
+  
+  gStateMachine.Trigger("selectChange");
+  
+}
+
+
+
+
 
 
 var gHoverInfo = null;
@@ -56,29 +73,19 @@ function HoverInfo( element )
 
 HoverInfo.prototype.Draw = function ()
 {
-  if(!gHoverState.obj) {
+  var h = "";  
+  var state;
+  if(gSelectState.obj) {
+    state = gSelectState;
+    h = "<h3>Selected:" + state.type + "</h3>";
+  } else if(gHoverState.obj) {
+    state = gHoverState;
+    h = "<h3>Hover:" + state.type + "</h3>";    
+  } else {
     $(this.element).html("");
     return;
   }
-
-  function HTMLEncode(str){
-    var i = str.length,
-        aRet = [];
-
-    while (i--) {
-      var iC = str[i].charCodeAt();
-      if (iC < 65 || iC > 127 || (iC>90 && iC<97)) {
-        aRet[i] = '&#'+iC+';';
-      } else {
-        aRet[i] = str[i];
-      }
-     }
-    return aRet.join('');    
-  }
-
   
-  var h = "";
-  h += "<h3>"+gHoverState.type+"</h3>";
   h += "<table class='.hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
@@ -87,8 +94,8 @@ HoverInfo.prototype.Draw = function ()
   
   switch(gHoverState.type) {
     default:    
-      for(var k in gHoverState.obj) {
-        h+= a + HTMLEncode(k) + b + gHoverState.obj[k] + c;
+      for(var k in state.obj) {
+        h+= a + k + b + state.obj[k] + c;
       }
   }
   
