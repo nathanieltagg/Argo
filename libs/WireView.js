@@ -574,7 +574,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
       pts.push([this.GetX(u),this.GetY(v)]);
     }
     
-    this.ctx.strokeStyle = "black";
+    this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
     this.ctx.lineWidth = 2;
     
     // Draw underlay

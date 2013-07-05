@@ -188,7 +188,7 @@ Pad.prototype.MouseCallBack = function(ev)
     } else {
       if(!ev.which) return; // No reason the object needs to know about mouse moves when mouse is up.
     }
-    console.warn("Pad mousemove",this.fMouseInContentArea,this.plane);
+    // console.warn("Pad mousemove",this.fMouseInContentArea,this.plane);
     
   }
   // If the mouse enters or leaves (or element) then flag the correct thing to do.
