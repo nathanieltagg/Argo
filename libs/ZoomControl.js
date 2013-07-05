@@ -127,6 +127,7 @@ function ZoomControl( element, options )
   this.fDragging = false; // Mouse is moving zoom region
   this.fPulling  = false; // Mouse is changing size of zoome region
   this.fMousedWires = [];
+  this.mouseable =[];
   
   // $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   // $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
@@ -142,12 +143,16 @@ function ZoomControl( element, options )
 
   $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
   $(this.ctl_zoom_full  ).click(function(ev) { return self.FullZoom(); }); 
+  $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(); });
+  $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(); });
  
  
  
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('zoomChange',this,"Draw");
   gStateMachine.BindObj('zoomChangeFast',this,"Draw");
+  gStateMachine.BindObj('hoverChange_track',this,"Draw");  
+  gStateMachine.BindObj('selectChange',this,"Draw");
   
 }
 
@@ -217,9 +222,73 @@ ZoomControl.prototype.NewRecord = function()
 }
 
 
+ZoomControl.prototype.DrawTracks = function()
+{
+  
+  if(!$("#ctl-TrackLists").val()) return;
+  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
+  if(!tracks) return;
+  this.ctx.save();
+  console.log("zoom draw tracks");
+  for(var i=0;i<tracks.length;i++)
+  {
+    var trk = tracks[i];
+    var points = trk.points;
+    if(points.length<2) continue;
+    // compile points
+    var pts = [];
+    for(var j=0;j<points.length;j++) {
+      // Fixme: bezier
+      var x = this.GetX(points[j].z);
+      var y = this.GetY(points[j].y);
+      pts.push([x,y]);
+    }
+    
+    this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
+    this.ctx.lineWidth = 2;
+    
+    // Draw underlay
+    // Draw underlay for a selected track.
+    if(gSelectState.obj && (gSelectState.obj == trk)){      
+      this.ctx.lineWidth = 5;
+      this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(pts[0][0],pts[0][1]);
+      for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+      this.ctx.stroke();
+      this.ctx.lineWidth =2;
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+      
+    }
+  
+    if(gHoverState.obj && (gHoverState.obj == trk)){ // hovering
+      console.warn("zoom hover track");
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+    }
+        
+    // Draw it.
+    this.ctx.beginPath();
+    this.ctx.moveTo(pts[0][0],pts[0][1]);
+    for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+    this.ctx.stroke();
+
+
+    // for mouseovering
+    for(var j=1;j<pts.length;j++) 
+      this.mouseable.push({type:"track", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: trk});
+
+    this.ctx.stroke();
+  }
+  this.ctx.restore();
+}
+
+
 ZoomControl.prototype.Draw = function()
 {  
   this.Clear();
+  console.warn("zoomcontrol draw");
+  this.mouseable =[];
+  
   // this.DrawFrame();
   var x1 = this.GetX(0);
   var x2 = this.GetX(1040);
@@ -299,25 +368,8 @@ ZoomControl.prototype.Draw = function()
   }
   this.ctx.restore();
   
+  this.DrawTracks();
   // Draw tracks.
-  if($("#ctl-TrackLists").val()) {
-    var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
-    for(var itrk =0;itrk<tracks.length;itrk++) {
-      var points = tracks[itrk].points;
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeStyle = "black";
-      this.ctx.beginPath();
-    
-      for(var i=0;i<points.length;i++) {
-        var p = points[i];
-        var x = this.GetX(p.z);
-        var y = this.GetY(p.y);
-        if(i==0) this.ctx.moveTo(x,y);
-        else     this.ctx.lineTo(x,y);
-      }
-      this.ctx.stroke();
-    }
-  }
   
   if(this.fMousing)
   for(var plane=0;plane<3;plane++) {
@@ -378,6 +430,7 @@ ZoomControl.prototype.DoMouse = function(ev)
     // Finish the range change.
   } else {
     if(!this.fMouseInContentArea) return;
+    this.dirty = true;
 
     this.fMousing = true; // mouse is inside canvas.
     document.onselectstart = function(){ return false; }// Keep stupid I-bar from appearing on drag.
