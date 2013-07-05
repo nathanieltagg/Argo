@@ -580,7 +580,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     // Draw underlay
     // Draw underlay for a selected track.
     if(gSelectState.obj && (gSelectState.obj == trk)){      
-      this.ctx.lineWidth = 4;
+      this.ctx.lineWidth = 5;
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
       this.ctx.moveTo(pts[0][0],pts[0][1]);
