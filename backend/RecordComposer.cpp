@@ -351,7 +351,7 @@ void  RecordComposer::composeTracks()
       const vector<TVector3>          *XYZ           = tel_fXYZ        .get<vector<TVector3>          >(i);
       const vector<TVector3>          *Dir           = tel_fDir        .get<vector<TVector3>          >(i);
       // const vector<TMatrixT<double> > *Cov           = tel_fCov        .get<vector<TMatrixT<double> > >(i);
-      // const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
+      const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
       const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
       JsonArray jpoints;
       
@@ -363,7 +363,10 @@ void  RecordComposer::composeTracks()
         jpoint.add("vx",(*Dir)[j].x());
         jpoint.add("vy",(*Dir)[j].y());
         jpoint.add("vz",(*Dir)[j].z());
-        jpoint.add("fitP",(*FitMomentum)[j]);
+        jpoint.add("dQdx",(*dQdx)[0][j]);
+        jpoint.add("dQdy",(*dQdx)[1][j]);
+        jpoint.add("dQdz",(*dQdx)[2][j]);
+        jpoint.add("P",(*FitMomentum)[j]);
         jpoints.add(jpoint);
       }
       jtrk.add("points",jpoints);
