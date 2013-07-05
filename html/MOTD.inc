@@ -8,6 +8,7 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> MC and Track Hover/Select now working correctly in wire/MC digraph views.</li>
     <li> Starting to more elegantly handle multiple data products in one file.</li>
     <li> Fixed Ryan's problems seeing MC from particle cannon.</li>
   </ul>

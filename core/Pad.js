@@ -211,10 +211,11 @@ Pad.prototype.MouseCallBack = function(ev)
   this.fMousePos.u = this.GetU(this.fMousePos.x);
   this.fMousePos.v = this.GetV(this.fMousePos.y);
   
-  this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
+  var bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
   // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);
 
   if(this.dirty) this.Draw();
+  return bubble;
 }
 
 
