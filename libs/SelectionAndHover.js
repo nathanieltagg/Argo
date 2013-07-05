@@ -35,7 +35,12 @@ function ClearHover()
   }
 }
 
-
+function ClearSelection( )
+{
+  gSelectState = {obj:  null, type: "none", collection: null};
+  gStateMachine.Trigger("selectChange");
+  
+}
 
 function ChangeSelection( arg )
 {

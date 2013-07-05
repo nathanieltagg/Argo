@@ -52,9 +52,10 @@ function TriDView( element, options ){
 
   // Data model state.
   gStateMachine.BindObj('recordChange',this,"Rebuild");
+  gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");
+  gStateMachine.BindObj('hoverChange_track',this,"Draw");
 
   var self = this;
-  $(this.element) .bind('click',  function(ev)     { return self.Click(); });
  
  
   this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
@@ -172,13 +173,14 @@ TriDView.prototype.CreateTracks = function()
   console.warn(tracks,gRecord.tracks,$("#ctl-TrackLists").val());
   for(itrk in tracks) {
     var trk = tracks[itrk];
+    var hovobj = {obj:trk, type:"track", collection: tracks};    
     var points = trk.points;
     for(var i=0;i<points.length-1;i++) {
 
-      var curColor = "rgba(0, 0, 0, 1)";
+      var curColor = "rgba(89, 169, 28, 1)";
       var p1 = points[i];
       var p2 = points[i+1];
-      this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 2, curColor, trk);
+      this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 3, curColor, hovobj);
     }
   }
 }
@@ -204,6 +206,7 @@ TriDView.prototype.CreateMC = function()
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
+    var hovobj = {obj:p, type:"mcparticle", collection: particles};
     if(!p.trajectory || p.trajectory.length==0) continue;
     
     var lineWidth = 1;
@@ -220,17 +223,12 @@ TriDView.prototype.CreateMC = function()
     //     curColor = "rgba(255,255,20,1)";        
     //   }
     // }
-
-    if(gHoverState.obj && gHoverState.obj.ftrackId === p.ftrackId){
-      lineWidth = 2;
-      curColor ="rgba(255,20,20,1)";
-    }
     
     for(var j=1;j<p.trajectory.length;j++) {
       var p1 = p.trajectory[j-1];
       var p2 = p.trajectory[j];
 
-      this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 2, curColor, p);
+      this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 2, curColor, hovobj);
     }
   }
  
@@ -241,33 +239,39 @@ TriDView.prototype.CreateMC = function()
 TriDView.prototype.should_highlight = function(obj)
 {
   if(!obj.source) return false;
-  if(obj.source.nodeName == "trk") return ShouldIHighlightThisTrack(obj.source);
-  if(obj.source.nodeName == "vtx") return (obj.source == gHoverVertex || obj.source == gSelectedVertex);
+  if(!obj.source.obj) return false;
+  if(! gHoverState.obj) return false;
+  if((obj.source.obj == gHoverState.obj) 
+    || ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gHoverState.obj.ftrackId))) 
+    return true;
+  return false;
 }
 
 TriDView.prototype.should_outline = function(obj)
 {
   if(!obj.source) return false;
-  return (obj.source == gSelectedTrack);
+  if(!obj.source.obj) return false;
+  if(! gSelectState.obj) return false;
+  if((obj.source.obj == gSelectState.obj) 
+    || ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gSelectState.obj.ftrackId))) 
+    return true;
+  return false;
 }
 
 TriDView.prototype.HoverObject = function(selected)
 {
-  gHoverTrack = null;
-  gHoverVertex = null;
+  ClearHover();
   if(selected) {
-    if(selected.nodeName == "trk") gHoverTrack = selected;    
-    if(selected.nodeName == "vtx") gHoverVertex = selected;    
+    ChangeHover(selected);
   }
   this.Draw();
 }
 
-
-
-TriDView.prototype.Click = function()
+TriDView.prototype.ClickObject = function(selected)
 {
-  // gSelectedVertex = gHoverVertex;
-  // gSelectedTrack = gHoverTrack; 
-  // gStateMachine.Trigger('selectedHitChange');
+  console.warn("trid click");
+  if(selected) ChangeSelection(selected);
+  else ClearSelection();
+  this.Draw();
 }
 

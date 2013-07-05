@@ -114,6 +114,7 @@ function Pad3d( element, options )
   $(window)         .bind('mouseup',    function(ev)   { return self.stopDragging(ev); });
   $(window)         .bind('mousemove',  function(ev)   { return self.drag(ev); });
   $(this.element)   .bind('mousemove',  function(ev)   { return self.mouseMove(ev); });
+  $(this.element)   .bind('click',      function(ev)   { return self.click(ev); });
   
   // note: iOS events get sent to start element, even if your finger leaves the boundaries of the element. Not doing this right leads to delays!
   $(this.element)   .bind('touchstart',  function(ev)   { return self.startDragging(ev); });
@@ -560,6 +561,7 @@ Pad3d.prototype.startDragging = function(ev)
 {
   ev.originalEvent.preventDefault();
   
+  this.startDragWalltime = $.now();
   // this.startDragTransform = this.transform_matrix.dup();
   this.startDragX = ev.pageX;
   this.startDragY = ev.pageY;
@@ -641,17 +643,14 @@ Pad3d.prototype.drag = function(ev)
    this.Draw();
 }
 
-// var sample =0;
-Pad3d.prototype.mouseMove = function(ev)
+Pad3d.prototype.findObjectUnderMouse = function(event) 
 {
-  if(this.dragging) return;
-   ev.originalEvent.preventDefault();
   // Called for any movement in pad.  
   // find highlighed object.
   // go through object list from back to front, so that the frontmost object will highlight.
   var offset = getAbsolutePosition(this.canvas);
-  var x = ev.pageX - offset.x;
-  var y = ev.pageY - offset.y;    
+  var x = event.pageX - offset.x;
+  var y = event.pageY - offset.y;    
   var u = this.width/2 -x;  // Translate and flip inverse to screen coords
   var v = this.height/2-y;
 
@@ -677,16 +676,39 @@ Pad3d.prototype.mouseMove = function(ev)
         if( d < this.mouse_highlight_range*this.proj_dist/obj.meanz ) selected = obj.source;
       }
   }
-  
+  return selected;
+}
+
+// var sample =0;
+Pad3d.prototype.mouseMove = function(ev)
+{
+  if(this.dragging) return;
+  ev.originalEvent.preventDefault();
+   
+  var selected = this.findObjectUnderMouse(ev)
   
   this.HoverObject(selected);  
 }
 
-Pad3d.prototype.HoverObject = function(selected)
+Pad3d.prototype.click = function(ev)
 {
+  var now = $.now();
+  if((now - this.startDragWalltime) < 500) { // half-second
+    var selected = this.findObjectUnderMouse(ev)  
+    this.ClickObject(selected);  
+  }
+}
+
+
+Pad3d.prototype.HoverObject = function(selected)
+{  
   console.log("Pad3d.HoverObject selected=",selected);
 }
 
+Pad3d.prototype.ClickObject = function(selected)
+{
+  console.log("Pad3d.ClickObject selected=",selected);
+}
 
 Pad3d.prototype.scrollMe = function(ev,delta)
 {
