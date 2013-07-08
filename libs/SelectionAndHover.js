@@ -107,20 +107,24 @@ function DrawObjectInfo()
     return;
   }
 
-  var h = "";  
+  var h = "";
+  var state = gSelectState;
 
-  switch(gSelectState.type) {
+  switch(state.type) {
+    case "mcparticle": h=ComposeMCParticleInfo(state); break;
+    case "track": h=ComposeTrackInfo(state); break;
+    
     default:
-      h = "<h3>Selected:" + gSelectState.type + "</h3>";
+      h = "<h3>Selected:" + state.type + "</h3>";
       h += "<table class='.hoverinfo'>";
       var a = "<tr><td class='hoverinfo-key'>";
       var b = "</td><td class='hoverinfo-val'>";
       var c = "</td></tr>";  
-      for(var k in gSelectState.obj) {
-        if( Object.prototype.toString.call( gSelectState.obj[k] ) === '[object Array]' ) {
-          h+= a + k + b + gSelectState.obj[k].length + " items" + c;
+      for(var k in state.obj) {
+        if( Object.prototype.toString.call( state.obj[k] ) === '[object Array]' ) {
+          h+= a + k + b + state.obj[k].length + " items" + c;
         } else {
-          h+= a + k + b + gSelectState.obj[k] + c;          
+          h+= a + k + b + state.obj[k] + c;          
         }
       }
       h+= "</table>";
@@ -129,6 +133,123 @@ function DrawObjectInfo()
   $(".selected-object-info",e).html(h);      
   $('#selected-object-info').stop(true,true).fadeIn();
 }
+
+function ComposeMCParticleInfo(s)
+{
+  var p = s.obj;
+  var particle_name = GetParticle(p.fpdgCode);
+  var start =  p.trajectory[0];
+  var E = start.E;
+  var px = start.px;
+  var py = start.py;
+  var pz = start.pz;
+  var p2 = px*px + py*py + pz*pz;
+  var ke = E - p.fmass;
+  var eround = Math.round(ke*1000);
+  var etext = eround + " MeV";
+  if(eround < 1 ) {
+    etext = Math.round(ke*1e6) + " keV";
+  } 
+  
+  var end = p.trajectory[p.trajectory.length-1];
+  var deltaE = (start.E - end.E) * 1000;
+
+  var deltaX = 0;
+  var lastx=start.x;
+  var lasty=start.y;
+  var lastz=start.z;
+  for(var i=1;i<p.trajectory.length;i++) {
+    var x = p.trajectory[i].x;
+    var y = p.trajectory[i].y;
+    var z = p.trajectory[i].z;
+    var dl2 = (x-lastx)*(x-lastx) + (y-lasty)*(y-lasty) + (z-lastz)*(z-lastz);
+    deltaX += Math.sqrt(dl2);
+    lastx = x;
+    lasty = y;
+    lastz = z;
+  }
+
+  var h = "<h3>" + etext + " " + particle_name + "</h3>";
+  h += "<table class='.hoverinfo'>";
+  var a = "<tr><td class='hoverinfo-key'>";
+  var b = "</td><td class='hoverinfo-val'>";
+  var c = "</td></tr>";  
+  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " mm<br/>" 
+                       + "y: " +  Math.round(start.y) + " mm<br/>" 
+                       + "z: " +  Math.round(start.z) + " mm<br/>" + c;
+  h+= a + "Mom'm" + b  + "px: " + Math.round(start.px*1000) + " MeV/c<br/>" 
+                       + "py: " + Math.round(start.py*1000) + "  MeV/c<br/>" 
+                       + "pz: " + Math.round(start.pz*1000) + "  MeV/c<br/>" + c;
+  h+= a + "&lt;dE/dX&gt;" + b + Math.round(deltaE) + " MeV /<br/>" + Math.round(deltaX) + " mm" + c;
+  h += "</table>";
+  return h;
+}
+
+
+function ComposeTrackInfo(s)
+{
+  var trk = s.obj;
+  var id = trk.id;
+  var start =  trk.points[0];
+  var listname = $('#ctl-TrackLists').val();
+
+  var P = start.P;
+  var x = start.x;
+  var y = start.y;
+  var z = start.z;
+  var vx = start.vx;
+  var vy = start.vy;
+  var vz = start.vz;
+  var length = 0;
+  var dQ1 = 0;
+  var dQ2 = 0;
+  var dQ3 = 0;
+
+  var deltaX = 0;
+  var lastx=start.x;
+  var lasty=start.y;
+  var lastz=start.z;
+  for(var i=1;i<trk.points.length;i++) {
+    var x = trk.points[i].x;  var dx = x-lastx;
+    var y = trk.points[i].y;  var dy = y-lasty;
+    var z = trk.points[i].z;  var dz = z-lastz;
+    var dl2 = (dx*dx) + (dy*dy) + (dz*dz);
+    length += Math.sqrt(dl2);
+    dQ1 += trk.points[i].dQdx;
+    dQ2 += trk.points[i].dQdy;
+    dQ3 += trk.points[i].dQdz;
+    lastx = x;
+    lasty = y;
+    lastz = z;
+  }
+
+  var h = "<h3>Track " + id+ "</h3>";
+  h += listname + "</br>";
+  h += "<table class='.hoverinfo'>";
+  var a = "<tr><td class='hoverinfo-key'>";
+  var b = "</td><td class='hoverinfo-val'>";
+  var c = "</td></tr>";  
+  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " mm<br/>" 
+                       + "y: " +  Math.round(start.y) + " mm<br/>" 
+                       + "z: " +  Math.round(start.z) + " mm<br/>" + c;
+  h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" 
+                       + "vy: " + (vy).toFixed(3) + "<br/>" 
+                       + "vz: " + (vz).toFixed(3) + "<br/>" + c;
+  h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
+
+  h+= a + "Total &Delta;Q"  + b    + Math.round(dQ1) + "</br>"
+                               + Math.round(dQ2) + "</br>"
+                               + Math.round(dQ3) + "</br>" + c;
+
+  h+= a + "&lt;dQ&gt;"  + b    + Math.round(dQ1/trk.points.length) + "</br>"
+                               + Math.round(dQ2/trk.points.length) + "</br>"
+                               + Math.round(dQ3/trk.points.length) + "</br>" + c;
+  
+  h += "</table>";
+  return h;
+}
+
+
 
 // Hover Info box, which appears as a regular Portlet.
 var gHoverInfo = null;
@@ -152,26 +273,31 @@ HoverInfo.prototype.Draw = function ()
   var state;
   if(gSelectState.obj) {
     state = gSelectState;
-    h = "<h3>Selected:" + state.type + "</h3>";
   } else if(gHoverState.obj) {
     state = gHoverState;
-    h = "<h3>Hover:" + state.type + "</h3>";    
   } else {
     $(this.element).html("");
     return;
   }
   
-  h += "<table class='.hoverinfo'>";
-  var a = "<tr><td class='hoverinfo-key'>";
-  var b = "</td><td class='hoverinfo-val'>";
-  var c = "</td></tr>";  
-
-  
   switch(state.type) {
-    default:    
+    case "mcparticle": h=ComposeMCParticleInfo(state); break;
+    case "track": h=ComposeTrackInfo(state); break;
+    
+    default:
+      h = "<h3>Selected:" + state.type + "</h3>";
+      h += "<table class='.hoverinfo'>";
+      var a = "<tr><td class='hoverinfo-key'>";
+      var b = "</td><td class='hoverinfo-val'>";
+      var c = "</td></tr>";  
       for(var k in state.obj) {
-        h+= a + k + b + state.obj[k] + c;
+        if( Object.prototype.toString.call( state.obj[k] ) === '[object Array]' ) {
+          h+= a + k + b + state.obj[k].length + " items" + c;
+        } else {
+          h+= a + k + b + state.obj[k] + c;          
+        }
       }
+      h+= "</table>";
   }
   
   h+= "</table>";
