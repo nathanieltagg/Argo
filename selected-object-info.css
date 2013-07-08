@@ -1,0 +1,68 @@
+/*
+Styles for the floating object-selection overlay
+*/
+
+.selected-object-info {
+  font-size: 1em;
+  font-family: "Times New Roman", Times, serif;
+}
+
+
+.selected-object-info tr {
+  border-top-width: 2px;
+  border-top-color: black;
+  border-top-style: solid;
+  
+}
+
+
+div.floating { postion: absolute; zIndex: 999;}
+
+.triangle-isosceles h3 {
+  margin: 5px;
+}
+
+.triangle-isosceles {
+  position:relative;
+  padding:15px;
+  margin:1em 0 3em;
+  -moz-border-radius:10px;
+  -webkit-border-radius:10px;
+  border-radius:10px;
+}
+
+/* creates triangle */
+.triangle-isosceles:after {
+  content:"\00a0";
+  display:block; /* reduce the damage in FF3.0 */
+  position:absolute;
+  z-index:-1;
+  bottom:-30px; /* value = - border-top-width - border-bottom-width */
+  left:50px; /* controls horizontal position */
+  width:0;
+  height:0;
+  border-width:15px 15px; /* vary these values to change the angle of the vertex */
+  border-style:solid;
+
+  border-color:#285c00 transparent transparent;
+/*  border-color:inherit transparent transparent;*/
+}
+
+.triangle-isosceles.left {
+  margin-left:30px;
+
+/*  background:#F1B54F;*/
+}
+.triangle-isosceles.left:after {
+  top:16px; /* controls vertical position */
+  left:-80px; /* value = - border-left-width - border-right-width */
+  bottom:auto;
+  border-width:30px 50px;
+
+  border-color:transparent #285c00 transparent transparent;
+/*  border-color:transparent inherit transparent transparent;*/
+  
+  
+}
+
+
