@@ -258,9 +258,20 @@ TriDView.prototype.should_outline = function(obj)
   if(!obj.source.obj) return false;
   if(! gSelectState.obj) return false;
   if((obj.source.obj == gSelectState.obj) 
-    || ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gSelectState.obj.ftrackId))) 
-    return true;
+    || ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gSelectState.obj.ftrackId))) {
+      return true;      
+    }
   return false;
+}
+
+TriDView.prototype.DrawFinish = function()
+{
+  if(this.final_highlight_point){      
+    if(this.fMouseInContentArea) {
+      var offset = getAbsolutePosition(this.canvas);
+      SetOverlayPosition(offset.x + this.final_highlight_point[0], offset.y + this.final_highlight_point[1]);  
+    }
+  }
 }
 
 TriDView.prototype.HoverObject = function(selected)

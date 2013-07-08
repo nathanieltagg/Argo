@@ -63,9 +63,74 @@ function ChangeSelection( arg )
 
 
 
+// Hover info box which appears as overlay.
+function SetOverlayPosition(x,y)
+{
+  $('#selected-object-info.floating').css({
+    position: 'absolute',
+    zIndex : 2000,
+    left: x, top: y-60
+  });
+}
 
 
+////////// Initialization
+$(function(){
+  gStateMachine.Bind("selectChange",DrawObjectInfo);
+  $('#selected-object-info.floating').hide();
+  // $('#selected-object-info .unit-ctl').buttonset();
+  // $('#selected-object-info .unit-ctl input').click(DrawObjectInfo);
 
+  // $('#selected-object-info.dialog').dialog({
+  //     autoOpen: false,
+  //     position: 'right',
+  //     width: 200,
+  //     // dragStop: function(event,ui) {
+  //     //   if(clip_muon)   clip_muon.reposition();  // Fix floating copy boxes
+  //     //   if(clip_proton) clip_proton.reposition();
+  //     // },
+  //     // resizeStop: function(event,ui) {
+  //     //   if(clip_muon)   clip_muon.reposition();  // Fix floating copy boxes
+  //     //   if(clip_proton) clip_proton.reposition();
+  //     // }
+  // });
+});
+
+function DrawObjectInfo() 
+{
+  var e = $('#selected-object-info');
+  if(!gSelectState.obj) {
+    // don't draw anything
+    txt = "<span class='track_id'>No Object Selected</span><br/>";
+    $(".selected-object-info",e).html(txt);
+    $('#selected-object-info').stop(true,true).fadeOut();
+    return;
+  }
+
+  var h = "";  
+
+  switch(gSelectState.type) {
+    default:
+      h = "<h3>Selected:" + gSelectState.type + "</h3>";
+      h += "<table class='.hoverinfo'>";
+      var a = "<tr><td class='hoverinfo-key'>";
+      var b = "</td><td class='hoverinfo-val'>";
+      var c = "</td></tr>";  
+      for(var k in gSelectState.obj) {
+        if( Object.prototype.toString.call( gSelectState.obj[k] ) === '[object Array]' ) {
+          h+= a + k + b + gSelectState.obj[k].length + " items" + c;
+        } else {
+          h+= a + k + b + gSelectState.obj[k] + c;          
+        }
+      }
+      h+= "</table>";
+  }
+
+  $(".selected-object-info",e).html(h);      
+  $('#selected-object-info').stop(true,true).fadeIn();
+}
+
+// Hover Info box, which appears as a regular Portlet.
 var gHoverInfo = null;
 
 $(function(){
@@ -102,7 +167,7 @@ HoverInfo.prototype.Draw = function ()
   var c = "</td></tr>";  
 
   
-  switch(gHoverState.type) {
+  switch(state.type) {
     default:    
       for(var k in state.obj) {
         h+= a + k + b + state.obj[k] + c;

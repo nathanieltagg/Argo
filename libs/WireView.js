@@ -469,6 +469,9 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var w = 1.5;
       this.ctx.lineWidth = w;
       this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);      
+      
+      
+      
     }
 }
 
@@ -581,6 +584,12 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     // Draw underlay
     // Draw underlay for a selected track.
     if(gSelectState.obj && (gSelectState.obj == trk)){      
+      if(this.fMouseInContentArea) {
+        var offset = getAbsolutePosition(this.canvas);
+        var lastpt = pts[pts.length-1];
+        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
+      }
+
       this.ctx.lineWidth = 5;
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
@@ -632,14 +641,24 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
       var tdc = gGeo.getTDCofX(this.plane,point.x);
       // Convert YZ into wire number.
       var wire = gGeo.yzToWire(this.plane,point.y,point.z);
-      pts.push([this.GetX(wire), this.GetY(tdc)]);
+      var x = this.GetX(wire);
+      var y = this.GetY(tdc);
+      if(x>=0 && x<this.width && y>=0 && y<=this.height)
+        pts.push([x,y]);
     }
+    if(pts.length<2) continue;
     
     this.ctx.lineWidth =1;
     this.ctx.strokeStyle ="rgba(0,0,255,0.5)";
 
     // Draw underlay for a selected track.
     if(gSelectState.obj && (gSelectState.obj.ftrackId == p.ftrackId)){      
+      if(this.fMouseInContentArea) {
+        var offset = getAbsolutePosition(this.canvas);
+        var lastpt = pts[pts.length-1];
+        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
+      }
+      
       this.ctx.lineWidth = 4;
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
@@ -672,6 +691,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     // for mouseovering
     for(var j=1;j<pts.length;j++) 
       this.mouseable.push({type:"mcparticle", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: p});
+  
   
   }
 }
