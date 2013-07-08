@@ -13,6 +13,7 @@ var gSelectState = {
 
 function ChangeHover( arg )
 {
+  console.warn(arg);
   if(!arg) {ClearHover(); return;}
   
   if(arg.obj!=gHoverState.obj) {
@@ -39,13 +40,15 @@ function ClearHover()
 
 function ClearSelection( )
 {
-  gSelectState = {obj:  null, type: "none", collection: null};
-  gStateMachine.Trigger("selectChange");
-  
+  if(gSelectState.obj) {
+    gSelectState = {obj:  null, type: "none", collection: null};
+    gStateMachine.Trigger("selectChange");
+  }
 }
 
 function ChangeSelection( arg )
 {
+  if(!arg.obj) { ClearSelection(); return; }
   if(arg.obj && arg.obj==gSelectState.obj) {
     // Untoggle.
     gSelectState = {obj:  null, type: "none", collection: null};

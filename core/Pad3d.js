@@ -122,7 +122,11 @@ function Pad3d( element, options )
   $(this.element)   .bind('touchend',    function(ev)   { return self.stopDragging(ev); });
     
 
-  // $(this.element) .bind('mousewheel',  function(ev,d) { return self.scrollMe(ev,d); });
+  $(this.element) .bind('mousewheel',  function(ev,d) {
+    if(ev.shiftKey) return self.scrollMe(ev,-d); 
+    else return true; // bubble.
+   });
+   
   $(this.element) .bind('dblclick',  function(ev)     { return self.fullScreen(); });
   
   $(this.element) .bind('contextmenu', function(ev){ return false;} )

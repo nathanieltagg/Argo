@@ -107,6 +107,7 @@ function WireView( element, options )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
+  gStateMachine.BindObj('hoverChange_hit',this,"Draw");  
   gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");  
   gStateMachine.BindObj('hoverChange_track',this,"Draw");  
   gStateMachine.BindObj('selectChange',this,"Draw");
@@ -422,7 +423,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   this.cellWidth = this.span_x/this.num_u;
   this.cellHeight = this.span_y/this.num_v;
   
-  console.warn("DrawHits",this.plane,min_u,max_u,min_v,max_v, gHoverState.obj);
+  // console.warn("DrawHits",this.plane,min_u,max_u,min_v,max_v, gHoverState.obj);
 
   var hoverVisHit = null;
   for(var i=0;i<this.visHits.length;i++) {
@@ -786,8 +787,8 @@ WireView.prototype.DoMouse = function(ev)
         ChangeSelection(match);
       } else {
         // mousemove.
-        if(match) ChangeHover(match); // match might be null.
-        else      ChangeHover(  { obj:{channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
+        if(match.obj) ChangeHover(match); // match might be null.
+        else          ChangeHover(  { obj:{channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
                                  sample:  this.fMousePos.v
                                  }
                                 , type: "wire"});        

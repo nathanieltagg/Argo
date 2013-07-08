@@ -54,6 +54,7 @@ function TriDView( element, options ){
   gStateMachine.BindObj('recordChange',this,"Rebuild");
   gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");
   gStateMachine.BindObj('hoverChange_track',this,"Draw");
+  gStateMachine.BindObj('hoverChange_hit',this,"Draw");  
 
   var self = this;
  
@@ -148,7 +149,9 @@ TriDView.prototype.CreateHits = function()
   cs.max = 2000;
 
   for(var i=0;i<hits.length;i++) {
-    var h = hits[i];
+    var h = hits[i];    
+    var hovobj = {obj:h, type:"hit", collection: hits};    
+
     if(h.t1 > gZoomRegion.tdc[1]) continue;
     if(h.t2 < gZoomRegion.tdc[0]) continue;
     var gwire = gGeo.getWire(h.plane,h.wire);
@@ -156,7 +159,7 @@ TriDView.prototype.CreateHits = function()
     var color = "rgba(" + c + ",0.2)";
     var x = gGeo.getXofTDC(h.plane,h.t);
     // if(h.view<2) continue;
-    this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, h);    
+    this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);    
   }
 }
 
@@ -191,8 +194,10 @@ TriDView.prototype.CreateSpacepoints = function()
   var spacepoints = gRecord.spacepoints[$("#ctl-SpacepointLists").val()];
   for(var i=0;i<spacepoints.length;i++) {
     var sp = spacepoints[i];
+    var hovobj = {obj:sp, type:"spacepoint", collection: spacepoints};    
+    
     var curColor = "rgba(0, 150, 150, 1)";
-    this.AddLine(sp.xyz[0], sp.xyz[1], sp.xyz[2],sp.xyz[0], sp.xyz[1], sp.xyz[2]+0.3, 2, curColor, sp);
+    this.AddLine(sp.xyz[0], sp.xyz[1], sp.xyz[2],sp.xyz[0], sp.xyz[1], sp.xyz[2]+0.3, 2, curColor, hovobj);
   }
 }
 
