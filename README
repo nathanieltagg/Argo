@@ -1,0 +1,23 @@
+This project is the Argo online web-based event display for the 
+MicroBooNE neutrino experiment.
+
+This code was written by Nathaniel Tagg (ntagg@otterbein.edu) and our group at Otterbein University, 
+with the exception of some third-party libraries (mostly in the js/ directory). 
+Other authors and contributors include Phillip Kellogg, Curtis Brown, Molly Clairemont, 
+Jack Brangham, and Erin Cochran.
+
+This code can only be used with permission of the maintainer, who takes no responsibility
+for it being readable, sensible, or any proclivity for it to summon Ancient Old Ones 
+to destroy humanity. Your Sanity May Be At Risk.  Abandon all hope, yadda yadda yadda.
+
+If you use this work for your own projects, you are required to put attribution to us somewhere
+on your main page.
+
+
+Work on this project is based off of the Arachne event display for Minerva, by the same authors.
+A technical paper describing the operation of this system was published in 
+Nucl.Inst.Meth. 676 (2012) 44-49, and is available on the arXiv at http://arxiv.org/abs/1111.5315
+
+--Nathaniel
+
+
