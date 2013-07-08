@@ -1,0 +1,9 @@
+Options +ExecCGI -Indexes
+AddHandler cgi-script .cgi
+
+RewriteEngine On
+RewriteBase /datacache
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule (.*\.(png))$ read.cgi?filename=$1 [L]
