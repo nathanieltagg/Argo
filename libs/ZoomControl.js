@@ -262,7 +262,6 @@ ZoomControl.prototype.DrawTracks = function()
     }
   
     if(gHoverState.obj && (gHoverState.obj == trk)){ // hovering
-      console.warn("zoom hover track");
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
     }
         
@@ -286,7 +285,6 @@ ZoomControl.prototype.DrawTracks = function()
 ZoomControl.prototype.Draw = function()
 {  
   this.Clear();
-  console.warn("zoomcontrol draw");
   this.mouseable =[];
   
   // this.DrawFrame();
