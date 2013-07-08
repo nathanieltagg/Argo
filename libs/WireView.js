@@ -786,12 +786,11 @@ WireView.prototype.DoMouse = function(ev)
         ChangeSelection(match);
       } else {
         // mousemove.
-        ClearHover();
-        if(match) ChangeHover(match);
+        if(match) ChangeHover(match); // match might be null.
         else      ChangeHover(  { obj:{channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
                                  sample:  this.fMousePos.v
                                  }
-                                , type: "wire"});
+                                , type: "wire"});        
       }
     }
                   

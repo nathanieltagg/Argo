@@ -13,6 +13,8 @@ var gSelectState = {
 
 function ChangeHover( arg )
 {
+  if(!arg) {ClearHover(); return;}
+  
   if(arg.obj!=gHoverState.obj) {
     gHoverState = $.extend({},arg);
     gStateMachine.Trigger("hoverChange_"+arg.type);
