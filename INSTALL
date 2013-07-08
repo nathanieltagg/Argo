@@ -1,0 +1,22 @@
+Quick instructions for installing a new copy so that it will load.
+
+Make sure apache is running correctly.
+
+Make sure apache is configured correctly.  Either DocumentRoot or the userdir configuration 
+will need:
+	    AllowOverride All
+in the options set, so that the local .htaccess files can set up rewriting and librares.
+Might also need to turn on/install rewrite_module.
+
+Install requisite perl modules (CGI, JSON::XS, a few others)
+
+Find a built copy of root.
+$ ln -sf $ROOTSYS backend/root
+$ cd backend; make; cd -
+$ chmod a+w datacache/ server/
+$ cp dot.htaccess .htaccess
+Edit the .htaccess file, using YOUR absolute link for RewriteBase
+$ cp datacache/dot.htaccess datacache/.htaccess
+Edit above, ditto
+
+Try a load. Might take two or three reloads to get backend going
