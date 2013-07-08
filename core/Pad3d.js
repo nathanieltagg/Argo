@@ -110,6 +110,10 @@ function Pad3d( element, options )
                        });                                               
                                                                        
 
+   // user support:
+  $(this.element)   .bind('mouseenter', function(ev)   { self.fMouseInContentArea = true; });
+  $(this.element)   .bind('mouseout',   function(ev)   { self.fMouseInContentArea = false; });
+
   $(this.element)   .bind('mousedown',  function(ev)   { return self.startDragging(ev); });
   $(window)         .bind('mouseup',    function(ev)   { return self.stopDragging(ev); });
   $(window)         .bind('mousemove',  function(ev)   { return self.drag(ev); });
@@ -413,8 +417,11 @@ Pad3d.prototype.Draw = function()
 {
   this.Clear();
   this.DrawLines();
+  this.DrawFinish(); // usercallback.
 }
 
+Pad3d.prototype.DrawFinish = function()
+{};
 
 Pad3d.prototype.Linesort = function(l1,l2)
 {
@@ -438,6 +445,8 @@ Pad3d.prototype.DrawLines = function()
 {
   // Viewport should center on screen.
   this.ctx.save();
+  this.final_highlight_point = null;
+
   // this.ctx.translate(this.width/2,this.height/2);
   // this.ctx.rotate(3.14159);
   // Lines.
@@ -514,6 +523,8 @@ Pad3d.prototype.DrawLines = function()
         var y1 = cv-obj.av;
         var y2 = cv-obj.bv;
         if(Math.abs(x2-x1)<1 && Math.abs(y2-y1<1)) x2+=1;
+        var highlight = this.should_highlight(obj);
+        var outline   = this.should_outline(obj);
         GeoUtils.draw_highlighted_line(
            this.ctx,
            x1,y1,
@@ -522,9 +533,14 @@ Pad3d.prototype.DrawLines = function()
            obj.stroke, // default style
            "rgba(250,0,0,0.9)", //highlight style
            "rgba(0,0,0,0.7)", //outline style
-           this.should_highlight(obj),
-           this.should_outline(obj)
+           highlight, outline
          );
+         
+         if(outline) {
+           if(x2>0 && x2<this.width && y2>0 && y2<this.height) {
+             this.final_highlight_point = [x2,y2];
+           }
+         }
         
         // this.ctx.strokeStyle = obj.stroke;
         // this.ctx.beginPath();
@@ -545,6 +561,11 @@ Pad3d.prototype.DrawLines = function()
         this.ctx.fill();
         this.ctx.closePath();
         this.ctx.restore();
+
+        if(this.should_outline) {
+            this.final_highlight_point = [cu-obj.au,cv-obj.av];
+        }
+
       }
     }
   }
