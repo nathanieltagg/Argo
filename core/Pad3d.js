@@ -445,6 +445,7 @@ Pad3d.prototype.DrawLines = function()
 {
   // Viewport should center on screen.
   this.ctx.save();
+  this.begin_highlight_point = null;
   this.final_highlight_point = null;
 
   // this.ctx.translate(this.width/2,this.height/2);
@@ -537,6 +538,10 @@ Pad3d.prototype.DrawLines = function()
          );
          
          if(outline) {
+           if(x1>0 && x1<this.width && y1>0 && y1<this.height && !this.begin_highlight_point) {
+             this.begin_highlight_point = [x1,y1];
+           }
+           
            if(x2>0 && x2<this.width && y2>0 && y2<this.height) {
              this.final_highlight_point = [x2,y2];
            }
