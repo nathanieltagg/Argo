@@ -3,4 +3,4 @@ myroot
 root
 testx
 tmp
-
+*.pid
