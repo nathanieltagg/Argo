@@ -107,9 +107,7 @@ function WireView( element, options )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('TimeCutChange',this,"Draw");
-  gStateMachine.BindObj('hoverChange_hit',this,"Draw");  
-  gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");  
-  gStateMachine.BindObj('hoverChange_track',this,"Draw");  
+  gStateMachine.BindObj('hoverChange',this,"Draw");  
   gStateMachine.BindObj('selectChange',this,"Draw");
   
   gStateMachine.BindObj('phCutChange',this,"TrimHits");
@@ -190,6 +188,7 @@ WireView.prototype.NewRecord_image = function()
   
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
   if(!gRecord[this.show_image]) return;
+  if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
   var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
   this.wireimg.src       = wiredesc.wireimg_url;
   this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;

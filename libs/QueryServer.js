@@ -28,7 +28,7 @@ var gClientParseTime;
 var gFinishedDrawTime;
 
 var gEventsLoadedThisSession = 0;
-function QueryServer( querytype )
+function QueryServer( querytype, newmsg )
 {
     // Clear all selection targets.
     $("input").blur();
@@ -38,7 +38,11 @@ function QueryServer( querytype )
     // Used for next/prev increment buttons.
     if(querytype == 'last_query_type') querytype = gLastQueryType;
     console.log("QueryServer("+querytype+")");
-    
+    var opts = "_NoPreSpill_NoPostSpill_";
+    // Are we looking at wires? If not, don't request them.
+    if (!$(".show-wireimg").is(":checked")) {
+      opts += "_NORAW__NOCAL_";
+    }
     
     if(querytype === "fe") {
       var file = $('#inFilename').val();
@@ -47,7 +51,7 @@ function QueryServer( querytype )
       data = { filename: file, 
                   selection: selection,
                   entry: entry,
-                  options: "_NoPreSpill_NoPostSpill_" };
+                  options: opts };
     } else {
       $('#status').attr('class', 'status-error');
       $("#status").text("Unknown request type "+ querytype);

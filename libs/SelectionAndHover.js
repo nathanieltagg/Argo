@@ -18,7 +18,6 @@ function ChangeHover( arg )
   
   if(arg.obj!=gHoverState.obj) {
     gHoverState = $.extend({},arg);
-    gStateMachine.Trigger("hoverChange_"+arg.type);
     gStateMachine.Trigger("hoverChange");
     
   }
@@ -32,7 +31,7 @@ function ClearHover()
     gHoverState.obj = null;
     gHoverState.type = "none";
     gHoverState.collection = null;
-    gStateMachine.Trigger("hoverChange_"+type);
+    // gStateMachine.Trigger("hoverChange_"+type);
     gStateMachine.Trigger("hoverChange");
     
   }

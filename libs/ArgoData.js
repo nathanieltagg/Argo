@@ -32,14 +32,14 @@ function DoInitialBookmarking()
   
   
   if(gRecord.raw) {
-    for(var i in gRecord.raw) { 
-      if(gRecord.raw[i].wireimg_url) {gCurName.raw = i; break;}
+    for(var i in gRecord.raw) { // element can be set to null; just key exists if not loaded.
+      if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) {gCurName.raw = i; break;}
     }
   }
 
   if(gRecord.cal) {
     for(var i in gRecord.cal) { 
-      if(gRecord.cal[i].wireimg_url) {gCurName.cal =i; break;}
+      if(gRecord.cal[i] && gRecord.cal[i].wireimg_url) {gCurName.cal =i; break;}
     }
   }
 

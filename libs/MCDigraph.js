@@ -27,7 +27,7 @@ function MCDigraph( element )
   gStateMachine.BindObj("recordChange",this,"NewRecord");
   var self = this;
   $(this.element).resize( function(ev){ self.NewRecord(); });                                               
-  gStateMachine.BindObj('hoverChange_mcparticle',this,"HoverChanged");
+  gStateMachine.BindObj('hoverChange',this,"HoverChanged");
   
 }
 

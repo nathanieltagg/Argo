@@ -52,9 +52,7 @@ function TriDView( element, options ){
 
   // Data model state.
   gStateMachine.BindObj('recordChange',this,"Rebuild");
-  gStateMachine.BindObj('hoverChange_mcparticle',this,"Draw");
-  gStateMachine.BindObj('hoverChange_track',this,"Draw");
-  gStateMachine.BindObj('hoverChange_hit',this,"Draw");  
+  gStateMachine.BindObj('hoverChange',this,"Draw");
 
   var self = this;
  

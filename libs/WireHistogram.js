@@ -58,13 +58,18 @@ WireHistogram.prototype.Change = function()
 WireHistogram.prototype.NewRecord = function()
 {
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
-  if(!gRecord[this.show_image]) return;
-  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
-  this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
-  this.SetHist(this.hist,new ColorScaleIndexed(0));
-  this.ResetToHist(this.hist);
-  this.bound_u_min = 0;
-  this.bound_u_max = gGeo.numWires(this.plane);
+  if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {    
+    var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
+    this.SetHist(this.hist,new ColorScaleIndexed(0));
+    this.ResetToHist(this.hist);
+    this.bound_u_min = 0;
+    this.bound_u_max = gGeo.numWires(this.plane);
+  } else {
+    this.hist = new Histogram(gGeo.numWires(this.plane),0,gGeo.numWires(this.plane));
+    this.SetHist(this.hist,new ColorScaleIndexed(0));
+    this.ResetToHist(this.hist);
+  }
   
   this.Draw();
 }

@@ -58,21 +58,25 @@ TimeHistogram.prototype.Change = function()
 TimeHistogram.prototype.NewRecord = function()
 {
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
-  if(!gRecord[this.show_image]) return;
-  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
-  this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.timeHist);
+  if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {
+    var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.timeHist);
 
-  var cs = new ColorScaleIndexed(0);
-  // Use this for testing out color schemes.
-  // cs.colorScale = new HueColorScale(1.0,0.15);
-  // cs.min = this.hist.min;
-  // cs.max = this.hist.max;
-  this.SetHist(this.hist,cs);
-  this.ResetToHist(this.hist);
-  this.bound_u_min = gRecord.header.TDCStart;
-  this.bound_u_max = gRecord.header.TDCEnd;
-  gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
-  
+    var cs = new ColorScaleIndexed(0);
+    // Use this for testing out color schemes.
+    // cs.colorScale = new HueColorScale(1.0,0.15);
+    // cs.min = this.hist.min;
+    // cs.max = this.hist.max;
+    this.SetHist(this.hist,cs);
+    this.ResetToHist(this.hist);
+    this.bound_u_min = gRecord.header.TDCStart;
+    this.bound_u_max = gRecord.header.TDCEnd;
+    gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
+  } else {
+    this.hist = new Histogram(32,0,3200);
+    this.SetHist(this.hist,cs);
+    this.ResetToHist(this.hist);      
+  }  
   this.Draw();
 }
 

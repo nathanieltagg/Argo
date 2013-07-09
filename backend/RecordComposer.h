@@ -27,6 +27,8 @@ public:
   void  composeOpHits();
 
   // Wires
+  void  composeCalAvailability(); 
+  void  composeRawAvailability(); 
   void  composeCal();
   void  composeRaw();
   
