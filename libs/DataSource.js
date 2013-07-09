@@ -3,16 +3,27 @@ $(function(){
   new DataSource();
 });
 
+
 function DataSource()
 {
   /// Object to track things in the DataSource portlet and environs
+
+
+  function PushFEHash()
+  {
+    $.bbq.pushState({
+      filename: $('#inFilename').val(),
+      entry: $('#inFeEntry').val(),
+      selection: $('#inFeSelection').val()
+    });
+  }
   
   //
   // Bindings for DataSource controls.
   
-  $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { QueryServer('fe'); }});
-  $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { QueryServer('fe'); }});
-  $('#go_fe').button().click(function(){QueryServer('fe'); return false;});
+  $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
+  $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
+  $('#go_fe').button().click(function(){PushFEHash(); return false;});
   $('button.next-event').button().click(DoNextEvent);
   $('button.prev-event').button().click(DoPrevEvent);
   
@@ -27,11 +38,12 @@ DataSource.prototype.NewRecord = function()
   var baseurl = location.href.split('?')[0];
   baseurl = baseurl.replace("live\.html","arachne.html");
 
-  gUrlToThisEvent = baseurl + "?"
-                    +"filename="+gFile
-                    +"&entry="+gEntry
-                    // +"&slice="+gCurrentSlice
-                    ;    
+  gUrlToThisEvent = window.location;
+   // baseurl + "?"
+   //                  +"filename="+gFile
+   //                  +"&entry="+gEntry
+   //                  // +"&slice="+gCurrentSlice
+   //                  ;    
   $('#link-to-this-event').html('<a href="'+gUrlToThisEvent+'">Link to this event</a>');
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Arachne Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
   
@@ -52,11 +64,7 @@ function DoNextEvent()
           }
     });
   } else {
-      if(gLastQueryType=='fe') {
-        gEntry = gEntry+1;
-        $('.inEntry').val(gEntry)
-      }
-      QueryServer('last_query_type');
+    $.bbq.pushState({entry: gEntry+1}, 0); // merge into current hash.
   }
 }
 
@@ -71,11 +79,7 @@ function DoPrevEvent()
           }
     });
   } else {
-    if(gLastQueryType=='fe') {
-      gEntry = gEntry-1;
-      $('.inEntry').val(gEntry)
-    }
-    QueryServer('last_query_type');
+    $.bbq.pushState({entry: gEntry-1}, 0); // merge into current hash.
   }
 }
 

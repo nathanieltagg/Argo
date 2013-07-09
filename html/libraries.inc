@@ -20,7 +20,10 @@
 <script type="text/javascript" src="js/jquery.hotkeys.js"></script>
 <script type="text/javascript" src="js/sylvester.js"></script>
 <script type="text/javascript" src="js/canvas.text.js"></script>
+<script type="text/javascript" src="js/jquery.ba-hashchange.js"></script>
+<script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript" src="js/jit.js"></script>
+
 
 
 <!-- for creating animated gifs. -->

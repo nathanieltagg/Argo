@@ -6,7 +6,8 @@
   </p>
   Recent updates: <br/>
   <ul>
-    <li> NEW: Click to select tracks or trajectories, with popup info overlay!
+    <li> Load-on-hashchange: URLs are now persistent; back-button works within viewer. </li>
+    <li> NEW: Click to select tracks or trajectories, with popup info overlay! </li>
     <li> MC and Track Hover/Select now working correctly in wire, 3D, and MC digraph views.</li>
   </ul>
 </div> 
