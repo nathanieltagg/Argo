@@ -59,7 +59,7 @@ function WireInfo( element  )
   this.raw_offscreenCanvas = document.createElement("canvas");
 
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj("hoverChange_wire",this,"Draw");
+  gStateMachine.BindObj("hoverChange",this,"Draw");
   
   
 }

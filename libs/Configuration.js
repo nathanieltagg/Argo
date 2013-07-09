@@ -22,7 +22,7 @@ $(function(){
   );
   
   gStateMachine.Bind('recordChange',CheckWireData);
-  gStateMachine.Bind('recordChange',SetListNames);
+  // gStateMachine.Bind('recordChange',SetListNames);
 
 
   $('#ctl-lock-aspect-ratio').change(function() {
@@ -34,7 +34,29 @@ $(function(){
     }
   });
 
+
+  /// Important: callback to load wire data if user re-checks the box.
+  $('#ctl-show-wireimg').click(CheckWireDataReload);
+
 });
+
+function CheckWireDataReload()
+{
+  var turning_on = $('#ctl-show-wireimg').is(":checked");
+  if(turning_on) {
+    // Does the event have any wiredata?
+    // Does the event have any VALID wiredata?
+    var lists = 0;
+    var valid = 0;
+    if(gRecord.cal) { for(var i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_url) valid++; } }
+    if(gRecord.raw) { for(var i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) valid++; } }
+    // alert("lists: " + lists + " valid:"+valid);
+    if(lists>0 && valid==0) {
+      // We need to go back to the server.
+      QueryServer('last_query_type',"Re-fetching event from server with wire data.");
+    }
+  }
+}
 
 function CheckWireData()
 {
@@ -61,10 +83,10 @@ function CheckWireData()
   }
 }
 
-function SetListNames()
-{
-  
- }
+
+
+
+
 
 
 

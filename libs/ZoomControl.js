@@ -151,7 +151,7 @@ function ZoomControl( element, options )
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('zoomChange',this,"Draw");
   gStateMachine.BindObj('zoomChangeFast',this,"Draw");
-  gStateMachine.BindObj('hoverChange_track',this,"Draw");  
+  gStateMachine.BindObj('hoverChange',this,"Draw");  
   gStateMachine.BindObj('selectChange',this,"Draw");
   
 }

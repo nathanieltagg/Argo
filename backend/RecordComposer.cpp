@@ -513,6 +513,18 @@ void wireOfChannel(int channel, int& plane, int& wire)
 }
 
 
+void RecordComposer::composeCalAvailability()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
+  JsonObject reco_list;
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
+    reco_list.add(stripdots(name),JsonElement());
+  }
+  fOutput.add("cal",reco_list);
+}
+
 void RecordComposer::composeCal() 
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
@@ -620,6 +632,19 @@ void RecordComposer::composeCal()
   }
   fOutput.add("cal",reco_list);
 }
+
+void RecordComposer::composeRawAvailability()
+{
+  vector<string> leafnames = findLeafOfType("vector<raw::RawDigit>");
+  JsonObject reco_list;
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
+    reco_list.add(stripdots(name),JsonElement());
+  }
+  fOutput.add("raw",reco_list);
+}
+
 
 void RecordComposer::composeRaw()
 {
@@ -852,16 +877,20 @@ void RecordComposer::compose()
 {
   fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
 
-  // parse options.
+  // parse some options.
   int doCal = 1;
   int doRaw = 1;
   if( std::string::npos != fOptions.find("_NOCAL_")) doCal = 0;
   if( std::string::npos != fOptions.find("_NORAW_")) doRaw = 0;
 
+  if(!doCal) composeCalAvailability(); // just look at branch names.
+  if(!doRaw) composeRawAvailability();
+
+  // don't 
   // Set branches to read here.
   fTree->SetBranchStatus("*",1);  // By default, read all.
-  fTree->SetBranchStatus("raw::RawDigits*",doRaw); // Don't know how to read these yet.
-  fTree->SetBranchStatus("recob::Wires_caldata",doCal);
+  fTree->SetBranchStatus("raw::RawDigits*",doRaw); // Speed!
+  fTree->SetBranchStatus("recob::Wires*"  ,doCal); // Speed!
 
   //
   // Load the tree element.
