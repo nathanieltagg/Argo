@@ -266,10 +266,13 @@ TriDView.prototype.should_outline = function(obj)
 
 TriDView.prototype.DrawFinish = function()
 {
-  if(this.final_highlight_point){      
-    if(this.fMouseInContentArea) {
+  if(this.fMouseInContentArea) {
+    if(this.final_highlight_point){      
       var offset = getAbsolutePosition(this.canvas);
-      SetOverlayPosition(offset.x + this.final_highlight_point[0], offset.y + this.final_highlight_point[1]);  
+      var pt = this.final_highlight_point;
+      // Pick rightmost alternative.
+      if(pt[0] < this.begin_highlight_point[0]) pt = this.begin_highlight_point;
+      SetOverlayPosition(offset.x + pt[0], offset.y + pt[1]);  
     }
   }
 }
