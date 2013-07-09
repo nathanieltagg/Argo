@@ -28,35 +28,57 @@ var gClientParseTime;
 var gFinishedDrawTime;
 
 var gEventsLoadedThisSession = 0;
-function QueryServer( querytype, newmsg )
+
+
+$(function(){
+  // Initialize hashchange function.
+  $(window).hashchange( QueryServer );
+  
+  // Do intial trigger on page load.
+  $(window).hashchange();
+});
+
+
+function QueryServer( event )
 {
     // Clear all selection targets.
     $("input").blur();
     
+    var par = $.deparam.fragment(true);    
+    
     var data = {};
     var myurl = "server/serve_event.cgi"; // Note relative url.
     // Used for next/prev increment buttons.
-    if(querytype == 'last_query_type') querytype = gLastQueryType;
-    console.log("QueryServer("+querytype+")");
+    // if(querytype == 'last_query_type') querytype = gLastQueryType;
+    // console.log("QueryServer("+querytype+")");
     var opts = "_NoPreSpill_NoPostSpill_";
     // Are we looking at wires? If not, don't request them.
     if (!$(".show-wireimg").is(":checked")) {
       opts += "_NORAW__NOCAL_";
     }
     
-    if(querytype === "fe") {
-      var file = $('#inFilename').val();
-      var entry = $('#inFeEntry').val();
-      var selection = encodeURIComponent($('#inFeSelection').val());
-      data = { filename: file, 
-                  selection: selection,
-                  entry: entry,
-                  options: opts };
-    } else {
-      $('#status').attr('class', 'status-error');
-      $("#status").text("Unknown request type "+ querytype);
-      return;      
-    }
+
+    // Default: do file-and-entry read from parameters. Should check for other options first.
+    data ={ filename:  par.filename  || "standard_reco_uboone.root"
+           ,selection: par.selection || 1
+           ,entry:     par.entry     || 0
+           ,options:   par.options   || opts
+         };
+    
+    
+    // if(querytype === "fe") {
+    //   var file = $('#inFilename').val();
+    //   var entry = $('#inFeEntry').val();
+    //   var selection = encodeURIComponent($('#inFeSelection').val());
+    //   data = { filename: file, 
+    //               selection: selection,
+    //               entry: entry,
+    //               options: opts };
+    // } else {
+    //   $('#status').attr('class', 'status-error');
+    //   $("#status").text("Unknown request type "+ querytype);
+    //   return;      
+    // }
     var param = $.param(data);
     
     $('#status').attr('class', 'status-transition');
@@ -65,11 +87,10 @@ function QueryServer( querytype, newmsg )
     $("#debuglinks").html(
       "Link to json data: <a href=\""+myurl+"?"+param+"\">"+myurl+"?"+param+"</a>"
     );
-    // Modify the "URL to an XML file" link with the actual query.
+    // Modify the "URL to the json data file" link with the actual query.
     $('#inXmlUrl').val(myurl+"?"+param);
 
-    gLastQueryType = querytype;
-
+    // gLastQueryType = querytype;
     gServerRequestTime = (new Date).getTime();
 
     // Modify the cursor to show we're fetching.

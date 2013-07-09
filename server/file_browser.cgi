@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody end_tbody *div/;
 use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
-  use POSIX qw(strftime);
+use POSIX qw(strftime);
 #
 # Script to browse ROOT files on the server. Mild security hassle as viewers on the web
 #  can see directory structrures and ROOT files.
@@ -133,8 +133,10 @@ if( scalar(@files) ==0 ) {
   foreach $f (@files)
   {
     @info = stat("$cur_path/$f");
+    $f_enc = "$cur_path/$f";
+    $f_enc =~ s/([^-_.~\/A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
     print Tr(
-             td( a({-href=>"$link_target?entry=0&filename=$cur_path/$f"},"$f"))
+             td( a({-href=>"$link_target#entry=0&filename=$f_enc"},"$f"))
             ,td({-class=>"date"},strftime("%b %e, %Y %H:%M",localtime($info[9])))
             ,td({-class=>"size"},get_filesize_str($info[7]))
           

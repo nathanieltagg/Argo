@@ -46,32 +46,6 @@ function GetUrlParameter( name )
 
 
 
-$(function(){
-
-  // Initial load - read parameters on URL
-
-  
-  
-  // Let's see if data was requested in the URL to this page.
-  var recFilename = GetUrlParameter("filename");  
-  if(recFilename){
-      $('#inFilename').val(recFilename);
-  } else {
-      // This is the default action on load. Currently it will load run 580, rubrun 4, event 12.
-      QueryServer('fe');
-  }
-                                                                   
-  var recEntry = GetUrlParameter("entry");        if(recEntry)     $(".inEntry").each(function(){$(this).val(recEntry);});
-  var recSelection = GetUrlParameter("selection");if(recSelection) $(".inSelection").each(function(){$(this).val(recSelection);});
-  
-
-  console.log("Requested via url:",recFilename,recEntry,recSelection);
-  if(recFilename && recEntry) {
-    QueryServer('fe');    
-  }
-  
-});
-
 
 
 ///

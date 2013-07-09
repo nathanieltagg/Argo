@@ -53,7 +53,8 @@ function CheckWireDataReload()
     // alert("lists: " + lists + " valid:"+valid);
     if(lists>0 && valid==0) {
       // We need to go back to the server.
-      QueryServer('last_query_type',"Re-fetching event from server with wire data.");
+      // Don't push a hashchange; we need to be more
+      QueryServer();
     }
   }
 }
