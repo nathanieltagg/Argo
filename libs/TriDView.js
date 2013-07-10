@@ -131,7 +131,9 @@ TriDView.prototype.CreateFrame = function()
   this.ctx.strokeStyle = "black";
   for(var i=0;i<dets.length;i++){
     var det = dets[i];
-    this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,det);
+    var hov = {obj: det, type: "opdet", collection: gGeo.opDets.opticalDetectors};
+
+    this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,hov);
   }
   
   
