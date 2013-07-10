@@ -20,7 +20,7 @@
 #include <TError.h>
 
 #include "SocketServer.h"
-#include "ComposeResult.h"
+#include "ResultComposer.h"
 
 #include <signal.h>
 
@@ -124,12 +124,14 @@ int main(int argc, char **argv)
           cout << "    Options:  --" << options << endl;
 
           // Now do your stuff.
-          std::string xml = ComposeResult(options,filename,selection,entrystart,entryend);
-
+          ResultComposer rc;
+          std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
           // Send it out.
           ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
           cout << "Request served." << endl;
           ss->Close(client);
+          
+          // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
         }
 
       }
