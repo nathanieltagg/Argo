@@ -727,7 +727,7 @@ WireView.prototype.DoMouse = function(ev)
     this.fMousing = false;
     gHoverWire = null;
     // gStateMachine.Trigger('hoverWireChange');    
-    this.dirty = true;
+    // this.dirty = true;
     return;
   }
   

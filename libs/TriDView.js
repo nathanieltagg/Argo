@@ -209,6 +209,9 @@ TriDView.prototype.CreateMC = function()
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
+    var t = p.trajectory[0].t;
+    if(t>1.6e6 || t<-1000) continue; // Ignore out-of-time particles
+    console.log("TriDView::CreateMC particle at time ",t, p.trajectory.length);
     var hovobj = {obj:p, type:"mcparticle", collection: particles};
     if(!p.trajectory || p.trajectory.length==0) continue;
     
@@ -281,7 +284,7 @@ TriDView.prototype.HoverObject = function(selected)
   if(selected) {
     ChangeHover(selected);
   }
-  this.Draw();
+  //this.Draw();
 }
 
 TriDView.prototype.ClickObject = function(selected)
@@ -289,6 +292,6 @@ TriDView.prototype.ClickObject = function(selected)
   console.warn("trid click");
   if(selected) ChangeSelection(selected);
   else ClearSelection();
-  this.Draw();
+  //this.Draw();
 }
 
