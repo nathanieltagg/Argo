@@ -54,6 +54,74 @@ protected:
     
 };
 
+// This class is used to create values 
+// with a fixed precision: e.g 0.01 mm or 0.1 pe.
+// HOwever, it does it in a space saving way:
+// JsonFixedVal(1234.567,0) -> 1234
+// JsonFixedVal(1234.567,1) -> 1234.6
+// JsonFixedVal(1234.567,2) -> 1234.57
+// JsonFixedVal(1234.401,2) -> 1234.4   omits tailing zero
+// JsonFixedVal(1234.001,2) -> 1234     omits decimal point and tailing zero
+
+class JsonFixed : public JsonElement
+{
+public:
+  JsonFixed(const double value, int prec=-999) 
+  {
+    if(isnan(value)) { fContent << "\"nan\""; return; }
+    if(prec==-999) prec = JsonElement::sfDecimals;
+    std::ostringstream oss;    
+    oss << std::fixed << std::setprecision(prec) << value;
+    std::string tmp = oss.str();
+    int dec = prec;
+    // remove trailing 0s after the decimal point.
+    while(*tmp.rbegin()=='0' && dec>0) {
+      dec--;
+      tmp.erase(tmp.end()-1);
+    }
+    // remove trailing decimal point.
+    if(*tmp.rbegin()=='.') tmp.erase(tmp.end()-1); 
+    fContent << tmp;
+  }
+};
+
+
+// This class is used to create values 
+// with a relative precision: e.g 3 sig.figs.
+// HOwever, it does it in a space saving way:
+// X = exponent base 10 of value
+// S = number of sig figs
+// JsonFixedVal(0.0001234,3) -> 0.000123 (8 chars) -> 1.23e-04 (7 chars) X=-4 // As scientific prec=S-1 when S-X+1 >S+4 -> X < -3
+// JsonFixedVal(0.001234 ,3) -> 0.00123 (7 chars)  -> 0.00123 (7 chars) X=-3 // As fixed, prec=S-X-1   when S-X+1<=S+4
+// JsonFixedVal(0.1234 ,3)   -> 0.123 (5 chars)    -> 0.123 (5 chars)
+// JsonFixedVal(1.234  ,3)   -> 1.23  (4 chars)    -> 1.23  (4 chars)
+// JsonFixedVal(12.34  ,3)   -> 12.3  (4 chars)    -> 12.3  (4 chars)   
+// JsonFixedVal(123.4  ,3)   -> 123.  (3 chars)    -> 123   (3 chars)   X=2 // integer when X+1 >= S
+// JsonFixedVal(1234.0 ,3)   -> 1234.  (4 chars)   -> 1234   (4 chars)
+// JsonFixedVal(12340  ,3)    -> 12340  (5 chars)  -> 12340   (5 chars) X=4 // integer when X+1 >= S
+// JsonFixedVal(123400 ,3)    -> 123400 (6 chars)  -> 123400  (6 chars) X=5
+// JsonFixedVal(1234000,3)    -> 1234000(7 chars)  -> 1.23e+06  (6 chars) X=6 // flip when X+1 > S+5
+// Also removes trailing 0s at end, or trailing decimal points.
+
+class JsonSigFig : public JsonElement
+{
+public:
+  JsonSigFig(const double value, int S=3) {
+    if(isnan(value)) { fContent << "\"nan\""; return; }
+    // Find exponent
+    int X = (int)floor(log10(value));
+    char buff[S+10];
+    if((X+1<S) ||  (X > S+4) ){
+      // For most of the above cases, the %g format works well!
+      sprintf(buff,"%.*g",S,value);
+    } else { // if (X <= S+2) {
+      sprintf(buff,"%d",(int)value);
+    }
+    fContent << buff;
+  }
+};
+
+
 // A JsonObject is anything that is inside curly braces {}.
 class JsonObject : public JsonElement
 {

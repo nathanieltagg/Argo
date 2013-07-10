@@ -60,19 +60,25 @@ JsonObject TH1ToHistogram( TH1* hist )
 {
   JsonObject h;
   if(!hist) return h;
+  h.add("classname",hist->ClassName());
+  h.add("name",hist->GetName());
+  h.add("title",hist->GetTitle());
+  h.add("xlabel",hist->GetXaxis()->GetTitle());
+  h.add("ylabel",hist->GetYaxis()->GetTitle());
   h.add("n",hist->GetNbinsX());
-  h.add("min",hist->GetXaxis()->GetXmin());
-  h.add("max",hist->GetXaxis()->GetXmax());
+  h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
+  h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
   h.add("underflow",hist->GetBinContent(0));
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
   double tot = hist->GetSumOfWeights();
-  h.add("total",tot);
-  h.add("sum_x",tot*hist->GetMean());
+  h.add("total",JsonElement(tot,5));
+  h.add("sum_x",JsonElement(tot*hist->GetMean(),5));
   h.add("max_content",hist->GetMaximum());
   h.add("min_content",hist->GetMinimum());
+  h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
   JsonArray data;
   for(int i=1; i <= hist->GetNbinsX();i++) {
-    data.add(hist->GetBinContent(i));
+    data.add(JsonSigFig(hist->GetBinContent(i),3));
   }
   h.add("data",data);
   return h;
@@ -190,12 +196,11 @@ void RecordComposer::composeHits()
    //      , "view",     name+"obj.fView"
    //      , "m",        name+"obj.fMultiplicity"
    //      , "q",        name+"obj.fCharge"
-   //      , "σq",       name+"obj.fSigmaCharge"
+   //      , "\u03C3q",       name+"obj.fSigmaCharge"
    //      , "t",        name+"obj.fPeakTime"
-   //      , "σt",       name+"obj.fSigmaPeakTime"
+   //      , "\u03C3t",       name+"obj.fSigmaPeakTime"
    //      , "t1",       name+"obj.fStartTime"
    //      , "t2",       name+"obj.fEndTime"
-   //          , "rdkey",name+"obj.fRawDigit.key_"
    //    );
    //  r.add("n",arr.length());
    //  r.add("hits",arr);
@@ -206,23 +211,37 @@ void RecordComposer::composeHits()
     int nhits = l->GetLen();
     cout << "nhits: " << nhits << endl;
 
-    for(int i=0;i<nhits;i++) {
-      JsonObject hit;
-      hit.add("wire",      ftr.getJson(name+"obj.fWireID.Wire",i));
-      hit.add("plane",     ftr.getJson(name+"obj.fWireID.Plane" ,i));
-      hit.add("view",      ftr.getJson(name+"obj.fView" ,i));
-      hit.add("m",         ftr.getJson(name+"obj.fMultiplicity",i));
-      hit.add("q",         ftr.getJson(name+"obj.fCharge",i));
-      hit.add("\u03C3q",   ftr.getJson(name+"obj.fSigmaCharge" ,i));
-      hit.add("t",         ftr.getJson(name+"obj.fPeakTime" ,i));
-      hit.add("\u03C3t",   ftr.getJson(name+"obj.fSigmaPeakTime" ,i));
-      hit.add("t1",        ftr.getJson(name+"obj.fStartTime" ,i));
-      hit.add("t2",        ftr.getJson(name+"obj.fEndTime" ,i));
-      // \u03C3 is the UTF-8 encoding for \sigma. See http://www.fileformat.info/info/unicode/char/03c3/index.htm
-      
-      
-      arr.add(hit);
-    }
+    vector<pair< string,string> > key_leaf_pairs;
+    key_leaf_pairs.push_back(make_pair<string,string>("wire",      name+"obj.fWireID.Wire"     ));
+    key_leaf_pairs.push_back(make_pair<string,string>("plane",     name+"obj.fWireID.Plane"    ));
+    key_leaf_pairs.push_back(make_pair<string,string>("view",      name+"obj.fView"            ));
+    key_leaf_pairs.push_back(make_pair<string,string>("m",         name+"obj.fMultiplicity"    ));
+    key_leaf_pairs.push_back(make_pair<string,string>("q",         name+"obj.fCharge"          ));
+    key_leaf_pairs.push_back(make_pair<string,string>("\u03C3q",   name+"obj.fSigmaCharge"     ));
+    key_leaf_pairs.push_back(make_pair<string,string>("t",         name+"obj.fPeakTime"        ));
+    key_leaf_pairs.push_back(make_pair<string,string>("\u03C3t",   name+"obj.fSigmaPeakTime"   ));
+    key_leaf_pairs.push_back(make_pair<string,string>("t1",        name+"obj.fStartTime"       ));
+    key_leaf_pairs.push_back(make_pair<string,string>("t2",        name+"obj.fEndTime"         ));
+    std::vector<JsonObject> v = ftr.makeVector(key_leaf_pairs);
+    for(int i=0;i<v.size();i++) arr.add(v[i]);
+
+    // for(int i=0;i<nhits;i++) {
+    //   JsonObject hit;
+    //   hit.add("wire",      ftr.getJson(name+"obj.fWireID.Wire"   ,i));
+    //   hit.add("plane",     ftr.getJson(name+"obj.fWireID.Plane"  ,i));
+    //   hit.add("view",      ftr.getJson(name+"obj.fView"          ,i));
+    //   hit.add("m",         ftr.getJson(name+"obj.fMultiplicity"  ,i));
+    //   hit.add("q",         ftr.getJson(name+"obj.fCharge"        ,i));
+    //   hit.add("\u03C3q",   ftr.getJson(name+"obj.fSigmaCharge"   ,i));
+    //   hit.add("t",         ftr.getJson(name+"obj.fPeakTime"      ,i));
+    //   hit.add("\u03C3t",   ftr.getJson(name+"obj.fSigmaPeakTime" ,i));
+    //   hit.add("t1",        ftr.getJson(name+"obj.fStartTime"     ,i));
+    //   hit.add("t2",        ftr.getJson(name+"obj.fEndTime"       ,i));
+    //   // \u03C3 is the UTF-8 encoding for \sigma. See http://www.fileformat.info/info/unicode/char/03c3/index.htm
+    //   
+    //   
+    //   arr.add(hit);
+    // }
     
     reco_list.add(stripdots(name),arr);
   }
@@ -908,7 +927,7 @@ void RecordComposer::composeMC()
         // add the last one no matter what.
         if(usePt[n-1]==0) { usePt[n-1]=1; n_need++; }
 
-        std::cout << "MC track " << i << " found trajectory points " << n_need << " / " << n << endl;
+        // std::cout << "MC track " << i << " found trajectory points " << n_need << " / " << n << endl;
 
         /*
         // Order the trajectory points by how far they diverge from a line from start to finish.
@@ -959,14 +978,14 @@ void RecordComposer::composeMC()
           const TLorentzVector& pos = (*traj)[j].first;
           const TLorentzVector& mom = (*traj)[j].second;
           // trajpoint.add("acc",ptAcc[j]);
-          trajpoint.add("x",pos.X());
-          trajpoint.add("y",pos.Y());
-          trajpoint.add("z",pos.Z());
-          trajpoint.add("t",pos.T());
-          trajpoint.add("px",JsonElement(mom.X(),4));
-          trajpoint.add("py",JsonElement(mom.Y(),4));
-          trajpoint.add("pz",JsonElement(mom.Z(),4));
-          trajpoint.add("E" ,JsonElement(mom.T(),6));
+          trajpoint.add("x",JsonFixed(pos.X(),1));
+          trajpoint.add("y",JsonFixed(pos.Y(),1));
+          trajpoint.add("z",JsonFixed(pos.Z(),1));
+          trajpoint.add("t",JsonFixed(pos.T(),1));
+          trajpoint.add("px",JsonFixed(mom.X(),4));
+          trajpoint.add("py",JsonFixed(mom.Y(),4));
+          trajpoint.add("pz",JsonFixed(mom.Z(),4));
+          trajpoint.add("E" ,JsonFixed(mom.T(),6));
           jtraj.add(trajpoint);
         }
         v_particles[i].add("trajectory",jtraj);

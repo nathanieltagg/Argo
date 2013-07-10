@@ -7,6 +7,7 @@
 // you're free to modify and use it as you like.
 //
 
+#include "ResultComposer.h"
 #include "RecordComposer.h"
 #include <TTree.h>
 #include <TFile.h>
@@ -16,6 +17,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <TTime.h>
+#include "JsonElement.h"
 
 
 using namespace std; 
@@ -24,7 +28,15 @@ static UInt_t events_served = 0;
 
 TTime  gTimeStart;
 
-string ComposeResult(
+ResultComposer::ResultComposer()
+  : rootfile(0)
+  , tree(0)
+{
+  
+}
+
+
+string ResultComposer::compose(
          const char* inOptions,
          const char* inRootFile,
          const char* inSelection,
@@ -53,7 +65,7 @@ string ComposeResult(
   // if(dst && oRefresh) { dst->Close(); delete dst; dst = NULL; }
   // if(!dst) dst = new TFile(inDstFile,"READ");
   
-  TFile* rootfile = new TFile(inRootFile,"READ");
+  rootfile = new TFile(inRootFile,"READ");
   if(rootfile->IsZombie()) {
     // Bad file. 
     result.add("error",string("Cannot open file ") + inRootFile + " for reading.");
@@ -65,7 +77,6 @@ string ComposeResult(
   TTree* tree = (TTree*) rootfile->Get("Events");
   
   if(!tree) {
-    rootfile->Close(); delete rootfile;
     result.add("error",string("Could not open tree 'Events' on file ") + inRootFile);
     return result.str();
   }
@@ -75,7 +86,6 @@ string ComposeResult(
   Long64_t nentries = tree->GetEntriesFast();  
   if(nentries<1){
     result.add("error",string("No entries in tree in file ") + inRootFile);
-    rootfile->Close(); delete rootfile;
     return result.str();
   }
   
@@ -83,13 +93,11 @@ string ComposeResult(
   TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
   if (!select) {
       result.add("error","Could not create TTreeFormula.");
-      rootfile->Close(); delete rootfile;
       return result.str();
   }
   if (!select->GetNdim()) { 
     delete select;
     result.add("error","Problem with your selection function..");
-    rootfile->Close(); delete rootfile;
     return result.str();
   }
 
@@ -137,7 +145,6 @@ string ComposeResult(
   delete select;
   if(!match) {
     result.add("error","Selection matched no events in file.");
-    rootfile->Close(); delete rootfile;
     return result.str();
   } 
   
@@ -193,12 +200,21 @@ string ComposeResult(
   RecordComposer composer(result,tree,jentry,options);
   composer.compose();
   
-  // Always close the file - let's see if this stops memory leaks.
-  rootfile->Close(); delete rootfile;
   
   result.add("ElapsedServerTime",((long)(gSystem->Now()) - eventTimeStart));
   
   return result.str();
+}
+
+ResultComposer::~ResultComposer()
+{
+  // The reason for doing this here is that closing the file and garbage collection take ~20% of the time.
+  // This lets the main routine deliver the result, then perform cleanup;
+  
+  // Always close the file - let's see if this stops memory leaks.
+  if(rootfile) {
+    rootfile->Close(); delete rootfile;
+  } 
 }
 
 
