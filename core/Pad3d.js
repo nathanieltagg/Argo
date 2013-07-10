@@ -415,6 +415,7 @@ Pad3d.prototype.Clear = function()
 
 Pad3d.prototype.Draw = function()
 {
+  if($(this.element).is(":hidden")) return;
   this.Clear();
   this.DrawLines();
   this.DrawFinish(); // usercallback.
@@ -518,41 +519,44 @@ Pad3d.prototype.DrawLines = function()
       if(obj.type=='l') {
         // Line
         // adjust line thickness for relative z.      
-        this.ctx.lineWidth = obj.linewidth/obj.meanz*this.proj_dist;
+        var linewidth = obj.linewidth/obj.meanz*this.proj_dist;
         var x1 = cu-obj.au;
         var x2 = cu-obj.bu;
         var y1 = cv-obj.av;
         var y2 = cv-obj.bv;
         if(Math.abs(x2-x1)<1 && Math.abs(y2-y1<1)) x2+=1;
-        var highlight = this.should_highlight(obj);
-        var outline   = this.should_outline(obj);
-        GeoUtils.draw_highlighted_line(
-           this.ctx,
-           x1,y1,
-           x2,y2,
-           this.ctx.lineWidth, //linewidth
-           obj.stroke, // default style
-           "rgba(250,0,0,0.9)", //highlight style
-           "rgba(0,0,0,0.7)", //outline style
-           highlight, outline
-         );
-         
-         if(outline) {
-           if(x1>0 && x1<this.width && y1>0 && y1<this.height && !this.begin_highlight_point) {
-             this.begin_highlight_point = [x1,y1];
-           }
-           
-           if(x2>0 && x2<this.width && y2>0 && y2<this.height) {
-             this.final_highlight_point = [x2,y2];
-           }
-         }
+        if(this.should_outline(obj)) {
+          if(x1>0 && x1<this.width && y1>0 && y1<this.height && !this.begin_highlight_point) {
+            this.begin_highlight_point = [x1,y1];
+          }
+          
+          if(x2>0 && x2<this.width && y2>0 && y2<this.height) {
+            this.final_highlight_point = [x2,y2];
+          }
+
+
+          // Draw underlay for a selected track.
+          this.ctx.lineWidth = linewidth*2;
+          this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+          this.ctx.beginPath();
+          this.ctx.moveTo(x1,y1);
+          this.ctx.lineTo(x2,y2);
+          this.ctx.stroke();
+          this.ctx.lineWidth = linewidth;          
+        }
         
-        // this.ctx.strokeStyle = obj.stroke;
-        // this.ctx.beginPath();
-        // this.ctx.moveTo(this.width/2-obj.au, this.height/2-obj.av);
-        // this.ctx.lineTo(this.width/2-obj.bu, this.height/2-obj.bv);
-        // this.ctx.stroke();
-        // this.ctx.closePath();
+        if(this.should_highlight(obj)) {
+          this.ctx.strokeStyle = "rgba(250,0,0,0.9)";
+        } else {
+          this.ctx.strokeStyle = obj.stroke;
+        }
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1,y1);
+        this.ctx.lineTo(x2,y2);
+        this.ctx.stroke();
+        
+         
       }
       if(obj.type=='p') {
         // Point
