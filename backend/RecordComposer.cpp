@@ -750,6 +750,48 @@ void RecordComposer::composeRaw()
 }
 
 
+int pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
+{
+  // Starting at x0 and moving along a vector p, how far off the line is point x?
+  TVector3 dx(x.X()-x0.X()
+             ,x.Y()-x0.Y()
+             ,x.Z()-x0.Z());
+  TVector3 p = pv.Vect();
+  double dx_dot_p = dx.Dot(p);  
+  double p2 = p.Mag2();
+  if(p2<=0) p2 = 1;
+  double delta2 = dx.Mag2() - (dx_dot_p*dx_dot_p)/p.Mag2();
+  if(delta2 > tol*tol) return 1;
+  if(delta2 < 0) return 1;
+  return 0;
+}
+
+// double distanceOffLine(const TVector3& p, const TVector3& x1, const TVector3 &x2 )
+// {
+//   // Find lambda, the distance along the line segment closest to the point.
+//   // v = vector from p1 to p2
+//   TVector3 v = x2-x1;
+//   TVector3 qp = p-x1;
+//   
+//   double v_dot_qp = v.Dot(qp);
+//   double v2 = v.Mag2();
+//   double lam = v_dot_qp/v2;
+//   
+//   if(lam<=0) {
+//     // Closest point is p1.
+//     return qp.Mag();
+//   }
+//   if(lam>=1) {
+//     // Closest point is p2
+//     return (p-x2).Mag();
+//   }
+//   
+//   // Closest point is along the line.
+//   double qp2 = qp.Mag2();
+//   double d2 = qp2-lam*lam*v2;
+//   return sqrt(d2);
+// }
+
 
 void RecordComposer::composeMC()
 {
@@ -843,11 +885,80 @@ void RecordComposer::composeMC()
         // Add  the trajectory points.
         const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
         traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
+
+        // Find which points are really required.
+        // Start at the beginning and trace along the mom'm vector until you find a point outside of tolerance. Add that point
+        // and use it as the seed for later ones.
+        int n = traj->size();
+        if(n<1) continue;
+        std::vector<unsigned char> usePt(n,0);
+        usePt[0] = 1;
+        const TLorentzVector* x0 = &((*traj)[0].first);
+        const TLorentzVector* p  = &((*traj)[0].second);
+        int n_need = 1;
+        for(int j=1;j<n;j++) {
+          int off = pointOffLine(*x0,*p,(*traj)[j].first,0.3);
+          // cout << j << " " << delta << endl;
+          if(off) { // 0.1 mm tolerance
+            usePt[j] = 1; n_need++;
+            x0 = &((*traj)[j].first);
+            p  = &((*traj)[j].second); 
+          }
+        }
+        // add the last one no matter what.
+        if(usePt[n-1]==0) { usePt[n-1]=1; n_need++; }
+
+        std::cout << "MC track " << i << " found trajectory points " << n_need << " / " << n << endl;
+
+        /*
+        // Order the trajectory points by how far they diverge from a line from start to finish.
+        // Add the first two points as being crucial.
+        int n = traj->size();
+        std::vector<double> ptAcc(n,-1);
+        ptAcc[0] = ptAcc[traj->size()-1] = 1e99;
+        // Now recursively go through unused points. Each time, find the point furthest off the existing line,
+        // and add it, labelling it's accuracy as the degree to which it corrects the implicit line you would
+        // have used if you didn't know it.
+        bool done = false;
+        while(!done) {
+          int worst=-1;
+          double worstacc = -1;
+          int lowbracket = 0;
+          int highbracket = traj->size()-1;
+          for(int k=0;k<n;k++) {
+            // consider point k.
+            if(ptAcc[k]>-1) {
+              lowbracket = k;
+              continue; // done this one.
+            }
+            // ok, we're considering point k. Find the high bracket.
+            for(int m=k+1;k<n;m++) {
+              if(ptAcc[m]>-1) {
+                highbracket = m;
+                break; 
+              }              
+            }
+            // Find accuracy improvement from point k.
+            double acc = distanceOffLine( (*traj)[k].first.Vect(), (*traj)[lowbracket].first.Vect(), (*traj)[highbracket].first.Vect() );
+            if(acc > worstacc) { worst = k; worstacc = acc;}
+            // cout << "Considering point " << k << " between " << lowbracket << " and " << highbracket << " has accuracy " << acc 
+            //               << " worst is " << worst << endl;
+          }
+          cout << "Worst is " << worst << " with acc " << worstacc << " out of " << n << endl;
+          if(worst == -1) done = true;
+          else            ptAcc[worst] = worstacc;
+          if(worstacc < 0.1) done = true;
+        }
+        */
+
+
         JsonArray jtraj;
         for(int j=0;j<traj->size();j++){
+          if(usePt[j]==0) continue;
           JsonObject trajpoint;
           const TLorentzVector& pos = (*traj)[j].first;
           const TLorentzVector& mom = (*traj)[j].second;
+          // trajpoint.add("acc",ptAcc[j]);
           trajpoint.add("x",pos.X());
           trajpoint.add("y",pos.Y());
           trajpoint.add("z",pos.Z());
