@@ -224,25 +224,7 @@ void RecordComposer::composeHits()
     key_leaf_pairs.push_back(make_pair<string,string>("t2",        name+"obj.fEndTime"         ));
     std::vector<JsonObject> v = ftr.makeVector(key_leaf_pairs);
     for(int i=0;i<v.size();i++) arr.add(v[i]);
-
-    // for(int i=0;i<nhits;i++) {
-    //   JsonObject hit;
-    //   hit.add("wire",      ftr.getJson(name+"obj.fWireID.Wire"   ,i));
-    //   hit.add("plane",     ftr.getJson(name+"obj.fWireID.Plane"  ,i));
-    //   hit.add("view",      ftr.getJson(name+"obj.fView"          ,i));
-    //   hit.add("m",         ftr.getJson(name+"obj.fMultiplicity"  ,i));
-    //   hit.add("q",         ftr.getJson(name+"obj.fCharge"        ,i));
-    //   hit.add("\u03C3q",   ftr.getJson(name+"obj.fSigmaCharge"   ,i));
-    //   hit.add("t",         ftr.getJson(name+"obj.fPeakTime"      ,i));
-    //   hit.add("\u03C3t",   ftr.getJson(name+"obj.fSigmaPeakTime" ,i));
-    //   hit.add("t1",        ftr.getJson(name+"obj.fStartTime"     ,i));
-    //   hit.add("t2",        ftr.getJson(name+"obj.fEndTime"       ,i));
-    //   // \u03C3 is the UTF-8 encoding for \sigma. See http://www.fileformat.info/info/unicode/char/03c3/index.htm
-    //   
-    //   
-    //   arr.add(hit);
-    // }
-    
+        
     reco_list.add(stripdots(name),arr);
   }
   fOutput.add("hits",reco_list);

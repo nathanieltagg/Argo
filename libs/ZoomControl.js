@@ -229,7 +229,6 @@ ZoomControl.prototype.DrawTracks = function()
   var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
   if(!tracks) return;
   this.ctx.save();
-  console.log("zoom draw tracks");
   for(var i=0;i<tracks.length;i++)
   {
     var trk = tracks[i];

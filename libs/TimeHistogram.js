@@ -39,11 +39,10 @@ function TimeHistogram( element  )
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
     
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj("hoverWireChange",this,"Draw");
-  gStateMachine.BindObj('zoomChange',this,"Change");
-  gStateMachine.BindObj('zoomChangeFast',this,"Change");
-  gStateMachine.BindObj("TimeCutChange",this,"Change");
+  gStateMachine.Bind('recordChange',  this.NewRecord.bind(this) ); 
+  gStateMachine.Bind('zoomChange'    ,this.Change.bind(this) );
+  gStateMachine.Bind('zoomChangeFast',this.Change.bind(this) );
+  gStateMachine.Bind("TimeCutChange" ,this.Change.bind(this) );
   
 }
 

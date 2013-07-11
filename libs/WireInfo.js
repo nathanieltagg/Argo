@@ -58,10 +58,8 @@ function WireInfo( element  )
   this.cal_offscreenCanvas = document.createElement("canvas");
   this.raw_offscreenCanvas = document.createElement("canvas");
 
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj("hoverChange",this,"Draw");
-  
-  
+  gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
+  gStateMachine.Bind("hoverChange", this.Draw.bind(this));
 }
 
 WireInfo.prototype.NewRecord = function()
@@ -187,7 +185,6 @@ WireInfo.prototype.Draw = function()
   if(this.graph.min_v > -100) this.graph.min_v = -100;
   if(this.graph.max_v <  100) this.graph.max_v =  100;
   // this.LoadHistogramWithWireData(this.graphdata,offscreenCtx,chan,tdc);
-  console.log(this);
   $(this.txt_element).html(h);
   // this.graph.ResetToHist(this.graphdata);
   this.graph.Draw();
