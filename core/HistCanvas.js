@@ -234,7 +234,7 @@ HistCanvas.prototype.DrawHists = function( )
          if(x<this.origin_x) {// partial-width bar at front.
            bw = barwidth-this.origin_x+x; 
            x = this.origin_x; } 
-         var c = colorscale.GetColor((t+t2)/2);
+         var c = colorscale.GetColor(t);//(t+t2)/2);
          this.ctx.fillStyle = "rgba(" + c + ",1.0)";
          //log(t + " " + c);
          this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));          
