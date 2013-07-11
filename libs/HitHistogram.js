@@ -58,8 +58,8 @@ function HitHistogram( element  )
   this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
   this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
   
-  $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
-  $(this.ctl_hit_field   ).change(function(ev) { return self.NewRecord(); });
+  $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
+  $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.NewRecord(); });
   
 }
 
@@ -79,7 +79,7 @@ HitHistogram.prototype.NewRecord = function()
     case "view": this.hist = new Histogram(3,0,3);  break;
     case "plane": this.hist = new Histogram(3,0,3);  break;
     case "wire": this.hist = new Histogram(100,0,4200);  break;
-    case "m": this.hist = new Histogram(10,0,10);  break;
+    case "m": this.hist = new Histogram(5,0,5);  break;
     default: 
      this.hist = new Histogram(50,0,5000);  
   }
@@ -107,6 +107,8 @@ HitHistogram.prototype.HoverChange = function( )
 
 HitHistogram.prototype.Draw = function( )
 {
+  var cs = gHitColorScaler;
+  if(!$(this.ctl_show_hits).is(":checked")) cs = this.blandColorScale;
   if(this.hist) {
     if(gHoverState.type == "hit") {
       var hit = gHoverState.obj; 
@@ -116,10 +118,10 @@ HitHistogram.prototype.Draw = function( )
       val = this.hist.GetX(this.hist.GetBin(val));
       this.highlight_hist = new Histogram(1,val,val + (this.hist.max-this.hist.min)/this.hist.n);
       this.highlight_hist.Fill(val);
-      this.AddHist(this.highlight_hist,gHitColorScaler);     
+      this.AddHist(this.highlight_hist,cs);     
        
     } else {
-      this.SetHist(this.hist,gHitColorScaler);
+      this.SetHist(this.hist,cs);
     }
   }
   
