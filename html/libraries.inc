@@ -77,6 +77,7 @@
 <script type="text/javascript" src="libs/SelectionAndHover.js"></script> 
 
 <script type="text/javascript" src="libs/EventInfo.js"></script> 
+<script type="text/javascript" src="libs/HitHistogram.js"></script> 
 <script type="text/javascript" src="libs/TimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/WireHistogram.js"></script> 
 <script type="text/javascript" src="libs/WireView.js"></script> 

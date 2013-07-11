@@ -1,8 +1,10 @@
 var gHoverState = {
   obj:  null,
   type: "none",
-  collection: null
+  collection: null,
+  last: { obj:  null,type: "none", collection: null}
 };
+
 
 var gSelectState = {
   obj:  null,
@@ -13,11 +15,12 @@ var gSelectState = {
 
 function ChangeHover( arg )
 {
-  console.warn(arg);
   if(!arg) {ClearHover(); return;}
   
   if(arg.obj!=gHoverState.obj) {
+    var last = $.extend({},gHoverState);
     gHoverState = $.extend({},arg);
+    gHoverState.last = last;
     gStateMachine.Trigger("hoverChange");
     
   }
@@ -25,13 +28,13 @@ function ChangeHover( arg )
 
 function ClearHover()
 {
-  // console.trace();
   if(gHoverState.obj != null) {
+    var last = $.extend({},gHoverState);
     var type = gHoverState.type;
     gHoverState.obj = null;
     gHoverState.type = "none";
     gHoverState.collection = null;
-    // gStateMachine.Trigger("hoverChange_"+type);
+    gHoverState.last = last;
     gStateMachine.Trigger("hoverChange");
     
   }

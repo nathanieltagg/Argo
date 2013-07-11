@@ -105,18 +105,18 @@ function WireView( element, options )
 
   // $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.Draw(); });
   
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('TimeCutChange',this,"Draw");
-  gStateMachine.BindObj('hoverChange',this,"Draw");  
-  gStateMachine.BindObj('selectChange',this,"Draw");
-  
-  gStateMachine.BindObj('phCutChange',this,"TrimHits");
-  gStateMachine.BindObj('timeCutChange',this,"TrimHits");
+  gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );
+  gStateMachine.Bind('TimeCutChange',this.Draw.bind(this) );
+  gStateMachine.Bind('hoverChange',  this.HoverChange.bind(this) );
+  gStateMachine.Bind('selectChange', this.Draw.bind(this) );
+  gStateMachine.Bind('hitChange',    this.TrimHits.bind(this) );
+  gStateMachine.Bind('timeCutChange',this.TrimHits.bind(this) );
   
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
  
   this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
+  this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
   this.ctl_show_wireimg =  GetBestControl(this.element,".show-wireimg");
   this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
@@ -142,6 +142,29 @@ function WireView( element, options )
     
     return self.NewRecord(); 
   });
+}
+
+WireView.prototype.HoverChange = function()
+{
+  // Only need a redraw if the over change affected something we care about.
+  switch(gHoverState.type) {
+    case "hit": 
+    case "cluster":
+    case "spacepoint":
+    case "track":
+    case "mcparticle":
+      this.Draw(); break;
+    default: break;
+  }
+  switch(gHoverState.last.type) {
+    case "hit": 
+    case "cluster":
+    case "spacepoint":
+    case "track":
+    case "mcparticle":
+      this.Draw(); break;
+    default: break;  
+  }
 }
 
 WireView.prototype.Resize = function()
@@ -214,14 +237,19 @@ WireView.prototype.TrimHits = function()
   
   // For now, no cuts, but I am going to add wrapper objects to hold extracted data.
   this.visHits = [];
+  var field = $(this.ctl_hit_field).val();
   for(var i = 0;i<this.myHits.length;i++) {
     var h= this.myHits[i];
+    var c = h[field];
+    if(c<gHitCut.min) continue;
+    if(c>gHitCut.max) continue;
+    
     var vishit = {hit:h,
       u:h.wire,  // horizontal coord
       v:h.t,     // vertical coord
       v1:h.t1,
       v2:h.t2,
-      c: h.q     // Color coord
+      c: c    // Color coord
     }
     this.visHits.push(vishit);
   }
@@ -416,9 +444,6 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 {
   // Temp:
-  var cs = new ColorScaler();
-  cs.max = 2000;
-
   this.cellWidth = this.span_x/this.num_u;
   this.cellHeight = this.span_y/this.num_v;
   
@@ -438,7 +463,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     
     var y = this.GetY(h.v1);
     var dy = this.GetY(h.v2) - y;    
-    var c = cs.GetColor(h.c);
+    var c = gHitColorScaler.GetColor(h.c);
 
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.fillRect(x,y,dx,dy);      
@@ -457,7 +482,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     
       var y = this.GetY(h.v2);
       var dy = this.GetY(h.v1) - y;    
-      var c = cs.GetColor(h.c);
+      var c = gHitColorScaler.GetColor(h.c);
+      console.log("color",gHitColorScaler,c);
       this.ctx.fillStyle = "black";
 
       this.ctx.fillStyle = "rgb(" + c + ")";

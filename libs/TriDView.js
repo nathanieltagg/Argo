@@ -51,8 +51,8 @@ function TriDView( element, options ){
 
 
   // Data model state.
-  gStateMachine.BindObj('recordChange',this,"Rebuild");
-  gStateMachine.BindObj('hoverChange',this,"Draw");
+  gStateMachine.Bind('recordChange',this.Rebuild.bind(this));
+  gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
 
   var self = this;
  
@@ -76,6 +76,28 @@ function TriDView( element, options ){
   this.ResetView();
 }
 
+TriDView.prototype.HoverChange = function()
+{
+  // Only need a redraw if the over change affected something we care about.
+  switch(gHoverState.type) {
+    case "hit": 
+    case "cluster":
+    case "spacepoint":
+    case "track":
+    case "mcparticle":
+      this.Draw(); break;
+    default: break;
+  }
+  switch(gHoverState.last.type) {
+    case "hit": 
+    case "cluster":
+    case "spacepoint":
+    case "track":
+    case "mcparticle":
+      this.Draw(); break;
+    default: break;  
+  }
+}
 
 
 TriDView.prototype.Rebuild = function ()
