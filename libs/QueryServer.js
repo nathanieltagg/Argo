@@ -54,7 +54,7 @@ function QueryServer( event )
     var opts = "_NoPreSpill_NoPostSpill_";
     // Are we looking at wires? If not, don't request them.
     if (!$(".show-wireimg").is(":checked")) {
-      opts += "_NORAW__NOCAL_";
+      // opts += "_NORAW__NOCAL_";
     }
     
 
