@@ -63,6 +63,24 @@ function Geometry()
   }]]];
 }
 
+Geometry.prototype.wireCrossing = function(geoWire1,geoWire2)
+{
+  var result;
+  
+  var ua_t = (geoWire2.z2 - geoWire2.z1) * (geoWire1.y1 - geoWire2.y1) - (geoWire2.y2 - geoWire2.y1) * (geoWire1.z1 - geoWire2.z1);
+  var ub_t = (geoWire1.z2 - geoWire1.z1) * (geoWire1.y1 - geoWire2.y1) - (geoWire1.y2 - geoWire1.y1) * (geoWire1.z1 - geoWire2.z1);
+  var u_b  = (geoWire2.y2 - geoWire2.y1) * (geoWire1.z2 - geoWire1.z1) - (geoWire2.z2 - geoWire2.z1) * (geoWire1.y2 - geoWire1.y1);
+
+  if ( u_b != 0 ) {
+      var ua = ua_t / u_b;
+      var ub = ub_t / u_b;
+      return { z: geoWire1.z1 + ua * (geoWire1.z2 - geoWire1.z1),
+               y: geoWire1.y1 + ua * (geoWire1.y2 - geoWire1.y1) };
+  } 
+  
+  return null; 
+}
+
 Geometry.prototype.viewOfPlane = function(plane)
 {
   return 2-plane;
@@ -202,7 +220,7 @@ Geometry.prototype.getWire = function(plane,wire)
         r.y1 = -115.530;
         r.y2 = 117.470;
         r.z1 = 0.150+wire*(0.300);
-        r.z2 = 0.150+wire*(0.300);
+        r.z2 = r.z1;
         r.halfl = 116.500;
         r.thetaz = 1.571;
     break; 

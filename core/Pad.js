@@ -534,6 +534,8 @@ Pad.prototype.MagnifierDraw = function(arg)
   // or set the Draw() function to be this.
   // Calls DrawOne() to do the actual work.
   if($(this.element).is(":hidden")) return;
+  // console.warn("Draw",this.plane);
+  // console.trace();
 
   this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
   this.magnifying = false;
