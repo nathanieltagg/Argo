@@ -6,6 +6,7 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> "MRI" Timeslice View </li>
     <li> Hit Color histogram </li>
     <li> Load-on-hashchange: URLs are now persistent; back-button works within viewer. </li>
     <li> NEW: Click to select tracks or trajectories, with popup info overlay! </li>
