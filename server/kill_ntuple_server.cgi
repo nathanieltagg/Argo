@@ -4,9 +4,11 @@ use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
   use POSIX qw(strftime);
 use POSIX ();
 
-$exec_name = 'minos-ntuple-server';
+$exec_name = 'argo-backend';
 
 print header();
+
+do("../config/server_config.pl"); #|| die; # load file if present.
 
 print start_html("kill_ntuple_server.cgi");
 print "<pre>";
@@ -18,12 +20,12 @@ print "\n\n";
 
 # kill any existing service, if PID file exists.
 if(-r "ntuple_server.pid") {
-	open PIDFILE,"<ntuple_server.pid";
+	open PIDFILE,"<$exec_name.pid";
 	$pid = <PIDFILE>;
 	close PIDFILE;
 	print "PID file exists - had pid $pid \n";
         print "Deleting PID file.";
-        unlink "ntuple_server.pid";
+        unlink "$exec_name.pid";
 }
 
 
