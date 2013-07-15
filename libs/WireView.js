@@ -73,8 +73,7 @@ function WireView( element, options )
     tick_label_font: "10px serif",
     show_image:   false, // can be false, 'raw', or 'cal'
     show_hits:    false,
-    show_mc:      true,
-    show_blackout:true, // black in regions which aren't instrumented
+    show_mc:      true
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
@@ -83,7 +82,6 @@ function WireView( element, options )
   var self = this;
   this.SetMagnify(true);
   this.fMouseStart  = {}; this.fMouseLast = {};
-  this.fMousing = false;
   this.fDragging = false;
   this.hasContent = false;
   this.myHits = [];
@@ -749,23 +747,6 @@ WireView.prototype.DoMouse = function(ev)
   
   ev.originalEvent.preventDefault();
   
-  if(ev.type === 'mouseout' || ev.type == 'touchend') {
-    this.fMousing = false;
-    gHoverWire = null;
-    // gStateMachine.Trigger('hoverWireChange');    
-    // this.dirty = true;
-    return;
-  }
-  
-  /// Mousedown, mouseup OR mousemove
-  this.fMousing = true;
-
-  // var offset = getAbsolutePosition(this.element);
-  // this.fMouseX = ev.pageX - offset.x;
-  // this.fMousePos.y = ev.pageY - offset.y; 
-  // this.fMouseU = this.GetU(this.fMouseX);
-  // this.fMouseV = this.GetV(this.fMousePos.y);
-
   // Which area is mouse start in?
   var mouse_area;
   if(this.fMousePos.y > this.origin_y ) {

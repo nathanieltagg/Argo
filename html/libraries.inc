@@ -88,6 +88,7 @@
 <script type="text/javascript" src="libs/TriDView.js"></script> 
 <script type="text/javascript" src="libs/OpTimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 
+<script type="text/javascript" src="libs/MRI.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
