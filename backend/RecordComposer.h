@@ -25,6 +25,7 @@ public:
   // Optical
   void  composeOpFlashes();
   void  composeOpHits();
+  void  composeOpPulses();
 
   // Wires
   void  composeCalAvailability(); 

@@ -51,11 +51,41 @@ function OpHitMap( element  )
 OpHitMap.prototype.NewRecord = function()
 {
   this.ophits = [];
-  if(!gOphitsListName) return;
-  
-  this.ophits = gRecord.ophits[gOphitsListName].slice(0); // Copy
+  if(gOphitsListName && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length>0) {
+    this.input = "ophits";
+    this.ophits = gRecord.ophits[gOphitsListName].slice(0); // Copy
 
-  // Sort hits by time, earliest last. 
+    // Sort hits by time, earliest last. 
+  } else {
+    this.input = "oppulses";
+    
+    // Make my own hit list.
+    if (!gOpPulsesListName) return;
+    var oppulses = gRecord.oppulses[gOpPulsesListName];
+    if(!oppulses) return; // Zero-length.
+    if(oppulses.length==0) return;
+    
+    this.ophits = gRecord.ophits[gOphitsListName].slice(0); // Copy
+    for(var i=0;i<oppulses.length;i++) {
+      var p = oppulses[i];
+      var hit = { opDetChan: p.opDetChan };
+      var tot = 0;
+      var tweight = 0;
+      for(var s = 0; s<p.waveform.length; s++) {
+        var adc = p.waveform[s];
+        if(adc>0) {
+          tot += adc;
+          tweight += s*adc;          
+        }
+      }
+      hit.peakTime = tweight/tot + p.tdc;
+      hit.area = tot;
+      hit.pulse = p;
+      this.ophits.push(hit);
+    }    
+    gOpDetMode.variable = "peakTime";
+  }
+  
   this.ophits.sort(
     function(a,b){ return b.peakTime - a.peakTime;  }
   );
@@ -129,7 +159,7 @@ OpHitMap.prototype.Draw = function()
   // Draw OpHits
   for(var i=0;i<this.ophits.length;i++) {
     var oh = this.ophits[i];
-
+    console.log(oh);
     var w = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
     if(w<gOpDetMode.cut.min) continue;
     if(w>gOpDetMode.cut.max) continue;

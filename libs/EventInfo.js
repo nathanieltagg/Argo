@@ -91,6 +91,10 @@ EventInfo.prototype.NewRecord = function()
   h += a + "Tracks" + b + (t.length?t:"Not present") + c;
   
   t="";
+  for(var i in gRecord.oppulses) { t += gRecord.oppulses[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
+  h += a + "Optical Pulses" + b + (t.length?t:"Not present") + c;
+
+  t="";
   for(var i in gRecord.ophits) { t += gRecord.ophits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   h += a + "Optical Hits" + b + (t.length?t:"Not present") + c;
 

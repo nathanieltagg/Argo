@@ -430,6 +430,81 @@ void  RecordComposer::composeOpFlashes()
   }   
   fOutput.add("opflashes",reco_list);
 }
+
+void  RecordComposer::composeOpPulses()
+{
+  vector<string> leafnames = findLeafOfType("vector<raw::OpDetPulse>");  
+  JsonObject reco_list;
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
+    std::cout << "Looking at ophits object " << (name+"obj_").c_str() << endl;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    TreeElementLooter loot(fTree,name+"obj.fWaveform");
+    if(!loot.ok()) return;
+  
+    JsonArray joppulses;
+    for(int i=0;i<n;i++) {
+      
+      int chan    = ftr.getInt(name+"obj.fOpChannel",i);
+      int samples = ftr.getInt(name+"obj.fSamples"     ,i);
+      int frame   = ftr.getInt(name+"obj.fPMTFrame"    ,i);
+      int tdc     = ftr.getInt(name+"obj.fFirstSample" ,i);
+      const std::vector<short> *ptr = loot.get<std::vector<short>>(i);
+      const std::vector<short>& wave = *ptr;
+
+      if(samples > 15000) {
+        // We're dealing with badly-made MC which is just dumping it's waveform content.
+        
+        // Scan through the wavform and fake up pulse entries when you see something good.
+        int t = 0;
+        int tot = wave.size();
+        while(t<tot) {
+          if(wave[t] == 0) {t++; continue;}
+          
+          // start a pulse.
+          JsonObject jobj;
+          jobj.add("opDetChan"     ,chan    );
+          jobj.add("frame"         ,frame   );
+          jobj.add("tdc"           ,t       );
+          JsonArray jwave;
+          int nsamp = 0;
+          while(t<tot && wave[t]!=0) {
+            jwave.add(wave[t]); nsamp++;  t++;
+            if((t<tot) && wave[t]==0) {jwave.add(wave[t]); nsamp++; t++;} // Add one more - insist that there be two zeroes in a row.
+          }
+          jobj.add("samples",nsamp);
+          jobj.add("waveform",jwave);
+          joppulses.add(jobj);          
+          cout << "Created pulse channel " << chan << " with " << nsamp << " samples " << endl;
+        }
+        
+        
+      } else {
+        // This appears to be genuine, so we'll reproduce it faithfully.
+        JsonObject jobj;
+        jobj.add("opDetChan"     ,chan    );
+        jobj.add("samples"       ,samples );
+        jobj.add("frame"         ,frame   );
+        jobj.add("tdc"           ,tdc     );
+        JsonArray waveform;
+        for(int j=0;j<wave.size();j++) {
+          waveform.add( wave[j] );
+        }
+        jobj.add("waveform",waveform);
+        joppulses.add(jobj);
+        
+      }
+
+    }
+    
+    reco_list.add(stripdots(name),joppulses);
+  }
+  fOutput.add("oppulses",reco_list);
+  
+}
   
 void  RecordComposer::composeOpHits()
 {
@@ -443,18 +518,6 @@ void  RecordComposer::composeOpHits()
     if(!l) continue;
     int n = l->GetLen();
     cout << "ophits: " << n << endl;
-    //    Int_t recob::OpHits_ophit__Reco.obj_
-    //    Int_t recob::OpHits_ophit__Reco.obj.fOpDetChannel
-    // Double_t recob::OpHits_ophit__Reco.obj.fPeakTime
-    // Double_t recob::OpHits_ophit__Reco.obj.fWidth
-    // Double_t recob::OpHits_ophit__Reco.obj.fArea
-    // Double_t recob::OpHits_ophit__Reco.obj.fAmplitude
-    // Double_t recob::OpHits_ophit__Reco.obj.fPE
-    // Double_t recob::OpHits_ophit__Reco.obj.fPeakTimeError
-    // Double_t recob::OpHits_ophit__Reco.obj.fWidthError
-    // Double_t recob::OpHits_ophit__Reco.obj.fAreaError
-    // Double_t recob::OpHits_ophit__Reco.obj.fAmplitudeError
-    // Double_t recob::OpHits_ophit__Reco.obj.fPEError
 
     JsonArray jophits;
     for(int i=0;i<n;i++) {
@@ -473,21 +536,6 @@ void  RecordComposer::composeOpHits()
       jobj.add("peErr"         ,ftr.getJson(name+"obj.fPEError"              ,i));
       jophits.add(jobj);
     }
-
-
-    // if(n>0)    jophits = ftr.makeArray(
-    //    "opDetChan"     ,(name+"obj.fOpDetChannel") 
-    //   ,"peakTime"      ,(name+"obj.fPeakTime") 
-    //   ,"width"         ,(name+"obj.fWidth") 
-    //   ,"area"          ,(name+"obj.fArea") 
-    //   ,"amp"           ,(name+"obj.fAmplitude") 
-    //   ,"pe"            ,(name+"obj.fPE") 
-    //   ,"peakTimeErr"   ,(name+"obj.fPeakTimeError") 
-    //   ,"widthErr"      ,(name+"obj.fWidthError") 
-    //   ,"areaErr"       ,(name+"obj.fAreaError") 
-    //   ,"ampErr"        ,(name+"obj.fAmplitudeError") 
-    //   ,"peErr"         ,(name+"obj.fPEError") 
-    //   );
     
     reco_list.add(stripdots(name),jophits);
   }
@@ -1037,6 +1085,7 @@ void RecordComposer::compose()
   composeTracks();
   
   // Optical
+  composeOpPulses();
   composeOpFlashes();
   composeOpHits();
   
