@@ -11,7 +11,7 @@ gHitsListName = null;
 gClustersListName = null;
 gMCParticlesListName = null;
 gMCTruthListName = null;
-gSelectedTrack = null;
+gOpPulsesListName = null;
 
 function DoInitialBookmarking()
 {
@@ -23,7 +23,7 @@ function DoInitialBookmarking()
   gClustersListName = null;
   gOphitsListName=null;
   gOpflashesListName=null;
-  
+  gOpPulsesListName=null;
   gMCParticlesListName = null;
   gMCTruthListName = null;
   
@@ -69,7 +69,12 @@ function DoInitialBookmarking()
     $('#ctl-TrackLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
   
-  
+  if(gRecord.oppulses) {
+    for(var i in gRecord.oppulses) { 
+      gOpPulsesListName = i;
+      if(gRecord.oppulses[i].length > 0) break; // Select the first list that has nonzero entries.
+    }
+  }
 
   if(gRecord.ophits) {
     for(var i in gRecord.ophits) { 
