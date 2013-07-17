@@ -4,6 +4,7 @@
 //#include <unistd.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <string>
 
 
 class Timer {
@@ -25,6 +26,7 @@ class Timer {
   bool   Test ( double inSecs );  // Have inSecs passed?
   double Count( void );           // How many secs have passed?
   void   Camp( double inSecs );   // Sit and do nothing until inSecs seconds have elapsed (since last reset)
+  std::string AsString();
 
   double GetStartTime() { return mStartTime; };
 };

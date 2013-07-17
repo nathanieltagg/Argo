@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <TString.h>
 #include "cencode.h"
@@ -180,7 +181,7 @@ std::string MakePng::writeToUniqueFile(const std::string& path)
     std::cerr << "MakePng::Couldn't open unique temporary file!" << std::endl;
     return "error";
   }
-  write(fp,outdata,outdatalen);
+  ::write(fp,outdata,outdatalen);
   // Make world-readable
   fchmod(fp, 0000644);
   close(fp);
@@ -209,3 +210,17 @@ MakePng::~MakePng()
 {
   if(outdata) free(outdata); 
 }
+
+void BuildThumbnail(const std::string& pathname, const std::string& thumbname)
+{
+  // Compose a thumbnail image using external application. 
+  // Fork a background process for more speed.
+  std::string cmd = "PATH=$PATH:/usr/local/bin convert ";
+  cmd += pathname;
+  cmd += " -sample 20% ";
+  cmd += thumbname;
+  cmd += " &";
+  std::cerr << "BuildThumbnail: " << cmd << std::endl;
+  system(cmd.c_str());
+}
+  
