@@ -5,7 +5,7 @@ all: depend bin
 pwd := $(shell pwd)
 boonedaq = $(HOME)/uboonedaq
 CPPFLAGS := -g -I..
-CPP := g++ -std=c++11 
+CPP := g++44 -std=c++0x
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -46,6 +46,7 @@ LIBS += -lboost_serialization -lboost_system -lboost_thread
 ifeq ($(UNAME),Darwin)
   LIBS += -Wl,-rpath,@executable_path/boost/lib
 endif
+CPPFLAGS += -I/$(MY_BOOST_DIR)/include
 LIBS += -L $(MY_BOOST_DIR)/lib 
 
 # Root.
