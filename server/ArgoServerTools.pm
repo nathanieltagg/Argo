@@ -100,8 +100,9 @@ sub start_server
     # This is the forked process.
     
       $ROOTSYS="../backend/root";
+      $BOOSTSYS="../backend/boost";
       $ENV{"ROOTSYS"}="$ROOTSYS";
-      $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib";
+      $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib;../backend/boost/lib";
 
       setsid();
       rename "$exec_name.log.4", "$exec_name.log.5";

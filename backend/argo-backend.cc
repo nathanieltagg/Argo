@@ -148,6 +148,7 @@ void TerminationHandler(int signal)
 {
   cout << "Kill signal. Shutting down the server.\n";
   if(ss) delete ss; // Shut down the socket server cleanly.
+  ss = 0;
 }
 
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)

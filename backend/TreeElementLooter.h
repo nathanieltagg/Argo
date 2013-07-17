@@ -21,7 +21,7 @@ public:
 
   bool ok() { return fOK; }
   
-  template<typename T> const T* get(UInt_t row)
+  template<typename T> inline const T* get(UInt_t row)
     {   return (const T*) getAddress(row); }
 
   
@@ -38,7 +38,6 @@ private:
   Bool_t fOK;
  
 };
-
 
 #endif /* end of include guard: TREEELEMENTLOOTER_H_WC45LB9D */
 

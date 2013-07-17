@@ -3,29 +3,27 @@
 
 
 #include <TObject.h>
-#include <TTime.h>
 #include "JsonElement.h"
+#include "Timer.h"
 
-extern TTime  gTimeStart;
+extern Timer gStartTimer;
 
 class TTree;
 class TFile;
 
-class ResultComposer
+class RawResultComposer
 {
   public:
-   ResultComposer();
+   RawResultComposer();
 
    std::string compose(  const char* inOptions,
-                         const char* inRootFile,
+                         const char* inPath,
                          const char* inSelection,
                          Long64_t entrystart=0,
                          Long64_t entryend=1000000000                       
                          );  
 
-   ~ResultComposer();
-   TFile* rootfile;
-   TTree* tree;
+   ~RawResultComposer();
    JsonObject result;
 };
 

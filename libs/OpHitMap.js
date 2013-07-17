@@ -159,7 +159,6 @@ OpHitMap.prototype.Draw = function()
   // Draw OpHits
   for(var i=0;i<this.ophits.length;i++) {
     var oh = this.ophits[i];
-    console.log(oh);
     var w = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
     if(w<gOpDetMode.cut.min) continue;
     if(w>gOpDetMode.cut.max) continue;
