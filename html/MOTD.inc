@@ -6,6 +6,7 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> Read OpDetPulses if OpHits is empty </li>
     <li> "MRI" Timeslice View </li>
     <li> Hit Color histogram </li>
     <li> Load-on-hashchange: URLs are now persistent; back-button works within viewer. </li>
