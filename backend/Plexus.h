@@ -39,7 +39,7 @@ protected:
   int ccc(int crate,int card, int channel);
   typedef std::map<int,PlekPtr_t> MapType_t;
   MapType_t m_ccc_to_plek;
-  bool m_ok = false;
+  bool m_ok;
   
 };
         
