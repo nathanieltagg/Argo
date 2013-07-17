@@ -123,7 +123,7 @@ string RawResultComposer::compose(
   source.add("selection",inSelection);
   source.add("start",inStart);
   source.add("end",inEnd);
-  // source.add("entry",jentry);
+  source.add("entry",inStart);
   source.add("options",inOptions);
   // source.add("numEntriesInFile",nentries);
   result.add("source",source);
