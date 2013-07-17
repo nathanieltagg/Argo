@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <png.h>
+#include <iostream>
 
 
 class MakePng
@@ -46,5 +47,7 @@ private:
   size_t  outdatalen;
   
 };
+
+void BuildThumbnail(const std::string& pathname, const std::string& thumbname);
 
 #endif /* end of include guard: MAKEPNG_H_NHQFGWDJ */

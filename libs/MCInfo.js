@@ -31,7 +31,6 @@ MCInfo.prototype.NewRecord = function()
 {
   // console.debug("MCInfo::Build()");
   $(".accordion",this.fElement).empty();
-  $(".accordion",this.fElement).accordion("destroy");
   
   var mc = gRecord.mc;
   if(!mc) return;
@@ -124,14 +123,14 @@ MCInfo.prototype.NewRecord = function()
 
 
   // console.log($(".accordion",this.fElement));
-  $(".accordion",this.fElement).accordion({
-      collapsible: true
-     })
+  $(".accordion",this.fElement)
+    .accordion("destroy")
+    .accordion({collapsible: true})
     .bind('accordionchange', function(event, ui) {	
-  console.log("accordian selection: ",ui.newHeader.attr('interaction'));  
-  gInteraction = ui.newHeader.attr('interaction');
-  gStateMachine.Trigger('selectedMcChange');
-  // alert("interaction " + $(ui.newHeader).attr('interaction')); // jQuery object, activated header
+      console.log("accordian selection: ",ui.newHeader.attr('interaction'));  
+      gInteraction = ui.newHeader.attr('interaction');
+      gStateMachine.Trigger('selectedMcChange');
+      // alert("interaction " + $(ui.newHeader).attr('interaction')); // jQuery object, activated header
     });
 
 }

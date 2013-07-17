@@ -9,6 +9,7 @@
 
 #include "Timer.h"
 #include <math.h>
+#include <time.h>
 
 const double kms = 1e-6;
 
@@ -74,4 +75,15 @@ Timer::Camp( double inSecs )
     timeRemaining = (inSecs - Count());
   }
   
+}
+
+std::string Timer::AsString()
+{
+  struct timeval t;
+  struct tm      stm;
+  TimeToTimeval(mStartTime,t);
+  ::localtime_r(&t.tv_sec,&stm);
+  char buffer[256];
+  ::strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &stm);
+  return std::string(buffer);
 }

@@ -55,7 +55,7 @@ function DoNextEvent()
   console.log("DoNextEvent");
   // Check bounds - are we about to hit end of file?
   var n = gRecord.source.numEntriesInFile;
-  if(gEntry+1 >= n) {
+  if(n && gEntry+1 >= n) {
     $('#warning-dialog-message').html("You are at the last entry of the file/subrun. Can't advance.");
     $( "#warning-dialog" ).dialog({
           modal: true,

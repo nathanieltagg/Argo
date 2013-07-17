@@ -16,7 +16,6 @@
 #include <TLorentzVector.h>
 #include "TBranchElement.h"
 #include "TStreamerInfo.h"
-
 #include "TVirtualCollectionProxy.h"
 
 #include <iostream>
@@ -35,6 +34,7 @@
 #include "TreeElementLooter.h"
 #include "ColorMap.h"
 #include "MakePng.h"
+#include "RootToJson.h"
 #include <stdlib.h>
 
 using namespace std;
@@ -42,66 +42,7 @@ using namespace std;
 std::string RecordComposer::sfFileStoragePath = "../datacache";
 std::string RecordComposer::sfUrlToFileStorage = "datacache";
 
-void BuildThumbnail(const std::string& pathname, const std::string& thumbname)
-{
-  // Compose a thumbnail image using external application. 
-  // Fork a background process for more speed.
-  std::string cmd = "PATH=$PATH:/usr/local/bin convert ";
-  cmd += pathname;
-  cmd += " -sample 20% ";
-  cmd += thumbname;
-  cmd += " &";
-  std::cerr << "BuildThumbnail: " << cmd << std::endl;
-  system(cmd.c_str());
-}
 
-
-JsonObject TH1ToHistogram( TH1* hist )
-{
-  JsonObject h;
-  if(!hist) return h;
-  h.add("classname",hist->ClassName());
-  h.add("name",hist->GetName());
-  h.add("title",hist->GetTitle());
-  h.add("xlabel",hist->GetXaxis()->GetTitle());
-  h.add("ylabel",hist->GetYaxis()->GetTitle());
-  h.add("n",hist->GetNbinsX());
-  h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
-  h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
-  h.add("underflow",hist->GetBinContent(0));
-  h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
-  double tot = hist->GetSumOfWeights();
-  h.add("total",JsonElement(tot,5));
-  h.add("sum_x",JsonElement(tot*hist->GetMean(),5));
-  h.add("max_content",hist->GetMaximum());
-  h.add("min_content",hist->GetMinimum());
-  h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
-  JsonArray data;
-  for(int i=1; i <= hist->GetNbinsX();i++) {
-    data.add(JsonSigFig(hist->GetBinContent(i),3));
-  }
-  h.add("data",data);
-  return h;
-}
-
-
-inline unsigned char tanscale(float adc) 
-{
-  return (unsigned char)(atan(adc/50.)/M_PI*256.) + 127;  
-}
-
-inline float inv_tanscale(unsigned char y) 
-{
-  return tan((y-127)*M_PI/256.)*50.;
-}
- 
-std::string stripdots(const std::string& s)
-{
-  std::string out = s;
-  size_t pos;
-  while((pos = out.find('.')) != std::string::npos)  out.erase(pos, 1);
-  return out;
-}
 
 
 
@@ -124,7 +65,17 @@ RecordComposer::~RecordComposer()
 {
 }
 
-static void hsvToRgb(unsigned char* out, float h, float s, float v){
+
+ 
+std::string RecordComposer::stripdots(const std::string& s)
+{
+  std::string out = s;
+  size_t pos;
+  while((pos = out.find('.')) != std::string::npos)  out.erase(pos, 1);
+  return out;
+}
+
+void RecordComposer::hsvToRgb(unsigned char* out, float h, float s, float v){
     float r, g, b;
 
     int i = floor(h * 6);
@@ -231,7 +182,7 @@ void RecordComposer::composeHits()
 }
 
 // Utility function for composeCluster
-JsonObject GetClusterWireAndTDC(TreeElementLooter& l, int row) {
+JsonObject RecordComposer::GetClusterWireAndTDC(TreeElementLooter& l, int row) {
   JsonObject o;
   if(!l.ok()) return o;
   const vector<double>* v = l.get<vector<double> >(row);
@@ -544,7 +495,7 @@ void  RecordComposer::composeOpHits()
 }
 
 
-void wireOfChannel(int channel, int& plane, int& wire)
+void RecordComposer::wireOfChannel(int channel, int& plane, int& wire)
 {
   if(channel < 2399) {
     plane = 0; wire= channel; return;
@@ -799,7 +750,7 @@ void RecordComposer::composeRaw()
 }
 
 
-int pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
+int RecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
 {
   // Starting at x0 and moving along a vector p, how far off the line is point x?
   TVector3 dx(x.X()-x0.X()
