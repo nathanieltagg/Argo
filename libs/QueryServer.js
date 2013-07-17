@@ -195,9 +195,9 @@ function StartEvent()
   console.log(gRecord);
   gEventsLoadedThisSession +=1;
 
-  // Get some basic info.  Notes here show some basic jQuery magic.
-  gFile   = gRecord.source.file;
-  gEntry  = gRecord.source.entry;
+  // Get some basic info.  
+  if(gRecord.source.file)  gFile   = gRecord.source.file;
+  if(gRecord.source.entry) gEntry  = gRecord.source.entry;
   
   // Populate data from header, when that's available.
 

@@ -8,6 +8,8 @@
 #include "TObject.h"
 #include <math.h>
 class TTree;
+class TreeElementLooter;
+class TLorentzVector;
 
 class RecordComposer {
 public:
@@ -40,15 +42,21 @@ public:
   // Utility functions.
   std::vector<std::string> findLeafOfType(std::string pattern);
   
+  void        hsvToRgb(unsigned char* out, float h, float s, float v);
+  std::string stripdots(const std::string& s);
+  JsonObject  GetClusterWireAndTDC(TreeElementLooter& l, int row);
+  void        wireOfChannel(int channel, int& plane, int& wire);
+  int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
+  
   
   // Mapping from any adc value onto an 8-bit integer for crude color purposes.
   
-  int tanscale(float adc) 
+  int inline static tanscale(float adc) 
   {
     return int(atan(adc/50.)/M_PI*256.) + 127;  
   }
 
-  float inv_tanscale(int y) 
+  float inline static inv_tanscale(int y) 
   {
     return tan((y-127)*M_PI/256)*50.;
   }

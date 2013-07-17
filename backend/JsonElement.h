@@ -5,8 +5,8 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
-#include <TString.h>
 #include <math.h>
+#include <vector>
 
 class JsonElement;
 class JsonObject;
@@ -21,7 +21,6 @@ public:
     void operator=(const JsonElement& c) { fixed(); fContent.str(c.fContent.str()); }; // Copy constructor.
     JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const char*        value) { fixed(); fContent << quotestring(value); }; 
-    JsonElement(const TString& value) { fixed(); fContent << quotestring(value.Data()); }; 
     JsonElement(const unsigned int value) { fixed(); fContent << value; }
     JsonElement(const       int value) { fixed(); fContent << value; }
     JsonElement(const      long value) { fixed(); fContent << value; }

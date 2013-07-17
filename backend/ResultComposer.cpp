@@ -52,14 +52,13 @@ string ResultComposer::compose(
 
   long eventTimeStart = gSystem->Now();
 
-  // Parse options
-  std::string options(inOptions);
+  // Do whatever input option looks best.
+  std::string path(inRootFile);
+  if(path.find(".root"))
+
   
   // This is how to check options:
   // if( std::string::npos != options.find("+REFRESH")) oRefresh = true;
-
-  // Start building the output.
-  JsonObject result;
   
   // Find the file in the list
   // TFile* dst = (TFile*)gROOT->GetListOfFiles()->FindObject(inDstFile);
@@ -158,7 +157,7 @@ string ResultComposer::compose(
   source.add("start",inStart);
   source.add("end",inEnd);
   source.add("entry",jentry);
-  source.add("options",options);
+  source.add("options",inOptions);
   source.add("numEntriesInFile",nentries);
   result.add("source",source);
 
@@ -171,8 +170,8 @@ string ResultComposer::compose(
   ProcInfo_t procinfo; gSystem->GetProcInfo(&procinfo);
   
   monitor.add("OS"           , sysinfo.fOS.Data());
-  monitor.add("ComputerModel", sysinfo.fModel);
-  monitor.add("CpuType"      ,  sysinfo.fCpuType);
+  monitor.add("ComputerModel", sysinfo.fModel.Data());
+  monitor.add("CpuType"      ,  sysinfo.fCpuType.Data());
   monitor.add("Cpus"         ,  sysinfo.fCpus);
   monitor.add("CpuSpeed"     ,  sysinfo.fCpuSpeed);
   monitor.add("PhysicalRam"  ,  sysinfo.fPhysRam);
@@ -198,7 +197,7 @@ string ResultComposer::compose(
 
 
   // Here's where all the joy happens.
-  RecordComposer composer(result,tree,jentry,options);
+  RecordComposer composer(result,tree,jentry,inOptions);
   composer.compose();
   
   
