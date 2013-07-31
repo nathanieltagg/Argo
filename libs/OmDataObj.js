@@ -1,17 +1,32 @@
 
+var gOmData  = null;
+var gRefData = null;
 
 var gCurFile = "current.root";
+var gRefFile = "reference.root";
 
-var gOmData = new OmDataObj;
+// Open data files according the provided arguments on the URL.
+$(function(){
+  // Decode parameters.
+  var urlparams = $.deparam.querystring();
+  if(urlparams.file) gCurFile = urlparams.file;
+  if(urlparams.ref ) gRefFile = urlparams.ref;
+  
+  gOmData  = new OmDataObj(gCurFile,true);
+  gRefData = new OmDataObj(gRefFile,false);
+  
+});
 
-function OmDataObj()
+function OmDataObj(file, primary)
 {
   this.paths = [];
   this.cur_cycle = "";
-  this.file = gCurFile;
+  this.file = file;
   this.status = "uninitialized";  
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
-  
+  this.primary = primary;
+  this.event_to_emit = "OmDataRecieved";
+  if(!this.primary) this.event_to_emit = "OmRefDataRecieved";
 }
 
 
@@ -71,8 +86,10 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   this.status = "success";
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
   this.data = data;
-  if(data.error) {
-    this.status = data.error;
+  var bad=false;
+  if(data.error) { bad = true; this.status = data.error; }
+  if(data.record.error) { bad = true; this.status = data.record.error; }
+  if(bad) {
     console.warn("Got error when retrieving data"+data.error);
     $.event.trigger({
       type: "OmDataError",
@@ -81,8 +98,8 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
     return;
   }
 
-  console.log("triggering");
-  $.event.trigger({type: "OmDataRecieved"}) ;
+  console.log("Got data on ",this.file,". Triggering.");
+  $.event.trigger({type: this.event_to_emit}) ;
 
 }
 

@@ -10,6 +10,7 @@
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 
+gViews = [];
 
 $(function(){
   $('div.A-navtree').each(function(){
@@ -129,6 +130,7 @@ Navigation.prototype.ItemClicked = function(item)
   console.log(items);
   
   // Clear the main area.
+  gViews = [];
   $("div.A-mainview").empty();
   // Add new histogram objects to the dom.
   for(var i=0;i<items.length;i++) {
@@ -147,11 +149,11 @@ Navigation.prototype.ItemClicked = function(item)
     console.log("Creating portlet",portlet," with content",portlet_content);
 
     if(item.path.match(/tpc\/mapccc/)) {
-      new ChannelMap(portlet_content,item.path);      
+      gViews.push(new ChannelMap(portlet_content,item.path));
     } else if (item.roottype.match(/TH2/)){
-      new OmHist2Canvas(portlet_content,item.path);
+      gViews.push(new OmHist2Canvas(portlet_content,item.path));
     } else {
-      new OmHistCanvas(portlet_content,item.path);      
+      gViews.push(new OmHistCanvas(portlet_content,item.path));
     }
   }
   SetupPortlets($("div.A-mainview"));
@@ -161,5 +163,6 @@ Navigation.prototype.ItemClicked = function(item)
   
   // Go get the data.
   gOmData.get();
+  gRefData.get();
   
 }
