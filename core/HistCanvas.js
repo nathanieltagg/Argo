@@ -39,7 +39,14 @@ function HistCanvas( element, options )
     marker: null,
   	adjuct_display: false,
   	adjunct_height: 0,
-		adunct_label: null
+		adunct_label: null,
+    default_options : {
+      doFill: true,
+      doLine: false,
+      lineWidth: 1,
+      strokeStyle: "black",
+      alpha: 1.0
+    }
   };
   $.extend(true,settings,options); // Change defaults
   
@@ -51,6 +58,7 @@ function HistCanvas( element, options )
   this.fNHist = 0;
   this.fHists = [];
   this.fColorScales = [];
+  this.fHistOptions = []; // transparency settings
   
   this.fAdjunctData = [];
 
@@ -156,11 +164,13 @@ HistCanvas.prototype.SetMarker = function(t)
 }
 
 
-HistCanvas.prototype.AddHist = function( inHist, inColorScale, reset )
+HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
 {
   if(this.fNHist === 0 ){ this.ResetToHist(inHist); }
+  if(typeof alpha === 'undefined' || alpha === null) alpha = 1;  
   this.fHists[this.fNHist] = inHist;
   this.fColorScales[this.fNHist] = inColorScale;
+  this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
   this.fNHist++;
   // Adjust scales.
   if(inHist.min < this.min_u) this.min_u = inHist.min;
@@ -170,12 +180,13 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, reset )
   //console.log(this.fName + ".AddHist " + this.min_u + " " + this.max_u);
 }
 
-HistCanvas.prototype.SetHist = function( inHist, inColorScale )
+HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
 {
   this.fNHist = 1;
   delete this.fHists;
   this.fHists = [inHist];
   this.fColorScales = [inColorScale];
+  this.fHistOptions = [$.extend({},this.default_options,options)];
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
   this.FinishRangeChange();
@@ -227,12 +238,39 @@ HistCanvas.prototype.DrawHists = function( )
      //log("  drawing hist "+iHist);
      var hist = this.fHists[iHist];
      var colorscale = this.fColorScales[iHist];
+     var alpha = 1.0;
+     var do_fill = true;
+     var do_line = false;
+     var o = this.fHistOptions[iHist];
+     this.ctx.strokeStyle = o.strokeStyle;
+     this.ctx.lineWidth = o.lineWidth;
+     
      // Width of a single vertical histogram bar.
      var barwidth = (hist.max-hist.min)/(hist.n)*this.span_x/(this.max_u-this.min_u) ;
      if(barwidth>2) barwidth -= 1;
      
-     for (var i = 0; i < hist.n; i++) {
-       if(hist.data[i]!==0) {
+     if(o.doLine) {
+       this.ctx.beginPath();
+       this.ctx.moveTo(this.origin_x, this.origin_y);
+       for (var i = 0; i < hist.n; i++) {
+         var t = hist.GetX(i);
+         var t2 = hist.GetX(i+1);
+         var f = hist.data[i];
+         var x1 = this.GetX(t);
+         var x2 = this.GetX(t2);
+         var y = this.GetY(f);
+         if(x2<this.origin_x) continue;
+         if(x1>(this.origin_x + this.span_x)) continue;
+         if(x1<this.origin_x) x1 = this.origin_x;
+         if(x2>(this.origin_x + this.span_x)) x2 = this.origin_x+this.span_x;
+         this.ctx.lineTo(x1,y);
+         this.ctx.lineTo(x2,y);       
+       }
+       this.ctx.stroke();
+     }
+     if(o.doFill) {
+       for (var i = 0; i < hist.n; i++) {
+         if(hist.data[i]==0) continue;
          var t = hist.GetX(i);
          var t2 = hist.GetX(i+1);
          var f = hist.data[i];
@@ -245,11 +283,10 @@ HistCanvas.prototype.DrawHists = function( )
            bw = barwidth-this.origin_x+x; 
            x = this.origin_x; } 
          var c = colorscale.GetColor((t+t2)/2);
-         this.ctx.fillStyle = "rgba(" + c + ",1.0)";
-         //log(t + " " + c);
-         this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));          
+         this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
+         this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
        }
-   }
+     }
  }
    
 }    
