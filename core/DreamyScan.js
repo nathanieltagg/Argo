@@ -60,10 +60,12 @@ function DreamyScan( element, options )
   $('.dreamy-change-username-button',this.element).click(function() {
     $(".dreamy-username-input",self.element).val(self.user_name);
     $(self.element).block({ message: $('div.dreamy-login-form',self.element), css: {width: '50%'} });
+    $('.dreamy-username-input',self.element).focus().select(); // Highlight the text for easy
   });
   
   if(this.demand_username && this.user_name == "Anonymous Coward") {
     $(this.element).block({ message: $('div.dreamy-login-form',this.element), css: {width: '50%'} });
+    $('.dreamy-username-input',self.element).click(function(){$(this).select();}); // Highlight the text for easy
   } else {
     $(".dreamy-username",this.element).html(this.user_name);
   }      
