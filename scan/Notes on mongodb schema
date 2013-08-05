@@ -1,0 +1,42 @@
+Notes on mongodb schema:
+
+Each experiment gets it's own DB.
+Each project on an experiment gets it's own collection.
+
+Each document should have a type
+  'type': 'scan'  -> The data from a user's hand-scan attempt
+  'type': 'scanform' -> The HTML document describing an empty hand-scan form
+  'type': 'inbox'  -> An inbox entry for a user
+  'type': 'event' -> An interesting event in a list
+
+A scan document:  
+{
+  type: 'scan',
+  event_id: { ... elements uniquely describing this event ...},
+  checksum: { ... data checking event integrity: odhits, idhits, etc ...}
+  scan_id: { user_name: "Anonymous Coward", modification_date: <date> }
+  scan: { ... form data... }
+} 
+
+A scanform document:
+{
+  type: 'scanform',
+  scanform: <html>
+}
+Will use the ObjectId _id to sort the scanform documents, choosing only the most recent.
+
+
+An inbox document:
+{
+  type: 'inbox',
+  user_name: "Anonymous Coward",
+  event_id: { ... enough to load this event ...}
+}
+
+A bookmarked event:
+{
+  type: 'event',
+  label: 'nice event', -> optional label for presenting event.
+  event_id: { ... enough to load this event ...}
+  user_name: "Anonymous Coward" -> optional
+}

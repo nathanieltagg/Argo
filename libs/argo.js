@@ -18,6 +18,19 @@
 // Used to be in 'head', but it was too unwieldly.
 //
 
+// Global error handler: tell the user something good to do about it.
+window.onerror = function(arg1,arg2,arg3) {
+  var subject = "Script error to report";
+  var body = "Script error: "+ escape(arg1)
+            +"\nfile: "+ escape(arg2)
+            +"\nline: " + escape(arg3)
+            +escape("\nFrom event:")+escape(gUrlToThisEvent)
+            +escape("\n Url: "+window.location);
+  var email = "<a href='mailto:ntagg@otterbein.edu?subject=" + subject + "&body="+body+"'>Send Bug Report</a>";
+  $('#status').attr('class', 'status-error').html(
+    "Script Error!<br/>"+arg1+" "+arg2+" line"+arg3 + "</br>" + email
+  );  
+}
 
 gPhColorScaler = new ColorScaler();
 gPhColorScaler.max=10;

@@ -66,6 +66,7 @@
 <script type="text/javascript" src="core/Pad3d.js"></script>
 <script type="text/javascript" src="core/Printing.js"></script> 
 <script type="text/javascript" src="core/GeometryUtils.js"></script> 
+<script type="text/javascript" src="core/DreamyScan.js"></script> 
 
 
 <!-- My classes for doing histograming and other displays-->
@@ -89,6 +90,7 @@
 <script type="text/javascript" src="libs/OpTimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 
 <script type="text/javascript" src="libs/MRI.js"></script> 
+<script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->

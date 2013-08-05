@@ -92,7 +92,7 @@ function Pad( element, options )
   // override defaults with options.
   $.extend(true,defaults,options);
   
-  ABoundObject.call(this, element, defaults); // Give settings to Pad contructor.
+  ABoundObject.call(this, element, defaults); // Give settings to ABoundObject contructor.
   
   // Look for an existing canvas, and build one if it's not there.
   if($('canvas',this.element).length<1) {
