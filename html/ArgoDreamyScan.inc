@@ -1,7 +1,7 @@
 <div class="portlet" id="ArgoDreamyScan-portlet">
     <div class="portlet-header">Scan</div>
     <div class="portlet-content">
-      <div class="A-argoDreamyScan">
+      <div class="A-ArgoDreamyScan">
 
 
         <div class="dreamy-login-form" style='display:none'>
@@ -38,8 +38,8 @@
        <div>
          <span>Prong 1:</span>
            <span><input type="radio" name="Prong1" value="0" checked="checked"/>N/A</span>&nbsp;
-           <span><input type="radio" name="Prong1" value="1"/>Exit HCAL rear</span>&nbsp;
-           <span><input type="radio" name="Prong1" value="2"/>Exit HCAL side</span>&nbsp;
+           <span><input type="radio" name="Prong1" value="1"/>Exit rear</span>&nbsp;
+           <span><input type="radio" name="Prong1" value="2"/>Exit side</span>&nbsp;
            <span><input type="radio" name="Prong1" value="3"/>Scatter</span>&nbsp;
            <span><input type="radio" name="Prong1" value="4"/>Shower</span>&nbsp;
            <span><input type="radio" name="Prong1" value="5"/>Range-stop</span>&nbsp;
@@ -48,8 +48,8 @@
      <div>
      <span class="scan-input">Prong 2:</span>
        <span><input type="radio" name="Prong2" value="0" checked="checked"/>N/A</span>&nbsp;
-       <span><input type="radio" name="Prong2" value="Exit HCAL rear"/>Exit HCAL rear</span>&nbsp;
-       <span><input type="radio" name="Prong2" value="2"/>Exit HCAL side</span>&nbsp;
+       <span><input type="radio" name="Prong2" value="Exit HCAL rear"/>Exit  rear</span>&nbsp;
+       <span><input type="radio" name="Prong2" value="2"/>Exit  side</span>&nbsp;
        <span><input type="radio" name="Prong2" value="3"/>Scatter</span>&nbsp;
        <span><input type="radio" name="Prong2" value="4"/>Shower</span>&nbsp;
        <span><input type="radio" name="Prong2" value="5"/>Range-stop</span>&nbsp;
@@ -58,8 +58,8 @@
      <div>
      <span class="scan-input">Prong 3:</span>
        <span><input type="radio" name="Prong3" value="0" checked="checked"/>N/A</span>&nbsp;
-       <span><input type="radio" name="Prong3" value="1"/>Exit HCAL rear</span>&nbsp;
-       <span><input type="radio" name="Prong3" value="2"/>Exit HCAL side</span>&nbsp;
+       <span><input type="radio" name="Prong3" value="1"/>Exit rear</span>&nbsp;
+       <span><input type="radio" name="Prong3" value="2"/>Exit side</span>&nbsp;
        <span><input type="radio" name="Prong3" value="3"/>Scatter</span>&nbsp;
        <span><input type="radio" name="Prong3" value="4"/>Shower</span>&nbsp;
        <span><input type="radio" name="Prong3" value="5"/>Range-stop</span>&nbsp;
