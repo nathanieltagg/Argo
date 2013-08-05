@@ -84,8 +84,9 @@ OmHistCanvas.prototype.Update = function()
   this.bound_u_min = this.hist.min;
   this.bound_u_max = this.hist.max;
   this.time_on_x   = this.hist.time_on_x;
-  this.SetHist(this.hist,new ColorScaleIndexed(0));
-  if(this.refhist) this.AddHist(this.refhist,new ColorScaleIndexed(1),{doLine:true,doFill:true,strokeStyle:"red",alpha:0.5});
+  this.SetHist(this.hist,new ColorScaleIndexed(0),{alpha:0.9});
+  if(this.refhist) this.AddHist(this.refhist,new ColorScaleIndexed(1),
+                                {doLine:true,doFill:false,strokeStyle:"red",alpha:0.5});
   if(this.first_draw){
     this.first_draw = false;
     this.ResetToHist(this.hist);

@@ -50,6 +50,19 @@ function ChannelMap( element, path)
   $(this.adjunctpad).css("height","150");
   $(this.adjunctpad).css("width","50%");
   
+  // Buttons and things.
+  var ctl = '\
+  <div class="channelmap-radio">\
+    <label><input type="radio" value="value" name="channel-map-radio" checked="checked"/>Value</label>\
+    <label><input type="radio" value="diff"  name="channel-map-radio"                  />Diff</label>\
+  </div>\
+  ';
+  $(this.top_element).append(ctl);
+  this.radios = $('div.channelmap-radio', this.top_element);
+  console.warn($("input[value='value']",this.radios));
+  $(":radio",this.radios).click(function(e){
+    self.ChangeView();
+  });
   // info.
   $(this.top_element).append("<div class='infopane' />");
   $(this.top_element).append("<div style='clear:both;' />");
@@ -78,9 +91,13 @@ function ChannelMap( element, path)
   
   this.mynamespace= "mns" + this.gUniqueIdCounter;
   $(document).on("OmDataRecieved."+this.mynamespace, function(){return self.NewRecord()});  
+  $(document).on("OmRefDataRecieved."+this.mynamespace, function(){return self.NewRecord()});  
+  
   $(this.top_element).on("remove."+this.mynamespace, function(){return self.Remove()}); 
   
   gOmData.add(this.path); 
+  gRefData.add(this.path);
+  
 }
 
 ChannelMap.prototype.Remove = function()
@@ -88,6 +105,7 @@ ChannelMap.prototype.Remove = function()
   console.log("Removing ",this.path);
   gOmData.remove(this.path);
   $(document).off("OmDataRecieved."+this.mynamespace);
+  $(document).off("OmRefDataRecieved."+this.mynamespace);
 }
 
 ChannelMap.prototype.NewRecord = function()
@@ -99,6 +117,12 @@ ChannelMap.prototype.NewRecord = function()
   if(!gOmData.data.record[this.path]) return;
   if(!gOmData.data.record[this.path].data) return;
   this.map= gOmData.data.record[this.path].data;
+
+  if(gRefData.data)
+    if(gRefData.data.record)
+      if(gRefData.data.record[this.path])
+        if(gRefData.data.record[this.path].data)
+          this.refmap= gRefData.data.record[this.path].data;
 
   $(".portlet-title",$(this.top_element).parent()).html(this.map.title);
 
@@ -116,18 +140,67 @@ ChannelMap.prototype.NewRecord = function()
   this.cs = new ColorScaler("RedBluePalette");
   this.cs.min = this.map.min_content;
   this.cs.max = this.map.max_content;
-  this.associate_hist.xlabel = this.map.ylabel || this.map.title;
-  this.associate_hist.ylabel = "Num Channels";
-  this.associate_hist.tick_pixels_x =60;
-  this.associate_hist.min = this.map.min_content;
-  this.associate_hist.max = this.map.max_content;
-  this.associate_hist.SetHist(this.hist,this.cs);
-  this.associate_hist.ResetToHist(this.hist);
+  
+  if(this.refmap) {
+    this.diff_hist = new Histogram(1000,-100,100);
+    for(var crate=1;crate<10;crate++) {
+      for(var card=4;card<20;card++) {      
+        for(var channel=0;channel<64;channel++) {
+           var ccc = channel + 64*(card + 20*crate);
+           var x = this.map.data[ccc];
+           var y = this.refmap.data[ccc];
+           var ex = Math.sqrt(x);
+           if(this.map.errs) ex = this.map.errs[ccc];
+           var ey = Math.sqrt(y);
+           if(this.refmap.errs) ey = this.refmap.errs[ccc];
+           var diff = x-y;
+           var denom = Math.sqrt(ex*ex+ey*ey);
+           if(denom<=0) denom = 1;
+           var ediff = diff/denom;
+           this.diff_hist.Fill(ediff);
+        }
+      }
+    }
+  }
+  
   var self = this;
+  
   this.associate_hist.FinishRangeChange = function(){self.Draw();}
   this.associate_hist.ChangeRange = function(minu,maxu){self.cs.min = minu; self.cs.max = maxu; HistCanvas.prototype.ChangeRange.call(this,minu,maxu);}
+  this.ChangeView();
+}
+
+
+
+
+
+ChannelMap.prototype.ChangeView = function()
+{
+  this.view_state = $(":checked",this.radios).val();
+  console.warn(this.view_state);
+  
+  this.associate_hist.SetLogy(true);
+  if(this.view_state=='diff' && this.refmap) {
+    this.associate_hist.xlabel = "(Current-Ref)/Sigma";
+    this.associate_hist.ylabel = "Num Channels";
+    this.associate_hist.min = this.diff_hist.min_x;
+    this.associate_hist.max = this.diff_hist.max_x;
+    this.associate_hist.SetHist(this.diff_hist,this.cs);
+    this.associate_hist.ResetToHist(this.diff_hist); 
+  } else {
+    this.associate_hist.xlabel = this.map.ylabel || this.map.title;
+    this.associate_hist.ylabel = "Num Channels";
+    this.associate_hist.min = this.map.min_content;
+    this.associate_hist.max = this.map.max_content;
+    this.associate_hist.SetHist(this.hist,this.cs);
+    this.associate_hist.ResetToHist(this.hist);     
+  }
+  this.cs.min = this.associate_hist.min;
+  this.cs.max = this.associate_hist.max;
+  
   this.Draw();
   this.associate_hist.Draw();
+  
 }
 
 
@@ -203,6 +276,10 @@ ChannelMap.prototype.DrawOne = function(umin,umax,vmin,vmax)
   console.log("Drawone");
   if(!this.map) return;
 
+  var do_diff = (this.view_state=='diff' && this.refmap);
+
+  var cs = this.cs;
+
   var drawbox = {u1:umin,u2:umax,v1:vmin,v2:vmax};
   // cs.min =500;
   // cs.max = 600;
@@ -250,11 +327,23 @@ ChannelMap.prototype.DrawOne = function(umin,umax,vmin,vmax)
       for(var chan=0;chan<64;chan++) {
         
         var ccc = chan + 64*(card + 20*crate);
-        var val = this.map.data[ccc];
-        // var val = Math.random();
+        var x = this.map.data[ccc];
+        var val = x;
+        if(do_diff) {
+          x = this.map.data[ccc];
+          var y = this.refmap.data[ccc];
+          var ex = Math.sqrt(x);
+          if(this.map.errs) ex = this.map.errs[ccc];
+          var ey = Math.sqrt(y);
+          if(this.refmap.errs) ey = this.refmap.errs[ccc];
+          var diff = x-y;
+          var denom = Math.sqrt(ex*ex+ey*ey);
+          if(denom<=0) denom = 1;
+          val = diff/denom;
+        }
 
-        if(val>=this.cs.min && val<=this.cs.max ) {
-          this.ctx.fillStyle = "rgb("+this.cs.GetColor(val) + ")";
+        if(val>=cs.min && val<=cs.max ) {
+          this.ctx.fillStyle = "rgb("+cs.GetColor(val) + ")";
           // if(chan==0) console.log(ccc,val,this.cs.GetColor(val));
           var chanbox = this.ChannelBox(cardbox,chan);
           this.ctx.beginPath();    
