@@ -67,7 +67,7 @@ WireInfo.prototype.NewRecord = function()
   $(this.txt_element).html("");
   this.cal_loaded = false;
   this.raw_loaded = false;
-  // ofscreen image.
+  // offscreen image.
   this.cal_wire_img = new Image();
   this.raw_wire_img = new Image();
   
@@ -81,7 +81,16 @@ WireInfo.prototype.NewRecord = function()
   this.raw_wire_img.onload = function() {   // Callback when the png is actually there...
     self.MapRawData();
   }
-  
+
+
+  // // Experimental: used packed image, not the full one.
+  // this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  // this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
+  // this.packed_img = new Image();
+  // if(gCurName.cal) this.packed_img.src = gRecord[this.show_image][gCurName[this.show_image]].wireimg_encoded_url;
+  // this.packed_img.onload = function() {   // Callback when the png is actually there...
+  //   self.MapPackedData();
+  // }  
 }
 
 WireInfo.prototype.MapCalData = function()

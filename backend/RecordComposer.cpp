@@ -710,7 +710,6 @@ void RecordComposer::composeRaw()
         encodeddata[k*3+2] = 0;
         double val = fabs(raw);
         wiresum += val;
-        //timeProfile.Fill(k,val);
         timeProfileData[k+1] += val;
       }
       png.AddRow(imagedata);
@@ -997,11 +996,16 @@ void RecordComposer::compose()
   if(!doCal) composeCalAvailability(); // just look at branch names.
   if(!doRaw) composeRawAvailability();
 
-  // don't 
   // Set branches to read here.
   fTree->SetBranchStatus("*",1);  // By default, read all.
   fTree->SetBranchStatus("raw::RawDigits*",doRaw); // Speed!
   fTree->SetBranchStatus("recob::Wires*"  ,doCal); // Speed!
+
+  // Remove from the list anything which looks like a prespill or a postspill window if
+  // it's being de-requested.
+  if( std::string::npos != fOptions.find("_NoPreSpill_"))  fTree->SetBranchStatus("raw::RawDigits_daq_preSpill*",0);
+  if( std::string::npos != fOptions.find("_NoPostSpill_")) fTree->SetBranchStatus("raw::RawDigits_daq_postSpill*",0);
+
 
   //
   // Load the tree element.

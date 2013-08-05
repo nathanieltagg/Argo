@@ -102,7 +102,9 @@ sub start_server
       $ROOTSYS="../backend/root";
       $BOOSTSYS="../backend/boost";
       $ENV{"ROOTSYS"}="$ROOTSYS";
-      $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib;../backend/boost/lib";
+      $ENV{"BOOSTSYS"}="$BOOSTSYS";
+      $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib:$BOOSTSYS/lib";
+      $ENV{"DYLD_LIBRARY_PATH"}="$ROOTSYS/lib:$BOOSTSYS/lib";
 
       setsid();
       rename "$exec_name.log.4", "$exec_name.log.5";
@@ -115,6 +117,9 @@ sub start_server
       open (STDOUT, ">$exec_name.log");
       open (STDERR, '>&STDOUT');
       print "Starting a new job...<br/>\n";
+
+      print "Environemnt...\n";
+      system("bash -c 'set' >>$exec_name.log 2>&1");
   #     my $pid = getppid();
   #     # system("echo $pid > ntuple-server.pid");
   #     # my $pwd = getcwd;
