@@ -332,4 +332,7 @@ dEdXTool.prototype.DrawReferenceCurves = function()
   this.ctx.closePath();
   this.ctx.fill();
   
+  var y_avg = (this.MuonCurve(1,cosz,true) + this.MuonCurve(1,cosz,false))/2;
+  this.ctx.fillText("Muon",this.GetX(this.max_u), this.GetY(y_avg));
+  
 }
