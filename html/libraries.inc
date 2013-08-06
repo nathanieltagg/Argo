@@ -90,6 +90,7 @@
 <script type="text/javascript" src="libs/OpTimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 
 <script type="text/javascript" src="libs/MRI.js"></script> 
+<script type="text/javascript" src="libs/dEdXTool.js"></script> 
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
 
 

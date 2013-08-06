@@ -121,6 +121,7 @@ function WireView( element, options )
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
 
   $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
@@ -128,10 +129,10 @@ function WireView( element, options )
   $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
-  $(this.ctl_wireimg_type).click(function(ev) { return self.NewRecord(); });
+  $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
-
+  $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
   this.ctl_plane.click(function(ev) { 
@@ -319,6 +320,10 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.DrawMC(min_u,max_u, min_v, max_v, fast);
     }  
 
+
+    if ($(this.ctl_dedx_path).is(":checked")) {
+      this.DrawdEdXPath(min_u,max_u, min_v, max_v, fast);
+    }
   }
 
   if(this.zooming) {
@@ -719,6 +724,50 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   }
 }
 
+WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
+{
+  // Drawing the dEdX path.
+  if(!gUserTrack) return;
+  if(!gUserTrack.points.length) return;
+  
+  this.ctx.lineWidth = 2;
+
+  for(var i=0;i<gUserTrack.points.length; i++) {
+    var pt = gUserTrack.points[i];
+    this.ctx.fillStyle = "rgba(0,0,255,0.5)";
+    this.ctx.strokeStyle = "0000FF";
+    var r = 5; // 5 pixel radius handle
+
+    // draw handles.
+    if(gHoverState.obj == pt) this.ctx.strokeStyle = "FF0000";
+    var x = this.GetX(pt[this.plane]);
+    var y = this.GetY(pt.tdc);
+    this.ctx.beginPath();
+    this.ctx.arc(x,y,r,0,Math.PI*1.99,false);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+    this.mouseable.push({type:"UserTrack", x1:x, x2:x+0.1, y1:y, y2:y, r:r+this.ctx.lineWidth, obj: pt});
+    
+  }
+
+
+  this.ctx.strokeStyle = "0000FF";
+
+  for(var i=0;i<gUserTrack.points.length-1; i++) {
+    var pt = gUserTrack.points[i];
+    var pt2 = gUserTrack.points[i+1];
+    this.ctx.beginPath();    
+    this.ctx.moveTo(this.GetX(pt[this.plane]), this.GetY(pt.tdc - pt.r));
+    this.ctx.lineTo(this.GetX(pt[this.plane]), this.GetY(pt.tdc + pt.r));
+    this.ctx.lineTo(this.GetX(pt2[this.plane]), this.GetY(pt2.tdc + pt2.r));
+    this.ctx.lineTo(this.GetX(pt2[this.plane]), this.GetY(pt2.tdc - pt2.r));
+    this.ctx.closePath();
+    this.ctx.fill();
+  }
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 // Mouse
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -736,6 +785,10 @@ WireView.prototype.DoMouse = function(ev)
   if(ev.type === 'mouseout') return;   // dont need to deal with this.
 
   if(ev.type === 'mouseup') {
+    if( this.fObjectDragging ) {
+      this.fObjectDragging = false;
+      gStateMachine.Trigger("userTrackChange");
+    }
     if( this.fDragging) {
       this.fDragging = false;
       // Update thorough
@@ -750,9 +803,11 @@ WireView.prototype.DoMouse = function(ev)
   // Which area is mouse start in?
   var mouse_area;
   if(this.fMousePos.y > this.origin_y ) {
-    mouse_area = "xscale";
+    if(this.fMousePos.x> (this.origin_x + this.span_x/2)) mouse_area = "xscale-right";
+    else                                                 mouse_area = "xscale-left";
   } else if(this.fMousePos.x < this.origin_x) {
-    mouse_area = "yscale";
+    if(this.fMousePos.y < (this.origin_y - this.span_y/2)) mouse_area = "yscale-up";
+    else                                                   mouse_area = "yscale-down";
   } else {
     mouse_area = "body";
   }
@@ -760,8 +815,10 @@ WireView.prototype.DoMouse = function(ev)
     // Change cursor.
     switch(mouse_area) {
       case "body":         this.canvas.style.cursor = "move";      break;
-      case "xscale":       this.canvas.style.cursor = "e-resize";  break;
-      case "yscale":       this.canvas.style.cursor = "n-resize"; break;
+      case "xscale-right": this.canvas.style.cursor = "e-resize";  break;
+      case "xscale-left":  this.canvas.style.cursor = "w-resize";  break;
+      case "yscale-up":    this.canvas.style.cursor = "n-resize"; break;
+      case "yscale-down":  this.canvas.style.cursor = "s-resize"; break;
     }
   }
   
@@ -781,19 +838,40 @@ WireView.prototype.DoMouse = function(ev)
       this.fMouseLast = {};
       $.extend(this.fMouseLast,this.fMousePos); // copy.
       
-    } else if(this.fMouseStart.area == "xscale") {
+    } else if(this.fMouseStart.area == "xscale-right") {
       var relx = this.fMousePos.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var new_max_u = this.span_x * (this.fMouseStart.u-this.min_u)/relx + this.min_u;
       gZoomRegion.setLimits(this.plane,this.min_u, new_max_u);
       
-    } else if(this.fMouseStart.area == "yscale") {
+    } else if(this.fMouseStart.area == "xscale-left") {
+      var relx = this.origin_x + this.span_x - this.fMousePos.x;
+      if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
+      var new_min_u = this.max_u - this.span_x * (this.max_u - this.fMouseStart.u)/relx;
+      gZoomRegion.setLimits(this.plane,new_min_u, this.max_u);
+      
+    } else if(this.fMouseStart.area == "yscale-up") {
       var rely =  this.origin_y - this.fMousePos.y;
       if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
       var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
       gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] , new_max_v);
     
+    }else if(this.fMouseStart.area == "yscale-down") {
+      var rely =  this.fMousePos.y - (this.origin_y - this.span_y);
+      if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
+      var new_min_v = this.max_v - this.span_y * (this.max_v-this.fMouseStart.v)/rely;
+      gZoomRegion.changeTimeRange(new_min_v, gZoomRegion.tdc[1]);
+    }
+  } else if(this.fObjectDragging) {
+    
+    // Only user track is current thing.
+    if(gHoverState.type=="UserTrack") {
+      var newWire = this.fMousePos.u;
+      var newTdc  = this.fMousePos.v;
+      gHoverState.obj.set_view(this.plane,newWire,newTdc);
+    
+      
     }
     
   } else {
@@ -825,12 +903,16 @@ WireView.prototype.DoMouse = function(ev)
 
     
   if(ev.type === 'mousedown') {
+    // Check to see if object is draggable, instead of the view.
+    $.extend(this.fMouseStart,this.fMousePos); // copy.
+    $.extend(this.fMouseLast ,this.fMousePos); // copy.
+    this.fMouseStart.area = mouse_area;
+
+    if(gHoverState.type=="UserTrack") {
+      this.fObjectDragging = true;
+    } else {
       if(this.zooming) this.fDragging = true;
-      $.extend(this.fMouseStart,this.fMousePos); // copy.
-      $.extend(this.fMouseLast ,this.fMousePos); // copy.
-      // Which area is mouse start in?
-      this.fMouseStart.area = mouse_area;
-      console.log("dragstart",this.fMouseStart);
+    }
   } else if(ev.type === 'mousemove' ) {
     // Update quick.
     if(this.fDragging){
