@@ -6,11 +6,12 @@
   </p>
   Recent updates: <br/>
   <ul>
+    <li> dE/dX curve reference </li>
+    <li> Experimental hand-scan forms </li>
     <li> Read OpDetPulses if OpHits is empty </li>
     <li> "MRI" Timeslice View </li>
     <li> Hit Color histogram </li>
     <li> Load-on-hashchange: URLs are now persistent; back-button works within viewer. </li>
     <li> NEW: Click to select tracks or trajectories, with popup info overlay! </li>
-    <li> MC and Track Hover/Select now working correctly in wire, 3D, and MC digraph views.</li>
   </ul>
 </div> 
