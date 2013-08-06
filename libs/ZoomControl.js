@@ -140,6 +140,7 @@ function ZoomControl( element, options )
  
   this.ctl_zoom_auto    =  GetBestControl(this.element,".zoom-auto");
   this.ctl_zoom_full    =  GetBestControl(this.element,".zoom-full");
+  this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
 
   $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
   $(this.ctl_zoom_full  ).click(function(ev) { return self.FullZoom(); }); 
@@ -367,6 +368,24 @@ ZoomControl.prototype.Draw = function()
   
   this.DrawTracks();
   // Draw tracks.
+  
+  if ($(this.ctl_dedx_path).is(":checked")) {
+    this.ctx.lineWidth = 3;
+    this.ctx.strokeStyle = "black";
+
+    for(var i=0;i<gUserTrack.points.length; i++) {
+      var pt = gUserTrack.points[i];
+      for(var ip=0;ip<3;ip++) {
+        var geowire = gGeo.getWire(ip,pt[ip]);
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.GetX(geowire.z1), this.GetY(geowire.y1));
+        this.ctx.lineTo(this.GetX(geowire.z2), this.GetY(geowire.y2));
+        this.ctx.stroke();        
+      }
+    }
+  }
+  
+  
   
   if(this.fMousing)
   for(var plane=0;plane<3;plane++) {
