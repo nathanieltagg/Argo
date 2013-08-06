@@ -115,6 +115,7 @@ function DrawObjectInfo()
   switch(state.type) {
     case "mcparticle": h=ComposeMCParticleInfo(state); break;
     case "track": h=ComposeTrackInfo(state); break;
+    case "UserTrack": h="User Track"; break;
     
     default:
       h = "<h3>Selected:" + state.type + "</h3>";
