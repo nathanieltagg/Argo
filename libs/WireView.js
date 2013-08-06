@@ -734,8 +734,8 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 
   for(var i=0;i<gUserTrack.points.length; i++) {
     var pt = gUserTrack.points[i];
-    this.ctx.fillStyle = "rgba(0,0,255,0.5)";
-    this.ctx.strokeStyle = "0000FF";
+    this.ctx.fillStyle = "rgba(40,92,0,0.5)";
+    this.ctx.strokeStyle = "rgb(40,92,0)";
     var r = 5; // 5 pixel radius handle
 
     // draw handles.
@@ -752,7 +752,7 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
   }
 
 
-  this.ctx.strokeStyle = "0000FF";
+  this.ctx.strokeStyle = "rgb(40,92,0)";
 
   for(var i=0;i<gUserTrack.points.length-1; i++) {
     var pt = gUserTrack.points[i];
