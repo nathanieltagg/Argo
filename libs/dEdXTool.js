@@ -167,10 +167,25 @@ function dEdXTool( element, options  )
   Pad.call(this, element, defaults); // Give settings to ABoundObject contructor.
   
   gUserTrack.set_default();
+  var self = this;
   
   gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );  
   gStateMachine.Bind('userTrackChange', this.Draw.bind(this) );  
   this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
+  this.ctl_dedx_width_slider = GetBestControl(this.element,".dEdX-width-slider");
+  this.ctl_dedx_width_text   = GetBestControl(this.element,".dEdX-width-text");
+
+  $(this.ctl_dedx_width_slider).slider({
+    min:1, max:100, step: 1, value:10,
+    slide: function(e,ui){ $("input.dEdX-width-text").val(ui.value).change(); }
+  });
+  $(this.ctl_dedx_width_text).change(function(){
+    for(var i=0;i<gUserTrack.points.length;i++) { 
+      gUserTrack.points[i].r = parseFloat($(this).val());
+    }
+    gStateMachine.Trigger("zoomChange");    
+    gStateMachine.Trigger("userTrackChange");    
+  });
   $(this.ctl_dedx_path).change(this.Draw.bind(this));
   this.hists=[];
 }
