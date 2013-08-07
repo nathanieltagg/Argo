@@ -78,6 +78,8 @@ OpHitMap.prototype.NewRecord = function()
           tweight += s*adc;          
         }
       }
+      hit.basetime = p.tdc;
+      hit.adjtime = tweight/tot;
       hit.peakTime = tweight/tot + p.tdc;
       hit.area = tot;
       hit.pulse = p;
@@ -162,6 +164,7 @@ OpHitMap.prototype.Draw = function()
     var w = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
     if(w<gOpDetMode.cut.min) continue;
     if(w>gOpDetMode.cut.max) continue;
+    if(oh.opDetChan<0) continue; // Bad channel number
     
     var det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
     if(!det) { 
