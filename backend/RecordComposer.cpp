@@ -406,7 +406,7 @@ void  RecordComposer::composeOpPulses()
       const std::vector<short> *ptr = loot.get<std::vector<short>>(i);
       const std::vector<short>& wave = *ptr;
 
-      if(samples > 15000) {
+      if(samples > 10000) {
         // We're dealing with badly-made MC which is just dumping it's waveform content.
         
         // Scan through the wavform and fake up pulse entries when you see something good.
