@@ -154,6 +154,7 @@ function QueryError(jqxhr, textStatus, errorThrown )
   } else {
     $("#status").text("Problem with data: \""+textStatus+"\"");    
   }
+  window.document.title = "Argo (error)";
 }
 
 function QuerySuccess(data,textStatus,jqxhr)
@@ -170,6 +171,7 @@ function QuerySuccess(data,textStatus,jqxhr)
   if(gServing.error) { 
     $('#status').attr('class', 'status-error');
     $("#status").text('serve-event error: '+gServing.error);
+    window.document.title = "Argo (error)";
     return;
   }
   
@@ -189,6 +191,7 @@ function StartEvent()
   if(!gRecord.source) {
     $('#status').attr('class', 'status-error');
     $("#status").text("Problem with data: " + gRecord.error);
+    window.document.title = "Argo (error)";
     return;
   }
   $("#status").text("Drawing...");
@@ -198,6 +201,11 @@ function StartEvent()
   // Get some basic info.  
   if(gRecord.source.file)  gFile   = gRecord.source.file;
   if(gRecord.source.entry) gEntry  = gRecord.source.entry;
+  
+  // Fill the title bar.
+  var file_short = gFile.replace(/^.*\/|\.[^.]*$/g, '')
+  window.document.title = "Argo: event "+gEntry + " in "+file_short;
+  
   
   // Populate data from header, when that's available.
 
