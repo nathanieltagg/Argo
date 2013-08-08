@@ -310,6 +310,28 @@ dEdXTool.prototype.MuonCurve = function(x,cosz,top)
 }
 
 
+dEdXTool.prototype.ProtonCurve = function(x,cosz,top)
+{
+  var par0 =  cosz;
+  var par1 =  1.12129e+03/cosz;
+  var par2 =  3.09683e+00;
+  var par3 = -1.76300e-03;
+  var par4 = -2.61339e-06;
+
+
+  if(top) {
+    par1 =  2.13886e+03/cosz;
+    par2 =  2.46808e+00;
+    par3 = -8.69560e-03;
+    par4 =  3.90683e-05;
+  }
+  
+  var f= par1*(1+par2/(1+par0*x)+par3*par0*x+par4*par0*x*par0*x);
+  // console.log(x,f,cosz);
+  return f;
+}
+
+
 dEdXTool.prototype.DrawReferenceCurves = function()
 {
   var hist = this.hists[2]; // Just do induction plane for now.
@@ -334,5 +356,25 @@ dEdXTool.prototype.DrawReferenceCurves = function()
   
   var y_avg = (this.MuonCurve(1,cosz,true) + this.MuonCurve(1,cosz,false))/2;
   this.ctx.fillText("Muon",this.GetX(this.max_u), this.GetY(y_avg));
+  
+  
+  this.ctx.fillStyle = "rgba(255,0,0,0.5)";
+  this.ctx.beginPath();
+  this.ctx.moveTo( this.GetX(this.min_u), this.GetY( this.ProtonCurve(hist.n-1,cosz,true)) );
+
+  for(var i=0;i<hist.n;i++) {
+    var x = hist.n-i;
+    this.ctx.lineTo( this.GetX( hist.GetX(i) ), this.GetY( this.ProtonCurve(x,cosz,true)) );
+  }
+  for(var i=hist.n-1;i>=0;i--) {
+    var x = hist.n-i;
+    this.ctx.lineTo( this.GetX( hist.GetX(i) ), this.GetY( this.ProtonCurve(x,cosz,false)) );
+  }
+  this.ctx.closePath();
+  this.ctx.fill();
+  
+  var y_avg = (this.ProtonCurve(1,cosz,true) + this.ProtonCurve(1,cosz,false))/2;
+  console.warn("Proton",y_avg);
+  this.ctx.fillText("Proton",this.GetX(this.max_u), this.GetY(y_avg));
   
 }
