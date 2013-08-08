@@ -208,6 +208,8 @@ dEdXTool.prototype.Draw = function()
   // Find all hits that intersect and plot them.
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
+
+
   
   this.hists = [];
   this.starts = [];
@@ -262,6 +264,18 @@ dEdXTool.prototype.Draw = function()
   
   this.Clear();
   this.DrawFrame();
+  
+  // Set clipping region for all further calls, just to make things simpler.
+  this.ctx.save();
+  this.ctx.beginPath();
+  this.ctx.moveTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.clip();
+  
+  
   this.DrawReferenceCurves();
 
   // Width of a single vertical histogram bar.
@@ -284,6 +298,7 @@ dEdXTool.prototype.Draw = function()
     
     this.ctx.fillRect(x1, y-3, x2-x1, 6);
   }
+  this.ctx.restore();
 }
 
 dEdXTool.prototype.MuonCurve = function(x,cosz,top)
@@ -308,6 +323,32 @@ dEdXTool.prototype.MuonCurve = function(x,cosz,top)
   // console.log(x,f,cosz);
   return f;
 }
+
+
+// KE in GeV, range in g/cm2 of argon, which has density of 1.396.
+// Copied number for lAr from Groom, et al
+var kMuonRangeTable = [
+{ke:10.0e-3, range:  0.9937},
+{ke:14.0e-3, range:  1.795 },
+{ke:20.0e-3, range:  3.329 },
+{ke:30.0e-3, range:  6.605 },
+{ke:40.0e-3, range:  1.058 },
+{ke:80.0e-3, range:  3.084e1},
+{ke:100.e-3, range:  4.250e1},
+{ke:140.e-3, range:  6.732e1},
+{ke:200.e-3, range:  1.063e2},
+{ke:300.e-3, range:  1.725e2},
+{ke:400.e-3, range:  2.384e2},
+{ke:800.e-3, range:  4.934e2},
+{ke:1.00   , range:  6.163e2},
+{ke:1.40   , range:  8.552e2},
+{ke:2.00   , range:  1.202e3},
+{ke:3.00   , range:  1.758e3},
+{ke:4.00   , range:  2.297e3},
+{ke:8.00   , range:  4.359e3},
+{ke:10.0   , range:  5.354e3},
+{ke:14.0   , range:  7.298e3},
+{ke:20.0   , range:  1.013e4 }];
 
 
 dEdXTool.prototype.ProtonCurve = function(x,cosz,top)
@@ -340,6 +381,7 @@ dEdXTool.prototype.DrawReferenceCurves = function()
   var cosz = gUserTrack.get_costheta_z(hist.GetX(0)); // FIXME: do per-wire or per-segment
 
   this.ctx.fillStyle = "rgba(0,0,255,0.5)";
+  this.ctx.strokeStyle = "rgba(0,0,255,0.9)";
   this.ctx.beginPath();
   this.ctx.moveTo( this.GetX(this.min_u), this.GetY( this.MuonCurve(hist.n-1,cosz,true)) );
 
@@ -356,6 +398,38 @@ dEdXTool.prototype.DrawReferenceCurves = function()
   
   var y_avg = (this.MuonCurve(1,cosz,true) + this.MuonCurve(1,cosz,false))/2;
   this.ctx.fillText("Muon",this.GetX(this.max_u), this.GetY(y_avg));
+  
+  // put another scale on.
+  this.ctx.font = "10px sans-serif";
+  this.ctx.textAlign = 'center';
+  this.ctx.textBaseline = 'top';
+  var lasttick_x = this.span_x+this.origin_x;
+  var density = 1.396;
+  for(var itick=0;itick<kMuonRangeTable.length;itick++)
+  {    
+    // Walk from right to left, putting in KE markings.
+    var e = kMuonRangeTable[itick];
+
+    // Find the position to put this tick in wires.
+    var L = (e.range/density); // cm
+    var wires = L*0.3; // wires
+    var x = this.GetX(this.max_u-wires);
+    var tickLen = 5;
+    this.ctx.fillRect(x,this.origin_y-this.span_y,1,tickLen);
+    
+    var delta_x = Math.abs(x-lasttick_x);
+    if(delta_x > 20)  {
+      // If enough room, put in the label.
+      this.ctx.fillText(String(e.ke)+" GeV", x, this.origin_y-this.span_y+tickLen);
+    }
+    lasttick_x = x;
+  }
+  
+  
+  
+  
+  
+  
   
   
   this.ctx.fillStyle = "rgba(255,0,0,0.5)";
