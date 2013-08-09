@@ -14,6 +14,7 @@
 #include <TH1F.h>
 #include <TH1D.h>
 #include <TLorentzVector.h>
+#include <TTreeFormula.h>
 #include "TBranchElement.h"
 #include "TStreamerInfo.h"
 #include "TVirtualCollectionProxy.h"
@@ -139,8 +140,8 @@ void RecordComposer::composeHits()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
-    std::cout << "Looking at hits object " << (name+"obj_").c_str() << endl;
-        
+    std::cout << "Looking at hits object " << (name+"obj_").c_str() << endl;   
+    
     // JsonArray arr = ftr.makeArray(
    //        "wire",     name+"obj.fWireID.Wire"
    //      , "plane",    name+"obj.fWireID.Plane"
@@ -174,6 +175,38 @@ void RecordComposer::composeHits()
     key_leaf_pairs.push_back(make_pair<string,string>("t1",        name+"obj.fStartTime"       ));
     key_leaf_pairs.push_back(make_pair<string,string>("t2",        name+"obj.fEndTime"         ));
     std::vector<JsonObject> v = ftr.makeVector(key_leaf_pairs);
+
+    // Attempt to find association data. Look for a match to the name above, take the last match.
+    // SHOULD be good enough.
+    vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
+    for(size_t iass=0;iass<assnames.size(); iass++) {
+      std::string assname = assnames[iass];
+      cout << "Finding association to clusters " << assname << endl;
+      size_t u1 = assname.find_first_of("_");
+      size_t u2 = assname.find_first_of("_",u1+1);
+      std::string shortname("clusid");
+      shortname += assname.substr(u1,u2-u1);
+
+      // Attempt to pull association data.
+      TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
+      TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
+      int n = forma.GetNdata();
+      int nb = formb.GetNdata(); // need this line to goose formula into evaluating
+      cout << shortname << "  Association formula has " << n << " entries" << endl;
+      cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
+      for(Int_t i=0;i<n;i++) {
+        int cluster_id = forma.EvalInstance(i);
+        int hit_id     = formb.EvalInstance(i);
+        cout << "  " << hit_id << " --> " << cluster_id << endl;
+        if(hit_id< v.size() && hit_id >= 0) {
+          v[hit_id].add(shortname,cluster_id);
+        }
+      }
+      
+
+    }
+
+
     for(int i=0;i<v.size();i++) arr.add(v[i]);
         
     reco_list.add(stripdots(name),arr);
@@ -399,7 +432,7 @@ void  RecordComposer::composeOpPulses()
     JsonArray joppulses;
     for(int i=0;i<n;i++) {
       
-      int chan    = ftr.getInt(name+"obj.fOpChannel",i);
+      int chan    = ftr.getInt(name+"obj.fOpChannel"   ,i);
       int samples = ftr.getInt(name+"obj.fSamples"     ,i);
       int frame   = ftr.getInt(name+"obj.fPMTFrame"    ,i);
       int tdc     = ftr.getInt(name+"obj.fFirstSample" ,i);

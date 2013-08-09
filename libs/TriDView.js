@@ -198,6 +198,7 @@ TriDView.prototype.CreateTracks = function()
   console.warn(tracks,gRecord.tracks,$("#ctl-TrackLists").val());
   for(itrk in tracks) {
     var trk = tracks[itrk];
+    console.log(trk);
     var hovobj = {obj:trk, type:"track", collection: tracks};    
     var points = trk.points;
     for(var i=0;i<points.length-1;i++) {

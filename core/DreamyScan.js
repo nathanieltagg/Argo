@@ -42,13 +42,21 @@ function DreamyScan( element, options )
   if($.cookie("dreamy-experiment")) this.experiment = $.cookie("dreamy-experiment")
   if($.cookie("dreamy-project"))    this.project    = $.cookie("dreamy-project")
   
-  // Override with URL data.
+  // Override with URL data
   var url_param = $.deparam.querystring(); // Requires jquery bbq plugin
   if(url_param.experiment) this.experiment = url_param.experiment;
   if(url_param.project)   this.project     = url_param.project;
   if(url_param.user_name) this.user_name   = url_param.user_name;
   if(url_param.password)  this.password   = url_param.password;
 
+  if(gHiddenQueryString) {
+  // Override with hidden URL data
+    url_param = $.deparam(gHiddenQueryString); // Requires jquery bbq plugin
+    if(url_param.experiment) this.experiment = url_param.experiment;
+    if(url_param.project)   this.project     = url_param.project;
+    if(url_param.user_name) this.user_name   = url_param.user_name;
+    if(url_param.password)  this.password   = url_param.password;
+  }
   var self = this;
 
   // Deal with login issues.
@@ -84,8 +92,14 @@ function DreamyScan( element, options )
       self.advance_to_next_inbox();
     });
   // submit-and-advance-inbox button
-  // Add this event to interesting events button
-  // Add this event to inbox button
+  
+  // Event list functionality
+  this.update_event_list();
+  $(".dreamy-add-interesting-event-button",this.element).button().click(function(){self.add_interesting_event()});
+
+  // Inbox functionality
+  
+  
   
 }
 
@@ -318,3 +332,77 @@ DreamyScan.prototype.do_error = function( msg )
     });
 }
 
+
+
+
+///
+/// Interesting lists of events.
+///
+DreamyScan.prototype.update_event_list = function()
+{
+  if($(".dreamy-event-list",this.element).length == 0) return; // Don't do if no space for it.
+  
+  var query = {type:"event"};
+  console.warn("retrieve_scan_results",query);
+  var args = { func: "_find"
+             , db: this.experiment
+             , col: this.project
+             , batch_size: 999
+             , criteria: JSON.stringify(query)  
+             , sort: JSON.stringify({"_id":-1}) // Sort by recent            
+           };
+   $.ajax({url: this.dreamy_url
+       , type:'GET'
+       , dataType: "json"
+       , data: args
+       , success: this.update_event_list_callback.bind(this)
+     });
+  
+}
+
+DreamyScan.prototype.update_event_list_callback = function(response)
+{
+  var h = "";
+  console.log("update_event_list_callback",response);
+  if(response.results) {
+    for(var i=0;i<response.results.length;i++){
+      var doc = response.results[i];
+      h+="<a href=#'" + $.param(doc.event_id) + "'>" + $.param(doc.event_id) + "</a><br/>";
+    }
+  }
+  
+  $(".dreamy-event-list",this.element).html(h);
+}
+
+DreamyScan.prototype.add_interesting_event = function()
+{
+  var event_id = $.deparam.fragment();
+  // if(spec) { event_id = spec; }
+  //Compose result.
+  var doc = {
+    type: 'event',
+    event_id: event_id,
+    scan_id: { user_name: this.user_name, modification_date: new Date() }
+  };
+  
+  console.warn("Que?",doc);
+  var args = { func: "_insert"
+             , db: this.experiment
+             , col: this.project
+             , docs: JSON.stringify([doc])
+           };
+           
+  var self = this;
+  $.ajax({url: 'scan/dreamy.cgi'
+      , type:'POST'
+      , dataType: "json"
+      , data: args
+      ,  error: function(jqXHR, textStatus, errorThrown) { 
+              self.do_error("Failure to insert new event! "+textStatus+" "+errorThrown);
+      }
+      ,  success: function(response) { 
+          self.update_event_list();
+      }
+    });
+
+}

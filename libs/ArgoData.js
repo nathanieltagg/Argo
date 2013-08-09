@@ -8,7 +8,6 @@ gCurObjNames = {
   cal: null,
 };
 gHitsListName = null;
-gClustersListName = null;
 gMCParticlesListName = null;
 gMCTruthListName = null;
 gOpPulsesListName = null;
@@ -20,7 +19,6 @@ function DoInitialBookmarking()
     cal: null,
   };
   gHitsListName = null;
-  gClustersListName = null;
   gOphitsListName=null;
   gOpflashesListName=null;
   gOpPulsesListName=null;
@@ -51,10 +49,10 @@ function DoInitialBookmarking()
     }
   }
 
+  $('#ctl-ClusterLists').empty();
   if(gRecord.clusters) {
     for(var i in gRecord.clusters) { 
-      gClustersListName = i;
-      if(gRecord.clusters[i].length > 0) break; // Select the first list that has nonzero entries.
+      $('#ctl-ClusterLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
     }
   }
 

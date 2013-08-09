@@ -8,14 +8,20 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF8">
 
 <title>Argo</title>
+<!--#include virtual="basetag.inc"-->
+
 
 <!-- My little icon in the link url -->
-<link rel="icon"  type="image/png" href="images/icon" />  
+<link rel="icon"  type="image/png" href="images/ArgoIcon" />  
 
 <!-- Activate some overrides to basic configuration. -->
 <!--#set var="PageStyle" value="standard" -->
 <script type="text/javascript" charset="utf-8">
-gPageName='standard';
+// These lines pull the Server-side-include (SSI) strings.
+gPageName='<!--#echo encoding="none" var="PageStyle"-->';
+// This is used to get a query string supplied to the page on the server side, but hidden
+// from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
+gHiddenQueryString='<!--#echo encoding="none" var="QUERY_STRING"-->';
 </script>
 
 

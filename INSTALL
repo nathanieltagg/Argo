@@ -19,4 +19,17 @@ Edit the .htaccess file, using YOUR absolute link for RewriteBase
 $ cp datacache/dot.htaccess datacache/.htaccess
 Edit above, ditto
 
+Edit basetag.inc so it points at the correct location.
+
 Try a load. Might take two or three reloads to get backend going
+
+
+Python/mongo:
+yum install mongodb
+yum install upyum install upsupdbootstrap-fnal
+source /fnal/ups/etc/setups.sh
+setup python v2_7_2
+easy_install-2.7 pymongo
+service pymongo start
+chkconfig pymonto
+

@@ -67,6 +67,10 @@ $(function() {
         $('#ctl-show-clus').click();
         return false;
 
+      case 67: // 'C'
+        $('#ctl-ClusterLists').cycle_dropdown().trigger("change");
+        return false;
+
       case 115: // 's'
         $('#ctl-show-spoints').click();
         return false;
