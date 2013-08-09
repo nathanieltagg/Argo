@@ -28,6 +28,10 @@ $(function(){
 });
 
 
+
+
+
+
 // Subclass of HistCanvas.
 HitHistogram.prototype = new HistCanvas();
 
@@ -59,17 +63,40 @@ function HitHistogram( element  )
   this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
   
   $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
-  $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.NewRecord(); });
+  $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
   
 }
 
-
-
 HitHistogram.prototype.NewRecord = function()
+{
+  if(!gHitsListName) return;
+  var hits = gRecord.hits[gHitsListName];
+
+  // Get unique fields of an array.
+  function unique(list) {
+      var o = {}, i,j, l = list.length;
+      for(i=0; i<l;i+=1) 
+        for(j in list[i]) o[j] = j;
+      return o;
+  };
+
+  var fields = unique(hits);
+  $(this.ctl_hit_field ).empty();
+  for(var i in fields) { 
+    var name = i;
+    $(this.ctl_hit_field ).append("<option value='"+i+"'>"+name+"</option>");
+  }
+     
+}
+
+HitHistogram.prototype.BuildHistogram = function()
 {
   this.hist = null;
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
+  
+  // Get list of 
+  
   var field = $(this.ctl_hit_field).val();
   switch(field) {
     case "q":  this.hist = new Histogram(20,0,2000);  break;
@@ -81,7 +108,7 @@ HitHistogram.prototype.NewRecord = function()
     case "wire": this.hist = new Histogram(100,0,4200);  break;
     case "m": this.hist = new Histogram(5,0,5);  break;
     default: 
-     this.hist = new Histogram(50,0,5000);  
+     this.hist = new Histogram(5,0,5);  
   }
   
   for(var i=0;i<hits.length;i++) {

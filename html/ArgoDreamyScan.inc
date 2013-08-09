@@ -85,7 +85,9 @@
 
         <div class="dreamy-inbox"></div>
 
-        <div class="dreamy-eventlist"></div>
+        <div class="dreamy-event-list"></div>
+        <span class="dreamy-add-interesting-event-button">This Event is Cool</span>
       </div>
-    </div> <!-- slice-info -->
-  </div>
+    </div>
+
+</div>

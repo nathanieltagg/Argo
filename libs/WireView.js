@@ -132,6 +132,7 @@ function WireView( element, options )
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
+  $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
@@ -516,25 +517,28 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   // startPos: Object
   // totalCharge: 279631.85
   // view: 2
-  
-  if(!gClustersListName) return;
-  var clusters = gRecord.clusters[gClustersListName];
-  if(!clusters) return;
+  console.log("DrawClusters");
+  if(!gRecord.clusters) return;
+  var clusters = gRecord.clusters[$("#ctl-ClusterLists").val()];
+  if(!clusters) return;  
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
     if(gGeo.planeOfView(clus.view) != this.plane) continue;
-    // console.log(
-    //   "clus on plane ",this.plane 
-    // ,clus.startPos.wire
-    // ,clus.endPos  .wire
-    // ,clus.startPos.tdc 
-    // ,clus.endPos  .tdc 
-    // )
+    console.log(
+      "clus on plane ",this.plane 
+    ,clus.startPos.wire
+    ,clus.endPos  .wire
+    ,clus.startPos.tdc 
+    ,clus.endPos  .tdc 
+    )
     var x1 = this.GetX(clus.startPos.wire);
     var x2 = this.GetX(clus.endPos  .wire);
     var y1 = this.GetY(clus.startPos.tdc );
     var y2 = this.GetY(clus.endPos  .tdc );
-    this.ctx.fillStyle = "orange";
+    var cs = new ColorScaleIndexed(clus.ID);
+    this.ctx.fillStyle = "rgba(" + cs.GetColor() + ",0.5)";
+
+    // this.ctx.fillStyle = "orange";
     this.ctx.beginPath();
     this.ctx.moveTo(x1,y1);
     this.ctx.lineTo(x1,y2);
