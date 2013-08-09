@@ -179,6 +179,13 @@ function QuerySuccess(data,textStatus,jqxhr)
   $("#debuglog").html(gServing.serve_event_log );
 
   if(gServing.record) {
+
+    if(gServing.record.error) { 
+      $('#status').attr('class', 'status-error');
+      $("#status").text('serve-event error: '+gServing.error);
+      window.document.title = "Argo (error)";
+      return;
+    }
     gRecord = gServing.record;
     StartEvent();
     gFinishedDrawTime = (new Date).getTime();
