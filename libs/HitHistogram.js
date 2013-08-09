@@ -86,7 +86,8 @@ HitHistogram.prototype.NewRecord = function()
     var name = i;
     $(this.ctl_hit_field ).append("<option value='"+i+"'>"+name+"</option>");
   }
-     
+ $(this.ctl_hit_field ).val("q");
+ this.BuildHistogram();
 }
 
 HitHistogram.prototype.BuildHistogram = function()
