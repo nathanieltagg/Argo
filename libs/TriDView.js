@@ -62,12 +62,14 @@ function TriDView( element, options ){
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
+  this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");  
 
   $(this.ctl_show_hits).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_clus).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_spoints).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
 
   $('#ctl-TrackLists') .change(function(ev) { return self.Rebuild(); });
   $('#ctl-SpacepointLists').change(function(ev) { return self.Rebuild(); });
@@ -231,6 +233,7 @@ TriDView.prototype.CreateMC = function()
   if(!gMCParticlesListName) return;
   var particles = gRecord.mc.particles[gMCParticlesListName];
   if(!particles) return;
+  var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
@@ -242,16 +245,14 @@ TriDView.prototype.CreateMC = function()
     
     var lineWidth = 1;
     var curColor = "rgba(0,0,255,0.5)";
-    
 
-    if(p.fpdgCode == 22 || p.fpdgCode == 2112) {
-      // Make photons and neutrons colorless.
-      curColor = "rgba(0,0,0,0)";      
-    }
+
+    // is it an annoying neutral particle?
     var pdg = Math.abs(p.fpdgCode);
-    if(pdg == 12 || pdg == 14 || pdg == 16) {
-      // Make photons and neutrons colorless.       
-      curColor ="rgba(0,200,0,0.5)";    
+    if(pdg == 22 || pdg == 2112 || pdg == 12 || pdg == 14 || pdg == 16) {
+      // Make them grey
+      if(show_neutrals) curColor ="rgba(200,200,200,0.5)";    
+      else continue;  // Or skip 'em.
     }
     
     // for(var k=0;k<gSelectedTrajectories.length;k++) {

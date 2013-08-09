@@ -65,6 +65,7 @@ function MRI( element, options )
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
+  this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
   this.slider_ends  =  $(GetBestControl(this.element,".mri-slider-ends"));
   this.slider_grip  =  $(GetBestControl(this.element,".mri-slider-grip"));
   this.slider_window_size  =  $(GetBestControl(this.element,".mri-slider-window-size"));

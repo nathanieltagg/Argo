@@ -91,6 +91,9 @@ $(function() {
       case 109: // 'm'
         $('#ctl-show-mc').click();
         return false;
+      case 77: // 'M'
+        $('#ctl-show-mc-neutrals').click();
+        return false;
         
       // case 98: // 'b'
       //   $('#ctl-show-hitmap-blobs').click(); gStateMachine.Trigger('phColorChange');

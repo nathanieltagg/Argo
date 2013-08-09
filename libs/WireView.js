@@ -120,6 +120,7 @@ function WireView( element, options )
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
+  this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
 
@@ -129,6 +130,7 @@ function WireView( element, options )
   $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
@@ -660,6 +662,8 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   if(!gRecord.mc) return;
   var particles = gRecord.mc.particles[gMCParticlesListName];
   if(!particles) return;
+  var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
+  
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
@@ -701,16 +705,19 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
       
     }
-  
-    if(p.fpdgCode == 22 || p.fpdgCode == 2112) {
-      // Make photons and neutrons colorless.
-      this.ctx.strokeStyle = "rgba(0,0,0,0)";      
-    }
+
+    // is it an annoying neutral particle?
+    var pdg = Math.abs(p.fpdgCode);
     // Note direct object compare doesn't work with MCDigraph. Don't know why; spacetree must clone instead of link objects.
     if(gHoverState.obj && (gHoverState.obj.ftrackId == p.ftrackId)){ // hovering
       this.ctx.lineWidth = 2;
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
+    } else if(pdg == 22 || pdg == 2112 || pdg == 12 || pdg == 14 || pdg == 16) {
+      // Make them grey
+      if(show_neutrals) this.ctx.strokeStyle ="rgba(200,200,200,0.5)";    
+      else continue;  // Or skip 'em.
     }
+  
     
 
     // Draw main track.
