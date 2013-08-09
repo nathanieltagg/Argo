@@ -41,6 +41,7 @@
         <div><input type="checkbox" id="ctl-show-tracks"  name="show-tracks"  class="saveable show-tracks"  checked="yes"/><label for="ctl-show-tracks">  <b>(t)</b> Show Tracks </label></div>
         <div><b>(shift-T)</b> <select id="ctl-TrackLists"  class="align-right"></select><div style="clear:both;"></div></div>
         <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      checked="yes"/><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>
+        <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-show-mc-neutrals"      name="show-mc-neutrals"      class="saveable show-mc-neutrals"  /><label for="ctl-show-mc">      <b>(m)</b> Show neutral particles (M) </label></div>
           <!-- <div class="align-right"><div id="ctl-MCLists"></div><div style="clear:both;"></div></div> -->
 
 		<br/>
