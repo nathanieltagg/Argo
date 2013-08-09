@@ -65,7 +65,7 @@ OpHitMap.prototype.NewRecord = function()
     if(!oppulses) return; // Zero-length.
     if(oppulses.length==0) return;
     
-    this.ophits = gRecord.ophits[gOphitsListName].slice(0); // Copy
+    this.ophits = []; //gRecord.ophits[gOphitsListName].slice(0); // Copy
     for(var i=0;i<oppulses.length;i++) {
       var p = oppulses[i];
       var hit = { opDetChan: p.opDetChan };
