@@ -195,6 +195,7 @@ MRI.prototype.NewRecord = function()
   // Sort by hit start time.
   if(!gHitsListName) return;
   var inhits = gRecord.hits[gHitsListName];
+  if(inhits.length==0) return;
   
   // copy hits list, including deltas.
   this.hits = [];
