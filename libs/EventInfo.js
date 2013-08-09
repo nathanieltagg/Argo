@@ -48,7 +48,7 @@ EventInfo.prototype.NewRecord = function()
     return;
   }
 
-  h += "<table class='.eventinfo'>";
+  h += "<table class='eventinfo'>";
   var a = "<tr><td class='eventinfo-key'>";
   var b = "</td><td class='eventinfo-val'>";
   var c = "</td></tr>";

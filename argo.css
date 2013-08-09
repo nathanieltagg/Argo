@@ -198,6 +198,18 @@ div.event-info {
   font-size: 0.7em;
 }
 
+table.eventinfo {
+  border-collapse: separate;
+  border-spacing: 5px;
+}
+
+td.eventinfo-val {
+  border-left-width: 2px;
+  border-left-style: solid;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
 table.mc-info {
   font-size: 0.8em;
 }
