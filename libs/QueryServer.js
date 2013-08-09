@@ -182,7 +182,7 @@ function QuerySuccess(data,textStatus,jqxhr)
 
     if(gServing.record.error) { 
       $('#status').attr('class', 'status-error');
-      $("#status").text('serve-event error: '+gServing.error);
+      $("#status").text('serve-event error: '+gServing.record.error);
       window.document.title = "Argo (error)";
       return;
     }
