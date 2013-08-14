@@ -644,7 +644,12 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.moveTo(pts[0][0],pts[0][1]);
     for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
     this.ctx.stroke();
-
+    this.ctx.fillStyle=this.ctx.strokeStyle;
+    for(var j=1;j<pts.length;j++) {
+      this.ctx.beginPath();
+      this.ctx.arc(pts[j][0],pts[j][1],1,0,2*Math.PI,false);
+      this.ctx.stroke();
+    }
 
     // for mouseovering
     for(var j=1;j<pts.length;j++) 
