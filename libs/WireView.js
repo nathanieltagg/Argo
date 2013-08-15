@@ -57,7 +57,7 @@ function WireView( element, options )
     return;
   }
   
-  console.warn("WireView created with element:",$(element).css("height"),$(element).height());
+  // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
   
   var settings = {
     plane: 0, // default, override this
@@ -77,7 +77,7 @@ function WireView( element, options )
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
-  console.warn("WireView created with element:",$(element).css("height"),$(element).height());
+  // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
   
   var self = this;
   this.SetMagnify(true);
@@ -479,7 +479,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   }
   
   if(hoverVisHit) {
-    console.warn("hoverhit!",hoverVisHit);
+    // console.warn("hoverhit!",hoverVisHit);
       var h = hoverVisHit;
       var u = h.u;
       var v = h.v;         
@@ -594,9 +594,13 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
-  if(!$("#ctl-TrackLists").val()) return;
-  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
+  var tracklistname = $("#ctl-TrackLists").val();
+  if(!tracklistname) return;
+  var bezier = tracklistname.match(/bezier/)!=null;
+  if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }
+  var tracks = gRecord.tracks[tracklistname];
   if(!tracks) return;
+
   this.ctx.save();
   for(var i=0;i<tracks.length;i++)
   {
@@ -609,7 +613,8 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
       // Fixme: bezier
       var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
       var v = gGeo.getTDCofX(this.plane,points[j].x);
-      pts.push([this.GetX(u),this.GetY(v)]);
+      var coords = [this.GetX(u), this.GetY(v)];
+      pts.push(coords);      
     }
     
     this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
@@ -647,7 +652,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.fillStyle=this.ctx.strokeStyle;
     for(var j=1;j<pts.length;j++) {
       this.ctx.beginPath();
-      this.ctx.arc(pts[j][0],pts[j][1],1,0,2*Math.PI,false);
+      this.ctx.arc(pts[j][0],pts[j][1],1.5,0,2*Math.PI,false);
       this.ctx.stroke();
     }
 
@@ -660,6 +665,179 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.restore();
 }
 
+
+WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast) 
+{
+  var tracklistname = $("#ctl-TrackLists").val();
+  var bezier = tracklistname.match(/bezier/)!=null;
+  var tracks = gRecord.tracks[tracklistname];
+  if(!tracks) return;
+  
+  // Email exchange with Ben Jones, August 14 2013
+  // So, let's see. , given points and directions (p0,v0), (p1,v1)....(pn,vn), we have this set of points:
+  // 
+  // start          p0 - v0
+  // midpoint       p0
+  // control point  p0 + a v0   where a =  |p1-p0|/(4|v0|) * Sign((p1-p0).v0)
+  // control point  p1 + b v1   where b = -|p1-p0|/(4|v1|) * Sign((p1-p0).v1)
+  // midpoint       p1
+  // control point  p1 + a v1   where a =  |p2-p1|/(4|v1|) * Sign((p2-p1).v1)
+  // control point  p2 + b v2   where b = -|p2-p1|/(4|v2|) * Sign((p2-p1).v2)
+  // midpoint       p2
+  // ...
+  // midpoint       pn
+  // end            pn + vn
+  
+  
+  // console.warn("DrawBezierTracks");
+  this.ctx.save();
+  for(var i=0;i<tracks.length;i++)
+  {
+    var trk = tracks[i];
+    var points = trk.points;
+    if(points.length<2) continue;
+    // compile points
+    var segments = [];
+    
+
+    function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+    // Return an x,y screen coords tuple
+    var self = this;
+    function DetectorXyzToScreenXY(x,y,z) {
+      return [
+        self.GetX( gGeo.yzToWire( self.plane,y,z) ),
+        self.GetY( gGeo.getTDCofX(self.plane,x ) )
+        ];
+    }
+    
+    // First, record xyz control and endpoint positions in detector coords.
+    // start point.
+    var pt = points[0];
+    var s = {
+      p0: DetectorXyzToScreenXY(pt.x - pt.vx, 
+                                pt.y - pt.vy,
+                                pt.z - pt.vz),
+      p1: DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
+    }
+    s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
+    s.c1 = s.p1;
+    segments.push(s);
+
+    // Every pair of points 0..n-1 has two control points attached.
+    for(var j=0;j<points.length-1;j++) {
+      var p0 = points[j];
+      var p1 = points[j+1];
+      var dp = [p1.x-p0.x,p1.y-p0.y, p1.z-p0.z];
+      var dp_ = Math.sqrt(dp[0]*dp[0]+dp[1]*dp[1]+dp[2]*dp[2]);
+      var v0_ = Math.sqrt(p0.vx+p0.vx + p0.vy*p0.vy + p0.vz*p0.vz);
+      var signa= sign(dp[0]*p0.vx + dp[1]*p0.vy + dp[2]*p0.vz);
+      var scale_a = 0;
+      if(signa) scale_a = dp_/(4*v0_) * signa;  // Protect against zero-length v0
+      
+      var v1_ = Math.sqrt(p1.vx+p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
+      var signb= sign(dp[0]*p1.vx + dp[1]*p1.vy + dp[2]*p1.vz);
+      var scale_b = 0;
+      if(signb) scale_b = dp_/(4*v1_) * signb; // protect against zero-length v1
+
+      // console.log(dp_,"v0",v0_,signa,scale_a,"v1",v1_,signb,scale_b);
+      segments.push({
+        p0: DetectorXyzToScreenXY(p0.x,p0.y,p0.z),
+        p1: DetectorXyzToScreenXY(p1.x,p1.y,p1.z),
+        c0: DetectorXyzToScreenXY(p0.x + scale_a*p0.vx,
+                                  p0.y + scale_a*p0.vy,
+                                  p0.z + scale_a*p0.vz
+                                ),
+        c1: DetectorXyzToScreenXY(p1.x - scale_b*p1.vx,
+                                  p1.y - scale_b*p1.vy,
+                                  p1.z - scale_b*p1.vz
+                                ),
+      });
+    }
+    
+    // Last point
+    var pt = points[points.length-1];
+    var s = {
+      p0: DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
+      p1: DetectorXyzToScreenXY(pt.x + pt.vx, 
+                                pt.y + pt.vy,
+                                pt.z + pt.vz)
+    };
+    s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
+    s.c1 = s.p1;
+    segments.push(s);
+    
+    this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
+    this.ctx.lineWidth = 2;
+    
+    // Draw underlay
+    // Draw underlay for a selected track.
+    if(gSelectState.obj && (gSelectState.obj == trk)){      
+      if(this.fMouseInContentArea) {
+        var offset = getAbsolutePosition(this.canvas);
+        var lastpt = pts[pts.length-1];
+        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
+      }
+
+      this.ctx.lineWidth = 5;
+      this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(segments[0].p0[0],segments[0].p0[1]);
+      for(var j=0;j<segments.length;j++) {
+        var s = segments[j];
+        this.ctx.bezierCurveTo( s.c0[0],s.c0[1],
+                                s.c1[0],s.c1[1],
+                                s.p1[0],s.p1[1]);
+      }
+      this.ctx.stroke();
+      this.ctx.lineWidth =2;
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+      
+    }
+  
+    if(gHoverState.obj && (gHoverState.obj == trk)){ // hovering
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+    }
+        
+    // Draw it.
+    this.ctx.beginPath();
+    this.ctx.moveTo(segments[0].p0[0],segments[0].p0[1]);
+    for(var j=0;j<segments.length;j++) {
+      var s = segments[j];
+      this.ctx.bezierCurveTo( s.c0[0],s.c0[1],
+                              s.c1[0],s.c1[1],
+                              s.p1[0],s.p1[1]);
+    }
+    this.ctx.stroke();
+    
+    // make circles at the nodes.
+    this.ctx.fillStyle = this.ctx.strokeStyle;
+    for(var j=0;j<segments.length-1;j++) {
+         this.ctx.fillStyle = "rgba(89, 169, 28, 1)";
+      this.ctx.beginPath();
+      this.ctx.arc(segments[j].p0[0],segments[j].p0[1],1.5,0,1.99*Math.PI,false);
+      this.ctx.fill();
+      this.ctx.beginPath();
+      this.ctx.arc(segments[j].p1[0],segments[j].p1[1],1.5,0,1.99*Math.PI,false);
+      this.ctx.fill();
+      this.ctx.fillStyle = "rgba(166,95,89,0.54)";
+      this.ctx.beginPath();
+      this.ctx.arc(segments[j].c0[0],segments[j].c0[1],1.5,0,1.99*Math.PI,false);
+      this.ctx.fill();
+      this.ctx.beginPath();
+      this.ctx.arc(segments[j].c1[0],segments[j].c1[1],1.5,0,1.99*Math.PI,false);
+      this.ctx.fill();
+
+    }
+    // console.warn("Bezier:",segments);
+
+    // for mouseovering
+    for(var j=0;j<segments.length-1;j++) {
+       this.mouseable.push({type:"track", x1:segments[j].p0[0], x2:segments[j].p0[1], y1:segments[j].p1[0], y2:segments[j].p1[1], r:this.ctx.lineWidth, obj: trk});
+     }
+  }
+  this.ctx.restore();
+  
+}
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 {  
