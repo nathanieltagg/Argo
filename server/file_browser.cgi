@@ -2,6 +2,7 @@
 use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody end_tbody *div/;
 use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
 use POSIX qw(strftime);
+use Cwd qw/getcwd realpath/;
 #
 # Script to browse ROOT files on the server. Mild security hassle as viewers on the web
 #  can see directory structrures and ROOT files.
@@ -12,6 +13,8 @@ $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
 $cookie_name = 'arachne_file_browser';
 $link_target = "../arachne.html";
+$restrict_to = [ getcwd(), "/uboone","/minos","/minerva"];
+$force_paths = [ "/uboone/app", "/uboone/data" ];
 
 # Different configuration.
 if( -r "file_browser_config.pl" ) {
@@ -85,6 +88,21 @@ print start_html(
 print h2({-id=>"title"},$title);
 
 
+# Resolve path to see if it's legal. NO poking around in /etc!
+$req_path_abs = realpath($cur_path);
+# Check to make sure it's rooted in an allowed area.
+$good=0;
+foreach $basepath (@$restrict_to)
+{
+  if( $cur_path=~/^$basepath/ ) {$good=1;}
+}
+if($good==0) {
+  print p("$cur_path");
+  print p("This path is not a standard file location. Contact Nathaniel if you need to see this area.");
+  print end_html;
+  exit(0);
+}
+
 print start_div({id=>"cur_path"});
 @breakdown = split('/',$cur_path);
 shift @breakdown;
@@ -98,8 +116,10 @@ print end_div;
 print br. br;
 
 # Force open of critical paths.
-opendir(IMDTMP, "/uboone/app"); close(IMDTMP);
-opendir(IMDTMP, "/uboone/data"); close(IMDTMP);
+foreach $path (@$force_paths) {
+  opendir(IMDTMP, $path); close(IMDTMP);
+  
+}
 
 # read directory.
 if (! opendir(IMD, $cur_path) )
