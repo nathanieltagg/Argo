@@ -2,7 +2,7 @@
       <div class="portlet-header">Configuration:</div>
       <div class="portlet-content">
 
-        <select  id="ctl-color-scale" class="saveable">
+        <select  id="ctl-hit-color-scale" class="saveable">
 			<option value="RedBluePalette" selected="selected">Red-Blue Palette</option>
 			<option value="BrownPurplePalette">Brown-Purple Palette</option>
 			<option value="GrayscalePalette">Grayscale</option>

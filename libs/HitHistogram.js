@@ -22,13 +22,22 @@ var gHitCut = {
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
+  $('#ctl-hit-color-scale').addClass("saveable").change(ChangeHitColorScale);
+  gHitColorScaler = new ColorScaler("CurtColorPalette");    
+  ChangeHitColorScale();
+
   $('div.A-HitHistogram').each(function(){
     gHitHistogram = new HitHistogram(this);
   });  
 });
 
 
-
+function ChangeHitColorScale()
+{
+    var sel = $('#ctl-hit-color-scale option:selected').val();
+    gHitColorScaler.SetScale(sel);
+    gStateMachine.Trigger('hitChange');
+}
 
 
 
@@ -58,6 +67,7 @@ function HitHistogram( element  )
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('hoverChange',this,"HoverChange");
+  gStateMachine.BindObj('hitChange',this,"Draw");
   
   this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
   this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
@@ -135,21 +145,27 @@ HitHistogram.prototype.HoverChange = function( )
 
 HitHistogram.prototype.Draw = function( )
 {
+  console.warn("HitHistogram::Draw()");
   var cs = gHitColorScaler;
   if(!$(this.ctl_show_hits).is(":checked")) cs = this.blandColorScale;
   if(this.hist) {
     if(gHoverState.type == "hit") {
       var hit = gHoverState.obj; 
-      this.SetHist(this.hist,this.blandColorScale);
       // new histogram 
       var val = hit[$(this.ctl_hit_field).val()];
       val = this.hist.GetX(this.hist.GetBin(val));
       this.highlight_hist = new Histogram(1,val,val + (this.hist.max-this.hist.min)/this.hist.n);
       this.highlight_hist.Fill(val);
-      this.AddHist(this.highlight_hist,cs);     
-       
+      
+      this.fNHist = 2;
+      this.fHists = [this.hist,this.highlight_hist];
+      this.fColorScales = [this.blandColorScale,cs];
+      this.fHistOptions = [$.extend({},this.default_options),$.extend({},this.default_options)];       
     } else {
-      this.SetHist(this.hist,cs);
+      this.fNHist = 1;
+      this.fHists = [this.hist];
+      this.fColorScales = [cs];
+      this.fHistOptions = [$.extend({},this.default_options)];       
     }
   }
   
@@ -166,7 +182,7 @@ HitHistogram.prototype.ChangeRange = function( minu,maxu )
 
 HitHistogram.prototype.FinishRangeChange = function()
 {
-  // console.debug("PhHistCanvas::FinishRangeChange");
+  console.warn("PhHistCanvas::FinishRangeChange");
   gHitCut.field = $(this.ctl_hit_field).val();
   gHitCut.min = this.min_u;
   gHitCut.max = this.max_u;
