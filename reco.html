@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:svg="http://www.w3.org/2000/svg"
+     xml:lang="en">
+<head> 
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta http-equiv="content-type" content="text/html; charset=UTF8">
+
+<title>Argo</title>
+<!--#include virtual="basetag.inc"-->
+
+
+<!-- My little icon in the link url -->
+<link rel="icon"  type="image/png" href="images/ArgoIcon" />  
+
+<!-- Activate some overrides to basic configuration. -->
+<!--#set var="PageStyle" value="standard" -->
+<script type="text/javascript" charset="utf-8">
+// These lines pull the Server-side-include (SSI) strings.
+gPageName='<!--#echo encoding="none" var="PageStyle"-->';
+// This is used to get a query string supplied to the page on the server side, but hidden
+// from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
+gHiddenQueryString='<!--#echo encoding="none" var="QUERY_STRING"-->';
+</script>
+
+
+<!-- Javascript libraries and code. -->
+<!--(#)include virtual="html/libraries.inc"-->
+<!--#include virtual="libraries.cgi"-->
+
+
+<!-- Main CSS sheet for basic layout, custom mods. -->
+<link rel="stylesheet" href="argo.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="selected-object-info.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="local.css" type="text/css" media="all"/>
+
+</head>
+
+
+<body>
+<div id='everything'>
+
+  <div id="header" >
+    <center>
+      <a href="http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/uboone/data/uboonepro/reco/S2013.06.25"
+      style="background: black; color: white;"> Click here for 2013 MC Challenge events! </a>
+    </center>
+    <center>
+      <!-- <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span> -->
+        <img src="images/new-argo-logo.png" alt="Argo - the Microboone Web Event Display" style="height:200px;">
+    </center>
+    <div class="header-links"><center>
+            <a href='help'>Help and Hints</a>
+      
+            <a class="align-left" id="Print" href='#'>Print</a>
+            <div class="align-right"><span class="align-right" id="link-to-this-event">Link to this event</span>
+              <br/><span class="align-right" id="email-this-event">Email this event</span>
+            </div>
+    </center>
+    </div>
+    
+    <table style="clear: both;" border="0" width="100%"><tr>
+    <td width="5%">Status:</td><td><div id="status">Script loading...</div></td>
+    </tr></table>
+  </div> <!-- header -->
+
+  <div id="expando-target" style="z-index:998;"></div>
+
+  <div id="content">
+  <div id="content-top">
+    <!-- INPUT -->
+    <!--#include virtual="html/DataSource.inc" -->
+  </div> <!-- content-top -->
+
+  <div style="clear:both;"></div>
+  <div id="content-right" class="dock">   
+    <!--#include virtual="html/HitHistogram.inc" -->
+    
+    <!--#include virtual="html/EventInfo.inc" -->
+    <!--#include virtual="html/Configuration.inc" -->
+    <!--#include virtual="html/WireInfo.inc" -->
+    <!--#include virtual="html/dEdXTool.inc" -->
+    <!--#include virtual="html/MCInfo.inc" -->
+    <!--#include virtual="html/HoverInfo.inc" -->
+     
+    
+  </div> <!-- content-right -->
+
+  <div id="content-main">
+  <div id="content-wide" class="dock">
+    
+    <!--#include virtual="html/TimeHistogram.inc" -->
+    <!--#include virtual="html/WireView.inc" -->
+    <!--#include virtual="html/reco.inc" -->
+    <!--#include virtual="html/ZoomControl.inc" -->
+    
+    
+
+  </div> <!-- content-wide -->
+  <div id="content-left" class="dock">
+    <!--#include virtual="html/MRI.inc" -->    
+    <!--#include virtual="html/MCDigraph.inc" -->
+    <!--#include virtual="html/OpTimeHistogram.inc" -->
+    
+  </div> <!-- content-left -->
+
+  <div id="content-middle" class="dock">
+
+    <!--#include virtual="html/TridView.inc" -->
+    <!--#include virtual="html/WireViewBig.inc" -->
+    <!--#include virtual="html/ArgoDreamyScan.inc" -->
+    
+
+  </div> <!-- content-middle -->
+
+  </div> <!-- content-main -->
+  
+
+
+</div> <!-- content -->
+  
+  <!-- <div style="clear: both;"></div> -->
+
+
+  <div id="footer">
+    <!--#include virtual="html/Debugging.inc" -->
+    
+  <!--#include virtual="html/credits.inc" -->
+  
+  </div> <!-- footer -->
+  
+  <!-- hidden stuff. -->
+  <!--#include virtual="html/MOTD.inc" -->
+  
+  <div id="warning-dialog" title="Warning">
+     <p id="warning-dialog-message"></p>
+   </div>
+   
+   <!--#include virtual="html/SelectionInfoOverlay.inc" -->
+   
+</div> <!-- Everything -->
+</body>
+</html>
