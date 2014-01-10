@@ -155,16 +155,35 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
 WireInfo.prototype.Draw = function()
 {
   $(this.txt_element).html('');
-  if(gHoverState.type != "wire") return;
+  var tdc =0;
+  var chan=0;
+  var wire = 0;;
+  var plane = 0;
+  if(gHoverState.type == "wire") {
+    tdc = Math.max(Math.floor(gHoverState.obj.sample),0);
+    chan = Math.floor(gHoverState.obj.channel);
+    var planewire = gGeo.wireOfChannel(chan);
+    wire = planewire.wire;
+    plane = planewire.plane;
+    
+  } else if(gHoverState.type == "hit") {
+    console.warn("hit hover: ",gHoverState.obj);
+    tdc = Math.max(Math.floor(gHoverState.obj.t),0);
+    wire = gHoverState.obj.wire;
+    plane = gHoverState.obj.plane;
+    chan = gGeo.channelOfWire(plane,wire);
+ 
+  } else {
+    return;
+  }
+
 
   var h = "";
-  var tdc = Math.max(Math.floor(gHoverState.obj.sample),0);
-  var chan = Math.floor(gHoverState.obj.channel);
   h += "Channel: " +  chan + '<br/>';
-  var planewire = gGeo.wireOfChannel(chan);
-  h += "Plane: " + planewire.plane + "  Wire: " +  planewire.wire + '<br/>';
+  h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
   h += "TDC: " +tdc + '<br/>';
     
+  $(this.txt_element).html(h);
   
   // Pull a single horizontal line from the png into the histogram
   var offscreenCtx;
@@ -180,10 +199,10 @@ WireInfo.prototype.Draw = function()
 
   this.graph.hists = [];
   this.graph.colorscales = [];
-  var maxwire = gGeo.numWires(planewire.plane);
+  var maxwire = gGeo.numWires(plane);
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     var c = i+chan;
-    var wire = planewire.plane+i;    
+    var wire = plane+i;    
     if(c<0) continue;
     if(wire>maxwire) continue;
     this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
@@ -194,7 +213,6 @@ WireInfo.prototype.Draw = function()
   if(this.graph.min_v > -100) this.graph.min_v = -100;
   if(this.graph.max_v <  100) this.graph.max_v =  100;
   // this.LoadHistogramWithWireData(this.graphdata,offscreenCtx,chan,tdc);
-  $(this.txt_element).html(h);
   // this.graph.ResetToHist(this.graphdata);
   this.graph.Draw();
   
