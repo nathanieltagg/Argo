@@ -107,8 +107,9 @@ $(function() {
       // case 116: // 't'
       //   $('#ctl-show-hitmap-tracks').click(); gStateMachine.Trigger('phColorChange');
       //   return false;
-      // case 114: // 'r'
-      //   $('#ctl-show-hitmap-regions').click(); gStateMachine.Trigger('phColorChange');
+       case 114: // 'r'
+         $('#ctl-show-reco').click(); 
+         return false;
       //   return false;
       // case 109: // 'm'
       //   $('#ctl-show-hitmap-truth').click(); gStateMachine.Trigger('phColorChange');

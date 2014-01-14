@@ -121,6 +121,7 @@ function WireView( element, options )
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
+  this.ctl_show_reco =  GetBestControl(this.element,".show-reco");
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
 
@@ -131,11 +132,14 @@ function WireView( element, options )
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
   $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
+  $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
+  
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
   this.ctl_plane.click(function(ev) { 
@@ -327,6 +331,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     if ($(this.ctl_dedx_path).is(":checked")) {
       this.DrawdEdXPath(min_u,max_u, min_v, max_v, fast);
     }
+
+    this.DrawMyReco(min_u,max_u, min_v, max_v, fast);
+    
   }
 
   if(this.zooming) {
@@ -549,8 +556,9 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.lineTo(x1,y1);
     this.ctx.fill();
   }
-  
 }
+
+
 
 WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -959,6 +967,61 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.closePath();
     this.ctx.fill();
   }
+
+}
+
+WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
+{
+  // Drawing the dEdX path.
+  if (typeof gReco === 'undefined') return;
+  if(!gReco) return;
+  if(!gReco.matches) return;
+  
+  if (! ($("#ctl-show-reco").is(":checked")))  return;
+
+
+  this.ctx.save();
+  this.ctx.fillStyle = "rgba(0,92,0,0.5)";
+  this.ctx.strokeStyle = "rgb(0,92,0)";
+  
+  if(gReco.houghlines && this.plane==2)
+    for(var i=0;i<gReco.houghlines.length;i++)
+    {      
+      var line =gReco.houghlines[i];
+      this.ctx.beginPath();
+      this.ctx.moveTo( this.GetX(line[0][0]), this.GetY(line[0][1]) );
+      for(var j = 1; j<line.length; j++) {
+        this.ctx.lineTo( this.GetX(line[j][0]), this.GetY(line[j][1]) );
+      }
+      this.ctx.stroke();
+    }
+  
+  this.ctx.restore();
+
+
+  this.ctx.save();
+  this.ctx.fillStyle = "rgba(0,92,0,0.5)";
+  this.ctx.strokeStyle = "rgb(0,92,0)";
+  
+  for(var i=0;i<gReco.matches.length;i++)
+  {
+    var pt =gReco.matches[i];
+
+    // Convert particle X coordinate to TDC value.
+
+    // Convert YZ into wire number.
+    var wire = gGeo.yzToWire(this.plane,pt.y,pt.z);
+    var x = this.GetX(wire);
+    var y = this.GetY(pt.t + gGeo.getTDCofX(this.plane,0));
+    var r = 2;
+    this.ctx.beginPath();
+    this.ctx.arc(x,y,r,0,Math.PI*1.99,false);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+  }
+  
+  this.ctx.restore();
 
 }
 
