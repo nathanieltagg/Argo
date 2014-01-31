@@ -530,9 +530,15 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   if(!gRecord.clusters) return;
   var clusters = gRecord.clusters[$("#ctl-ClusterLists").val()];
   if(!clusters) return;  
+
+  var hits = [];
+  if(gHitsListName) hits = gRecord.hits[gHitsListName];
+
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
-    if(gGeo.planeOfView(clus.view) != this.plane) continue;
+    // if(gGeo.planeOfView(clus.view) != this.plane) continue;
+    console.log(clus.plane,"clus.plane",this.plane,"this.plane");
+    if(clus.plane != this.plane) continue;
     console.log(
       "clus on plane ",this.plane 
     ,clus.startPos.wire
@@ -547,14 +553,31 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     var cs = new ColorScaleIndexed(clus.ID);
     this.ctx.fillStyle = "rgba(" + cs.GetColor() + ",0.5)";
 
+    if(!clus.hits) continue;
+    var points = [];
+    for(var ihit=0;ihit<clus.hits.length;ihit++) {
+      var hid = clus.hits[ihit];
+      var h = hits[hid];
+      if(h.plane == this.plane) {
+        points.push( [ h.wire, h.t ] );        
+      } else {
+        console.log(clus,ihit,hid,h);
+      }
+    }
+    hull = GeoUtils.convexHull(points);
+    console.log("convex hull",points.length,hull);
+
+
     // this.ctx.fillStyle = "orange";
     this.ctx.beginPath();
-    this.ctx.moveTo(x1,y1);
-    this.ctx.lineTo(x1,y2);
-    this.ctx.lineTo(x2,y2);
-    this.ctx.lineTo(x2,y1);
-    this.ctx.lineTo(x1,y1);
+    this.ctx.moveTo(this.GetX(hull[0][0][0]),this.GetY(hull[0][0][1]));
+    for(var ihull=0;ihull<hull.length;ihull++) {
+      this.ctx.lineTo(this.GetX(hull[ihull][1][0])
+                     ,this.GetY(hull[ihull][1][1]) );
+    }
     this.ctx.fill();
+
+    
   }
 }
 
