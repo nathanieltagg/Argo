@@ -253,37 +253,33 @@ void RecordComposer::composeClusters()
     // Also, I really should support multiple hit lists...
     //
     // Attempt to find association data to hits.
-    // vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
-    // for(size_t iass=0;iass<assnames.size(); iass++) {
-    //   std::string assname = assnames[iass];
-    //   cout << "Finding association to clusters " << assname << endl;
-    //   size_t u1 = assname.find_first_of("_");
-    //   size_t u2 = assname.find_first_of("_",u1+1);
-    //   std::string shortname("clusid");
-    //   shortname += assname.substr(u1,u2-u1);
-    // 
-    //   // Attempt to pull association data.
-    //   TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
-    //   TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
-    //   int n = forma.GetNdata();
-    //   int nb = formb.GetNdata(); // need this line to goose formula into evaluating
-    //   cout << shortname << "  Association formula has " << n << " entries" << endl;
-    //   cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
-    //   for(Int_t i=0;i<n;i++) {
-    //     int cluster_id = forma.EvalInstance(i);
-    //     int hit_id     = formb.EvalInstance(i);
-    //     cout << "  " << hit_id << " --> " << cluster_id << endl;
-    //     if(hit_id< v.size() && hit_id >= 0) {
-    //       v[hit_id].add(shortname,cluster_id);
-    //     }
-    //   }
-    //   
-    // 
-    // }
+    std::map<int,std::vector<int> > map_to_hits;
     
-
-
-
+    vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
+    for(size_t iass=0;iass<assnames.size(); iass++) {
+      std::string assname = assnames[iass];
+      cout << "Finding association to clusters " << assname << endl;
+      size_t u1 = assname.find_first_of("_");
+      size_t v1 = name.find_first_of("_");
+      std::cout << "Looking for match between " << name << " and " << assname << endl;
+      if(assname.substr(u1+1)!=name.substr(v1+1)) {
+        continue;
+      }
+      std::cout << "---> Got a match." << endl;
+    
+      // Attempt to pull association data.
+      TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
+      TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
+      int n = forma.GetNdata();
+      int nb = formb.GetNdata(); // need this line to goose formula into evaluating
+      // cout << shortname << "  Association formula has " << n << " entries" << endl;
+      // cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
+      for(Int_t i=0;i<n;i++) {
+        int cluster_id = forma.EvalInstance(i);
+        int hit_id     = formb.EvalInstance(i);
+        map_to_hits[cluster_id].push_back(hit_id);
+      }    
+    }
 
     for(int i=0;i<nclusters;i++) {
       JsonObject jclus;
@@ -299,6 +295,8 @@ void RecordComposer::composeClusters()
       jclus.add("endPos"        ,GetClusterWireAndTDC(endPos,i));
       jclus.add("sigmaStartPos" ,GetClusterWireAndTDC(sigmaStartPos,i));
       jclus.add("sigmaEndPos"   ,GetClusterWireAndTDC(sigmaEndPos,i));
+
+      jclus.add("hits",JsonArray(map_to_hits[i]));
 
       jClusters.add(jclus);
     }
@@ -499,7 +497,7 @@ void  RecordComposer::composeOpPulses()
           jobj.add("samples",nsamp);
           jobj.add("waveform",jwave);
           joppulses.add(jobj);          
-          cout << "Created pulse channel " << chan << " with " << nsamp << " samples " << endl;
+          // cout << "Created pulse channel " << chan << " with " << nsamp << " samples " << endl;
         }
         
         
