@@ -774,8 +774,8 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     if(gSelectState.obj && (gSelectState.obj == trk)){      
       if(this.fMouseInContentArea) {
         var offset = getAbsolutePosition(this.canvas);
-        var lastpt = pts[pts.length-1];
-        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
+        var lastpt = points[points.length-1];
+        SetOverlayPosition(offset.x + lastpt.p1.x, offset.y + lastpt.p1.y);  
       }
 
       this.ctx.lineWidth = 5;
