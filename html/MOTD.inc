@@ -6,12 +6,6 @@
   </p>
   Recent updates: <br/>
   <ul>
-    <li> dE/dX curve reference </li>
-    <li> Experimental hand-scan forms </li>
-    <li> Read OpDetPulses if OpHits is empty </li>
-    <li> "MRI" Timeslice View </li>
-    <li> Hit Color histogram </li>
-    <li> Load-on-hashchange: URLs are now persistent; back-button works within viewer. </li>
-    <li> NEW: Click to select tracks or trajectories, with popup info overlay! </li>
+    <li> Feb 4: Added orange convex hull layer for clusters. </li>
   </ul>
 </div> 

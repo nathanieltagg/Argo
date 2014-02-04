@@ -248,6 +248,39 @@ void RecordComposer::composeClusters()
     TreeElementLooter sigmaStartPos(fTree,name+"obj.fSigmaStartPos");
     TreeElementLooter sigmaEndPos  (fTree,name+"obj.fSigmaEndPos");
 
+    //
+    // I would like to also put this stuff here, instead of just in the hits area.
+    // Also, I really should support multiple hit lists...
+    //
+    // Attempt to find association data to hits.
+    std::map<int,std::vector<int> > map_to_hits;
+    
+    vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
+    for(size_t iass=0;iass<assnames.size(); iass++) {
+      std::string assname = assnames[iass];
+      cout << "Finding association to clusters " << assname << endl;
+      size_t u1 = assname.find_first_of("_");
+      size_t v1 = name.find_first_of("_");
+      std::cout << "Looking for match between " << name << " and " << assname << endl;
+      if(assname.substr(u1+1)!=name.substr(v1+1)) {
+        continue;
+      }
+      std::cout << "---> Got a match." << endl;
+    
+      // Attempt to pull association data.
+      TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
+      TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
+      int n = forma.GetNdata();
+      int nb = formb.GetNdata(); // need this line to goose formula into evaluating
+      // cout << shortname << "  Association formula has " << n << " entries" << endl;
+      // cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
+      for(Int_t i=0;i<n;i++) {
+        int cluster_id = forma.EvalInstance(i);
+        int hit_id     = formb.EvalInstance(i);
+        map_to_hits[cluster_id].push_back(hit_id);
+      }    
+    }
+
     for(int i=0;i<nclusters;i++) {
       JsonObject jclus;
       jclus.add("totalCharge",ftr.getJson(name+"obj.fTotalCharge",i));
@@ -262,6 +295,8 @@ void RecordComposer::composeClusters()
       jclus.add("endPos"        ,GetClusterWireAndTDC(endPos,i));
       jclus.add("sigmaStartPos" ,GetClusterWireAndTDC(sigmaStartPos,i));
       jclus.add("sigmaEndPos"   ,GetClusterWireAndTDC(sigmaEndPos,i));
+
+      jclus.add("hits",JsonArray(map_to_hits[i]));
 
       jClusters.add(jclus);
     }
@@ -436,7 +471,7 @@ void  RecordComposer::composeOpPulses()
       int samples = ftr.getInt(name+"obj.fSamples"     ,i);
       int frame   = ftr.getInt(name+"obj.fPMTFrame"    ,i);
       int tdc     = ftr.getInt(name+"obj.fFirstSample" ,i);
-      const std::vector<short> *ptr = loot.get<std::vector<short>>(i);
+      const std::vector<short> *ptr = loot.get<std::vector<short> >(i);
       const std::vector<short>& wave = *ptr;
 
       if(samples > 10000) {
@@ -462,7 +497,7 @@ void  RecordComposer::composeOpPulses()
           jobj.add("samples",nsamp);
           jobj.add("waveform",jwave);
           joppulses.add(jobj);          
-          cout << "Created pulse channel " << chan << " with " << nsamp << " samples " << endl;
+          // cout << "Created pulse channel " << chan << " with " << nsamp << " samples " << endl;
         }
         
         
@@ -572,7 +607,7 @@ void RecordComposer::composeCal()
     int nwires = lf->GetLen();
     TreeElementLooter l(fTree,name+"obj.fSignal");
     if(!l.ok()) return;
-    const std::vector<float> *ptr = l.get<std::vector<float>>(0);
+    const std::vector<float> *ptr = l.get<std::vector<float> >(0);
   
     JsonObject r;
     size_t width = ptr->size();
@@ -603,7 +638,7 @@ void RecordComposer::composeCal()
       // pointer = (char*)cont->At(i);
       // ladd = pointer+offset;
       // ptr = (std::vector<float> *)ladd;
-      ptr = l.get<std::vector<float>>(i);
+      ptr = l.get<std::vector<float> >(i);
       // std::string signal("[");
       float max = 0;
       float min = 1;
@@ -709,7 +744,7 @@ void RecordComposer::composeRaw()
   
     TreeElementLooter l(fTree,name+"obj.fADC");
     if(!l.ok()) return;
-    const std::vector<short> *ptr = l.get<std::vector<short>>(0);
+    const std::vector<short> *ptr = l.get<std::vector<short> >(0);
     // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
     size_t width = ptr->size();
 
@@ -727,7 +762,7 @@ void RecordComposer::composeRaw()
   
   
     for(int i=0;i<ndig;i++) {
-      ptr= l.get<std::vector<short>>(i);
+      ptr= l.get<std::vector<short> >(i);
       std::vector<short>::iterator it;
       double wiresum = 0;
     
@@ -823,7 +858,50 @@ int RecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector&
 //   double d2 = qp2-lam*lam*v2;
 //   return sqrt(d2);
 // }
-
+void RecordComposer::composeAuxDets()
+{
+  // On hold. No way I can figure out how to decode a std::set<AuxDetIDE>.
+  
+  // vector<string> leafnames = findLeafOfType("vector<sim::AuxDetSimChannel>");
+  // JsonObject reco_list;
+  // 
+  // for(size_t iname = 0; iname<leafnames.size(); iname++) {
+  //   std::string name = leafnames[iname];     
+  //       
+  //   std::cout << "Looking at sim::AuxDetSimChannel " << (name+"obj_").c_str() << endl;
+  // 
+  //   JsonArray jAuxDets;
+  //   TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+  //   if(!l) continue;
+  //   int n = l->GetLen();
+  //   cout << "auxdets: " << n << endl;
+  //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fTime
+  //    // vector<double> recob::OpFlashs_opflash__Reco.obj.fPEperOpDet
+  //    // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireCenter
+  //    // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireWidths
+  //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fYCenter
+  //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fYWidth
+  //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fZCenter
+  //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fZWidth
+  //    //          Int_t recob::OpFlashs_opflash__Reco.obj.fOnBeamTime
+  //   
+  // 
+  //   TreeElementLooter tel_fPEperOpDet(fTree,name+"obj.fPEperOpDet");
+  //   TreeElementLooter tel_fWireCenter(fTree,name+"obj.fWireCenter");
+  //   TreeElementLooter tel_fWireWidths(fTree,name+"obj.fWireWidths");
+  // 
+  //   for(int i=0;i<n;i++) {
+  //     JsonObject jflash;
+  //     jflash.add("time"       ,ftr.getJson(name+"obj.fTime",i));
+  //     jflash.add("yCenter"    ,ftr.getJson(name+"obj.fYCenter",i));
+  //     jflash.add("yWidth"     ,ftr.getJson(name+"obj.fYWidth",i));
+  //     jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
+  //     jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
+  //     jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
+  // 
+  // 
+  // }
+}
 
 void RecordComposer::composeMC()
 {
@@ -916,7 +994,7 @@ void RecordComposer::composeMC()
       for(int i=0;i<v_particles.size();i++) {
         // Add  the trajectory points.
         const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
-        traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector>>>(i);
+        traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector> > >(i);
 
         // Find which points are really required.
         // Start at the beginning and trace along the mom'm vector until you find a point outside of tolerance. Add that point
@@ -1076,6 +1154,8 @@ void RecordComposer::compose()
   composeOpPulses();
   composeOpFlashes();
   composeOpHits();
+  
+  composeAuxDets();
   
   composeMC();
   

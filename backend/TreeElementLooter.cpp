@@ -70,6 +70,6 @@ char* TreeElementLooter::getAddress(UInt_t row)
 using std::vector;
 template const vector<float>* TreeElementLooter::get< vector<float> >(UInt_t row);
 template const vector<short>* TreeElementLooter::get< vector<short> >(UInt_t row);
-template const vector<std::pair<TLorentzVector,TLorentzVector>>* TreeElementLooter::get< vector<std::pair<TLorentzVector,TLorentzVector>> >(UInt_t row);
+template const vector<std::pair<TLorentzVector,TLorentzVector> >* TreeElementLooter::get< vector<std::pair<TLorentzVector,TLorentzVector> > >(UInt_t row);
 
 

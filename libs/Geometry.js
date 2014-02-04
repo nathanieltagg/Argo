@@ -245,6 +245,6 @@ Geometry.prototype.yzToWire = function(plane,y,z)
       var wire = -1.16434+z*(3.33333);
       break;
  }
-  return Math.round(wire);
+  return wire;
 }
 
