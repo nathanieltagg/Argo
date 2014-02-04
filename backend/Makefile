@@ -32,6 +32,12 @@ SOURCES = $(notdir $(wildcard *.cpp)) \
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
 
+backend_obj = tmp/MakePng.o tmp/ResultComposer.o    tmp/TreeReader.o \
+tmp/ColorMap.o                tmp/RootToJson.o        tmp/cencode.o \
+tmp/FormString.o        tmp/SocketServer.o \
+tmp/FormulaLooter.o      tmp/Timer.o \
+tmp/JsonElement.o       tmp/RecordComposer.o    tmp/TreeElementLooter.o
+
 #Where to look for source files
 vpath %.cpp $(boonedaq)/projects/dispatcher
 vpath %.cpp $(boonedaq)/projects/datatypes
@@ -42,9 +48,10 @@ CPPFLAGS += -I $(boonedaq)/projects
 # Boost.
 MY_BOOST_DIR ?= boost
 CPPFLAGS += -I $(MY_BOOST_DIR)/include
-LIBS += -lboost_serialization -lboost_system -lboost_thread
+#LIBS += -lboost_serialization -lboost_system -lboost_thread
 ifeq ($(UNAME),Darwin)
-  LIBS += -Wl,-rpath,@executable_path/boost/lib
+  LIBS += -Wl,-rpath,@executable_path/boost/lib 
+	CPPFLAGS += -ftemplate-depth=256  #stupid clang!
 endif
 CPPFLAGS += -I/$(MY_BOOST_DIR)/include
 LIBS += -L $(MY_BOOST_DIR)/lib 
@@ -64,8 +71,15 @@ CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/o
 # add any other desired libs here
 # PNG
 LIBS += -L/opt/X11/lib -lpng 
+
 # postresql
-LIBS +=  -lpq
+ifeq ($(UNAME),Darwin)
+	# Use the Postgres app, instead of a fullblown installation.
+#	LIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib
+	CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
+endif
+#LIBS += -lpq
+	
 
 #Dependency rule
 tmp/%.d : %.cpp
@@ -109,7 +123,7 @@ tmp/Cint.o : Cint.cpp
 
 .PHONY: bin
 bin: argo-backend argo-raw-backend myroot testx
-argo-backend: $(OBJ) tmp/argo-backend.o Makefile
+argo-backend: $(backend_obj) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile

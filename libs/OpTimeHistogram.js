@@ -56,7 +56,7 @@ function OpTimeHistogram( element  )
   
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('hoverChange',this,"Draw");
+  gStateMachine.BindObj('hoverChange',this,"HoverChange");
   this.input = "ophits"; 
  
 }
@@ -143,6 +143,14 @@ OpTimeHistogram.prototype.NewRecord = function()
   gOpDetMode.cut.max = tmax;
   
   this.Draw();
+}
+
+OpTimeHistogram.prototype.HoverChange = function()
+{
+  if(  (gHoverState.type == "opdet") 
+     ||(gHoverState.type == "opflash")
+     ||(gHoverState.last.type == "opdet") 
+     ||(gHoverState.last.type == "opflash") ) this.Draw();
 }
 
 

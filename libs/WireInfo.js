@@ -155,36 +155,51 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
 WireInfo.prototype.Draw = function()
 {
   $(this.txt_element).html('');
+  var h = "";
+  var showgraph = false;
   var tdc =0;
   var chan=0;
   var wire = 0;;
   var plane = 0;
-  if(gHoverState.type == "wire") {
-    tdc = Math.max(Math.floor(gHoverState.obj.sample),0);
-    chan = Math.floor(gHoverState.obj.channel);
+  if(("channel" in gHoverState) && ("sample" in gHoverState)) {
+    tdc = Math.max(Math.floor(gHoverState.sample),0);
+    chan = Math.floor(gHoverState.channel);
     var planewire = gGeo.wireOfChannel(chan);
     wire = planewire.wire;
     plane = planewire.plane;
-    
+    showgraph = true;
+  }
+
+  h += "Channel: " +  chan + '<br/>';
+  h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
+  h += "TDC: " +tdc + '<br/>';
+
+  if(gHoverState.type == "wire") {    
   } else if(gHoverState.type == "hit") {
-    console.warn("hit hover: ",gHoverState.obj);
+    // console.warn("hit hover: ",gHoverState.obj);
     tdc = Math.max(Math.floor(gHoverState.obj.t),0);
     wire = gHoverState.obj.wire;
     plane = gHoverState.obj.plane;
     chan = gGeo.channelOfWire(plane,wire);
+    h += "Hit: q:" + gHoverState.obj.q + " t:" + gHoverState.obj.t + "<br/>";
+    h += "Channel: " +  chan + '<br/>';
+    h += "Channel: " +  chan + '<br/>';
+    h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
+    h += "TDC: " +tdc + '<br/>';
+    showgraph = true;
  
+  } else if(gHoverState.type == "cluster") {
+      // console.warn("hit hover: ",gHoverState.obj);
+      h += "Cluster: " + gHoverState.obj.ID;
   } else {
-    return;
+    h += gHoverState.type;
   }
-
-
-  var h = "";
-  h += "Channel: " +  chan + '<br/>';
-  h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
-  h += "TDC: " +tdc + '<br/>';
     
   $(this.txt_element).html(h);
   
+  
+  
+  if(!showgraph) return;
   // Pull a single horizontal line from the png into the histogram
   var offscreenCtx;
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();

@@ -198,11 +198,14 @@ MRI.prototype.NewRecord = function()
   var inhits = gRecord.hits[gHitsListName];
   if(inhits.length==0) return;
   
+  // Get calibration
+  this.t0 = [gGeo.getTDCofX(0,0),gGeo.getTDCofX(1,0),gGeo.getTDCofX(2,0)];
+  
   // copy hits list, including deltas.
   this.hits = [];
   for(var i=0;i<inhits.length;i++) {
     var hit = inhits[i];
-    var t_corr = hit.t - gGeo.fXTicksOffsets[0][0][hit.plane].offset;
+    var t_corr = hit.t - this.t0[hit.plane];
     this.hits.push({tc: t_corr, h:hit});
   }
   // this.hits = hits.slice(0); // copy.
@@ -376,6 +379,36 @@ MRI.prototype.DrawHits = function()
   
 }
 
+MRI.prototype.DrawMyReco = function()
+{
+  // Drawing the dEdX path.
+  if (typeof gReco === 'undefined') return;
+  if(!gReco) return;
+  if(!gReco.matches) return;
+  
+  if (! ($("#ctl-show-reco").is(":checked")))  return;
+  this.ctx.fillStyle = "rgba(0,92,0,0.5)";
+  this.ctx.strokeStyle = "rgb(0,92,0)";
+  
+
+  this.ctx.save();
+  for(var i=0;i<gReco.matches.length;i++)
+  {
+    var pt =gReco.matches[i];
+    if(pt.t < this.t[0]) continue;
+    if(pt.t > this.t[1]) continue;
+    var x = this.GetX(pt.z);
+    var y = this.GetY(pt.y);
+    var r = 2;
+    this.ctx.beginPath();
+    this.ctx.arc(x,y,r,0,Math.PI*1.99,false);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+
+  }
+  this.ctx.restore();
+}
 
 
 
@@ -492,7 +525,8 @@ MRI.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   if ($(this.ctl_show_tracks).is(":checked")) {
     this.DrawTracks(min_u,max_u, min_v, max_v);
   }
-
+  
+  this.DrawMyReco(min_u,max_u, min_v, max_v);
   // 
   // if ($(this.ctl_show_mc).is(":checked")) {
   //   this.DrawMC(min_u,max_u, min_v, max_v, fast);

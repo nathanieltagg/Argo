@@ -17,6 +17,7 @@ $ chmod a+w datacache/ server/
 $ cp dot.htaccess .htaccess
 Edit the .htaccess file, using YOUR absolute link for RewriteBase
 $ cp datacache/dot.htaccess datacache/.htaccess
+$ cp basetag.inc.template basetag.inc
 Edit above, ditto
 
 Edit basetag.inc so it points at the correct location.
@@ -33,3 +34,26 @@ easy_install-2.7 pymongo
 service pymongo start
 chkconfig pymonto
 
+
+
+Feb 1 2014:
+On a freshly-installed OS X 10.8 (Mavericks) computer:
+Edit /private/etc/apache2/extra/httpd-userdir.conf
+Add these lines:
+  <Directory "/Users/*/Sites/">
+    Allowoverride All
+    Options Indexes
+    Order allow,deny
+    Allow from all
+  </Directory>
+Make a Sites dir. chmod a+rX on it.
+Reload config:
+$ sudo apachectl graceful 
+
+$ sudo su
+  $ cpan
+    <enter yes to all defaults>
+    quit <---- Not sure why I had to quit, but installs worked on second try.
+  $ cpan
+        CPAN> install CGI
+        CPAN> install JSON::XS    

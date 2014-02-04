@@ -7,6 +7,8 @@
 #include "TreeReader.h"
 #include "TObject.h"
 #include <math.h>
+#include <vector>
+
 class TTree;
 class TreeElementLooter;
 class TLorentzVector;
@@ -34,6 +36,10 @@ public:
   void  composeRawAvailability(); 
   void  composeCal();
   void  composeRaw();
+
+  // Other
+  void composeAuxDets();
+
   
   // Monte carlo
   void  composeMC();
@@ -41,6 +47,17 @@ public:
 
   // Utility functions.
   std::vector<std::string> findLeafOfType(std::string pattern);
+  
+  class association { public:
+    association() {};
+    // Holds an Assn object that links a to b.
+    std::string a;
+    std::string b;
+    std::vector< std::vector<int> > a_to_b;
+    std::vector< std::vector<int> > b_to_a;
+  };
+
+  std::vector<association> getAssociation(std::string pattern);
   
   void        hsvToRgb(unsigned char* out, float h, float s, float v);
   std::string stripdots(const std::string& s);

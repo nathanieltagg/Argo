@@ -1,3 +1,5 @@
+// Hoverstate should also hold "channel" and "sample" if it relates to a specific wire.
+
 var gHoverState = {
   obj:  null,
   type: "none",
@@ -21,8 +23,8 @@ function ChangeHover( arg )
     var last = $.extend({},gHoverState);
     gHoverState = $.extend({},arg);
     gHoverState.last = last;
+    console.log("HoverChange:",arg);
     gStateMachine.Trigger("hoverChange");
-    
   }
 }
 

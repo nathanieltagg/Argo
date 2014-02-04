@@ -1,4 +1,4 @@
-Options +ExecCGI -Indexes +Includes
+Options +ExecCGI -Indexes +Includes +FollowSymLinks
 AddHandler cgi-script .cgi
 AddHandler server-parsed .html
 AddHandler server-parsed .inc
