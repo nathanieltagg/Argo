@@ -61,7 +61,7 @@ return {
   },
 
   is_point_in_polygon : function(p,polygon) {
-    // return true if point p=[x,y] is inside convex polygon described by polygon [[x,y],[x,y]]
+    // return true if point p=[x,y] is inside convex polygon described by polygon [[x,y],[x,y],...]
     // Uses 'winding number': go around points in order, and see if the angle to the point
     // is zero or 2pi.  (In fact, use method which just checks that sign of angle is the same each time:
     //  http://demonstrations.wolfram.com/AnEfficientTestForAPointToBeInAConvexPolygon/)
@@ -143,7 +143,7 @@ return {
 //
 convexHull: function( points )
 {
-  console.warn("convexHull",points);
+  // console.warn("convexHull",points);
   //find first baseline
   var maxX, minX;
   var maxPt, minPt;
