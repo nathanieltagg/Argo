@@ -88,6 +88,7 @@ function WireView( element, options )
   this.visHits = [];
   
   this.mouseable = [];
+  this.mouseable_poly = [];
   
   this.loaded_wireimg = false;
   this.loaded_thumbnail = false;
@@ -301,18 +302,20 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.clip();
   
   this.mouseable = [];
+  this.mouseable_poly = [];
   if(gRecord) {
     if ($(this.ctl_show_wireimg).is(":checked")) {
       this.DrawImage(min_u,max_u, min_v, max_v, fast);
+    }
+
+    if ($(this.ctl_show_clus).is(":checked")) {
+      this.DrawClusters(min_u,max_u, min_v, max_v, fast);
     }
 
     if ($(this.ctl_show_hits).is(":checked")) {
       this.DrawHits(min_u,max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_clus).is(":checked")) {
-      this.DrawClusters(min_u,max_u, min_v, max_v, fast);
-    }
 
     if ($(this.ctl_show_spoints).is(":checked")) {
       this.DrawSpacepoints(min_u,max_u, min_v, max_v, fast);
@@ -534,24 +537,27 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   var hits = [];
   if(gHitsListName) hits = gRecord.hits[gHitsListName];
 
+  this.clusterHulls = [];
+
+  clusterLoop:
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
+    // FIXME: in principle this should work, but it appears the view numbers are actually
+    // plane numbers in the early 2013 MC.  So, instead, we'll break out later....
     // if(gGeo.planeOfView(clus.view) != this.plane) continue;
-    console.log(clus.plane,"clus.plane",this.plane,"this.plane");
-    if(clus.plane != this.plane) continue;
-    console.log(
-      "clus on plane ",this.plane 
-    ,clus.startPos.wire
-    ,clus.endPos  .wire
-    ,clus.startPos.tdc 
-    ,clus.endPos  .tdc 
-    )
-    var x1 = this.GetX(clus.startPos.wire);
-    var x2 = this.GetX(clus.endPos  .wire);
-    var y1 = this.GetY(clus.startPos.tdc );
-    var y2 = this.GetY(clus.endPos  .tdc );
-    var cs = new ColorScaleIndexed(clus.ID);
-    this.ctx.fillStyle = "rgba(" + cs.GetColor() + ",0.5)";
+
+    // console.log(clus.view,"=clus.view",clus.plane,"=clus.plane",this.plane,"=this.plane");
+    // console.log(clus.hits[0],clus.hits[1]);
+    // console.log(hits[clus.hits[0]].plane,"=first hit plane");
+    // console.log(hits[clus.hits[1]].plane,"=first hit plane");
+    // if(clus.plane != this.plane) continue;
+
+    // var x1 = this.GetX(clus.startPos.wire);
+    // var x2 = this.GetX(clus.endPos  .wire);
+    // var y1 = this.GetY(clus.startPos.tdc );
+    // var y2 = this.GetY(clus.endPos  .tdc );
+    // var cs = new ColorScaleIndexed(clus.ID);
+    // this.ctx.fillStyle = "rgba(" + cs.GetColor() + ",0.5)";
 
     if(!clus.hits) continue;
     var points = [];
@@ -559,24 +565,32 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       var hid = clus.hits[ihit];
       var h = hits[hid];
       if(h.plane == this.plane) {
-        points.push( [ h.wire, h.t ] );        
+        points.push( [ this.GetX(h.wire), this.GetY(h.t) ] );        
       } else {
-        console.log(clus,ihit,hid,h);
+        continue clusterLoop;  // Give up on this cluster; go to the next one.
       }
     }
-    hull = GeoUtils.convexHull(points);
-    console.log("convex hull",points.length,hull);
-
-
-    // this.ctx.fillStyle = "orange";
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.GetX(hull[0][0][0]),this.GetY(hull[0][0][1]));
+    var hull = GeoUtils.convexHull(points);
+    var poly = [];
     for(var ihull=0;ihull<hull.length;ihull++) {
-      this.ctx.lineTo(this.GetX(hull[ihull][1][0])
-                     ,this.GetY(hull[ihull][1][1]) );
+      poly.push(hull[ihull][0]);
+    }
+    
+    this.mouseable_poly.push({ obj: clus, type: "cluster",  poly: poly });
+    
+    this.ctx.fillStyle = "rgba(255, 165, 0, 0.5)";
+    this.ctx.beginPath();
+    this.ctx.moveTo(poly[poly.length-1][0],poly[poly.length-1][1]);
+    for(var ipoly=0;ipoly<poly.length;ipoly++) {
+      this.ctx.lineTo(poly[ipoly][0]
+                     ,poly[ipoly][1] );
     }
     this.ctx.fill();
-
+    if(gHoverState.obj == clus) {
+      this.ctx.fillStyle = "rgba(255, 165, 0, 0.8)";
+      this.ctx.strokeStyle = "black";
+      this.ctx.stroke();
+    }
     
   }
 }
@@ -1157,7 +1171,15 @@ WireView.prototype.DoMouse = function(ev)
   } else {
     if(this.fMouseInContentArea) {
       // Find the first good match
-      var match = {obj: null, type:"none"};
+      var match = {obj: {}, type:"wire"}; // by default, it's a wire.
+      
+      for(var i =this.mouseable_poly.length-1 ; i>=0; i--) {
+        var m = this.mouseable_poly[i];
+        if(GeoUtils.is_point_in_polygon([this.fMousePos.x,this.fMousePos.y],m.poly)) {
+          match = m;
+          break;
+        }
+      }
       for(var i =this.mouseable.length-1 ; i>=0; i--) {
         var m = this.mouseable[i];
         if (GeoUtils.line_is_close_to_point(
@@ -1171,11 +1193,10 @@ WireView.prototype.DoMouse = function(ev)
         ChangeSelection(match);
       } else {
         // mousemove.
-        if(match.obj) ChangeHover(match); // match might be null.
-        else          ChangeHover(  { obj:{channel: gGeo.channelOfWire(this.plane,this.fMousePos.u), 
-                                 sample:  this.fMousePos.v
-                                 }
-                                , type: "wire"});        
+        // add hover coordinates.
+        match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u);
+        match.sample  = this.fMousePos.v;
+        ChangeHover(match); // match might be null.
       }
     }
                   
