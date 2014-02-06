@@ -412,9 +412,9 @@ ZoomControl.prototype.Draw = function()
   txt += "<br/>"
   if(this.fMousing) {
     txt += "<span style='color:black'>Mouse:</span> "
-        +"<span style='color: red'  >"+this.fMousedWires[0]+'</span> '
-        +"<span style='color: green'>"+this.fMousedWires[1]+'</span> '
-        +"<span style='color: blue' >"+this.fMousedWires[2]+'</span> ';
+        +"<span style='color: red'  >"+Math.round(this.fMousedWires[0])+'</span> '
+        +"<span style='color: green'>"+Math.round(this.fMousedWires[1])+'</span> '
+        +"<span style='color: blue' >"+Math.round(this.fMousedWires[2])+'</span> ';
   }
   $('span.ZoomControl-Info').html(txt);
   
