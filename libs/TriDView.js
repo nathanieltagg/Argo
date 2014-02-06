@@ -276,6 +276,8 @@ TriDView.prototype.CreateMC = function()
   
 TriDView.prototype.CreateAuxDets = function()
 {
+  if(!gRecord.auxdets) return;
+  if(gRecord.auxdets.length==0) return; // No auxdet info available.
   console.warn("CREATEAUXDETS");
   var detpos = [
   { name:"posAuxDet0"  ,    x:"3628.91180974" ,y:"-1420.26501873" ,z:"-7445.5670412"},
