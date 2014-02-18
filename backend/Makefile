@@ -76,7 +76,8 @@ $(BINOBJ) : tmp/%.o : %.cc
 #Rootcint rule:
 tmp/Cint.cpp : $(RHEADERS) LinkDef.h
 	@echo "Running rootcint... " $(RHEADERS) LinkDef.h
-	LD_LIBRARY_FLAGS=${ROOTSYS}/lib
+	LD_LIBRARY_PATH=${ROOTSYS}/lib
+	DYLD_LIBRARY_PATH=${ROOTSYS}/lib
 	rootcint -v3 -f $@ -c $(CPPFLAGS) $(RHEADERS) LinkDef.h
 
 	
