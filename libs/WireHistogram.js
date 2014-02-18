@@ -36,12 +36,15 @@ function WireHistogram( element  )
     tick_pixels_y: 20,
     log_y:true
   };
+  var self=this;
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
   this.hist = null;
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
   
-  var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('zoomChange',this,"Change");
   gStateMachine.BindObj('zoomChangeFast',this,"Change");
@@ -86,4 +89,10 @@ WireHistogram.prototype.FastRangeChange = function()
   // TDC bounds
   gZoomRegion.setLimits(this.plane,this.min_u,this.max_u);
   gStateMachine.Trigger("zoomChangeFast");
+}
+
+WireHistogram.prototype.Draw = function()
+{
+  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  HistCanvas.prototype.Draw.call(this);
 }
