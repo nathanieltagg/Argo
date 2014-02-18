@@ -35,6 +35,27 @@ OmStatus.prototype.Remove = function()
   $(document).off("OmDataRecieved."+this.mynamespace);
 }
 
+function deltaTimeString(t)
+{
+  
+  var now = new Date();
+  var delta = (now.getTime() - t.getTime())/1000.;
+  var unit = "seconds";
+  if(delta > 100) {
+    delta /= 60.;
+    unit = "minutes";
+    if(delta > 60) {
+      delta /= 60;
+      unit = "hours";
+      if(delta >= 24) {
+        delta /= 24;
+        unit = "days";
+      }
+    }
+  }
+  return delta.toPrecision(4) + " " + unit ;
+}
+
 OmStatus.prototype.UpdateData = function()
 {
   var h = "<a href='" + gOmData.myurl + '?' + gOmData.param + "'>Last URL</a><br/>"
@@ -45,24 +66,12 @@ OmStatus.prototype.UpdateData = function()
       if(gOmData.data.record[key].cycle) {
         var cycle = gOmData.data.record[key].cycle;
         h += "Last event seen: " + cycle.run + "|" + cycle.subrun + "|" +cycle.event + "<br/>";
-        var t = new Date(cycle.time);
-        h += "File update time " + t;
-        var now = new Date();
-        var delta = (now.getTime() - t.getTime())/1000.;
-        var unit = "seconds";
-        if(delta > 100) {
-          delta /= 60.;
-          unit = "minutes";
-          if(delta > 60) {
-            delta /= 60;
-            unit = "hours";
-            if(delta >= 24) {
-              delta /= 24;
-              unit = "days";
-            }
-          }
-        }
-        h += " (" + delta.toPrecision(4) + " " + unit + " ago)<br/>";
+        var t = new Date(cycle.updateTime);
+        h += "File update time " + t + "(" + deltaTimeString(t) + " ago)<br/>";
+        t = new Date(cycle.firstEventTime);
+        h += "First Event: " + t + "(" + deltaTimeString(t) + " ago)<br/>";
+        t = new Date(cycle.lastEventTime);
+        h += "Last Event: " + t + "(" + deltaTimeString(t) + " ago)<br/>";
       }
       break; // just do one cycle.
     }

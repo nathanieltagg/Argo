@@ -66,7 +66,7 @@ int SocketServer::Setup( void )
   mMyAddress.sin_addr.s_addr = INADDR_ANY;
   mMyAddress.sin_port = htons(mPort);
   memset(&(mMyAddress.sin_zero), '\0', 8);
-  if (bind(mListener, (struct sockaddr *)&mMyAddress, sizeof(mMyAddress)) == -1) {
+  if (::bind(mListener, (struct sockaddr *)&mMyAddress, sizeof(mMyAddress)) == -1) {
     cout << Form("SocketServer::Setup Cannot bind socket: %s\n",strerror(errno));
     return 1;
     

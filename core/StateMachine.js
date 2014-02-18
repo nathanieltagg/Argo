@@ -100,6 +100,7 @@ StateMachine.prototype.Trigger = function( trigType )
   this.eventQueue.push(trigType);
 
   if(this.eventExecuting) {
+    console.log("Pushing " + trigType + " into event queue for delayed execution.")
     // We're already in the midst of doing things. Queue this trigger to fire when we're done.
     // console.log('StateMachine::Trigger -> '+trigType+' QUEUED FOR LATER EXECUTION');
     return;
@@ -115,10 +116,9 @@ StateMachine.prototype.Trigger = function( trigType )
     //console.debug("StateMachine::Trigger -> ",trigType);
 
     if(!(t in this.triggers)) {
-		console.error("StateMachine::Trigger called with trigger type ",t," which has no registrants. Maybe a typo?");
-		this.eventExecuting = false;
-		return false;
-	}
+      console.warn("StateMachine::Trigger called with trigger type ",t," which has no registrants. Maybe a typo?");
+      continue; // skip to next event.
+    }
     //console.trace();
     //console.profile();  // Useful for optimizing.
 

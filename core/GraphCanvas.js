@@ -59,17 +59,6 @@ function GraphCanvas( element, options )
 
   // This should work to rebind the event handler to this particular instance of the GraphCanvas.
   // This gives us a mousedown in our region, mousemove or mouseup anywhere.
-  var self = this;
-  if(!isIOS()){
-    $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
-    $(window)    .bind('mousemove',function(ev) { return self.DoMouse(ev); });
-    $(window)    .bind('mouseup',  function(ev) { return self.DoMouse(ev); });
-  }
-   
-  $(this.element).bind('touchstart', function(ev)   { return self.DoTouch(ev); });
-  $(this.element).bind('touchend',   function(ev)   { return self.DoTouch(ev); });
-  $(this.element).bind('touchmove',  function(ev)   { return self.DoTouch(ev); });
-  $(this.element).unbind('click');
   
   $(".reset-button"     ,$(this.element).parent(".portlet-content:first"))
     // .button({icons: {primary: 'ui-icon-seek-first'},text: false})          
@@ -182,15 +171,15 @@ GraphCanvas.prototype.DrawHists = function( )
      
      if(this.show_points) {
        this.ctx.fillStyle =  "rgba(" + colorscale.GetColor() + ",1.0)";
-       this.ctx.beginPath();
        for (var i = 0; i < hist.n; i++) {
+         this.ctx.beginPath();
          var t = hist.GetX(i);
          var f = hist.data[i];
          var x = Math.floor(this.GetX(t)) + this.waterfall_offset[0]*iHist;
          var y = Math.floor(this.GetY(f)) - this.waterfall_offset[1]*iHist;
-         this.ctx.arc(x,y,2,0,2*Math.PI);
+         this.ctx.arc(x,y,2,0,1.999*Math.PI);
+         this.ctx.fill();
        }
-       this.ctx.fill();
      }
      
    }

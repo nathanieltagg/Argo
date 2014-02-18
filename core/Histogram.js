@@ -36,27 +36,70 @@ Histogram.prototype.Clear = function()
   this.sum_x = 0;
 } 
 
+Histogram.prototype.ExpandFill = function(x,val) 
+{
+  // Fill a histogram, but always expand limits to grow, instead of overflowing.
+  if(!val) val = 1;
+  var bin = this.GetBin(x);
+  if (bin<0) {
+    console.log("expandlow");
+    // Instead of underflowing, figure out how many bins we need at the beginning to accomodate this.
+    var nadd = -bin;
+    if(this.n+nadd > 10000) { console.error("Increasing bounds on histogram",this,"to",this.n+nadd,". This might be bad!"); }
+    var newdata = new Array(nadd);
+    for (var i = 0; i < nadd; i++) newdata[i] = 0;
+    this.data = newdata.concat(this.data);
+    var binwidth = (this.max - this.min)/this.n;
+    this.min = this.min - binwidth*nadd;
+    this.n += nadd;
+    bin = this.GetBin(x); // should be 0 now.
+  }
+
+  if (bin >= this.n) {
+    // Instead of overflowing, expand the histogram.    
+    console.log("expandhigh");
+    var nadd = bin + 1 - this.n;
+    if(this.n+nadd > 10000) { console.error("Increasing bounds on histogram",this,"to",this.n+nadd,". This might be bad!"); }
+    var newdata = new Array(nadd);
+    for (var i = 0; i < nadd; i++) newdata[i] = 0;
+    this.data = this.data.concat(newdata);
+    var binwidth = (this.max - this.min)/this.n;
+    this.max = this.max + binwidth*nadd;
+    this.n += nadd;
+    bin = this.GetBin(x); // should be n now.
+  }
+  
+  this.total+=val;
+  this.sum_x += val*x;
+  if(x > this.max_x) this.max_x = x;
+  if(x < this.min_x) this.min_x = x;
+
+  this.data[bin]+=val;
+  if(this.data[bin] > this.max_content) this.max_content = this.data[bin];
+  if(this.data[bin] < this.min_content) this.min_content = this.data[bin];      
+  
+}
 
 Histogram.prototype.Fill = function(x,val) 
 {
-        if(!val) val = 1;
-        if (x < this.min) {
-            this.underflow+=val;
-            return;
-        }
-        if (x > this.max) {
-            this.overflow+=val;
-            return;
-        }
-        this.total+=val;
-        this.sum_x += val*x;
-        if(x > this.max_x) this.max_x = x;
-        if(x < this.min_x) this.min_x = x;
-        var bin = this.GetBin(x);
+  if(!val) val = 1;
+  if (x < this.min) {
+      this.underflow+=val;
+      return;
+  }
+  if (x > this.max) {
+      this.overflow+=val;
+      return;
+  }
+  this.total+=val;
+  this.sum_x += val*x;
+  if(x > this.max_x) this.max_x = x;
+  if(x < this.min_x) this.min_x = x;
+  var bin = this.GetBin(x);
 
-        this.data[bin]+=val;
-        if(this.data[bin] > this.max_content) this.max_content = this.data[bin];
-        if(this.data[bin] < this.min_content) this.min_content = this.data[bin];      
+  this.data[bin]+=val;
+  if(this.data[bin] > this.max_content) this.max_content = this.data[bin];
+  if(this.data[bin] < this.min_content) this.min_content = this.data[bin];      
 }
 
 Histogram.prototype.GetBin = function(x) 
