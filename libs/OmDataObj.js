@@ -12,6 +12,7 @@ $(function(){
   if(urlparams.filename) gCurFile = urlparams.filename;
   if(urlparams.ref     ) gRefFile = urlparams.ref;
   
+ console.log(urlparams,"Attempting new OmDataObj gets with gCurFile=",gCurFile," and gRefFile ",gRefFile);
   gOmData  = new OmDataObj(gCurFile,true);
   gRefData = new OmDataObj(gRefFile,false);
   

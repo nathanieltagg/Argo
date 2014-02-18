@@ -3,9 +3,10 @@ export ROOTSYS := ${pwd}/root
 
 UNAME := $(shell uname -s)
 
-
-CPP = gcc
-LD = gcc
+CPP := g++44 -std=c++0x
+LD := g++44 -std=c++0x
+#CPP = gcc
+#LD = gcc
 
 ifeq ($(UNAME),Darwin)
   CPP = clang++ -std=c++11 -g 
