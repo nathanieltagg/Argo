@@ -23,6 +23,7 @@
           </div>
           <div id="ctl-magnifier-mag-slider"></div>
         </div>
+        <div><input type="checkbox" id="ctl-histo-logscale" name="ctl-histo-logscale" checked="yes" class="saveable  ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale Histograms</label></div>
         <div><input type="checkbox" id="ctl-show-labels" name="ctl-show-labels" checked="yes" class="saveable"/><label for="ctl-show-labels">Draw Axis Labels</label></div>
         <div><input type="checkbox" id="ctl-show-tick-labels" name="ctl-show-tick-labels" checked="yes" class="saveable"/><label for="ctl-show-tick-labels">Draw Tick Values</label></div>
         <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio"             class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>

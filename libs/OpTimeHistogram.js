@@ -58,7 +58,10 @@ function OpTimeHistogram( element  )
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('hoverChange',this,"HoverChange");
   this.input = "ophits"; 
- 
+
+  
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
 }
 
 
@@ -156,6 +159,8 @@ OpTimeHistogram.prototype.HoverChange = function()
 
 OpTimeHistogram.prototype.Draw = function( )
 {
+  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  
   if(this.hist) {
     if(gHoverState.type == "opdet") {
       this.SetHist(this.hist,this.blandColorScale);

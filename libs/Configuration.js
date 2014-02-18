@@ -24,6 +24,8 @@ $(function(){
   gStateMachine.Bind('recordChange',CheckWireData);
   // gStateMachine.Bind('recordChange',SetListNames);
 
+ 
+
 
   $('#ctl-lock-aspect-ratio').change(function() {
     // Force the zoom system to acknowledge the change, by 

@@ -32,13 +32,16 @@ function TimeHistogram( element  )
     margin_left: 60,
     log_y:true
   };
+  var self=this;
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
 
   this.hist = null;
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
     
-  var self=this;
   gStateMachine.Bind('recordChange',  this.NewRecord.bind(this) ); 
   gStateMachine.Bind('zoomChange'    ,this.Change.bind(this) );
   gStateMachine.Bind('zoomChangeFast',this.Change.bind(this) );
@@ -99,4 +102,11 @@ TimeHistogram.prototype.FastRangeChange = function()
             , Math.min(this.max_u, gRecord.header.TDCEnd )
           );
   gStateMachine.Trigger("zoomChangeFast");
+}
+
+
+TimeHistogram.prototype.Draw = function()
+{
+  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  HistCanvas.prototype.Draw.call(this);
 }

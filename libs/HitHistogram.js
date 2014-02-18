@@ -75,6 +75,8 @@ function HitHistogram( element  )
   $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
   $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
   
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); });
 }
 
 HitHistogram.prototype.NewRecord = function()
@@ -148,6 +150,8 @@ HitHistogram.prototype.Draw = function( )
   console.warn("HitHistogram::Draw()");
   var cs = gHitColorScaler;
   if(!$(this.ctl_show_hits).is(":checked")) cs = this.blandColorScale;
+  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  
   if(this.hist) {
     if(gHoverState.type == "hit") {
       var hit = gHoverState.obj; 

@@ -137,6 +137,12 @@ $(function() {
       //   }
       //   return false;
       // 
+    case 108:
+      // l: logscale
+      return $('#ctl-histo-logscale').click();
+      break;
+      
+      
       case 80:
         // console.log("P:",event);
         DoPrint(gPortletHover);
