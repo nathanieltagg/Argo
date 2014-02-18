@@ -110,10 +110,15 @@ function Pad3d( element, options )
                        });                                               
                                                                        
 
+   // user support:
+  $(this.element)   .bind('mouseenter', function(ev)   { self.fMouseInContentArea = true; });
+  $(this.element)   .bind('mouseout',   function(ev)   { self.fMouseInContentArea = false; });
+
   $(this.element)   .bind('mousedown',  function(ev)   { return self.startDragging(ev); });
   $(window)         .bind('mouseup',    function(ev)   { return self.stopDragging(ev); });
   $(window)         .bind('mousemove',  function(ev)   { return self.drag(ev); });
   $(this.element)   .bind('mousemove',  function(ev)   { return self.mouseMove(ev); });
+  $(this.element)   .bind('click',      function(ev)   { return self.click(ev); });
   
   // note: iOS events get sent to start element, even if your finger leaves the boundaries of the element. Not doing this right leads to delays!
   $(this.element)   .bind('touchstart',  function(ev)   { return self.startDragging(ev); });
@@ -121,7 +126,11 @@ function Pad3d( element, options )
   $(this.element)   .bind('touchend',    function(ev)   { return self.stopDragging(ev); });
     
 
-  // $(this.element) .bind('mousewheel',  function(ev,d) { return self.scrollMe(ev,d); });
+  $(this.element) .bind('mousewheel',  function(ev,d) {
+    if(ev.shiftKey) return self.scrollMe(ev,-d); 
+    else return true; // bubble.
+   });
+   
   $(this.element) .bind('dblclick',  function(ev)     { return self.fullScreen(); });
   
   $(this.element) .bind('contextmenu', function(ev){ return false;} )
@@ -406,10 +415,14 @@ Pad3d.prototype.Clear = function()
 
 Pad3d.prototype.Draw = function()
 {
+  if($(this.element).is(":hidden")) return;
   this.Clear();
   this.DrawLines();
+  this.DrawFinish(); // usercallback.
 }
 
+Pad3d.prototype.DrawFinish = function()
+{};
 
 Pad3d.prototype.Linesort = function(l1,l2)
 {
@@ -433,6 +446,9 @@ Pad3d.prototype.DrawLines = function()
 {
   // Viewport should center on screen.
   this.ctx.save();
+  this.begin_highlight_point = null;
+  this.final_highlight_point = null;
+
   // this.ctx.translate(this.width/2,this.height/2);
   // this.ctx.rotate(3.14159);
   // Lines.
@@ -503,30 +519,44 @@ Pad3d.prototype.DrawLines = function()
       if(obj.type=='l') {
         // Line
         // adjust line thickness for relative z.      
-        this.ctx.lineWidth = obj.linewidth/obj.meanz*this.proj_dist;
+        var linewidth = obj.linewidth/obj.meanz*this.proj_dist;
         var x1 = cu-obj.au;
         var x2 = cu-obj.bu;
         var y1 = cv-obj.av;
         var y2 = cv-obj.bv;
         if(Math.abs(x2-x1)<1 && Math.abs(y2-y1<1)) x2+=1;
-        GeoUtils.draw_highlighted_line(
-           this.ctx,
-           x1,y1,
-           x2,y2,
-           this.ctx.lineWidth, //linewidth
-           obj.stroke, // default style
-           "rgba(250,0,0,0.9)", //highlight style
-           "rgba(0,0,0,0.7)", //outline style
-           this.should_highlight(obj),
-           this.should_outline(obj)
-         );
+        if(this.should_outline(obj)) {
+          if(x1>0 && x1<this.width && y1>0 && y1<this.height && !this.begin_highlight_point) {
+            this.begin_highlight_point = [x1,y1];
+          }
+          
+          if(x2>0 && x2<this.width && y2>0 && y2<this.height) {
+            this.final_highlight_point = [x2,y2];
+          }
+
+
+          // Draw underlay for a selected track.
+          this.ctx.lineWidth = linewidth*2;
+          this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+          this.ctx.beginPath();
+          this.ctx.moveTo(x1,y1);
+          this.ctx.lineTo(x2,y2);
+          this.ctx.stroke();
+          this.ctx.lineWidth = linewidth;          
+        }
         
-        // this.ctx.strokeStyle = obj.stroke;
-        // this.ctx.beginPath();
-        // this.ctx.moveTo(this.width/2-obj.au, this.height/2-obj.av);
-        // this.ctx.lineTo(this.width/2-obj.bu, this.height/2-obj.bv);
-        // this.ctx.stroke();
-        // this.ctx.closePath();
+        if(this.should_highlight(obj)) {
+          this.ctx.strokeStyle = "rgba(250,0,0,0.9)";
+        } else {
+          this.ctx.strokeStyle = obj.stroke;
+        }
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1,y1);
+        this.ctx.lineTo(x2,y2);
+        this.ctx.stroke();
+        
+         
       }
       if(obj.type=='p') {
         // Point
@@ -540,6 +570,11 @@ Pad3d.prototype.DrawLines = function()
         this.ctx.fill();
         this.ctx.closePath();
         this.ctx.restore();
+
+        if(this.should_outline) {
+            this.final_highlight_point = [cu-obj.au,cv-obj.av];
+        }
+
       }
     }
   }
@@ -560,6 +595,7 @@ Pad3d.prototype.startDragging = function(ev)
 {
   ev.originalEvent.preventDefault();
   
+  this.startDragWalltime = $.now();
   // this.startDragTransform = this.transform_matrix.dup();
   this.startDragX = ev.pageX;
   this.startDragY = ev.pageY;
@@ -641,17 +677,14 @@ Pad3d.prototype.drag = function(ev)
    this.Draw();
 }
 
-// var sample =0;
-Pad3d.prototype.mouseMove = function(ev)
+Pad3d.prototype.findObjectUnderMouse = function(event) 
 {
-  if(this.dragging) return;
-   ev.originalEvent.preventDefault();
   // Called for any movement in pad.  
   // find highlighed object.
   // go through object list from back to front, so that the frontmost object will highlight.
   var offset = getAbsolutePosition(this.canvas);
-  var x = ev.pageX - offset.x;
-  var y = ev.pageY - offset.y;    
+  var x = event.pageX - offset.x;
+  var y = event.pageY - offset.y;    
   var u = this.width/2 -x;  // Translate and flip inverse to screen coords
   var v = this.height/2-y;
 
@@ -677,16 +710,39 @@ Pad3d.prototype.mouseMove = function(ev)
         if( d < this.mouse_highlight_range*this.proj_dist/obj.meanz ) selected = obj.source;
       }
   }
-  
+  return selected;
+}
+
+// var sample =0;
+Pad3d.prototype.mouseMove = function(ev)
+{
+  if(this.dragging) return;
+  ev.originalEvent.preventDefault();
+   
+  var selected = this.findObjectUnderMouse(ev)
   
   this.HoverObject(selected);  
 }
 
-Pad3d.prototype.HoverObject = function(selected)
+Pad3d.prototype.click = function(ev)
 {
+  var now = $.now();
+  if((now - this.startDragWalltime) < 500) { // half-second
+    var selected = this.findObjectUnderMouse(ev)  
+    this.ClickObject(selected);  
+  }
+}
+
+
+Pad3d.prototype.HoverObject = function(selected)
+{  
   console.log("Pad3d.HoverObject selected=",selected);
 }
 
+Pad3d.prototype.ClickObject = function(selected)
+{
+  console.log("Pad3d.ClickObject selected=",selected);
+}
 
 Pad3d.prototype.scrollMe = function(ev,delta)
 {

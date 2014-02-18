@@ -249,12 +249,13 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   // Create metata object showing state of file.
   JsonObject cycle;
   
-  TTimeStamp *cycletime = 0;
-  f->GetObject("updateTimeStamp",cycletime);
-  if(cycletime) {
-    // Javascript likes the near ISO-8601 compliant version, lets use that.
-    cycle.add("time",cycletime->AsString("c"));
-  }
+  TTimeStamp *ttimestamp = 0;
+  f->GetObject("updateTimeStamp",    ttimestamp); if(ttimestamp) cycle.add("updateTime",ttimestamp->AsString("c"));  // Javascript likes the near ISO-8601 compliant version, lets use that.
+  ttimestamp = 0;
+  f->GetObject("firstEventTimeStamp",ttimestamp); if(ttimestamp) cycle.add("firstEventTime",ttimestamp->AsString("c"));  
+  ttimestamp = 0;
+  f->GetObject("lastEventTimeStamp", ttimestamp); if(ttimestamp) cycle.add("lastEventTime",ttimestamp->AsString("c"));  
+
   TNamed* nmd;
   f->GetObject("run",nmd);    if(nmd) cycle.add(nmd->GetName(),nmd->GetTitle());
   f->GetObject("subrun",nmd); if(nmd) cycle.add(nmd->GetName(),nmd->GetTitle());

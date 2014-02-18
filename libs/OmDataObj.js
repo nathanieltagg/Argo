@@ -7,10 +7,10 @@ var gRefFile = "reference.root";
 
 // Open data files according the provided arguments on the URL.
 $(function(){
-  // Decode parameters.
+  // Decode parameters from URL.
   var urlparams = $.deparam.querystring();
-  if(urlparams.file) gCurFile = urlparams.file;
-  if(urlparams.ref ) gRefFile = urlparams.ref;
+  if(urlparams.filename) gCurFile = urlparams.filename;
+  if(urlparams.ref     ) gRefFile = urlparams.ref;
   
   gOmData  = new OmDataObj(gCurFile,true);
   gRefData = new OmDataObj(gRefFile,false);

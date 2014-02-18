@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody end_tbody *div/;
 use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
-  use POSIX qw(strftime);
+use POSIX qw(strftime);
+use Cwd qw/getcwd realpath/;
 #
 # Script to browse ROOT files on the server. Mild security hassle as viewers on the web
 #  can see directory structrures and ROOT files.
@@ -12,6 +13,8 @@ $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
 $cookie_name = 'arachne_file_browser';
 $link_target = "../arachne.html";
+$restrict_to = [ getcwd(), "/uboone","/minos","/minerva"];
+$force_paths = [ "/uboone/app", "/uboone/data" ];
 
 # Different configuration.
 if( -r "file_browser_config.pl" ) {
@@ -42,7 +45,6 @@ sub get_filesize_str
         return sprintf("%.2f bytes", $size);
     }
 }
-my $title = "Arachne File Browser";
 if(! -d $default_path) { $default_path = `pwd`; chomp $default_path;}
 
 $cur_path = $default_path;
@@ -86,6 +88,21 @@ print start_html(
 print h2({-id=>"title"},$title);
 
 
+# Resolve path to see if it's legal. NO poking around in /etc!
+$req_path_abs = realpath($cur_path);
+# Check to make sure it's rooted in an allowed area.
+$good=0;
+foreach $basepath (@$restrict_to)
+{
+  if( $cur_path=~/^$basepath/ ) {$good=1;}
+}
+if($good==0) {
+  print p("$cur_path");
+  print p("This path is not a standard file location. Contact Nathaniel if you need to see this area.");
+  print end_html;
+  exit(0);
+}
+
 print start_div({id=>"cur_path"});
 @breakdown = split('/',$cur_path);
 shift @breakdown;
@@ -97,6 +114,12 @@ foreach $parent (@breakdown)
 }
 print end_div;
 print br. br;
+
+# Force open of critical paths.
+foreach $path (@$force_paths) {
+  opendir(IMDTMP, $path); close(IMDTMP);
+  
+}
 
 # read directory.
 if (! opendir(IMD, $cur_path) )
@@ -130,8 +153,10 @@ if( scalar(@files) ==0 ) {
   foreach $f (@files)
   {
     @info = stat("$cur_path/$f");
+    $f_enc = "$cur_path/$f";
+    $f_enc =~ s/([^-_.~\/A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
     print Tr(
-             td( a({-href=>"$link_target?entry=0&filename=$cur_path/$f"},"$f"))
+             td( a({-href=>"$link_target#entry=0&filename=$f_enc"},"$f"))
             ,td({-class=>"date"},strftime("%b %e, %Y %H:%M",localtime($info[9])))
             ,td({-class=>"size"},get_filesize_str($info[7]))
           
