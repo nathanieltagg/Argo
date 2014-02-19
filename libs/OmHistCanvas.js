@@ -13,8 +13,8 @@ function OmHistCanvas( element, path )
   this.main_element = $('div.main',this.top_element).get(0);
   $(this.main_element).css("height","200px");
   $(this.main_element).css("width","100%");
-  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-logscale" checked="yes" class="saveable  ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale </label></span>');
-  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-fill" checked="yes" class="saveable  ctl-histo-fill"/><label for="ctl-histo-fill"><b>(f)</b>ill</label></span>');
+  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-logscale" checked="yes" class="ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale </label></span>');
+  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-fill" checked="yes" class="ctl-histo-fill"/><label for="ctl-histo-fill"><b>(f)</b>ill</label></span>');
   $(this.top_element).append('<span><button type="button" name="ctl-histo-reset" checked="yes" class="ctl-histo-reset"><b>(r)</b>eset</button></span>');
   this.path = path;
   var settings = {
@@ -92,8 +92,12 @@ OmHistCanvas.prototype.Update = function()
   $(".portlet-title",$(this.top_element).parent()).html(this.hist.title);
   this.xlabel = this.hist.xlabel;
   this.ylabel = this.hist.ylabel;
-  this.bound_u_min = Math.min(this.hist.min,this.refhist.min);
-  this.bound_u_max = Math.max(this.hist.max,this.refhist.max);
+  this.bound_u_min = this.hist.min;
+  this.bound_u_max = this.hist.max;
+  if(this.refhist) {
+    this.bound_u_min = Math.min(this.hist.min,this.refhist.min);
+    this.bound_u_max = Math.max(this.hist.max,this.refhist.max);
+  }
   this.time_on_x   = this.hist.time_on_x;
   
   

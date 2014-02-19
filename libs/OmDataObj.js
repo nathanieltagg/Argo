@@ -55,10 +55,14 @@ OmDataObj.prototype.get = function()
   console.log("OmDataObj::get",this.paths);
   
   this.myurl = "server/serve_hists.cgi"; // Note relative url.
+  var opts = ":";
+  if($("input.ctl-low-resolution").is(":checked")){ opts = ":lowres128:"; }
+  console.log("lowres check",$("input.ctl-low-resolution").is(":checked"),opts);
+  
   this.param = $.param({
     filename: this.file,
     hists: this.paths.join(':'),
-    options: "-",
+    options: opts,
     });
 
   var self = this;

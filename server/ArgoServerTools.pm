@@ -106,14 +106,14 @@ sub start_server
       rename "$exec_name.log",   "$exec_name.log.1";
       unlink "$exec_name.log";
       open STDIN,  '</dev/null';
-      open STDOUT, '>$exec_name.log';
+      open STDOUT, ">$exec_name.log";
       open STDERR, '>&STDOUT';
   #     my $pid = getppid();
   #     # system("echo $pid > ntuple-server.pid");
   #     # my $pwd = getcwd;
   #     # system("echo $pwd >> ntuple-server.pid");
   #     # print  $pwd . "\n";
-      my $cmd = "../backend/$exec_name $ntuple_server_port >> ntuple-server.log 2>&1";
+      my $cmd = "../backend/$exec_name $ntuple_server_port";
       print  "Running: $cmd<br/>\n";
       $val = system($cmd);
       $pid = $!;
