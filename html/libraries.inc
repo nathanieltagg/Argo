@@ -70,6 +70,8 @@
 <script type="text/javascript" src="libs/Navigation.js"></script> 
 
 <script type="text/javascript" src="libs/ChannelMap.js"></script> 
+<script type="text/javascript" src="libs/Keyboard.js"></script> 
+
 
 
 <!-- My classes for talking to the back-end and other displays-->
