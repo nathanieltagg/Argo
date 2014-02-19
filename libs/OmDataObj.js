@@ -64,9 +64,11 @@ OmDataObj.prototype.get = function()
     hists: this.paths.join(':'),
     options: opts,
     });
+  
+  console.log("Requesting data:",this.myurl+"?"+this.param);
 
   var self = this;
-  $.ajax({
+  var req = $.ajax({
           type: "GET",
           url: this.myurl,
           data: this.param,
@@ -76,6 +78,7 @@ OmDataObj.prototype.get = function()
           error:    function(){self.QueryError()},
           success:  function(data,textStatus,jqxhr){self.QuerySuccess(data,textStatus,jqxhr)},
         }); 
+        console.log(req);
   this.status = "getting";
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
 }

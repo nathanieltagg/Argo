@@ -4,7 +4,7 @@ export ROOTSYS := ${pwd}/root
 UNAME := $(shell uname -s)
 
 CPP := g++44 -std=c++0x
-LD := g++44 -std=c++0x
+LD := g++44 
 #CPP = gcc
 #LD = gcc
 
