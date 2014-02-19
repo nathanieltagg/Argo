@@ -67,6 +67,8 @@ function HistCanvas( element, options )
   this.fDragMode = "none";
   this.fDragStartX = 0; // start drag X coordinate, absolute, in pixels
   this.fDragStartT = 0; // start drag X coordinate, in display units.
+  this.fDragStartY = 0; // in pixels
+  this.fDragStartF = 0; // in display units
 
   if(!this.element) { return; }
   // This should work to rebind the event handler to this particular instance of the HistCanvas.
@@ -97,7 +99,7 @@ HistCanvas.prototype.ResetDefaultRange = function()
 
 HistCanvas.prototype.Draw = function()
 {
-  console.log("HistCanvas::Draw",this);
+  // console.log("HistCanvas::Draw",this);
   this.Clear();
   this.DrawFrame();
   this.DrawRegions();
@@ -163,11 +165,17 @@ HistCanvas.prototype.SetMarker = function(t)
   }
 }
 
+HistCanvas.prototype.ClearHists = function(  )
+{
+  this.fNHist = 0;
+  this.fHists = [];
+  this.fColorScales = [];
+  this.fHistOptions = []; // transparency settings
+}
 
 HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
 {
   if(this.fNHist === 0 ){ this.ResetToHist(inHist); }
-  if(typeof alpha === 'undefined' || alpha === null) alpha = 1;  
   this.fHists[this.fNHist] = inHist;
   this.fColorScales[this.fNHist] = inColorScale;
   this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
@@ -190,6 +198,20 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
   this.FinishRangeChange();
+}
+
+HistCanvas.prototype.ResetScales = function ( )
+{
+  this.min_u = this.fHists[0].min;
+  this.max_u = this.fHists[0].max;
+  this.min_v = this.fHists[0].min_content;                // minimum value shown on Y-axis
+  this.max_v=  this.fHists[0].max_content;  // maximum value shown on Y-axis
+  for(var i=0;i<this.fNHist;i++) {
+    if(this.fHists[i].min < this.min_u)         this.min_u = this.fHists[i].min;
+    if(this.fHists[i].max > this.max_u)         this.max_u = this.fHists[i].max;
+    if(this.fHists[i].min_content < this.min_v) this.min_v = this.fHists[i].min_content;
+    if(this.fHists[i].max_content > this.max_v) this.max_v = this.fHists[i].max_content;
+  }
 }
 
 HistCanvas.prototype.SetAdjunctData = function ( inAdjunct )
@@ -223,9 +245,19 @@ HistCanvas.prototype.GetY = function( f )
   if(this.log_y === false) {  
     return this.origin_y - this.adjunct_height - this.span_y*(f-this.min_v)/(this.max_v-this.min_v);
   }
+  if(f<=0) f = this.min_v; // Protect against floating point errors
   return this.origin_y - this.adjunct_height - this.span_y*(Math.log(f)-Math.log(this.min_v))/(Math.log(this.max_v)-Math.log(this.min_v));
 }
 
+HistCanvas.prototype.GetF = function( y ) 
+{
+  if(this.log_y === false) {
+    return (- y + this.origin_y - this.adjunct_height)/this.span_y*(this.max_v-this.min_v) + this.min_v; 
+  }
+  return Math.exp( 
+    (- y + this.origin_y - this.adjunct_height)/this.span_y*(Math.log(this.max_v)-Math.log(this.min_v)) + Math.log(this.min_v)
+  );
+}
 
 
 
@@ -277,11 +309,13 @@ HistCanvas.prototype.DrawHists = function( )
          var x = this.GetX(t);
          var y = this.GetY(f);
          if(x+barwidth<this.origin_x) continue;
-         if(x+barwidth>this.origin_x+this.span_x) continue;
+         if(x>this.origin_x+this.span_x) continue;
          var bw = barwidth;
          if(x<this.origin_x) {// partial-width bar at front.
            bw = barwidth-this.origin_x+x; 
-           x = this.origin_x; } 
+           x = this.origin_x; 
+         }
+         bw = Math.min(bw, this.origin_x + this.span_x - x); // partial-width at end.
          var c = colorscale.GetColor((t+t2)/2);
          this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
          this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
@@ -335,15 +369,21 @@ HistCanvas.prototype.DoMouse = function( ev )
     var rely = y - offset.y;    
     this.fDragStartX = x;
     this.fDragStartT = (relx - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
+    this.fDragStartF = this.GetF(rely);
     if(rely < this.origin_y && relx > this.origin_x) {
       this.fIsBeingDragged = true;
       this.fDragMode = "shiftX";
       console.log("body drag")      
+    } else if(rely < (this.origin_y - 5) && relx < this.origin_x ) {
+      // Drag on vertical axis.
+      this.fIsBeingDragged = true;
+      this.fDragMode = "scaleY";
+      console.log("scale Y: start = ",this.fDragStartF,this.fDragStartY);
     } else if(relx > this.origin_x + 5 ) {
       // Note that this is capped at 5 pixels from the origin, for saftey. 
       this.fIsBeingDragged = true;
       this.fDragMode = "scaleX";
-      console.log("scale drag" + this.fDragStartT)
+      console.log("scale",this.fDragStartT);
     } 
   } else {
     // Either mousemove or mouseup.
@@ -356,7 +396,22 @@ HistCanvas.prototype.DoMouse = function( ev )
       this.fDragStartX = x;
       this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
     }
-    if(this.fDragMode === "scaleX") {
+    else if(this.fDragMode === "scaleY") {
+      // Want to set the scale so that the new mouse position is at fDragStartF in display units.
+      var offset = getAbsolutePosition(this.canvas);
+      var y = ev.pageY;
+      var rely = y - offset.y; 
+      var z = this.origin_y - rely; // pixels above the origin of the mouse location.
+      if(z<5) z=5;
+      if(this.log_y) {
+        this.max_v = Math.exp((this.span_y)*(Math.log(this.fDragStartF) - Math.log(this.min_v))/z);        
+      } else {        
+        this.max_v = (this.span_y)*(this.fDragStartF - this.min_v)/z;
+      }
+      this.Draw();
+  
+    }
+    else if(this.fDragMode === "scaleX") {
       // Find the new scale factor.
       var x = ev.pageX;
       var offset = getAbsolutePosition(this.canvas);
@@ -364,7 +419,10 @@ HistCanvas.prototype.DoMouse = function( ev )
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
+      console.log('scaleX',relx,this.fDragStartT,this.max_u,maxu,this.bound_u_min,this.bound_u_max);
       this.ChangeRange(this.min_u,maxu);
+      console.log('finish scale',this.min_u,this.max_u);
+      
     }
   }
   
