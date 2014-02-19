@@ -12,7 +12,6 @@
 #include <iostream>
 #include <fstream>
 #include <sys/file.h>
-#include <regex>
 
 #include <TROOT.h>
 #include <TRint.h>
@@ -22,6 +21,7 @@
 #include <TError.h>
 #include <TKey.h>
 #include <TClass.h>
+#include <regex.h>
 #include <TROOT.h>
 
 #include "JsonElement.h"
@@ -240,13 +240,13 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
 
   // Parse options.
   int maxbins = 0;
-  std::cmatch res;
-  std::regex rx(":lowres(\\d+):");
-  if(std::regex_search(options.c_str(), res, rx)) {
-    ::sscanf(res.str(1).c_str(),"%d",&maxbins);
-    std::cout << "Maxbins " << res.str(0) << " set to " << maxbins << std::endl;
+
+  // look for :lowres<nbins>:
+  size_t loc = options.find(":lowres");
+  if(loc != std::string::npos) {
+    ::sscanf(options.c_str()+loc+7,"%d",&maxbins);
+    std::cout << "Maxbins " << options.c_str()+loc << " set to " << maxbins << std::endl;    
   }
-   
   // open file:
   JsonObject result;
   TFile* f = getlocked(filename.c_str(),"READ");
