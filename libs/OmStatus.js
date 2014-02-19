@@ -7,6 +7,51 @@ $(function(){
   });  
 });
 
+/// Save configuration.
+function AutoSaveConfig()
+{
+  slot="default";
+  // Cookie expiration date.
+  expdate = new Date();
+  expdate.setFullYear(2040);
+    
+   // Save misc. configuration boxes.
+  $(".ctl-autosave").each(function(){
+    val = $(this).val();
+    if($(this).is(":checkbox")) val = $(this).is(":checked");
+    $.cookie(slot+":"+this.id,val);
+    console.log("saving ",this.id,val);
+  });
+    
+  console.log("cookies saved.");
+}
+
+$(function(){
+  // Set up autosave callback.
+  $(".ctl-autosave").on("change",AutoSaveConfig);
+
+  // Load autoconfig.
+  var slot = "default";
+  $(".ctl-autosave").each(function(){
+    var val = $.cookie(slot+":"+this.id);
+    if(val!=null){
+      // console.log("restoring:",this.id,val);
+      var changed = false;
+      if($(this).is(':checkbox')){
+        if( (val=='true') != $(this).is(':checked')) changed = true;
+        $(this).attr('checked',val=='true');
+      } else {
+        if( val != $(this).val() ) changed = true;
+        $(this).val(val);
+      } 
+      if(changed) $(this).trigger('change'); // Just in case
+     }
+  });
+  
+});
+
+
+
 // Subclass of Pad.
 OmStatus.prototype = new ABoundObject(null);           
 
@@ -22,6 +67,7 @@ function OmStatus( element )
   $(this.element).on("remove."+this.mynamespace, function(){return self.Remove()});  
 
   $(".refresh",this.element).click(function(){gOmData.get()});
+  $(".ctl-low-resolution",this.element).click(function(){gOmData.get()});
   $(".ctl-auto-refresh",this.element).click(function(){
     var checked = $(this).is(":checked");
     if(checked) self.auto_refresh_timer = setInterval(function(){$(".refresh",self.element).click();},30000);

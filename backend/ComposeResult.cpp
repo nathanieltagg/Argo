@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/file.h>
+#include <regex>
 
 #include <TROOT.h>
 #include <TRint.h>
@@ -236,7 +237,16 @@ void getObjListing(TDirectory* dir, std::string path, JsonArray &arr)
 std::string ComposeResult(const std::string& filename, const std::string& histname, const std::string& options)
 {
   // Now do your stuff.
-  
+
+  // Parse options.
+  int maxbins = 0;
+  std::cmatch res;
+  std::regex rx(":lowres(\\d+):");
+  if(std::regex_search(options.c_str(), res, rx)) {
+    ::sscanf(res.str(1).c_str(),"%d",&maxbins);
+    std::cout << "Maxbins " << res.str(0) << " set to " << maxbins << std::endl;
+  }
+   
   // open file:
   JsonObject result;
   TFile* f = getlocked(filename.c_str(),"READ");
@@ -315,8 +325,8 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
       }
   
       JsonObject jobj;
-      if(o->InheritsFrom(TH2::Class()))      jobj = TH2ToHistogram((TH2*)o);
-      else if(o->InheritsFrom(TH1::Class())) jobj = TH1ToHistogram((TH1*)o);
+      if(o->InheritsFrom(TH2::Class()))      jobj = TH2ToHistogram((TH2*)o,maxbins);
+      else if(o->InheritsFrom(TH1::Class())) jobj = TH1ToHistogram((TH1*)o,maxbins);
     
       JsonObject thing;
       thing.add("cycle",cycle);

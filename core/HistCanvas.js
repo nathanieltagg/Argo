@@ -419,7 +419,7 @@ HistCanvas.prototype.DoMouse = function( ev )
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
-      console.log('scaleX',relx,this.fDragStartT,this.max_u,maxu,this.bound_u_min,this.bound_u_max);
+      console.log('scaleX',this,relx,this.fDragStartT,this.max_u,maxu,this.bound_u_min,this.bound_u_max);
       this.ChangeRange(this.min_u,maxu);
       console.log('finish scale',this.min_u,this.max_u);
       

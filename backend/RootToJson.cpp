@@ -2,13 +2,39 @@
 #include <TH1.h>
 #include <TH2.h>
 
-JsonObject TH1ToHistogram( TH1* hist )
+int findDivisor(int n, int m)
 {
+  // Have m bins, want n bins.
+  // Find a divisor d such that
+  // nd ~ m
+  // and 
+  // m%d = 0.
+  for(int d=2;d<100;d++) {
+    if(m%d) continue;
+    if(m/d >= n) continue;
+    return d;
+  }
+}
+
+JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
+{
+  // Convert a histogram into a JSON file.
   JsonObject h;
+
+  // Rebin if requested.
+  TH1* hist = inHist;
+  TH1* htemp = 0;
+  if(maxbins && inHist->GetNbinsX() > maxbins) {
+    int rebin = findDivisor(maxbins,inHist->GetNbinsX());
+    htemp = inHist->Rebin(rebin,"htemp");
+    hist = htemp;
+    h.add("original_n",inHist->GetNbinsX());
+    h.add("rebinned_x_by",rebin);
+  }
   if(!hist) return h;
   h.add("classname",hist->ClassName());
-  h.add("name",hist->GetName());
-  h.add("title",hist->GetTitle());
+  h.add("name" ,inHist->GetName());
+  h.add("title",inHist->GetTitle());
   h.add("xlabel",hist->GetXaxis()->GetTitle());
   h.add("ylabel",hist->GetYaxis()->GetTitle());
   h.add("n",hist->GetNbinsX());
@@ -32,17 +58,34 @@ JsonObject TH1ToHistogram( TH1* hist )
   }
   h.add("data",data);
   if(has_err) h.add("errs",errs);
+  if(htemp) delete htemp;
   return h;
 }
 
 
-JsonObject TH2ToHistogram( TH2* hist )
+JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
 {
   JsonObject h;
+
+  // Rebin if requested.
+  TH2* hist = inHist;
+  TH2* htemp = 0;
+  if(maxbins && ((inHist->GetNbinsX() > maxbins) || (inHist->GetNbinsY() > maxbins))) {
+    int rebinX = findDivisor(maxbins,inHist->GetNbinsX());
+    int rebinY = findDivisor(maxbins,inHist->GetNbinsY());
+    htemp = inHist->Rebin2D(rebinX,rebinY,"htemp");
+    hist = htemp;
+    h.add("original_n_x",inHist->GetNbinsX());
+    h.add("original_n_y",inHist->GetNbinsY());
+    h.add("rebinned_x_by",rebinX);
+    h.add("rebinned_y_by",rebinY);
+        
+  }
+ 
   if(!hist) return h;
   h.add("classname",hist->ClassName());
-  h.add("name",hist->GetName());
-  h.add("title",hist->GetTitle());
+  h.add("name" ,inHist->GetName());
+  h.add("title",inHist->GetTitle());
   h.add("xlabel",hist->GetXaxis()->GetTitle());
   h.add("ylabel",hist->GetYaxis()->GetTitle());
   h.add("n_x",hist->GetNbinsX());
@@ -76,5 +119,6 @@ JsonObject TH2ToHistogram( TH2* hist )
   }
   h.add("data",data);
   if(has_err) h.add("errs",errs);
+  if(htemp) delete htemp;
   return h;
 }
