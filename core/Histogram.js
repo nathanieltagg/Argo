@@ -87,7 +87,7 @@ Histogram.prototype.Fill = function(x,val)
       this.underflow+=val;
       return;
   }
-  if (x > this.max) {
+  if ( !(x < this.max) )  { // Cleverness: catches NaNs into overflow.
       this.overflow+=val;
       return;
   }

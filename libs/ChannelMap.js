@@ -128,7 +128,8 @@ ChannelMap.prototype.NewRecord = function()
 
   // $("div.title",this.top_element).html(this.map.title);
 
-  this.hist = new Histogram(50,this.map.min_content,this.map.max_content);
+  // Need histogram _slightly_ bigger than max_content
+  this.hist = new Histogram(50,this.map.min_content,this.map.max_content+(this.map.max_content-this.map.min_content)/50);
   for(var crate=1;crate<10;crate++) {
     for(var card=4;card<20;card++) {      
       for(var channel=0;channel<64;channel++) {
@@ -393,7 +394,7 @@ ChannelMap.prototype.DoMouse = function(ev)
         var cardbox = this.CardBox(cratebox,card);
         if(this.InBox(p,cardbox)) {
           this.fMouseInCard = card;
-          for(var channel=0;channel<63;channel++) {
+          for(var channel=0;channel<64;channel++) {
             var chanbox = this.ChannelBox(cardbox,channel);
             if(this.InBox(p,chanbox)) {
               this.fMouseInChannel = channel;
@@ -407,10 +408,10 @@ ChannelMap.prototype.DoMouse = function(ev)
     }
   }
   var txt = "";
-  if(this.fMouseInCrate) txt += "Crate: " + this.fMouseInCrate + "<br/>";
-  if(this.fMouseInCard) txt += "Card: " + this.fMouseInCard + "<br/>";
-  if(this.fMouseInChannel) txt += "Channel: " + this.fMouseInChannel + "<br/>";
-  var h = gOmData.data.record[this.path].data;  
+  if(null!=this.fMouseInCrate) txt += "Crate: " + this.fMouseInCrate + "<br/>";
+  if(null!=this.fMouseInCard) txt += "Card: " + this.fMouseInCard + "<br/>";
+  if(null!=this.fMouseInChannel) txt += "Channel: " + this.fMouseInChannel + "<br/>";
+  var h = this.map;  
   if(this.fMouseInChannel) txt += "Value: " + h.data[this.fMouseInChannel + 64*(this.fMouseInCard + 20*this.fMouseInCrate)] + "<br/>";
 
   $(".infopane",this.top_element).html(txt);
@@ -418,8 +419,8 @@ ChannelMap.prototype.DoMouse = function(ev)
   
   if(ev.type === 'click' && this.fMouseInCrate) {
     var hash = "#tpc/crate"+this.fMouseInCrate;
-    if(this.fMouseInCard) hash += "/crate"+this.fMouseInCrate + "card" + zeropad(this.fMouseInCard,2);
-    if(this.fMouseInChannel) hash += "/crate"+this.fMouseInCrate + "card" + zeropad(this.fMouseInCard,2) + "chan" + zeropad(this.fMouseInChannel,2);
+    if(null!=this.fMouseInCard) hash += "/crate"+this.fMouseInCrate + "card" + zeropad(this.fMouseInCard,2);
+    if(null!=this.fMouseInChannel) hash += "/crate"+this.fMouseInCrate + "card" + zeropad(this.fMouseInCard,2) + "chan" + zeropad(this.fMouseInChannel,2);
     console.log("click newhash = ",hash);
     window.location.hash = hash;
   }

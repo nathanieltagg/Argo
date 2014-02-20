@@ -1,10 +1,9 @@
 pwd := $(shell pwd)
-export ROOTSYS := ${pwd}/root
 
 UNAME := $(shell uname -s)
 
-CPP := g++44 -std=c++0x
-LD := g++44 
+CPP := g++ 
+LD := g++ 
 #CPP = gcc
 #LD = gcc
 
@@ -13,8 +12,18 @@ ifeq ($(UNAME),Darwin)
   LD = clang++ 
 endif
 
-PATH+=:${ROOTSYS}/bin
+
+# Root.
+export ROOTSYS ?= ${pwd}/root
 export LD_LIBRARY_PATH=${ROOTSYS}/lib
+ifeq ($(UNAME),Darwin)
+        LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
+endif
+PATH+=:${ROOTSYS}/bin
+LIBS  += -L/usr/X11R6/lib -lTreePlayer $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )
+LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
+CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
+
 # My includes
 LDFLAGS = -g 
 
@@ -26,10 +35,8 @@ ifeq ($(platform),Darwin)
   LDFLAGS = -bind_at_load -g
 endif
 
-# ROOT
-CPPFLAGS := -g -I./ $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
-LIBS := -L/usr/X11R6/lib -lTreePlayer $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs --cflags)\
-        -L/opt/X11/lib -lpng # add any other desired libs here
+# PNG
+#LIBS :=   -L/opt/X11/lib -lpng # add any other desired libs here
 
 #Sources
 SOURCES = $(notdir $(wildcard *.cpp))
@@ -88,7 +95,7 @@ $(CINTOBJ): tmp/Cint.cpp
 
 
 .PHONY: bin
-bin: histserver histquick myroot 
+bin: histserver histquick
 histserver: $(OBJ) tmp/hist-server-main.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(OBJ) tmp/hist-server-main.o $(LIBS) $(LIBS) -o $@
@@ -97,9 +104,9 @@ histquick: $(OBJ) tmp/hist-quick-main.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(OBJ) tmp/hist-quick-main.o $(LIBS) $(LIBS) -o $@
 
-myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
-	@echo "Building " $@ $(OBJ)
-	$(LD) $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
+#myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
+#	@echo "Building " $@ $(OBJ)
+#	$(LD) $(LDFLAGS) $(OBJ) tmp/myroot-main.o tmp/Cint.o $(LIBS) $(LIBS) -o $@
 
 
 depend: $(DEPS)
