@@ -17,36 +17,7 @@ $(function(){
 /// Find a DOM element matching the selector that has the closest common ancestor
 /// to the given element.
 
-function ClosestMatch( element, selector )
-{
-  var parents = $(element).parents();
-  for(var i = 0; i<parents.length; i++) {
-    var got = $(selector,parents[i]);
-    if(got.length>0) return got.first();
-  }
-  // no match.
-  return null;
-}
 
-function GetLocalControl( element, selector )
-{
-  // Is there one in our portlet?
-  var p = $(element).closest('.portlet')
-  if(p.length>0) {
-    var c = $(selector,p.first());
-    return c;
-  }
-  return $();
-}
-
-function GetBestControl( element, selector )
-{
-  var c = GetLocalControl(element,selector);
-  if(c.length>0) return c;
-  c = $(selector,$('#config-port'));
-  if(c.length>0) return c;
-  return ClosestMatch(element,selector);
-}
 
 function WireView( element, options )
 {
