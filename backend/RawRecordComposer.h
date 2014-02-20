@@ -4,7 +4,7 @@
 
 
 #include "JsonElement.h"
-#include "Plexus.h"
+#include "online_monitor/Plexus.h"
 
 #include <math.h>
 
@@ -34,7 +34,7 @@ public:
   
   
   
-  Plexus fPlexus;
+  gov::fnal::uboone::online::Plexus fPlexus;
   
   static std::string sfFileStoragePath;
   static std::string sfUrlToFileStorage;

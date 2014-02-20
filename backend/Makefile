@@ -3,7 +3,8 @@
 all: depend bin
 
 pwd := $(shell pwd)
-boonedaq = $(HOME)/uboonedaq
+uboonedaq           = $(HOME)/ubdaq/uboonedaq
+uboonedaq_datatypes = $(HOME)/ubdaq/uboonedaq-datatypes
 CPPFLAGS := -g -I..
 CPP := g++44 -std=c++0x
 LD := $(CPP)
@@ -21,7 +22,8 @@ endif
 
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
-          $(notdir $(wildcard $(boonedaq)/projects/datatypes/*.cpp)) \
+          $(notdir $(wildcard $(uboonedaq_datatypes)/projects/datatypes/*.cpp)) \
+          Plexus.cpp \
           Client.cpp \
           DispatcherMessage.cpp \
           KvpSet.cpp \
@@ -32,28 +34,32 @@ SOURCES = $(notdir $(wildcard *.cpp)) \
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
 
-backend_obj = tmp/MakePng.o tmp/ResultComposer.o    tmp/TreeReader.o \
-tmp/ColorMap.o                tmp/RootToJson.o        tmp/cencode.o \
-tmp/FormString.o        tmp/SocketServer.o \
-tmp/FormulaLooter.o      tmp/Timer.o \
-tmp/JsonElement.o       tmp/RecordComposer.o    tmp/TreeElementLooter.o
+backend_obj = \
+tmp/MakePng.o       tmp/ResultComposer.o    tmp/TreeReader.o \
+tmp/ColorMap.o      tmp/RootToJson.o        tmp/cencode.o \
+tmp/FormString.o    tmp/SocketServer.o \
+tmp/FormulaLooter.o tmp/Timer.o \
+tmp/JsonElement.o   tmp/RecordComposer.o    tmp/TreeElementLooter.o
 
 #Where to look for source files
-vpath %.cpp $(boonedaq)/projects/dispatcher
-vpath %.cpp $(boonedaq)/projects/datatypes
+vpath %.cpp $(uboonedaq_datatypes)/projects/datatypes
+vpath %.cpp $(uboonedaq)/projects/dispatcher
+vpath %.cpp $(uboonedaq)/projects/online_monitor
 #Where to look for include files
-CPPFLAGS += -I $(boonedaq)/projects/dispatcher
-CPPFLAGS += -I $(boonedaq)/projects
+CPPFLAGS += -I $(uboonedaq)/projects
+CPPFLAGS += -I $(uboonedaq_datatypes)/projects
+
+# Don't use the default FCL and messagelogger.
+CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 
 # Boost.
 MY_BOOST_DIR ?= boost
 CPPFLAGS += -I $(MY_BOOST_DIR)/include
-#LIBS += -lboost_serialization -lboost_system -lboost_thread
+LIBS += -lboost_serialization -lboost_system -lboost_thread
 ifeq ($(UNAME),Darwin)
   LIBS += -Wl,-rpath,@executable_path/boost/lib 
-	CPPFLAGS += -ftemplate-depth=256  #stupid clang!
 endif
-CPPFLAGS += -I/$(MY_BOOST_DIR)/include
+CPPFLAGS += -I/$(MY_BOOST_DIR)/include -ftemplate-depth=512
 LIBS += -L $(MY_BOOST_DIR)/lib 
 
 # Root.
@@ -74,11 +80,11 @@ LIBS += -L/opt/X11/lib -lpng
 
 # postresql
 ifeq ($(UNAME),Darwin)
-	# Use the Postgres app, instead of a fullblown installation.
-#	LIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib
-	CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
+  # Use the Postgres app, instead of a fullblown installation.
+  LIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib
+  CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
 endif
-#LIBS += -lpq
+LIBS += -lpq
 	
 
 #Dependency rule
