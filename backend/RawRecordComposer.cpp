@@ -36,10 +36,11 @@
 #include "RootToJson.h"
 #include <stdlib.h>
 
-#include "../datatypes/eventRecord.h"
+#include "datatypes/eventRecord.h"
 
 using namespace std;
 using namespace gov::fnal::uboone::datatypes;
+using gov::fnal::uboone::online::Plexus;
 
 std::string RawRecordComposer::sfFileStoragePath = "../datacache";
 std::string RawRecordComposer::sfUrlToFileStorage = "datacache";

@@ -16,20 +16,19 @@
 #include "JsonElement.h"
 #include "Timer.h"
 
-#include "Client.h"
-#include "KvpSet.h"
-#include "Client.h"
-#include "ConvertDispatcherToEventRecord.h"
+#include "dispatcher/Client.h"
+#include "dispatcher/KvpSet.h"
+#include "dispatcher/ConvertDispatcherToEventRecord.h"
 
 
-using gov::fnal::uboone::datatypes::eventRecord;
 
 Timer gStartTimer;
 using namespace std; 
+using namespace gov::fnal::uboone::dispatcher;
+using gov::fnal::uboone::datatypes::eventRecord;
 
 static UInt_t events_served = 0;
 
-using namespace uboone::dispatcher;
 
 JsonObject KvpToJson(KvpSet& kvp)
 {
