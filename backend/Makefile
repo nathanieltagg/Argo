@@ -3,10 +3,17 @@
 all: depend bin
 
 pwd := $(shell pwd)
-uboonedaq           = $(HOME)/ubdaq/uboonedaq
-uboonedaq_datatypes = $(HOME)/ubdaq/uboonedaq-datatypes
+
+ifeq ($(origin UBOONEDAQ_DATATYPES_DIR), undefined)
+  uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
+  uboonedaq_datatypes = $(HOME)/ubdaq/uboonedaq-datatypes/projects
+else
+  uboonedaq           = $(UBOONEDAQ_DIR)/source
+  uboonedaq_datatypes = $(UBOONEDAQ_DATATYPES_DIR)/source
+endif
 CPPFLAGS := -g -I..
-CPP := g++44 -std=c++0x
+#CPP := g++44 -std=c++0x
+CPP := g++ 
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -22,7 +29,7 @@ endif
 
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
-          $(notdir $(wildcard $(uboonedaq_datatypes)/projects/datatypes/*.cpp)) \
+          $(notdir $(wildcard $(uboonedaq_datatypes)/datatypes/*.cpp)) \
           Plexus.cpp \
           Client.cpp \
           DispatcherMessage.cpp \
@@ -42,28 +49,28 @@ tmp/FormulaLooter.o tmp/Timer.o \
 tmp/JsonElement.o   tmp/RecordComposer.o    tmp/TreeElementLooter.o
 
 #Where to look for source files
-vpath %.cpp $(uboonedaq_datatypes)/projects/datatypes
-vpath %.cpp $(uboonedaq)/projects/dispatcher
-vpath %.cpp $(uboonedaq)/projects/online_monitor
+vpath %.cpp $(uboonedaq_datatypes)/datatypes
+vpath %.cpp $(uboonedaq)/dispatcher
+vpath %.cpp $(uboonedaq)/online_monitor
 #Where to look for include files
-CPPFLAGS += -I $(uboonedaq)/projects
-CPPFLAGS += -I $(uboonedaq_datatypes)/projects
+CPPFLAGS += -I $(uboonedaq)
+CPPFLAGS += -I $(uboonedaq_datatypes)
 
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 
 # Boost.
-MY_BOOST_DIR ?= boost
-CPPFLAGS += -I $(MY_BOOST_DIR)/include
+BOOST_INC ?= boost/include # Usually defined for us, use local symlink ./boost if not
+BOOST_LIB ?= boost/lib
 LIBS += -lboost_serialization -lboost_system -lboost_thread
 ifeq ($(UNAME),Darwin)
   LIBS += -Wl,-rpath,@executable_path/boost/lib 
 endif
-CPPFLAGS += -I/$(MY_BOOST_DIR)/include -ftemplate-depth=512
-LIBS += -L $(MY_BOOST_DIR)/lib 
+CPPFLAGS += -I/$(BOOST_INC) -ftemplate-depth=512
+LIBS += -L${BOOST_LIB}
 
 # Root.
-export ROOTSYS ?= ${pwd}/root
+export ROOTSYS ?= ${pwd}/root  # Usually defined for us, use local symlink ./root if not
 export LD_LIBRARY_PATH=${ROOTSYS}/lib
 ifeq ($(UNAME),Darwin)
 	LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
@@ -84,7 +91,11 @@ ifeq ($(UNAME),Darwin)
   LIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib
   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
 endif
-LIBS += -lpq
+ifneq ($(origin POSTGRES_INC), undefined)
+	CPPFLAGS += -I ${POSTGRES_INC}
+endif
+POSTGRES_LIB ?= "postgres"  # Usually defined for us, use local symlink ./postgres if not
+LIBS += -L${POSTGRES_LIB} -lpq
 	
 
 #Dependency rule
