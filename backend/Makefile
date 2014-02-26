@@ -6,11 +6,17 @@ pwd := $(shell pwd)
 
 ifeq ($(origin UBOONEDAQ_DATATYPES_DIR), undefined)
   uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
-  uboonedaq_datatypes = $(HOME)/ubdaq/uboonedaq-datatypes/projects
+  uboonedaq_datatypes_src = $(HOME)/ubdaq/uboonedaq-datatypes/projects
+  uboonedaq_datatypes_inc = $(HOME)/ubdaq/uboonedaq-datatypes/projects
 else
   uboonedaq           = $(UBOONEDAQ_DIR)/source
-  uboonedaq_datatypes = $(UBOONEDAQ_DATATYPES_DIR)/source
+  uboonedaq_datatypes_src = $(UBOONEDAQ_DATATYPES_DIR)/source
+  uboonedaq_datatypes_inc = $(UBOONEDAQ_DATATYPES_DIR)/include
 endif
+
+#override, since setup is poor.
+uboonedaq           = $(HOME)/development/uboonedaq/projects
+
 CPPFLAGS := -g -I..
 #CPP := g++44 -std=c++0x
 CPP := g++ 
@@ -29,7 +35,7 @@ endif
 
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
-          $(notdir $(wildcard $(uboonedaq_datatypes)/datatypes/*.cpp)) \
+          $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) \
           Plexus.cpp \
           Client.cpp \
           DispatcherMessage.cpp \
@@ -49,12 +55,12 @@ tmp/FormulaLooter.o tmp/Timer.o \
 tmp/JsonElement.o   tmp/RecordComposer.o    tmp/TreeElementLooter.o
 
 #Where to look for source files
-vpath %.cpp $(uboonedaq_datatypes)/datatypes
+vpath %.cpp $(uboonedaq_datatypes_src)/datatypes
 vpath %.cpp $(uboonedaq)/dispatcher
 vpath %.cpp $(uboonedaq)/online_monitor
 #Where to look for include files
-CPPFLAGS += -I $(uboonedaq)
-CPPFLAGS += -I $(uboonedaq_datatypes)
+CPPFLAGS += -I$(uboonedaq)
+CPPFLAGS += -I$(uboonedaq_datatypes_inc)
 
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
