@@ -115,14 +115,14 @@ ChannelMap.prototype.NewRecord = function()
   if(!gOmData.data) return;
   if(!gOmData.data.record) return;
   if(!gOmData.data.record[this.path]) return;
-  if(!gOmData.data.record[this.path].data) return;
-  this.map= gOmData.data.record[this.path].data;
+  if(!gOmData.data.record[this.path].obj) return;
+  this.map= gOmData.data.record[this.path].obj;
 
   if(gRefData.data)
     if(gRefData.data.record)
       if(gRefData.data.record[this.path])
-        if(gRefData.data.record[this.path].data)
-          this.refmap= gRefData.data.record[this.path].data;
+        if(gRefData.data.record[this.path].obj)
+          this.refmap= gRefData.data.record[this.path].obj;
 
   $(".portlet-title",$(this.top_element).parent()).html(this.map.title);
 

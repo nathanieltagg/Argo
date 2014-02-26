@@ -51,7 +51,7 @@ function Navigation(element, options)
 Navigation.prototype.GetListing = function()
 {  
   if(!gOmData.data.record.HLIST) return;
-  var layout = $(gOmData.data.record.HLIST.data);
+  var layout = $(gOmData.data.record.HLIST.obj);
   console.timeStamp("GetListing.");
   gOmData.remove("HLIST");
 

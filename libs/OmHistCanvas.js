@@ -66,7 +66,7 @@ OmHistCanvas.prototype.UpdateData = function()
   console.log("looking for ",this.path,' in ', gOmData.data.record,gOmData.data.record[this.path]);
   console.log(gOmData.data.record[this.path]);
   this.hist = $.extend(true,new Histogram(1,0,1), 
-                gOmData.data.record[this.path].data);
+                gOmData.data.record[this.path].obj);
   // $("div.title",this.top_element).html(this.hist.title);
 
   this.Update();
@@ -79,7 +79,7 @@ OmHistCanvas.prototype.UpdateRefData = function()
   console.log("looking for ",this.path,' in ', gRefData.data.record,gRefData.data.record[this.path]);
   console.log(gRefData.data.record[this.path]);
   this.refhist = $.extend(true,new Histogram(1,0,1), 
-                  gRefData.data.record[this.path].data);
+                  gRefData.data.record[this.path].obj);
   // $("div.title",this.top_element).html(this.hist.title);
 
   this.Update();

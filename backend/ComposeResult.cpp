@@ -283,7 +283,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
       getObjHtmlListing(f,"",list);
       JsonObject thing;
       thing.add("cycle",cycle);
-      thing.add("data",list);    
+      thing.add("obj",list);    
       result.add("HLIST",thing);
       
      } else if(hname == "LIST") {
@@ -291,7 +291,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
       getObjListing(f,"",arr);
       JsonObject thing;
       thing.add("cycle",cycle);
-      thing.add("data",arr);    
+      thing.add("obj",arr);    
       result.add("LIST",thing);
       
       
@@ -330,7 +330,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
     
       JsonObject thing;
       thing.add("cycle",cycle);
-      thing.add("data",jobj);    
+      thing.add("obj",jobj);    
       result.add(hname,thing);
     }
   }
