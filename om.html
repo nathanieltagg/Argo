@@ -32,12 +32,14 @@ gPageName='standard';
 
 
 <body>
-  <input id="ctl-show-labels" type="hidden" name="" checked="yes" value="1" />
-  <input id="ctl-show-tick-labels" type="hidden" name="" checked="yes" value="1" />
-  <input id="ctl-magnifying-glass" type="hidden" name="" checked="yes" value="1" />
-  <input id="ctl-magnifier-size" type="hidden" name="" checked="yes" value="50" />
-  <input id="ctl-magnifier-mag"  type="hidden" name="" checked="yes" value="2" />
-
+  <div style='display:none'>
+    <!-- Hidden controls; Set 'em and forget 'em.  Note that using type=hidden has wrong effect on latest jquery. -->
+    <input id="ctl-show-labels"      type="checkbox" name="ctl-show-labels" checked="checked" value="1" />
+    <input id="ctl-show-tick-labels" type="checkbox" name="ctl-show-tick-labels" checked="checked" value="1" />
+    <input id="ctl-magnifying-glass" type="checkbox" name="ctl-magnifying-glass" checked="checked" value="1" />
+    <input id="ctl-magnifier-size"   type="checkbox" name="ctl-magnifier-size" checked="checked" value="50" />
+    <input id="ctl-magnifier-mag"    type="checkbox" name="ctl-magnifier-mag" checked="checked" value="2" />
+  </div>
 <div id='everything'>
 
   <div id="header" >

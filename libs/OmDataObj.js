@@ -98,9 +98,9 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   if(data.error) { bad = true; this.status = data.error; }
   if(data.record.error) { bad = true; this.status = data.record.error; }
   if(bad) {
-    console.warn("Got error when retrieving data"+data.error);
+    console.warn("Got error when retrieving data: "+this.status);
     $.event.trigger({
-      type: "OmDataError",
+      type: "OmDataChangeState",
       msg: "Backend error: "+data.error
     }) ;
     return;
