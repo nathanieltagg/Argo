@@ -4,7 +4,7 @@
 <link href="css/le-frog/jquery-ui.css" rel="stylesheet">
 <link href="css/le-frog/jquery.ui.theme.css" rel="stylesheet">
 
-<script src="js/jquery-1.9.0.js"></script>
+<script src="js/jquery-2.1.0.min.js"></script>
 <script src="js/jquery-ui-1.10.0.custom.js"></script>
 
 <!-- IE detection -->

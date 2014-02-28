@@ -373,17 +373,17 @@ HistCanvas.prototype.DoMouse = function( ev )
     if(rely < this.origin_y && relx > this.origin_x) {
       this.fIsBeingDragged = true;
       this.fDragMode = "shiftX";
-      console.log("body drag")      
+      // console.log("body drag")      
     } else if(rely < (this.origin_y - 5) && relx < this.origin_x ) {
       // Drag on vertical axis.
       this.fIsBeingDragged = true;
       this.fDragMode = "scaleY";
-      console.log("scale Y: start = ",this.fDragStartF,this.fDragStartY);
+      // console.log("scale Y: start = ",this.fDragStartF,this.fDragStartY);
     } else if(relx > this.origin_x + 5 ) {
       // Note that this is capped at 5 pixels from the origin, for saftey. 
       this.fIsBeingDragged = true;
       this.fDragMode = "scaleX";
-      console.log("scale",this.fDragStartT);
+      // console.log("scale",this.fDragStartT);
     } 
   } else {
     // Either mousemove or mouseup.
@@ -419,9 +419,9 @@ HistCanvas.prototype.DoMouse = function( ev )
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
-      console.log('scaleX',this,relx,this.fDragStartT,this.max_u,maxu,this.bound_u_min,this.bound_u_max);
+      // console.log('scaleX',this,relx,this.fDragStartT,this.max_u,maxu,this.bound_u_min,this.bound_u_max);
       this.ChangeRange(this.min_u,maxu);
-      console.log('finish scale',this.min_u,this.max_u);
+      // console.log('finish scale',this.min_u,this.max_u);
       
     }
   }

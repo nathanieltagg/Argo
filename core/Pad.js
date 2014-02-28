@@ -396,7 +396,7 @@ Pad.prototype.DrawFrame = function()
       var ticks;
       if(this.time_on_x) {ticks = this.GetGoodTicksTime(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false); }
       else               ticks = this.GetGoodTicks(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false);
-      //console.log(this.fName + " " + ticks + " " + this.min_u + " " + this.max_u);
+      // console.log(this.fName + " " + ticks + " " + this.min_u + " " + this.max_u);
       var nt = ticks.length;
       for( var i=0;i<nt;i++) {
         var ttick = ticks[i];
@@ -405,7 +405,7 @@ Pad.prototype.DrawFrame = function()
           this.ctx.fillStyle = "rgba(100,100,100,0.5)";
           this.ctx.fillRect(x,this.origin_y-this.span_y,0.5,this.span_y);          
         }
-        if($('#ctl-show-tick-labels').is(':checked')) {
+        if($('#ctl-show-tick-labels').prop('checked')) {
           if(this.draw_ticks_x) {
             this.ctx.fillStyle = "rgba(0,0,0,1.0)";
             this.ctx.fillRect(x,this.origin_y,1,tickLen);
@@ -439,7 +439,7 @@ Pad.prototype.DrawFrame = function()
       for( var i=0;i<nt;i++) {
         var ftick = ticks[i];
         var y = this.GetY(ftick);
-        if($('#ctl-show-tick-labels').is(':checked')) {
+        if($('#ctl-show-tick-labels').prop('checked')) {
           if(this.draw_ticks_y) {
             this.ctx.fillStyle = "rgba(0,0,0,1.0)";
             this.ctx.fillRect(this.origin_x-tickLen,y,tickLen,1);
