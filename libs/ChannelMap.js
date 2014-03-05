@@ -419,8 +419,8 @@ ChannelMap.prototype.DoMouse = function(ev)
   
   if(ev.type === 'click' && this.fMouseInCrate) {
     var hash = "#tpc/crate"+this.fMouseInCrate;
-    if(null!=this.fMouseInCard) hash += "/crate"+this.fMouseInCrate + "card" + zeropad(this.fMouseInCard,2);
-    if(null!=this.fMouseInChannel) hash += "/crate"+this.fMouseInCrate + "card" + zeropad(this.fMouseInCard,2) + "chan" + zeropad(this.fMouseInChannel,2);
+    if(null!=this.fMouseInCard) hash += "/card" + zeropad(this.fMouseInCard,2);
+    if(null!=this.fMouseInChannel) hash += "/chan" + zeropad(this.fMouseInChannel,2);
     console.log("click newhash = ",hash);
     window.location.hash = hash;
   }
