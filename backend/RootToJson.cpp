@@ -40,6 +40,7 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   h.add("n",hist->GetNbinsX());
   h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
   h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
+  h.add("log_x",hist->GetXaxis()->);
   h.add("underflow",hist->GetBinContent(0));
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
   double tot = hist->GetSumOfWeights();
