@@ -48,6 +48,7 @@ vpath %.cpp $(uboonedaq)/projects/online_monitor
 #Where to look for include files
 CPPFLAGS += -I $(uboonedaq)/projects
 CPPFLAGS += -I $(uboonedaq_datatypes)/projects
+CPPFLAGS += -D nullptr=0
 
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
@@ -58,8 +59,9 @@ CPPFLAGS += -I $(MY_BOOST_DIR)/include
 LIBS += -lboost_serialization -lboost_system -lboost_thread
 ifeq ($(UNAME),Darwin)
   LIBS += -Wl,-rpath,@executable_path/boost/lib 
+  CPPFLAGS +=  -ftemplate-depth=512
 endif
-CPPFLAGS += -I/$(MY_BOOST_DIR)/include -ftemplate-depth=512
+CPPFLAGS += -I/$(MY_BOOST_DIR)/include
 LIBS += -L $(MY_BOOST_DIR)/lib 
 
 # Root.

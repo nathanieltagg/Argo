@@ -649,7 +649,7 @@ void RecordComposer::composeCal()
         //timeProfile.Fill(k,adc);
         timeProfileData[k+1] += adc;
         
-        wiresum+=adc;
+        wiresum+=fabs(adc);
         // colormap.get(&imagedata[k*3],adc/4000.);
         imagedata[k] = tanscale(adc);
       

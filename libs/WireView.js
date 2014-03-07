@@ -360,7 +360,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     if(!this.loaded_wireimg) return; // no more fallbacks. 
     if(!this.wireimg) return;
   }
-  
+  if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
    var min_wire    = Math.max(this.min_u,0);
