@@ -2,3 +2,4 @@
 .htaccess
 .nfs*
 basetag.inc
+config

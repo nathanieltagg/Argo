@@ -1,15 +1,8 @@
-#!/bin/bash
-
-pushd `dirname "${BASH_SOURCE[0]}"` >> /dev/null;
-SCRIPTPATH=`pwd`
-popd >> /dev/null
-
-#upsscript=$SCRIPTPATH/../ups/setup_for_development
-#if [ -r $upsscript ] ; then source $upsscript -d; fi;
-#source $SCRIPTPATH/../ups/setup_for_development
-export LD_LIBRARY_PATH=$SCRIPTPATH/root/lib:$SCRIPTPATH/boost/lib
-export DYLD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-
-source $SCRIPTPATH/root/bin/thisroot.sh
-
-
+# For use on ups systems, source this.
+source /uboone/setup
+setup gcc v4_7_1
+setup root v5_34_05 -q e2:debug
+setup boost v1_53_0 -q e2:debug
+setup postgres
+setup uboonedaq_datatypes v1_00_02 -q e2:debug
+#setup uboonedaq v1_00_02 -q e2:debug

@@ -49,12 +49,12 @@ public:
   
   int inline static tanscale(float adc) 
   {
-    return int(atan(adc/50.)/M_PI*256.) + 127;  
+    return int(atan(adc/25.)/M_PI*256.) + 127;  
   }
 
   float inline static inv_tanscale(int y) 
   {
-    return tan((y-127)*M_PI/256)*50.;
+    return tan((y-127)*M_PI/256)*25.;
   }
   
 };
