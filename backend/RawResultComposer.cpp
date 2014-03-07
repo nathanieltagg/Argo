@@ -52,6 +52,7 @@ string RawResultComposer::compose(
          Long64_t inStart,
          Long64_t inEnd )
 {
+  using std::string;
   events_served++;
 
   // Test code to see what serve_event.cgi will do if the process hangs on an event.
@@ -61,16 +62,29 @@ string RawResultComposer::compose(
   Timer eventTimeStart;
 
   // Do whatever input option looks best.
-  std::string path(inPath);
+  string path(inPath);
   
   std::shared_ptr<gov::fnal::uboone::datatypes::eventRecord> record;
+  std::cout << "Requested path: " << path << std::endl;
   
   // If it is a dispatcher call:
   if(path.find("dispatcher",0)==0) {
-    // Make a call to the dispatcher!
-      Client client(false);
+    // Make a call to the dispatcher.
+    
+    // Format: dispatcher:hostname:port
+    string::size_type c1 = path.find_first_of(':');
+    string::size_type c2 = path.find_first_of(':',c1+1);
+    string disp_host = "localhost";
+    string disp_port = "2013";
+    
+    if(c1 != string::npos) { disp_host = path.substr(c1+1,c2-c1-1); }
+    if(c2 != string::npos) { disp_port = path.substr(c2+1); }
+    std::cout << "Dispatcher host: " << disp_host << std::endl;
+    std::cout << "Dispatcher port: " << disp_port << std::endl;
 
-      client.connect("localhost","2013"); // fixme: don't hardwire
+      Client client(false);
+      
+      client.connect(disp_host,disp_port); // fixme: don't hardwire
       double retry_wait = 5;      
       if(!client.is_good() ) {
         result.add("error","Could not connect to dispatcher");
@@ -103,17 +117,26 @@ string RawResultComposer::compose(
         << " requestHeaderOnly="<< md.get("requestHeaderOnly")
         << " evMyEventNumber=" << md.get("evMyEventNumber")
           ;
+      
+      try {
        record = ConvertDispatcherToEventRecord(data.get());
-        
+      }
+      catch(...) {
+        result.add("error","Could not unpack event Record");
+        return result.str();
+      }
   } else {
     // Open an actual-to-goodness file.
-    
+    result.add("error","TODO: Raw Data File interface not implimented.");
   }
   
-  logInfo << "Got a record and ready to compose.";
   if(record) {
+    logInfo << "Got a record and ready to compose.";
     RawRecordComposer composer(result,record,inOptions);
     composer.compose();
+  } else {
+    logInfo << "Returning empty record.";
+    
   }
   // This is a good time to figure out the software version information.
   

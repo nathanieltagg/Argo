@@ -56,6 +56,8 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   , fPaletteTrans(256) 
   , fmintdc(0)
   , fmaxtdc(0)
+  , fPlexus("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE")
+
 {
   unsigned char vv[] =   { 
     #include "palette.inc" 
@@ -124,7 +126,7 @@ void wireOfChannel(int channel, int& plane, int& wire)
   
 void RawRecordComposer::composeTPC()
 {
-
+  if(!fPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
   // The big wire map.
   typedef std::vector<int16_t> waveform_t;
   typedef std::shared_ptr<waveform_t> waveform_ptr_t;
@@ -133,6 +135,7 @@ void RawRecordComposer::composeTPC()
   wiremap_t wireMap;
   int ntdc = 0;
   
+  int wires_read = 0;
   // Loop through all channels.
   std::map<crateHeader,crateData,compareCrateHeader> seb_map = fRecord->getSEBMap();
   std::map<crateHeader,crateData,compareCrateHeader>::iterator seb_it;
@@ -164,7 +167,7 @@ void RawRecordComposer::composeTPC()
           // Find the wire number of this channel.
           Plexus::PlekPtr_t p = fPlexus.get(crate,card,channel);
           int wire = p->wirenum;
-          
+          // std::cout << "found wire " << wire << std::endl;
           if(wire<0) continue;
 
           // FIXME: not right for huffman.
@@ -174,16 +177,18 @@ void RawRecordComposer::composeTPC()
           std::pair<wiremap_t::iterator,bool> inserted;
           waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp));
           inserted = wireMap.insert(wiremap_t::value_type(wire, waveform_ptr));
-          waveform_t& waveform = *(inserted.first->second.get());
           if(!inserted.second) {
             cerr << "Two channels with wire number " << wire << " seem to have the same crate/card/channel map." << endl;
+            continue;
           }
+          waveform_t& waveform = *(inserted.first->second.get());
                   
           // Copy the channel data to my own signed vector array
           // FIXME: do huffman decoding or decimation recover here!
-          for(int i=0;i<nsamp;i++) waveform[i] = *((uint16_t*)(data.getChannelDataPtr()+i*sizeof(uint16_t)));
+          uint16_t* rawdata = (uint16_t*)(data.getChannelDataPtr());
+          for(int i=0;i<nsamp;i++) waveform[i] = rawdata[i];
           
-          
+          wires_read++;
           if(ntdc<nsamp) ntdc = nsamp;
           
           // Find the pedestal manually.
@@ -212,6 +217,7 @@ void RawRecordComposer::composeTPC()
   fmintdc = 0;
   fmaxtdc = ntdc;
 
+  if(wires_read<=0) cerr << "Got no wires!" << std::endl;
   int nwire = 8254;
   ColorMap colormap;
   MakePng png (ntdc,nwire, MakePng::palette_alpha,fPalette,fPaletteTrans);
@@ -225,34 +231,49 @@ void RawRecordComposer::composeTPC()
   planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
   planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
   planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-  waveform_t blank(ntdc,0);
+  // waveform_t blank(ntdc,0);
   for(int wire=0;wire<nwire;wire++) 
   {
+    // waveform_t& waveform = blank;
     wiremap_t::iterator it = wireMap.find(wire);
-    waveform_t& waveform = blank;
-    if(it != wireMap.end()) waveform = *(it->second.get());
+    if(it != wireMap.end()) {
+      // We have a good wire recorded.0
+      waveform_t& waveform = *(it->second.get());
 
-    double wiresum = 0;
-    for(int k=0;k<ntdc;k++) {
-      short raw = waveform[k];
-      // colormap.get(&imagedata[k*3],float(raw)/4000.);
-      imagedata[k] = tanscale(raw);
-      // Save bitpacked data as image map.
-      int iadc = raw + 0x8000;
-      encodeddata[k*3]   = 0xFF&(iadc>>8);
-      encodeddata[k*3+1] = iadc&0xFF;
-      encodeddata[k*3+2] = 0;
-      double val = fabs(raw);
-      wiresum += val;
-      //timeProfile.Fill(k,val);
-      timeProfileData[k+1] += val;
-    }
-    png.AddRow(imagedata);
-    epng.AddRow(encodeddata);
+      double wiresum = 0;
+      for(int k=0;k<ntdc;k++) {
+        short raw = waveform[k];
+        // colormap.get(&imagedata[k*3],float(raw)/4000.);
+        imagedata[k] = tanscale(raw);
+        // Save bitpacked data as image map.
+        int iadc = raw + 0x8000;
+        encodeddata[k*3]   = 0xFF&(iadc>>8);
+        encodeddata[k*3+1] = iadc&0xFF;
+        encodeddata[k*3+2] = 0;
+        double val = fabs(raw);
+        wiresum += val;
+        //timeProfile.Fill(k,val);
+        timeProfileData[k+1] += val;
+      }
+      png.AddRow(imagedata);
+      epng.AddRow(encodeddata);
       
-    int plane, planewire;
-    wireOfChannel(wire,plane,planewire);
-    planeProfile[plane]->Fill(planewire,wiresum);
+      int plane, planewire;
+      wireOfChannel(wire,plane,planewire);
+      planeProfile[plane]->Fill(planewire,wiresum);
+    } else {
+      // Do not have wire info.
+      
+      for(int k=0;k<ntdc;k++) {
+        imagedata[k] = 256; // Saturate!
+        // Save bitpacked data as image map.
+        encodeddata[k*3]   = 0;
+        encodeddata[k*3+1] = 0;
+        encodeddata[k*3+2] = 0;
+      }
+      png.AddRow(imagedata);
+      epng.AddRow(encodeddata);      
+    }
     
   }
   timeProfile.SetContent(&timeProfileData[0]);
