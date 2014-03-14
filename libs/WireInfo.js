@@ -215,6 +215,9 @@ WireInfo.prototype.Draw = function()
   this.graph.hists = [];
   this.graph.colorscales = [];
   var maxwire = gGeo.numWires(plane);
+  this.graph.max_v = -1e9;
+  this.graph.min_v =  1e9;
+  
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     var c = i+chan;
     var wire = plane+i;    
@@ -225,8 +228,15 @@ WireInfo.prototype.Draw = function()
     if(i<0) color = 10-color;
     this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(color)); 
   }
-  if(this.graph.min_v > -100) this.graph.min_v = -100;
-  if(this.graph.max_v <  100) this.graph.max_v =  100;
+
+  //insist that the graph be at least 20 ADC counts tall
+  var dv = this.graph.max_v - this.graph.min_v;
+  if( dv < 20) {
+     this.graph.max_v += (20-dv)/2; 
+     this.graph.min_v -= (20-dv)/2;   
+   }
+  // if(this.graph.min_v > -100) this.graph.min_v = -100;
+  // if(this.graph.max_v <  100) this.graph.max_v =  100;
   // this.LoadHistogramWithWireData(this.graphdata,offscreenCtx,chan,tdc);
   // this.graph.ResetToHist(this.graphdata);
   this.graph.Draw();

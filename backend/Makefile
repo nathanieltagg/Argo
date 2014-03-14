@@ -71,7 +71,7 @@ CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 # Boost.
 BOOST_INC ?= boost/include # Usually defined for us, use local symlink ./boost if not
 BOOST_LIB ?= boost/lib
-LIBS += -lboost_serialization -lboost_system -lboost_thread
+# LIBS += -lboost_serialization -lboost_system -lboost_thread
 ifeq ($(UNAME),Darwin)
   LIBS += -Wl,-rpath,@executable_path/boost/lib 
   CPPFLAGS +=  -ftemplate-depth=512

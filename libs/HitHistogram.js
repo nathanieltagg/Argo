@@ -128,6 +128,8 @@ HitHistogram.prototype.BuildHistogram = function()
     var w = hits[i][field];
     this.hist.ExpandFill(w);
   }
+  this.bound_u_min = this.hist.min;
+  this.bound_u_max = this.hist.max;
   
   this.xlabel = $(this.ctl_hit_field).find(":selected").text();
   
