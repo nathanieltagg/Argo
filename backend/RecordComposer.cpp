@@ -137,6 +137,7 @@ void RecordComposer::composeHits()
   } 
   
   JsonObject reco_list;
+  JsonObject hist_list;
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
@@ -163,18 +164,48 @@ void RecordComposer::composeHits()
     int nhits = l->GetLen();
     cout << "nhits: " << nhits << endl;
 
-    vector<pair< string,string> > key_leaf_pairs;
-    key_leaf_pairs.push_back(make_pair<string,string>("wire",      name+"obj.fWireID.Wire"     ));
-    key_leaf_pairs.push_back(make_pair<string,string>("plane",     name+"obj.fWireID.Plane"    ));
-    key_leaf_pairs.push_back(make_pair<string,string>("view",      name+"obj.fView"            ));
-    key_leaf_pairs.push_back(make_pair<string,string>("m",         name+"obj.fMultiplicity"    ));
-    key_leaf_pairs.push_back(make_pair<string,string>("q",         name+"obj.fCharge"          ));
-    key_leaf_pairs.push_back(make_pair<string,string>("\u03C3q",   name+"obj.fSigmaCharge"     ));
-    key_leaf_pairs.push_back(make_pair<string,string>("t",         name+"obj.fPeakTime"        ));
-    key_leaf_pairs.push_back(make_pair<string,string>("\u03C3t",   name+"obj.fSigmaPeakTime"   ));
-    key_leaf_pairs.push_back(make_pair<string,string>("t1",        name+"obj.fStartTime"       ));
-    key_leaf_pairs.push_back(make_pair<string,string>("t2",        name+"obj.fEndTime"         ));
-    std::vector<JsonObject> v = ftr.makeVector(key_leaf_pairs);
+    TLeaf* lhit_wire    = fTree->GetLeaf( (name+"obj.fWireID.Wire"     ).c_str());
+    TLeaf* lhit_plane   = fTree->GetLeaf( (name+"obj.fWireID.Plane"    ).c_str());
+    TLeaf* lhit_view    = fTree->GetLeaf( (name+"obj.fView"            ).c_str());
+    TLeaf* lhit_m       = fTree->GetLeaf( (name+"obj.fMultiplicity"    ).c_str());
+    TLeaf* lhit_q       = fTree->GetLeaf( (name+"obj.fCharge"          ).c_str());
+    TLeaf* lhit_sigq    = fTree->GetLeaf( (name+"obj.fSigmaCharge"     ).c_str());
+    TLeaf* lhit_t       = fTree->GetLeaf( (name+"obj.fPeakTime"        ).c_str());
+    TLeaf* lhit_sigt    = fTree->GetLeaf( (name+"obj.fSigmaPeakTime"   ).c_str());
+    TLeaf* lhit_t1      = fTree->GetLeaf( (name+"obj.fStartTime"       ).c_str());
+    TLeaf* lhit_t2      = fTree->GetLeaf( (name+"obj.fEndTime"         ).c_str());
+    
+    // Hit histograms.
+    TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
+    std::vector<TH1*> planeProfile;
+    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",218,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",218,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",432,0,3456));
+ 
+    
+    std::vector<JsonObject> v;
+    for(int i=0;i<nhits;i++){
+      JsonObject h;
+      int wire  = ftr.getInt(lhit_wire   ,i);
+      int plane = ftr.getInt(lhit_plane  ,i);
+      double q  = ftr.getVal(lhit_q      ,i);
+      double t  = ftr.getVal(lhit_t      ,i);
+      if(plane==2)timeProfile.Fill(t,q);
+      if(plane>=0 && plane<3) planeProfile[plane]->Fill(wire,q);
+      h.add("wire",    wire  );
+      h.add("plane",   plane );
+      h.add("q",       q     );
+      h.add("t",       t     );
+      h.add("t1",      ftr.getJson(lhit_t1     ,i) );
+      h.add("t2",      ftr.getJson(lhit_t2     ,i) );
+      // h.add("view",    ftr.getJson(lhit_view   ,i) ); // View is redundant with plane.
+      // h.add("m",       ftr.getJson(lhit_m      ,i) );  // unusued
+      // h.add("\u03C3q", ftr.getJson(lhit_sigq   ,i) ); // unused
+      // h.add("\u03C3t", ftr.getJson(lhit_sigt   ,i) ); //unused
+      v.push_back(h);                              
+    }
+      
+
 
     // Attempt to find association data. Look for a match to the name above, take the last match.
     // SHOULD be good enough.
@@ -207,11 +238,24 @@ void RecordComposer::composeHits()
     }
 
 
-    for(int i=0;i<v.size();i++) arr.add(v[i]);
-        
+    for(int i=0;i<v.size();i++) arr.add(v[i]);        
     reco_list.add(stripdots(name),arr);
+    
+    JsonObject hists;
+    hists.add("timeHist",TH1ToHistogram(&timeProfile));
+    JsonArray jPlaneHists;
+    jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
+    jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
+    jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
+    hists.add("planeHists",jPlaneHists);
+
+    delete planeProfile[0];
+    delete planeProfile[1];
+    delete planeProfile[2];    
+    hist_list.add(stripdots(name),hists);
   }
   fOutput.add("hits",reco_list);
+  fOutput.add("hit_hists",hist_list);
 }
 
 // Utility function for composeCluster

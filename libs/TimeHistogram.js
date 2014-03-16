@@ -59,8 +59,18 @@ TimeHistogram.prototype.Change = function()
 
 TimeHistogram.prototype.NewRecord = function()
 {
+  var hitsListName = $("#ctl-HitLists").val();
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
-  if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {
+  if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) {
+    var wiredesc = gRecord.hit_hists[hitsListName].timeHist; 
+    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc);
+    this.SetHist(this.hist,new ColorScaleIndexed(0));
+    this.bound_u_min = gRecord.header.TDCStart;
+    this.bound_u_max = gRecord.header.TDCEnd;
+    gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
+     
+  } 
+  else if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {
     var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
     this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.timeHist);
 
