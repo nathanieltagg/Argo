@@ -1,8 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-   "http://www.w3.org/TR/html4/loose.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-     xmlns:svg="http://www.w3.org/2000/svg"
-     xml:lang="en">
+<!DOCTYPE html>
 <head> 
 <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta http-equiv="content-type" content="text/html; charset=UTF8">
@@ -16,7 +12,7 @@
 
 <!-- Activate some overrides to basic configuration. -->
 <!--#set var="PageStyle" value="standard" -->
-<script type="text/javascript" charset="utf-8">
+<script type="text/javascript">
 // These lines pull the Server-side-include (SSI) strings.
 gPageName='<!--#echo encoding="none" var="PageStyle"-->';
 // This is used to get a query string supplied to the page on the server side, but hidden
@@ -42,22 +38,22 @@ gHiddenQueryString='<!--#echo encoding="none" var="QUERY_STRING"-->';
 <div id='everything'>
 
   <div id="header" >
-    <center>
+    <div style="text-align:center;">
       <a href="http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/uboone/data/uboonepro/reco/S2013.06.25"
       style="background: black; color: white;"> Click here for 2013 MC Challenge events! </a>
-    </center>
-    <center>
+    </div>
+    <div style="text-align:center;">
       <!-- <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span> -->
         <img src="images/new-argo-logo.png" alt="Argo - the Microboone Web Event Display" style="height:200px;">
-    </center>
-    <div class="header-links"><center>
+    </div>
+    <div class="header-links" style="text-align:center;">
+
             <a href='help'>Help and Hints</a>
       
             <a class="align-left" id="Print" href='#'>Print</a>
             <div class="align-right"><span class="align-right" id="link-to-this-event">Link to this event</span>
               <br/><span class="align-right" id="email-this-event">Email this event</span>
             </div>
-    </center>
     </div>
     
     <table style="clear: both;" border="0" width="100%"><tr>
@@ -131,6 +127,7 @@ gHiddenQueryString='<!--#echo encoding="none" var="QUERY_STRING"-->';
   
   <!-- hidden stuff. -->
   <!--#include virtual="html/MOTD.inc" -->
+  <!--#include virtual="html/Keyboard.inc" -->
   
   <div id="warning-dialog" title="Warning">
      <p id="warning-dialog-message"></p>

@@ -24,6 +24,9 @@ $(function() {
     if($(event.target).is(":input")) return true;
     if(event.ctrlKey || event.altKey || event.metaKey) return true; // Don't intercept control-N for new window.
     console.log("keypress",event.which);
+    // var sound = document.getElementById("sound1");
+    // sound.Play();
+
     switch(event.which) {
       // case 44: // ',' key
       // case 60: // '<' key
