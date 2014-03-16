@@ -123,7 +123,7 @@ void RecordComposer::composeHeaderData()
   // Add my own things. 
   // FIXME: this should come from the event data, not be hardcoded, but this will have to do for the moment.
   header.add("TDCStart",0);
-  header.add("TDCEnd",3200);
+  header.add("TDCEnd",9600);
   
   fOutput.add("header",header);
 }

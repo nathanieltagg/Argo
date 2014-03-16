@@ -65,8 +65,8 @@ TimeHistogram.prototype.NewRecord = function()
     var wiredesc = gRecord.hit_hists[hitsListName].timeHist; 
     this.hist = $.extend(true,new Histogram(1,0,1), wiredesc);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
-    this.bound_u_min = gRecord.header.TDCStart;
-    this.bound_u_max = gRecord.header.TDCEnd;
+    this.bound_u_min = this.hist.min;
+    this.bound_u_max = this.hist.max;
     gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
      
   } 
@@ -81,11 +81,11 @@ TimeHistogram.prototype.NewRecord = function()
     // cs.max = this.hist.max;
     this.SetHist(this.hist,cs);
     this.ResetToHist(this.hist);
-    this.bound_u_min = gRecord.header.TDCStart;
-    this.bound_u_max = gRecord.header.TDCEnd;
+    this.bound_u_min = this.hist.min;
+    this.bound_u_max = this.hist.max;
     gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
   } else {
-    this.hist = new Histogram(32,0,3200);
+    this.hist = new Histogram(32,0,9600);
     this.SetHist(this.hist,cs);
     this.ResetToHist(this.hist);      
   }  
@@ -98,7 +98,7 @@ TimeHistogram.prototype.FinishRangeChange = function()
   // TDC bounds
   gZoomRegion.changeTimeRange( 
               Math.max(this.min_u, gRecord.header.TDCStart)
-            , Math.min(this.max_u, gRecord.header.TDCEnd )
+            , Math.min(this.max_u, gRecord.header.TDCEnd  )
           );
   gStateMachine.Trigger("TimeCutChange");
 }
