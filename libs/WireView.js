@@ -108,6 +108,7 @@ function WireView( element, options )
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
+  $('#ctl-HitLists'    ) .change(function(ev) { return self.NewRecord_hits(); });
   $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
@@ -187,10 +188,12 @@ WireView.prototype.NewRecord_image = function()
   this.wireimg = new Image();
   this.wireimg_thumb = new Image();
   
-  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
+  this.show_image = $(this.ctl_wireimg_type).prop("checked").val();  
   if(!gRecord[this.show_image]) return;
   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
-  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
+  console.warn("NewRecord_image",wiredesc);
+  // e.g. gRecord.raw."recob::rawwire"
   this.wireimg.src       = wiredesc.wireimg_url;
   this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;
   // Callback when the png is actually there...
@@ -311,7 +314,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   }
 
   if(this.zooming) {
-    // Clip out the region
+    // Make black boxes around the data.
     this.ctx.fillStyle = "rgb(0,0,0)";
     var nwires = gGeo.numWires(this.plane);
     if(min_u < 0) 
@@ -329,10 +332,10 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
                         this.span_x, this.span_y /*too much*/);
     }
 
-    if(max_v > 3200) { // FIXME: Should be number of samples.!
-      this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
-                        this.span_x, this.GetY(3200)-(this.origin_y-this.span_y));
-    }
+    // if(max_v > 3200) { // FIXME: Should be number of samples.!
+    //   this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
+    //                     this.span_x, this.GetY(3200)-(this.origin_y-this.span_y));
+    // }
     
     
   }  
@@ -347,6 +350,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
+  console.warn("DrawImage",this.loaded_wireimg);
   var do_thumbnail = (fast);
   if(!this.loaded_wireimg) do_thumbnail = true;
   if(!this.wireimg) do_thumbnail = true;
@@ -360,6 +364,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     if(!this.loaded_wireimg) return; // no more fallbacks. 
     if(!this.wireimg) return;
   }
+  
+  console.warn("DrawImage",this.wireimg);
   if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 

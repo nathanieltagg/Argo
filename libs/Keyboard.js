@@ -63,6 +63,10 @@ $(function() {
         $('#ctl-show-hits').click();
         return false;
 
+      case 72: // 'H'
+        $('#ctl-HitLists').cycle_dropdown().trigger("change");
+        return false;
+
       case 99: // 'c'
         $('#ctl-show-clus').click();
         return false;

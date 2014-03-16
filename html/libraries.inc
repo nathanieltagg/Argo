@@ -1,11 +1,13 @@
 <!-- This library lets me use text functions for non-html5-compliant browsers, using the closest-thing-to-native you can get. -->
 <!-- General-purpose javascript library to help cross-platform compatibility and other issues. see http://jquery.com -->
 
-<link href="css/le-frog/jquery-ui.css" rel="stylesheet">
-<link href="css/le-frog/jquery.ui.theme.css" rel="stylesheet">
+<link href="css/le-frog/jquery-ui-1.10.4.custom.css" rel="stylesheet">
+<link href="css/le-frog/jquery-ui-1.10.4.custom.min.css" rel="stylesheet">
 
-<script src="js/jquery-1.9.0.js"></script>
-<script src="js/jquery-ui-1.10.0.custom.js"></script>
+<!-- <script src="js/jquery-1.9.0.js"></script> -->
+<!-- <script src="js/jquery-ui-1.10.0.custom.js"></script> -->
+<script src="js/jquery-2.1.0.min.js"></script>
+<script src="js/jquery-ui-1.10.4.custom.min.js"></script>
 
 <!-- IE detection -->
 <script type="text/javascript" src="js/modernizr.js"></script>
@@ -36,7 +38,7 @@
 <!-- firebug lite, for debugging on random browswers. -->
 <!-- <script type='text/javascript' 
         src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
-<script type="text/javascript" charset="utf-8">
+<script type="text/javascript" ">
   if (window['loadFirebugConsole']) {
       window.loadFirebugConsole();
   } else {
