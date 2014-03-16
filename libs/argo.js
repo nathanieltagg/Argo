@@ -331,10 +331,10 @@ $(function(){
   function RestoreSettings( slot ) {
     console.log("RestoreSettings, slot=",slot);
     // see ideas at http://www.shopdev.co.uk/blog/sortable-lists-using-jquery-ui/
-    var hidden_list_str = $.cookie(slot+":hidden-portlets");
+    var hidden_list_str   = $.cookie(slot+":hidden-portlets");
     var unhidden_list_str = $.cookie(slot+":unhidden-portlets");
-    if(hidden_list_str === null) hidden_list_str = "";
-    if(unhidden_list_str === null) unhidden_list_str = "";
+    if(!hidden_list_str  ) hidden_list_str = "";
+    if(!unhidden_list_str) unhidden_list_str = "";
     var hidden_list = hidden_list_str.split(',');
     var unhidden_list = unhidden_list_str.split(',');
     
@@ -364,7 +364,7 @@ $(function(){
      $(".dock").each(function(){
        var cval = $.cookie(slot+":dock:"+this.id);
        // console.log("evaluating cookie","dock:"+this.id,cval);
-       if(cval === null) return;
+       if(!cval) return;
        var list = cval.split(',');
        for(var i=list.length-1;i>=0;i--){
          if(list[i]=="") continue;
@@ -399,6 +399,7 @@ $(function(){
 
   $('#ctl-load-config').button().click(function(){
     RestoreSettings("save");
+    return true;
   });
 
   

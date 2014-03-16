@@ -193,7 +193,6 @@ WireView.prototype.NewRecord_image = function()
   if(!gRecord[this.show_image]) return;
   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
   var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
-  console.warn("NewRecord_image",wiredesc);
   // e.g. gRecord.raw."recob::rawwire"
   this.wireimg.src       = wiredesc.wireimg_url;
   this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;
@@ -351,7 +350,6 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
-  console.warn("DrawImage",this.loaded_wireimg);
   var do_thumbnail = (fast);
   if(!this.loaded_wireimg) do_thumbnail = true;
   if(!this.wireimg) do_thumbnail = true;
@@ -366,7 +364,6 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     if(!this.wireimg) return;
   }
   
-  console.warn("DrawImage",this.wireimg);
   if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
    var min_tdc     = Math.max(0,this.min_v);
    var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
