@@ -170,6 +170,7 @@ WireView.prototype.NewRecord_hits = function()
   this.visHits = [];
   this.hasContent = false;
 
+  gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
   // Go through gHits, and find hits that match our view.
@@ -332,10 +333,10 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
                         this.span_x, this.span_y /*too much*/);
     }
 
-    // if(max_v > 3200) { // FIXME: Should be number of samples.!
-    //   this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
-    //                     this.span_x, this.GetY(3200)-(this.origin_y-this.span_y));
-    // }
+    if(max_v > 9600) { // FIXME: Should be number of samples.!
+      this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
+                        this.span_x, this.GetY(9600)-(this.origin_y-this.span_y));
+    }
     
     
   }  
@@ -512,6 +513,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   if(!clusters) return;  
 
   var hits = [];
+  gHitsListName = $("#ctl-HitLists").val();
   if(gHitsListName) hits = gRecord.hits[gHitsListName];
 
   this.clusterHulls = [];

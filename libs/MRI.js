@@ -194,6 +194,7 @@ MRI.prototype.ZoomChange = function()
 MRI.prototype.NewRecord = function()
 {
   // Sort by hit start time.
+  gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var inhits = gRecord.hits[gHitsListName];
   if(inhits.length==0) return;

@@ -168,6 +168,7 @@ TriDView.prototype.CreateFrame = function()
 
 TriDView.prototype.CreateHits = function()
 {
+  gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
 
