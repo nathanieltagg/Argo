@@ -161,9 +161,17 @@ function ZoomControl( element, options )
 ZoomControl.prototype.AutoZoom = function()
 {
   var source = null;
-  if(gCurName.cal) source = gRecord.cal[gCurName.cal];
+  
+  var sacrifice = 0.1;
+  var wire_pad = 20;
+
+  var hitsListName = $("#ctl-HitLists").val();
+  if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) source = gRecord.hit_hists[hitsListName];
+  else if(gCurName.cal) source = gRecord.cal[gCurName.cal];
   else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
   // else return;
+  
+  console.warn("Zoom Control Source:",source);
   
   if(source){
     if(source.timeHist){
@@ -171,24 +179,25 @@ ZoomControl.prototype.AutoZoom = function()
       var time_bounds = timeHist.GetROI(0.03);
       gZoomRegion.tdc[0] = time_bounds[0]-20;
       gZoomRegion.tdc[1] = time_bounds[1]+20;  
+      console.log("AutoZoom: Time: ",gZoomRegion.tdc[0], gZoomRegion.tdc[1]);
     } else {
       gZoomRegion.tdc[0] = 0;
       gZoomRegion.tdc[1] = 3200;
     }
   
+  
     if(source.planeHists) {
       var plane0Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[0]);
-      var plane0_bounds = plane0Hist.GetROI(0.1);
+      var plane0_bounds = plane0Hist.GetROI(sacrifice);
       console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
 
       var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
-      var plane1_bounds = plane1Hist.GetROI(0.1);
+      var plane1_bounds = plane1Hist.GetROI(sacrifice);
       console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
 
       var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
-      var plane2_bounds = plane2Hist.GetROI(0.1);
+      var plane2_bounds = plane2Hist.GetROI(sacrifice);
       console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
-      // Add 10 wires to either side.
     
 
       // gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
@@ -197,7 +206,7 @@ ZoomControl.prototype.AutoZoom = function()
       gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
       gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
       gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
-      gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+      gZoomRegion.setLimits(2,plane2_bounds[0]-wire_pad,plane2_bounds[1]+wire_pad);
     }
   } else { // No source available. Maybe try hits?
     this.FullZoom();
