@@ -59,7 +59,9 @@ Histogram.prototype.ExpandFill = function(x,val)
     // Instead of overflowing, expand the histogram.    
     console.log("expandhigh");
     var nadd = bin + 1 - this.n;
-    if(this.n+nadd > 10000) { console.error("Increasing bounds on histogram",this,"to",this.n+nadd,". This might be bad!"); }
+    if(this.n+nadd > 10000) { 
+      console.error("Increasing bounds on histogram",this,"to",this.n+nadd,". This might be bad!"); 
+    }
     var newdata = new Array(nadd);
     for (var i = 0; i < nadd; i++) newdata[i] = 0;
     this.data = this.data.concat(newdata);
