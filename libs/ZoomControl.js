@@ -163,43 +163,46 @@ ZoomControl.prototype.AutoZoom = function()
   var source = null;
   if(gCurName.cal) source = gRecord.cal[gCurName.cal];
   else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
-  else return;
+  // else return;
   
-  if(source.timeHist){
-    var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
-    var time_bounds = timeHist.GetROI(0.03);
-    gZoomRegion.tdc[0] = time_bounds[0]-20;
-    gZoomRegion.tdc[1] = time_bounds[1]+20;  
-  } else {
-    gZoomRegion.tdc[0] = 0;
-    gZoomRegion.tdc[1] = 3200;
-  }
+  if(source){
+    if(source.timeHist){
+      var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
+      var time_bounds = timeHist.GetROI(0.03);
+      gZoomRegion.tdc[0] = time_bounds[0]-20;
+      gZoomRegion.tdc[1] = time_bounds[1]+20;  
+    } else {
+      gZoomRegion.tdc[0] = 0;
+      gZoomRegion.tdc[1] = 3200;
+    }
   
-  if(source.planeHists) {
-    var plane0Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[0]);
-    var plane0_bounds = plane0Hist.GetROI(0.1);
-    console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
+    if(source.planeHists) {
+      var plane0Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[0]);
+      var plane0_bounds = plane0Hist.GetROI(0.1);
+      console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
 
-    var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
-    var plane1_bounds = plane1Hist.GetROI(0.1);
-    console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
+      var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
+      var plane1_bounds = plane1Hist.GetROI(0.1);
+      console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
 
-    var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
-    var plane2_bounds = plane2Hist.GetROI(0.1);
-    console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
-    // Add 10 wires to either side.
+      var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
+      var plane2_bounds = plane2Hist.GetROI(0.1);
+      console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
+      // Add 10 wires to either side.
     
 
-    // gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
-    // gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
-    // gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
-    gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
-    gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
-    gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
-    gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
-  } else {
-    gZoomRegion.setLimits(2,0,3456);
-  };
+      // gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
+      // gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
+      // gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+      gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
+      gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
+      gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
+      gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+    }
+  } else { // No source available. Maybe try hits?
+    this.FullZoom();
+    return;
+   };
   
   console.log("zoomChange?");
   gStateMachine.Trigger("zoomChange");
@@ -210,9 +213,9 @@ ZoomControl.prototype.FullZoom = function()
   gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
   
   var h = gGeo.numWires(2)/2;
-  gZoomRegion.setLimits(0,gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h);
-  gZoomRegion.setLimits(1,gGeo.numWires(1)/2-h,gGeo.numWires(1)/2+h);
-  gZoomRegion.setLimits(2,0,gGeo.numWires(2));
+  gZoomRegion.plane[0]=[gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h];
+  gZoomRegion.plane[1]=[gGeo.numWires(1)/2-h,gGeo.numWires(1)/2+h];
+  gZoomRegion.plane[2]=[0,gGeo.numWires(2)];
   
   gStateMachine.Trigger("zoomChange");
 }

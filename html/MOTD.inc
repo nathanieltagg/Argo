@@ -3,6 +3,7 @@
   <img style='float:left; padding: 10px;' src="images/busy.gif" /> 
   <p>Querying server for event data...</p>
   <p><em>Message of the day:</em></p>
+  <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em></p>
   </p>
   Recent updates: <br/>
   <ul>

@@ -425,12 +425,4 @@ $(function(){
 });
 
 
-//
-// Scripts are ready for work!
-//
-$(function(){
-  $('#status').attr('class', 'status-ok');  
-  $("#status").text("Ready.");
-});
-
 

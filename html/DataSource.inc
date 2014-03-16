@@ -1,5 +1,13 @@
 <div class="portlet" id="source-port"> 
 	<div class="portlet-header">Data Source</div>
+  <div class="portlet-content tabs">  
+	<ul>
+    <li><a href="#input-fe">LArSoft File</a></li>
+    <!-- <li><a href="#input-larlight">LarLight File</a></li> -->
+    <li><a href="#input-json">JSON Upload</a></li>
+	</ul>
+
+
 <div id="input-fe">
     <a style="font-size: large;" href="server/file_browser.cgi">File Browser</a>
     <form id="fileform"  action="" > 
@@ -14,4 +22,11 @@
      <button class='prev-event ui-state-default ui-corner-all styled-button'>(P)rev Event</button>
      
 </div>
+
+<div id='input-json'>
+         <input type="file" id="inLocalFile" name="inLocalFile" size="10"/>
+         <input class="ui-state-default ui-corner-all" type="button" id="go_localfile" value="Reload" /> <br/>
+</div>
+
+</div>  <!-- portlet-content -->
 </div>  <!-- portlet -->
