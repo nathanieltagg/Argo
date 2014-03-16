@@ -206,6 +206,7 @@ dEdXTool.prototype.Draw = function()
   $(this.element).show();
 
   // Find all hits that intersect and plot them.
+  gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
 

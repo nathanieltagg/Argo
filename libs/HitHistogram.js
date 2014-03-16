@@ -81,6 +81,7 @@ function HitHistogram( element  )
 
 HitHistogram.prototype.NewRecord = function()
 {
+  gHitsListName = $("#ctl-HitLists").val();  
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
 
@@ -105,6 +106,7 @@ HitHistogram.prototype.NewRecord = function()
 HitHistogram.prototype.BuildHistogram = function()
 {
   this.hist = null;
+  gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var hits = gRecord.hits[gHitsListName];
   
