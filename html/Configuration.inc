@@ -30,8 +30,8 @@
         <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio"             class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
         <div><input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" class="saveable show-wireimg" checked="checked"/><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>
         <div>&nbsp;&nbsp;&nbsp;&nbsp;
-          <input type="radio" id="ctl-show-wireimg-raw" value="raw" name="show-wireimg-raw" class="saveable show-wireimg-raw"              ><label for="show-wireimg-raw">Raw</label>
-          <input type="radio" id="ctl-show-wireimg-cal" value="cal" name="show-wireimg-cal" class="saveable show-wireimg-cal" checked><label for="show-wireimg-cal">Calibrated</label>
+          <input type="radio" id="ctl-show-wireimg-raw" value="raw" name="show-wireimg-type" class="saveable show-wireimg-raw"              ><label for="show-wireimg-raw">Raw</label>
+          <input type="radio" id="ctl-show-wireimg-cal" value="cal" name="show-wireimg-type" class="saveable show-wireimg-cal" checked><label for="show-wireimg-cal">Calibrated</label>
           </div>
         
         <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"    checked="checked"/><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>

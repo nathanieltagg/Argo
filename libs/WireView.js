@@ -188,7 +188,7 @@ WireView.prototype.NewRecord_image = function()
   this.wireimg = new Image();
   this.wireimg_thumb = new Image();
   
-  this.show_image = $(this.ctl_wireimg_type).prop("checked").val();  
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
   if(!gRecord[this.show_image]) return;
   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
   var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
