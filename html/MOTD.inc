@@ -6,6 +6,9 @@
   <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em></p>
   Recent updates: <br/>
   <ul>
+
+    <li> March 16: Added support for 9600-tick gates.</li>
+    <li> March 16: Added JSON local file loader.</li>
     <li> Feb 18: Log/linear scale checkbox. </li>
     <li> Feb 4: Added orange convex hull layer for clusters. </li>
   </ul>
