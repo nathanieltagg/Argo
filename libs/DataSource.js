@@ -29,7 +29,7 @@ function DataSource()
   }
   
   // Tabs.
-  $("#source-port div.tabs").tabs();
+  $("div#data-source-tabs").tabs();
   
   //
   // Bindings for DataSource controls.

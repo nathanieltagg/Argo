@@ -37,7 +37,6 @@ $(function(){
   $('#status').attr('class', 'status-ok');  
   $("#status").text("Ready.");
 
-  $.blockUI.defaults.themedCSS.top = '25%'; 
   
   
   // Initialize hashchange function.
@@ -56,6 +55,7 @@ function ChangeEvent( event )
   $("input").blur();
 
   // User feedback that we are querying
+  $.blockUI.defaults.themedCSS.top = '25%'; 
   $.blockUI({ 
             theme:     true, 
             title:    'Please wait', 
@@ -100,6 +100,7 @@ function ReadLocalFileSuccess()
 
 function QueryServer( par )
 {
+  console.log("QueryServer",par);
     $("input").blur();
 
     var data = {};
@@ -142,7 +143,7 @@ function QueryServer( par )
     
     $('#status').attr('class', 'status-transition');
     $("#status").text("Querying server for event data...");
-    console.log("requesting "+myurl+param);
+    console.log("requesting "+myurl+"?"+param);
     $("#debuglinks").html(
       "Link to json data: <a href=\""+myurl+"?"+param+"\">"+myurl+"?"+param+"</a>"
     );

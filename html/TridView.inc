@@ -16,11 +16,11 @@
           <span class="trid-ctl trid-reset"     >Reset</span>
           <span class="trid-ctl trid-create-animation"     >Animate</span>
           <span class="trid-ctl-mouse-set">
-          		<input type="radio" class="trid-ctl trid-ctl-mouse-rotate" name="trid-radio" id="trid-radio1" value="rotate" checked="yes"/><label for="trid-radio1">Mouse Rotate</label>
+          		<input type="radio" class="trid-ctl trid-ctl-mouse-rotate" name="trid-radio" id="trid-radio1" value="rotate" checked="checked"/><label for="trid-radio1">Mouse Rotate</label>
           		<input type="radio" class="trid-ctl trid-ctl-mouse-pan"    name="trid-radio" id="trid-radio2" value="pan" />             <label for="trid-radio2">Mouse Pan</label>
           </span>
           <span class="trid-ctl-view-set">
-            <input type="radio" class="trid-ctl trid-ctl-view-3D" name="trid-radio-view" id="trid-radio-view1" value="3D" checked="yes"/><label for="trid-radio-view1">3D</label>
+            <input type="radio" class="trid-ctl trid-ctl-view-3D" name="trid-radio-view" id="trid-radio-view1" value="3D" checked="checked"/><label for="trid-radio-view1">3D</label>
             <input type="radio" class="trid-ctl trid-ctl-view-xz" name="trid-radio-view" id="trid-radio-view2" value="XZ" /><label for="trid-radio-view2">XZ</label>
             <input type="radio" class="trid-ctl trid-ctl-view-yz" name="trid-radio-view" id="trid-radio-view3" value="YZ" /><label for="trid-radio-view3">YZ</label>
             <input type="radio" class="trid-ctl trid-ctl-view-xy" name="trid-radio-view" id="trid-radio-view4" value="XY" /><label for="trid-radio-view4">XY</label>

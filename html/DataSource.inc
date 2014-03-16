@@ -1,6 +1,6 @@
 <div class="portlet" id="source-port"> 
 	<div class="portlet-header">Data Source</div>
-  <div class="portlet-content tabs">  
+  <div class="portlet-content" id='data-source-tabs'>  
 	<ul>
     <li><a href="#input-fe">LArSoft File</a></li>
     <!-- <li><a href="#input-larlight">LarLight File</a></li> -->
@@ -10,7 +10,7 @@
 
 <div id="input-fe">
     <a style="font-size: large;" href="server/file_browser.cgi">File Browser</a>
-    <form id="fileform"  action="" > 
+    <form id="fileform" > 
       <label class='tbfill'>Filename:</label>
       <span><input type="text" class="ui-state-default tbfill"  id="inFilename" name="inFilename" value="standard_reco_uboone.root"/></span>
       <label>Cut:  </label><input style="width:200px" class="inSelection ui-state-default" type="text" id="inFeSelection" name="inFeSelection" value="1"/>
@@ -24,7 +24,7 @@
 </div>
 
 <div id='input-json'>
-         <input type="file" id="inLocalFile" name="inLocalFile" size="10"/>
+         <input type="file" id="inLocalFile" name="inLocalFile" />
          <input class="ui-state-default ui-corner-all" type="button" id="go_localfile" value="Reload" /> <br/>
 </div>
 

@@ -11,7 +11,7 @@
       <input type="radio" class="bigwireview-select-button" name='wireview-select' id="bigwireview-select-1" value='1'  />
       <label for="bigwireview-select-1">Plane 1</label>                                            
 
-      <input type="radio" class="bigwireview-select-button" name='wireview-select' id="bigwireview-select-2" value='2'  checked="yes" />
+      <input type="radio" class="bigwireview-select-button" name='wireview-select' id="bigwireview-select-2" value='2'  checked="checked" />
       <label for="bigwireview-select-2">Plane 2</label>
 
     </span>

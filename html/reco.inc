@@ -5,7 +5,7 @@
   <div class="portlet-content">
       <div class="A-reco">
         <div><input type="checkbox" id="ctl-show-reco"  name="show-reco"      class="saveable show-reco" 
-               checked="yes"/><label for="ctl-show-reco">      <b>(r)</b> Show Reco </label></div>
+               checked="checked"/><label for="ctl-show-reco">      <b>(r)</b> Show Reco </label></div>
         
         <button class="reco-go-button">Go!</button>
         <div class="A-reco-pad"></div>

@@ -42,10 +42,11 @@ function DoInitialBookmarking()
   }
 
 
+  $('#ctl-HitLists').empty();
   if(gRecord.hits) {
     for(var i in gRecord.hits) { 
-      gHitsListName = i;
-      if(gRecord.hits[i].length > 0) break; // Select the first list that has nonzero entries.
+      $('#ctl-HitLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
+      if(gRecord.hits[i].length > 0) gHitsListName = i; // Select the first list that has nonzero entries.
     }
   }
 

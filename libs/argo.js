@@ -319,7 +319,6 @@ $(function(){
     });
     
     console.log("cookies saved.");
-    
   }
 
   $('#ctl-save-config').button().click(function() {
@@ -410,11 +409,11 @@ $(function(){
   	for ( var Cnt=0; Cnt < Cookies.length; Cnt++ ) {
   		var CurCookie = Cookies[Cnt].split("=");
   		// console.log("unbinding "+CurCookie[0]);
-  		$.cookie(CurCookie[0],null);
+  		$.removeCookie(CurCookie[0]);
   	};
 
-    if(gUrlToThisEvent) window.location = gUrlToThisEvent;
-    else window.location.reload();
+    // if(gUrlToThisEvent) window.location = gUrlToThisEvent;
+    // else window.location.reload();
   });
   
 
@@ -423,6 +422,5 @@ $(function(){
   RestoreSettings("save");
 
 });
-
 
 
