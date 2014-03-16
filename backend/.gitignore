@@ -6,3 +6,4 @@ boost
 testx
 tmp
 *.pid
+Cint.*
