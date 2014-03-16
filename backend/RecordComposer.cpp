@@ -197,7 +197,7 @@ void RecordComposer::composeHits()
       for(Int_t i=0;i<n;i++) {
         int cluster_id = forma.EvalInstance(i);
         int hit_id     = formb.EvalInstance(i);
-        cout << "  " << hit_id << " --> " << cluster_id << endl;
+        // cout << "  " << hit_id << " --> " << cluster_id << endl;
         if(hit_id< v.size() && hit_id >= 0) {
           v[hit_id].add(shortname,cluster_id);
         }
@@ -265,7 +265,7 @@ void RecordComposer::composeClusters()
       if(assname.substr(u1+1)!=name.substr(v1+1)) {
         continue;
       }
-      std::cout << "---> Got a match." << endl;
+      // std::cout << "---> Got a match." << endl;
     
       // Attempt to pull association data.
       TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);

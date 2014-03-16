@@ -15,6 +15,7 @@ kTooManyHits = 10000;
 gFile = "";
 gEntry = 0;
 
+gFileReader = null;
 gjqXHR = null;    
 gServing = null;   // Data element from server, including wrapper with possible error messages.
 gRecord = null;    // This is the core data element
@@ -31,27 +32,85 @@ var gEventsLoadedThisSession = 0;
 
 
 $(function(){
+  // Scripts are ready for work!
+  //
+  $('#status').attr('class', 'status-ok');  
+  $("#status").text("Ready.");
+
+  $.blockUI.defaults.themedCSS.top = '25%'; 
+  
+  
   // Initialize hashchange function.
-  $(window).hashchange( QueryServer );
+  $(window).hashchange( ChangeEvent );
+  
   
   // Do intial trigger on page load.
   $(window).hashchange();
 });
 
 
-function QueryServer( event )
+function ChangeEvent( event )
 {
-    // Clear all selection targets.
+  console.log("ChangeEvent",event);
+  // Clear all selection targets.
+  $("input").blur();
+
+  // User feedback that we are querying
+  $.blockUI({ 
+            theme:     true, 
+            title:    'Please wait', 
+            message:    $('#MOTD')
+        });
+        
+  var par = $.deparam.fragment(true);
+  if( par.localFile ) ReadLocalFile(par);
+  else                QueryServer(par);
+}
+
+function ReadLocalFile( par )
+{
+  console.log("ReadLocalFile",par);
+  var files = $('#inLocalFile').get(0).files;
+  if(files.length<1) { 
+    console.warn("no local file");
+    $.unblockUI(); 
+    $('#status').attr('class', 'status-error').html("Need to re-select your input file.");
+    return;
+  }
+  var file = files[0];
+  console.log("reading local file ",file);
+  gFileReader = new FileReader();
+  gFileReader.onload = ReadLocalFileSuccess;
+  gFileReader.readAsText(file);
+}
+  
+function ReadLocalFileSuccess()
+{
+  try {
+    var obj = JSON.parse(gFileReader.result);
+  } catch (e) { 
+    $.unblockUI();
+    $('#status').attr('class', 'status-error').html("The file you loaded could not be parsed as json:</br>"+e);
+    return
+  }
+  console.log("Got it:",obj);
+  QuerySuccess(obj,null,null);
+}
+
+
+function QueryServer( par )
+{
     $("input").blur();
-    
-    var par = $.deparam.fragment(true);    
-    
+
     var data = {};
     var myurl = "server/serve_event.cgi"; // Note relative url.
     // Used for next/prev increment buttons.
     // if(querytype == 'last_query_type') querytype = gLastQueryType;
     // console.log("QueryServer("+querytype+")");
     var opts = "_NoPreSpill_NoPostSpill_";
+
+    // look at reco only:
+    if(/fast/.test(window.location.pathname)) opts+= "_NORAW__NOCAL_";
     // Are we looking at wires? If not, don't request them.
     if (!$(".show-wireimg").is(":checked")) {
       // opts += "_NORAW__NOCAL_";
@@ -116,15 +175,6 @@ function QueryServer( event )
     //   pageTracker._trackPageview("/Arachne"+myurl+"?"+param);
     // }
 
-    // User feedback that we are querying
-    $.blockUI.defaults.themedCSS.top = '25%'; 
-    $.blockUI({ 
-              theme:     true, 
-              title:    'Please wait', 
-              message:    $('#MOTD')
-              
-              // ,timeout:   2000 
-          });
     
     return false;
 }
@@ -261,7 +311,7 @@ function DoPerformanceStats()
    );
   var h = $('#debugbench').html();
   h+= gEntry
-  + "   size: " + (gjqXHR.responseText.length) + " bytes   " //+ gHits.length + " hits"
+  + "   size: " + (gjqXHR?(gjqXHR.responseText.length):"unknown") + " bytes   " //+ gHits.length + " hits"
   + "   backend: " + t_backend + " ms"
   + "   get:" + t_get + " ms "
   + "   parse:" + t_parse+ " ms "

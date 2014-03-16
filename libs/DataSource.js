@@ -1,4 +1,6 @@
 
+gLocalFileSeqno = 1;
+
 $(function(){
   new DataSource();
 });
@@ -15,8 +17,19 @@ function DataSource()
       filename: $('#inFilename').val(),
       entry: $('#inFeEntry').val(),
       selection: $('#inFeSelection').val()
-    });
+    },2);
   }
+  
+  function PushLocalFileHash()
+  {
+    console.log("PushLocalFileHash",$('#inLocalFile'),$('#inLocalFile').get(0).files);
+    $.bbq.pushState({      
+      localFile: ++gLocalFileSeqno
+    },2);
+  }
+  
+  // Tabs.
+  $("#source-port div.tabs").tabs();
   
   //
   // Bindings for DataSource controls.
@@ -24,11 +37,21 @@ function DataSource()
   $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
   $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
   $('#go_fe').button().click(function(){PushFEHash(); return false;});
+
+  var self=this;
+  $('#inLocalFile').change(function(){
+    $('#go_localfile').button( "enable" );
+    PushLocalFileHash();
+  });
+  $('#go_localfile').button().click(function(){PushLocalFileHash(); return false;}).button( "disable" );
+
   $('button.next-event').button().click(DoNextEvent);
   $('button.prev-event').button().click(DoPrevEvent);
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");  
 }
+
+
 
 DataSource.prototype.NewRecord = function()
 {

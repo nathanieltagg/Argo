@@ -7,21 +7,22 @@ use CGI qw/:standard/;
 
 sub myerror
 {
-    my $err = shift();
-    print '<?xml version="1.0" encoding="ISO-8859-1"?>';
-    print '<gate><error>';
-    print $err;
-    print '</error></gate>';
-    exit();
+  # subroutine to print errors to json stream
+  print header(-type => 'application/json',
+               -Access_Control_Allow_Origin => "*");
+  my $err = shift();
+  print encode_json({serve_event_log=> $msglog, error => $err});
+  exit;
 }
 
-print header('text/xml');
+print header(-type => 'application/json',
+               -Access_Control_Allow_Origin => "*");
 
 if(!defined param('thefile')) {
   myerror("echoFile.cgi: no input data!");
 }
 
-open(LOCAL,">lastecho.xml");
+open(LOCAL,">lastecho.json");
 
 my $upload_filehandle = upload('thefile'); 
 while(<$upload_filehandle>) { 
