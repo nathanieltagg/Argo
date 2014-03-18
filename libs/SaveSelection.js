@@ -66,7 +66,7 @@ SaveSelection.prototype.Do = function()
   if(this.hits) {
     this.data.push({header:this.event_id,hits:this.hits});
   }
-  var file = window.prompt("Filename to save in /uboone/data/argofeedback","blah.json");
+  var file = window.prompt("Filename to save in /uboone/data/users/tagg/argofeedback","blah.json");
   $.post("server/saveFile.cgi",{file:file,data:JSON.stringify(this.data)});
 }
 
