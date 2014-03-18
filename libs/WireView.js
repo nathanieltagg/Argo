@@ -54,6 +54,8 @@ function WireView( element, options )
   this.SetMagnify(true);
   this.fMouseStart  = {}; this.fMouseLast = {};
   this.fDragging = false;
+  this.fShiftSelecting = false;
+  this.fShiftRect = {};
   this.hasContent = false;
   this.myHits = [];
   this.visHits = [];
@@ -309,6 +311,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.DrawdEdXPath(min_u,max_u, min_v, max_v, fast);
     }
 
+    if(this.fShiftSelecting) {
+      this.DrawShiftRect();
+    }
     this.DrawMyReco(min_u,max_u, min_v, max_v, fast);
     
   }
@@ -439,7 +444,10 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   this.cellHeight = this.span_y/this.num_v;
   
   // console.warn("DrawHits",this.plane,min_u,max_u,min_v,max_v, gHoverState.obj);
-
+  this.fShiftRect.u1 = this.GetU(this.fShiftRect.x1);
+  this.fShiftRect.u2 = this.GetU(this.fShiftRect.x2);
+  this.fShiftRect.v1 = this.GetV(this.fShiftRect.y2);
+  this.fShiftRect.v2 = this.GetV(this.fShiftRect.y1);
   var hoverVisHit = null;
   for(var i=0;i<this.visHits.length;i++) {
     var h = this.visHits[i];
@@ -456,8 +464,14 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     var dy = this.GetY(h.v2) - y;    
     var c = gHitColorScaler.GetColor(h.c);
 
+    if(h.hit.saveselection)      c="10,10,10";
+    if(this.fShiftSelecting && ((h.u >= this.fShiftRect.u1) && (h.u < this.fShiftRect.u2) && (h.v >= this.fShiftRect.v1) && (h.v < this.fShiftRect.v2))) {
+        c="10,10,10";
+    }
+    
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.fillRect(x,y,dx,dy);      
+
   
     if(gHoverState.obj == h.hit) hoverVisHit = h;
     this.mouseable.push({type:"hit", x1:x, x2:x, y1:y, y2:y+dy, r:dx, obj: h.hit});
@@ -1038,6 +1052,23 @@ WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
 
 }
 
+WireView.prototype.DrawShiftRect = function(min_u,max_u,min_v,max_v,fast)
+{
+  this.ctx.strokeStyle = "black";
+  this.ctx.lineWidth = 1;
+  this.ctx.beginPath();
+  this.ctx.moveTo(this.fShiftRect.x1,this.fShiftRect.y1);
+  this.ctx.lineTo(this.fShiftRect.x1,this.fShiftRect.y2);
+  this.ctx.lineTo(this.fShiftRect.x2,this.fShiftRect.y2);
+  this.ctx.lineTo(this.fShiftRect.x2,this.fShiftRect.y1);
+  this.ctx.lineTo(this.fShiftRect.x1,this.fShiftRect.y1);
+  this.ctx.closePath();
+  if(this.ctx.setLineDash) this.ctx.setLineDash([2,3]);
+  this.ctx.stroke();
+  if(this.ctx.setLineDash) this.ctx.setLineDash([]);
+  
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 // Mouse
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -1058,6 +1089,19 @@ WireView.prototype.DoMouse = function(ev)
     if( this.fObjectDragging ) {
       this.fObjectDragging = false;
       gStateMachine.Trigger("userTrackChange");
+    }
+    if( this.fShiftSelecting ) {
+      this.fShiftSelecting = false;
+      this.fShiftRect.u1 = this.GetU(this.fShiftRect.x1);
+      this.fShiftRect.u2 = this.GetU(this.fShiftRect.x2);
+      this.fShiftRect.v1 = this.GetV(this.fShiftRect.y2);
+      this.fShiftRect.v2 = this.GetV(this.fShiftRect.y1);
+      for(var i=0;i<this.visHits.length;i++) {
+        var h = this.visHits[i];
+        if((h.u >= this.fShiftRect.u1) && (h.u < this.fShiftRect.u2) && (h.v >= this.fShiftRect.v1) && (h.v < this.fShiftRect.v2)) {
+          gSaveSelection.AddHit(h.hit);
+        }     
+      } 
     }
     if( this.fDragging) {
       this.fDragging = false;
@@ -1140,11 +1184,17 @@ WireView.prototype.DoMouse = function(ev)
       var newWire = this.fMousePos.u;
       var newTdc  = this.fMousePos.v;
       gHoverState.obj.set_view(this.plane,newWire,newTdc);
-    
       
     }
     
+  } else if(this.fShiftSelecting) {
+      this.fShiftRect.x1 = Math.min(this.fMouseStart.x, this.fMousePos.x);
+      this.fShiftRect.x2 = Math.max(this.fMouseStart.x, this.fMousePos.x);
+      this.fShiftRect.y1 = Math.min(this.fMouseStart.y, this.fMousePos.y);
+      this.fShiftRect.y2 = Math.max(this.fMouseStart.y, this.fMousePos.y);
+      
   } else {
+    // Regular mouse move.
     if(this.fMouseInContentArea) {
       // Find the first good match
       var match = {obj: {}, type:"wire"}; // by default, it's a wire.
@@ -1165,9 +1215,21 @@ WireView.prototype.DoMouse = function(ev)
             break;
           };
       }
-      if(ev.type=='click') {
-        ChangeSelection(match);
-      } else {
+      if(ev.type=='click'){
+        if (ev.shiftKey) {
+          if(match.type=="hit") {
+            if(match.obj.shiftselected) {
+              // deselect
+              gSaveSelection.RemoveHit(match.obj);
+            } else {
+              // select
+              gSaveSelection.AddHit(match.obj);
+            }
+          }
+        } else {
+          ChangeSelection(match);          
+        }      
+    } else {
         // mousemove.
         // add hover coordinates.
         match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u);
@@ -1185,10 +1247,12 @@ WireView.prototype.DoMouse = function(ev)
     $.extend(this.fMouseLast ,this.fMousePos); // copy.
     this.fMouseStart.area = mouse_area;
 
-    if(gHoverState.type=="UserTrack") {
+    if (ev.shiftKey) {
+      this.fShiftSelecting=true;
+    } else if(gHoverState.type=="UserTrack") {
       this.fObjectDragging = true;
-    } else {
-      if(this.zooming) this.fDragging = true;
+    } else if(this.zooming){
+      this.fDragging = true;
     }
   } else if(ev.type === 'mousemove' ) {
     // Update quick.
@@ -1198,4 +1262,16 @@ WireView.prototype.DoMouse = function(ev)
     this.dirty=true; // Do a slow draw in this view.    
   } 
     
+}
+
+// Utility
+function removeA(arr) {
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        what = a[--L];
+        while ((ax= arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
+        }
+    }
+    return arr;
 }

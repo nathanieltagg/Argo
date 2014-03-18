@@ -94,6 +94,7 @@
 <script type="text/javascript" src="libs/MRI.js"></script> 
 <script type="text/javascript" src="libs/dEdXTool.js"></script> 
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
+<script type="text/javascript" src="libs/SaveSelection.js"></script> 
 
 
 <!-- My classes for talking to the back-end and other displays-->
