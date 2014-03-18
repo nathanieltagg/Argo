@@ -64,7 +64,8 @@ function ChangeEvent( event )
         
   var par = $.deparam.fragment(true);
   if( par.localFile ) ReadLocalFile(par);
-  else                QueryServer(par);
+  if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
+  else QueryServer(par,"server/default_event.json");
 }
 
 function ReadLocalFile( par )
@@ -98,13 +99,12 @@ function ReadLocalFileSuccess()
 }
 
 
-function QueryServer( par )
+function QueryServer( par, myurl )
 {
   console.log("QueryServer",par);
     $("input").blur();
 
     var data = {};
-    var myurl = "server/serve_event.cgi"; // Note relative url.
     // Used for next/prev increment buttons.
     // if(querytype == 'last_query_type') querytype = gLastQueryType;
     // console.log("QueryServer("+querytype+")");
