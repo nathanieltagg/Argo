@@ -957,51 +957,52 @@ void RecordComposer::composeMC()
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
     
-    JsonArray gtruth_arr = ftr.makeArray(
-        "fGint"                             ,  name+"obj.fGint"                           
-       ,"fGscatter"                         ,  name+"obj.fGscatter"                       
-       ,"fweight"                           ,  name+"obj.fweight"                         
-       ,"fprobability"                      ,  name+"obj.fprobability"                    
-       ,"fXsec"                             ,  name+"obj.fXsec"                           
-       ,"fDiffXsec"                         ,  name+"obj.fDiffXsec"                       
-       ,"fNumPiPlus"                        ,  name+"obj.fNumPiPlus"                      
-       ,"fNumPiMinus"                       ,  name+"obj.fNumPiMinus"                     
-       ,"fNumPi0"                           ,  name+"obj.fNumPi0"                         
-       ,"fNumProton"                        ,  name+"obj.fNumProton"                      
-       ,"fNumNeutron"                       ,  name+"obj.fNumNeutron"                     
-       ,"fIsCharm"                          ,  name+"obj.fIsCharm"                        
-       ,"fResNum"                           ,  name+"obj.fResNum"                         
-       ,"fgQ2"                              ,  name+"obj.fgQ2"                            
-       ,"fgq2"                              ,  name+"obj.fgq2"                            
-       ,"fgW"                               ,  name+"obj.fgW"                             
-       ,"fgT"                               ,  name+"obj.fgT"                             
-       ,"fgX"                               ,  name+"obj.fgX"                             
-       ,"fgY"                               ,  name+"obj.fgY"                             
-       ,"fFShadSystP4_fP_fBits"             ,  name+"obj.fFShadSystP4.fP.fBits"           
-       ,"fFShadSystP4_fP_fX"                ,  name+"obj.fFShadSystP4.fP.fX"              
-       ,"fFShadSystP4_fP_fY"                ,  name+"obj.fFShadSystP4.fP.fY"              
-       ,"fFShadSystP4_fP_fZ"                ,  name+"obj.fFShadSystP4.fP.fZ"              
-       ,"fFShadSystP4_fE"                   ,  name+"obj.fFShadSystP4.fE"                 
-       ,"fIsSeaQuark"                       ,  name+"obj.fIsSeaQuark"                     
-       ,"fHitNucP4_fP_fBits"                ,  name+"obj.fHitNucP4.fP.fBits"              
-       ,"fHitNucP4_fP_fX"                   ,  name+"obj.fHitNucP4.fP.fX"                 
-       ,"fHitNucP4_fP_fY"                   ,  name+"obj.fHitNucP4.fP.fY"                 
-       ,"fHitNucP4_fP_fZ"                   ,  name+"obj.fHitNucP4.fP.fZ"                 
-       ,"fHitNucP4_fE"                      ,  name+"obj.fHitNucP4.fE"                    
-       ,"ftgtZ"                             ,  name+"obj.ftgtZ"                           
-       ,"ftgtA"                             ,  name+"obj.ftgtA"                           
-       ,"ftgtPDG"                           ,  name+"obj.ftgtPDG"                         
-       ,"fProbePDG"                         ,  name+"obj.fProbePDG"                       
-       ,"fProbeP4_fP_fBits"                 ,  name+"obj.fProbeP4.fP.fBits"               
-       ,"fProbeP4_fP_fX"                    ,  name+"obj.fProbeP4.fP.fX"                  
-       ,"fProbeP4_fP_fY"                    ,  name+"obj.fProbeP4.fP.fY"                  
-       ,"fProbeP4_fP_fZ"                    ,  name+"obj.fProbeP4.fP.fZ"                  
-       ,"fProbeP4_fE"                       ,  name+"obj.fProbeP4.fE"                     
-       ,"fVertex_fP_fX"                     ,  name+"obj.fVertex.fP.fX"                   
-       ,"fVertex_fP_fY"                     ,  name+"obj.fVertex.fP.fY"                   
-       ,"fVertex_fP_fZ"                     ,  name+"obj.fVertex.fP.fZ"                   
-       ,"fVertex_fE"                        ,  name+"obj.fVertex.fE"                      
-    );
+    std::vector<std::pair< std::string,std::string> > list;
+    list.push_back(std::make_pair<std::string,std::string>("fGint"                             ,  string(name+"obj.fGint"                    )));
+    list.push_back(std::make_pair<std::string,std::string>("fGscatter"                         ,  string(name+"obj.fGscatter"                )));
+    list.push_back(std::make_pair<std::string,std::string>("fweight"                           ,  string(name+"obj.fweight"                  )));
+    list.push_back(std::make_pair<std::string,std::string>("fprobability"                      ,  string(name+"obj.fprobability"             )));
+    list.push_back(std::make_pair<std::string,std::string>("fXsec"                             ,  string(name+"obj.fXsec"                    )));
+    list.push_back(std::make_pair<std::string,std::string>("fDiffXsec"                         ,  string(name+"obj.fDiffXsec"                )));
+    list.push_back(std::make_pair<std::string,std::string>("fNumPiPlus"                        ,  string(name+"obj.fNumPiPlus"               )));
+    list.push_back(std::make_pair<std::string,std::string>("fNumPiMinus"                       ,  string(name+"obj.fNumPiMinus"              )));
+    list.push_back(std::make_pair<std::string,std::string>("fNumPi0"                           ,  string(name+"obj.fNumPi0"                  )));
+    list.push_back(std::make_pair<std::string,std::string>("fNumProton"                        ,  string(name+"obj.fNumProton"               )));
+    list.push_back(std::make_pair<std::string,std::string>("fNumNeutron"                       ,  string(name+"obj.fNumNeutron"              )));
+    list.push_back(std::make_pair<std::string,std::string>("fIsCharm"                          ,  string(name+"obj.fIsCharm"                 )));
+    list.push_back(std::make_pair<std::string,std::string>("fResNum"                           ,  string(name+"obj.fResNum"                  )));
+    list.push_back(std::make_pair<std::string,std::string>("fgQ2"                              ,  string(name+"obj.fgQ2"                     )));
+    list.push_back(std::make_pair<std::string,std::string>("fgq2"                              ,  string(name+"obj.fgq2"                     )));
+    list.push_back(std::make_pair<std::string,std::string>("fgW"                               ,  string(name+"obj.fgW"                      )));
+    list.push_back(std::make_pair<std::string,std::string>("fgT"                               ,  string(name+"obj.fgT"                      )));
+    list.push_back(std::make_pair<std::string,std::string>("fgX"                               ,  string(name+"obj.fgX"                      )));
+    list.push_back(std::make_pair<std::string,std::string>("fgY"                               ,  string(name+"obj.fgY"                      )));
+    list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fBits"             ,  string(name+"obj.fFShadSystP4.fP.fBits"    )));
+    list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fX"                ,  string(name+"obj.fFShadSystP4.fP.fX"       )));
+    list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fY"                ,  string(name+"obj.fFShadSystP4.fP.fY"       )));
+    list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fZ"                ,  string(name+"obj.fFShadSystP4.fP.fZ"       )));
+    list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fE"                   ,  string(name+"obj.fFShadSystP4.fE"          )));
+    list.push_back(std::make_pair<std::string,std::string>("fIsSeaQuark"                       ,  string(name+"obj.fIsSeaQuark"              )));
+    list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fBits"                ,  string(name+"obj.fHitNucP4.fP.fBits"       )));
+    list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fX"                   ,  string(name+"obj.fHitNucP4.fP.fX"          )));
+    list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fY"                   ,  string(name+"obj.fHitNucP4.fP.fY"          )));
+    list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fZ"                   ,  string(name+"obj.fHitNucP4.fP.fZ"          )));
+    list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fE"                      ,  string(name+"obj.fHitNucP4.fE"             )));
+    list.push_back(std::make_pair<std::string,std::string>("ftgtZ"                             ,  string(name+"obj.ftgtZ"                    )));
+    list.push_back(std::make_pair<std::string,std::string>("ftgtA"                             ,  string(name+"obj.ftgtA"                    )));
+    list.push_back(std::make_pair<std::string,std::string>("ftgtPDG"                           ,  string(name+"obj.ftgtPDG"                  )));
+    list.push_back(std::make_pair<std::string,std::string>("fProbePDG"                         ,  string(name+"obj.fProbePDG"                )));
+    list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fBits"                 ,  string(name+"obj.fProbeP4.fP.fBits"        )));
+    list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fX"                    ,  string(name+"obj.fProbeP4.fP.fX"           )));
+    list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fY"                    ,  string(name+"obj.fProbeP4.fP.fY"           )));
+    list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fZ"                    ,  string(name+"obj.fProbeP4.fP.fZ"           )));
+    list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fE"                       ,  string(name+"obj.fProbeP4.fE"              )));
+    list.push_back(std::make_pair<std::string,std::string>("fVertex_fP_fX"                     ,  string(name+"obj.fVertex.fP.fX"            )));
+    list.push_back(std::make_pair<std::string,std::string>("fVertex_fP_fY"                     ,  string(name+"obj.fVertex.fP.fY"            )));
+    list.push_back(std::make_pair<std::string,std::string>("fVertex_fP_fZ"                     ,  string(name+"obj.fVertex.fP.fZ"            )));
+    list.push_back(std::make_pair<std::string,std::string>("fVertex_fE"                        ,  string(name+"obj.fVertex.fE"               )));
+    JsonArray gtruth_arr = ftr.makeArray(list);
+        
     truth_list.add(stripdots(name),gtruth_arr);
   }
   mc.add("gtruth",truth_list);
