@@ -821,7 +821,8 @@ void RecordComposer::composeRaw()
     ColorMap colormap;
   
     TreeElementLooter l(fTree,name+"obj.fADC");
-    if(!l.ok()) return;
+    TLeaf* l_pedestal = fTree->GetLeaf(string(name+"obj.fPedestal").c_str());
+    TLeaf* l_samples  = fTree->GetLeaf(string(name+"obj.fSamples").c_str());
     const std::vector<short> *ptr = l.get<std::vector<short> >(0);
     // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
     size_t width = ptr->size();
@@ -838,23 +839,29 @@ void RecordComposer::composeRaw()
     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
   
-  
+    JsonArray jpedestals;
+    
     for(int i=0;i<ndig;i++) {
+      short pedestal = ftr.getInt(l_pedestal,i);
+      if(pedestal<0) pedestal = 0; // Didn't read correctly.
+      jpedestals.add(pedestal);
+      
       ptr= l.get<std::vector<short> >(i);
       std::vector<short>::iterator it;
       double wiresum = 0;
     
       for(size_t k = 0; k<width; k++) {
         short raw = (*ptr)[k];
+        short pedcorr = raw - pedestal;
         // colormap.get(&imagedata[k*3],float(raw)/4000.);
-        imagedata[k] = tanscale(raw);
+        imagedata[k] = tanscale(pedcorr);
       
         // Save bitpacked data as image map.
         int iadc = raw + 0x8000;
         encodeddata[k*3]   = 0xFF&(iadc>>8);
         encodeddata[k*3+1] = iadc&0xFF;
         encodeddata[k*3+2] = 0;
-        double val = fabs(raw);
+        double val = fabs(pedcorr);
         wiresum += val;
         timeProfileData[k+1] += val;
       }
@@ -885,6 +892,7 @@ void RecordComposer::composeRaw()
     jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
     jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
     r.add("planeHists",jPlaneHists);
+    r.add("pedestals",jpedestals);
 
     delete planeProfile[0];
     delete planeProfile[1];
