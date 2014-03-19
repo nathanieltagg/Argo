@@ -23,6 +23,7 @@ public:
   // Reco
   void  composeHits();
   void  composeClusters();
+  void  composeVertex2d();
   void  composeSpacepoints();
   void  composeTracks();
 
