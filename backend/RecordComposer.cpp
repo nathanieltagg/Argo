@@ -949,10 +949,11 @@ void RecordComposer::composeAuxDets()
 
 void RecordComposer::composeMC()
 {
-  JsonObject mc;
 
   vector<string> leafnames = findLeafOfType("vector<simb::GTruth>");
-  JsonObject gtruth_list;
+  JsonObject mc;
+
+  JsonObject truth_list;
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
     
@@ -1002,8 +1003,13 @@ void RecordComposer::composeMC()
     list.push_back(std::make_pair<std::string,std::string>("fVertex_fE"                        ,  string(name+"obj.fVertex.fE"               )));
     JsonArray gtruth_arr = ftr.makeArray(list);
         
-    gtruth_list.add(stripdots(name),gtruth_arr);
+    truth_list.add(stripdots(name),gtruth_arr);
   }
+<<<<<<< Local Changes
+<<<<<<< Local Changes
+<<<<<<< Local Changes
+<<<<<<< Local Changes
+<<<<<<< Local Changes
   mc.add("gtruth",gtruth_list);
 
 
@@ -1063,6 +1069,10 @@ void RecordComposer::composeMC()
     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fQSqr"                       , string(name+"obj.fMCNeutrino.fQSqr"                       )));
     list.push_back(std::make_pair<std::string,std::string>( "fOrigin"                                 , string(name+"obj.fOrigin"                                 )));
     list.push_back(std::make_pair<std::string,std::string>( "fNeutrinoSet"                            , string(name+"obj.fNeutrinoSet"                            )));
+    TTreeFormula ttf("tff",string(name+"obj.fPartList"),fTree);
+    int n
+    if(ttf.GetNdata()<index) return fDefaultValue;
+     return ttf.EvalInstance(index);
     std::vector<JsonObject> v_mctruths = ftr.makeVector(list);
     
     vector<simb::MCParticle> simb::MCTruths_generator__GenieGen.obj.fPartList
@@ -1074,6 +1084,21 @@ void RecordComposer::composeMC()
 
 
 
+=======
+  mc.add("gtruth",truth_list);
+>>>>>>> External Changes
+=======
+  mc.add("gtruth",truth_list);
+>>>>>>> External Changes
+=======
+  mc.add("gtruth",truth_list);
+>>>>>>> External Changes
+=======
+  mc.add("gtruth",truth_list);
+>>>>>>> External Changes
+=======
+  mc.add("gtruth",truth_list);
+>>>>>>> External Changes
   
   JsonObject particle_list;
   leafnames = findLeafOfType("vector<simb::MCParticle>");
