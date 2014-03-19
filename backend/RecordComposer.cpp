@@ -349,6 +349,40 @@ void RecordComposer::composeClusters()
   fOutput.add("clusters",reco_list);
 }
 
+void  RecordComposer::composeVertex2d()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::EndPoint2D>>");
+  JsonObject reco_list;
+  
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
+    std::cout << "Looking at 2d object " << (name+"obj_").c_str() << endl;
+
+    JsonArray jlist;
+
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "endpoint2ds: " << n << endl;
+    
+    for(int i=0;i<n;i++) {
+      JsonObject jpt;
+             
+      jpt.add("t"           ,ftr.getJson(name+"obj.fDriftTime",i));
+      jpt.add("plane"       ,ftr.getJson(name+"obj.fWireID.Plane",i));
+      jpt.add("wire"        ,ftr.getJson(name+"obj.fWireID.Wire",i));
+      jpt.add("id"          ,ftr.getJson(name+"obj.fID",i));
+      jpt.add("strength"    ,ftr.getJson(name+"obj.fStrength",i));
+      jpt.add("view"        ,ftr.getJson(name+"obj.fView",i));
+      jpt.add("q"           ,ftr.getJson(name+"obj.fTotalCharge",i));
+
+      jlist.add(jpt);
+    }
+    reco_list.add(stripdots(name),jlist);
+  } 
+  fOutput.add("endpoint2d",reco_list);  
+}
+  
 void  RecordComposer::composeSpacepoints()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::SpacePoint> >");  
@@ -1005,17 +1039,12 @@ void RecordComposer::composeMC()
         
     truth_list.add(stripdots(name),gtruth_arr);
   }
-<<<<<<< Local Changes
-<<<<<<< Local Changes
-<<<<<<< Local Changes
-<<<<<<< Local Changes
-<<<<<<< Local Changes
-  mc.add("gtruth",gtruth_list);
+  mc.add("gtruth",truth_list);
 
 
 
 
-  vector<string> leafnames = findLeafOfType("vector<simb::MCTruth>");
+  leafnames = findLeafOfType("vector<simb::MCTruth>");
   JsonObject mctruth_list;
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
@@ -1069,36 +1098,17 @@ void RecordComposer::composeMC()
     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fQSqr"                       , string(name+"obj.fMCNeutrino.fQSqr"                       )));
     list.push_back(std::make_pair<std::string,std::string>( "fOrigin"                                 , string(name+"obj.fOrigin"                                 )));
     list.push_back(std::make_pair<std::string,std::string>( "fNeutrinoSet"                            , string(name+"obj.fNeutrinoSet"                            )));
-    TTreeFormula ttf("tff",string(name+"obj.fPartList"),fTree);
-    int n
-    if(ttf.GetNdata()<index) return fDefaultValue;
-     return ttf.EvalInstance(index);
     std::vector<JsonObject> v_mctruths = ftr.makeVector(list);
+    TTreeFormula ttf("tff",string(name+"obj.fPartList").c_str(),fTree);
+    // if(ttf.GetNdata()<index) return fDefaultValue;
+    //  return ttf.EvalInstance(index);
     
-    vector<simb::MCParticle> simb::MCTruths_generator__GenieGen.obj.fPartList
+    // vector<simb::MCParticle> simb::MCTruths_generator__GenieGen.obj.fPartList
     
     JsonArray arr(v_mctruths);
     mctruth_list.add(stripdots(name),arr);
   }
   mc.add("mcruth",mctruth_list);
-
-
-
-=======
-  mc.add("gtruth",truth_list);
->>>>>>> External Changes
-=======
-  mc.add("gtruth",truth_list);
->>>>>>> External Changes
-=======
-  mc.add("gtruth",truth_list);
->>>>>>> External Changes
-=======
-  mc.add("gtruth",truth_list);
->>>>>>> External Changes
-=======
-  mc.add("gtruth",truth_list);
->>>>>>> External Changes
   
   JsonObject particle_list;
   leafnames = findLeafOfType("vector<simb::MCParticle>");
@@ -1285,6 +1295,7 @@ void RecordComposer::compose()
   //reco
   composeHits();
   composeClusters();
+  composeVertex2d();
   composeSpacepoints();
   composeTracks();
   
