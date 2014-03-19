@@ -805,10 +805,12 @@ void RecordComposer::composeRaw()
     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
   
-  
+    JsonArray jpedestals;
+    
     for(int i=0;i<ndig;i++) {
       short pedestal = ftr.getInt(l_pedestal,i);
       if(pedestal<0) pedestal = 0; // Didn't read correctly.
+      jpedestals.add(pedestal);
       
       ptr= l.get<std::vector<short> >(i);
       std::vector<short>::iterator it;
@@ -856,6 +858,7 @@ void RecordComposer::composeRaw()
     jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
     jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
     r.add("planeHists",jPlaneHists);
+    r.add("pedestals",jpedestals);
 
     delete planeProfile[0];
     delete planeProfile[1];
