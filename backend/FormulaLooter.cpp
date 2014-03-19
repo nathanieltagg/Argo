@@ -26,7 +26,7 @@ JsonElement FormulaMakeElement(TTree* tree, const std::string& formula)
   if(ttf.IsInteger()) return JsonElement((int)v);
   return JsonElement(v);
 }
-
+/*
 template <class ...B> 
 JsonArray FormulaMakeArray(TTree* tree, std::vector<std::pair< std::string,std::string> >& key_formula_pairs, 
                            const std::string& k, const std::string& f,  B... argTail)
@@ -41,6 +41,7 @@ JsonArray FormulaMakeArray(TTree* tree, const std::string& k, const std::string&
   std::vector<std::pair< std::string,std::string> > v;
   return FormulaMakeArray(tree,v,k,f,argTail...);
 }
+*/
 
 JsonArray FormulaMakeArray(TTree* tree, const vector<pair< string,string> >& key_formula_pairs)
 {
@@ -75,7 +76,7 @@ JsonArray FormulaMakeArray(TTree* tree, const vector<pair< string,string> >& key
 }
 
 
-
+/*
 JsonArray test_fma(TTree* tree)
 {
   vector<pair< string,string> > ps;
@@ -85,3 +86,4 @@ JsonArray test_fma(TTree* tree)
       ,"plane","recob::Hits_ffthit__Reco.obj.fWireID.Plane"
     );
 }
+*/

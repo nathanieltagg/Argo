@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <math.h>
 #include <vector>
+#include <cstdio>
 
 class JsonElement;
 class JsonObject;

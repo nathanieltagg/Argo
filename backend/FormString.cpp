@@ -1,6 +1,7 @@
 #include "FormString.h"
 #include <stdarg.h>
 #include <iostream>
+#include <cstdio>
 
 std::string FormString(const char* fmt, ...) {
     int size = 100;
