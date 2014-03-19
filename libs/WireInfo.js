@@ -146,6 +146,8 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
   histogram.Clear();
   histogram.min = x1;
   histogram.max = x2;
+  histogram.min_content=1e9;
+  histogram.max_content=-1e9;
   for(var i=0;i<x2-x1;i++) {
     histogram.SetBinContent(i,getEncodedPngVal(imgdata,i));
   }
@@ -173,6 +175,9 @@ WireInfo.prototype.Draw = function()
   h += "Channel: " +  chan + '<br/>';
   h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
   h += "TDC: " +tdc + '<br/>';
+  if(gRecord.raw && gCurName.raw && gRecord.raw[gCurName.raw] && gRecord.raw[gCurName.raw].pedestals)
+    h+="Pedestal:" + gRecord.raw[gCurName.raw].pedestals[chan] + '<br/>';
+
 
   if(gHoverState.type == "wire") {    
   } else if(gHoverState.type == "hit") {
