@@ -228,8 +228,8 @@ WireView.prototype.TrimHits = function()
   for(var i = 0;i<this.myHits.length;i++) {
     var h= this.myHits[i];
     var c = h[field];
-    if(c<gHitCut.min) continue;
-    if(c>gHitCut.max) continue;
+    if(c<gHitCut.min) {console.warn("trimming low",h); continue;}
+    if(c>gHitCut.max) {console.warn("trimming hi ",h); continue;}
     
     var vishit = {hit:h,
       u:h.wire,  // horizontal coord
