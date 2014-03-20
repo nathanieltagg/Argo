@@ -1,7 +1,7 @@
     <div class="portlet" id="config-port"> 
       <div class="portlet-header">Configuration:</div>
       <div class="portlet-content">
-        <form id="controls">
+        <!-- <form id="controls" action=""> -->
 
         <select  id="ctl-hit-color-scale" class="saveable">
 			<option value="RedBluePalette" selected="selected">Red-Blue Palette</option>
@@ -53,7 +53,7 @@
         <button id='ctl-save-config'>Save</button>        
         <button id='ctl-load-config'>Load</button>        
         <button id='ctl-restore-defaults'>Restore Defaults</button>
-        </form>
+        <!-- </form> -->
       </div>      
     </div> <!-- configuration portlet -->
 
