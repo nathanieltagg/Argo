@@ -63,6 +63,7 @@ function TriDView( element, options ){
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");  
+  this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
 
   $(this.ctl_show_hits).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_clus).change(function(ev) { return self.Rebuild(); });
@@ -70,6 +71,7 @@ function TriDView( element, options ){
   $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
 
   $('#ctl-TrackLists') .change(function(ev) { return self.Rebuild(); });
   $('#ctl-SpacepointLists').change(function(ev) { return self.Rebuild(); });
@@ -237,11 +239,13 @@ TriDView.prototype.CreateMC = function()
   var particles = gRecord.mc.particles[gMCParticlesListName];
   if(!particles) return;
   var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
+  var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
+
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
-    var t = p.trajectory[0].t;
-    if(t>1.6e6 || t<-1000) continue; // Ignore out-of-time particles
+    var t0 = p.trajectory[0].t;
+    // if(t>1.6e6 || t<-1000) continue; // Ignore out-of-time particles
     console.log("TriDView::CreateMC particle at time ",t, p.trajectory.length);
     var hovobj = {obj:p, type:"mcparticle", collection: particles};
     if(!p.trajectory || p.trajectory.length==0) continue;
@@ -268,8 +272,9 @@ TriDView.prototype.CreateMC = function()
     for(var j=1;j<p.trajectory.length;j++) {
       var p1 = p.trajectory[j-1];
       var p2 = p.trajectory[j];
-
-      this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 2, curColor, hovobj);
+      var dx = 0;
+      if(move_t0) dx =  gGeo.getXofTDC(0,t0/500.0);
+      this.AddLine(p1.x + dx,p1.y,p1.z, p2.x + dx,p2.y,p2.z, 2, curColor, hovobj);
     }
   }
  
