@@ -154,7 +154,7 @@ tmp/Cint.o : Cint.cpp
 
 
 .PHONY: bin
-bin: argo-backend argo-raw-backend myroot testx
+bin: argo-backend 
 argo-backend: $(backend_obj) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
