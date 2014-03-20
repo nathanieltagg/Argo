@@ -943,8 +943,9 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
       var wire = gGeo.yzToWire(this.plane,point.y,point.z);
       var x = this.GetX(wire);
       var y = this.GetY(tdc);
-      if(x>=0 && x<this.width && y>=0 && y<=this.height)
-        pts.push([x,y]);
+      // This clips out track segments.
+      // if(x>=0 && x<this.width && y>=0 && y<=this.height)
+      //   pts.push([x,y]);
     }
     if(pts.length<2) continue;
     
