@@ -71,7 +71,7 @@ function TriDView( element, options ){
   $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Rebuild(); });
 
   $('#ctl-TrackLists') .change(function(ev) { return self.Rebuild(); });
   $('#ctl-SpacepointLists').change(function(ev) { return self.Rebuild(); });
@@ -246,7 +246,10 @@ TriDView.prototype.CreateMC = function()
     var p= particles[i];
     var t0 = p.trajectory[0].t;
     // if(t>1.6e6 || t<-1000) continue; // Ignore out-of-time particles
-    console.log("TriDView::CreateMC particle at time ",t, p.trajectory.length);
+    var dx_from_t0 = 0;
+    if(move_t0) dx_from_t0 =  gGeo.getXofTDC(0,t0/500.0);
+    
+    console.log("TriDView::CreateMC particle at time ",t0, p.trajectory.length);
     var hovobj = {obj:p, type:"mcparticle", collection: particles};
     if(!p.trajectory || p.trajectory.length==0) continue;
     
@@ -272,9 +275,9 @@ TriDView.prototype.CreateMC = function()
     for(var j=1;j<p.trajectory.length;j++) {
       var p1 = p.trajectory[j-1];
       var p2 = p.trajectory[j];
-      var dx = 0;
-      if(move_t0) dx =  gGeo.getXofTDC(0,t0/500.0);
-      this.AddLine(p1.x + dx,p1.y,p1.z, p2.x + dx,p2.y,p2.z, 2, curColor, hovobj);
+      this.AddLine(p1.x + dx_from_t0, p1.y, p1.z, 
+                   p2.x + dx_from_t0, p2.y, p2.z, 
+                   2, curColor, hovobj);
     }
   }
  
