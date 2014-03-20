@@ -83,12 +83,12 @@ Geometry.prototype.wireCrossing = function(geoWire1,geoWire2)
 
 Geometry.prototype.viewOfPlane = function(plane)
 {
-  return 2-plane;
+  return plane;
 }
 
 Geometry.prototype.planeOfView = function(view)
 {
-  return 2-view;
+  return view;
 }
 
 
