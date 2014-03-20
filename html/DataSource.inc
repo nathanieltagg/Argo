@@ -24,6 +24,7 @@
 </div>
 
 <div id='input-json'>
+         <p>This works only with .json files created by larlight or downloaded from Argo.</p>
          <input type="file" id="inLocalFile" name="inLocalFile" />
          <input class="ui-state-default ui-corner-all" type="button" id="go_localfile" value="Reload" /> <br/>
 </div>
