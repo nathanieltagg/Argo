@@ -512,6 +512,8 @@ void  RecordComposer::composeOpFlashes()
     for(int i=0;i<n;i++) {
       JsonObject jflash;
       jflash.add("time"       ,ftr.getJson(name+"obj.fTime",i));
+      jflash.add("timeWidth"  ,ftr.getJson(name+"obj.fTimeWidth",i));
+      jflash.add("absTime"    ,ftr.getJson(name+"obj.fAbsTime",i));
       jflash.add("yCenter"    ,ftr.getJson(name+"obj.fYCenter",i));
       jflash.add("yWidth"     ,ftr.getJson(name+"obj.fYWidth",i));
       jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
@@ -622,17 +624,13 @@ void  RecordComposer::composeOpHits()
     for(int i=0;i<n;i++) {
       JsonObject jobj;
       
-      jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpDetChannel"         ,i));
+      jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"         ,i));
       jobj.add("peakTime"      ,ftr.getJson(name+"obj.fPeakTime"             ,i));
       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
       jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));
       jobj.add("pe"            ,ftr.getJson(name+"obj.fPE"                   ,i));
-      jobj.add("peakTimeErr"   ,ftr.getJson(name+"obj.fPeakTimeError"        ,i));
-      jobj.add("widthErr"      ,ftr.getJson(name+"obj.fWidthError"           ,i));
-      jobj.add("areaErr"       ,ftr.getJson(name+"obj.fAreaError"            ,i));
-      jobj.add("ampErr"        ,ftr.getJson(name+"obj.fAmplitudeError"       ,i));
-      jobj.add("peErr"         ,ftr.getJson(name+"obj.fPEError"              ,i));
+      jobj.add("fastToTotal"   ,ftr.getJson(name+"obj.fFastToTotal"          ,i));
       jophits.add(jobj);
     }
     
