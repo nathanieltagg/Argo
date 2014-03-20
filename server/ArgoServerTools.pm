@@ -41,13 +41,23 @@ sub serve
 {
   # print to the stored version of $stdout to actually get it out the door.
   # Note that we encode everything that nominally went to stdout/stderr and ship it as the 'serve_event_log'.
+
+
+  my $headertype = 'application/json';
+  if($_[1]>0) { 
+    print $oldout header(-type => 'application/json',
+                 -attachment => 'event.json',
+                 -charset => "UTF-8",
+                 -Access_Control_Allow_Origin => "*");    
+  } else {
+    print $oldout header(-type => 'application/json',
+                 -charset => "UTF-8",
+                 -Access_Control_Allow_Origin => "*");    
+  }
   
-  print $oldout header(-type => 'application/json',
-               -charset => "UTF-8",
-               -Access_Control_Allow_Origin => "*");
   print $oldout '{';
   print $oldout '"record":';
-  print $oldout @_;
+  print $oldout $_[0];
   # Convert $msglog to something printable in html.
   $msglog =~ s/\n/\<br\/\>/g;
   print $oldout ',"serve_event_log":"';

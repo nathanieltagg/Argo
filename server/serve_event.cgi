@@ -61,7 +61,10 @@ $filename = $files[0];
 
 my $resp = ArgoServerTools::request($filename,$selection,$entrystart,$entryend,param('options'));
 
-ArgoServerTools::serve($resp);
+my $download=0;
+if(defined param('download')) { $download = 1; }
+
+ArgoServerTools::serve($resp,$download);
 
 
 
