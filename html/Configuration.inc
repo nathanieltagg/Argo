@@ -39,6 +39,10 @@
           
         <div><input type="checkbox" id="ctl-show-clus"    name="show-clus"    class="saveable show-clus"                 /><label for="ctl-show-clus">    <b>(c)</b> Show Clusters </label></div>
         <div><b>(shift-C)</b> <select id="ctl-ClusterLists"  class="align-right"></select><div style="clear:both;"></div></div>
+
+
+        <div><input type="checkbox" id="ctl-show-endpoint2d"    name="show-endpoint2d"    class="saveable show-endpoint2d"                 /><label for="ctl-show-endpoint2d"> <b>(e)</b>  Show Endpoint2Ds </label></div>
+        <div> <b>(shift-E)</b><select id="ctl-EndpointLists"  class="align-right"></select><div style="clear:both;"></div></div>
         
         <div><input type="checkbox" id="ctl-show-spoints" name="show-spoints" class="saveable show-spoints"              /><label for="ctl-show-spoints"> <b>(s)</b> Show Spacepoints </label></div>
         <div><b>(shift-S)</b> <select id="ctl-SpacepointLists"  class="align-right"></select><div style="clear:both;"></div></div>

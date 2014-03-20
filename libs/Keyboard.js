@@ -78,6 +78,14 @@ $(function() {
         $('#ctl-ClusterLists').cycle_dropdown().trigger("change");
         return false;
 
+      case 101: 'e'
+        $('#ctl-show-endpoint2d').click();
+        return false;
+        
+      case 69: 'E'
+        $('#ctl-EndpointLists').cycle_dropdown().trigger("change");
+        return false;
+        
       case 115: // 's'
         $('#ctl-show-spoints').click();
         return false;
