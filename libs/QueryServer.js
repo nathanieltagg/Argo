@@ -147,6 +147,8 @@ function QueryServer( par, myurl )
     $("#debuglinks").html(
       "Link to json data: <a href=\""+myurl+"?"+param+"\">"+myurl+"?"+param+"</a>"
     );
+    $('#download-this-event').html('<a href="'+myurl+'?'+param+'&download">Download this event</a>');
+    
     // Modify the "URL to the json data file" link with the actual query.
     $('#inXmlUrl').val(myurl+"?"+param);
 
