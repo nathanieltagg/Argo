@@ -130,6 +130,7 @@ WireView.prototype.HoverChange = function()
   // Only need a redraw if the over change affected something we care about.
   switch(gHoverState.type) {
     case "hit": 
+    case "endpoint2d": 
     case "cluster":
     case "spacepoint":
     case "track":
@@ -139,6 +140,7 @@ WireView.prototype.HoverChange = function()
   }
   switch(gHoverState.last.type) {
     case "hit": 
+    case "endpoint2d": 
     case "cluster":
     case "spacepoint":
     case "track":
@@ -278,7 +280,6 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.clip();
   
   this.mouseable = [];
-  this.mouseable_poly = [];
   if(gRecord) {
     if ($(this.ctl_show_wireimg).is(":checked")) {
       this.DrawImage(min_u,max_u, min_v, max_v, fast);
@@ -301,6 +302,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.DrawTracks(min_u,max_u, min_v, max_v, fast);
     }
 
+    this.DrawEndpoint2d()
 
     if ($(this.ctl_show_mc).is(":checked")) {
       this.DrawMC(min_u,max_u, min_v, max_v, fast);
@@ -474,7 +476,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
   
     if(gHoverState.obj == h.hit) hoverVisHit = h;
-    this.mouseable.push({type:"hit", x1:x, x2:x, y1:y, y2:y+dy, r:dx, obj: h.hit});
+    this.mouseable.push({type:"hit", coords:[[x,y],[x,y+dy]], r:dx, obj: h.hit});
   }
   
   if(hoverVisHit) {
@@ -566,7 +568,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       poly.push(hull[ihull][0]);
     }
     
-    this.mouseable_poly.push({ obj: clus, type: "cluster",  poly: poly });
+    this.mouseable.push({ obj: clus, type: "cluster", coords: poly });
     
     this.ctx.fillStyle = "rgba(255, 165, 0, 0.5)";
     this.ctx.beginPath();
@@ -582,6 +584,38 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.stroke();
     }
     
+  }
+}
+
+WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
+{
+  if(!gRecord.endpoint2d) return;
+  for(set in gRecord.endpoint2d) {
+    var endpoints = gRecord.endpoint2d[set];
+    for(var i=0;i<endpoints.length;i++) {
+      var pt = endpoints[i];
+      if(pt.plane != this.plane) continue;
+      
+      var u = pt.wire;
+      var v = pt.t;
+      var x = this.GetX(u);
+      var y = this.GetY(v);
+      var r = 6;
+      this.ctx.fillStyle = "orange";
+      this.ctx.beginPath();
+      this.ctx.arc(x,y,r,0,1.99*Math.PI);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.mouseable.push({type:"endpoint2d", coords:[[x,y]], r:r, obj: pt});
+
+      if(gHoverState.obj == pt) {
+        console.warn("Endpoint selected",gHoverState.obj);
+        this.ctx.fillStyle = "rgba(255, 165, 0, 0.8)";
+        this.ctx.strokeStyle = "black";
+        this.ctx.linewidth = 3;
+        this.ctx.stroke();
+      }
+    }
   }
 }
 
@@ -620,7 +654,7 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.stroke();
     
     
-    this.mouseable.push({type:"sp", x1:x, x2:x, y1:y, y2:y, r:ru, obj: sp});
+    this.mouseable.push({type:"sp", coords:[[x,y]], r:ru, obj: sp});
     
     
   }
@@ -693,7 +727,10 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 
     // for mouseovering
     for(var j=1;j<pts.length;j++) 
-      this.mouseable.push({type:"track", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: trk});
+      this.mouseable.push({type:"track", 
+                          coords: [[pts[j-1][0],pts[j-1][1]],
+                                    pts[j][0],pts[j][1] ], 
+                          r:this.ctx.lineWidth, obj: trk});
 
     this.ctx.stroke();
   }
@@ -867,7 +904,9 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
 
     // for mouseovering
     for(var j=0;j<segments.length-1;j++) {
-       this.mouseable.push({type:"track", x1:segments[j].p0[0], x2:segments[j].p0[1], y1:segments[j].p1[0], y2:segments[j].p1[1], r:this.ctx.lineWidth, obj: trk});
+       this.mouseable.push({type:"track", 
+                            coords: [[segments[j].p0[0],segments[j].p1[0]], [segments[j].p0[1],segments[j].p1[1]]],
+                            r:this.ctx.lineWidth, obj: trk});
      }
   }
   this.ctx.restore();
@@ -947,7 +986,9 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     
     // for mouseovering
     for(var j=1;j<pts.length;j++) 
-      this.mouseable.push({type:"mcparticle", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: p});
+      this.mouseable.push({type:"mcparticle",
+                           coords: [[pts[j-1][0],pts[j-1][1]], [pts[j][0],pts[j][1]] ],
+                           r:this.ctx.lineWidth, obj: p});
   
   
   }
@@ -976,7 +1017,8 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.closePath();
     this.ctx.fill();
     this.ctx.stroke();
-    this.mouseable.push({type:"UserTrack", x1:x, x2:x+0.1, y1:y, y2:y, r:r+this.ctx.lineWidth, obj: pt});
+    this.mouseable.push({type:"UserTrack",
+                        coords: [[x,y]],  r:r+this.ctx.lineWidth, obj: pt});
     
   }
 
@@ -1197,24 +1239,7 @@ WireView.prototype.DoMouse = function(ev)
     // Regular mouse move.
     if(this.fMouseInContentArea) {
       // Find the first good match
-      var match = {obj: {}, type:"wire"}; // by default, it's a wire.
-      
-      for(var i =this.mouseable_poly.length-1 ; i>=0; i--) {
-        var m = this.mouseable_poly[i];
-        if(GeoUtils.is_point_in_polygon([this.fMousePos.x,this.fMousePos.y],m.poly)) {
-          match = m;
-          break;
-        }
-      }
-      for(var i =this.mouseable.length-1 ; i>=0; i--) {
-        var m = this.mouseable[i];
-        if (GeoUtils.line_is_close_to_point(
-          this.fMousePos.x,this.fMousePos.y, m.x1,m.y1,m.x2,m.y2,m.r)) 
-          {
-            match = m;
-            break;
-          };
-      }
+      var match = this.FindMouseableMatch();
       if(ev.type=='click'){
         if (ev.shiftKey) {
           if(match.type=="hit") {
@@ -1229,7 +1254,7 @@ WireView.prototype.DoMouse = function(ev)
         } else {
           ChangeSelection(match);          
         }      
-    } else {
+      } else { // not a click, but a mousemove.
         // mousemove.
         // add hover coordinates.
         match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u);
@@ -1263,6 +1288,36 @@ WireView.prototype.DoMouse = function(ev)
   } 
     
 }
+
+WireView.prototype.FindMouseableMatch = function() 
+{
+
+  for(var i =this.mouseable.length-1 ; i>=0; i--) {
+    var m = this.mouseable[i];
+    if(m.coords.length==1) {
+      // is just a point.
+      var dx = m.coords[0][0] - this.fMousePos.x;
+      var dy = m.coords[0][1] - this.fMousePos.y;
+      if( (dx*dx + dy*dy) < (m.r*m.r) ) { return m; }
+    } else if (m.coords.length==2) {
+      // it's a line
+      if  (GeoUtils.line_is_close_to_point(
+                      this.fMousePos.x,this.fMousePos.y, 
+                      m.coords[0][0], m.coords[0][1], m.coords[1][0], m.coords[1][1],
+                      m.r) ) {
+                        return m;                        
+                      }
+    } else {
+      //polygon
+      if(GeoUtils.is_point_in_polygon([this.fMousePos.x,this.fMousePos.y],m.coords)) {
+        return m;
+      }
+    }
+  }
+  return  {obj: {}, type:"wire"}; // by default, it's a wire.
+
+}
+
 
 // Utility
 function removeA(arr) {

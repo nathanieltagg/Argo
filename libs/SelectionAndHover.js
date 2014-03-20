@@ -276,8 +276,10 @@ HoverInfo.prototype.Draw = function ()
 {
   var h = "";  
   var state;
+  var sel = false;
   if(gSelectState.obj) {
     state = gSelectState;
+    sel = true;
   } else if(gHoverState.obj) {
     state = gHoverState;
   } else {
@@ -290,7 +292,11 @@ HoverInfo.prototype.Draw = function ()
     case "track": h=ComposeTrackInfo(state); break;
     
     default:
-      h = "<h3>Selected:" + state.type + "</h3>";
+      var h="";
+      if(sel) 
+        h += "<h3>Selected:" + state.type + "</h3>";
+      else 
+        h += "<h3>Hover:" + state.type + "</h3>";
       h += "<table class='.hoverinfo'>";
       var a = "<tr><td class='hoverinfo-key'>";
       var b = "</td><td class='hoverinfo-val'>";
@@ -306,6 +312,7 @@ HoverInfo.prototype.Draw = function ()
   }
   
   h+= "</table>";
+  console.warn("HoverInfo",h);
   $(this.element).html(h);
   
 }

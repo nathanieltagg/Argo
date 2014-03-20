@@ -198,7 +198,7 @@ void RecordComposer::composeHits()
       h.add("t",       t     );
       h.add("t1",      ftr.getJson(lhit_t1     ,i) );
       h.add("t2",      ftr.getJson(lhit_t2     ,i) );
-      // h.add("view",    ftr.getJson(lhit_view   ,i) ); // View is redundant with plane.
+      h.add("view",    ftr.getJson(lhit_view   ,i) ); // View is redundant with plane.
       // h.add("m",       ftr.getJson(lhit_m      ,i) );  // unusued
       // h.add("\u03C3q", ftr.getJson(lhit_sigq   ,i) ); // unused
       // h.add("\u03C3t", ftr.getJson(lhit_sigt   ,i) ); //unused
@@ -1050,7 +1050,7 @@ void RecordComposer::composeMC()
   mc.add("gtruth",truth_list);
 
 
-
+  /*
 
   leafnames = findLeafOfType("vector<simb::MCTruth>");
   JsonObject mctruth_list;
@@ -1116,7 +1116,8 @@ void RecordComposer::composeMC()
     JsonArray arr(v_mctruths);
     mctruth_list.add(stripdots(name),arr);
   }
-  mc.add("mcruth",mctruth_list);
+  mc.add("mctruth",mctruth_list);
+  */
   
   JsonObject particle_list;
   leafnames = findLeafOfType("vector<simb::MCParticle>");
