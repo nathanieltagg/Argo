@@ -5,7 +5,8 @@
   <p><em>Message of the day:</em></p>
   <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em> to avoid loading wires</p>
   Recent updates: <br/>
-  <ul>
+  <ul> 
+    <li> March 20: Apparently, view=plane. Clusters should look better now. </li>
     <li> For Herb: Press 'z' to fake MC t0 to match naive tracker </li>
     <li> For David: Now correctly pedestal-subtracts raw hits. </li>
     <li> For Andrej: Now can shift-select and save hits to a file.</li>
