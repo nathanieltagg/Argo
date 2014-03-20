@@ -95,6 +95,7 @@ function WireView( element, options )
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
+  this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
   this.ctl_show_reco =  GetBestControl(this.element,".show-reco");
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
@@ -106,6 +107,7 @@ function WireView( element, options )
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
+  $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
@@ -920,6 +922,8 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   var particles = gRecord.mc.particles[gMCParticlesListName];
   if(!particles) return;
   var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
+  var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
+  if(move_t0) console.warn('moving mc t0');
   
   for(var i=0;i<particles.length;i++)
   {
@@ -928,10 +932,13 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 
     // compile points
     var pts = [];
+    var t0 = 0;
+    if(move_t0 && p.trajectory.length>0) t0 = p.trajectory[0].t/500.0; // 500 ns per tick.
+    
     for(var j=0;j<p.trajectory.length;j++) {
       var point = p.trajectory[j];
       // Convert particle X coordinate to TDC value.
-      var tdc = gGeo.getTDCofX(this.plane,point.x);
+      var tdc = gGeo.getTDCofX(this.plane,point.x) + t0;
       // Convert YZ into wire number.
       var wire = gGeo.yzToWire(this.plane,point.y,point.z);
       var x = this.GetX(wire);
