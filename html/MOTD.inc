@@ -6,11 +6,10 @@
   <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em> to avoid loading wires</p>
   Recent updates: <br/>
   <ul>
+    <li> For Herb: Press 'zero' to fake MC t0 to match naive tracker </li>
     <li> For David: Now correctly pedestal-subtracts raw hits. </li>
     <li> For Andrej: Now can shift-select and save hits to a file.</li>
     <li> March 16: Added support for 9600-tick gates.</li>
     <li> March 16: Added JSON local file loader.</li>
-    <li> Feb 18: Log/linear scale checkbox. </li>
-    <li> Feb 4: Added orange convex hull layer for clusters. </li>
   </ul>
 </div> 
