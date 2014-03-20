@@ -190,15 +190,17 @@ void RecordComposer::composeHits()
       int plane = ftr.getInt(lhit_plane  ,i);
       double q  = ftr.getVal(lhit_q      ,i);
       double t  = ftr.getVal(lhit_t      ,i);
+      double t1  = ftr.getVal(lhit_t1      ,i);
+      double t2  = ftr.getVal(lhit_t2      ,i);
       if(plane==2)timeProfile.Fill(t,q);
       if(plane>=0 && plane<3) planeProfile[plane]->Fill(wire,q);
       h.add("wire",    wire  );
       h.add("plane",   plane );
-      h.add("q",       q     );
-      h.add("t",       t     );
-      h.add("t1",      ftr.getJson(lhit_t1     ,i) );
-      h.add("t2",      ftr.getJson(lhit_t2     ,i) );
-      h.add("view",    ftr.getJson(lhit_view   ,i) ); // View is redundant with plane.
+      h.add("q",       JsonFixed(q,0)     );
+      h.add("t",       JsonFixed(t,1)     );
+      h.add("t1",      JsonFixed(t1,1)    );
+      h.add("t2",      JsonFixed(t2,1)    );
+      // h.add("view",    ftr.getJson(lhit_view   ,i) ); // View is redundant with plane.
       // h.add("m",       ftr.getJson(lhit_m      ,i) );  // unusued
       // h.add("\u03C3q", ftr.getJson(lhit_sigq   ,i) ); // unused
       // h.add("\u03C3t", ftr.getJson(lhit_sigt   ,i) ); //unused
