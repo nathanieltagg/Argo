@@ -138,10 +138,11 @@ HitHistogram.prototype.BuildHistogram = function()
   this.SetHist(this.hist,gHitColorScaler);
   this.ResetToHist(this.hist);
 
-  gHitColorScaler.min = this.hist.min;
-  gHitColorScaler.max = this.hist.max;  
-  
+  gHitColorScaler.min = this.min_u;
+  gHitColorScaler.max = this.max_u;    
+  gHitCut = gHitColorScaler;
   this.Draw();
+  // gStateMachine.Trigger("hitChange");
 }
 
 HitHistogram.prototype.HoverChange = function( )
@@ -183,14 +184,21 @@ HitHistogram.prototype.Draw = function( )
 
 HitHistogram.prototype.ChangeRange = function( minu,maxu )
 {
-  gHitColorScaler.min = minu;
-  gHitColorScaler.max = maxu;  
   HistCanvas.prototype.ChangeRange.call(this,minu,maxu);
+  gHitColorScaler.min = this.min_u;
+  gHitColorScaler.max = this.max_u;    
+}
+
+
+HitHistogram.prototype.FastRangeChange = function()
+{
+  gHitColorScaler.min = this.min_u;
+  gHitColorScaler.max = this.max_u;    
 }
 
 HitHistogram.prototype.FinishRangeChange = function()
 {
-  console.warn("PhHistCanvas::FinishRangeChange");
+  console.warn("HitHistogram::FinishRangeChange");
   gHitCut.field = $(this.ctl_hit_field).val();
   gHitCut.min = this.min_u;
   gHitCut.max = this.max_u;
