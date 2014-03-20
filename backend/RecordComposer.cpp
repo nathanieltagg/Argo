@@ -461,9 +461,9 @@ void  RecordComposer::composeTracks()
         jpoint.add("vx",(*Dir)[j].x());
         jpoint.add("vy",(*Dir)[j].y());
         jpoint.add("vz",(*Dir)[j].z());
-        jpoint.add("dQdx",(*dQdx)[0][j]);
-        jpoint.add("dQdy",(*dQdx)[1][j]);
-        jpoint.add("dQdz",(*dQdx)[2][j]);
+        // jpoint.add("dQdx",(*dQdx)[0][j]); // Problematic; sometimes crashes
+        // jpoint.add("dQdy",(*dQdx)[1][j]);
+        // jpoint.add("dQdz",(*dQdx)[2][j]);
         jpoint.add("P",(*FitMomentum)[j]);
         jpoints.add(jpoint);
       }
