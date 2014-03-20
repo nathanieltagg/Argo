@@ -1349,8 +1349,8 @@ WireView.prototype.DoMouseWheel = function(ev,dist)
     gZoomRegion.changeTimeRange(new_v_min, new_v_max);
     
     console.warn("DoMouseWheel",this.fMousePos.u,ev,dist,this.min_u,new_u_min,this.max_u,new_u_max);
+    gStateMachine.Trigger("zoomChange"); 
    
-    this.dirty = true;
     return false;
     
   }
