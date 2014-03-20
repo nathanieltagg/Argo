@@ -11,7 +11,7 @@ use Cwd qw/getcwd realpath/;
 #default configuration
 $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
-$cookie_name = 'arachne_file_browser';
+$cookie_name = 'argo_file_browser';
 $link_target = "../arachne.html";
 $restrict_to = [ getcwd(), "/uboone","/minos","/minerva"];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
@@ -50,7 +50,7 @@ if(! -d $default_path) { $default_path = `pwd`; chomp $default_path;}
 $cur_path = $default_path;
 $cook_path = cookie($cookie_name);
 if(defined $cook_path) {
-  # $cur_path = $cook_path;
+   $cur_path = $cook_path;
 }
 if(defined param('path')) {$cur_path = param('path');};
 
