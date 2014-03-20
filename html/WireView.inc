@@ -3,12 +3,12 @@
 <div class="portlet-content" style="background-color:white">
 
   <div style="width: 33%;float: left;">
-   <center> <span style="color: red">"U" View / View 2 / Plane 0</span></center>
+   <center> <span style="color: red">"U" View / View 0 / Plane 0</span></center>
     <div class="pad A-WireView" style="width:100%; height:300px" data-options='{"plane": 0}'></div>
   </div>
   
   <div style="width: 33%;float: right;">
-    <center> <span style="color: blue">"Y" View / View 0 /Plane 2</span></center>
+    <center> <span style="color: blue">"Y" View / View 2 /Plane 2</span></center>
     <div class="pad A-WireView" style="width:100%; height:300px" data-options='{"plane": 2}'></div>
   </div>
 
