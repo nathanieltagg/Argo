@@ -57,6 +57,14 @@ function DoInitialBookmarking()
     }
   }
 
+  $('#ctl-EndpointLists').empty();
+  if(gRecord.endpoint2d) {
+    for(var i in gRecord.endpoint2d) { 
+      $('#ctl-EndpointLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
+    }
+  }
+
+
   $('#ctl-SpacepointLists').empty();
   for(var i in gRecord.spacepoints) { 
     // Sanitize name a little: remove everything before and including first underscore.

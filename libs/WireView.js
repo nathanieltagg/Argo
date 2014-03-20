@@ -92,6 +92,7 @@ function WireView( element, options )
   this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
   this.ctl_show_wireimg =  GetBestControl(this.element,".show-wireimg");
   this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
+  this.ctl_show_endpoint=  GetBestControl(this.element,".show-endpoint2d");
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
@@ -104,6 +105,8 @@ function WireView( element, options )
   $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_clus)   .change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_endpoint).change(function(ev) { return self.Draw(false); });
+
   $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
@@ -296,6 +299,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.DrawHits(min_u,max_u, min_v, max_v, fast);
     }
 
+    if ($(this.ctl_show_endpoint).is(":checked")) {
+      this.DrawEndpoint2d()
+    }
 
     if ($(this.ctl_show_spoints).is(":checked")) {
       this.DrawSpacepoints(min_u,max_u, min_v, max_v, fast);
@@ -304,8 +310,6 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     if ($(this.ctl_show_tracks).is(":checked")) {
       this.DrawTracks(min_u,max_u, min_v, max_v, fast);
     }
-
-    this.DrawEndpoint2d()
 
     if ($(this.ctl_show_mc).is(":checked")) {
       this.DrawMC(min_u,max_u, min_v, max_v, fast);
@@ -593,9 +597,8 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 {
   if(!gRecord.endpoint2d) return;
-  for(set in gRecord.endpoint2d) {
-    var endpoints = gRecord.endpoint2d[set];
-    for(var i=0;i<endpoints.length;i++) {
+  var endpoints = gRecord.endpoint2d[$("#ctl-EndpointLists").val()];
+  for(var i=0;i<endpoints.length;i++) {
       var pt = endpoints[i];
       if(pt.plane != this.plane) continue;
       
@@ -618,7 +621,6 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
         this.ctx.linewidth = 3;
         this.ctx.stroke();
       }
-    }
   }
 }
 
