@@ -317,8 +317,13 @@ $(function(){
       $.cookie(slot+":"+this.id,val);
       // console.log("saving ",this.id,val);
     });
-    
+
     console.log("cookies saved.");
+    $.blockUI({ 
+        message: '<h1>Configuration Saved.</h1>'
+    }); 
+
+    setTimeout($.unblockUI, 800); 
   }
 
   $('#ctl-save-config').button().click(function() {
@@ -399,6 +404,12 @@ $(function(){
 
   $('#ctl-load-config').button().click(function(){
     RestoreSettings("save");
+    $.blockUI({ 
+        message: '<h1>Configuration Loaded.</h1>'
+    }); 
+
+    setTimeout($.unblockUI, 800); 
+
     return true;
   });
 
@@ -408,10 +419,18 @@ $(function(){
   	var Cookies = document.cookie.split(";");
 
   	for ( var Cnt=0; Cnt < Cookies.length; Cnt++ ) {
+      $.removeCookie(Cookies[Cnt]);
   		var CurCookie = Cookies[Cnt].split("=");
-  		// console.log("unbinding "+CurCookie[0]);
+      console.log("unbinding "+CurCookie[0]);
   		$.removeCookie(CurCookie[0]);
   	};
+
+    $.blockUI({ 
+        message: '<h1>Configuration restored to default.</h1><p>Hit reload to move things back</p>'
+    }); 
+
+    setTimeout($.unblockUI, 800); 
+
 
     // if(gUrlToThisEvent) window.location = gUrlToThisEvent;
     // else window.location.reload();
