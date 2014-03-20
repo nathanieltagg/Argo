@@ -102,6 +102,10 @@ $(function() {
         $('#ctl-show-mc-neutrals').click();
         return false;
         
+      case 122: // 'z'
+        $('#ctl-mc-move-tzero').click();
+        return false
+        
       // case 98: // 'b'
       //   $('#ctl-show-hitmap-blobs').click(); gStateMachine.Trigger('phColorChange');
       //   return false;
