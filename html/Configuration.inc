@@ -11,7 +11,7 @@
 			<option value="PhilipColorPalette"  >Philip's Color Palette</option>
 			
 		</select><br/>
-        <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  >Magnifying glass</label></div>
+        <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
         <div id="mag-sliders">
           <div>
           <label for="ctl-magnifier-size">Mag. Size:</label>         
