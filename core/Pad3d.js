@@ -127,7 +127,7 @@ function Pad3d( element, options )
     
 
   $(this.element) .bind('mousewheel',  function(ev,d) {
-    if(ev.crtlKey) return self.scrollMe(ev,-d); 
+    if(ev.ctrlKey) return self.scrollMe(ev,-d); 
     else return true; // bubble.
    });
    
