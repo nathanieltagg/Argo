@@ -139,6 +139,7 @@ function Pad( element, options )
     $(this.element).on('mouseout.'  +this.NameSpace, fn);
     $(window)      .on('mousemove.' +this.NameSpace, fn);
     $(window)      .on('mouseup.'   +this.NameSpace, fn);
+    $(this.element).on('mousewheel.'+this.NameSpace, function(ev,d){if (ev.ctrlKey) return fn(ev,d); return true;});
   }
 
   $(this.element).on('touchstart.'+this.NameSpace, fn);
@@ -176,7 +177,7 @@ Pad.prototype.SetMagnify = function()
 }
 
 
-Pad.prototype.MouseCallBack = function(ev)
+Pad.prototype.MouseCallBack = function(ev,scrollDist)
 {
   // All mouse-related callbacks are routed through here.
   this.dirty = false;  // flag that tells us if we need a draw or not.
@@ -210,9 +211,13 @@ Pad.prototype.MouseCallBack = function(ev)
   };
   this.fMousePos.u = this.GetU(this.fMousePos.x);
   this.fMousePos.v = this.GetV(this.fMousePos.y);
-  
-  var bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
+
+  var bubble;
+  if(ev.type === 'mousewheel') bubble=this.DoMouseWheel(ev,scrollDist);
+  else                        bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
   // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);
+
+
 
   if(this.dirty) this.Draw();
   return bubble;
@@ -581,5 +586,9 @@ Pad.prototype.DoMouse = function(ev)
   // Override me to read the mouse position.
 }
 
+Pad.prototype.DoMouseWheel = function(ev,dist)
+{
+  // Override me to read the mouse position.
+}
 
 

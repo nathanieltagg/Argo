@@ -77,6 +77,7 @@ function WireView( element, options )
 
   // $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.Draw(); });
   
+    
   gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );
   gStateMachine.Bind('TimeCutChange',this.Draw.bind(this) );
   gStateMachine.Bind('hoverChange',  this.HoverChange.bind(this) );
@@ -1327,14 +1328,32 @@ WireView.prototype.FindMouseableMatch = function()
 }
 
 
-// Utility
-function removeA(arr) {
-    var what, a = arguments, L = a.length, ax;
-    while (L > 1 && arr.length) {
-        what = a[--L];
-        while ((ax= arr.indexOf(what)) !== -1) {
-            arr.splice(ax, 1);
-        }
-    }
-    return arr;
+WireView.prototype.DoMouseWheel = function(ev,dist)
+{
+  // Zoom in/out around the mouse.
+  if(!ev.ctrlKey) {return true;}
+  if(this.fMouseInContentArea) {
+    var frac_x = (this.fMousePos.x - this.origin_x) / this.span_x;
+    var frac_y = (this.origin_y - this.fMousePos.y ) / this.span_y;
+
+    var scale = 1 + 0.01*dist;
+    if(dist>0) scale = 1.05;
+    if(dist<0) scale = 0.95;
+    var new_u_min = this.fMousePos.u*(1.0-scale) + this.min_u*scale;
+    var new_u_max = (this.max_u-this.min_u)*scale + new_u_min;
+
+    var new_v_min = this.fMousePos.v*(1.0-scale) + this.min_v*scale;
+    var new_v_max = (this.max_v-this.min_v)*scale + new_v_min;
+    
+    gZoomRegion.setLimits(this.plane,new_u_min, new_u_max);
+    gZoomRegion.changeTimeRange(new_v_min, new_v_max);
+    
+    console.warn("DoMouseWheel",this.fMousePos.u,ev,dist,this.min_u,new_u_min,this.max_u,new_u_max);
+   
+    this.dirty = true;
+    return false;
+    
+  }
+  return true;
 }
+
