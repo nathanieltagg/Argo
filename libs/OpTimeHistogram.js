@@ -167,7 +167,7 @@ OpTimeHistogram.prototype.Draw = function( )
       // new histogram 
       this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
       
-      if(this.input == "ophits") {
+      if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length) {
         var ophits = gRecord.ophits[gOphitsListName];
         for(var i=0;i<ophits.length;i++) {
           var oh = ophits[i];
