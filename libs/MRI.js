@@ -2,9 +2,11 @@
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 
+var gMRI = null;
+
 $(function(){
   $('div.A-MRI').each(function(){
-    var o = new MRI(this);
+    gMRI = new MRI(this);
   });  
 });
 
@@ -112,7 +114,7 @@ function MRI( element, options )
   
   this.t = [0,50];
   this.min_t = 0;
-  this.max_t = 3200;
+  this.max_t = 9600;
   this.hits = [];
   
   // this slider has two adjustable endpoints matching the selection range for planes.
@@ -269,6 +271,7 @@ MRI.prototype.ChangeT = function( )
   if(this.t[0] != this.slider_grip.slider('value')) { this.slider_grip.slider('value',this.t[0]); }
   
   this.Draw();
+  gStateMachine.Trigger("changeMRIslice")
   
 }
 

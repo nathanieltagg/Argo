@@ -53,6 +53,7 @@ function TriDView( element, options ){
   // Data model state.
   gStateMachine.Bind('recordChange',this.Rebuild.bind(this));
   gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
+  gStateMachine.Bind('changeMRIslice',this.Rebuild.bind(this));
 
   var self = this;
  
@@ -130,6 +131,7 @@ TriDView.prototype.Rebuild = function ()
 }
 
 
+
 TriDView.prototype.CreateFrame = function()
 {
   // console.log("TriDView CreateFrame.");
@@ -148,17 +150,35 @@ TriDView.prototype.CreateFrame = function()
   this.AddLine( dx,-dy, 0,  dx, dy, 0,   3, curColor);
   this.AddLine( dx, dy,0,  0 ,  dy, 0,   3, curColor);
   this.AddLine( 0 ,-dy, 0,  0 , dy, 0,   3, curColor);
-                                         3
+
   this.AddLine( 0, -dy, dz,  dx,-dy, dz, 3, curColor);
   this.AddLine( dx,-dy, dz,  dx, dy, dz, 3, curColor);
   this.AddLine( dx, dy,dz,   0 , dy, dz, 3, curColor);
   this.AddLine( 0 ,-dy, dz,  0 , dy, dz, 3, curColor);
-                                         3
+
   this.AddLine( 0,-dy, 0 ,  0 ,-dy, dz,  3, curColor);
   this.AddLine(dx,-dy, 0 , dx ,-dy, dz,  3, curColor);
   this.AddLine( 0, dy, 0 ,  0 , dy, dz,  3, curColor);
   this.AddLine(dx, dy, 0 ,  dx, dy, dz,  3, curColor);
 
+  // MRI slice
+  if(gMRI){
+    var mri_t = gMRI.t[0];
+    var mri_x = gGeo.getXofTDC(0,mri_t);
+    this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
+    this.AddLine( mri_x, dy,  0 ,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+    this.AddLine( mri_x ,-dy, 0,   mri_x , dy, 0,   3, "rgba(255,50,50,0.5)");
+    this.AddLine( mri_x ,-dy, dz,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+    
+    mri_t = gMRI.t[1];
+    mri_x = gGeo.getXofTDC(0,mri_t);
+    this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
+    this.AddLine( mri_x, dy,  0 ,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+    this.AddLine( mri_x ,-dy, 0,   mri_x , dy, 0,   3, "rgba(255,50,50,0.5)");
+    this.AddLine( mri_x ,-dy, dz,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+  
+  }
+  
   // Optical detectors.
   var dets = gGeo.opDets.opticalDetectors;
   this.ctx.strokeStyle = "black";
