@@ -39,6 +39,11 @@ $(function(){
 
   /// Important: callback to load wire data if user re-checks the box.
   $('#ctl-show-wireimg').click(CheckWireDataReload);
+  
+  // prevent controls from capturing the keyboard events.  Remove focus if gathereed.
+  $('#config-port input').on("focus",function(ev){this.blur();});
+  $('#config-port select').on("focus",function(ev){this.blur();});
+  $('#config-port button').on("focus",function(ev){this.blur();});
 
 });
 
@@ -88,7 +93,15 @@ function CheckWireData()
 
 
 
-
+function CycleWireRadios()
+{
+  if($('#ctl-show-wireimg-cal').is(":checked")) {
+    $('#ctl-show-wireimg-raw').click();
+  } else {
+    $('#ctl-show-wireimg-cal').click();
+  }
+  
+}
 
 
 
