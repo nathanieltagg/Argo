@@ -1256,7 +1256,7 @@ WireView.prototype.DoMouse = function(ev)
       if(ev.type=='click'){
         if (ev.shiftKey) {
           if(match.type=="hit") {
-            if(match.obj.shiftselected) {
+            if(match.obj.saveselection) {
               // deselect
               gSaveSelection.RemoveHit(match.obj);
             } else {
