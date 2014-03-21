@@ -205,6 +205,9 @@ $(function(){
   });
   
   // Make portlets resizable.
+  // The problems with this:
+  // - Does not constrain horizontal
+  // - Does not scale inner objects.
   // $(".portlet-content").resizable({
   //   containment: 'parent' 
   //  
