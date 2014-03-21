@@ -62,6 +62,10 @@ $(function() {
         $('#ctl-show-wireimg').click();
         return false;
 
+      case 87: // 'W'
+        CycleWireRadios();
+        return false;
+
       case 104: // 'h'
         $('#ctl-show-hits').click();
         return false;

@@ -1338,9 +1338,9 @@ WireView.prototype.DoMouseWheel = function(ev,dist)
     var frac_x = (this.fMousePos.x - this.origin_x) / this.span_x;
     var frac_y = (this.origin_y - this.fMousePos.y ) / this.span_y;
 
-    var scale = 1 + 0.01*dist;
-    if(dist>0) scale = 1.05;
-    if(dist<0) scale = 0.95;
+    var scale = 1 ;
+    if(dist<0) scale = 1.05;
+    if(dist>0) scale = 0.95;
     var new_u_min = this.fMousePos.u*(1.0-scale) + this.min_u*scale;
     var new_u_max = (this.max_u-this.min_u)*scale + new_u_min;
 
