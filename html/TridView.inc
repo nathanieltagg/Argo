@@ -25,7 +25,9 @@
             <input type="radio" class="trid-ctl trid-ctl-view-yz" name="trid-radio-view" id="trid-radio-view3" value="YZ" /><label for="trid-radio-view3">YZ</label>
             <input type="radio" class="trid-ctl trid-ctl-view-xy" name="trid-radio-view" id="trid-radio-view4" value="XY" /><label for="trid-radio-view4">XY</label>
           </span>
+<input type="checkbox" id="ctl-show-trid-hits" class='show-trid-hits' name='show-trid-hits' /><label for='show-trid-hits'>Show 3D hits</label>
         </div>
       </div>
+      
     </div>
 
