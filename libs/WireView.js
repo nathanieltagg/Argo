@@ -538,6 +538,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 
   this.clusterHulls = [];
 
+  
   clusterLoop:
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
@@ -577,7 +578,8 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     
     this.mouseable.push({ obj: clus, type: "cluster", coords: poly });
     
-    this.ctx.fillStyle = "rgba(255, 165, 0, 0.5)";
+    cs = new ColorScaleIndexed(i+1);    
+    this.ctx.fillStyle = "rgba("+cs.GetColor()+", 0.5)";
     this.ctx.beginPath();
     this.ctx.moveTo(poly[poly.length-1][0],poly[poly.length-1][1]);
     for(var ipoly=0;ipoly<poly.length;ipoly++) {
