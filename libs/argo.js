@@ -419,15 +419,12 @@ $(function(){
   
   // Clear all cookies.
   $("#ctl-restore-defaults").button().click(function(){
-  	var Cookies = document.cookie.split(";");
-
-  	for ( var Cnt=0; Cnt < Cookies.length; Cnt++ ) {
-      $.removeCookie(Cookies[Cnt]);
-  		var CurCookie = Cookies[Cnt].split("=");
-      console.log("unbinding "+CurCookie[0]);
-  		$.removeCookie(CurCookie[0]);
-  	};
-
+    var Cookies = $.cookie();
+    for (key in Cookies) {
+      console.log("removing "+ key);
+      $.removeCookie(key);
+    }
+    
     $.blockUI({ 
         message: '<h1>Configuration restored to default.</h1><p>Hit reload to move things back</p>'
     }); 
