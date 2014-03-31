@@ -49,7 +49,7 @@ TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname)
   eoffset = fBranch->GetOffset();
   offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
   fOK = true;
-};
+}
 
 
   

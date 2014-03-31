@@ -44,7 +44,7 @@ Timer::Timer( long sec, long usec )
   t.tv_sec=sec; 
   t.tv_usec=usec; 
   mStartTime=TimevalToTime(t); 
-};
+}
 
 
 double 
@@ -52,7 +52,7 @@ Timer::Count( void )
 {
   double now = GetTimeOfDay();
   return now-mStartTime;
-};
+}
 
 // Return TRUE if it has been longer than inSecs seconds since 
 // the last timer reset.
@@ -61,7 +61,7 @@ Timer::Test( double inSecs )
 {
   if( Count() > inSecs) return true;
   return false;
-};
+}
 
 
 void
