@@ -197,7 +197,7 @@ int SocketServer::Listen( double inWaitSecs,
   }
 
   return 0;
-};
+}
 
 
 int SocketServer::Send(const unsigned char* data, 

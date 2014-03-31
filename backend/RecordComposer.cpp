@@ -60,7 +60,7 @@ RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry,
     #include "palette_trans.inc" 
   };
   fPaletteTrans.assign(&vvt[0], &vvt[0]+sizeof(vvt));
-};
+}
   
 RecordComposer::~RecordComposer()
 {
@@ -166,12 +166,12 @@ void RecordComposer::composeHits()
 
     TLeaf* lhit_wire    = fTree->GetLeaf( (name+"obj.fWireID.Wire"     ).c_str());
     TLeaf* lhit_plane   = fTree->GetLeaf( (name+"obj.fWireID.Plane"    ).c_str());
-    TLeaf* lhit_view    = fTree->GetLeaf( (name+"obj.fView"            ).c_str());
-    TLeaf* lhit_m       = fTree->GetLeaf( (name+"obj.fMultiplicity"    ).c_str());
+    // TLeaf* lhit_view    = fTree->GetLeaf( (name+"obj.fView"            ).c_str());
+    // TLeaf* lhit_m       = fTree->GetLeaf( (name+"obj.fMultiplicity"    ).c_str());
     TLeaf* lhit_q       = fTree->GetLeaf( (name+"obj.fCharge"          ).c_str());
-    TLeaf* lhit_sigq    = fTree->GetLeaf( (name+"obj.fSigmaCharge"     ).c_str());
+    // TLeaf* lhit_sigq    = fTree->GetLeaf( (name+"obj.fSigmaCharge"     ).c_str());
     TLeaf* lhit_t       = fTree->GetLeaf( (name+"obj.fPeakTime"        ).c_str());
-    TLeaf* lhit_sigt    = fTree->GetLeaf( (name+"obj.fSigmaPeakTime"   ).c_str());
+    // TLeaf* lhit_sigt    = fTree->GetLeaf( (name+"obj.fSigmaPeakTime"   ).c_str());
     TLeaf* lhit_t1      = fTree->GetLeaf( (name+"obj.fStartTime"       ).c_str());
     TLeaf* lhit_t2      = fTree->GetLeaf( (name+"obj.fEndTime"         ).c_str());
     
@@ -224,14 +224,14 @@ void RecordComposer::composeHits()
       TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
       TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
       int n = forma.GetNdata();
-      int nb = formb.GetNdata(); // need this line to goose formula into evaluating
+              formb.GetNdata(); // need this line to goose formula into evaluating
       cout << shortname << "  Association formula has " << n << " entries" << endl;
       cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
       for(Int_t i=0;i<n;i++) {
         int cluster_id = forma.EvalInstance(i);
         int hit_id     = formb.EvalInstance(i);
         // cout << "  " << hit_id << " --> " << cluster_id << endl;
-        if(hit_id< v.size() && hit_id >= 0) {
+        if(hit_id< (int)v.size() && hit_id >= 0) {
           v[hit_id].add(shortname,cluster_id);
         }
       }
@@ -240,7 +240,7 @@ void RecordComposer::composeHits()
     }
 
 
-    for(int i=0;i<v.size();i++) arr.add(v[i]);        
+    for(size_t i=0;i<v.size();i++) arr.add(v[i]);        
     reco_list.add(stripdots(name),arr);
     
     JsonObject hists;
@@ -317,7 +317,7 @@ void RecordComposer::composeClusters()
       TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
       TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
       int n = forma.GetNdata();
-      int nb = formb.GetNdata(); // need this line to goose formula into evaluating
+              formb.GetNdata(); // need this line to goose formula into evaluating
       // cout << shortname << "  Association formula has " << n << " entries" << endl;
       // cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
       for(Int_t i=0;i<n;i++) {
@@ -451,11 +451,11 @@ void  RecordComposer::composeTracks()
       const vector<TVector3>          *XYZ           = tel_fXYZ        .get<vector<TVector3>          >(i);
       const vector<TVector3>          *Dir           = tel_fDir        .get<vector<TVector3>          >(i);
       // const vector<TMatrixT<double> > *Cov           = tel_fCov        .get<vector<TMatrixT<double> > >(i);
-      const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
+      // const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
       const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
       JsonArray jpoints;
       
-      for(int j=0;j<XYZ->size();j++) {
+      for(size_t j=0;j<XYZ->size();j++) {
         JsonObject jpoint;
         jpoint.add("x",(*XYZ)[j].x());
         jpoint.add("y",(*XYZ)[j].y());
@@ -591,7 +591,7 @@ void  RecordComposer::composeOpPulses()
         jobj.add("frame"         ,frame   );
         jobj.add("tdc"           ,tdc     );
         JsonArray waveform;
-        for(int j=0;j<wave.size();j++) {
+        for(size_t j=0;j<wave.size();j++) {
           waveform.add( wave[j] );
         }
         jobj.add("waveform",waveform);
@@ -718,8 +718,6 @@ void RecordComposer::composeCal()
       // ptr = (std::vector<float> *)ladd;
       ptr = l.get<std::vector<float> >(i);
       // std::string signal("[");
-      float max = 0;
-      float min = 1;
       double wiresum = 0;
       for(size_t k = 0; k<width; k++) {
         // Color map.
@@ -822,7 +820,7 @@ void RecordComposer::composeRaw()
   
     TreeElementLooter l(fTree,name+"obj.fADC");
     TLeaf* l_pedestal = fTree->GetLeaf(string(name+"obj.fPedestal").c_str());
-    TLeaf* l_samples  = fTree->GetLeaf(string(name+"obj.fSamples").c_str());
+    // TLeaf* l_samples  = fTree->GetLeaf(string(name+"obj.fSamples").c_str());
     const std::vector<short> *ptr = l.get<std::vector<short> >(0);
     // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
     size_t width = ptr->size();
@@ -1148,7 +1146,7 @@ void RecordComposer::composeMC()
     TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
     JsonArray j_particles;
     if(l.ok()){
-      for(int i=0;i<v_particles.size();i++) {
+      for(size_t i=0;i<v_particles.size();i++) {
         // Add  the trajectory points.
         const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
         traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector> > >(i);
@@ -1220,7 +1218,7 @@ void RecordComposer::composeMC()
 
 
         JsonArray jtraj;
-        for(int j=0;j<traj->size();j++){
+        for(size_t j=0;j<traj->size();j++){
           if(usePt[j]==0) continue;
           JsonObject trajpoint;
           const TLorentzVector& pos = (*traj)[j].first;
