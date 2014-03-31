@@ -61,7 +61,6 @@ function WireView( element, options )
   this.visHits = [];
   
   this.mouseable = [];
-  this.mouseable_poly = [];
   
   this.loaded_wireimg = false;
   this.loaded_thumbnail = false;
