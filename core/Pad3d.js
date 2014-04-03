@@ -131,7 +131,7 @@ function Pad3d( element, options )
     else return true; // bubble.
    });
    
-  $(this.element) .bind('dblclick',  function(ev)     { return self.fullScreen(); });
+  // $(this.element) .bind('dblclick',  function(ev)     { return self.fullScreen(); });
   
   $(this.element) .bind('contextmenu', function(ev){ return false;} )
   
