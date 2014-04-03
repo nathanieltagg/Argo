@@ -181,17 +181,17 @@ OpTimeHistogram.prototype.Draw = function( )
       } else { // pulses
         
         var oppulses = gRecord.oppulses[gOpPulsesListName];      
-        for(var i=0;i<oppulses.length;i++) {
-          var p = oppulses[i];
-          if(p.opDetChan == gHoverState.obj.chan) {
-            for(var s = 0; s<p.waveform.length; s++) {
-              var adc = p.waveform[s];
-              if(adc>0) this.highlight_hist.Fill ( p.tdc + s, adc );
+        if(oppulses && oppulses.length) {
+          for(var i=0;i<oppulses.length;i++) {
+            var p = oppulses[i];
+            if(p.opDetChan == gHoverState.obj.chan) {
+              for(var s = 0; s<p.waveform.length; s++) {
+                var adc = p.waveform[s];
+                if(adc>0) this.highlight_hist.Fill ( p.tdc + s, adc );
+              }
             }
-          }
-        }    
-        
-      
+          }    
+        }
       }
       
       this.AddHist(this.highlight_hist,gOpDetColorScaler);        

@@ -80,6 +80,9 @@ function SetOverlayPosition(x,y)
 
 ////////// Initialization
 $(function(){
+  gStateMachine.Bind("newRecord",ClearHover);
+  gStateMachine.Bind("newRecord",ClearSelection);
+  gStateMachine.Bind("newRecord",function(){ $('#selected-object-info.floating').hide()});
   gStateMachine.Bind("selectChange",DrawObjectInfo);
   $('#selected-object-info.floating').hide();
   // $('#selected-object-info .unit-ctl').buttonset();
@@ -179,9 +182,9 @@ function ComposeMCParticleInfo(s)
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
   var c = "</td></tr>";  
-  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " mm<br/>" 
-                       + "y: " +  Math.round(start.y) + " mm<br/>" 
-                       + "z: " +  Math.round(start.z) + " mm<br/>" + c;
+  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" 
+                       + "y: " +  Math.round(start.y) + " cm<br/>" 
+                       + "z: " +  Math.round(start.z) + " cm<br/>" + c;
   h+= a + "Mom'm" + b  + "px: " + Math.round(start.px*1000) + " MeV/c<br/>" 
                        + "py: " + Math.round(start.py*1000) + "  MeV/c<br/>" 
                        + "pz: " + Math.round(start.pz*1000) + "  MeV/c<br/>" + c;
@@ -234,9 +237,9 @@ function ComposeTrackInfo(s)
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
   var c = "</td></tr>";  
-  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " mm<br/>" 
-                       + "y: " +  Math.round(start.y) + " mm<br/>" 
-                       + "z: " +  Math.round(start.z) + " mm<br/>" + c;
+  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" 
+                       + "y: " +  Math.round(start.y) + " cm<br/>" 
+                       + "z: " +  Math.round(start.z) + " cm<br/>" + c;
   h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" 
                        + "vy: " + (vy).toFixed(3) + "<br/>" 
                        + "vz: " + (vz).toFixed(3) + "<br/>" + c;
