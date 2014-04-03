@@ -68,7 +68,8 @@ $scripts = [
               -src      => 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'
             },
             { -type => 'text/javascript',
-              -src      => '../js/jquery.tablesorter.js'
+              # -src      => '../js/jquery.tablesorter.js'
+              -src      => '../js/sorttable.js'
             },
             { -type => 'text/javascript',
               -src      => 'file_browser.js'}              
@@ -148,7 +149,7 @@ if( scalar(@files) ==0 ) {
 } else {
 
   print start_table({-class=>"filetable tablesorter"});
-  print thead(Tr({-style=>"text-align:left;"},th("File"),th("Date"),th("Size")));
+  print thead(Tr({-style=>"text-align:left;"},th("File"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
   print start_tbody;
   foreach $f (@files)
   {
@@ -158,8 +159,7 @@ if( scalar(@files) ==0 ) {
     print Tr(
              td( a({-href=>"$link_target#entry=0&filename=$f_enc"},"$f"))
             ,td({-class=>"date"},strftime("%b %e, %Y %H:%M",localtime($info[9])))
-            ,td({-class=>"size"},get_filesize_str($info[7]))
-          
+            ,"<td sorttable_customkey=".$info[7].">".get_filesize_str($info[7])."</td>"
             );
   }
   print end_tbody;
