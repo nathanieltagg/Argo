@@ -52,6 +52,7 @@ OmHistCanvas.prototype.Remove = function()
 {
   console.log("Removing ",this.path);
   gOmData.remove(this.path);
+  gRefData.remove(this.path);
   $(document).off("OmDataRecieved."+this.mynamespace);
   $(document).off("OmRefDataRecieved."+this.mynamespace);
   $(this.ctl_histo_logscale).off("change."+this.mynamespace);
