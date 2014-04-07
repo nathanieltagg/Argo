@@ -44,9 +44,9 @@ public:
   { 
     static char options[100];
     static char filename[990];
-    static char histname[990];
+    static char histname[2990];
     int bytes;
-    int r =  sscanf((char*)inData,"%99[^,\n],%900[^,\n],%900[^,\n]\n%n",options,filename,histname,&bytes);
+    int r =  sscanf((char*)inData,"%99[^,\n],%900[^,\n],%2900[^,\n]\n%n",options,filename,histname,&bytes);
     if(r==3) return bytes;
     return 0;
   };
@@ -99,8 +99,8 @@ int main(int argc, char **argv)
       // Try to parse format of FILENAME,GATE\n
       char options[100];
       char filename[990];
-      char histname[990];
-      int r = sscanf((char*)dataRecvd,"%99[^,\n],%900[^,\n],%900[^,\r\n]",options,filename,histname);
+      char histname[2990];
+      int r = sscanf((char*)dataRecvd,"%99[^,\n],%900[^,\n],%2900[^,\r\n]",options,filename,histname);
       if(r==3) {
         //Successful conversion. Give it a try.
         cout << "Got a valid request at " << TTimeStamp().AsString() << endl;
