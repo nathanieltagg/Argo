@@ -4,6 +4,7 @@ use POSIX qw(setsid);
 use IO::Socket;
 use Cwd;
 use ArgoServerTools qw(setup myerror);
+use URI::Escape;
 
 #
 # Script to get a an event from a root-file DST as an XML object.
@@ -21,23 +22,42 @@ if( -r "server_config.pl" ) {
     require "server_config.pl";
 }  
 
-$pathglob = "hists.root";
+$hists = param('hists') || "HLIST";
+$options = param('options');
+
+my @paths_to_check = ("/",".","/online/om");
+$fileglob = "current.root";
+
 if(defined param('filename')) {
-  $pathglob = param('filename');
+  $fileglob = uri_unescape(param('filename'));
+} else {
+  $run = 1;
+  $subrun = 0;
+  if( defined param('run')    ) {$run = param('run');       }
+  if( defined param('subrun') ) {$subrun = param('subrun'); }
+  $fileglob = "run_" . sprintf("%08d",$run) . "_" . sprintf("%03d",$subrun) .".om.root";    
 }
 
-$hists = param('hists');
-$options = param('options');
+@files_raw = ();
+$pathglob = "";
+foreach $p (@paths_to_check) {
+  $pathglob .= "$p/$fileglob ";
+  push(@files_raw,glob("$p/$fileglob"));  
+}
+
+# This is a good place to remove some false-positives from the fileglob:
+@files = ();
+foreach $f (@files_raw)
+{
+  if( -r $f ){push(@files,$f);}
+}
 
 
 my $print_pathglob = $pathglob;
-$print_pathglob =~ s/ /\n<br\/>\n/g;
-print "serve_hists.cgi looking in pathglob: $print_pathglob\n<br/>\n";
+$print_pathglob =~ s/ /<br\/>/g;
+print "serve_hists.cgi looking in pathglob: $print_pathglob<br/>\n";
 
-@files_raw = glob($pathglob);
 
-# This is a good place to remove some false-positives from the fileglob:
-@files = @files_raw;
 
 if((@files)==0) {
     myerror("Couldn't find file for this event specification.");

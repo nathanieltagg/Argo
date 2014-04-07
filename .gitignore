@@ -1,3 +1,5 @@
+*.pid
+*.log
 .htaccess
 .htpasswd
 local.css

@@ -75,7 +75,7 @@ OmDataObj.prototype.get = function()
           contentType: "application/json; charset=utf-8",
           dataType: "json",
           async: true,
-          error:    function(){self.QueryError()},
+          error:    function(jqXHR, textStatus, errorThrown){self.QueryError(jqXHR, textStatus, errorThrown)},
           success:  function(data,textStatus,jqxhr){self.QuerySuccess(data,textStatus,jqxhr)},
         }); 
         console.log(req);
@@ -83,9 +83,11 @@ OmDataObj.prototype.get = function()
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
 }
 
-OmDataObj.prototype.QueryError = function()
+OmDataObj.prototype.QueryError = function(jqXHR, textStatus, errorThrown)
 {
-  this.status = "error";
+  this.status = "QueryError: "+textStatus;
+  this.jqXHR = jqXHR;
+  console.log("QueryError",jqXHR, textStatus, errorThrown);
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
 }
 
