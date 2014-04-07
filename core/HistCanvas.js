@@ -101,9 +101,9 @@ HistCanvas.prototype.Draw = function()
 {
   // console.log("HistCanvas::Draw",this);
   this.Clear();
-  this.DrawFrame();
   this.DrawRegions();
   this.DrawHists();
+  this.DrawFrame();
   if(this.adjunct_display) this.DrawAdjunct();
   this.DrawMarker();
 }
@@ -321,9 +321,36 @@ HistCanvas.prototype.DrawHists = function( )
          this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
        }
      }
+     
+     if(hist.binlabels) {
+       this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
+       this.ctx.font = this.tick_label_font;
+       this.ctx.textAlign = 'center';
+       this.ctx.textBaseline = 'top';
+       
+        for (var i = 0; i < hist.n; i++) {
+          var t1 = hist.GetX(i);
+          var t2 = hist.GetX(i+1);
+          var x1 = this.GetX(t1);
+          var x2 = this.GetX(t2);
+          var x = (x1+x2)/2;
+          var arr = getLines(this.ctx,hist.binlabels[i],x2-x1,this.ctx.font);
+          console.warn("getLines",arr);
+          var y = this.origin_y+8;
+          for(var j=0;j<arr.length;j++) {
+            console.warn(x,y,arr[j]);
+            this.ctx.fillText(arr[j], x, y);
+            y += 10;
+          }
+        }
+       
+     }
  }
    
 }    
+
+
+
 
 function getAbsolutePosition(element) {
    var r = { x: element.offsetLeft, y: element.offsetTop };
