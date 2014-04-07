@@ -2,8 +2,8 @@ pwd := $(shell pwd)
 
 UNAME := $(shell uname -s)
 
-CPP := g++ 
-LD := g++ 
+CPP := g++  -g
+LD := g++  -g
 #CPP = gcc
 #LD = gcc
 
