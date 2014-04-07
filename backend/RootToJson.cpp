@@ -20,6 +20,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
 {
   // Convert a histogram into a JSON file.
   JsonObject h;
+  h.add("name" ,inHist->GetName());
+  h.add("title",inHist->GetTitle());
 
   // Rebin if requested.
   TH1* hist = inHist;
@@ -33,10 +35,17 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   }
   if(!hist) return h;
   h.add("classname",hist->ClassName());
-  h.add("name" ,inHist->GetName());
-  h.add("title",inHist->GetTitle());
   h.add("xlabel",hist->GetXaxis()->GetTitle());
   h.add("ylabel",hist->GetYaxis()->GetTitle());
+  // Custom axis labels.
+  if(hist->GetXaxis()->GetLabels()) {
+    JsonArray binlabels;
+    for(int i=1; i <= hist->GetNbinsX();i++) {
+      binlabels.add(hist->GetXaxis()->GetBinLabel(i));
+    }
+    h.add("binlabels",binlabels);
+  }
+  
   h.add("n",hist->GetNbinsX());
   h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
   h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
