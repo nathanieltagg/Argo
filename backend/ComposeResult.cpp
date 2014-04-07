@@ -252,7 +252,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   TFile* f = getlocked(filename.c_str(),"READ");
   if(f->IsZombie()) {
     result.add("error","Could not find filename "+filename);
-    delete f;
+    try{delete f;} catch(...) {cerr << "Error deleting file!";}
     return result.str();
   }
   
