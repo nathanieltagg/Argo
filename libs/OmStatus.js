@@ -104,34 +104,35 @@ function deltaTimeString(t)
 
 OmStatus.prototype.UpdateData = function()
 {
-  var h = "";
+  var cycle = gOmData.getCycle();
+  var refcycle = gRefData.getCycle();
+  
+  var filename    = cycle    ? (   cycle.filename) : gOmData.file;
+  var reffilename = refcycle ? (refcycle.filename) : gRefData.file;
+  h="";
   h+= "<table class='omstatus'><tr>";
   h+= "<tr><th>Source</th><th>Status</th><th>File</th><th>JSON data</th></tr>";
   h+= "<tr>"
   h+= " <td><b>Monitor</b></td>";
   h+= " <td>" + gOmData.status + "</td>";
-  h+=  "<td>" + gOmData.file   + "</td>"
+  h+=  "<td>" + filename  + "</td>"
   h+=  "<td><a href='" + gOmData.myurl + '?' + gOmData.param + "'>last call</a></td>"
   h+= "</tr><tr>";
   h+= " <td><b>Reference</b></td>";
   h+= " <td>" + gRefData.status + "</td>";
-  h+=  "<td>" + gRefData.file   + "</td>"
+  h+=  "<td>" + filename   + "</td>"
   h+=  "<td><a href='" + gRefData.myurl + '?' + gRefData.param + "'>last call</a></td>"
   h+= "</table>";
-  if(gOmData.data && gOmData.data.record) {
-    for(var key in gOmData.data.record) {
-      if(gOmData.data.record[key].cycle) {
-        var cycle = gOmData.data.record[key].cycle;
-        h += "Last event seen: " + cycle.run + "|" + cycle.subrun + "|" +cycle.event + "<br/>";
-        var t = new Date(cycle.updateTime);
-        h += "File update time " + t + "(" + deltaTimeString(t) + " ago)<br/>";
-        t = new Date(cycle.firstEventTime);
-        h += "First Event: " + t + "(" + deltaTimeString(t) + " ago)<br/>";
-        t = new Date(cycle.lastEventTime);
-        h += "Last Event: " + t + "(" + deltaTimeString(t) + " ago)<br/>";
-      }
-      break; // just do one cycle.
-    }
+
+  if(cycle) {
+    h += "Last event seen: " + cycle.run + "|" + cycle.subrun + "|" +cycle.event + "<br/>";
+    var t = new Date(cycle.updateTime);
+    h += "File update time " + t + "(" + deltaTimeString(t) + " ago)<br/>";
+    t = new Date(cycle.firstEventTime);
+    h += "First Event: " + t + "(" + deltaTimeString(t) + " ago)<br/>";
+    t = new Date(cycle.lastEventTime);
+    h += "Last Event: " + t + "(" + deltaTimeString(t) + " ago)<br/>";
+    
   }
   $(".statusinfo",this.element).html(h);
 }

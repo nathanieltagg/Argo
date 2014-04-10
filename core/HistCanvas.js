@@ -101,9 +101,9 @@ HistCanvas.prototype.Draw = function()
 {
   // console.log("HistCanvas::Draw",this);
   this.Clear();
+  this.DrawFrame();
   this.DrawRegions();
   this.DrawHists();
-  this.DrawFrame();
   if(this.adjunct_display) this.DrawAdjunct();
   this.DrawMarker();
 }
@@ -180,6 +180,9 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
   this.fColorScales[this.fNHist] = inColorScale;
   this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
   this.fNHist++;
+  if(inHist.binlabels) 
+    this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
+  
   // Adjust scales.
   if(inHist.min < this.min_u) this.min_u = inHist.min;
   if(inHist.max > this.max_u) this.max_u = inHist.max;
@@ -197,6 +200,8 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.fHistOptions = [$.extend({},this.default_options,options)];
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
+  if(inHist.binlabels) 
+    this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   this.FinishRangeChange();
 }
 
@@ -323,7 +328,6 @@ HistCanvas.prototype.DrawHists = function( )
      }
      
      if(hist.binlabels) {
-       this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
        this.ctx.font = this.tick_label_font;
        this.ctx.textAlign = 'center';
        this.ctx.textBaseline = 'top';

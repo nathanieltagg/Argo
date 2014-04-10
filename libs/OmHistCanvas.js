@@ -13,6 +13,8 @@ function OmHistCanvas( element, path )
   this.main_element = $('div.main',this.top_element).get(0);
   $(this.main_element).css("height","200px");
   $(this.main_element).css("width","100%");
+  $(this.top_element).append('<div class="stats"></div>');
+  
   $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-logscale" checked="yes" class="ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale </label></span>');
   $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-fill" checked="yes" class="ctl-histo-fill"/><label for="ctl-histo-fill"><b>(f)</b>ill</label></span>');
   $(this.top_element).append('<span><button type="button" name="ctl-histo-reset" checked="yes" class="ctl-histo-reset"><b>(r)</b>eset</button></span>');
@@ -61,12 +63,8 @@ OmHistCanvas.prototype.Remove = function()
 
 OmHistCanvas.prototype.UpdateData = function()
 {
-  console.timeStamp("Drawing "+this.path);
-  
-  console.log("looking for ",this.path,' in ', gOmData.data.record,gOmData.data.record[this.path]);
-  console.log(gOmData.data.record[this.path]);
   this.hist = $.extend(true,new Histogram(1,0,1), 
-                gOmData.data.record[this.path].obj);
+                        gOmData.getObj(this.path));
   // $("div.title",this.top_element).html(this.hist.title);
 
   this.Update();
@@ -76,10 +74,8 @@ OmHistCanvas.prototype.UpdateRefData = function()
 {
   console.timeStamp("Drawing "+this.path);
   
-  console.log("looking for ",this.path,' in ', gRefData.data.record,gRefData.data.record[this.path]);
-  console.log(gRefData.data.record[this.path]);
   this.refhist = $.extend(true,new Histogram(1,0,1), 
-                  gRefData.data.record[this.path].obj);
+                  gRefData.getObj(this.path));
   // $("div.title",this.top_element).html(this.hist.title);
 
   this.Update();
@@ -107,6 +103,12 @@ OmHistCanvas.prototype.Update = function()
   if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:0.9});
   // this.ResetToHist(this.hist);
   this.Draw();
+
+  var stats = "";
+  stats += "<span>Entries: " + this.hist.total + " </span>";
+  stats += "<span>Mean: " + this.hist.GetMean().toFixed(1) + " </span>";
+  stats += "<span>RMS: " + this.hist.GetRMS().toFixed(1) + " </span>";
+  $("div.stats",this.top_element).html(stats);
   console.timeStamp("Drawing "+this.path);
   console.log("Done drawing "+this.path,this.bound_u_min,this.hist,this.refhist);
   
