@@ -46,7 +46,6 @@ $(function(){
 function OmDataObj(dataspec, primary)
 {
   this.paths = [];
-  this.cur_cycle = "";
   this.dataspec = dataspec;
   this.status = "uninitialized";  
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
@@ -73,6 +72,26 @@ OmDataObj.prototype.remove = function(path)
   console.log("OmDataObj::remove",this.paths);
   
 }
+
+OmDataObj.prototype.getObj = function(path)
+{
+  // Pull a specific path out of the results.
+  if(!this.data) return null;
+  if(!this.data.record) return null;
+  if(!this.data.record.shipment) return null;
+  if(!this.data.record.shipment[path]) return null;
+  return this.data.record.shipment[path];
+}
+
+OmDataObj.prototype.getCycle = function(path)
+{
+  // Pull a specific path out of the results.
+  if(!this.data) return null;
+  if(!this.data.record) return null;
+  if(!this.data.record.cycle) return null;
+  return this.data.record.cycle;
+}
+
 
 
 OmDataObj.prototype.get = function()
