@@ -15,6 +15,6 @@
 #pragma link C++ function FormulaMakeElement;
 
 #pragma link C++ function FormulaMakeArray;
-#pragma link C++ funciton test_fma;
+//#pragma link C++ function test_fma;
 
 #endif
