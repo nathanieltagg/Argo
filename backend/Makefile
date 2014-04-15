@@ -110,7 +110,7 @@ ifneq ($(origin POSTGRES_INC), undefined)
 	CPPFLAGS += -I ${POSTGRES_INC}
 endif
 POSTGRES_LIB ?= "postgres"  # Usually defined for us, use local symlink ./postgres if not
-BLIBS += -L${POSTGRES_LIB} -lpq
+# BLIBS += -L${POSTGRES_LIB} -lpq
 	
 
 #Dependency rule
@@ -161,7 +161,7 @@ argo-backend: $(backend_obj) tmp/argo-backend.o Makefile
 argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
-myroot: $(OBJ) tmp/myroot-main.o tmp/Cint.o Makefile
+myroot: $(backend_obj) tmp/myroot-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 

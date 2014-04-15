@@ -683,15 +683,33 @@ void RecordComposer::composeCal()
     TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
     if(!lf) continue;
     int nwires = lf->GetLen();
-    TreeElementLooter l(fTree,name+"obj.fSignal");
-    if(!l.ok()) return;
-    const std::vector<float> *ptr = l.get<std::vector<float> >(0);
+
+    TLeaf* lchannel= fTree->GetLeaf((name+"obj.fRawDigit.key_").c_str());
+    TLeaf* lsignal = fTree->GetLeaf((name+"obj.fSignal").c_str());
+    TLeaf* lroi    = fTree->GetLeaf((name+"obj.fSignalROI").c_str());
+    TreeElementLooter* simpleLooter =0;
+    TreeElementLooter* roiLooter =0;
+    size_t width;
+    if(lsignal) {
+      simpleLooter = new TreeElementLooter(fTree,name+"obj.fSignal");
+      if(!simpleLooter->ok()) {delete simpleLooter; continue;};
+      const std::vector<float> *ptr = simpleLooter->get<std::vector<float> >(0);
+      width = ptr->size();
+    } else if( lroi ){
+      roiLooter    = new TreeElementLooter(fTree,name+"obj.fSignalROI");
+      if(!roiLooter->ok()) {delete roiLooter; continue;};
+      width = ftr.getInt(name+"obj.fMaxSamples");
+    } else {
+      std::cout << "! Can't figure out what the hell this is!" << std::endl;
+      continue;
+    }
+    
+    if(width<=0) continue;
   
     JsonObject r;
-    size_t width = ptr->size();
     // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-    MakePng png(width,nwires,MakePng::palette_alpha,fPalette,fPaletteTrans);
-    MakePng encoded(width,nwires,MakePng::rgb);
+    MakePng png(width,8254,MakePng::palette_alpha,fPalette,fPaletteTrans);
+    MakePng encoded(width,8254,MakePng::rgb);
     ColorMap colormap;
   
     std::vector<unsigned char> imagedata(width);
@@ -704,24 +722,62 @@ void RecordComposer::composeCal()
     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
 
-    // JsonArray arr;
-    for(long i=0;i<nwires;i++) {
+
+    // Map the rows in the data to wirenumbers
+    std::vector<int> channelToRow(8254,-1);
+    for(size_t irow=0;irow<nwires;irow++) {
+      int channel =ftr.getInt(lchannel,irow);
+      channelToRow[channel] = irow;
+    }
+    
+
+    std::vector<float> wireArr(width); // Storage.
+    wireArr.reserve(width);
+
+    // Loop through logical channel number (i.e. logical wire number)
+    for(long channel=0;channel<8254;channel++) {
       // std::cout << "Doing wire " << i << std::endl;
       // JsonObject wire;
       // wire.add("view",ftr.getJson("recob::Wires_caldata__Reco.obj.fView",i));
       // wire.add("signalType",ftr.getJson("recob::Wires_caldata__Reco.obj.fSignalType",i));
       // wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
 
-      // Get signal pointer.  This is ROOT magic crap I dont' understand, but it works. 
-      // pointer = (char*)cont->At(i);
-      // ladd = pointer+offset;
-      // ptr = (std::vector<float> *)ladd;
-      ptr = l.get<std::vector<float> >(i);
+      // Find the row in the data that matches.
+      int row = channelToRow[channel];
+      if(row<0) {
+        std::fill(wireArr.begin(), wireArr.end(), 0);        
+      } else {
+        
+        // Now actually get the data
+        
+        // The simple way:
+        if(simpleLooter) {
+          const std::vector<float> *ptr = simpleLooter->get<std::vector<float> >(row);
+          wireArr = *ptr;        
+        }
+      
+        // The hard way: Bruce's new ROIs.
+        if(roiLooter) {
+          std::fill(wireArr.begin(), wireArr.end(), 0);
+          const vector<pair<unsigned int,vector<float> > >*ptr = roiLooter->get<vector<pair<unsigned int,vector<float> > > >(row);
+          for(size_t iroi=0;iroi<ptr->size();iroi++) {
+            unsigned int roi_loc = (*ptr)[iroi].first;
+            const vector<float>& roi_wave = (*ptr)[iroi].second;
+            for(size_t s=0;s<roi_wave.size();s++) {
+              wireArr[s+roi_loc] = roi_wave[s]; // copy it in.
+            }
+          }
+        }
+
+      }
+      
+
+      
       // std::string signal("[");
       double wiresum = 0;
       for(size_t k = 0; k<width; k++) {
         // Color map.
-        float adc = (*ptr)[k];
+        float adc = wireArr[k];
         //timeProfile.Fill(k,adc);
         timeProfileData[k+1] += adc;
         
@@ -737,7 +793,7 @@ void RecordComposer::composeCal()
         encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
       }
       int wire, plane;
-      wireOfChannel(i,plane,wire);
+      wireOfChannel(channel,plane,wire);
       planeProfile[plane]->Fill(wire,wiresum);
     
       png.AddRow(imagedata);
@@ -772,6 +828,9 @@ void RecordComposer::composeCal()
     delete planeProfile[0];
     delete planeProfile[1];
     delete planeProfile[2];
+    if(simpleLooter) delete simpleLooter;
+    if(roiLooter)    delete roiLooter;
+    
     reco_list.add(stripdots(name),r);
   }
   fOutput.add("cal",reco_list);
