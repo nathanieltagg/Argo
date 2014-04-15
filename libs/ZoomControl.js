@@ -203,9 +203,13 @@ ZoomControl.prototype.AutoZoom = function()
       // gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
       // gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
       // gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
-      gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
-      gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
-      gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
+      if(!isNaN(plane2Hist.GetMean()))
+        gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
+      if(!isNaN(plane0Hist.GetMean()))
+        gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
+      if(!isNaN(plane1Hist.GetMean()))
+        gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
+      
       gZoomRegion.setLimits(2,plane2_bounds[0]-wire_pad,plane2_bounds[1]+wire_pad);
     }
   } else { // No source available. Maybe try hits?
