@@ -53,11 +53,11 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
   double stats[4];
   hist->GetStats(stats);
-  h.add("total",JsonElement(stats[0],5));
-  h.add("sum_x",JsonElement(stats[2],5));
-  h.add("sum_x2",JsonElement(stats[3],5));
-  h.add("max_content",hist->GetMaximum());
-  h.add("min_content",hist->GetMinimum());
+  h.add("total",JsonElement(stats[0],9));
+  h.add("sum_x",JsonElement(stats[2],9));
+  h.add("sum_x2",JsonElement(stats[3],9));
+  h.add("max_content",JsonElement(hist->GetMaximum(),9));
+  h.add("min_content",JsonElement(hist->GetMinimum(),9));
   h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
   JsonArray data;
   JsonArray errs;

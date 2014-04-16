@@ -265,6 +265,7 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
   var sigfigs = 1;
   var goodTickWidth = dumbTickWidth;
 
+  console.log("ticks",min, max, dumbTickWidth,thelog,multiplier,abcissa,goodTickWidth);
   if (logscale === false)
    {
       if (abcissa < 2.5) {
@@ -293,6 +294,7 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
   } else {
       var low10 = Math.ceil(0.4342944 * Math.log(min));
       var high10 = Math.ceil(0.4342944 * Math.log(max));
+      console.warn("logtick",low10,high10);
       var width = 1;
       // console.log(low10,high10,width,maxticks,width);
       while (((high10 - low10) / width) > maxticks) width += 1;
@@ -341,7 +343,10 @@ Pad.prototype.DrawFrame = function()
     this.ctx.strokeStyle = "rgb(0,0,0)";
 
     // Sanity.
-    if(this.log_y && this.min_v <=0) this.min_v = 0.5;
+    if(this.log_y && this.min_v <=0) {      
+      this.min_v = Math.min(this.max_v/100 , 0.5);
+      
+    } 
     
     if(this.draw_axes) {
     // Draw the axes.

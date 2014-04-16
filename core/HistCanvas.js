@@ -237,7 +237,7 @@ HistCanvas.prototype.SetLogy = function( inOn )
 {
   if(inOn) {
     this.log_y=true;
-    if(this.min_v <=0) this.min_v = 0.5;
+    if(this.min_v <=0) this.min_v = 1e-10;
   } else {
     this.log_y=false;
   }
