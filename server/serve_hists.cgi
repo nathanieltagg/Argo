@@ -25,17 +25,18 @@ if( -r "server_config.pl" ) {
 $hists = param('hists') || "HLIST";
 $options = param('options');
 
-my @paths_to_check = ("/",".","/online/om");
+my @paths_to_check = ("/",".","/online/om","/datalocal/om");
 $fileglob = "current.root";
 
 if(defined param('filename')) {
   $fileglob = uri_unescape(param('filename'));
 } else {
   $run = 1;
-  $subrun = 0;
-  if( defined param('run')    ) {$run = param('run');       }
-  if( defined param('subrun') ) {$subrun = param('subrun'); }
-  $fileglob = "run_" . sprintf("%08d",$run) . "_" . sprintf("%03d",$subrun) .".om.root";    
+
+  $subrun = "*";
+  if( defined param('run')    ) {$run    = sprintf("%08d",param('run'));       }
+  if( defined param('subrun') ) {$subrun = sprintf("%03d",param('subrun')); }
+  $fileglob = "run_" . $run . "_" . $subrun .".om.root";    
 }
 
 @files_raw = ();

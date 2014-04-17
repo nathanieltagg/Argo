@@ -20,7 +20,7 @@ function Histogram(n, min, max)
     this.max = max;
     this.max_x = min;
     this.min_x = max;
-    this.Clear();
+    this.Clear();    
 }
 
 Histogram.prototype.Clear = function()
@@ -34,6 +34,7 @@ Histogram.prototype.Clear = function()
   this.min_content = 0;
   this.total = 0;
   this.sum_x = 0;
+  this.sum_x2 = 0;
 } 
 
 Histogram.prototype.ExpandFill = function(x,val) 
@@ -71,6 +72,7 @@ Histogram.prototype.ExpandFill = function(x,val)
   
   this.total+=val;
   this.sum_x += val*x;
+  this.sum_x2 += val*x*x;
   if(x > this.max_x) this.max_x = x;
   if(x < this.min_x) this.min_x = x;
 
@@ -93,6 +95,7 @@ Histogram.prototype.Fill = function(x,val)
   }
   this.total+=val;
   this.sum_x += val*x;
+  this.sum_x2 += val*x*x;
   if(x > this.max_x) this.max_x = x;
   if(x < this.min_x) this.min_x = x;
   var bin = this.GetBin(x);
@@ -109,9 +112,13 @@ Histogram.prototype.GetBin = function(x)
 
 Histogram.prototype.SetBinContent = function(bin,val) 
 {
-    this.total+=val;
     var x = this.GetX(bin);
+    this.total -=this.data[bin];
+    this.sum_x -=this.data[bin]*x;
+    this.sum_x2-=this.data[bin]*x*x;
+    this.total+=val;
     this.sum_x += val*x;
+    this.sum_x2 += val*x*x;
     if(x > this.max_x) this.max_x = x;
     if(x < this.min_x) this.min_x = x;
   
@@ -130,6 +137,13 @@ Histogram.prototype.GetX = function(bin)
 Histogram.prototype.GetMean = function()
 {
   return this.sum_x/this.total;
+}
+
+Histogram.prototype.GetRMS = function()
+{
+  var x = this.sum_x/this.total;
+  var rms2 = Math.abs(this.sum_x2/this.total -x*x); // As root TH1 does.
+  return Math.sqrt(rms2);
 }
 
 

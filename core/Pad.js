@@ -265,7 +265,7 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
   var sigfigs = 1;
   var goodTickWidth = dumbTickWidth;
 
-  if (logscale === false)
+   if (logscale === false)
    {
       if (abcissa < 2.5) {
           goodTickWidth = 2 * multiplier;
@@ -341,7 +341,10 @@ Pad.prototype.DrawFrame = function()
     this.ctx.strokeStyle = "rgb(0,0,0)";
 
     // Sanity.
-    if(this.log_y && this.min_v <=0) this.min_v = 0.5;
+    if(this.log_y && this.min_v <=0) {      
+      this.min_v = Math.min(this.max_v/100 , 0.5);
+      
+    } 
     
     if(this.draw_axes) {
     // Draw the axes.
@@ -582,4 +585,28 @@ Pad.prototype.DoMouse = function(ev)
 }
 
 
+// utility to do text wrapping.
+function getLines(ctx,phrase,maxPxLength,textStyle) {
+    var wa=phrase.split(" "),
+        phraseArray=[],
+        lastPhrase=wa[0],
+        l=maxPxLength,
+        measure=0;
+    ctx.font = textStyle;
+    for (var i=1;i<wa.length;i++) {
+        var w=wa[i];
+        measure=ctx.measureText(lastPhrase+w).width;
+        if (measure<l) {
+            lastPhrase+=(" "+w);
+        }else {
+            phraseArray.push(lastPhrase);
+            lastPhrase=w;
+        }
+        if (i===wa.length-1) {
+            phraseArray.push(lastPhrase);
+            break;
+        }
+    }
+    return phraseArray;
+}
 

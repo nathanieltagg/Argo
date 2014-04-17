@@ -2,27 +2,51 @@
 var gOmData  = null;
 var gRefData = null;
 
-var gCurFile = "current.root";
-var gRefFile = "reference.root";
+var gCurSpec = {filename: "current.root"};
+var gRefSpec = {filename: "reference.root"};
 
 // Open data files according the provided arguments on the URL.
 $(function(){
-  // Decode parameters from URL.
-  var urlparams = $.deparam.querystring();
-  if(urlparams.filename) gCurFile = urlparams.filename;
-  if(urlparams.ref     ) gRefFile = urlparams.ref;
+  // Decode parameters from URL path!
+  // Look for start of path.
+  var url =window.location.pathname.replace(/^.*\/Argoom/,"");
+  console.log(url);
+
+  // Try to find run numbers.
+  var vars = url.split(/[\s,_\-\/]/);
+  console.log(vars);
+  function isNumber(n) { return !isNaN(parseFloat(n)) && isFinite(n);}
+  var vals =[];
+  for(var i=0;i<vars.length;i++) {
+    if(isNumber(vars[i])) vals.push(vars[i]) ;
+  }
+  console.log("vals:",vals);
+  var s;
+  if(undefined !== (s = vals.shift())) { gCurSpec = {run: parseInt(s)} }
+  if(undefined !== (s = vals.shift())) { gCurSpec.subrun = parseInt(s);}
+  if(undefined !== (s = vals.shift())) { gRefSpec = {run: parseInt(s)} }
+  if(undefined !== (s = vals.shift())) { gRefSpec.subrun = parseInt(s);}
   
- console.log(urlparams,"Attempting new OmDataObj gets with gCurFile=",gCurFile," and gRefFile ",gRefFile);
-  gOmData  = new OmDataObj(gCurFile,true);
-  gRefData = new OmDataObj(gRefFile,false);
+  // Decode parameters from URL parameters
+  var urlparams = $.deparam.querystring();
+  if(urlparams.filename) gCurSpec = {filename: urlparams.filename};
+  if(urlparams.reffile ) gRefSpec = {filename: urlparams.reffile};
+
+  if(urlparams.run)     gCurSpec = {run: urlparams.run};
+  if(urlparams.refrun ) gRefSpec = {run: urlparams.refrun};
+  if(urlparams.subrun)     gCurSpec.subrun= urlparams.subrun;
+  if(urlparams.refsubrun ) gRefSpec.subrun= urlparams.refsubrun;  
+  
+ console.log(urlparams,"Attempting new OmDataObj gets with gCurSpec=",gCurSpec," and gRefSpec=",gRefSpec);
+  gOmData  = new OmDataObj(gCurSpec,true);
+  gRefData = new OmDataObj(gRefSpec,false);
   
 });
 
-function OmDataObj(file, primary)
+function OmDataObj(dataspec, primary)
 {
   this.paths = [];
-  this.cur_cycle = "";
-  this.file = file;
+  this.dataspec = dataspec;
   this.status = "uninitialized";  
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
   this.primary = primary;
@@ -49,6 +73,26 @@ OmDataObj.prototype.remove = function(path)
   
 }
 
+OmDataObj.prototype.getObj = function(path)
+{
+  // Pull a specific path out of the results.
+  if(!this.data) return null;
+  if(!this.data.record) return null;
+  if(!this.data.record.shipment) return null;
+  if(!this.data.record.shipment[path]) return null;
+  return this.data.record.shipment[path];
+}
+
+OmDataObj.prototype.getCycle = function(path)
+{
+  // Pull a specific path out of the results.
+  if(!this.data) return null;
+  if(!this.data.record) return null;
+  if(!this.data.record.cycle) return null;
+  return this.data.record.cycle;
+}
+
+
 
 OmDataObj.prototype.get = function()
 {
@@ -59,11 +103,13 @@ OmDataObj.prototype.get = function()
   if($("input.ctl-low-resolution").is(":checked")){ opts = ":lowres128:"; }
   console.log("lowres check",$("input.ctl-low-resolution").is(":checked"),opts);
   
-  this.param = $.param({
-    filename: this.file,
-    hists: this.paths.join(':'),
-    options: opts,
-    });
+  var p = $.extend({}
+    ,this.dataspec
+    ,{
+      hists: this.paths.join(':'),
+      options: opts    
+  })
+  this.param = $.param(p);
   
   console.log("Requesting data:",this.myurl+"?"+this.param);
 
@@ -98,7 +144,7 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   this.data = data;
   var bad=false;
   if(data.error) { bad = true; this.status = data.error; }
-  if(data.record.error) { bad = true; this.status = data.record.error; }
+  if(data.record && data.record.error) { bad = true; this.status = data.record.error; }
   if(bad) {
     console.warn("Got error when retrieving data: "+this.status);
     $.event.trigger({
@@ -108,7 +154,7 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
     return;
   }
 
-  console.log("Got data on ",this.file,". Triggering.");
+  console.log("Got data on ",this.dataspec,". Triggering.");
   $.event.trigger({type: this.event_to_emit}) ;
 
 }

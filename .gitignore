@@ -3,3 +3,5 @@
 .htaccess
 .htpasswd
 local.css
+*.pid
+

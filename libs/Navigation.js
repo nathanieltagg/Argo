@@ -33,11 +33,12 @@ function Navigation(element, options)
   ABoundObject.call(this, element, defaults); // Give settings to Pad contructor.
 
   this.tree_element = $(".tree",this.element);
+  var cur_item = null;
 
   var self = this;
   gOmData.add("HLIST");
   $(document).on("OmDataRecieved", function(){return self.GetListing()});
-  console.timeStamp("Staring query.");
+  console.timeStamp("Starting query.");
   gOmData.get();
   
   $(window).hashchange( function(){self.HashChange()} );
@@ -50,8 +51,8 @@ function Navigation(element, options)
 
 Navigation.prototype.GetListing = function()
 {  
-  if(!gOmData.data.record.HLIST) return;
-  var layout = $(gOmData.data.record.HLIST.obj);
+  var layout = gOmData.getObj('HLIST');
+  if(!layout) return;
   console.timeStamp("GetListing.");
   gOmData.remove("HLIST");
 
@@ -71,6 +72,7 @@ Navigation.prototype.GetListing = function()
   // $("a",layout).click(function(){self.ItemClicked(this);});
   // console.timeStamp("Done adding click callback.");
   $(this.tree_element).html(layout);
+  // console.log("GetListing() hiding all");
   $("li>ul",this.tree_element).hide();
   
   
@@ -88,7 +90,7 @@ Navigation.prototype.GetListing = function()
 
 Navigation.prototype.HashChange = function(item) 
 {
-  console.log("HashChange");
+  console.log("HashChange",location.hash);
   var hash = location.hash;
   if(hash.length <1) return;
   var item = $('a[href="'+window.location.hash+'"]', this.tree_element);
@@ -101,6 +103,7 @@ Navigation.prototype.ItemClicked = function(item)
   $(item).parent().addClass("ui-state-highlight");
   
   // Reveal all elements above.
+  console.log("ItemClicked() hiding all");
   $("li>ul",this.tree_element).hide();
   
   $(item).parentsUntil(this.tree_element).show();//.children(".collapsible-icon").addClass('ui-icon-triangle-1-s'.removeClass('ui-icon-triangle-1-e');
@@ -115,9 +118,10 @@ Navigation.prototype.ItemClicked = function(item)
     );
   } else {
     // It's a directory. Pull all objects, but not sub-objects.    
-    console.log($($(item).next().children('li')));
-    $($(item).next().show(200).children('li').children('a')).each(function(){
+    console.log("ItemClicked/directory",$($(item).next()));
+    $($(item).next().show(200).children('li').show(200).children('a')).each(function(){
       if($(this).hasClass("om-elem")) {
+        console.log("push item",$(this).data("ompath"));
         items.push(
           { path: $(this).data("ompath"),
             roottype: $(this).data("roottype")

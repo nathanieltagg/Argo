@@ -20,6 +20,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
 {
   // Convert a histogram into a JSON file.
   JsonObject h;
+  h.add("name" ,inHist->GetName());
+  h.add("title",inHist->GetTitle());
 
   // Rebin if requested.
   TH1* hist = inHist;
@@ -33,20 +35,29 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   }
   if(!hist) return h;
   h.add("classname",hist->ClassName());
-  h.add("name" ,inHist->GetName());
-  h.add("title",inHist->GetTitle());
   h.add("xlabel",hist->GetXaxis()->GetTitle());
   h.add("ylabel",hist->GetYaxis()->GetTitle());
+  // Custom axis labels.
+  if(hist->GetXaxis()->GetLabels()) {
+    JsonArray binlabels;
+    for(int i=1; i <= hist->GetNbinsX();i++) {
+      binlabels.add(hist->GetXaxis()->GetBinLabel(i));
+    }
+    h.add("binlabels",binlabels);
+  }
+  
   h.add("n",hist->GetNbinsX());
   h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
   h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
   h.add("underflow",hist->GetBinContent(0));
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
-  double tot = hist->GetSumOfWeights();
-  h.add("total",JsonElement(tot,5));
-  h.add("sum_x",JsonElement(tot*hist->GetMean(),5));
-  h.add("max_content",hist->GetMaximum());
-  h.add("min_content",hist->GetMinimum());
+  double stats[4];
+  hist->GetStats(stats);
+  h.add("total",JsonElement(stats[0],9));
+  h.add("sum_x",JsonElement(stats[2],9));
+  h.add("sum_x2",JsonElement(stats[3],9));
+  h.add("max_content",JsonElement(hist->GetMaximum(),9));
+  h.add("min_content",JsonElement(hist->GetMinimum(),9));
   h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
   JsonArray data;
   JsonArray errs;
