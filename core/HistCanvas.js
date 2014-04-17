@@ -180,6 +180,9 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
   this.fColorScales[this.fNHist] = inColorScale;
   this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
   this.fNHist++;
+  if(inHist.binlabels) 
+    this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
+  
   // Adjust scales.
   if(inHist.min < this.min_u) this.min_u = inHist.min;
   if(inHist.max > this.max_u) this.max_u = inHist.max;
@@ -197,6 +200,8 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.fHistOptions = [$.extend({},this.default_options,options)];
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
+  if(inHist.binlabels) 
+    this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   this.FinishRangeChange();
 }
 
@@ -232,7 +237,7 @@ HistCanvas.prototype.SetLogy = function( inOn )
 {
   if(inOn) {
     this.log_y=true;
-    if(this.min_v <=0) this.min_v = 0.5;
+    if(this.min_v <=0) this.min_v = 1e-10;
   } else {
     this.log_y=false;
   }
@@ -321,9 +326,35 @@ HistCanvas.prototype.DrawHists = function( )
          this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
        }
      }
+     
+     if(hist.binlabels) {
+       this.ctx.font = this.tick_label_font;
+       this.ctx.textAlign = 'center';
+       this.ctx.textBaseline = 'top';
+       
+        for (var i = 0; i < hist.n; i++) {
+          var t1 = hist.GetX(i);
+          var t2 = hist.GetX(i+1);
+          var x1 = this.GetX(t1);
+          var x2 = this.GetX(t2);
+          var x = (x1+x2)/2;
+          var arr = getLines(this.ctx,hist.binlabels[i],x2-x1,this.ctx.font);
+          console.warn("getLines",arr);
+          var y = this.origin_y+8;
+          for(var j=0;j<arr.length;j++) {
+            console.warn(x,y,arr[j]);
+            this.ctx.fillText(arr[j], x, y);
+            y += 10;
+          }
+        }
+       
+     }
  }
    
 }    
+
+
+
 
 function getAbsolutePosition(element) {
    var r = { x: element.offsetLeft, y: element.offsetTop };

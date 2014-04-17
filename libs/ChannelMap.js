@@ -111,18 +111,9 @@ ChannelMap.prototype.Remove = function()
 ChannelMap.prototype.NewRecord = function()
 {
   console.log("NewRecord");
-  this.map = null;
-  if(!gOmData.data) return;
-  if(!gOmData.data.record) return;
-  if(!gOmData.data.record[this.path]) return;
-  if(!gOmData.data.record[this.path].obj) return;
-  this.map= gOmData.data.record[this.path].obj;
-
-  if(gRefData.data)
-    if(gRefData.data.record)
-      if(gRefData.data.record[this.path])
-        if(gRefData.data.record[this.path].obj)
-          this.refmap= gRefData.data.record[this.path].obj;
+  this.map   = gOmData.getObj(this.path); 
+  if(!this.map)return;
+  this.refmap= gRefData.getObj(this.path);
 
   $(".portlet-title",$(this.top_element).parent()).html(this.map.title);
 

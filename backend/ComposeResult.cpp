@@ -249,6 +249,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   }
   // open file:
   JsonObject result;
+  
   TFile* f = getlocked(filename.c_str(),"READ");
   if(f->IsZombie()) {
     result.add("error","Could not find filename "+filename);
@@ -258,6 +259,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   
   // Create metata object showing state of file.
   JsonObject cycle;
+  cycle.add("filename",filename);
   
   TTimeStamp *ttimestamp = 0;
   f->GetObject("updateTimeStamp",    ttimestamp); if(ttimestamp) cycle.add("updateTime",ttimestamp->AsString("c"));  // Javascript likes the near ISO-8601 compliant version, lets use that.
@@ -270,10 +272,13 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   f->GetObject("run",nmd);    if(nmd) cycle.add(nmd->GetName(),nmd->GetTitle());
   f->GetObject("subrun",nmd); if(nmd) cycle.add(nmd->GetName(),nmd->GetTitle());
   f->GetObject("event",nmd);  if(nmd) cycle.add(nmd->GetName(),nmd->GetTitle());
-    
+  
+  result.add("cycle",cycle);
+  
   // Seperate space-delimited listing of histname objects.
   vector<string> histnames = split(histname,":");
   
+  JsonObject shipment;
   for(int ih=0;ih<histnames.size();ih++) {
     std::string hname = histnames[ih];
 
@@ -281,19 +286,12 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
     if(hname == "HLIST") {
       std::string list;
       getObjHtmlListing(f,"",list);
-      JsonObject thing;
-      thing.add("cycle",cycle);
-      thing.add("obj",list);    
-      result.add("HLIST",thing);
+      shipment.add("HLIST",list);
       
      } else if(hname == "LIST") {
       JsonArray arr;
-      getObjListing(f,"",arr);
-      JsonObject thing;
-      thing.add("cycle",cycle);
-      thing.add("obj",arr);    
-      result.add("LIST",thing);
-      
+      getObjListing(f,"",arr); 
+      shipment.add("LIST",arr);      
       
     } else {
     
@@ -312,28 +310,24 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
       TDirectory* dir = f->GetDirectory(path.c_str(), false);
       if(!dir) {
         result.add("error","Could not find path "+path);
-        delete f;
-        return result.str();
+        continue;
       }
   
       // Attempt to find object.
       TObject* o = dir->Get(name.c_str());
       if(!o) {
         result.add("error","Could not find object "+name);
-        delete f;
-        return result.str();
+        continue;
       }
   
       JsonObject jobj;
       if(o->InheritsFrom(TH2::Class()))      jobj = TH2ToHistogram((TH2*)o,maxbins);
       else if(o->InheritsFrom(TH1::Class())) jobj = TH1ToHistogram((TH1*)o,maxbins);
     
-      JsonObject thing;
-      thing.add("cycle",cycle);
-      thing.add("obj",jobj);    
-      result.add(hname,thing);
+      shipment.add(hname,jobj);
     }
   }
+  result.add("shipment",shipment);
   delete f;
   return result.str();
 }
