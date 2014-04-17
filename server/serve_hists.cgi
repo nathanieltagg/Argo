@@ -17,6 +17,9 @@ use URI::Escape;
 
 ArgoServerTools::setup();
 
+my @paths_to_check = ("/",".","/online/om","/datalocal/om", "./data/");
+$fileglob = "current.root";
+
 
 if( -r "server_config.pl" ) {
     require "server_config.pl";
@@ -25,8 +28,6 @@ if( -r "server_config.pl" ) {
 $hists = param('hists') || "HLIST";
 $options = param('options');
 
-my @paths_to_check = ("/",".","/online/om","/datalocal/om");
-$fileglob = "current.root";
 
 if(defined param('filename')) {
   $fileglob = uri_unescape(param('filename'));
