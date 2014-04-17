@@ -105,7 +105,7 @@ Double_t TreeReader::getF(const std::string& formula, int index)
 
 JsonElement TreeReader::jsonF(const std::string& formula, int index)
 {
-  TTreeFormula ttf("tff",formula.c_str(),fTree);
+  TTreeFormula ttf(formula.c_str(),formula.c_str(),fTree);
   if(ttf.GetNdata()<index) return JsonElement(); // null value!
   Double_t v = ttf.EvalInstance(index);
   if(ttf.IsInteger()) return JsonElement((int)v);
