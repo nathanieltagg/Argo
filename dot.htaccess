@@ -3,10 +3,19 @@ AddHandler cgi-script .cgi
 AddHandler server-parsed .html
 AddHandler server-parsed .inc
 
+# Security. 
+# create the password file with
+AuthUserFile /home/tagg/Argoom/.htpasswd
+AuthGroupFile /dev/null
+AuthName EnterPassword
+AuthType Basic
+require user uboone
+
+
 # This bit changes a request like "get blah.1231231.css" into "get blah.css"
 # This removes the versioning information I put in using subversion.
 RewriteEngine on
-RewriteBase /~tagg/Argoom
+RewriteBase /lizard
 #RewriteRule ^(ajs|libs|css)/(.+)\.(.+)\.(js|css)$ $1/$2.$4 [L]
 RewriteRule ^(.*)\.[\d]{10}\.(css|js)$ $1.$2 [PT]
 #AliasMatch  ^(.*)\.[\d]{10}\.(css|js)$ $1.$2 
@@ -24,17 +33,15 @@ RewriteRule ^(.*)\.[\d]{10}\.(css|js)$ $1.$2 [PT]
 
 
 # Automagic convert url to script.
+# if the requested file/directory isn't an exact match to a file, symlink,or directory...
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-l
 RewriteCond %{REQUEST_FILENAME} !-d
 
-
+# If it's something/something/html/something , server from html/something
 RewriteRule (.*)/(images|js|html|core|css|libs|server)/(.*)$ $2/$3 [L]
+# If it's something/something/blah.html, serve blah.html
 RewriteRule (.*)/(.*)\.(html)$ $2.$3 [L]
+# if it's something/ , serve this.
 RewriteRule (.*)/$ ./ [L]
 
-# RewriteRule    ^(.+[^/])$           $1/  [R]
-# RewriteCond ([^/]*)/([^/]*)$ index.html?thing1=$1&thing2=$2
-# RewriteCond (.*)$
-# RewriteRule (.*)$ translate_url.cgi?url=$1
-#AddOutputFilter INCLUDES .html
