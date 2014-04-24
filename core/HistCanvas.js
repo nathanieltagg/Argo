@@ -23,10 +23,11 @@ function HistCanvas( element, options )
       // console.log("HistCanvas: NULL element supplied."); 
       return;
   }
-
+  
   var settings = {
     // default settings:
     log_y : false,
+    suppress_zero: false,
     draw_grid_y : true,
     draw_grid_x : false,
     margin_left : 30,
@@ -198,7 +199,8 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.fHists = [inHist];
   this.fColorScales = [inColorScale];
   this.fHistOptions = [$.extend({},this.default_options,options)];
-  this.min_v =inHist.min_content;                // minimum value shown on Y-axis
+  this.min_v = inHist.min_content;                // minimum value shown on Y-axis
+  if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
   if(inHist.binlabels) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
@@ -228,6 +230,7 @@ HistCanvas.prototype.ResetToHist = function( inHist ) {
   this.min_u = inHist.min; // Minimum value shown on x-axis  FIXME - make adjustable.
   this.max_u = inHist.max; // Maximum value shown on y-axis
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
+  if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
   this.max_v= inHist.max_content*1.02;  // maximum value shown on Y-axis
   if(this.min_v == this.max_v) this.max_v = this.min_v + 1.02; // If min and max are both 0, adjust the max to be 1 unit bigger
   this.SetLogy(this.log_y);
