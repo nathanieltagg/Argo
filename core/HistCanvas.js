@@ -330,7 +330,7 @@ HistCanvas.prototype.DrawHists = function( )
        }
      }
      
-     if(hist.binlabels) {
+     if(hist.binlabelsx) {
        this.ctx.font = this.tick_label_font;
        this.ctx.textAlign = 'center';
        this.ctx.textBaseline = 'top';
@@ -341,7 +341,7 @@ HistCanvas.prototype.DrawHists = function( )
           var x1 = this.GetX(t1);
           var x2 = this.GetX(t2);
           var x = (x1+x2)/2;
-          var arr = getLines(this.ctx,hist.binlabels[i],x2-x1,this.ctx.font);
+          var arr = getLines(this.ctx,hist.binlabelsx[i],x2-x1,this.ctx.font);
           console.warn("getLines",arr);
           var y = this.origin_y+8;
           for(var j=0;j<arr.length;j++) {
