@@ -14,6 +14,7 @@ int findDivisor(int n, int m)
     if(m/d >= n) continue;
     return d;
   }
+  return 1;
 }
 
 JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
@@ -43,9 +44,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
     for(int i=1; i <= hist->GetNbinsX();i++) {
       binlabels.add(hist->GetXaxis()->GetBinLabel(i));
     }
-    h.add("binlabels",binlabels);
+    h.add("binlabelsx",binlabels);
   }
-  
   h.add("n",hist->GetNbinsX());
   h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
   h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
@@ -92,6 +92,20 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
     h.add("rebinned_y_by",rebinY);
         
   }
+  if(hist->GetXaxis()->GetLabels()) {
+    JsonArray binlabels;
+    for(int i=1; i <= hist->GetNbinsX();i++) {
+      binlabels.add(hist->GetXaxis()->GetBinLabel(i));
+    }
+    h.add("binlabelsx",binlabels);
+  }
+  if(hist->GetYaxis()->GetLabels()) {
+    JsonArray binlabels;
+    for(int i=1; i <= hist->GetNbinsY();i++) {
+      binlabels.add(hist->GetYaxis()->GetBinLabel(i));
+    }
+    h.add("binlabelsy",binlabels);
+  }
  
   if(!hist) return h;
   h.add("classname",hist->ClassName());
@@ -99,6 +113,7 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
   h.add("title",inHist->GetTitle());
   h.add("xlabel",hist->GetXaxis()->GetTitle());
   h.add("ylabel",hist->GetYaxis()->GetTitle());
+  
   h.add("n_x",hist->GetNbinsX());
   h.add("min_x",hist->GetXaxis()->GetXmin());
   h.add("max_x",hist->GetXaxis()->GetXmax());
@@ -107,6 +122,15 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
   h.add("max_y",hist->GetYaxis()->GetXmax());
   h.add("max_content",hist->GetMaximum());
   h.add("min_content",hist->GetMinimum());
+  
+  
+  double stats[8];
+  hist->GetStats(stats);
+  h.add("total",JsonElement(stats[0],9));
+  h.add("sum_x",JsonElement(stats[2],9));
+  h.add("sum_x2",JsonElement(stats[3],9));
+  h.add("sum_y",JsonElement(stats[6],9));
+  h.add("sum_y2",JsonElement(stats[7],9));
   
 
   double tot = hist->GetSumOfWeights();

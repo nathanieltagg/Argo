@@ -593,6 +593,7 @@ function getLines(ctx,phrase,maxPxLength,textStyle) {
         l=maxPxLength,
         measure=0;
     ctx.font = textStyle;
+    if(wa.length==1) return wa;
     for (var i=1;i<wa.length;i++) {
         var w=wa[i];
         measure=ctx.measureText(lastPhrase+w).width;

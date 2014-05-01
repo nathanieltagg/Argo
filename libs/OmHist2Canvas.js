@@ -77,7 +77,7 @@ OmHist2Canvas.prototype.UpdateData = function()
   this.Draw();
   console.timeStamp("Done drawing "+this.path);
   
-  this.hist1d = new Histogram(50,this.hist.min_content, this.hist.max_content);
+  this.hist1d = new Histogram(50,this.hist.min_content, this.hist.max_content+ (this.hist.max_content-this.hist.min_content)/50);
   
   for (var i = 0; i < this.hist.n_x; i++) {
     for (var j =0; j< this.hist.n_y; j++) {
@@ -85,8 +85,8 @@ OmHist2Canvas.prototype.UpdateData = function()
       this.hist1d.Fill(z);
     }
   }
-  this.associate_hist.xlabel = this.hist.zlabel || this.hist.title;
-  this.associate_hist.ylabel = "Bins";
+  this.associate_hist.xlabel = this.hist.zlabel || "Bin Content";
+  this.associate_hist.ylabel = "# of Bins";
   this.associate_hist.SetHist(this.hist1d,this.cs);
   this.associate_hist.ResetToHist(this.hist1d);     
   
