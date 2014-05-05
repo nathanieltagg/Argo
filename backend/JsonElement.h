@@ -30,6 +30,7 @@ public:
     JsonElement(const bool value) { fixed(); fContent << ((value)?("true"):("false"));  }
 
     virtual const std::string str() const {  return (fContent.str().length()<1)?"null":fContent.str(); }
+    virtual void setStr(const std::string& content) { fContent << content; } // bare copy, no quoting, use with caution
     
     virtual void fixed() {
       fContent << std::fixed << std::setprecision(sfDecimals); 

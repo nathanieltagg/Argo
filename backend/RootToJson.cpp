@@ -1,6 +1,8 @@
 #include "RootToJson.h"
 #include <TH1.h>
 #include <TH2.h>
+#include <TDirectory.h>
+
 
 int findDivisor(int n, int m)
 {
@@ -15,6 +17,19 @@ int findDivisor(int n, int m)
     return d;
   }
   return 1;
+}
+
+JsonElement getObjectInfo( TH1* hist )
+{
+  JsonElement j;
+  TDirectory* dir = hist->GetDirectory();
+  std::string name = hist->GetName();
+  name += "_Info";
+  if(!dir) return j;
+  TNamed* info = dynamic_cast<TNamed*>(dir->Get(name.c_str()));
+  if(!info) return j;
+  j.setStr(info->GetTitle());
+  return j;
 }
 
 JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
@@ -69,6 +84,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   }
   h.add("data",data);
   if(has_err) h.add("errs",errs);
+  h.add("info",getObjectInfo(inHist));
+  
   if(htemp) delete htemp;
   return h;
 }
@@ -154,6 +171,8 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
   }
   h.add("data",data);
   if(has_err) h.add("errs",errs);
+  h.add("info",getObjectInfo(inHist));
+  
   if(htemp) delete htemp;
   return h;
 }
