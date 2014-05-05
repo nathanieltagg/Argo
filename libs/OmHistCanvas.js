@@ -109,6 +109,9 @@ OmHistCanvas.prototype.Update = function()
   stats += "<span>Entries: " + this.hist.total + " </span>";
   stats += "<span>Mean: " + this.hist.GetMean().toFixed(1) + " </span>";
   stats += "<span>RMS: " + this.hist.GetRMS().toFixed(1) + " </span>";
+  stats += "<span>Underflow: " + this.hist.underflow + " </span>";
+  stats += "<span>Overflow: " + this.hist.overflow + " </span>";
+  
   $("div.stats",this.top_element).html(stats);
   console.timeStamp("Drawing "+this.path);
   console.log("Done drawing "+this.path,this.bound_u_min,this.hist,this.refhist);
