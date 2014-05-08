@@ -110,13 +110,24 @@ OmStatus.prototype.UpdateData = function()
   var filename    = cycle    ? (   cycle.filename) : gOmData.file;
   var reffilename = refcycle ? (refcycle.filename) : gRefData.file;
   h="";
+
+  // hidden form for 'post' data.
+  h+="<form id='omform' method='post' action='"+gOmData.myurl+"'>";
+  for(i in gOmData.param ) {
+    h+="<input type='hidden' name='"+i+"' value='" + gOmData.param[i] + "' />";    
+  }
+  h+="</form>";
+
   h+= "<table class='omstatus'><tr>";
   h+= "<tr><th>Source</th><th>Status</th><th>File</th><th>JSON data</th></tr>";
   h+= "<tr>"
   h+= " <td><b>Monitor</b></td>";
   h+= " <td>" + gOmData.status + "</td>";
   h+=  "<td>" + filename  + "</td>"
-  h+=  "<td><a href='" + gOmData.myurl + '?' + gOmData.param + "'>last call</a></td>"
+  // h+=  "<td><a href='" + gOmData.myurl + '?' + gOmData.param + "'>last call</a></td>"
+  h+=  "<td><a href='#' id='omLastCallClick'>last call</a></td>";
+  
+  
   h+= "</tr><tr>";
   h+= " <td><b>Reference</b></td>";
   h+= " <td>" + gRefData.status + "</td>";
@@ -135,5 +146,8 @@ OmStatus.prototype.UpdateData = function()
     
   }
   $(".statusinfo",this.element).html(h);
+  $("#omLastCallClick").click(function(){
+    $('form#omform').submit();
+  });
 }
 

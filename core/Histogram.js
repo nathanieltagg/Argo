@@ -12,6 +12,17 @@
 /// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
 ///
 
+function CreateGoodHistogram(nbins, min, max)
+{
+  // Create a histogram with good boundaries that will incorporate bins 'min' and 'max' into the view.
+  
+  // Primative version does something reasonable, if not perfect:
+  var h= new Histogram(nbins,min, max + (max-min)/nbins);
+
+  console.log("CreateGoodHistogram",nbins,min,max,h);
+  return h;  
+}
+
 function Histogram(n, min, max)
 {
     this.n = n;

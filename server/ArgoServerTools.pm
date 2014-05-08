@@ -182,7 +182,7 @@ sub request
 
 
   print $sock "$options,$filename,$hists\n";
-
+  $sock->flush();
   # print ("Query made.\n");
 
   # now wait to see if we get anything on the socket

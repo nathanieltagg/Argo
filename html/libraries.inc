@@ -70,6 +70,7 @@
 <script type="text/javascript" src="libs/Navigation.js"></script> 
 
 <script type="text/javascript" src="libs/ChannelMap.js"></script> 
+<script type="text/javascript" src="libs/PmtMap.js"></script> 
 <script type="text/javascript" src="libs/Keyboard.js"></script> 
 
 
