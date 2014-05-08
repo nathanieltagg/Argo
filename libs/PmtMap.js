@@ -82,12 +82,12 @@ function PmtMap( element, path, override_settings )
   // Buttons and things.
   var ctl = '\
   <div class="PmtMap-diffradio">\
-    <label><input type="radio" value="value" name="pmt-map-radio1" checked="checked"/>Value</label>\
-    <label><input type="radio" value="diff"  name="pmt-map-radio1"                  />Diff</label>\
+    <label><input type="radio" value="value" name="pmt-map-radio1-'+this.UniqueId+'" checked="checked"/>Value</label>\
+    <label><input type="radio" value="diff"  name="pmt-map-radio1-'+this.UniqueId+'"                  />Diff</label>\
   </div>\
   <div class="PmtMap-gainradio">\
-    <label><input type="radio" value="1" name="pmt-map-radio2"                    />Low Gain</label>\
-    <label><input type="radio" value="2"  name="pmt-map-radio2" checked="checked" />High Gain</label>\
+    <label><input type="radio" value="1" name="pmt-map-radio2-'+this.UniqueId+'"                    />Low Gain</label>\
+    <label><input type="radio" value="2" name="pmt-map-radio2-'+this.UniqueId+'" checked="checked" />High Gain</label>\
   </div>\
   ';
   $(this.top_element).append(ctl);
@@ -123,6 +123,8 @@ function PmtMap( element, path, override_settings )
   $(this.top_element).on("remove."+this.mynamespace, function(){return self.Remove()}); 
   
   gOmData.add(this.path); 
+  this.plexpath = "pmt/mappmt/DirectoryInfo";
+  gOmData.add(this.plexpath);
   gRefData.add(this.path); 
 }
 
@@ -130,6 +132,7 @@ PmtMap.prototype.Remove = function()
 {
   console.log("Removing ",this.path);
   gOmData.remove(this.path);
+  gOmData.remove(this.plexpath);  
   $(document).off("OmDataRecieved."+this.mynamespace);
   $(document).off("OmRefDataRecieved."+this.mynamespace);
 }
@@ -299,16 +302,7 @@ PmtMap.prototype.DrawOne = function(umin,umax,vmin,vmax)
   }
   
   
-  var txt = "";
-  if(null!=this.fMouseInPmt) {
-    txt += "PMT: " + this.fMouseInPmt + " ";
-    txt += (this.fMouseInGain==1)?"Low gain":"High gain";
-    txt += "<br/>";
-    if(this.fMouseInPmt) txt += "Value: " + this.map.data[this.GetPmtIndex(this.fMouseInPmt,this.fMouseInGain)]  + "<br/>";
-  }
-  $(".infopane",this.top_element).html(txt);
-  
-   
+    
   
   console.timeStamp("PmtMap.DrawOne() Finished");
   
@@ -347,6 +341,22 @@ PmtMap.prototype.DoMouse = function(ev)
   }
   if(ev.type === 'click' && this.fMouseInPmt) {
     // FIXME
+    var dirinfo = gOmData.getObj(this.plexpath); 
+    console.log("clickmap",dirinfo);
+    if(dirinfo && dirinfo.map) {
+      for(var i=0;i<dirinfo.map.length;i++) {
+        var plexum = dirinfo.map[i];
+        if(plexum.pmt == this.fMouseInPmt) {
+          if(plexum.gain == this.fMouseInGain) {
+            var hash = "#pmt/crate"+plexum.crate
+            + "/card" + zeropad(plexum.card,2)
+            + "/chan" + zeropad(plexum.channel,2);
+            console.log("click newhash = ",hash);
+            window.location.hash = hash;
+          }
+        }
+      }
+    }
     // need to associate to channel here. Not clear how.
     
     // var hash = "#tpc/crate"+this.fMouseInCrate;
@@ -355,6 +365,36 @@ PmtMap.prototype.DoMouse = function(ev)
     // console.log("click newhash = ",hash);
     // window.location.hash = hash;
   }
+
+
+  var txt = "";
+  if(null!=this.fMouseInPmt) {
+    txt += "PMT: " + this.fMouseInPmt + " ";
+    txt += "<br/>";
+    txt += "Gain: "; 
+    txt += (this.fMouseInGain==1)?"Low":"High";
+    txt += "("+this.fMouseInGain+")";
+    txt += "<br/>";
+    txt += "Value: " + this.map.data[this.GetPmtIndex(this.fMouseInPmt,this.fMouseInGain)];
+    if(this.map.errs)
+     txt += "+/- " + this.map.errs[this.GetPmtIndex(this.fMouseInPmt,this.fMouseInGain)];
+    txt += "<br/>";
+    var dirinfo = gOmData.getObj(this.plexpath); 
+    console.log("clickmap",dirinfo);
+    if(dirinfo && dirinfo.map) {
+      for(var i=0;i<dirinfo.map.length;i++) {
+        var plexum = dirinfo.map[i];
+        if(plexum.pmt == this.fMouseInPmt) {
+          if(plexum.gain == this.fMouseInGain) {
+            txt += "<br/>";
+            txt += "Crate: " + plexum.crate + " Card: " + plexum.card + " Channel " + plexum.channel;
+          }
+        }
+      }
+    }
+  }
+  $(".infopane",this.top_element).html(txt);
+  
 
 }
 
