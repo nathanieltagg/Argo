@@ -77,7 +77,7 @@ OmHist2Canvas.prototype.UpdateData = function()
   this.Draw();
   console.timeStamp("Done drawing "+this.path);
   
-  this.hist1d = new Histogram(50,this.hist.min_content, this.hist.max_content+ (this.hist.max_content-this.hist.min_content)/50);
+  this.hist1d = CreateGoodHistogram(50, this.hist.min_content, this.hist.max_content);
   
   for (var i = 0; i < this.hist.n_x; i++) {
     for (var j =0; j< this.hist.n_y; j++) {

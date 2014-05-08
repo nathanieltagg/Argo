@@ -108,17 +108,18 @@ OmDataObj.prototype.get = function()
     ,{
       hists: this.paths.join(':'),
       options: opts    
-  })
-  this.param = $.param(p);
+  });
+  this.param = p;
+  // this.param = $.param(p);
   
-  console.log("Requesting data:",this.myurl+"?"+this.param);
+  console.log("Requesting data:",this.myurl,this.param);
 
   var self = this;
   var req = $.ajax({
-          type: "GET",
+          type: "POST",
           url: this.myurl,
-          data: this.param,
-          contentType: "application/json; charset=utf-8",
+          data: p,
+          // contentType: "application/json; charset=utf-8", This is content-type sent, not recieved! Makes 'post' work incorrectly.
           dataType: "json",
           async: true,
           error:    function(jqXHR, textStatus, errorThrown){self.QueryError(jqXHR, textStatus, errorThrown)},
@@ -146,7 +147,7 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   if(data.error) { bad = true; this.status = data.error; }
   if(data.record && data.record.error) { bad = true; this.status = data.record.error; }
   if(bad) {
-    console.warn("Got error when retrieving data: "+this.status);
+    console.warn("Got error when retrieving data: ",this.status);
     $.event.trigger({
       type: "OmDataChangeState",
       msg: "Backend error: "+data.error

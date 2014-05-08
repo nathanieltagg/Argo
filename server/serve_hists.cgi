@@ -25,13 +25,20 @@ if( -r "server_config.pl" ) {
     require "server_config.pl";
 }  
 
+@names = param;
+print("Parameters recieved: ");
+print join(",",@names);
+print " <br/>";
+
 $hists = param('hists') || "HLIST";
 $options = param('options');
 
 
 if(defined param('filename')) {
+  print "Filename defined as " . param('filename');
   $fileglob = uri_unescape(param('filename'));
 } else {
+  print "Filename undefined <br/>";
   $run = 1;
 
   $subrun = "*";

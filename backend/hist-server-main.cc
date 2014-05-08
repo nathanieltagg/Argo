@@ -45,9 +45,11 @@ public:
     static char options[100];
     static char filename[990];
     static char histname[2990];
+    static char endmarker[10];
     int bytes;
-    int r =  sscanf((char*)inData,"%99[^,\n],%900[^,\n],%2900[^,\n]\n%n",options,filename,histname,&bytes);
-    if(r==3) return bytes;
+    int r =  sscanf((char*)inData,"%99[^,\n],%900[^,\n],%2900[^,\n]%10[\n]%n",options,filename,histname,endmarker,&bytes);
+    if(r==4) return bytes;
+    std::cout << " Insufficient data recieved..." << inSize << std::endl;
     return 0;
   };
 };
@@ -86,7 +88,7 @@ int main(int argc, char **argv)
     int   client;
     bool  newClient;
     ss.Listen(100., // seconds timeout
-              1000, // bytes max
+              5000, // bytes max
               dataRecvd, // data recieved in message
               client,    // fd number of client.
               newClient  // true if a new client connected.

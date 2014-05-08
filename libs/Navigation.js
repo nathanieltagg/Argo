@@ -154,8 +154,19 @@ Navigation.prototype.ItemClicked = function(item)
 
     if(item.path.match(/tpc\/mapccc/)) {
       gViews.push(new ChannelMap(portlet_content,item.path));
+
+    } else if(item.path.match(/pmt\/mapccc/)) {
+      gViews.push(new ChannelMapPmt(portlet_content,item.path));      
+
+    } else if(item.path.match(/tpc\/mapwire/)) {
+      gViews.push(new OmHistCanvas(portlet_content,item.path));      
+
+    } else if(item.path.match(/pmt\/mappmt/)) {
+      gViews.push(new PmtMap(portlet_content,item.path));      
+
     } else if (item.roottype.match(/TH2/)){
       gViews.push(new OmHist2Canvas(portlet_content,item.path));
+
     } else {
       gViews.push(new OmHistCanvas(portlet_content,item.path));
     }

@@ -323,6 +323,11 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
       JsonObject jobj;
       if(o->InheritsFrom(TH2::Class()))      jobj = TH2ToHistogram((TH2*)o,maxbins);
       else if(o->InheritsFrom(TH1::Class())) jobj = TH1ToHistogram((TH1*)o,maxbins);
+      else if(o->InheritsFrom(TNamed::Class()) && name=="DirectoryInfo") {
+        TNamed* info = dynamic_cast<TNamed*>(o);
+        if(!info) continue;
+        jobj.setStr(info->GetTitle());
+      }
     
       shipment.add(hname,jobj);
     }

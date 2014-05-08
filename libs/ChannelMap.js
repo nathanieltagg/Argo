@@ -22,45 +22,58 @@ $(function(){
 // Subclass of HistCanvas.
 ChannelMap.prototype = new Pad(null);
 
-function ChannelMap( element, path)
+function ChannelMap( element, path, override_settings)
 {
   if(element==null) return;
-  this.top_element = element;
-  this.path = path;  
-  $(this.top_element).append("<div class='title' />");
-  $(this.top_element).append("<div class='pad main' />");
-  this.main_element = $('div.main',this.top_element).get(0);
-  $(this.main_element).css("height","600px");
-  $(this.main_element).css("width","100%");
   var settings = {
     log_y:false
     ,min_u:0
-    ,max_u:2.9 // crate*20 + card;
+    ,max_u:2.96 // 3 crates
     ,min_v:0
     ,max_v:3 // channels
+    ,main_height: "600px"
+    ,main_width: "100%"    
+    ,crate_start:1
+    ,crate_end:9
+    ,det: "tpc"
     
   };
+  $.extend(settings,override_settings);
+
+  this.top_element = element;
+  this.path = path;  
+  $(this.top_element).append("<div class='title' />");
+  $(this.top_element).append("<div class='pad channel-map-main main' />");
+  this.main_element = $('div.channel-map-main',this.top_element).get(0);
+  $(this.main_element).css("display","inline-block");
+  $(this.main_element).css("margin","5px");
+  $(this.main_element).css("height",settings.main_height);
+  $(this.main_element).css("width",settings.main_width);
   this.element = this.main_element;
   Pad.call(this, this.main_element, settings); // Give settings to Pad contructor.
   
   // sub-pad.
-  $(this.top_element).append("<div class='pad adjunct' />");
-  this.adjunctpad = $('div.adjunct',this.top_element).get(0);
-  $(this.adjunctpad).css("float","left");
+  $(this.top_element).append("<div class='pad channel-map-adjunct' />");
+  this.adjunctpad = $('div.channel-map-adjunct',this.top_element).get(0);
+  $(this.adjunctpad).css("display","inline-block");
+  // $(this.adjunctpad).css("float","left");
   $(this.adjunctpad).css("height","150");
   $(this.adjunctpad).css("width","50%");
+
+  this.associate_hist = new HistCanvas(this.adjunctpad,{margin_left:50});
   
   // Buttons and things.
   var ctl = '\
-  <div class="channelmap-radio">\
+  <div class="channel-map-ctl">\
     <label><input type="radio" value="value" name="channel-map-radio" checked="checked"/>Value</label>\
     <label><input type="radio" value="diff"  name="channel-map-radio"                  />Diff</label>\
   </div>\
   ';
-  $(this.top_element).append(ctl);
-  this.radios = $('div.channelmap-radio', this.top_element);
-  console.warn($("input[value='value']",this.radios));
-  $(":radio",this.radios).click(function(e){
+  $(this.adjunctpad).append(ctl);
+  this.ctl_element = $('div.channel-map-ctl', this.top_element).get(0);
+  $(this.ctl_element).css("display","inline-block");
+  // console.warn($("input[value='value']",this.radios));
+  $(":radio",this.ctl_element).click(function(e){
     self.ChangeView();
   });
   // info.
@@ -68,7 +81,6 @@ function ChannelMap( element, path)
   $(this.top_element).append("<div style='clear:both;' />");
   
   
-  this.associate_hist = new HistCanvas(this.adjunctpad,{margin_left:50});
   
   this.crate_w = 0.96;
   this.crate_h = 0.96;
@@ -120,25 +132,26 @@ ChannelMap.prototype.NewRecord = function()
   // $("div.title",this.top_element).html(this.map.title);
 
   // Need histogram _slightly_ bigger than max_content
-  this.hist = new Histogram(50,this.map.min_content,this.map.max_content+(this.map.max_content-this.map.min_content)/50);
-  for(var crate=1;crate<10;crate++) {
+  this.hist = CreateGoodHistogram(50, 1e-5, this.map.max_content);
+  
+  for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
     for(var card=4;card<20;card++) {      
       for(var channel=0;channel<64;channel++) {
-         var ccc = channel + 64*(card + 20*crate);
+         var ccc = this.GetCCCIndex(crate,card,channel);
          this.hist.Fill(this.map.data[ccc]);
       }
     }
   }
   this.cs = new ColorScaler("RedBluePalette");
-  this.cs.min = this.map.min_content;
-  this.cs.max = this.map.max_content;
+  this.cs.min = this.hist.min;
+  this.cs.max = this.hist.max;
   
   if(this.refmap) {
     this.diff_hist = new Histogram(1000,-100,100);
-    for(var crate=1;crate<10;crate++) {
+    for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
       for(var card=4;card<20;card++) {      
         for(var channel=0;channel<64;channel++) {
-           var ccc = channel + 64*(card + 20*crate);
+           var ccc = this.GetCCCIndex(crate,card,channel);
            var x = this.map.data[ccc];
            var y = this.refmap.data[ccc];
            var ex = Math.sqrt(x);
@@ -168,10 +181,10 @@ ChannelMap.prototype.NewRecord = function()
 
 ChannelMap.prototype.ChangeView = function()
 {
-  this.view_state = $(":checked",this.radios).val();
-  console.warn(this.view_state);
+  this.view_state = $(":checked",this.ctl_element).val();
+  // console.warn(this.view_state);
   
-  this.associate_hist.SetLogy(true);
+  this.associate_hist.SetLogy(false);
   if(this.view_state=='diff' && this.refmap) {
     this.associate_hist.xlabel = "(Current-Ref)/Sigma";
     this.associate_hist.ylabel = "Num Channels";
@@ -182,8 +195,8 @@ ChannelMap.prototype.ChangeView = function()
   } else {
     this.associate_hist.xlabel = this.map.ylabel || this.map.title;
     this.associate_hist.ylabel = "Num Channels";
-    this.associate_hist.min = this.map.min_content;
-    this.associate_hist.max = this.map.max_content;
+    this.associate_hist.min = this.hist.min;
+    this.associate_hist.max = this.hist.max;
     this.associate_hist.SetHist(this.hist,this.cs);
     this.associate_hist.ResetToHist(this.hist);     
   }
@@ -261,99 +274,109 @@ ChannelMap.prototype.InBox = function(p,b)
   return false;
 }
 
+ChannelMap.prototype.GetCCCIndex = function(crate,card,channel)
+{
+  return channel + 64*(card + 20*crate);
+}
+
+ChannelMap.prototype.DrawOneCrate = function(crate, drawbox, cratebox)
+{
+  // Clip for partical draw.
+  if(!this.BoxOverlap(drawbox,cratebox)) return;
+  this.ctx.fillStyle = "rgba(250,0,0,0.2)";
+  this.ctx.strokeStyle = "rgba(0,0,0,1)";
+  this.ctx.beginPath();
+  this.ctx.moveTo(cratebox.x1,cratebox.y1);
+  this.ctx.lineTo(cratebox.x1,cratebox.y2);
+  this.ctx.lineTo(cratebox.x2,cratebox.y2);
+  this.ctx.lineTo(cratebox.x2,cratebox.y1);
+  this.ctx.lineTo(cratebox.x1,cratebox.y1);
+  this.ctx.fill();
+  this.ctx.stroke();
+  this.ctx.font = "12px sans-serif";
+  this.ctx.textAlign = 'center';
+  this.ctx.textBaseline = 'top';
+  this.ctx.fillStyle = "rgba(0,0,0,1)";    
+  this.ctx.fillText("Crate "+crate, (cratebox.x1+cratebox.x2)/2, cratebox.y2);
+  
+  for(var card=4;card<20;card++) {      
+    var cardbox = this.CardBox(cratebox,card);
+    this.ctx.fillStyle = "white";
+    this.ctx.strokeStyle = "rgba(0,0,0,1)";
+    this.ctx.beginPath();
+    this.ctx.moveTo(cardbox.x1,cardbox.y1);
+    this.ctx.lineTo(cardbox.x1,cardbox.y2);
+    this.ctx.lineTo(cardbox.x2,cardbox.y2);
+    this.ctx.lineTo(cardbox.x2,cardbox.y1);
+    this.ctx.lineTo(cardbox.x1,cardbox.y1);
+    this.ctx.fill();
+    this.ctx.stroke();
+    this.ctx.font = "11px serif";
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'top';
+    this.ctx.fillStyle = "rgba(0,0,0,1)";   
+    this.ctx.fillText(card, (cardbox.x1+cardbox.x2)/2, cardbox.y2);
+     
+    
+    for(var chan=0;chan<64;chan++) {
+      
+      var ccc = this.GetCCCIndex(crate,card,chan);
+      var x = this.map.data[ccc];
+      var val = x;
+      if(this.do_diff) {
+        x = this.map.data[ccc];
+        var y = this.refmap.data[ccc];
+        var ex = Math.sqrt(x);
+        if(this.map.errs) ex = this.map.errs[ccc];
+        var ey = Math.sqrt(y);
+        if(this.refmap.errs) ey = this.refmap.errs[ccc];
+        var diff = x-y;
+        var denom = Math.sqrt(ex*ex+ey*ey);
+        if(denom<=0) denom = 1;
+        val = diff/denom;
+      }
+
+      if(val>=this.cs.min && val<=this.cs.max ) {
+        this.ctx.fillStyle = "rgb("+this.cs.GetColor(val) + ")";
+        // if(chan==0) console.log(ccc,val,this.cs.GetColor(val));
+        var chanbox = this.ChannelBox(cardbox,chan);
+        this.ctx.beginPath();    
+        this.ctx.moveTo(chanbox.x1,chanbox.y1);
+        this.ctx.lineTo(chanbox.x1,chanbox.y2);
+        this.ctx.lineTo(chanbox.x2,chanbox.y2);
+        this.ctx.lineTo(chanbox.x2,chanbox.y1);
+        this.ctx.lineTo(chanbox.x1,chanbox.y1);
+        this.ctx.fill();
+        if((crate == this.fMouseInCrate ) 
+          && (card == this.fMouseInCard ) 
+          && (chan == this.fMouseInChannel) )
+         this.ctx.stroke();    
+      }
+      // this.ctx.fillRect(chanbox.x1,chanbox.y1,chanbox.x2-chanbox.x1,chanbox.y1-chanbox.y2);
+    }
+    
+  }
+}
+
 ChannelMap.prototype.DrawOne = function(umin,umax,vmin,vmax)
 {
   console.timeStamp("ChannelMap.DrawOne()");
-  // cs.colorScale= new ColorScaleRedBlue;
   console.log("Drawone");
   if(!this.map) return;
 
-  var do_diff = (this.view_state=='diff' && this.refmap);
+  this.do_diff = (this.view_state=='diff' && this.refmap);
 
-  var cs = this.cs;
 
   var drawbox = {u1:umin,u2:umax,v1:vmin,v2:vmax};
   // cs.min =500;
   // cs.max = 600;
   this.Clear();
   // Crate boxes.
-  for(var crate=1;crate<10;crate++) {
+  console.warn("from/to:",this.crate_start,this.crate_end);
+  for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
     var cratebox = this.CrateBox(crate);
-    // Clip for partical draw.
-    if(!this.BoxOverlap(drawbox,cratebox)) continue;
-    this.ctx.fillStyle = "rgba(250,0,0,0.2)";
-    this.ctx.strokeStyle = "rgba(0,0,0,1)";
-    this.ctx.beginPath();
-    this.ctx.moveTo(cratebox.x1,cratebox.y1);
-    this.ctx.lineTo(cratebox.x1,cratebox.y2);
-    this.ctx.lineTo(cratebox.x2,cratebox.y2);
-    this.ctx.lineTo(cratebox.x2,cratebox.y1);
-    this.ctx.lineTo(cratebox.x1,cratebox.y1);
-    this.ctx.fill();
-    this.ctx.stroke();
-    this.ctx.font = "12px sans-serif";
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'top';
-    this.ctx.fillStyle = "rgba(0,0,0,1)";    
-    this.ctx.fillText("Crate "+crate, (cratebox.x1+cratebox.x2)/2, cratebox.y2);
-    
-    for(var card=4;card<20;card++) {      
-      var cardbox = this.CardBox(cratebox,card);
-      this.ctx.fillStyle = "white";
-      this.ctx.strokeStyle = "rgba(0,0,0,1)";
-      this.ctx.beginPath();
-      this.ctx.moveTo(cardbox.x1,cardbox.y1);
-      this.ctx.lineTo(cardbox.x1,cardbox.y2);
-      this.ctx.lineTo(cardbox.x2,cardbox.y2);
-      this.ctx.lineTo(cardbox.x2,cardbox.y1);
-      this.ctx.lineTo(cardbox.x1,cardbox.y1);
-      this.ctx.fill();
-      this.ctx.stroke();
-      this.ctx.font = "11px serif";
-      this.ctx.textAlign = 'center';
-      this.ctx.textBaseline = 'top';
-      this.ctx.fillStyle = "rgba(0,0,0,1)";   
-      this.ctx.fillText(card, (cardbox.x1+cardbox.x2)/2, cardbox.y2);
-       
-      
-      for(var chan=0;chan<64;chan++) {
-        
-        var ccc = chan + 64*(card + 20*crate);
-        var x = this.map.data[ccc];
-        var val = x;
-        if(do_diff) {
-          x = this.map.data[ccc];
-          var y = this.refmap.data[ccc];
-          var ex = Math.sqrt(x);
-          if(this.map.errs) ex = this.map.errs[ccc];
-          var ey = Math.sqrt(y);
-          if(this.refmap.errs) ey = this.refmap.errs[ccc];
-          var diff = x-y;
-          var denom = Math.sqrt(ex*ex+ey*ey);
-          if(denom<=0) denom = 1;
-          val = diff/denom;
-        }
-
-        if(val>=cs.min && val<=cs.max ) {
-          this.ctx.fillStyle = "rgb("+cs.GetColor(val) + ")";
-          // if(chan==0) console.log(ccc,val,this.cs.GetColor(val));
-          var chanbox = this.ChannelBox(cardbox,chan);
-          this.ctx.beginPath();    
-          this.ctx.moveTo(chanbox.x1,chanbox.y1);
-          this.ctx.lineTo(chanbox.x1,chanbox.y2);
-          this.ctx.lineTo(chanbox.x2,chanbox.y2);
-          this.ctx.lineTo(chanbox.x2,chanbox.y1);
-          this.ctx.lineTo(chanbox.x1,chanbox.y1);
-          this.ctx.fill();
-          if((crate == this.fMouseInCrate ) 
-            && (card == this.fMouseInCard ) 
-            && (chan == this.fMouseInChannel) )
-           this.ctx.stroke();    
-        }
-        // this.ctx.fillRect(chanbox.x1,chanbox.y1,chanbox.x2-chanbox.x1,chanbox.y1-chanbox.y2);
-      }
-      
-    }
+    console.warn('draw one crate ',crate);
+    this.DrawOneCrate(crate, drawbox, cratebox);
   }
   
   console.timeStamp("ChannelMap.DrawOne() Finished");
@@ -377,7 +400,7 @@ ChannelMap.prototype.DoMouse = function(ev)
   this.fMouseInCrate = null;
   this.fMouseInCard = null;
   this.fMouseInChannel = null;
-  for(var crate=1;crate<10;crate++) {
+  for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
     var cratebox = this.CrateBox(crate);
     if(this.InBox(p,cratebox)) {
       this.fMouseInCrate = crate;
@@ -403,17 +426,62 @@ ChannelMap.prototype.DoMouse = function(ev)
   if(null!=this.fMouseInCard) txt += "Card: " + this.fMouseInCard + "<br/>";
   if(null!=this.fMouseInChannel) txt += "Channel: " + this.fMouseInChannel + "<br/>";
   var h = this.map;  
-  if(this.fMouseInChannel) txt += "Value: " + h.data[this.fMouseInChannel + 64*(this.fMouseInCard + 20*this.fMouseInCrate)] + "<br/>";
+  if(this.fMouseInChannel) txt += "Value: " + h.data[this.GetCCCIndex(this.fMouseInCrate,this.fMouseInCard,this.fMouseInChannel)] + "<br/>";
 
   $(".infopane",this.top_element).html(txt);
   console.log(this.fMouseInCrate,this.fMouseInCard,this.fMouseInChannel);
   
   if(ev.type === 'click' && this.fMouseInCrate) {
-    var hash = "#tpc/crate"+this.fMouseInCrate;
+    var hash = "#" + this.det + "/crate"+this.fMouseInCrate;
     if(null!=this.fMouseInCard) hash += "/card" + zeropad(this.fMouseInCard,2);
     if(null!=this.fMouseInChannel) hash += "/chan" + zeropad(this.fMouseInChannel,2);
     console.log("click newhash = ",hash);
     window.location.hash = hash;
   }
 
+}
+
+
+/// PMT channel map is smaller
+// Subclass of HistCanvas.
+ChannelMapPmt.prototype = new ChannelMap(null);
+
+function ChannelMapPmt( element, path )
+{
+  if(element==null) return;
+  var settings = {
+     log_y:false
+    ,min_u:0
+    ,max_u:1 // 3 crates
+    ,min_v:0
+    ,max_v:1 // channels
+    ,main_height: "300px"
+    ,main_width: "300px"
+    ,crate_start:10
+    ,crate_end:10
+    ,det:"pmt"
+  };
+  ChannelMap.call(this, element, path, settings); // Give settings to Pad contructor.
+}
+
+ChannelMapPmt.prototype.GetCCCIndex = function(crate,card,channel)
+{
+  return channel + 64*(card);
+}
+
+
+ChannelMapPmt.prototype.CrateBox = function(crate)
+{
+  var cratex = (crate-1)%3;
+  var cratey = 2-Math.floor((crate-1)/3);
+  var box = {
+    u1: 0,
+    u2: this.crate_w,
+    v1: 0,
+    v2: this.crate_h};
+  box.x1 = this.GetX(box.u1);
+  box.x2 = this.GetX(box.u2);
+  box.y1 = this.GetY(box.v1);
+  box.y2 = this.GetY(box.v2);
+  return box;
 }
