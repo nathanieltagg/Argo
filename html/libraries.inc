@@ -64,13 +64,16 @@
 <!-- My classes for doing histograming and other displays-->
 
 <script type="text/javascript" src="libs/OmDataObj.js"></script> 
+
 <script type="text/javascript" src="libs/OmHistCanvas.js"></script> 
 <script type="text/javascript" src="libs/OmHist2Canvas.js"></script> 
+<script type="text/javascript" src="libs/OmDirInfoCanvas.js"></script> 
+<script type="text/javascript" src="libs/ChannelMap.js"></script> 
+<script type="text/javascript" src="libs/PmtMap.js"></script> 
+
 <script type="text/javascript" src="libs/OmStatus.js"></script> 
 <script type="text/javascript" src="libs/Navigation.js"></script> 
 
-<script type="text/javascript" src="libs/ChannelMap.js"></script> 
-<script type="text/javascript" src="libs/PmtMap.js"></script> 
 <script type="text/javascript" src="libs/Keyboard.js"></script> 
 
 
