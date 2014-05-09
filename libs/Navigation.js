@@ -110,6 +110,7 @@ Navigation.prototype.ItemClicked = function(item)
   
   // Do that mother. Is the selected thing an object?
   var items = [];
+  
   if($(item).hasClass("om-elem")) {
     items.push(
       { path: $(item).data("ompath"),
@@ -118,8 +119,10 @@ Navigation.prototype.ItemClicked = function(item)
     );
   } else {
     // It's a directory. Pull all objects, but not sub-objects.    
-    console.log("ItemClicked/directory",$($(item).next()));
-    $($(item).next().show(200).children('li').show(200).children('a')).each(function(){
+    var next = $(item).next();
+    console.log("ItemClicked/directory",$(next));
+    
+    $(next.show(200).children('li').show(200).children('a')).each(function(){
       if($(this).hasClass("om-elem")) {
         console.log("push item",$(this).data("ompath"));
         items.push(
@@ -131,11 +134,14 @@ Navigation.prototype.ItemClicked = function(item)
     });
   }
 
-  console.log(items);
   
   // Clear the main area.
   gViews = [];
   $("div.A-mainview").empty();
+  
+  // Add new directory info object to DOM
+  
+  
   // Add new histogram objects to the dom.
   for(var i=0;i<items.length;i++) {
     var item = items[i];
@@ -152,7 +158,10 @@ Navigation.prototype.ItemClicked = function(item)
     var portlet_content = $(".portlet-content",portlet);
     console.log("Creating portlet",portlet," with content",portlet_content);
 
-    if(item.path.match(/tpc\/mapccc/)) {
+    if(item.path.match(/DirectoryInfo/)){
+      gViews.push(new OmDirInfoCanvas(portlet_content,item.path));
+    
+    } else if(item.path.match(/tpc\/mapccc/)) {
       gViews.push(new ChannelMap(portlet_content,item.path));
 
     } else if(item.path.match(/pmt\/mapccc/)) {

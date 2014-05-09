@@ -103,6 +103,8 @@ void getObjHtmlListing(TDirectory* dir, std::string path, std::string &list)
       map_subdirs[key->GetName()] = key;
     } else if (cl->InheritsFrom("TH1")) {
       map_hists[key->GetName()] = key;
+    } else if (0==strncmp(key->GetName(),"DirectoryInfo",14)) {
+      map_hists[key->GetName()] = key;
     }
   }
 
@@ -113,7 +115,7 @@ void getObjHtmlListing(TDirectory* dir, std::string path, std::string &list)
   for(it = map_subdirs.begin(); it!=map_subdirs.end(); it++) {
     key = it->second;
     TDirectory* subdir = dir->GetDirectory(key->GetName());
-    if(subdir) {
+    if(subdir) {      
       std::string children;  
       getObjHtmlListing(subdir,path+key->GetName()+"/",children);
 
