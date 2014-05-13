@@ -6,6 +6,7 @@
 #include <string>
 #include <iomanip>
 #include <math.h>
+#include <cmath>
 #include <vector>
 
 class JsonElement;
@@ -25,8 +26,8 @@ public:
     JsonElement(const       int value) { fixed(); fContent << value; }
     JsonElement(const      long value) { fixed(); fContent << value; }
     JsonElement(const long long value) { fixed(); fContent << value; }
-    JsonElement(const float value, int prec=-999) { fixed(prec); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
-    JsonElement(const double value,int prec=-999) { fixed(prec); if(isnan(value)) fContent << "\"nan\""; else fContent << value; }
+    JsonElement(const float value, int prec=-999) { fixed(prec); if(!std::isfinite(value)) fContent << "\"nan\""; else fContent << value; }
+    JsonElement(const double value,int prec=-999) { fixed(prec); if(!std::isfinite(value)) fContent << "\"nan\""; else fContent << value; }
     JsonElement(const bool value) { fixed(); fContent << ((value)?("true"):("false"));  }
 
     virtual const std::string str() const {  return (fContent.str().length()<1)?"null":fContent.str(); }
@@ -68,7 +69,7 @@ class JsonFixed : public JsonElement
 public:
   JsonFixed(const double value, int prec=-999) 
   {
-    if(isnan(value)) { fContent << "\"nan\""; return; }
+    if(!std::isfinite(value)) { fContent << "\"nan\""; return; }
     if(prec==-999) prec = JsonElement::sfDecimals;
     std::ostringstream oss;    
     oss << std::fixed << std::setprecision(prec) << value;
@@ -107,7 +108,7 @@ class JsonSigFig : public JsonElement
 {
 public:
   JsonSigFig(const double value, int S=3) {
-    if(isnan(value)) { fContent << "\"nan\""; return; }
+    if(!std::isfinite(value)) { fContent << "\"nan\""; return; }
     // Find exponent
     int X = (int)floor(log10(value));
     char buff[S+10];
