@@ -390,17 +390,21 @@ HistCanvas.prototype.FinishRangeChange = function()
 HistCanvas.prototype.FastRangeChange = function()
 {}
 
+HistCanvas.prototype.DoMouseOverContent = function( u, v )
+{}
+
 HistCanvas.prototype.DoMouse = function( ev )
 {
+  var x = ev.pageX;
+  var y = ev.pageY;
+  var offset = getAbsolutePosition(this.canvas);
+  var relx = x - offset.x;
+  var rely = y - offset.y;    
+
   if(ev.type === 'mousedown') {
     //logclear();
     //console.log("begin drag");
     // Find the position of the drag start - is this in the horizontal scale or the body?
-    var x = ev.pageX;
-    var y = ev.pageY;
-    var offset = getAbsolutePosition(this.canvas);
-    var relx = x - offset.x;
-    var rely = y - offset.y;    
     this.fDragStartX = x;
     this.fDragStartT = (relx - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
     this.fDragStartF = this.GetF(rely);
@@ -421,10 +425,13 @@ HistCanvas.prototype.DoMouse = function( ev )
     } 
   } else {
     // Either mousemove or mouseup.
-    if(this.fIsBeingDragged !== true) return true; // Not a handled event.
+    if(this.fIsBeingDragged !== true) {
+      if(x>this.origin_x && y<this.origin_y
+        && x<this.width && y> 0) this.DoMouseOverContent(this.GetU(x),this.GetV(y));
+      else  this.DoMouseOverContent(null,null);
+    }
     if(this.fDragMode === "shiftX") {
       // find current magnitude of the shift.
-      var x = ev.pageX;
       var deltaX = x - this.fDragStartX;
       var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x);
       this.fDragStartX = x;
@@ -432,9 +439,6 @@ HistCanvas.prototype.DoMouse = function( ev )
     }
     else if(this.fDragMode === "scaleY") {
       // Want to set the scale so that the new mouse position is at fDragStartF in display units.
-      var offset = getAbsolutePosition(this.canvas);
-      var y = ev.pageY;
-      var rely = y - offset.y; 
       var z = this.origin_y - rely; // pixels above the origin of the mouse location.
       if(z<5) z=5;
       if(this.log_y) {
@@ -447,9 +451,6 @@ HistCanvas.prototype.DoMouse = function( ev )
     }
     else if(this.fDragMode === "scaleX") {
       // Find the new scale factor.
-      var x = ev.pageX;
-      var offset = getAbsolutePosition(this.canvas);
-      var relx = x - offset.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;

@@ -119,10 +119,11 @@ OmStatus.prototype.UpdateData = function()
   h+="</form>";
 
   h+= "<table class='omstatus'><tr>";
-  h+= "<tr><th>Source</th><th>Status</th><th>File</th><th>JSON data</th></tr>";
+  h+= "<tr><th>Source</th><th>Status</th><th>Size</th><th>File</th><th>JSON data</th></tr>";
   h+= "<tr>"
   h+= " <td><b>Monitor</b></td>";
   h+= " <td>" + gOmData.status + "</td>";
+  h+= " <td>" + gOmData.data_size + " bytes</td>";
   h+=  "<td>" + filename  + "</td>"
   // h+=  "<td><a href='" + gOmData.myurl + '?' + gOmData.param + "'>last call</a></td>"
   h+=  "<td><a href='#' id='omLastCallClick'>last call</a></td>";
@@ -131,6 +132,7 @@ OmStatus.prototype.UpdateData = function()
   h+= "</tr><tr>";
   h+= " <td><b>Reference</b></td>";
   h+= " <td>" + gRefData.status + "</td>";
+  h+= " <td>" + gRefData.data_size + " bytes</td>";
   h+=  "<td>" + filename   + "</td>"
   h+=  "<td><a href='" + gRefData.myurl + '?' + gRefData.param + "'>last call</a></td>"
   h+= "</table>";

@@ -13,7 +13,7 @@ function OmHistCanvas( element, path )
   this.main_element = $('div.main',this.top_element).get(0);
   $(this.main_element).css("height","200px");
   $(this.main_element).css("width","100%");
-  $(this.top_element).append('<div class="stats"></div>');
+  $(this.top_element).append('<span class="stats"></span><span class="mouseover-info"></span><br/>');
   
   $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-logscale" checked="yes" class="ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale </label></span>');
   $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-fill" checked="yes" class="ctl-histo-fill"/><label for="ctl-histo-fill"><b>(f)</b>ill</label></span>');
@@ -112,7 +112,7 @@ OmHistCanvas.prototype.Update = function()
   stats += "<span>Underflow: " + this.hist.underflow + " </span>";
   stats += "<span>Overflow: " + this.hist.overflow + " </span>";
   
-  $("div.stats",this.top_element).html(stats);
+  $(".stats",this.top_element).html(stats);
   console.timeStamp("Drawing "+this.path);
   console.log("Done drawing "+this.path,this.bound_u_min,this.hist,this.refhist);
   
@@ -134,4 +134,10 @@ OmHistCanvas.prototype.Draw = function()
   }
   
    HistCanvas.prototype.Draw.call(this);
+}
+
+OmHistCanvas.prototype.DoMouseOverContent = function( u, v )
+{
+  $(".mouseover-info",this.top_element).html("u: "+u+"v: "+v);
+  
 }
