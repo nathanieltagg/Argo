@@ -46,6 +46,9 @@ $(function(){
 function OmDataObj(dataspec, primary)
 {
   this.paths = [];
+  this.data = null;
+  this.file = null;
+  this.data_size = 0;
   this.dataspec = dataspec;
   this.status = "uninitialized";  
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
@@ -142,6 +145,7 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
 {
   this.status = "success";
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
+  this.data_size = jqxhr.responseText.length;
   this.data = data;
   var bad=false;
   if(data.error) { bad = true; this.status = data.error; }

@@ -62,7 +62,8 @@ OmDirInfoCanvas.prototype.Update = function()
   var h = "<table class='dirinfo'>";
   for(var i in this.info) {
     var thing = this.info[i];
-    h+= "<tr><td>" + thing.title + "</td><td>" + thing.value
+    if(! thing.hasOwnProperty("title")) continue; // Not for public consumption.
+    h+= "<tr><td>" + thing.title + ":</td><td>" + thing.value
     if(thing.hasOwnProperty("error")) h+= " &plusmn; " + thing.error;
     h+="</td><td class='dirinfo-ref'>";
     
@@ -77,4 +78,6 @@ OmDirInfoCanvas.prototype.Update = function()
   h+="</table>";
   $(this.element).html(h);
 }
+
+
 

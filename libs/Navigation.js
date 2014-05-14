@@ -168,7 +168,7 @@ Navigation.prototype.ItemClicked = function(item)
       gViews.push(new ChannelMapPmt(portlet_content,item.path));      
 
     } else if(item.path.match(/tpc\/mapwire/)) {
-      gViews.push(new OmHistCanvas(portlet_content,item.path));      
+      gViews.push(new TpcMap(portlet_content,item.path));      
 
     } else if(item.path.match(/pmt\/mappmt/)) {
       gViews.push(new PmtMap(portlet_content,item.path));      
