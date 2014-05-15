@@ -12,6 +12,7 @@ use ArgoServerTools qw(setup myerror);
 # and makes a request via sockets!
 #
 
+my $start_time = Time::HiRes::gettimeofday();
 
 
 ArgoServerTools::setup();
@@ -55,16 +56,22 @@ if((@files)==0) {
     myerror("Couldn't find file for this event specification.");
 }
 
-print "serve_event.cgi found " . scalar(@files) . " files\n<br/>\n";
 
 $filename = $files[0];
 
 my $resp = ArgoServerTools::request($filename,$selection,$entrystart,$entryend,param('options'));
+
+my $req_time = Time::HiRes::gettimeofday();
+
 
 my $download=0;
 if(defined param('download')) { $download = 1; }
 
 ArgoServerTools::serve($resp,$download);
 
+my $serve_time =  Time::HiRes::gettimeofday();
+
+open(PROFLOG,">>serve_event_profile.log");
+print PROFLOG "Time to req: " . ($req_time - $start_time) . " time to serve: " . ($serve_time - $req_time);
 
 
