@@ -200,8 +200,9 @@ string ResultComposer::compose(
   RecordComposer composer(result,tree,jentry,inOptions);
   composer.compose();
   
-  
-  result.add("ElapsedServerTime",((long)(gSystem->Now()) - eventTimeStart));
+  long ElapsedServerTime = ((long)(gSystem->Now()) - eventTimeStart);
+  result.add("ElapsedServerTime",ElapsedServerTime);
+  std::cout << "ElapsedServerTime: " << ElapsedServerTime << std::endl;
   
   return result.str();
 }

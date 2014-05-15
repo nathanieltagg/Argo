@@ -123,13 +123,19 @@ int main(int argc, char **argv)
           cout << "    From:     --" << entrystart << " to " << entryend << endl;
           cout << "    Options:  --" << options << endl;
 
+          long t1 = gSystem->Now();
           // Now do your stuff.
           ResultComposer rc;
           std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
+          long t2 = gSystem->Now();
           // Send it out.
           ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
           cout << "Request served." << endl;
+          long t3 = gSystem->Now();
+          
           ss->Close(client);
+          long t4 = gSystem->Now();
+          cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
           
           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
         }
