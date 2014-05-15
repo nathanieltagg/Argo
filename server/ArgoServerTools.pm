@@ -164,7 +164,6 @@ sub get_sock
 
 sub request
 {
-  open(REQUESTLOG, ">>argo_backend_request.log");
   my $time_start = [gettimeofday];
   my $filename = shift() || "NO_FILENAME_SPECIFIED";
   my $selection = shift() || 1;
@@ -211,7 +210,7 @@ sub request
     myerror("Could not create socket\n") unless $sock;   
   }
 
-
+  $time_start_req = [gettimeofday];
   print $sock "$options,$filename,$selection,$entrystart,$entryend\n";
 
   # print ("Query made.\n");
@@ -224,16 +223,17 @@ sub request
   
   @ready = $sel->can_read($timeout_seconds);
   if(@ready) {
-    print REQUESTLOG "Got a read hit.\n";
+    # print REQUESTLOG "Got a read hit.\n";
     $result = "";
     while(<$sock>) {
-      print REQUESTLOG "Got " . length($_) . " bytes\n";
+      # print REQUESTLOG "Got " . length($_) . " bytes\n";
       $result .= $_;
     }
-    print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
+    # print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
     
     print "Got result from ntuple-server. Length: " . length($result) . " bytes\n<br/>";
-    print "Time to get response: " . tv_interval( $time_start, [gettimeofday])*1000 . " ms\n<br/>";
+    print "Time to send query:   " . tv_interval( $time_start, $time_start_req)*1000 . " ms\n<br/>";
+    print "Time to get response: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
     
     return $result;
   } else {
