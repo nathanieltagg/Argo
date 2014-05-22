@@ -444,3 +444,73 @@ $(function(){
 });
 
 
+// Time trial: what if instead of
+// hit = { q: 1, plane: 0, ... }
+// I instead did
+// hit = [1,0,...] 
+// 
+// Results: 4200 Hits
+// Size reduction is a factor of 3 (300 kB -> 100 kB)
+// Time to parse regular hits is ~6ms
+// Time to parse array and turn it into regular hits is 6ms + 8ms = 14 ms. 
+
+// So, not crazy, IF the data volume reduction is sufficient to increase speed.
+
+var gHitArrayHeader = [];
+var gHitArray = [];
+
+function convertHitsToArray()
+{
+  console.time("convertHitsToArray");
+  
+  var hits = gRecord.hits["recob::Hits_ffthit__Reco"];
+
+  gHitArray = [];
+  gHitArrayHeader = ["clusid_dbcluster","plane","q","t","t1","t2","wire"];
+
+  for(var i=0;i<hits.length;i++) {
+    var hit = hits[i];
+    var newhit = [];
+    for(var j=0;j<gHitArrayHeader.length;j++) {
+      newhit.push(hit[gHitArrayHeader[j]]);
+    }
+    gHitArray.push(newhit);
+  }
+  
+  
+  console.timeEnd("convertHitsToArray");
+  var string_of_hits = JSON.stringify(hits);
+  var string_of_array = JSON.stringify(gHitArray);
+  console.log("Length before Array-izing:",string_of_hits.length);
+  console.log("Length after  Array-izing:",string_of_array.length);
+  
+  console.time("parse_hits");
+  var hits = JSON.parse(string_of_hits);
+  console.timeEnd("parse_hits");
+
+  console.time("parse_array");
+  var array = JSON.parse(string_of_array);
+  console.timeEnd("parse_array");
+ 
+  
+}
+
+var gRebuildHits =[];
+
+function convertArrayToHits()
+{
+  console.time("convertArrayToHits()");
+  
+  var gRebuildHits = [];
+  for(var i=0;i<gHitArray.length;i++) {
+    var row = gHitArray[i];
+    var hit = {};
+    for(var j=0;j<gHitArrayHeader.length;j++) {
+      hit[gHitArrayHeader[j]] = row[j];
+    }
+    gRebuildHits.push(hit)
+  }
+  
+  console.timeEnd("convertArrayToHits()");
+  console.log(gRebuildHits);
+}

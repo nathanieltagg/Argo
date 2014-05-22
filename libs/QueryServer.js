@@ -283,6 +283,15 @@ function StartEvent()
   gStateMachine.Trigger('recordChange');
   $("#status").text("Done!");
   $('#status').attr('class', 'status-ok');
+
+  console.log("     /.\                           ");
+  console.log("    // \\                          ");
+  console.log("   //...\\    '||''| .|''|, .|''|, ");
+  console.log("  //     \\    ||    ||  || ||  || ");
+  console.log(".//       \\. .||.   `|..|| `|..|' ");
+  console.log("                         ||        ");
+  console.log("                      `..|'        ");
+  console.log("Cool, you know how to open the console. You should definately work on Argo with us. --Nathaniel");
 }
 
 function DoPerformanceStats()
