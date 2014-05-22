@@ -127,6 +127,7 @@ int main(int argc, char **argv)
           // Now do your stuff.
           ResultComposer rc;
           std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
+          xml.append("\n");
           long t2 = gSystem->Now();
           // Send it out.
           ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
