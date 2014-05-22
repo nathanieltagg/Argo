@@ -228,6 +228,7 @@ sub request
     while(<$sock>) {
       # print REQUESTLOG "Got " . length($_) . " bytes\n";
       $result .= $_;
+      print "Got data chunk at time: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
     }
     # print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
     
