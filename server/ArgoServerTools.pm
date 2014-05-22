@@ -210,7 +210,6 @@ sub request
     myerror("Could not create socket\n") unless $sock;   
   }
 
-  $time_start_req = [gettimeofday];
   print $sock "$options,$filename,$selection,$entrystart,$entryend\n";
 
   # print ("Query made.\n");
@@ -223,13 +222,20 @@ sub request
   
   @ready = $sel->can_read($timeout_seconds);
   if(@ready) {
+    $time_start_req = [gettimeofday];
     # print REQUESTLOG "Got a read hit.\n";
     $result = "";
-    while(<$sock>) {
-      # print REQUESTLOG "Got " . length($_) . " bytes\n";
-      $result .= $_;
-      print "Got data chunk at time: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
-    }
+    # while(<$sock>) {
+    #   # print REQUESTLOG "Got " . length($_) . " bytes\n";
+    #   $result .= $_;
+    #   print "Got data chunk at time: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
+    # }
+    
+    # This version is not as robust as the above one 
+    #  (e.g. pretty-print might clobber it) 
+    #  but it returns considerably faster! Somehow, waiting for the socket to 
+    #  close in that while() loop can take many seconds!
+    $result = <$sock>;
     # print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
     
     print "Got result from ntuple-server. Length: " . length($result) . " bytes\n<br/>";
