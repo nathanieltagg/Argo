@@ -81,6 +81,7 @@ public:
   
   
   JsonObject& fOutput; // Top-level output object
+  JsonObject fStats; // Processing metadata
   TTree* fTree;
   Long64_t fEntry;
   std::string fOptions;

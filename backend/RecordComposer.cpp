@@ -17,6 +17,7 @@
 #include <TTreeFormula.h>
 #include "TBranchElement.h"
 #include "TStreamerInfo.h"
+#include "Timer.h"
 #include "TVirtualCollectionProxy.h"
 
 #include <iostream>
@@ -37,6 +38,17 @@
 #include "MakePng.h"
 #include "RootToJson.h"
 #include <stdlib.h>
+
+
+class TimeReporter
+{
+public:
+  std::string fName;
+  Timer t;
+  TimeReporter(const std::string& name="") :fName(name), t() {};
+  ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
+};
+
 
 using namespace std;
 
@@ -141,6 +153,7 @@ void RecordComposer::composeHits()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at hits object " << (name+"obj_").c_str() << endl;   
     
     // JsonArray arr = ftr.makeArray(
@@ -255,6 +268,7 @@ void RecordComposer::composeHits()
     delete planeProfile[1];
     delete planeProfile[2];    
     hist_list.add(stripdots(name),hists);
+    fStats.add(name,timer.t.Count());
   }
   fOutput.add("hits",reco_list);
   fOutput.add("hit_hists",hist_list);
@@ -283,6 +297,7 @@ void RecordComposer::composeClusters()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at cluster object " << (name+"obj_").c_str() << endl;
     JsonArray jClusters;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -347,6 +362,7 @@ void RecordComposer::composeClusters()
       jClusters.add(jclus);
     }
     reco_list.add(stripdots(name),jClusters);
+    fStats.add(name,timer.t.Count());
   } 
   fOutput.add("clusters",reco_list);
 }
@@ -358,6 +374,7 @@ void  RecordComposer::composeVertex2d()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at 2d object " << (name+"obj_").c_str() << endl;
 
     JsonArray jlist;
@@ -381,6 +398,7 @@ void  RecordComposer::composeVertex2d()
       jlist.add(jpt);
     }
     reco_list.add(stripdots(name),jlist);
+    fStats.add(name,timer.t.Count());
   } 
   fOutput.add("endpoint2d",reco_list);  
 }
@@ -392,6 +410,7 @@ void  RecordComposer::composeSpacepoints()
     
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at spacepoint object " << (name+"obj_").c_str() << endl;
     JsonArray jSpacepoints;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -419,6 +438,7 @@ void  RecordComposer::composeSpacepoints()
       jSpacepoints.add(jsp);
     }
     reco_list.add(stripdots(name),jSpacepoints);
+    fStats.add(name,timer.t.Count());
   }  
   fOutput.add("spacepoints",reco_list);
 }
@@ -431,6 +451,7 @@ void  RecordComposer::composeTracks()
 
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at track object " << (name+"obj_").c_str() << endl;
     JsonArray jTracks;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -475,6 +496,7 @@ void  RecordComposer::composeTracks()
     }
 
     reco_list.add(stripdots(name),jTracks);
+    fStats.add(name,timer.t.Count());
   }  
   fOutput.add("tracks",reco_list);
 
@@ -488,6 +510,7 @@ void  RecordComposer::composeOpFlashes()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at opflash object " << (name+"obj_").c_str() << endl;
     JsonArray jOpFlashes;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
@@ -528,6 +551,7 @@ void  RecordComposer::composeOpFlashes()
       jOpFlashes.add(jflash);
     }
     reco_list.add(stripdots(name),jOpFlashes);
+    fStats.add(name,timer.t.Count());
   }   
   fOutput.add("opflashes",reco_list);
 }
@@ -539,6 +563,7 @@ void  RecordComposer::composeOpPulses()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at ophits object " << (name+"obj_").c_str() << endl;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
     if(!l) continue;
@@ -602,6 +627,7 @@ void  RecordComposer::composeOpPulses()
     }
     
     reco_list.add(stripdots(name),joppulses);
+    fStats.add(name,timer.t.Count());
   }
   fOutput.add("oppulses",reco_list);
   
@@ -614,6 +640,7 @@ void  RecordComposer::composeOpHits()
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {    
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     std::cout << "Looking at ophits object " << (name+"obj_").c_str() << endl;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
     if(!l) continue;
@@ -635,6 +662,7 @@ void  RecordComposer::composeOpHits()
     }
     
     reco_list.add(stripdots(name),jophits);
+    fStats.add(name,timer.t.Count());
   }
   fOutput.add("ophits",reco_list);
   
@@ -680,6 +708,7 @@ void RecordComposer::composeCal()
     std::string name = leafnames[iname];
   
     std::cout << "Looking at cal Wires object " << (name+"obj_").c_str() << endl;
+    TimeReporter timer(name);
     TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
     if(!lf) continue;
     int nwires = lf->GetLen();
@@ -832,6 +861,7 @@ void RecordComposer::composeCal()
     if(roiLooter)    delete roiLooter;
     
     reco_list.add(stripdots(name),r);
+    fStats.add(name,timer.t.Count());
   }
   fOutput.add("cal",reco_list);
 }
@@ -857,6 +887,7 @@ void RecordComposer::composeRaw()
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
   
+    TimeReporter timer(name);
     // Remove from the list anything which looks like a prespill or a postspill window.
     if( std::string::npos != fOptions.find("_NoPreSpill_")) 
       if(string::npos != name.find("preSpill")) {
@@ -955,6 +986,7 @@ void RecordComposer::composeRaw()
     delete planeProfile[1];
     delete planeProfile[2];
     reco_list.add(stripdots(name),r);
+    fStats.add(name,timer.t.Count());
   }
   fOutput.add("raw",reco_list);
 }
@@ -1055,6 +1087,7 @@ void RecordComposer::composeMC()
   JsonObject truth_list;
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     
     std::vector<std::pair< std::string,std::string> > list;
     list.push_back(std::make_pair<std::string,std::string>("fGint"                             ,  string(name+"obj.fGint"                    )));
@@ -1103,6 +1136,7 @@ void RecordComposer::composeMC()
     JsonArray gtruth_arr = ftr.makeArray(list);
         
     truth_list.add(stripdots(name),gtruth_arr);
+    fStats.add(name,timer.t.Count());
   }
   mc.add("gtruth",truth_list);
 
@@ -1180,6 +1214,7 @@ void RecordComposer::composeMC()
   leafnames = findLeafOfType("vector<simb::MCParticle>");
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
     
     JsonElement::sfDecimals=5;
     JsonArray gparticle_arr;
@@ -1301,6 +1336,7 @@ void RecordComposer::composeMC()
     JsonElement::sfDecimals=2;
 
     particle_list.add(stripdots(name),j_particles);
+    fStats.add(name,timer.t.Count());
   }
   mc.add("particles",particle_list);
   fOutput.add("mc",mc);
@@ -1322,10 +1358,11 @@ void RecordComposer::compose()
   if(!doRaw) composeRawAvailability();
 
   // Set branches to read here.
-  fTree->SetBranchStatus("*",1);  // By default, read all.
+  fTree->SetBranchStatus("*",1);  // By default, read nothing.
+  
   fTree->SetBranchStatus("raw::RawDigits*",doRaw); // Speed!
   fTree->SetBranchStatus("recob::Wires*"  ,doCal); // Speed!
-
+  
   // Remove from the list anything which looks like a prespill or a postspill window if
   // it's being de-requested.
   if( std::string::npos != fOptions.find("_NoPreSpill_"))  fTree->SetBranchStatus("raw::RawDigits_daq_preSpill*",0);
@@ -1333,9 +1370,14 @@ void RecordComposer::compose()
 
 
   //
-  // Load the tree element.
+  // Load the tree element. This should be very fast, but we're loading no 
   //
-  Int_t bytesRead = fTree->GetEntry(fEntry);
+  Int_t bytesRead;
+  {
+    TimeReporter timer("GetEntry");
+    bytesRead = fTree->GetEntry(fEntry);
+    fStats.add("GetEntry",timer.t.Count());
+  }
   if(bytesRead<0) {
     cout << "Error: I/O error on GetEntry trying to read entry " << fEntry;
     fOutput.add("error","I/O error on GetEntry");
@@ -1373,6 +1415,8 @@ void RecordComposer::compose()
   composeAuxDets();
   
   composeMC();
+  
+  fOutput.add("stats",fStats);
   
   
 }

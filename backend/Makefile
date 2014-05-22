@@ -91,7 +91,7 @@ ifeq ($(UNAME),Darwin)
 	LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
 endif
 PATH+=:${ROOTSYS}/bin
-LIBS  += -L/usr/X11R6/lib -lTreePlayer $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  
+LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer 
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
 CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
 
