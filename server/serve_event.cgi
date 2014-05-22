@@ -3,6 +3,7 @@ use CGI qw/:standard/;
 use POSIX qw(setsid);
 use IO::Socket;
 use Cwd;
+use File::Spec;
 use ArgoServerTools qw(setup myerror);
 
 #
@@ -58,8 +59,9 @@ if((@files)==0) {
 
 
 $filename = $files[0];
+$absolute_filename = File::Spec->rel2abs($filename);
 
-my $resp = ArgoServerTools::request($filename,$selection,$entrystart,$entryend,param('options'));
+my $resp = ArgoServerTools::request($absolute_filename,$selection,$entrystart,$entryend,param('options'));
 
 my $req_time = Time::HiRes::gettimeofday();
 
