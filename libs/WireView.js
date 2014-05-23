@@ -273,6 +273,8 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.Clear();
   
   this.DrawFrame();
+  
+  this.DrawScale();
 
   // Set clipping region for all further calls, just to make things simpler.
   this.ctx.save();
@@ -359,6 +361,42 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 
 
 
+WireView.prototype.DrawScale = function()
+{
+  var uspan = (this.max_u-this.min_u);
+  // Hardcoded wire pitch.
+  var metric_w = (uspan*0.25) * 0.3; // 20% of pad wide, find in mm.
+  var ticks = this.GetGoodTicks(0,metric_w,2,false);
+  var lasttick = ticks[ticks.length-1];
+  var w = lasttick/0.3; // Length of marker line in wires
+  
+  var u2 = this.max_u - uspan*0.05;
+  var u1 = u2-w;
+  var x1 = this.GetX(u1);
+  var x2 = this.GetX(u2);
+  var v  = (this.max_v-this.min_v)*0.95 + this.min_v;
+  var y  = this.GetY(v);
+  
+  this.ctx.save();
+  this.ctx.strokeStyle = "black";
+  this.ctx.fillStyle = "black";
+  this.ctx.moveTo(x1,y); 
+  this.ctx.lineTo(x2,y);
+  this.ctx.moveTo(x1,y-2);
+  this.ctx.lineTo(x1,y+2)
+  this.ctx.moveTo(x2,y-2);
+  this.ctx.lineTo(x2,y+2)
+  this.ctx.stroke();
+  this.ctx.font="8px";
+  var txt = lasttick + " cm";
+  if(lasttick<=0.9) { txt = lasttick*10 + " mm";}
+  if(lasttick>=100) { txt = lasttick/100 + " m";}
+  this.ctx.textAlign= "center";
+  this.ctx.textBaseline = "top";
+  this.ctx.fillText(txt,(x1+x2)*0.5, y);
+  console.warn(txt,(x1+x2)*0.5, y+2);
+  this.ctx.restore();
+}
 
 
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
