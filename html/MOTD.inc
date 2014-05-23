@@ -6,14 +6,8 @@
   <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em> to avoid loading wires</p>
   Recent updates: <br/>
   <ul> 
+    <li> Added length-scale in corner of WireViews (May 23)</li>
+    <li> Attempted performance boost (May 10) - should load faster.</li>
     <li> Added decoder for Bruces' ROI-based recob::Wire </li>
-    <li> March 21: Many minor fixes and improvements (e.g cluster color) at Yale </li>
-    <li> For Matt: Hold control and use scroll wheel to zoom in on wire views</li>
-    <li> March 20: Apparently, view=plane. Clusters should look better now. </li>
-    <li> For Herb: Press 'z' to fake MC t0 to match naive tracker </li>
-    <li> For David: Now correctly pedestal-subtracts raw hits. </li>
-    <li> For Andrej: Now can shift-select and save hits to a file.</li>
-    <li> March 16: Added support for 9600-tick gates.</li>
-    <li> March 16: Added JSON local file loader.</li>
   </ul>
 </div> 
