@@ -1,5 +1,6 @@
 <!-- Message of the Day. -->
 <div id="MOTD" style="display:none;"> 
+  <div id="load-progressbar"></div>
   <img style='float:left; padding: 10px;' src="images/busy.gif" /> 
   <p>Querying server for event data...</p>
   <p><em>Message of the day:</em></p>

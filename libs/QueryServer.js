@@ -61,7 +61,7 @@ function ChangeEvent( event )
             title:    'Please wait', 
             message:    $('#MOTD')
         });
-        
+  
   var par = $.deparam.fragment(true);
   if( par.localFile ) ReadLocalFile(par);
   if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
@@ -158,6 +158,8 @@ function QueryServer( par, myurl )
     // Modify the cursor to show we're fetching.
     document.body.style.cursor='wait';
 
+    console.log("Starting AJAX calls");
+
     // JQuery call for compatibility.
     $.ajax({
             type: "GET",
@@ -168,7 +170,21 @@ function QueryServer( par, myurl )
             async: true,
             dataFilter: QueryFilter,
             error:    QueryError,
-            success:  QuerySuccess
+            success:  QuerySuccess,
+            xhrFields: {
+              onprogress : function(evt){ console.warn('progress', evt.loaded,evt.total); }
+              
+            }
+            // xhr: function(){
+ //                 // get the native XmlHttpRequest object
+ //                 var xhr = $.ajaxSettings.xhr() ;
+ //                 // set the onprogress event handler
+ //                 xhr.upload.onprogress = function(evt){ console.warn('upload.progress', evt.loaded/evt.total*100); } ;
+ //                 // set the onload event handler
+ //                 xhr.onprogress = function(evt){ console.warn('progress', evt.loaded/evt.total*100); } ;
+ //                 // return the customized object
+ //                 return xhr ;
+ //             }
           });
     // QueryRecievedData is called via callback when this is done.
     

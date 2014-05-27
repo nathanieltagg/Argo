@@ -113,7 +113,7 @@ function Pad( element, options )
   if(initCanvas) this.ctx = initCanvas(this.canvas).getContext('2d');
   if(!this.ctx) console.log("Problem getting context!");
   
-  console.warn("Pad created canvas with ", $(this.canvas).css("height"),$(this.canvas).height());
+  // console.warn("Pad created canvas with ", $(this.canvas).css("height"),$(this.canvas).height());
   // Resize the canvas to the coordinates specified, either in html, the css, or options provided.
   this.Resize();
    
