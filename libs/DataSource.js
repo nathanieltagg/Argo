@@ -58,16 +58,35 @@ DataSource.prototype.NewRecord = function()
   
   
   if(gUrlToThisEvent) gUrlToLastEvent = gUrlToThisEvent;
-  var baseurl = location.href.split('?')[0];
-  baseurl = baseurl.replace("live\.html","arachne.html");
-
   gUrlToThisEvent = window.location;
+
+  var split1 = window.location.href.split('#');
+  var hash = split1[1] || "";
+  var split2 = split1[0].split('?');
+  var par = split2[1] || "";
+  var path = window.location.pathname;
+  var fastpath = path+"fast"
+  
+  if(path && path.match(/fast/)) {
+    // Aleady fast.
+    fastpath = path;
+    path.replace("fast.html","");
+    path.replace("fast","");
+  }
+  
+  gUrlToThisEvent = window.location.protocol + "//" + window.location.hostname + path + par + hash;
+  var fasturl     = window.location.protocol + "//" + window.location.hostname + fastpath + par + hash;
+  
+  
    // baseurl + "?"
    //                  +"filename="+gFile
    //                  +"&entry="+gEntry
    //                  // +"&slice="+gCurrentSlice
    //                  ;    
-  $('#link-to-this-event').html('<a href="'+gUrlToThisEvent+'">Link to this event</a>');
+  $('#link-to-this-event').html(
+     '<a href="'+gUrlToThisEvent+'">Link to this event</a><br/>'
+    +'<a href="'+fasturl+'">Fast link to this event</a><br/>'
+  );
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Arachne Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
   
 }                                         
