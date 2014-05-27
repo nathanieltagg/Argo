@@ -95,7 +95,7 @@ $req_path_abs = realpath($cur_path);
 $good=0;
 foreach $basepath (@$restrict_to)
 {
-  if( $cur_path=~/^$basepath/ ) {$good=1;}
+  if( $req_path_abs=~/^$basepath/ ) {$good=1;}
 }
 if($good==0) {
   print p("$cur_path");

@@ -172,7 +172,7 @@ function QueryServer( par, myurl )
             error:    QueryError,
             success:  QuerySuccess,
             xhrFields: {
-              onprogress : function(evt){ console.warn('progress', evt.loaded,evt.total); }
+              onprogress : function(evt){ console.warn('progress',evt, evt.loaded,evt.total); }
               
             }
             // xhr: function(){
