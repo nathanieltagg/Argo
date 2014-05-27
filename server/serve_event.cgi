@@ -17,6 +17,7 @@ my $start_time = Time::HiRes::gettimeofday();
 
 
 ArgoServerTools::setup();
+open(PROFLOG,">>serve_event_profile.log");
 
 
 if( -r "server_config.pl" ) {
@@ -73,7 +74,6 @@ ArgoServerTools::serve($resp,$download);
 
 my $serve_time =  Time::HiRes::gettimeofday();
 
-open(PROFLOG,">>serve_event_profile.log");
 print PROFLOG "Time to req: " . ($req_time - $start_time) . " time to serve: " . ($serve_time - $req_time) . "\n";
 
 
