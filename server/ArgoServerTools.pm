@@ -59,25 +59,37 @@ sub serve
          or die "gzip failed: $GzipError\n";
          
          
+ my $size = length($zipped);
  my $zip_time =  Time::HiRes::gettimeofday();
          
   print main::PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
 
-  my $size = length($zipped);
-  my $head = header(-type => 'application/json',
-                     -charset => "UTF-8",
-                     -Access_Control_Allow_Origin => "*",
-                     -Content_Encoding => 'gzip',
-                     -Content_Length => $size);
-   if($_[1]>0) {
-     $head = header(-type => 'application/json',
-                         -charset => "UTF-8",
-                         -Access_Control_Allow_Origin => "*",
-                         -Content_Length => $size,
-                         -Content_Encoding => 'gzip',                         
-                         -attachment => 'event.json'
-                         );
- }
+ #  my $head = header(-type => 'application/json',
+ #                     -charset => "UTF-8",
+ #                     -Access_Control_Allow_Origin => "*",
+ #                     -Content_Encoding => 'gzip',
+ #                     -Content_Length => $size);
+ #   if($_[1]>0) {
+ #     $head = header(-type => 'application/json',
+ #                         -charset => "UTF-8",
+ #                         -Access_Control_Allow_Origin => "*",
+ #                         -Content_Length => $size,
+ #                         -Content_Encoding => 'gzip',                         
+ #                         -attachment => 'event.json'
+ #                         );
+ # }
+ print $oldout "Content-type:application/json\r\n";
+ print $oldout "charset: UTF-8\r\n";
+ print $oldout "Access-Control-Allow-Origin: *\r\n";
+ print $oldout "Content-Encoding: gzip\r\n";
+ print $oldout "Content-Length: $size\r\n";
+ if($_[1]>0) {
+   print $oldout "attachment: event.json\r\n";
+ }  
+ print $oldout "\r\n";
+
+ binmode $oldout;
+ 
  print $oldout $head;
  print $oldout $zipped;
  close $oldout;
