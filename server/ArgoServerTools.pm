@@ -42,27 +42,35 @@ sub serve
   # print to the stored version of $stdout to actually get it out the door.
   # Note that we encode everything that nominally went to stdout/stderr and ship it as the 'serve_event_log'.
 
+  # estimate total length.
+  my $thing1 = '{';
+  $thing1 .= '"record":';
+
+  $msglog =~ s/\n/\<br\/\>/g;
+  my $thing2 = ',"serve_event_log":"';
+  $thing2 .= encode_utf8 "$msglog";
+  $thing2 .= '"}';
+
+  my $size = length($thing1) + length($_[0]) + length($thing2);
+
 
   my $headertype = 'application/json';
-  if($_[1]>0) { 
-    print $oldout header(-type => 'application/json',
-                 -attachment => 'event.json',
-                 -charset => "UTF-8",
-                 -Access_Control_Allow_Origin => "*");    
-  } else {
-    print $oldout header(-type => 'application/json',
-                 -charset => "UTF-8",
-                 -Access_Control_Allow_Origin => "*");    
+  my $head = header(-type => 'application/json',
+                    -charset => "UTF-8",
+                    -Access_Control_Allow_Origin => "*",
+                    -Content_Length => $size);
+  if($_[1]>0) {
+    $head = header(-type => 'application/json',
+                        -charset => "UTF-8",
+                        -Access_Control_Allow_Origin => "*",
+                        -Content_Length => $size,
+                        -attachment => 'event.json'
+                        );
   }
-  
-  print $oldout '{';
-  print $oldout '"record":';
+  print $oldout $head;  
+  print $oldout $thing1;
   print $oldout $_[0];
-  # Convert $msglog to something printable in html.
-  $msglog =~ s/\n/\<br\/\>/g;
-  print $oldout ',"serve_event_log":"';
-  print $oldout encode_utf8 "$msglog";
-  print $oldout '"}';
+  print $oldout $thing2;
 
   #trick: see if closing STDOUT will force the session to end.
   close $oldout;
