@@ -394,7 +394,6 @@ WireView.prototype.DrawScale = function()
   this.ctx.textAlign= "center";
   this.ctx.textBaseline = "top";
   this.ctx.fillText(txt,(x1+x2)*0.5, y);
-  console.warn(txt,(x1+x2)*0.5, y+2);
   this.ctx.restore();
 }
 
