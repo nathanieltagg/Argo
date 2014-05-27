@@ -9,6 +9,7 @@ use IO::Socket;
 use IO::Select;
 use Cwd;
 use Encode qw(encode_utf8);
+use IO::Compress::Gzip qw(gzip $GzipError) ;
 
 use JSON qw(encode_json);
 use Exporter 'import';
@@ -42,38 +43,77 @@ sub serve
   # print to the stored version of $stdout to actually get it out the door.
   # Note that we encode everything that nominally went to stdout/stderr and ship it as the 'serve_event_log'.
 
-  # estimate total length.
-  my $thing1 = '{';
-  $thing1 .= '"record":';
 
+  #package and manually gzip. 
   $msglog =~ s/\n/\<br\/\>/g;
-  my $thing2 = ',"serve_event_log":"';
-  $thing2 .= encode_utf8 "$msglog";
-  $thing2 .= '"}';
+  
+  my $serving = '{"record":' . $_[0] . ',"serve_event_log":"' . encode_utf8($msglog) . '"}';
+  my $zipped = ""; 
+  
+  my $start_time =  Time::HiRes::gettimeofday();
+  
+  # zip it.
+  open($serving_fh, '<', \$serving);
+  open($zipped_fh, '>' , \$zipped);
+  gzip $serving_fh => $zipped_fh, -Level=>9
+         or die "gzip failed: $GzipError\n";
+         
+         
+ my $zip_time =  Time::HiRes::gettimeofday();
+         
+  print main::PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
 
-  my $size = length($thing1) + length($_[0]) + length($thing2);
-
-
-  my $headertype = 'application/json';
+  my $size = length($zipped);
   my $head = header(-type => 'application/json',
-                    -charset => "UTF-8",
-                    -Access_Control_Allow_Origin => "*",
-                    -Content_Length => $size);
-  if($_[1]>0) {
-    $head = header(-type => 'application/json',
-                        -charset => "UTF-8",
-                        -Access_Control_Allow_Origin => "*",
-                        -Content_Length => $size,
-                        -attachment => 'event.json'
-                        );
-  }
-  print $oldout $head;  
-  print $oldout $thing1;
-  print $oldout $_[0];
-  print $oldout $thing2;
-
-  #trick: see if closing STDOUT will force the session to end.
-  close $oldout;
+                     -charset => "UTF-8",
+                     -Access_Control_Allow_Origin => "*",
+                     -Content_Encoding => 'gzip',
+                     -Content_Length => $size);
+   if($_[1]>0) {
+     $head = header(-type => 'application/json',
+                         -charset => "UTF-8",
+                         -Access_Control_Allow_Origin => "*",
+                         -Content_Length => $size,
+                         -Content_Encoding => 'gzip',                         
+                         -attachment => 'event.json'
+                         );
+ }
+ print $oldout $head;
+ print $oldout $zipped;
+ close $oldout;
+ 
+  # estimate total length.
+  # my $thing1 = '{';
+  # $thing1 .= '"record":';
+  # 
+  # $msglog =~ s/\n/\<br\/\>/g;
+  # my $thing2 = ',"serve_event_log":"';
+  # $thing2 .= encode_utf8 "$msglog";
+  # $thing2 .= '"}';
+  # 
+  # my $size = length($thing1) + length($_[0]) + length($thing2);
+  # 
+  # 
+  # my $headertype = 'application/json';
+  # my $head = header(-type => 'application/json',
+  #                   -charset => "UTF-8",
+  #                   -Access_Control_Allow_Origin => "*",
+  #                   -Content_Length => $size);
+  # if($_[1]>0) {
+  #   $head = header(-type => 'application/json',
+  #                       -charset => "UTF-8",
+  #                       -Access_Control_Allow_Origin => "*",
+  #                       -Content_Length => $size,
+  #                       -attachment => 'event.json'
+  #                       );
+  # }
+  # print $oldout $head;  
+  # print $oldout $thing1;
+  # print $oldout $_[0];
+  # print $oldout $thing2;
+  # 
+  # #trick: see if closing STDOUT will force the session to end.
+  # close $oldout;
 }
 
 sub myerror
