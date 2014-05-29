@@ -149,6 +149,7 @@ class JsonArray : public JsonElement
 public:
   JsonArray() : JsonElement(), fElements(0) { fContent.str(""); };
   JsonArray(const JsonArray& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
+  JsonArray(const std::vector<JsonObject>& in);
   template<typename T>
     JsonArray(const std::vector<T>& in);
   
@@ -181,6 +182,16 @@ JsonArray::JsonArray(const std::vector<T>& in) :   fElements(0)
   for ( itr = in.begin(); itr != in.end(); ++itr ) this->add(JsonElement(*itr));
 }
 
+
+
+// Deal explicitly with objects, which shouldn't be cast.
+inline
+JsonArray::JsonArray(const std::vector<JsonObject>& in) :   fElements(0)
+{
+  fixed();
+  typename std::vector<JsonObject>::const_iterator itr;
+  for ( itr = in.begin(); itr != in.end(); ++itr ) this->add(*itr);
+}
 
 #endif 
 
