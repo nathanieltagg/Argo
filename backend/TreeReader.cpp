@@ -140,7 +140,8 @@ std::vector<JsonObject> TreeReader::makeVector(const vector<pair< string,string>
   for(Int_t jj=0; jj< count; jj++) {
     JsonObject t;    
     for(size_t i=0;i<key_leaf_pairs.size(); i++) {
-      t.add(key_leaf_pairs[i].first, getJson(leaves[i],jj)); // TODO: get multiple indexing right.
+      if(leaves[i])
+        t.add(key_leaf_pairs[i].first, getJson(leaves[i],jj)); // TODO: get multiple indexing right.
     }
     retval.push_back(t);
   }
