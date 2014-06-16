@@ -49,6 +49,32 @@ public:
   ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
 };
 
+// This is a total cheat class to hack into associations in a fast way.
+class ProductID {
+public:
+  unsigned short processIndex_;
+  unsigned short productIndex_;
+};
+
+class RefCore 
+{
+public:
+  struct RefCoreTransients {
+    // itemPtr_ is the address of the item for which the Ptr in which
+    // this RefCoreTransients object resides is a pointer.
+    void const * itemPtr_; // transient
+    void const * prodGetter_; // transient
+  }; // RefCoreTransients
+  ProductID id_;
+  RefCoreTransients transients_;
+};
+
+class Assn {
+public:
+  typedef std::vector<std::pair<RefCore, size_t> > ptr_data_t; 
+  ptr_data_t ptr_data_1_;
+  ptr_data_t ptr_data_2_;
+};
 
 using namespace std;
 
@@ -651,7 +677,7 @@ void  RecordComposer::composeOpHits()
     for(int i=0;i<n;i++) {
       JsonObject jobj;
       
-      jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"         ,i));
+      jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"            ,i));
       jobj.add("peakTime"      ,ftr.getJson(name+"obj.fPeakTime"             ,i));
       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
@@ -1141,12 +1167,11 @@ void RecordComposer::composeMC()
   mc.add("gtruth",truth_list);
 
 
-  /*
-
   leafnames = findLeafOfType("vector<simb::MCTruth>");
   JsonObject mctruth_list;
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
+    TimeReporter timer(name);
         
     std::vector<std::pair< std::string,std::string> > list;
     // Not pulled; maybe I can get away without it?
@@ -1198,22 +1223,33 @@ void RecordComposer::composeMC()
     list.push_back(std::make_pair<std::string,std::string>( "fOrigin"                                 , string(name+"obj.fOrigin"                                 )));
     list.push_back(std::make_pair<std::string,std::string>( "fNeutrinoSet"                            , string(name+"obj.fNeutrinoSet"                            )));
     std::vector<JsonObject> v_mctruths = ftr.makeVector(list);
-    TTreeFormula ttf("tff",string(name+"obj.fPartList").c_str(),fTree);
-    // if(ttf.GetNdata()<index) return fDefaultValue;
-    //  return ttf.EvalInstance(index);
-    
-    // vector<simb::MCParticle> simb::MCTruths_generator__GenieGen.obj.fPartList
-    
+
+    // The fPartList object is in fact a vector<simb::MCParticle>, as is read in the next step.
+    // However, the default splitlevel means it's stored as monolithic blocks and has no "obj." stuff.
+    // The only way I can see to get at it is to do a ttreeformula. 
+    // However, I think the only thing in there we care about is the track number...?
+
+    for(size_t i=0;i<v_mctruths.size();i++) {      
+      TTreeFormula ttf("tff",string(name+"obj.fPartList["+std::to_string(i)+"].ftrackId").c_str(),fTree);
+      int npart = ttf.GetNdata();
+      JsonArray trackids;
+      for(int j = 0;j<npart; j++) {
+        trackids.add((int)ttf.EvalInstance(j));
+      }
+      v_mctruths[i].add("trackIds",trackids);
+    }
     JsonArray arr(v_mctruths);
     mctruth_list.add(stripdots(name),arr);
+    fStats.add(name,timer.t.Count());
+    
   }
   mc.add("mctruth",mctruth_list);
-  */
-  
+
   JsonObject particle_list;
   leafnames = findLeafOfType("vector<simb::MCParticle>");
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
+    if(fTree->GetLeaf((name+"obj_").c_str())==0) continue;
     TimeReporter timer(name);
     
     JsonElement::sfDecimals=5;
@@ -1237,10 +1273,10 @@ void RecordComposer::composeMC()
     key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , name+"obj.ftrackId"                 ));
     key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , name+"obj.fWeight"                  ));
     std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs);
+    std::cout << "Making particle list " << name << " " << v_particles.size() << std::endl;
     TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
-    JsonArray j_particles;
-    if(l.ok()){
-      for(size_t i=0;i<v_particles.size();i++) {
+    for(size_t i=0;i<v_particles.size();i++) {
+      if(l.ok()){        
         // Add  the trajectory points.
         const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
         traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector> > >(i);
@@ -1329,9 +1365,9 @@ void RecordComposer::composeMC()
           jtraj.add(trajpoint);
         }
         v_particles[i].add("trajectory",jtraj);
-        j_particles.add(v_particles[i]);
       }
     }
+    JsonArray j_particles(v_particles);
   
     JsonElement::sfDecimals=2;
 
@@ -1339,6 +1375,17 @@ void RecordComposer::composeMC()
     fStats.add(name,timer.t.Count());
   }
   mc.add("particles",particle_list);
+ 
+  leafnames = findLeafOfType("art::Wrapper<art::Assns<simb::MCTruth,simb::MCParticle,void>");
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {
+    std::string name = leafnames[iname];
+    TBranch* br = fTree->GetBranch((name+"obj").c_str());
+    const Assn* assn = (const Assn*) br->GetAddress();
+    if(assn) {
+      std::cout << "Got assn" << name << " number of elements: " << assn->ptr_data_1_.size() << " and " << assn->ptr_data_2_.size() << std::endl;
+    }
+  }
+ 
   fOutput.add("mc",mc);
   
 }
@@ -1423,6 +1470,47 @@ void RecordComposer::compose()
 
 
 // Utility functions.
+
+AssList RecordComposer::GetAssociations(const string& type1, const string& type2)
+{
+  AssList retval;
+  // e.g.:   "art::Wrapper<art::Assns<recob::Cluster,recob::Hit"
+  string type("art::Wrapper<art::Assns<");
+  type.append(type1).append(",").append(type2);
+  vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
+
+
+  for(size_t iass=0;iass<assnames.size(); iass++) {
+    AssPtr_t e(new Association);
+    e->type1 = type1;
+    e->type2 = type2;
+    e->assname = assnames[iass];
+    
+    // Between the two underscores is the name of this particular association.
+    size_t u1 = e->assname.find_first_of("_");
+    size_t u2 = e->assname.find_first_of("__",u1+1);
+    e->shortname = e->assname.substr(u1,u2-u1);
+
+    // Attempt to pull association data.
+    TTreeFormula forma("a",std::string(e->assname+".obj.ptr_data_1_.second").c_str(),fTree);
+    TTreeFormula formb("b",std::string(e->assname+".obj.ptr_data_2_.second").c_str(),fTree);
+    int na = forma.GetNdata();
+    int nb = formb.GetNdata();
+    if(na!=nb) cout << "Error: Association " << e->assname << " has mismatched entry lists " << std::endl;
+    e->n = std::min(na,nb);
+    for(Int_t i=0;i<e->n;i++) {
+      int a_id = forma.EvalInstance(i);
+      int b_id = formb.EvalInstance(i);
+      if(e->a_to_b.size() <= a_id) e->a_to_b.resize(a_id+1,-1);
+      e->a_to_b[a_id] = b_id;
+      if(e->b_to_a.size() <= b_id) e->b_to_a.resize(b_id+1,-1);
+      e->b_to_a[b_id] = a_id;
+    }
+    retval.push_back(e);
+  }
+  return retval;
+}
+
 vector<string>  RecordComposer::findLeafOfType(std::string pattern)
 {
   /// Look in the tree. Try to find a leafelement that matches 'pattern'.

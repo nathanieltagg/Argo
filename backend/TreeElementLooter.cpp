@@ -20,28 +20,28 @@ TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname)
 {
   TBranch* b = fTree->GetBranch(fName.c_str());
   if(!b) {
-    fError = "TreeStlElementLooter: Couldn't find branch " + fName;  
+    fError = "TreeElementLooter: Couldn't find branch " + fName;  
     std::cerr << fError << std::endl;
     return;
   }
 
   fBranch = dynamic_cast<TBranchElement*>(b);
   if(!fBranch) {
-    fError = "TreeStlElementLooter: Branch " + fName + " couldn't be cast to TBranchElement";  
+    fError = "TreeElementLooter: Branch " + fName + " couldn't be cast to TBranchElement";  
     std::cerr << fError << std::endl;
     return;
   }
     
   fProxy = fBranch->GetCollectionProxy();
   if (!(fProxy)) {
-    fError = "TreeStlElementLooter: Couldn't GetCollectionProxy() on " + fName;
+    fError = "TreeElementLooter: Couldn't GetCollectionProxy() on " + fName;
     std::cerr << fError << std::endl;
     return;
   }
   fProxy->PushProxy(fBranch->GetObject());
   
   if (!(fBranch->GetInfo())) {
-    fError = "TreeStlElementLooter: Couldn't GetInfo() on " + fName;
+    fError = "TreeElementLooter: Couldn't GetInfo() on " + fName;
     std::cerr << fError << std::endl;
     return;
   }
