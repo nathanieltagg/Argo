@@ -724,7 +724,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     for(var j=0;j<points.length;j++) {
       // Fixme: bezier
       var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
-      var v = gGeo.getTDCofX(this.plane,points[j].x);
+      var v = gGeo.getTDCofX(this.plane,points[j].x) + 3200; // Move it off by 1 frame
       var coords = [this.GetX(u), this.GetY(v)];
       pts.push(coords);      
     }
