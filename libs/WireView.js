@@ -1,5 +1,26 @@
+//
+// Code for the ARgo Event Display
+// Author: Nathaniel Tagg ntagg@otterbein.edu
+// 
+// Licence: this code is free for non-commertial use. Note other licences may apply to 3rd-party code.
+// Any use of this code must include attribution to Nathaniel Tagg at Otterbein University, but otherwise 
+// you're free to modify and use it as you like.
+//
+
+///
+/// Boilerplate:  Javascript utilities for MINERvA event display, codenamed "Argo"
+/// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
+///
+
+
+//
+// 'Main' scripts for argo.html
+// Used to be in 'head', but it was too unwieldly.
+//
+/*jshint laxcomma:true */
+
 // Subclass of Pad.
-WireView.prototype = new Pad;           
+WireView.prototype = new Pad();
 
 gWireViews = [];
 // Automatic runtime configuration.
@@ -153,13 +174,13 @@ WireView.prototype.HoverChange = function()
       this.Draw(); break;
     default: break;  
   }
-}
+};
 
 WireView.prototype.Resize = function()
 {
   Pad.prototype.Resize.call(this);
   gZoomRegion.wireview_aspect_ratio = this.span_y/this.span_x;
-}
+};
 
 
 WireView.prototype.NewRecord = function()
@@ -171,7 +192,7 @@ WireView.prototype.NewRecord = function()
   this.NewRecord_hits();
   this.NewRecord_image();
   this.NewRecord_mc();
-}
+};
 
 WireView.prototype.NewRecord_hits = function()
 {
@@ -187,7 +208,7 @@ WireView.prototype.NewRecord_hits = function()
     if(hits[i].plane == this.plane) this.myHits.push(hits[i]);
   }
   this.TrimHits();
-}
+};
 
 WireView.prototype.NewRecord_image = function()
 {
@@ -210,16 +231,16 @@ WireView.prototype.NewRecord_image = function()
   this.wireimg.onload = function() {
       self.loaded_wireimg = true;
       self.Draw();
-  }  
+  };  
   this.wireimg_thumb.onload = function() {
       self.loaded_thumbnail = true;
-  }  
-}
+  }; 
+};
 
 WireView.prototype.NewRecord_mc = function()
 {
   
-}
+};
 
 WireView.prototype.TrimHits = function()
 {
@@ -240,12 +261,12 @@ WireView.prototype.TrimHits = function()
       v1:h.t1,
       v2:h.t2,
       c: c    // Color coord
-    }
+    };
     this.visHits.push(vishit);
   }
 
   this.Draw();
-}
+};
 
 
 
@@ -253,7 +274,7 @@ WireView.prototype.TrimHits = function()
 WireView.prototype.DrawFast = function()
 {
   this.Draw(true);
-}
+};
 
 WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -301,7 +322,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     }
 
     if ($(this.ctl_show_endpoint).is(":checked")) {
-      this.DrawEndpoint2d()
+      this.DrawEndpoint2d();
     }
 
     if ($(this.ctl_show_spoints).is(":checked")) {
@@ -356,7 +377,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   }  
   this.ctx.restore();
   
-}
+};
 
 
 
@@ -383,9 +404,9 @@ WireView.prototype.DrawScale = function()
   this.ctx.moveTo(x1,y); 
   this.ctx.lineTo(x2,y);
   this.ctx.moveTo(x1,y-2);
-  this.ctx.lineTo(x1,y+2)
+  this.ctx.lineTo(x1,y+2);
   this.ctx.moveTo(x2,y-2);
-  this.ctx.lineTo(x2,y+2)
+  this.ctx.lineTo(x2,y+2);
   this.ctx.stroke();
   this.ctx.font="8px";
   var txt = lasttick + " cm";
@@ -395,7 +416,7 @@ WireView.prototype.DrawScale = function()
   this.ctx.textBaseline = "top";
   this.ctx.fillText(txt,(x1+x2)*0.5, y);
   this.ctx.restore();
-}
+};
 
 
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
@@ -479,7 +500,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   }
   this.ctx.restore();   
 
-}
+};
 
 
 WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
@@ -494,20 +515,22 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   this.fShiftRect.v1 = this.GetV(this.fShiftRect.y2);
   this.fShiftRect.v2 = this.GetV(this.fShiftRect.y1);
   var hoverVisHit = null;
+  var h,u,v,x,dx,y,dy,c;
+  
   for(var i=0;i<this.visHits.length;i++) {
-    var h = this.visHits[i];
-    var u = h.u;
+    h = this.visHits[i];
+    u = h.u;
     if(u<min_u) continue;
     if(u>max_u) continue;
-    var v = h.v;         
+    v = h.v;         
     if(v<min_v) continue;
     if(v>max_v) continue;
-    var x = this.GetX(u);
-    var dx = this.GetX(u+1) - x;
+    x = this.GetX(u);
+    dx = this.GetX(u+1) - x;
     
-    var y = this.GetY(h.v1);
-    var dy = this.GetY(h.v2) - y;    
-    var c = gHitColorScaler.GetColor(h.c);
+    y = this.GetY(h.v1);
+    dy = this.GetY(h.v2) - y;    
+    c = gHitColorScaler.GetColor(h.c);
 
     if(h.hit.saveselection)      c="10,10,10";
     if(this.fShiftSelecting && ((h.u >= this.fShiftRect.u1) && (h.u < this.fShiftRect.u2) && (h.v >= this.fShiftRect.v1) && (h.v < this.fShiftRect.v2))) {
@@ -524,15 +547,15 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   
   if(hoverVisHit) {
     // console.warn("hoverhit!",hoverVisHit);
-      var h = hoverVisHit;
-      var u = h.u;
-      var v = h.v;         
-      var x = this.GetX(u);
-      var dx = this.GetX(u) - x;
+      h = hoverVisHit;
+      u = h.u;
+      v = h.v;         
+      x = this.GetX(u);
+      dx = this.GetX(u) - x;
     
-      var y = this.GetY(h.v2);
-      var dy = this.GetY(h.v1) - y;    
-      var c = gHitColorScaler.GetColor(h.c);
+      y = this.GetY(h.v2);
+      dy = this.GetY(h.v1) - y;    
+      c = gHitColorScaler.GetColor(h.c);
       console.log("color",gHitColorScaler,c);
       this.ctx.fillStyle = "black";
 
@@ -543,12 +566,10 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       this.ctx.strokeStyle = "black";
       var w = 1.5;
       this.ctx.lineWidth = w;
-      this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);      
-      
-      
+      this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);          
       
     }
-}
+};
 
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -630,7 +651,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     }
     
   }
-}
+};
 
 WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -660,7 +681,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
         this.ctx.stroke();
       }
   }
-}
+};
 
 
 
@@ -702,13 +723,13 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     
   }
   this.ctx.restore();
-}
+};
 
 WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
   var tracklistname = $("#ctl-TrackLists").val();
   if(!tracklistname) return;
-  var bezier = tracklistname.match(/bezier/)!=null;
+  var bezier = tracklistname.match(/bezier/)!==null;
   if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }
   var tracks = gRecord.tracks[tracklistname];
   if(!tracks) return;
@@ -745,7 +766,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
       this.ctx.moveTo(pts[0][0],pts[0][1]);
-      for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+      for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
       this.ctx.stroke();
       this.ctx.lineWidth =2;
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
@@ -759,17 +780,17 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     // Draw it.
     this.ctx.beginPath();
     this.ctx.moveTo(pts[0][0],pts[0][1]);
-    for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+    for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
     this.ctx.stroke();
     this.ctx.fillStyle=this.ctx.strokeStyle;
-    for(var j=1;j<pts.length;j++) {
+    for(j=1;j<pts.length;j++) {
       this.ctx.beginPath();
       this.ctx.arc(pts[j][0],pts[j][1],1.5,0,2*Math.PI,false);
       this.ctx.stroke();
     }
 
     // for mouseovering
-    for(var j=1;j<pts.length;j++) 
+    for(j=1;j<pts.length;j++) 
       this.mouseable.push({type:"track", 
                           coords: [[pts[j-1][0],pts[j-1][1]],
                                     pts[j][0],pts[j][1] ], 
@@ -778,13 +799,13 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.stroke();
   }
   this.ctx.restore();
-}
+};
 
 
 WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast) 
 {
   var tracklistname = $("#ctl-TrackLists").val();
-  var bezier = tracklistname.match(/bezier/)!=null;
+  var bezier = tracklistname.match(/bezier/)!==null;
   var tracks = gRecord.tracks[tracklistname];
   if(!tracks) return;
   
@@ -806,6 +827,17 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
   
   // console.warn("DrawBezierTracks");
   this.ctx.save();
+
+  function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+  // Return an x,y screen coords tuple
+  var self = this;
+  function DetectorXyzToScreenXY(x,y,z) {
+    return [
+      self.GetX( gGeo.yzToWire( self.plane,y,z) ),
+      self.GetY( gGeo.getTDCofX(self.plane,x ) )
+      ];
+  }
+  
   for(var i=0;i<tracks.length;i++)
   {
     var trk = tracks[i];
@@ -815,15 +847,6 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     var segments = [];
     
 
-    function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-    // Return an x,y screen coords tuple
-    var self = this;
-    function DetectorXyzToScreenXY(x,y,z) {
-      return [
-        self.GetX( gGeo.yzToWire( self.plane,y,z) ),
-        self.GetY( gGeo.getTDCofX(self.plane,x ) )
-        ];
-    }
     
     // First, record xyz control and endpoint positions in detector coords.
     // start point.
@@ -833,7 +856,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
                                 pt.y - pt.vy,
                                 pt.z - pt.vz),
       p1: DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
-    }
+    };
     s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
     s.c1 = s.p1;
     segments.push(s);
@@ -870,8 +893,8 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     }
     
     // Last point
-    var pt = points[points.length-1];
-    var s = {
+    pt = points[points.length-1];
+    s = {
       p0: DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
       p1: DetectorXyzToScreenXY(pt.x + pt.vx, 
                                 pt.y + pt.vy,
@@ -897,8 +920,8 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
       this.ctx.moveTo(segments[0].p0[0],segments[0].p0[1]);
-      for(var j=0;j<segments.length;j++) {
-        var s = segments[j];
+      for(j=0;j<segments.length;j++) {
+        s = segments[j];
         this.ctx.bezierCurveTo( s.c0[0],s.c0[1],
                                 s.c1[0],s.c1[1],
                                 s.p1[0],s.p1[1]);
@@ -916,8 +939,8 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     // Draw it.
     this.ctx.beginPath();
     this.ctx.moveTo(segments[0].p0[0],segments[0].p0[1]);
-    for(var j=0;j<segments.length;j++) {
-      var s = segments[j];
+    for(j=0;j<segments.length;j++) {
+      s = segments[j];
       this.ctx.bezierCurveTo( s.c0[0],s.c0[1],
                               s.c1[0],s.c1[1],
                               s.p1[0],s.p1[1]);
@@ -926,7 +949,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     
     // make circles at the nodes.
     this.ctx.fillStyle = this.ctx.strokeStyle;
-    for(var j=0;j<segments.length-1;j++) {
+    for(j=0;j<segments.length-1;j++) {
          this.ctx.fillStyle = "rgba(89, 169, 28, 1)";
       this.ctx.beginPath();
       this.ctx.arc(segments[j].p0[0],segments[j].p0[1],1.5,0,1.99*Math.PI,false);
@@ -946,7 +969,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     // console.warn("Bezier:",segments);
 
     // for mouseovering
-    for(var j=0;j<segments.length-1;j++) {
+    for(j=0;j<segments.length-1;j++) {
        this.mouseable.push({type:"track", 
                             coords: [[segments[j].p0[0],segments[j].p1[0]], [segments[j].p0[1],segments[j].p1[1]]],
                             r:this.ctx.lineWidth, obj: trk});
@@ -954,7 +977,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
   }
   this.ctx.restore();
   
-}
+};
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 {  
@@ -969,7 +992,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
-    if(!p.trajectory || p.trajectory.length==0) continue;
+    if(!p.trajectory || p.trajectory.length===0) continue;
 
     // compile points
     var pts = [];
@@ -1005,7 +1028,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
       this.ctx.moveTo(pts[0][0],pts[0][1]);
-      for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+      for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
       this.ctx.stroke();
       this.ctx.lineWidth =2;
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
@@ -1029,19 +1052,19 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     // Draw main track.
     this.ctx.beginPath();
     this.ctx.moveTo(pts[0][0],pts[0][1]);
-    for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+    for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
     this.ctx.stroke();
     
     
     // for mouseovering
-    for(var j=1;j<pts.length;j++) 
+    for(j=1;j<pts.length;j++) 
       this.mouseable.push({type:"mcparticle",
                            coords: [[pts[j-1][0],pts[j-1][1]], [pts[j][0],pts[j][1]] ],
                            r:this.ctx.lineWidth, obj: p});
   
   
   }
-}
+};
 
 WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -1051,8 +1074,9 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
   
   this.ctx.lineWidth = 2;
 
+  var pt, pt2;
   for(var i=0;i<gUserTrack.points.length; i++) {
-    var pt = gUserTrack.points[i];
+    pt = gUserTrack.points[i];
     this.ctx.fillStyle = "rgba(40,92,0,0.5)";
     this.ctx.strokeStyle = "rgb(40,92,0)";
     var r = 5; // 5 pixel radius handle
@@ -1074,9 +1098,9 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 
   this.ctx.strokeStyle = "rgb(40,92,0)";
 
-  for(var i=0;i<gUserTrack.points.length-1; i++) {
-    var pt = gUserTrack.points[i];
-    var pt2 = gUserTrack.points[i+1];
+  for(i=0;i<gUserTrack.points.length-1; i++) {
+    pt = gUserTrack.points[i];
+    pt2 = gUserTrack.points[i+1];
     this.ctx.beginPath();    
     this.ctx.moveTo(this.GetX(pt[this.plane]), this.GetY(pt.tdc - pt.r));
     this.ctx.lineTo(this.GetX(pt[this.plane]), this.GetY(pt.tdc + pt.r));
@@ -1086,7 +1110,7 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.fill();
   }
 
-}
+};
 
 WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -1101,9 +1125,10 @@ WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.save();
   this.ctx.fillStyle = "rgba(0,92,0,0.5)";
   this.ctx.strokeStyle = "rgb(0,92,0)";
+  var i;
   
   if(gReco.houghlines && this.plane==2)
-    for(var i=0;i<gReco.houghlines.length;i++)
+    for(i=0;i<gReco.houghlines.length;i++)
     {      
       var line =gReco.houghlines[i];
       this.ctx.beginPath();
@@ -1121,7 +1146,7 @@ WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.fillStyle = "rgba(0,92,0,0.5)";
   this.ctx.strokeStyle = "rgb(0,92,0)";
   
-  for(var i=0;i<gReco.matches.length;i++)
+  for(i=0;i<gReco.matches.length;i++)
   {
     var pt =gReco.matches[i];
 
@@ -1141,7 +1166,7 @@ WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
   
   this.ctx.restore();
 
-}
+};
 
 WireView.prototype.DrawShiftRect = function(min_u,max_u,min_v,max_v,fast)
 {
@@ -1158,7 +1183,7 @@ WireView.prototype.DrawShiftRect = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.stroke();
   if(this.ctx.setLineDash) this.ctx.setLineDash([]);
   
-}
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Mouse
@@ -1227,7 +1252,8 @@ WireView.prototype.DoMouse = function(ev)
     }
   }
   
-
+  var relx, rely;
+  
   if(this.fDragging) {
       // Update new zoom position or extent...
     if(this.fMouseStart.area == "body"){
@@ -1244,26 +1270,26 @@ WireView.prototype.DoMouse = function(ev)
       $.extend(this.fMouseLast,this.fMousePos); // copy.
       
     } else if(this.fMouseStart.area == "xscale-right") {
-      var relx = this.fMousePos.x - this.origin_x;
+      relx = this.fMousePos.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var new_max_u = this.span_x * (this.fMouseStart.u-this.min_u)/relx + this.min_u;
       gZoomRegion.setLimits(this.plane,this.min_u, new_max_u);
       
     } else if(this.fMouseStart.area == "xscale-left") {
-      var relx = this.origin_x + this.span_x - this.fMousePos.x;
+      relx = this.origin_x + this.span_x - this.fMousePos.x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       var new_min_u = this.max_u - this.span_x * (this.max_u - this.fMouseStart.u)/relx;
       gZoomRegion.setLimits(this.plane,new_min_u, this.max_u);
       
     } else if(this.fMouseStart.area == "yscale-up") {
-      var rely =  this.origin_y - this.fMousePos.y;
+      rely =  this.origin_y - this.fMousePos.y;
       if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
       var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
       gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] , new_max_v);
     
     }else if(this.fMouseStart.area == "yscale-down") {
-      var rely =  this.fMousePos.y - (this.origin_y - this.span_y);
+      rely =  this.fMousePos.y - (this.origin_y - this.span_y);
       if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
       var new_min_v = this.max_v - this.span_y * (this.max_v-this.fMouseStart.v)/rely;
       gZoomRegion.changeTimeRange(new_min_v, gZoomRegion.tdc[1]);
@@ -1336,7 +1362,7 @@ WireView.prototype.DoMouse = function(ev)
     this.dirty=true; // Do a slow draw in this view.    
   } 
     
-}
+};
 
 WireView.prototype.FindMouseableMatch = function() 
 {
@@ -1365,7 +1391,7 @@ WireView.prototype.FindMouseableMatch = function()
   }
   return  {obj: {}, type:"wire"}; // by default, it's a wire.
 
-}
+};
 
 
 WireView.prototype.DoMouseWheel = function(ev,dist)
@@ -1395,5 +1421,5 @@ WireView.prototype.DoMouseWheel = function(ev,dist)
     
   }
   return true;
-}
+};
 

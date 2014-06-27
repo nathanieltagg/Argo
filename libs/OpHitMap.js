@@ -63,7 +63,7 @@ OpHitMap.prototype.NewRecord = function()
     if (!gOpPulsesListName) return;
     var oppulses = gRecord.oppulses[gOpPulsesListName];
     if(!oppulses) return; // Zero-length.
-    if(oppulses.length==0) return;
+    if(oppulses.length===0) return;
     
     this.ophits = []; //gRecord.ophits[gOphitsListName].slice(0); // Copy
     for(var i=0;i<oppulses.length;i++) {
@@ -93,7 +93,7 @@ OpHitMap.prototype.NewRecord = function()
   );
   
   this.Draw();
-}
+};
 
 OpHitMap.prototype.Draw = function()
 {
@@ -113,16 +113,17 @@ OpHitMap.prototype.Draw = function()
   this.ctx.lineTo(x1,y1);
   this.ctx.stroke();
   
+  var i, x,y,wx,wy,w,c, det;
   // Draw Flashes.
   this.drawn_flashes = [];
   if(gRecord && gRecord.opflashes){
-    for(var i=0;i<gRecord.opflashes.length;i++){
+    for(i=0;i<gRecord.opflashes.length;i++){
       var flash = gRecord.opflashes[i];
-      var x = this.GetX(flash.zCenter);
-      var y = this.GetY(flash.yCenter);
-      var wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
-      var wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
-      var w = flash.time*gOpDetMode.variableScale;
+      x = this.GetX(flash.zCenter);
+      y = this.GetY(flash.yCenter);
+      wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
+      wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
+      w = flash.time*gOpDetMode.variableScale;
       if(w<gOpDetMode.cut.min) continue;
       if(w>gOpDetMode.cut.max) continue;
       
@@ -133,7 +134,7 @@ OpHitMap.prototype.Draw = function()
           wx: wx,
           wy: wy}
       );
-      var c = gOpDetColorScaler.GetColor(w);
+      c = gOpDetColorScaler.GetColor(w);
       if(gHoverState.obj == flash) c = "0,0,0";
       var grad = this.ctx.createRadialGradient(0,0,0, 0,0,1);
       grad.addColorStop(0,   'rgba('+c+',1)'); // red
@@ -149,7 +150,7 @@ OpHitMap.prototype.Draw = function()
       
       this.ctx.fill();
       this.ctx.stroke();
-      this.ctx.restore()
+      this.ctx.restore();
     }
   }
   
@@ -159,21 +160,21 @@ OpHitMap.prototype.Draw = function()
   
   
   // Draw OpHits
-  for(var i=0;i<this.ophits.length;i++) {
+  for(i=0;i<this.ophits.length;i++) {
     var oh = this.ophits[i];
-    var w = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
+    w = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
     if(w<gOpDetMode.cut.min) continue;
     if(w>gOpDetMode.cut.max) continue;
     if(oh.opDetChan<0) continue; // Bad channel number
     
-    var det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
+    det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
     if(!det) { 
       console.warn("Couldn't find optical detector geometry for hit",oh);
       continue;
     }
-    var x = this.GetX(det.z);
-    var y = this.GetY(det.y);
-    var c = gOpDetColorScaler.GetColor(w);
+    x = this.GetX(det.z);
+    y = this.GetY(det.y);
+    c = gOpDetColorScaler.GetColor(w);
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.beginPath();
     this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
@@ -184,18 +185,18 @@ OpHitMap.prototype.Draw = function()
   
   var dets = gGeo.opDets.opticalDetectors;
   this.ctx.strokeStyle = "black";
-  for(var i=0;i<dets.length;i++){
-    var det = dets[i];
+  for(i=0;i<dets.length;i++){
+    det = dets[i];
     if(det == gHoverState.obj) { this.ctx.lineWidth = 2;} 
     else                       { this.ctx.lineWidth = 1;} 
-    var x = this.GetX(det.z);
-    var y = this.GetY(det.y);
+    x = this.GetX(det.z);
+    y = this.GetY(det.y);
     this.ctx.beginPath();
     this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
     this.ctx.stroke();
   }
   
-}
+};
 
 OpHitMap.prototype.DoMouse = function(ev)
 {
@@ -211,22 +212,23 @@ OpHitMap.prototype.DoMouse = function(ev)
 
   var dets = gGeo.opDets.opticalDetectors;
   var hoverdet = null;
-  for(var i=0;i<dets.length;i++){
-    var det = dets[i];
-    var dx = (det.z - this.fMouseU);
-    var dy = (det.y - this.fMouseV);
-    var d2 = dx*dx + dy*dy;
+  var i, det, dx,dy,d2, dr2;
+  for(i=0;i<dets.length;i++){
+    det = dets[i];
+    dx = (det.z - this.fMouseU);
+    dy = (det.y - this.fMouseV);
+    d2 = dx*dx + dy*dy;
     if(d2<r2) hoverdet = det;
   }
   if(hoverdet){
      ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
   } else {
     var hoverflash = null;
-    for(var i=0;i<this.drawn_flashes.length;i++) {
+    for(i=0;i<this.drawn_flashes.length;i++) {
       var df = this.drawn_flashes[i];
-      var dx = (df.x - this.fMouseX)/df.wx;
-      var dy = (df.y - this.fMouseY)/df.wy;
-      var dr2 = dx*dx + dy*dy;
+      dx = (df.x - this.fMouseX)/df.wx;
+      dy = (df.y - this.fMouseY)/df.wy;
+      dr2 = dx*dx + dy*dy;
       if(dr2<1) hoverflash = df.flash;
     }
     if(hoverflash) {
@@ -236,4 +238,4 @@ OpHitMap.prototype.DoMouse = function(ev)
     }
   } 
   this.Draw();
-}
+};

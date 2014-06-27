@@ -10,7 +10,7 @@ $(function(){
 
 
 // Subclass of Pad.
-Reco.prototype = new Pad;           
+Reco.prototype = new Pad();           
 
 function Reco( element )
 {
@@ -34,7 +34,7 @@ var nd = 0;
 hitTimesMatch = function(a,b,t0a,t0b)
 {
   var sig2 = a.σt*a.σt + b.σt*b.σt;
-  var diff = (a.t-gGeo.getTDCofX(a.plane,0))- (b.t-gGeo.getTDCofX(b.plane,0))
+  var diff = (a.t-gGeo.getTDCofX(a.plane,0))- (b.t-gGeo.getTDCofX(b.plane,0));
   return (diff*diff < sig2*16);
   
   // var sig = Math.sqrt(sig2);
@@ -51,7 +51,7 @@ hitTimesMatch = function(a,b,t0a,t0b)
   // var sig2 = a.σt*a.σt + b.σt*b.σt;
   // var diff = (a.t-gGeo.getTDCofX(a.plane,0))- (b.t-gGeo.getTDCofX(b.plane,0))
   // return (diff*diff < sig2 * 5);
-}
+};
 
 Reco.prototype.NewRecord = function()
 {
@@ -59,7 +59,7 @@ Reco.prototype.NewRecord = function()
   this.best_hough = null;
   this.houghpoints = [];
   this.houghlines = [];
-}
+};
 
 
 Reco.prototype.Do3dMatchFinding = function(planes)
@@ -91,12 +91,12 @@ Reco.prototype.Do3dMatchFinding = function(planes)
                 dy = Math.abs(cross02.y - cross12.y);
                 if(dy<0.035) {
                   // possible match.
-                  var tsum = (hit0.t-gGeo.getTDCofX(0,0))/(hit0.σt*hit0.σt)
-                           + (hit1.t-gGeo.getTDCofX(1,0))/(hit1.σt*hit1.σt)
-                           + (hit2.t-gGeo.getTDCofX(2,0))/(hit1.σt*hit1.σt);
-                  var ttot = 1/(hit0.σt*hit0.σt)
-                           + 1/(hit1.σt*hit1.σt)
-                           + 1/(hit1.σt*hit1.σt);
+                  var tsum = (hit0.t-gGeo.getTDCofX(0,0))/(hit0.σt*hit0.σt) +
+                             (hit1.t-gGeo.getTDCofX(1,0))/(hit1.σt*hit1.σt) +
+                             (hit2.t-gGeo.getTDCofX(2,0))/(hit1.σt*hit1.σt);
+                  var ttot = 1/(hit0.σt*hit0.σt) +
+                             1/(hit1.σt*hit1.σt) +
+                             1/(hit1.σt*hit1.σt);
                            
                   
                   var match = {
@@ -123,7 +123,7 @@ Reco.prototype.Do3dMatchFinding = function(planes)
   console.log("matches:",matches);
   this.matches = matches;
   
-}
+};
 
 Reco.prototype.DoReco = function()
 {
@@ -131,21 +131,22 @@ Reco.prototype.DoReco = function()
   gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var inhits = gRecord.hits[gHitsListName];
-  if(inhits.length==0) return;
+  if(inhits.length===0) return;
   
+  var i, hit;
   // sort by plane.
   var planes = [[],[],[]];
-  for(var i=0;i<inhits.length;i++){
-    var hit = inhits[i];
+  for(i=0;i<inhits.length;i++){
+    hit = inhits[i];
     hit.idx = i; // Cheat and add our own info.
     if(hit.plane >=0 && hit.plane <3) planes[hit.plane].push(hit);
   }
   var txt = planes[0].length + "," + planes[1].length + "," + planes[2].length;
 
-  if(this.houghpoints.length == 0) {
+  if(this.houghpoints.length === 0) {
     this.houghpoints = [];
-    for(var i=0;i<planes[2].length;i++){
-      var hit = planes[2][i];
+    for(i=0;i<planes[2].length;i++){
+      hit = planes[2][i];
       var point = {
         hit: hit,
         h_wt: 1,
@@ -200,7 +201,7 @@ Reco.prototype.DoReco = function()
   console.log("HOUGH COMPLETE:",this.best_hough);
 
   gStateMachine.Trigger("zoomChange");
-}
+};
 
 function Bifurcated_2d_Hough( points )
 { 
@@ -215,7 +216,7 @@ function Bifurcated_2d_Hough( points )
   var mass = 0;
   var p;
   for(var i=0;i<points.length;i++) {
-    var p = points[i];
+    p = points[i];
     x_cm += p.h_wt*p.h_pt[0];
     y_cm += p.h_wt*p.h_pt[1];
     mass += p.h_wt;
@@ -229,7 +230,7 @@ function Bifurcated_2d_Hough( points )
   // Next, let's construct the bounds for the search in. We'll search all angles between 0 and pi,
   // and for distance from origin, just use distance to the furthest point.  It's almost certainly too far, but what the hell.
   var rmax = 0;
-  for(var i=0;i<points.length;i++) {
+  for(i=0;i<points.length;i++) {
     p = points[i];
     p.h_pt_rx = p.h_pt[0]-x_cm;  // reduced x-coord
     p.h_pt_ry = p.h_pt[1]-y_cm;  // reduced y-coord
@@ -249,8 +250,7 @@ function Bifurcated_2d_Hough( points )
     θ2: Math.PI,
     points: points.slice(0), // copy the array
     points_out: []
-  }
-  // OK, we have our first setup to call the recursion.
+  };  // OK, we have our first setup to call the recursion.
   return Bifurcate_2d_Hough_Region(state);
   
 }

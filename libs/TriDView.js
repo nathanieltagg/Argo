@@ -22,7 +22,7 @@ $(function(){
 var gTriDView = null;
 
 // Subclass of Pad.
-TriDView.prototype = new Pad3d;           
+TriDView.prototype = new Pad3d();           
 
 function TriDView( element, options ){
   // console.log('TriDView ctor');
@@ -45,7 +45,7 @@ function TriDView( element, options ){
     camera_distance_min: 50,
     default_theta: -0.224,
     default_phi: 5.72,
-  }
+  };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad3d.call(this, element, settings); // Give settings to Pad contructor.
 
@@ -106,7 +106,7 @@ TriDView.prototype.HoverChange = function()
       this.Draw(); break;
     default: break;  
   }
-}
+};
 
 
 TriDView.prototype.Rebuild = function ()
@@ -128,7 +128,7 @@ TriDView.prototype.Rebuild = function ()
   this.CreateAuxDets();
   
   this.Draw();
-}
+};
 
 
 
@@ -191,7 +191,7 @@ TriDView.prototype.CreateFrame = function()
   
   
   
-}
+};
 
 TriDView.prototype.CreateHits = function()
 {
@@ -215,12 +215,12 @@ TriDView.prototype.CreateHits = function()
     // if(h.view<2) continue;
     this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);    
   }
-}
+};
 
 TriDView.prototype.CreateClusters = function()
 {
   
-}
+};
 
 
 TriDView.prototype.CreateTracks = function()
@@ -228,7 +228,7 @@ TriDView.prototype.CreateTracks = function()
   if(!$("#ctl-TrackLists").val()) return;
   var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
   console.warn(tracks,gRecord.tracks,$("#ctl-TrackLists").val());
-  for(itrk in tracks) {
+  for(var itrk in tracks) {
     var trk = tracks[itrk];
     console.log(trk);
     var hovobj = {obj:trk, type:"track", collection: tracks};    
@@ -241,7 +241,7 @@ TriDView.prototype.CreateTracks = function()
       this.AddLine(p1.x,p1.y,p1.z, p2.x,p2.y,p2.z, 3, curColor, hovobj);
     }
   }
-}
+};
 
 TriDView.prototype.CreateSpacepoints = function()
 {  
@@ -254,7 +254,7 @@ TriDView.prototype.CreateSpacepoints = function()
     var curColor = "rgba(0, 150, 150, 1)";
     this.AddLine(sp.xyz[0], sp.xyz[1], sp.xyz[2],sp.xyz[0], sp.xyz[1], sp.xyz[2]+0.3, 2, curColor, hovobj);
   }
-}
+};
 
 TriDView.prototype.CreateMC = function()
 {
@@ -276,7 +276,7 @@ TriDView.prototype.CreateMC = function()
     
     console.log("TriDView::CreateMC particle at time ",t0, p.trajectory.length);
     var hovobj = {obj:p, type:"mcparticle", collection: particles};
-    if(!p.trajectory || p.trajectory.length==0) continue;
+    if(!p.trajectory || p.trajectory.length===0) continue;
     
     var lineWidth = 1;
     var curColor = "rgba(0,0,255,0.5)";
@@ -306,12 +306,12 @@ TriDView.prototype.CreateMC = function()
     }
   }
  
-}
+};
   
 TriDView.prototype.CreateAuxDets = function()
 {
   if(!gRecord.auxdets) return;
-  if(gRecord.auxdets.length==0) return; // No auxdet info available.
+  if(gRecord.auxdets.length===0) return; // No auxdet info available.
   console.warn("CREATEAUXDETS");
   var detpos = [
   { name:"posAuxDet0"  ,    x:"3628.91180974" ,y:"-1420.26501873" ,z:"-7445.5670412"},
@@ -642,7 +642,7 @@ TriDView.prototype.CreateAuxDets = function()
                             );
 
   }
-}
+};
 
 
 TriDView.prototype.should_highlight = function(obj)
@@ -650,23 +650,23 @@ TriDView.prototype.should_highlight = function(obj)
   if(!obj.source) return false;
   if(!obj.source.obj) return false;
   if(! gHoverState.obj) return false;
-  if((obj.source.obj == gHoverState.obj) 
-    || ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gHoverState.obj.ftrackId))) 
+  if((obj.source.obj == gHoverState.obj) ||
+    ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gHoverState.obj.ftrackId))) 
     return true;
   return false;
-}
+};
 
 TriDView.prototype.should_outline = function(obj)
 {
   if(!obj.source) return false;
   if(!obj.source.obj) return false;
   if(! gSelectState.obj) return false;
-  if((obj.source.obj == gSelectState.obj) 
-    || ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gSelectState.obj.ftrackId))) {
+  if((obj.source.obj == gSelectState.obj) ||
+    ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gSelectState.obj.ftrackId))) {
       return true;      
     }
   return false;
-}
+};
 
 TriDView.prototype.DrawFinish = function()
 {
@@ -679,7 +679,7 @@ TriDView.prototype.DrawFinish = function()
       SetOverlayPosition(offset.x + pt[0], offset.y + pt[1]);  
     }
   }
-}
+};
 
 TriDView.prototype.HoverObject = function(selected)
 {
@@ -688,7 +688,7 @@ TriDView.prototype.HoverObject = function(selected)
     ChangeHover(selected);
   }
   //this.Draw();
-}
+};
 
 TriDView.prototype.ClickObject = function(selected)
 {
@@ -696,5 +696,5 @@ TriDView.prototype.ClickObject = function(selected)
   if(selected) ChangeSelection(selected);
   else ClearSelection();
   //this.Draw();
-}
+};
 

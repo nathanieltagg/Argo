@@ -42,7 +42,7 @@ function WireHistogram( element  )
   this.hist = null;
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
 
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
@@ -55,16 +55,17 @@ WireHistogram.prototype.Change = function()
   this.min_u = gZoomRegion.plane[this.plane][0];
   this.max_u = gZoomRegion.plane[this.plane][1];
   this.Draw();
-}
+};
 
 
 WireHistogram.prototype.NewRecord = function()
 {
   var hitsListName = $("#ctl-HitLists").val();
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
+  var wiredesc;
   if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) {
     
-    var wiredesc = gRecord.hit_hists[hitsListName];; // e.g. gRecord.raw."recob::rawwire"
+    wiredesc = gRecord.hit_hists[hitsListName]; // e.g. gRecord.raw."recob::rawwire"
     this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
@@ -73,7 +74,7 @@ WireHistogram.prototype.NewRecord = function()
     
   } 
   else  if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {    
-    var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+    wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
     this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
@@ -86,13 +87,13 @@ WireHistogram.prototype.NewRecord = function()
   }
   
   this.Draw();
-}
+};
 
 WireHistogram.prototype.FinishRangeChange = function()
 {
   gZoomRegion.setLimits(this.plane,this.min_u,this.max_u);
   gStateMachine.Trigger("zoomChange");
-}
+};
 
 WireHistogram.prototype.FastRangeChange = function()
 {
@@ -100,10 +101,10 @@ WireHistogram.prototype.FastRangeChange = function()
   // TDC bounds
   gZoomRegion.setLimits(this.plane,this.min_u,this.max_u);
   gStateMachine.Trigger("zoomChangeFast");
-}
+};
 
 WireHistogram.prototype.Draw = function()
 {
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   HistCanvas.prototype.Draw.call(this);
-}
+};

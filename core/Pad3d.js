@@ -73,7 +73,7 @@ function Pad3d( element, options )
   var element_settings = $(element).attr('settings');
   var element_settings_obj={};
   if(element_settings) {
-    eval( "var element_settings_obj = { " + element_settings + '};');; // override from 'settings' attribute of html object.
+    eval( "var element_settings_obj = { " + element_settings + '};'); // override from 'settings' attribute of html object.
     // console.log(element_settings, element_settings_obj);
     $.extend(true,this,element_settings_obj); // Change default settings by provided overrides.
   }
@@ -133,7 +133,7 @@ function Pad3d( element, options )
    
   // $(this.element) .bind('dblclick',  function(ev)     { return self.fullScreen(); });
   
-  $(this.element) .bind('contextmenu', function(ev){ return false;} )
+  $(this.element) .bind('contextmenu', function(ev){ return false;} );
   
   var parent = $(this.element).parent();
 
@@ -220,7 +220,7 @@ Pad3d.prototype.panMe = function(ev,dx,dy,dz)
   this.look_at[1] += dy;
   this.look_at[2] += dz;
   this.Draw();
-}
+};
 
 Pad3d.prototype.rotateMe = function(theta,phi)
 {
@@ -229,7 +229,7 @@ Pad3d.prototype.rotateMe = function(theta,phi)
   this.phi += phi;
   if(this.theta>Math.PI/2) this.theta = Math.PI/2;
   if(this.theta<-Math.PI/2) this.theta = -Math.PI/2;  
-}
+};
 
 
 Pad3d.prototype.ResetView = function()
@@ -273,14 +273,14 @@ Pad3d.prototype.ResetView = function()
   }
   
   
-}
+};
 
 Pad3d.prototype.ChangeViewMode = function(mode)
 {
   this.view_mode = mode;
   this.ResetView();
   this.Draw();
-}
+};
 
 Pad3d.prototype.Translate = function( mat, x,y,z)
 {
@@ -293,7 +293,7 @@ Pad3d.prototype.Translate = function( mat, x,y,z)
     ]);  
   mat = trans.x(mat);
   return mat;
-}
+};
 
 Pad3d.prototype.RotateX = function( mat, angle )
 {
@@ -308,7 +308,7 @@ Pad3d.prototype.RotateX = function( mat, angle )
   ]);
   mat = rot.x(mat);
   return mat;
-}
+};
 
 Pad3d.prototype.RotateY = function( mat, angle )
 {
@@ -323,7 +323,7 @@ Pad3d.prototype.RotateY = function( mat, angle )
   ]);
   mat = rot.x(mat);
   return mat;
-}
+};
 
 
 Pad3d.prototype.AddLine = function(x1,y1,z1,x2,y2,z2,width,color,source)
@@ -337,7 +337,7 @@ Pad3d.prototype.AddLine = function(x1,y1,z1,x2,y2,z2,width,color,source)
     source: source
   };
   this.objects.push(line);
-}
+};
 
 Pad3d.prototype.AddPoint = function(x1,y1,z1,size,fill,highlightfill,source)
 {
@@ -353,7 +353,7 @@ Pad3d.prototype.AddPoint = function(x1,y1,z1,size,fill,highlightfill,source)
     source: source
   };
   this.objects.push(obj);
-}
+};
 
 // Circle in the YZ plane
 Pad3d.prototype.AddArcYZ = function(x,y,z,r,nstep,theta_start,theta_end,width,color,source)
@@ -370,7 +370,7 @@ Pad3d.prototype.AddArcYZ = function(x,y,z,r,nstep,theta_start,theta_end,width,co
     var z2 = z + r*Math.sin(theta2);
     this.AddLine(x1,y1,z1,x2,y2,z2,width,color,source);    
   }
-}
+};
 
 
 Pad3d.prototype.Resize = function()
@@ -401,7 +401,7 @@ Pad3d.prototype.Resize = function()
   $(this.canvas).css('height', height );
   this.ctx.scale(this.padPixelScaling,this.padPixelScaling);
 
-}
+};
 
 
 Pad3d.prototype.Clear = function()
@@ -410,7 +410,7 @@ Pad3d.prototype.Clear = function()
   if (!this.ctx) return;
   this.ctx.fillStyle = this.bg_color;
   this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-}
+};
 
 
 Pad3d.prototype.Draw = function()
@@ -419,7 +419,7 @@ Pad3d.prototype.Draw = function()
   this.Clear();
   this.DrawLines();
   this.DrawFinish(); // usercallback.
-}
+};
 
 Pad3d.prototype.DrawFinish = function()
 {};
@@ -440,7 +440,7 @@ Pad3d.prototype.Linesort = function(l1,l2)
   
   // Do we care? That is, do the lines overlap in screen space?  
 
-}
+};
 
 Pad3d.prototype.DrawLines = function()
 {
@@ -461,8 +461,9 @@ Pad3d.prototype.DrawLines = function()
   trans = this.RotateY(trans,this.phi);
   trans = this.RotateX(trans,this.theta);
   trans = this.Translate(trans,0,0,this.camera_distance);
+  var i;
   
-  for(var i=0;i<this.objects.length;i++)
+  for(i=0;i<this.objects.length;i++)
   {
     var line = this.objects[i];
     // Rotate each point by the current matrix.
@@ -511,7 +512,7 @@ Pad3d.prototype.DrawLines = function()
   
   var cu = this.width/2;
   var cv = this.height/2;
-  for(var i=0;i<this.objects.length;i++)
+  for(i=0;i<this.objects.length;i++)
   {
     var obj = this.objects[i];
     // draw it.
@@ -579,17 +580,17 @@ Pad3d.prototype.DrawLines = function()
     }
   }
   this.ctx.restore();
-}
+};
 
 Pad3d.prototype.should_highlight = function(obj)
 {
   return false;
-}
+};
 
 Pad3d.prototype.should_outline = function(obj)
 {
   return false;
-}
+};
 
 Pad3d.prototype.startDragging = function(ev)
 {
@@ -613,14 +614,14 @@ Pad3d.prototype.startDragging = function(ev)
   $(this.element).css("cursor","move !important");
   return true;
   
-}
+};
 
 Pad3d.prototype.stopDragging = function(ev)
 {
   $(this.element).css("cursor","auto");
   
   this.dragging = false;
-}
+};
 
 Pad3d.prototype.drag = function(ev)
 {
@@ -635,7 +636,7 @@ Pad3d.prototype.drag = function(ev)
      x = ev.originalEvent.touches[0].pageX;
      y = ev.originalEvent.touches[0].pageY;       
      ev.originalEvent.preventDefault();       
-     console.log("Touch: " + x + " " + y)
+     console.log("Touch: " + x + " " + y);
    } else {
      if(this.startDragTouch) return; // Avoid processing a fake mousemove event when running ios.
    }
@@ -675,7 +676,7 @@ Pad3d.prototype.drag = function(ev)
      this.rotateMe(sy,sx);
    }
    this.Draw();
-}
+};
 
 Pad3d.prototype.findObjectUnderMouse = function(event) 
 {
@@ -711,7 +712,7 @@ Pad3d.prototype.findObjectUnderMouse = function(event)
       }
   }
   return selected;
-}
+};
 
 // var sample =0;
 Pad3d.prototype.mouseMove = function(ev)
@@ -719,30 +720,30 @@ Pad3d.prototype.mouseMove = function(ev)
   if(this.dragging) return;
   ev.originalEvent.preventDefault();
    
-  var selected = this.findObjectUnderMouse(ev)
+  var selected = this.findObjectUnderMouse(ev);
   
   this.HoverObject(selected);  
-}
+};
 
 Pad3d.prototype.click = function(ev)
 {
   var now = $.now();
   if((now - this.startDragWalltime) < 500) { // half-second
-    var selected = this.findObjectUnderMouse(ev)  
+    var selected = this.findObjectUnderMouse(ev);  
     this.ClickObject(selected);  
   }
-}
+};
 
 
 Pad3d.prototype.HoverObject = function(selected)
 {  
   console.log("Pad3d.HoverObject selected=",selected);
-}
+};
 
 Pad3d.prototype.ClickObject = function(selected)
 {
   console.log("Pad3d.ClickObject selected=",selected);
-}
+};
 
 Pad3d.prototype.scrollMe = function(ev,delta)
 {
@@ -761,7 +762,7 @@ Pad3d.prototype.scrollMe = function(ev,delta)
   this.Draw();
   return false; // Capture the mouse event.
   
-}
+};
 
 
 Pad3d.prototype.autoRotate = function(on)
@@ -774,10 +775,10 @@ Pad3d.prototype.autoRotate = function(on)
       self.Draw();
     },
     100 // ms
-    )
+    );
   }
   if(!on) clearInterval(this.autoRotateTimer);
-}
+};
 
 
 Pad3d.prototype.Print = function()
@@ -793,7 +794,7 @@ Pad3d.prototype.Print = function()
   var url = this.canvas.toDataURL("image/png");
   console.log("Pad::Print() ",url);
   return url;
-}
+};
 
 
 /* @author Remy Sharp (leftlogic.com)
@@ -826,19 +827,19 @@ jQuery.fn.mousehold = function(timeout, f) {
 					f.call(t, ctr);
 					fireStep = 2;
 				}, timeout);
-			})
+			});
 
 			clearMousehold = function() {
 				clearInterval(timer);
 				if (fireStep == 1) f.call(this, 1);
 				fireStep = 0;
-			}
+			};
 			
 			jQuery(this).mouseout(clearMousehold);
 			jQuery(this).mouseup(clearMousehold);
-		})
+		});
 	}
-}
+};
 
 Pad3d.prototype.PrintHQ = function()
 {
@@ -874,7 +875,7 @@ Pad3d.prototype.PrintHQ = function()
   
   // nuke buffer.
   // document.removeChild(canvas);
-}
+};
 
 Pad3d.prototype.AnimateNextFrame = function(restart)
 {
@@ -884,22 +885,22 @@ Pad3d.prototype.AnimateNextFrame = function(restart)
     this.ani_frame = 0;
     this.ani_frames_per_station = 10;
     this.ani_stations = [
-       [0,-Math.PI/2]
-      ,[0,-Math.PI/2]
-      ,[0,-Math.PI/2]
-      ,[0,0]
-      ,[0,0]
-      ,[-Math.PI/2,0]
-      ,[-Math.PI/2,0]
-      ,[0,-Math.PI/2]
-      ,[0,-Math.PI/2]
-      ,[0,Math.PI]
-      ,[0,Math.PI]
-      ,[0,Math.PI*1.5]
-      ,[-Math.PI/6,Math.PI*2]
-      ,[0,Math.PI*2.5]
-      ,[0,Math.PI*3]
-      ,[0,Math.PI*3.5]
+       [0,-Math.PI/2] ,
+       [0,-Math.PI/2] ,
+       [0,-Math.PI/2] ,
+       [0,0] ,
+       [0,0] ,
+       [-Math.PI/2,0] ,
+       [-Math.PI/2,0] ,
+       [0,-Math.PI/2] ,
+       [0,-Math.PI/2] ,
+       [0,Math.PI] ,
+       [0,Math.PI] ,
+       [0,Math.PI*1.5] ,
+       [-Math.PI/6,Math.PI*2] ,
+       [0,Math.PI*2.5] ,
+       [0,Math.PI*3] ,
+       [0,Math.PI*3.5]
       ];    
   } 
   if(restart) {
@@ -924,7 +925,7 @@ Pad3d.prototype.AnimateNextFrame = function(restart)
   this.phi = phi;
   return change;
   
-}
+};
 
 
 Pad3d.prototype.CreateAnimation = function()
@@ -946,7 +947,7 @@ Pad3d.prototype.CreateAnimation = function()
   while(!done) {
     this.AnimateNextFrame(false);
     this.Draw(); encoder.addFrame(this.ctx);
-    if((this.ani_frame ==0)&&(this.ani_station==0)) done = true;    
+    if((this.ani_frame ===0)&&(this.ani_station===0)) done = true;    
   }
   encoder.finish();
 
@@ -966,4 +967,4 @@ Pad3d.prototype.CreateAnimation = function()
   outDoc.write( "</html>" );
   outDoc.close();
   
-}
+};

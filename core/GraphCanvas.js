@@ -14,7 +14,7 @@
 
 
 // Subclass of Pad.
-GraphCanvas.prototype = new Pad;           
+GraphCanvas.prototype = new Pad();           
 
 
 function GraphCanvas( element, options )
@@ -69,7 +69,7 @@ function GraphCanvas( element, options )
 GraphCanvas.prototype.ResetDefaultRange = function()
 {
   this.ResetToHist(this.hists[0]);
-}
+};
 
 
 GraphCanvas.prototype.Draw = function()
@@ -78,11 +78,11 @@ GraphCanvas.prototype.Draw = function()
   this.DrawFrame();
   this.DrawRegions();
   this.DrawHists();
-}
+};
 
 GraphCanvas.prototype.DrawRegions = function()
 {
-}
+};
 
 
 GraphCanvas.prototype.AddHist = function( inHist, inColorScale )
@@ -97,7 +97,7 @@ GraphCanvas.prototype.AddHist = function( inHist, inColorScale )
   if(inHist.min_content < this.min_v) this.min_v = inHist.min_content;
   if(inHist.max_content > this.max_v) this.max_v = inHist.max_content;
   //console.log(this.fName + ".AddHist " + this.min_u + " " + this.max_u);
-}
+};
 
 GraphCanvas.prototype.SetHist = function( inHist, inColorScale )
 {
@@ -107,7 +107,7 @@ GraphCanvas.prototype.SetHist = function( inHist, inColorScale )
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
   this.FinishRangeChange();
-}
+};
 
 
 GraphCanvas.prototype.ResetToHist = function( inHist ) {
@@ -116,7 +116,7 @@ GraphCanvas.prototype.ResetToHist = function( inHist ) {
   this.min_v =inHist.min_content-1;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content+1;  // maximum value shown on Y-axis
   this.SetLogy(this.log_y);
-}
+};
 
 GraphCanvas.prototype.SetLogy = function( inOn )
 {
@@ -126,7 +126,7 @@ GraphCanvas.prototype.SetLogy = function( inOn )
   } else {
     this.log_y=false;
   }
-}
+};
 
 
 
@@ -136,7 +136,7 @@ GraphCanvas.prototype.GetY = function( f )
     return this.origin_y - this.span_y*(f-this.min_v)/(this.max_v-this.min_v);
   }
   return this.origin_y  - this.span_y*(Math.log(f)-Math.log(this.min_v))/(Math.log(this.max_v)-Math.log(this.min_v));
-}
+};
 
 
 
@@ -151,6 +151,7 @@ GraphCanvas.prototype.DrawHists = function( )
      //log("  drawing hist "+iHist);
      var hist = this.hists[iHist];
      var colorscale = this.colorscales[iHist];
+     var i, t, f, x, y;
      
      if(this.show_lines) {
        this.ctx.lineCap = "round";
@@ -158,12 +159,12 @@ GraphCanvas.prototype.DrawHists = function( )
        this.ctx.lineWidth=1;
        this.ctx.strokeStyle =  "rgba(" + colorscale.GetColor() + ",1.0)";
        this.ctx.beginPath();
-       for (var i = 0; i < hist.n; i++) {
-         var t = hist.GetX(i);
-         var f = hist.data[i];
-         var x = Math.floor(this.GetX(t)) + this.waterfall_offset[0]*iHist;
-         var y = Math.floor(this.GetY(f)) - this.waterfall_offset[1]*iHist;
-         if(i==0) this.ctx.moveTo(x,y);
+       for (i = 0; i < hist.n; i++) {
+         t = hist.GetX(i);
+         f = hist.data[i];
+         x = Math.floor(this.GetX(t)) + this.waterfall_offset[0]*iHist;
+         y = Math.floor(this.GetY(f)) - this.waterfall_offset[1]*iHist;
+         if(i===0) this.ctx.moveTo(x,y);
          else     this.ctx.lineTo(x,y);
        }
        this.ctx.stroke();
@@ -171,12 +172,12 @@ GraphCanvas.prototype.DrawHists = function( )
      
      if(this.show_points) {
        this.ctx.fillStyle =  "rgba(" + colorscale.GetColor() + ",1.0)";
-       for (var i = 0; i < hist.n; i++) {
+       for (i = 0; i < hist.n; i++) {
          this.ctx.beginPath();
-         var t = hist.GetX(i);
-         var f = hist.data[i];
-         var x = Math.floor(this.GetX(t)) + this.waterfall_offset[0]*iHist;
-         var y = Math.floor(this.GetY(f)) - this.waterfall_offset[1]*iHist;
+         t = hist.GetX(i);
+         f = hist.data[i];
+         x = Math.floor(this.GetX(t)) + this.waterfall_offset[0]*iHist;
+         y = Math.floor(this.GetY(f)) - this.waterfall_offset[1]*iHist;
          this.ctx.arc(x,y,2,0,1.999*Math.PI);
          this.ctx.fill();
        }
@@ -185,7 +186,7 @@ GraphCanvas.prototype.DrawHists = function( )
    }
    this.ctx.restore();
    
-}
+};
 
 
 GraphCanvas.prototype.ChangeRange = function( minu,maxu )
@@ -199,50 +200,51 @@ GraphCanvas.prototype.ChangeRange = function( minu,maxu )
   else                              this.max_u = maxu;
 
   this.Draw();  
-}
+};
 
 GraphCanvas.prototype.FinishRangeChange = function()
-{}
+{};
 
 GraphCanvas.prototype.DoMouse = function( ev )
 {
+  var x, y, relx, rely, offset, deltaX, deltaT;
   if(ev.type === 'mousedown') {
     //logclear();
     //console.log("begin drag");
     // Find the position of the drag start - is this in the horizontal scale or the body?
-    var x = ev.pageX;
-    var y = ev.pageY;
-    var offset = getAbsolutePosition(this.canvas);
-    var relx = x - offset.x;
-    var rely = y - offset.y;    
+    x = ev.pageX;
+    y = ev.pageY;
+    offset = getAbsolutePosition(this.canvas);
+    relx = x - offset.x;
+    rely = y - offset.y;    
     this.fDragStartX = x;
     this.fDragStartT = (relx - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
     if(rely < this.origin_y && relx > this.origin_x) {
       this.fIsBeingDragged = true;
       this.fDragMode = "shiftX";
-      console.log("body drag")      
+      console.log("body drag");      
     } else if(relx > this.origin_x + 5 ) {
       // Note that this is capped at 5 pixels from the origin, for saftey. 
       this.fIsBeingDragged = true;
       this.fDragMode = "scaleX";
-      console.log("scale drag" + this.fDragStartT)
+      console.log("scale drag" + this.fDragStartT);
     } 
   } else {
     // Either mousemove or mouseup.
     if(this.fIsBeingDragged !== true) return true; // Not a handled event.
     if(this.fDragMode === "shiftX") {
       // find current magnitude of the shift.
-      var x = ev.pageX;
-      var deltaX = x - this.fDragStartX;
-      var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x)
+      x = ev.pageX;
+      deltaX = x - this.fDragStartX;
+      deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x);
       this.fDragStartX = x;
       this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
     }
     if(this.fDragMode === "scaleX") {
       // Find the new scale factor.
-      var x = ev.pageX;
-      var offset = getAbsolutePosition(this.canvas);
-      var relx = x - offset.x - this.origin_x;
+      x = ev.pageX;
+      offset = getAbsolutePosition(this.canvas);
+      relx = x - offset.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
@@ -261,13 +263,13 @@ GraphCanvas.prototype.DoMouse = function( ev )
     this.FinishRangeChange();
   }  
   return false; // Handled.
-} 
+}; 
 
 GraphCanvas.prototype.DoTouch = function( ev )
 {
-  var t1 = new Date().getTime();
-  console.log(ev.type + " " + (t1-this.touchtime));
-  this.touchtime = t1;
+  var tt = new Date().getTime();
+  console.log(ev.type + " " + (tt-this.touchtime));
+  this.touchtime = tt;
   if(ev.type === 'touchend' && this.fIsBeingDragged) {
     // Mouseup - finish what you're doing.
     
@@ -324,14 +326,14 @@ GraphCanvas.prototype.DoTouch = function( ev )
       console.log("doing 1-touch");
       // Anything else, find smallest shift.
       var deltaX = 99999;
-      for(var i=0;i<this.lastTouch.length;i++) {
+      for(i=0;i<this.lastTouch.length;i++) {
         for(var j=0;j<touch.length;j++) {
           dx = touch[j].x - this.lastTouch[i].x;
           if(Math.abs(dx) < Math.abs(deltaX)) deltaX = dx;
         }
       }
       if(deltaX < 99999){
-        var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x)
+        var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x);
         console.log("delta t:"+deltaT);
         this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
       }
@@ -341,6 +343,6 @@ GraphCanvas.prototype.DoTouch = function( ev )
   this.lastTouch = touch;
   return true;
 
-}
+};
 
 

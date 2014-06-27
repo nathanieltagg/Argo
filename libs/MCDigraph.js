@@ -47,8 +47,7 @@ MCDigraph.prototype.DoClick = function(node,label)
  //  );
  //  gStateMachine.Trigger("changeSelectedTrajectories");
   ChangeSelection({obj: node.data.particle, type: "mcparticle", collection: gRecord.mc.particles});
-  
-}
+};
 
 MCDigraph.prototype.HoverChanged = function() 
 {
@@ -61,7 +60,7 @@ MCDigraph.prototype.HoverChanged = function()
   // this.st.addNodeInPath(id);
    $('#'+id).addClass("mc-jit-node-hover");
 //   
-}
+};
 
 MCDigraph.prototype.NewRecord = function() 
 {
@@ -71,7 +70,7 @@ MCDigraph.prototype.NewRecord = function()
   if(!gRecord.mc) return;
   var particles = gRecord.mc.particles[gMCParticlesListName];
   
-  if(!particles || particles.length == 0) {
+  if(!particles || particles.length === 0) {
     $(this.element).hide();
     return;
   } else {
@@ -116,7 +115,7 @@ MCDigraph.prototype.NewRecord = function()
     for(var i=0;i<particles.length; i++) {
       if(particles[i].fmother === trkid) { 
         node.children.push(buildNestedObject(particles[i]));
-      };
+      }
     }
     return node;
   }
@@ -129,10 +128,10 @@ MCDigraph.prototype.NewRecord = function()
   if(inters && inters[0]) {
     var inter = inters[0];
     var incE = inter.fProbeP4_fE;
-    root.name = incE.toFixed(3)  + " GeV" 
-              + " " + GetParticle(inter.fProbePDG)
-              + " " + InteractionCode[inter.fGint]
-              + " " + ScatterCode[inter.fGscatter];  
+    root.name = incE.toFixed(3)  + " GeV"  +
+               " " + GetParticle(inter.fProbePDG) +
+               " " + InteractionCode[inter.fGint] +
+               " " + ScatterCode[inter.fGscatter];  
   }
   for(var i=0;i<particles.length; i++) {
     if(particles[i].fmother === 0){
@@ -277,6 +276,6 @@ MCDigraph.prototype.NewRecord = function()
   
   this.st.onClick(this.st.root);
   
-}
+};
 
 

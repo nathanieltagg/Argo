@@ -30,7 +30,7 @@ function ChangeHover( arg )
 
 function ClearHover()
 {
-  if(gHoverState.obj != null) {
+  if(gHoverState.obj !== null) {
     var last = $.extend({},gHoverState);
     var type = gHoverState.type;
     gHoverState.obj = null;
@@ -82,7 +82,7 @@ function SetOverlayPosition(x,y)
 $(function(){
   gStateMachine.Bind("newRecord",ClearHover);
   gStateMachine.Bind("newRecord",ClearSelection);
-  gStateMachine.Bind("newRecord",function(){ $('#selected-object-info.floating').hide()});
+  gStateMachine.Bind("newRecord",function(){ $('#selected-object-info.floating').hide();});
   gStateMachine.Bind("selectChange",DrawObjectInfo);
   $('#selected-object-info.floating').hide();
   // $('#selected-object-info .unit-ctl').buttonset();
@@ -182,12 +182,12 @@ function ComposeMCParticleInfo(s)
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
   var c = "</td></tr>";  
-  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" 
-                       + "y: " +  Math.round(start.y) + " cm<br/>" 
-                       + "z: " +  Math.round(start.z) + " cm<br/>" + c;
-  h+= a + "Mom'm" + b  + "px: " + Math.round(start.px*1000) + " MeV/c<br/>" 
-                       + "py: " + Math.round(start.py*1000) + "  MeV/c<br/>" 
-                       + "pz: " + Math.round(start.pz*1000) + "  MeV/c<br/>" + c;
+  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" +
+                         "y: " +  Math.round(start.y) + " cm<br/>" +
+                         "z: " +  Math.round(start.z) + " cm<br/>" + c;
+  h+= a + "Mom'm" + b  + "px: " + Math.round(start.px*1000) + " MeV/c<br/>" +
+                         "py: " + Math.round(start.py*1000) + "  MeV/c<br/>" +
+                         "pz: " + Math.round(start.pz*1000) + "  MeV/c<br/>" + c;
   h+= a + "&lt;dE/dX&gt;" + b + Math.round(deltaE) + " MeV /<br/>" + Math.round(deltaX) + " mm" + c;
   h += "</table>";
   return h;
@@ -218,9 +218,9 @@ function ComposeTrackInfo(s)
   var lasty=start.y;
   var lastz=start.z;
   for(var i=1;i<trk.points.length;i++) {
-    var x = trk.points[i].x;  var dx = x-lastx;
-    var y = trk.points[i].y;  var dy = y-lasty;
-    var z = trk.points[i].z;  var dz = z-lastz;
+    x = trk.points[i].x;  var dx = x-lastx;
+    y = trk.points[i].y;  var dy = y-lasty;
+    z = trk.points[i].z;  var dz = z-lastz;
     var dl2 = (dx*dx) + (dy*dy) + (dz*dz);
     length += Math.sqrt(dl2);
     dQ1 += trk.points[i].dQdx;
@@ -237,21 +237,23 @@ function ComposeTrackInfo(s)
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
   var c = "</td></tr>";  
-  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" 
-                       + "y: " +  Math.round(start.y) + " cm<br/>" 
-                       + "z: " +  Math.round(start.z) + " cm<br/>" + c;
-  h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" 
-                       + "vy: " + (vy).toFixed(3) + "<br/>" 
-                       + "vz: " + (vz).toFixed(3) + "<br/>" + c;
+  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" +
+                         "y: " +  Math.round(start.y) + " cm<br/>" +
+                         "z: " +  Math.round(start.z) + " cm<br/>" + c;
+  h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
+                         "vy: " + (vy).toFixed(3) + "<br/>" +
+                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
-  h+= a + "Total &Delta;Q"  + b    + Math.round(dQ1) + "</br>"
-                               + Math.round(dQ2) + "</br>"
-                               + Math.round(dQ3) + "</br>" + c;
+  h+= a + "Total &Delta;Q"  + b +
+      Math.round(dQ1) + "</br>" +
+      Math.round(dQ2) + "</br>" +
+      Math.round(dQ3) + "</br>" + c;
 
-  h+= a + "&lt;dQ&gt;"  + b    + Math.round(dQ1/trk.points.length) + "</br>"
-                               + Math.round(dQ2/trk.points.length) + "</br>"
-                               + Math.round(dQ3/trk.points.length) + "</br>" + c;
+  h+= a + "&lt;dQ&gt;"  + b + 
+      Math.round(dQ1/trk.points.length) + "</br>" +
+      Math.round(dQ2/trk.points.length) + "</br>" +
+      Math.round(dQ3/trk.points.length) + "</br>" + c;
   
   h += "</table>";
   return h;
@@ -295,7 +297,7 @@ HoverInfo.prototype.Draw = function ()
     case "track": h=ComposeTrackInfo(state); break;
     
     default:
-      var h="";
+      h="";
       if(sel) 
         h += "<h3>Selected:" + state.type + "</h3>";
       else 
@@ -318,5 +320,5 @@ HoverInfo.prototype.Draw = function ()
   console.warn("HoverInfo",h);
   $(this.element).html(h);
   
-}
+};
 

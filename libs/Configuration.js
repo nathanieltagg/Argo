@@ -55,10 +55,11 @@ function CheckWireDataReload()
     // Does the event have any VALID wiredata?
     var lists = 0;
     var valid = 0;
-    if(gRecord.cal) { for(var i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_url) valid++; } }
-    if(gRecord.raw) { for(var i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) valid++; } }
+    var i;
+    if(gRecord.cal) { for(i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_url) valid++; } }
+    if(gRecord.raw) { for(i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) valid++; } }
     // alert("lists: " + lists + " valid:"+valid);
-    if(lists>0 && valid==0) {
+    if(lists>0 && valid===0) {
       // We need to go back to the server.
       // Don't push a hashchange; we need to be more
       QueryServer();
@@ -152,7 +153,7 @@ $.widget( "argo.shiftspinner", {
       var left = this.which * (-this.width) + "px";
       console.log("click",this.which);
       console.log("click",this.which,left,this.options.easing);
-      var fn = function(){console.log("noreset")};
+      var fn = function(){console.log("noreset");};
       if(this.which == this.n) { this.which = 0; fn = function(){console.log("reset");$(this).css('left',0);};}
       $(this.ul).stop().animate({left: left, top: "0px"}, 
                                 {easing: this.options.easing, duration: this.options.duration, complete: fn}
@@ -164,7 +165,7 @@ $.widget( "argo.shiftspinner", {
   // can be called directly via .colorize( "val" )
   val: function() {
     return this.selected;
-    return $('li',this.element).get(selected);
+    // return $('li',this.element).get(selected);
   },
 
   // events bound via _on are removed automatically

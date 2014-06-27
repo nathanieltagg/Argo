@@ -39,7 +39,7 @@ function TimeHistogram( element  )
   this.hist = null;
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
     
   gStateMachine.Bind('recordChange',  this.NewRecord.bind(this) ); 
@@ -54,15 +54,18 @@ TimeHistogram.prototype.Change = function()
   this.min_u = gZoomRegion.tdc[0];
   this.max_u = gZoomRegion.tdc[1];
   this.Draw();
-}
+};
 
 
 TimeHistogram.prototype.NewRecord = function()
 {
   var hitsListName = $("#ctl-HitLists").val();
+  var wiredec;
+  var cs = new ColorScaleIndexed(0);
+  
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
   if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) {
-    var wiredesc = gRecord.hit_hists[hitsListName].timeHist; 
+    wiredesc = gRecord.hit_hists[hitsListName].timeHist; 
     this.hist = $.extend(true,new Histogram(1,0,1), wiredesc);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.bound_u_min = this.hist.min;
@@ -71,10 +74,9 @@ TimeHistogram.prototype.NewRecord = function()
      
   } 
   else if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {
-    var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
+    wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
     this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.timeHist);
 
-    var cs = new ColorScaleIndexed(0);
     // Use this for testing out color schemes.
     // cs.colorScale = new HueColorScale(1.0,0.15);
     // cs.min = this.hist.min;
@@ -90,33 +92,33 @@ TimeHistogram.prototype.NewRecord = function()
     this.ResetToHist(this.hist);      
   }  
   this.Draw();
-}
+};
 
 TimeHistogram.prototype.FinishRangeChange = function()
 {
   // Select our time window so it's compatible with the 
   // TDC bounds
   gZoomRegion.changeTimeRange( 
-              Math.max(this.min_u, gRecord.header.TDCStart)
-            , Math.min(this.max_u, gRecord.header.TDCEnd  )
+              Math.max(this.min_u, gRecord.header.TDCStart) ,
+              Math.min(this.max_u, gRecord.header.TDCEnd  )
           );
   gStateMachine.Trigger("TimeCutChange");
-}
+};
 
 TimeHistogram.prototype.FastRangeChange = function()
 {
   // Select our time window so it's compatible with the 
   // TDC bounds
   gZoomRegion.changeTimeRange(
-              Math.max(this.min_u, gRecord.header.TDCStart)
-            , Math.min(this.max_u, gRecord.header.TDCEnd )
+              Math.max(this.min_u, gRecord.header.TDCStart) ,
+              Math.min(this.max_u, gRecord.header.TDCEnd )
           );
   gStateMachine.Trigger("zoomChangeFast");
-}
+};
 
 
 TimeHistogram.prototype.Draw = function()
 {
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   HistCanvas.prototype.Draw.call(this);
-}
+};

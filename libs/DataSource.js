@@ -65,7 +65,7 @@ DataSource.prototype.NewRecord = function()
   var split2 = split1[0].split('?');
   var par = split2[1] || "";
   var path = window.location.pathname;
-  var fastpath = path+"fast"
+  var fastpath = path+"fast";
   
   if(path && path.match(/fast/)) {
     // Aleady fast.
@@ -84,12 +84,11 @@ DataSource.prototype.NewRecord = function()
    //                  // +"&slice="+gCurrentSlice
    //                  ;    
   $('#link-to-this-event').html(
-     '<a href="'+gUrlToThisEvent+'">Link to this event</a><br/>'
-    +'<a href="'+fasturl+'">Fast link to this event</a><br/>'
+     '<a href="'+gUrlToThisEvent+'">Link to this event</a><br/>'+
+     '<a href="'+fasturl+'">Fast link to this event</a><br/>'
   );
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Arachne Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
-  
-}                                         
+};
 
 
 function DoNextEvent()

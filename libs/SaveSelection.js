@@ -10,7 +10,7 @@ $(function(){
 
 
 // Subclass of Pad.
-SaveSelection.prototype = new ABoundObject;           
+SaveSelection.prototype = new ABoundObject();
 
 function SaveSelection( element )
 {
@@ -43,7 +43,7 @@ SaveSelection.prototype.NewRecord = function()
   this.hits = [];
   $(this.text_element).html("hits: " + this.hits.length);
   
-}
+};
 
 SaveSelection.prototype.AddHit = function(hit)
 {
@@ -51,14 +51,14 @@ SaveSelection.prototype.AddHit = function(hit)
   removeA(this.hits,hit);
   this.hits.push(hit);
   $(this.text_element).html("hits: " + this.hits.length);
-}
+};
 
 SaveSelection.prototype.RemoveHit = function(hit)
 {
   delete hit.saveselection;
   removeA(this.hits,hit);
   $(this.text_element).html("hits: " + this.hits.length);
-}
+};
 
 
 SaveSelection.prototype.Do = function()
@@ -68,7 +68,7 @@ SaveSelection.prototype.Do = function()
   }
   var file = window.prompt("Filename to save in /uboone/data/users/tagg/argofeedback","blah.json");
   $.post("server/saveFile.cgi",{file:file,data:JSON.stringify(this.data)});
-}
+};
 
 function removeA(arr) {
     var what, a = arguments, L = a.length, ax;

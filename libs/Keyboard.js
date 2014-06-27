@@ -5,7 +5,7 @@
     $.fn.cycle_dropdown = function() { 
       var s = $("option:selected",this).last();
       var n = $(s).next();
-      if(n.length == 0) n = $("option",this).first();
+      if(n.length === 0) n = $("option",this).first();
       this.val(n.val());
       return this;
     }; 
@@ -82,11 +82,11 @@ $(function() {
         $('#ctl-ClusterLists').cycle_dropdown().trigger("change");
         return false;
 
-      case 101: 'e'
+      case 101: // 'e'
         $('#ctl-show-endpoint2d').click();
         return false;
         
-      case 69: 'E'
+      case 69: // 'E'
         $('#ctl-EndpointLists').cycle_dropdown().trigger("change");
         return false;
         
@@ -116,7 +116,7 @@ $(function() {
         
       case 122: // 'z'
         $('#ctl-mc-move-tzero').click();
-        return false
+        return false;
       
       case 103: //'g'
         $('#ctl-magnifying-glass').click();
@@ -167,20 +167,17 @@ $(function() {
     case 108:
       // l: logscale
       return $('#ctl-histo-logscale').click();
-      break;
-      
-      
-      case 80:
+            
+    case 80:
         // console.log("P:",event);
         DoPrint(gPortletHover);
         break;
         
-      case 76:
+    case 76:
         // shift-L: print everything.
         return DoPrint($('body'),true);
-        break;
         
-      default:
+    default:
         return true;
     }
   });

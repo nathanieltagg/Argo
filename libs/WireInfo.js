@@ -33,7 +33,7 @@ function WireInfo( element  )
   var element_settings = $(element).attr('settings');
   var element_settings_obj={};
   if(element_settings) {
-    eval( "var element_settings_obj = { " + element_settings + '};');; // override from 'settings' attribute of html object.
+    eval( "var element_settings_obj = { " + element_settings + '};'); // override from 'settings' attribute of html object.
     // console.log(element_settings, element_settings_obj);
     $.extend(true,this,element_settings_obj); // Change default settings by provided overrides.
   }
@@ -45,7 +45,7 @@ function WireInfo( element  )
   this.graph_data = [];
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     this.graph_data[i] = new Histogram(50,0,50); 
-  };
+  }
 
   this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
   this.graph.ResetDefaultRange();
@@ -77,10 +77,10 @@ WireInfo.prototype.NewRecord = function()
   if(gCurName.raw) this.raw_wire_img.src = gRecord.raw[gCurName.raw].wireimg_encoded_url;
   this.cal_wire_img.onload = function() {   // Callback when the png is actually there...
     self.MapCalData();
-  }
+  };
   this.raw_wire_img.onload = function() {   // Callback when the png is actually there...
     self.MapRawData();
-  }
+  };
 
 
   // // Experimental: used packed image, not the full one.
@@ -91,7 +91,7 @@ WireInfo.prototype.NewRecord = function()
   // this.packed_img.onload = function() {   // Callback when the png is actually there...
   //   self.MapPackedData();
   // }  
-}
+};
 
 WireInfo.prototype.MapCalData = function()
 {
@@ -104,7 +104,7 @@ WireInfo.prototype.MapCalData = function()
   this.cal_offscreenCtx.drawImage(this.cal_wire_img,0,0);
 
   this.Draw();  
-}
+};
 
 WireInfo.prototype.MapRawData = function()
 {
@@ -117,7 +117,7 @@ WireInfo.prototype.MapRawData = function()
   this.raw_offscreenCtx.drawImage(this.raw_wire_img,0,0);
 
   this.Draw();  
-}
+};
 
 
 function getEncodedPngVal(imgdata, x)
@@ -126,7 +126,7 @@ function getEncodedPngVal(imgdata, x)
   var r = imgdata.data[i*4];
   var g = imgdata.data[i*4+1];
   var b = imgdata.data[i*4+2];
-  return (r*256. + g ) - 0x8000;
+  return (r*256 + g ) - 0x8000;
 }
 
 
@@ -152,7 +152,7 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
     histogram.SetBinContent(i,getEncodedPngVal(imgdata,i));
   }
   
-}
+};
 
 WireInfo.prototype.Draw = function()
 {
@@ -161,7 +161,7 @@ WireInfo.prototype.Draw = function()
   var showgraph = false;
   var tdc =0;
   var chan=0;
-  var wire = 0;;
+  var wire = 0;
   var plane = 0;
   if(("channel" in gHoverState) && ("sample" in gHoverState)) {
     tdc = Math.max(Math.floor(gHoverState.sample),0);
@@ -225,7 +225,7 @@ WireInfo.prototype.Draw = function()
   
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     var c = i+chan;
-    var wire = plane+i;    
+    wire = plane+i;    
     if(c<0) continue;
     if(wire>maxwire) continue;
     this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
@@ -246,5 +246,5 @@ WireInfo.prototype.Draw = function()
   // this.graph.ResetToHist(this.graphdata);
   this.graph.Draw();
   
-}
+};
 
