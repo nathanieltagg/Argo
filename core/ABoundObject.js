@@ -32,7 +32,7 @@ function ClosestMatch( element, selector )
 function GetLocalControl( element, selector )
 {
   // Is there one in our portlet?
-  var p = $(element).closest('.portlet')
+  var p = $(element).closest('.portlet');
   if(p.length>0) {
     var c = $(selector,p.first());
     return c;
@@ -83,7 +83,7 @@ ABoundObject.prototype.Remove = function(ev)
   $(this.element) .off("."+this.NameSpace);
   $(this.window)  .off("."+this.NameSpace);
   $(this.document).off("."+this.NameSpace);
-}
+};
 
 //
 // Utility.
@@ -99,9 +99,7 @@ if (!Function.prototype.bind) {
         fToBind = this, 
         fNOP = function () {},
         fBound = function () {
-          return fToBind.apply(this instanceof fNOP && oThis
-                                 ? this
-                                 : oThis,
+          return fToBind.apply(this instanceof fNOP && oThis ? this : oThis,
                                aArgs.concat(Array.prototype.slice.call(arguments)));
         };
  

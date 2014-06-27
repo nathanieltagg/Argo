@@ -116,14 +116,14 @@ return {
       var dy = y2-y1;
       var d = Math.sqrt(dx*dx+dy*dy);
       var tx, ty;
-      if(d==0) {
+      if(d===0) {
         tx = 0;
         ty = width;
       } else {
        tx = width*dy/d;
        ty = -tx*dx/dy;
       }
-      if(dy==0) ty = width;
+      if(dy===0) ty = width;
       // console.log("do_outline",tx,ty);
       ctx.strokeStyle = outline_style;
       ctx.beginPath();
@@ -159,7 +159,7 @@ convexHull: function( points )
       }
   }
   var ch = [].concat(GeoUtils.buildConvexHull([minPt, maxPt], points),
-                     GeoUtils.buildConvexHull([maxPt, minPt], points))
+                     GeoUtils.buildConvexHull([maxPt, minPt], points));
   return ch;
 },
 
@@ -167,14 +167,14 @@ getDistant: function(cpt, bl)
 {
     var Vy = bl[1][0] - bl[0][0];
     var Vx = bl[0][1] - bl[1][1];
-    return (Vx * (cpt[0] - bl[0][0]) + Vy * (cpt[1] -bl[0][1]))
+    return (Vx * (cpt[0] - bl[0][0]) + Vy * (cpt[1] -bl[0][1]));
 },
 
 findMostDistantPointFromBaseLine: function(baseLine, points) 
 {
     var maxD = 0;
-    var maxPt = new Array();
-    var newPoints = new Array();
+    var maxPt = [];
+    var newPoints = [];
     for (var idx in points) {
         var pt = points[idx];
         var d = GeoUtils.getDistant(pt, baseLine);
@@ -191,13 +191,13 @@ findMostDistantPointFromBaseLine: function(baseLine, points)
         }
     
     } 
-    return {'maxPoint':maxPt, 'newPoints':newPoints}
+    return {'maxPoint':maxPt, 'newPoints':newPoints};
 },
 
 buildConvexHull: function(baseLine, points)
 {
     var allBaseLines = [];    
-    allBaseLines.push(baseLine)
+    allBaseLines.push(baseLine);
     var convexHullBaseLines = [];
     var t = GeoUtils.findMostDistantPointFromBaseLine(baseLine, points);
     if (t.maxPoint.length) { // if there is still a point "outside" the base line

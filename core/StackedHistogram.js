@@ -35,13 +35,13 @@ StackedHistogram.prototype.AddHist = function(label)
   this.histograms[label] = new Array(n);
   this.ClearHist(label);
   return this.histograms[label];
-}
+};
 
 StackedHistogram.prototype.ClearHist = function(label)
 {
   var h = this.histograms[label];
   for(var i=0;i<this.n;i++) h[i]=0;
-}
+};
 
 StackedHistogram.prototype.Fill = function(x,val,label) 
 {
@@ -69,11 +69,11 @@ StackedHistogram.prototype.Fill = function(x,val,label)
   var bintot = this.total[bin];
   if(bintot > this.max_content) this.max_content = bintot;
   if(bintot < this.min_content) this.min_content = bintot;      
-}
+};
   
     
 StackedHistogram.prototype.GetX = function(bin) 
 {
   return (bin/this.n)*(this.max-this.min) + this.min;
-}
+};
     

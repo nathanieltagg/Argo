@@ -87,12 +87,13 @@ function ReadLocalFile( par )
   
 function ReadLocalFileSuccess()
 {
+  var obj;
   try {
-    var obj = JSON.parse(gFileReader.result);
+    obj = JSON.parse(gFileReader.result);
   } catch (e) { 
     $.unblockUI();
     $('#status').attr('class', 'status-error').html("The file you loaded could not be parsed as json:</br>"+e);
-    return
+    return;
   }
   console.log("Got it:",obj);
   QuerySuccess(obj,null,null);
@@ -119,10 +120,10 @@ function QueryServer( par, myurl )
     
 
     // Default: do file-and-entry read from parameters. Should check for other options first.
-    data ={ filename:  par.filename  || "standard_reco_uboone.root"
-           ,selection: par.selection || 1
-           ,entry:     par.entry     || 0
-           ,options:   par.options   || opts
+    data ={ filename:  par.filename  || "standard_reco_uboone.root" ,
+            selection: par.selection || 1 ,
+            entry:     par.entry     || 0 ,
+            options:   par.options   || opts
          };
     
     
@@ -153,7 +154,7 @@ function QueryServer( par, myurl )
     $('#inXmlUrl').val(myurl+"?"+param);
 
     // gLastQueryType = querytype;
-    gServerRequestTime = (new Date).getTime();
+    gServerRequestTime = (new Date()).getTime();
 
     // Modify the cursor to show we're fetching.
     document.body.style.cursor='wait';
@@ -202,7 +203,7 @@ function QueryServer( par, myurl )
 function QueryFilter(data, type)
 {
   // This function is called before processing, I think: it might be used to do timing.
-  gServerResponseTime = (new Date).getTime();
+  gServerResponseTime = (new Date()).getTime();
   return data;
 }
 
@@ -230,7 +231,7 @@ function QuerySuccess(data,textStatus,jqxhr)
 {
   document.body.style.cursor='auto';
   $.unblockUI();
-  gClientParseTime = (new Date).getTime();
+  gClientParseTime = (new Date()).getTime();
   
   gjqXHR = jqxhr;
   gServing = null;
@@ -257,7 +258,7 @@ function QuerySuccess(data,textStatus,jqxhr)
     }
     gRecord = gServing.record;
     StartEvent();
-    gFinishedDrawTime = (new Date).getTime();
+    gFinishedDrawTime = (new Date()).getTime();
     DoPerformanceStats();
   } 
 }
@@ -279,7 +280,7 @@ function StartEvent()
   if(gRecord.source.entry) gEntry  = gRecord.source.entry;
   
   // Fill the title bar.
-  var file_short = gFile.replace(/^.*\/|\.[^.]*$/g, '')
+  var file_short = gFile.replace(/^.*\/|\.[^.]*$/g, '');
   window.document.title = "Argo: event "+gEntry + " in "+file_short;
   
   
@@ -300,11 +301,11 @@ function StartEvent()
   $("#status").text("Done!");
   $('#status').attr('class', 'status-ok');
 
-  console.log("     /.\                           ");
-  console.log("    // \\                          ");
-  console.log("   //...\\    '||''| .|''|, .|''|, ");
-  console.log("  //     \\    ||    ||  || ||  || ");
-  console.log(".//       \\. .||.   `|..|| `|..|' ");
+  console.log("     /.\\\                           ");
+  console.log("    // \\\\                          ");
+  console.log("   //...\\\\    '||''| .|''|, .|''|, ");
+  console.log("  //     \\\\    ||    ||  || ||  || ");
+  console.log(".//       \\\\. .||.   `|..|| `|..|' ");
   console.log("                         ||        ");
   console.log("                      `..|'        ");
   console.log("Cool, you know how to open the console. You should definately work on Argo with us. --Nathaniel");
@@ -331,19 +332,19 @@ function DoPerformanceStats()
   var t_draw = ( gFinishedDrawTime - gClientParseTime);
   
   $("#debuginfo").html(
-      "Time for backend to build JSON from disk: " + t_backend + "ms<br/>"
-    + "Time to transfer JSON over network: " + t_get + " ms<br/>"
-    + "Time to parse JSON on client: " + t_parse + " ms<br/>"
-    + "Time to build and draw event: " +  t_draw + " ms<br/>"
-    + "Backend: " + nserved + " events served, running unstopped for " + wallstring
+      "Time for backend to build JSON from disk: " + t_backend + "ms<br/>" +
+      "Time to transfer JSON over network: " + t_get + " ms<br/>" +
+      "Time to parse JSON on client: " + t_parse + " ms<br/>" +
+      "Time to build and draw event: " +  t_draw + " ms<br/>" +
+      "Backend: " + nserved + " events served, running unstopped for " + wallstring
    );
   var h = $('#debugbench').html();
-  h+= gEntry
-  + "   size: " + (gjqXHR?(gjqXHR.responseText.length):"unknown") + " bytes   " //+ gHits.length + " hits"
-  + "   backend: " + t_backend + " ms"
-  + "   get:" + t_get + " ms "
-  + "   parse:" + t_parse+ " ms "
-  + "   draw: " + t_draw + " ms <br/>";
+  h+= gEntry +
+      "   size: " + (gjqXHR?(gjqXHR.responseText.length):"unknown") + " bytes   " + // gHits.length + " hits" +
+      "   backend: " + t_backend + " ms" +
+      "   get:" + t_get + " ms " +
+      "   parse:" + t_parse+ " ms " +
+      "   draw: " + t_draw + " ms <br/>";
   $('#debugbench').html(h);
   
 }

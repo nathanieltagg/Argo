@@ -21,12 +21,12 @@
 function StateMachine()
 {
   this.state = 'initializing';
-  this.triggers = new Object;  
+  this.triggers = {};  
   this.eventQueue = [];
   this.eventExecuting = false;
 }
 
-gStateMachine = new StateMachine;
+gStateMachine = new StateMachine();
 
 //
 // ChangeState() : Use this to change the machine's state.
@@ -36,7 +36,7 @@ StateMachine.prototype.ChangeState = function( newstate )
 {  
   this.state = newstate;
   this.Trigger('statechange');
-}
+};
 
 //
 // AddCallback() : Add a new callback.
@@ -48,7 +48,7 @@ StateMachine.prototype.Bind = function( trigType, callback )
   
   if(!(trigType in this.triggers)) this.triggers[trigType] = [];
   this.triggers[trigType].push(callback);
-}
+};
 
 
 //
@@ -61,7 +61,7 @@ StateMachine.prototype.BindObj = function( trigType, obj, callback )
   
   if(!(trigType in this.triggers)) this.triggers[trigType] = [];
   this.triggers[trigType].push(function(){return obj[callback]();});
-}
+};
 
 //
 //  Trigger() : call all registered callbacks.
@@ -81,7 +81,7 @@ StateMachine.prototype.SimplifyQueue = function(  )
     if(add>0) newlist.push(this.eventQueue[i]);
   }
   this.eventQueue = newlist;
-}
+};
 
 StateMachine.prototype.Trigger = function( trigType )
 {
@@ -100,7 +100,7 @@ StateMachine.prototype.Trigger = function( trigType )
   this.eventQueue.push(trigType);
 
   if(this.eventExecuting) {
-    console.log("Pushing " + trigType + " into event queue for delayed execution.")
+    console.log("Pushing " + trigType + " into event queue for delayed execution.");
     // We're already in the midst of doing things. Queue this trigger to fire when we're done.
     // console.log('StateMachine::Trigger -> '+trigType+' QUEUED FOR LATER EXECUTION');
     return;
@@ -131,7 +131,7 @@ StateMachine.prototype.Trigger = function( trigType )
       cb();
       // console.timeEnd("Trigger"+i);
     }
-    console.timeEnd("StateMachine::Trigger -> "+t)
+    console.timeEnd("StateMachine::Trigger -> "+t);
 
     //sconsole.profileEnd();
 
@@ -140,5 +140,5 @@ StateMachine.prototype.Trigger = function( trigType )
   this.eventExecuting = false;
   
   return 0;
-}
+};
 

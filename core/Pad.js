@@ -174,7 +174,7 @@ Pad.prototype.SetMagnify = function()
   //     self.Draw();
   // });
     
-}
+};
 
 
 Pad.prototype.MouseCallBack = function(ev,scrollDist)
@@ -221,7 +221,7 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
 
   if(this.dirty) this.Draw();
   return bubble;
-}
+};
 
 
 Pad.prototype.Resize = function()
@@ -257,7 +257,7 @@ Pad.prototype.Resize = function()
 
   this.span_x = width-this.margin_right -this.origin_x;
   this.span_y = this.origin_y-this.margin_top;
-}
+};
 
 Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale ) 
 {
@@ -269,7 +269,8 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
   // Gives a number between 1 and 9.999
   var sigfigs = 1;
   var goodTickWidth = dumbTickWidth;
-
+  var i,retval;
+  
   if (logscale === false)
    {
       if (abcissa < 2.5) {
@@ -283,8 +284,8 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
 
       var x = Math.ceil(min / goodTickWidth) * goodTickWidth;
       // console.warn("goodticks: goodTickWidth = ",goodTickWidth,multiplier);
-      var retval = new Array(0);
-      var i = 0;
+      retval = new Array(0);
+      i = 0;
       while (x < max) {
           retval[i] = ((x*10000).toFixed(0)/10000); // Limit to 4 decimal places, to keep from gettting things like 2.2000000001
           // console.log("goodticks " + i + " " + retval[i]);
@@ -301,16 +302,16 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
       var width = 1;
       // console.log(low10,high10,width,maxticks,width);
       while (((high10 - low10) / width) > maxticks) width += 1;
-      var retval = [];
+      retval = [];
       var p = low10;
-      var i = 0;
+      i = 0;
       while (p < high10) {
           retval[i++] = Math.pow(10, p);
           p += width;
       }
       return retval;
   }
-}
+};
 
 Pad.prototype.GetGoodTicksTime = function( min, max, maxticks, logscale ) 
 {
@@ -326,7 +327,7 @@ Pad.prototype.GetGoodTicksTime = function( min, max, maxticks, logscale )
   var ticks = this.GetGoodTicks(min/scale,max/scale,maxticks,logscale);
   for(var i=0;i<ticks.length;i++) ticks[i]*=scale;
   return ticks;
-}
+};
 
 
 
@@ -337,7 +338,7 @@ Pad.prototype.Clear = function()
   if (!this.ctx) return;
   this.ctx.fillStyle = "rgb("+this.bg_color+")";
   this.ctx.fillRect(0,0,this.width,this.height);
-}
+};
 
 Pad.prototype.DrawFrame = function()
 {
@@ -363,7 +364,7 @@ Pad.prototype.DrawFrame = function()
       this.ctx.lineTo(this.origin_x+this.span_x, this.origin_y);
       this.ctx.lineTo(this.origin_x+this.span_x, this.origin_y-this.span_y);
       this.ctx.lineTo(this.origin_x,             this.origin_y-this.span_y);
-      this.ctx.lineTo(this.origin_x,             this.origin_y)
+      this.ctx.lineTo(this.origin_x,             this.origin_y);
       this.ctx.stroke();      
     }
     
@@ -390,20 +391,20 @@ Pad.prototype.DrawFrame = function()
     }
 
 
-
+    var tickLen = 8;
+    var ticks, nt, i;
+    
     if(this.draw_ticks_x || this.draw_tick_labels_x || this.draw_grid_x)
     {
       // Do the X-axis.
-      var tickLen = 8;
       this.ctx.font = this.tick_label_font;
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'top';
-      var ticks;
       if(this.time_on_x) {ticks = this.GetGoodTicksTime(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false); }
       else               ticks = this.GetGoodTicks(this.min_u, this.max_u, Math.round(this.span_x/this.tick_pixels_x), false);
       //console.log(this.fName + " " + ticks + " " + this.min_u + " " + this.max_u);
-      var nt = ticks.length;
-      for( var i=0;i<nt;i++) {
+      nt = ticks.length;
+      for(i=0;i<nt;i++) {
         var ttick = ticks[i];
         var x = this.GetX(ttick);
         if(this.draw_grid_x) {
@@ -435,13 +436,12 @@ Pad.prototype.DrawFrame = function()
     if(this.draw_ticks_y || this.draw_tick_labels_y || this.draw_grid_y)
     {
       // Draw Y ticks
-      var tickLen = 8;
       this.ctx.font = this.tick_label_font;
       this.ctx.textAlign = 'right';
       this.ctx.textBaseline = 'middle';
-      var ticks = this.GetGoodTicks(this.min_v, this.max_v, Math.round(this.span_y/this.tick_pixels_y), this.log_y);
-      var nt = ticks.length;
-      for( var i=0;i<nt;i++) {
+      ticks = this.GetGoodTicks(this.min_v, this.max_v, Math.round(this.span_y/this.tick_pixels_y), this.log_y);
+      nt = ticks.length;
+      for( i=0;i<nt;i++) {
         var ftick = ticks[i];
         var y = this.GetY(ftick);
         if($('#ctl-show-tick-labels').is(':checked')) {
@@ -465,34 +465,34 @@ Pad.prototype.DrawFrame = function()
         }        
      }
   }  
-}
+};
 
 Pad.prototype.Draw = function()
 {
   this.Clear();
   this.DrawFrame();
-}
+};
 
 
 Pad.prototype.GetX = function( u ) 
 {
   return this.origin_x + this.span_x*(u-this.min_u)/(this.max_u-this.min_u);
-}
+};
 
 Pad.prototype.GetY = function( v ) 
 {
   return this.origin_y - this.span_y*(v-this.min_v)/(this.max_v-this.min_v);
-}
+};
 
 Pad.prototype.GetU = function( x ) 
 {
   return (x-this.origin_x)/this.span_x*(this.max_u-this.min_u) + this.min_u;
-}
+};
 
 Pad.prototype.GetV = function( y ) 
 {
   return (this.origin_y-y)/this.span_y*(this.max_v-this.min_v) + this.min_v;
-}
+};
 
 Pad.prototype.PrintHQ = function()
 {
@@ -528,7 +528,7 @@ Pad.prototype.PrintHQ = function()
   
   // nuke buffer.
   // document.removeChild(canvas); // Doesn't work. Is this thing a memory leak? I don't think so - I htink the canvas vanishes when it goes out of scope.
-}
+};
 
 
 
@@ -579,16 +579,16 @@ Pad.prototype.MagnifierDraw = function(arg)
     this.DrawOne(umin,umax,vmin,vmax,arg);
     this.ctx.restore();
   } 
-}
+};
 
 Pad.prototype.DoMouse = function(ev)
 {
   // Override me to read the mouse position.
-}
+};
 
 Pad.prototype.DoMouseWheel = function(ev,dist)
 {
   // Override me to read the mouse position.
-}
+};
 
 

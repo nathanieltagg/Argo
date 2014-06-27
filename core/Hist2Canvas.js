@@ -86,7 +86,7 @@ function Hist2Canvas( element, options )
 Hist2Canvas.prototype.ResetDefaultRange = function()
 {
   this.ResetToHist(this.fHists[0]);
-}
+};
 
 
 Hist2Canvas.prototype.Draw = function()
@@ -96,11 +96,11 @@ Hist2Canvas.prototype.Draw = function()
   this.DrawFrame();
   this.DrawRegions();
   this.DrawHists();
-}
+};
 
 Hist2Canvas.prototype.DrawRegions = function()
 {
-}
+};
 
 
 Hist2Canvas.prototype.SetHist = function( inHist, inColorScale )
@@ -112,14 +112,14 @@ Hist2Canvas.prototype.SetHist = function( inHist, inColorScale )
   this.min_v =inHist.min_content;                // minimum value shown on Y-axis
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
   this.FinishRangeChange();
-}
+};
 
 Hist2Canvas.prototype.ResetToHist = function( inHist ) {
   this.min_u = inHist.min_x;
   this.max_u = inHist.max_x;
   this.min_v = inHist.min_y;
   this.max_v = inHist.max_y;
-}
+};
 
 
 Hist2Canvas.prototype.GetY = function( f ) 
@@ -128,7 +128,7 @@ Hist2Canvas.prototype.GetY = function( f )
     return this.origin_y - this.adjunct_height - this.span_y*(f-this.min_v)/(this.max_v-this.min_v);
   }
   return this.origin_y - this.adjunct_height - this.span_y*(Math.log(f)-Math.log(this.min_v))/(Math.log(this.max_v)-Math.log(this.min_v));
-}
+};
 
 
 
@@ -173,7 +173,7 @@ Hist2Canvas.prototype.DrawHists = function( )
    }
  }
    
-}    
+};    
 
 function getAbsolutePosition(element) {
    var r = { x: element.offsetLeft, y: element.offsetTop };
@@ -183,7 +183,7 @@ function getAbsolutePosition(element) {
      r.y += tmp.y;
    }
    return r;
- };
+}
 
 
 Hist2Canvas.prototype.ChangeRange = function( minu,maxu )
@@ -198,43 +198,43 @@ Hist2Canvas.prototype.ChangeRange = function( minu,maxu )
 
   this.Draw();  
   this.FastRangeChange();
-}
+};
 
 Hist2Canvas.prototype.FinishRangeChange = function()
-{}
+{};
 
 Hist2Canvas.prototype.FastRangeChange = function()
-{}
+{};
 
 Hist2Canvas.prototype.DoMouse = function( ev )
 {
+  var x = ev.pageX;
+  var y = ev.pageY;
+  var offset = getAbsolutePosition(this.canvas);
+  var relx = x - offset.x;
+  var rely = y - offset.y;    
+
   if(ev.type === 'mousedown') {
     //logclear();
     //console.log("begin drag");
     // Find the position of the drag start - is this in the horizontal scale or the body?
-    var x = ev.pageX;
-    var y = ev.pageY;
-    var offset = getAbsolutePosition(this.canvas);
-    var relx = x - offset.x;
-    var rely = y - offset.y;    
     this.fDragStartX = x;
     this.fDragStartT = (relx - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
     if(rely < this.origin_y && relx > this.origin_x) {
       this.fIsBeingDragged = true;
       this.fDragMode = "shiftX";
-      console.log("body drag")      
+      console.log("body drag");      
     } else if(relx > this.origin_x + 5 ) {
       // Note that this is capped at 5 pixels from the origin, for saftey. 
       this.fIsBeingDragged = true;
       this.fDragMode = "scaleX";
-      console.log("scale drag" + this.fDragStartT)
+      console.log("scale drag" + this.fDragStartT);
     } 
   } else {
     // Either mousemove or mouseup.
     if(this.fIsBeingDragged !== true) return true; // Not a handled event.
     if(this.fDragMode === "shiftX") {
       // find current magnitude of the shift.
-      var x = ev.pageX;
       var deltaX = x - this.fDragStartX;
       var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x);
       this.fDragStartX = x;
@@ -242,9 +242,7 @@ Hist2Canvas.prototype.DoMouse = function( ev )
     }
     if(this.fDragMode === "scaleX") {
       // Find the new scale factor.
-      var x = ev.pageX;
-      var offset = getAbsolutePosition(this.canvas);
-      var relx = x - offset.x - this.origin_x;
+      relx = x - offset.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
@@ -263,13 +261,13 @@ Hist2Canvas.prototype.DoMouse = function( ev )
     this.FinishRangeChange();
   }  
   return false; // Handled.
-} 
+}; 
 
 Hist2Canvas.prototype.DoTouch = function( ev )
 {
-  var t1 = new Date().getTime();
-  console.log(ev.type + " " + (t1-this.touchtime));
-  this.touchtime = t1;
+  var tt = new Date().getTime();
+  console.log(ev.type + " " + (tt-this.touchtime));
+  this.touchtime = tt;
   if(ev.type === 'touchend' && this.fIsBeingDragged) {
     // Mouseup - finish what you're doing.
     
@@ -326,14 +324,14 @@ Hist2Canvas.prototype.DoTouch = function( ev )
       console.log("doing 1-touch");
       // Anything else, find smallest shift.
       var deltaX = 99999;
-      for(var i=0;i<this.lastTouch.length;i++) {
+      for(i=0;i<this.lastTouch.length;i++) {
         for(var j=0;j<touch.length;j++) {
           dx = touch[j].x - this.lastTouch[i].x;
           if(Math.abs(dx) < Math.abs(deltaX)) deltaX = dx;
         }
       }
       if(deltaX < 99999){
-        var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x)
+        var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x);
         console.log("delta t:"+deltaT);
         this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
       }
@@ -343,6 +341,6 @@ Hist2Canvas.prototype.DoTouch = function( ev )
   this.lastTouch = touch;
   return true;
 
-}
+};
 
 

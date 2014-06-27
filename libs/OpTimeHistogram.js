@@ -12,13 +12,13 @@ var gOpTimeHistogram = null;
 var gOpDetColorScaler = new ColorScaler("CurtColorPalette");
 var gOpDetMode = {
   variable      : "peakTime",
-  variableScale : 1/1000.,
+  variableScale : 1/1000,
   variableName  : "Time (µs)",
   cut           : {min: -1e99, max: 1e99},
   weight        : "pe",
   weightName    : "Photoelectrons",
   
-}
+};
 
 
 
@@ -60,7 +60,7 @@ function OpTimeHistogram( element  )
   this.input = "ophits"; 
 
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
 }
 
@@ -68,6 +68,9 @@ function OpTimeHistogram( element  )
 
 OpTimeHistogram.prototype.NewRecord = function()
 {
+  var tmin = 1e99;
+  var tmax = -1e99;
+  var i, width, nbins, p;
   if(gOphitsListName && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length>0) {
     this.input = "ophits"; 
 
@@ -75,25 +78,24 @@ OpTimeHistogram.prototype.NewRecord = function()
     this.ylabel = gOpDetMode.weightName;
     var ophits = gRecord.ophits[gOphitsListName];
     if(!ophits) return; // Zero-length.
-    if(ophits.length==0) return;
+    if(ophits.length===0) return;
     // First run through to get limits.
-    var tmin = 1e99;
-    var tmax = -1e99;
-    for(var i=0;i<ophits.length;i++) {
-      var oh = ophits[i];
+    var  oh;
+    for(i=0;i<ophits.length;i++) {
+      oh = ophits[i];
       var t = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
       if(t>tmax) tmax = t;
       if(t<tmin) tmin = t;
     }
-    var width = tmax-tmin;
+    width = tmax-tmin;
     tmin -= width*0.05;
     tmax += width*0.05;
-    var nbins = Math.floor((tmax-tmin));
+    nbins = Math.floor((tmax-tmin));
     while(nbins>100) nbins = Math.floor(nbins/2);
   
     this.hist = new Histogram(nbins,tmin,tmax);
-    for(var i=0;i<ophits.length;i++) {
-      var oh = ophits[i];
+    for(i=0;i<ophits.length;i++) {
+      oh = ophits[i];
       if(gOpDetMode.weight != 1)
         this.hist.Fill(oh[gOpDetMode.variable]*gOpDetMode.variableScale,oh[gOpDetMode.weight]);
       else  
@@ -107,27 +109,27 @@ OpTimeHistogram.prototype.NewRecord = function()
     this.ylabel = "Pulse";
     var oppulses = gRecord.oppulses[gOpPulsesListName];
     if(!oppulses) return; // Zero-length.
-    if(oppulses.length==0) return;
+    if(oppulses.length===0) return;
     gOpDetMode.variable = "peakTime";
     gOpDetMode.variableScale = 1;
     // First run through to get limits.
-    var tmin = 1e99;
-    var tmax = -1e99;
-    for(var i=0;i<oppulses.length;i++) {
-      var p = oppulses[i];
+    tmin = 1e99;
+    tmax = -1e99;
+    for(i=0;i<oppulses.length;i++) {
+      p = oppulses[i];
       var t1 = p.tdc;
       if(t1<tmin) tmin = t1;
       var t2 = t1 + p.samples;
       if(t2 > tmax) tmax = t2;
     }
-    var width = tmax-tmin;
+    width = tmax-tmin;
     tmin -= width*0.05;
     tmax += width*0.05;
-    var nbins = Math.floor((tmax-tmin));
+    nbins = Math.floor((tmax-tmin));
     while(nbins>200) nbins = Math.floor(nbins/2);
     this.hist = new Histogram(nbins,tmin,tmax);
-    for(var i=0;i<oppulses.length;i++) {
-      var p = oppulses[i];
+    for(i=0;i<oppulses.length;i++) {
+      p = oppulses[i];
       for(var s = 0; s<p.waveform.length; s++) {
         var adc = p.waveform[s];
         if(adc>0) this.hist.Fill ( p.tdc + s, adc );
@@ -146,21 +148,22 @@ OpTimeHistogram.prototype.NewRecord = function()
   gOpDetMode.cut.max = tmax;
   
   this.Draw();
-}
+};
 
 OpTimeHistogram.prototype.HoverChange = function()
 {
-  if(  (gHoverState.type == "opdet") 
-     ||(gHoverState.type == "opflash")
-     ||(gHoverState.last.type == "opdet") 
-     ||(gHoverState.last.type == "opflash") ) this.Draw();
-}
+  if(  (gHoverState.type == "opdet")  ||
+       (gHoverState.type == "opflash") ||
+       (gHoverState.last.type == "opdet")  ||
+       (gHoverState.last.type == "opflash") ) this.Draw();
+};
 
 
 OpTimeHistogram.prototype.Draw = function( )
 {
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
+  var i;
   if(this.hist) {
     if(gHoverState.type == "opdet") {
       this.SetHist(this.hist,this.blandColorScale);
@@ -169,7 +172,7 @@ OpTimeHistogram.prototype.Draw = function( )
       
       if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length) {
         var ophits = gRecord.ophits[gOphitsListName];
-        for(var i=0;i<ophits.length;i++) {
+        for(i=0;i<ophits.length;i++) {
           var oh = ophits[i];
           if(oh.opDetChan == gHoverState.obj.chan) {
             if(gOpDetMode.weight != 1)
@@ -182,7 +185,7 @@ OpTimeHistogram.prototype.Draw = function( )
         
         var oppulses = gRecord.oppulses[gOpPulsesListName];      
         if(oppulses && oppulses.length) {
-          for(var i=0;i<oppulses.length;i++) {
+          for(i=0;i<oppulses.length;i++) {
             var p = oppulses[i];
             if(p.opDetChan == gHoverState.obj.chan) {
               for(var s = 0; s<p.waveform.length; s++) {
@@ -203,14 +206,14 @@ OpTimeHistogram.prototype.Draw = function( )
   
   HistCanvas.prototype.Draw.call(this);
   
-}
+};
 
 OpTimeHistogram.prototype.ChangeRange = function( minu,maxu )
 {
   gOpDetColorScaler.min = minu;
   gOpDetColorScaler.max = maxu;  
   HistCanvas.prototype.ChangeRange.call(this,minu,maxu);
-}
+};
 
 OpTimeHistogram.prototype.FinishRangeChange = function()
 {
@@ -218,8 +221,8 @@ OpTimeHistogram.prototype.FinishRangeChange = function()
   gOpDetMode.cut.min = this.min_u;
   gOpDetMode.cut.max = this.max_u;
 
-  gStateMachine.Trigger('opHitScaleChange')
-}
+  gStateMachine.Trigger('opHitScaleChange');
+};
 
 
 

@@ -12,7 +12,7 @@ $(function(){
 
 
 // Subclass of Pad.
-MRI.prototype = new ButtressedPad;           
+MRI.prototype = new ButtressedPad(); 
 
 function MRI( element, options )
 {
@@ -189,7 +189,7 @@ MRI.prototype.ZoomChange = function()
   );
   this.Resize();
   this.Draw();
-}
+};
 
 
 
@@ -199,7 +199,7 @@ MRI.prototype.NewRecord = function()
   gHitsListName = $("#ctl-HitLists").val();
   if(!gHitsListName) return;
   var inhits = gRecord.hits[gHitsListName];
-  if(inhits.length==0) return;
+  if(inhits.length===0) return;
   
   // Get calibration
   this.t0 = [gGeo.getTDCofX(0,0),gGeo.getTDCofX(1,0),gGeo.getTDCofX(2,0)];
@@ -218,7 +218,7 @@ MRI.prototype.NewRecord = function()
   this.t[0] = this.hits[imid].tc;
   this.t[1] = this.t[0]+d;
   this.ChangeT();
-}
+};
 
 MRI.prototype.ChangeTends = function(values)
 {
@@ -233,7 +233,7 @@ MRI.prototype.ChangeTends = function(values)
   // console.log("left,right:",left,right);
   //$(".ui-slider-handle",this.slider_grip).css("width",right-left);
   this.ChangeT();
-}
+};
 
 MRI.prototype.ChangeTwindow = function( value )
 {
@@ -242,7 +242,7 @@ MRI.prototype.ChangeTwindow = function( value )
   this.slider_ends.slider('values',0,this.t[0]);
   this.slider_ends.slider('values',1,this.t[1]);
   this.ChangeT();
-}
+};
 
 MRI.prototype.ChangeTgrip = function( value )
 {
@@ -255,7 +255,7 @@ MRI.prototype.ChangeTgrip = function( value )
   this.slider_window_size.slider('value',d);
   
   this.ChangeT();
-}
+};
 
 
 MRI.prototype.ChangeT = function( )
@@ -271,9 +271,9 @@ MRI.prototype.ChangeT = function( )
   if(this.t[0] != this.slider_grip.slider('value')) { this.slider_grip.slider('value',this.t[0]); }
   
   this.Draw();
-  gStateMachine.Trigger("changeMRIslice")
+  gStateMachine.Trigger("changeMRIslice");
   
-}
+};
 
 MRI.prototype.DrawTracks = function()
 {
@@ -309,7 +309,7 @@ MRI.prototype.DrawTracks = function()
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
       this.ctx.beginPath();
       this.ctx.moveTo(pts[0][0],pts[0][1]);
-      for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+      for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
       this.ctx.stroke();
       this.ctx.lineWidth =2;
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
@@ -323,18 +323,18 @@ MRI.prototype.DrawTracks = function()
     // Draw it.
     this.ctx.beginPath();
     this.ctx.moveTo(pts[0][0],pts[0][1]);
-    for(var j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+    for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
     this.ctx.stroke();
 
 
     // for mouseovering
-    for(var j=1;j<pts.length;j++) 
+    for(j=1;j<pts.length;j++) 
       this.mouseable.push({type:"track", x1:pts[j-1][0], x2:pts[j][0], y1:pts[j-1][1], y2:pts[j][1], r:this.ctx.lineWidth, obj: trk});
 
     this.ctx.stroke();
   }
   this.ctx.restore();
-}
+};
 
 MRI.prototype.DrawHits = function()
 {
@@ -344,20 +344,22 @@ MRI.prototype.DrawHits = function()
   var nwires_x = (this.max_u-this.min_u)/0.3;
   this.ctx.lineWidth = this.span_x / nwires_x;
   var hoverVisHit = null;
+  var x1,x2,y1,y2;
+  var h, gw;
   for(var i=0;i<this.hits.length;i++) {
-    var h = this.hits[i];
+    h = this.hits[i];
     if(h.tc<this.t[0]) continue;
     if(h.tc>this.t[1]) break;
     var c = h.h[field];
     if(c<gHitCut.min) continue;
     if(c>gHitCut.max) continue;
-    var gw = gGeo.getWire(h.h.plane,h.h.wire);
+    gw = gGeo.getWire(h.h.plane,h.h.wire);
     this.ctx.strokeStyle = "rgba(" + gHitColorScaler.GetColor(c) +  ",0.6)";
     this.ctx.beginPath();
-    var x1 = this.GetX(gw.z1);
-    var y1 = this.GetY(gw.y1);
-    var x2 = this.GetX(gw.z2);
-    var y2 = this.GetY(gw.y2);
+    x1 = this.GetX(gw.z1);
+    y1 = this.GetY(gw.y1);
+    x2 = this.GetX(gw.z2);
+    y2 = this.GetY(gw.y2);
     this.ctx.moveTo(x1,y1);
     this.ctx.lineTo(x2,y2);
     this.ctx.stroke();
@@ -367,21 +369,21 @@ MRI.prototype.DrawHits = function()
     
   }
   if(hoverVisHit) {
-    var h = hoverVisHit;
-    var gw = gGeo.getWire(h.h.plane,h.h.wire);
+    h = hoverVisHit;
+    gw = gGeo.getWire(h.h.plane,h.h.wire);
     this.ctx.strokeStyle = "red";
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
-    var x1 = this.GetX(gw.z1);
-    var y1 = this.GetY(gw.y1);
-    var x2 = this.GetX(gw.z2);
-    var y2 = this.GetY(gw.y2);
+    x1 = this.GetX(gw.z1);
+    y1 = this.GetY(gw.y1);
+    x2 = this.GetX(gw.z2);
+    y2 = this.GetY(gw.y2);
     this.ctx.moveTo(x1,y1);
     this.ctx.lineTo(x2,y2);
     this.ctx.stroke();
     }
   
-}
+};
 
 MRI.prototype.DrawMyReco = function()
 {
@@ -412,7 +414,7 @@ MRI.prototype.DrawMyReco = function()
 
   }
   this.ctx.restore();
-}
+};
 
 
 
@@ -587,16 +589,16 @@ MRI.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   txt += "<span style='color: red'  >Plane 0: Wire " + Math.round(gZoomRegion.plane[0][0]) + " to " + Math.round(gZoomRegion.plane[0][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: green'>Plane 1: Wire " + Math.round(gZoomRegion.plane[1][0]) + " to " + Math.round(gZoomRegion.plane[1][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: blue' >Plane 2: Wire " + Math.round(gZoomRegion.plane[2][0]) + " to " + Math.round(gZoomRegion.plane[2][1]) + "</span>&nbsp;&nbsp;";
-  txt += "<br/>"
+  txt += "<br/>";
   if(this.fMousing) {
-    txt += "<span style='color:black'>Mouse:</span> "
-        +"<span style='color: red'  >"+this.fMousedWires[0]+'</span> '
-        +"<span style='color: green'>"+this.fMousedWires[1]+'</span> '
-        +"<span style='color: blue' >"+this.fMousedWires[2]+'</span> ';
+    txt += "<span style='color:black'>Mouse:</span> " +
+        "<span style='color: red'  >"+this.fMousedWires[0]+'</span> ' +
+        "<span style='color: green'>"+this.fMousedWires[1]+'</span> ' +
+        "<span style='color: blue' >"+this.fMousedWires[2]+'</span> ';
   }
   $('span.MRI-Info').html(txt);
   
-}
+};
 
 MRI.prototype.DoMouse = function(ev)
 {
@@ -634,7 +636,8 @@ MRI.prototype.DoMouse = function(ev)
     case "yscale":       this.canvas.style.cursor = "n-resize"; break;
   }
 
-
+  var wirestart;
+  
   if(this.fDragging) {
       // Update new zoom position or extent...
     if(this.fMouseStart.area == "body"){
@@ -647,7 +650,7 @@ MRI.prototype.DoMouse = function(ev)
       
       // Translate this du/dv to wire number shift so we can rezoom.
       for(var plane = 0; plane<3; plane++) {
-        var wirestart = gGeo.yzToWire(plane,this.GetV(this.fMouseLast.y),this.GetU(this.fMouseLast.x));
+        wirestart = gGeo.yzToWire(plane,this.GetV(this.fMouseLast.y),this.GetU(this.fMouseLast.x));
         var wireend   = gGeo.yzToWire(plane,this.GetV(this.fMousePos.y),this.GetU(this.fMousePos.x));
         var dwire = wireend-wirestart;
         gZoomRegion.plane[plane][0]-= dwire; // move low limit
@@ -671,7 +674,7 @@ MRI.prototype.DoMouse = function(ev)
       if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
       var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
       var mid_u = (this.max_u + this.min_u)/2;
-      var wirestart = gGeo.yzToWire(1,new_max_v,mid_u);
+      wirestart = gGeo.yzToWire(1,new_max_v,mid_u);
       if(wirestart<gZoomRegion.plane[1][0]) wirestart = gZoomRegion.plane[1][0]+5;
       
       gZoomRegion.setLimits(1,gZoomRegion.plane[1][0],wirestart);
@@ -689,7 +692,7 @@ MRI.prototype.DoMouse = function(ev)
           {
             match = m;
             break;
-          };
+          }
       }
       if(ev.type=='click') {
         ChangeSelection(match);
@@ -722,4 +725,4 @@ MRI.prototype.DoMouse = function(ev)
     this.dirty=true; // Do a slow draw in this view.    
   } 
   
-}
+};

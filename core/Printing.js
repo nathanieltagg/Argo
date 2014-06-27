@@ -69,7 +69,7 @@ function DoPrint(objToPrint,execPrintOrder)
       // tags into IE.
       var jStyleDiv = $( "<div>" )      
                       .append(  $("link[rel='stylesheet']").clone() )
-                      .append(  $("style").clone() )
+                      .append(  $("style").clone() );
                       
       var jPrintDiv = $( "<div id='printDiv'>" )
                       .append($(objToPrint).clone());
@@ -105,12 +105,14 @@ function DoPrint(objToPrint,execPrintOrder)
       // Following code works well, but doesn't handle non-Pad canvases.
       // Let pads print themselves.
       var srcPads = $(".pad",objToPrint);
+      var img, dstCanvas;
+      
       for(var i=0;i<srcPads.length;i++) {
         console.log("Requesting high-quality print from ",srcPads.get(i));
         $(srcPads.get(i)).trigger("PrintHQ");
-        var img = gPrintBuffer;
-        var dstCanvas = $(".pad canvas",outDoc).get(0);
-        var scale = 100./gPrintScale;
+        img = gPrintBuffer;
+        dstCanvas = $(".pad canvas",outDoc).get(0);
+        var scale = 100/gPrintScale;
         $(dstCanvas).replaceWith("<img width='100%' height='100%' src='"+img+"' />");
         //$(dstCanvas).replaceWith("<img width='"+scale+"%' height='"+scale+"%' src='"+img+"' />");
         gPrintBuffer="";
@@ -118,11 +120,11 @@ function DoPrint(objToPrint,execPrintOrder)
 
       // Change remaining canvases into images. May not work.
       var srcCanvas = $("canvas",objToPrint).not(".pad canvas");
-      for(var i=0;i<srcCanvas.length;i++) {
+      for(i=0;i<srcCanvas.length;i++) {
         console.log("Looking at canvas",srcCanvas.get(i));
-        var img = srcCanvas.get(i).toDataURL("image/png");
+        img = srcCanvas.get(i).toDataURL("image/png");
         console.log("Created image");
-        var dstCanvas = $("canvas",outDoc).not(".pad canvas").get(0);
+        dstCanvas = $("canvas",outDoc).not(".pad canvas").get(0);
         console.log("Replacing canvas",dstCanvas);
         
         $(dstCanvas).replaceWith("<img src='"+img+"' />");

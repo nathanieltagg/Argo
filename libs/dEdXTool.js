@@ -38,7 +38,7 @@ UserTrackPoint.prototype.set_to_zoom_center = function ()
   this[1] = zoomCenter[1];
   this[2] = zoomCenter[2];
   this.tdc= tdc;
-}
+};
 
 UserTrackPoint.prototype.set_view_zoomhint = function (plane, wire, tdc)
 {
@@ -55,9 +55,9 @@ UserTrackPoint.prototype.set_view_zoomhint = function (plane, wire, tdc)
 
   this[0] += dwire[0];
   this[1] += dwire[1];
-  this[2] += dwire[2];
-  
-}
+  this[2] += dwire[2];  
+};
+
 UserTrackPoint.prototype.set_view = function (plane, wire, tdc)
 {
   // Move the view to suggest the zoom point.

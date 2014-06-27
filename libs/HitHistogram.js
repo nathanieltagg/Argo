@@ -14,7 +14,7 @@ var gHitCut = {
   field: "q",
   min: -1e99,
   max: 1e99
-}
+};
 
 
 
@@ -75,7 +75,7 @@ function HitHistogram( element  )
   $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
   $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); });
 }
 
@@ -91,7 +91,7 @@ HitHistogram.prototype.NewRecord = function()
       for(i=0; i<l;i+=1) 
         for(j in list[i]) o[j] = j;
       return o;
-  };
+  }
 
   var fields = unique(hits);
   $(this.ctl_hit_field ).empty();
@@ -101,7 +101,7 @@ HitHistogram.prototype.NewRecord = function()
   }
  $(this.ctl_hit_field ).val("q");
  this.BuildHistogram();
-}
+};
 
 HitHistogram.prototype.BuildHistogram = function()
 {
@@ -143,12 +143,12 @@ HitHistogram.prototype.BuildHistogram = function()
   gHitCut = gHitColorScaler;
   this.Draw();
   // gStateMachine.Trigger("hitChange");
-}
+};
 
 HitHistogram.prototype.HoverChange = function( )
 {
   if(gHoverState.type == "hit" || gHoverState.last.type == "hit") this.Draw();
-}
+};
 
 HitHistogram.prototype.Draw = function( )
 {
@@ -180,21 +180,21 @@ HitHistogram.prototype.Draw = function( )
   
   HistCanvas.prototype.Draw.call(this);
   
-}
+};
 
 HitHistogram.prototype.ChangeRange = function( minu,maxu )
 {
   HistCanvas.prototype.ChangeRange.call(this,minu,maxu);
   gHitColorScaler.min = this.min_u;
   gHitColorScaler.max = this.max_u;    
-}
+};
 
 
 HitHistogram.prototype.FastRangeChange = function()
 {
   gHitColorScaler.min = this.min_u;
   gHitColorScaler.max = this.max_u;    
-}
+};
 
 HitHistogram.prototype.FinishRangeChange = function()
 {
@@ -203,8 +203,8 @@ HitHistogram.prototype.FinishRangeChange = function()
   gHitCut.min = this.min_u;
   gHitCut.max = this.max_u;
 
-  gStateMachine.Trigger('hitChange')
-}
+  gStateMachine.Trigger('hitChange');
+};
 
 
 

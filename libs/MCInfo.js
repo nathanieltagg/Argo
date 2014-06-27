@@ -50,8 +50,8 @@ MCInfo.prototype.NewRecord = function()
     
     h+="<span>" +  incE.toFixed(3)  + " GeV  " + GetParticle(inter.fProbePDG) +"</span><br/>";
 
-    h+= "<span style='font-size: smaller'>" + InteractionCode[inter.fGint] + "("+inter.fGint+") / " 
-       + ScatterCode[inter.fGscatter] + "("+inter.fGscatter+")" + "</span>";
+    h+= "<span style='font-size: smaller'>" + InteractionCode[inter.fGint] + "("+inter.fGint+") / " +
+        ScatterCode[inter.fGscatter] + "("+inter.fGscatter+")" + "</span>";
     
     
     h += '<table border="0" class="mc-info" >';
@@ -79,7 +79,7 @@ MCInfo.prototype.NewRecord = function()
     var fss = [];
     for(var i =0; i< mc.particles.length; i++) {
       // console.log(mc.particles[i],mc.particles[i].fmother);
-      if(mc.particles[i].fmother==0) fss.push(mc.particles[i]);
+      if(mc.particles[i].fmother===0) fss.push(mc.particles[i]);
     }
     h+= "<table border='0' class='mc-fs'>";
     for(var j=0;j<fss.length;j++) {
@@ -94,22 +94,22 @@ MCInfo.prototype.NewRecord = function()
       var m = fs.fmass*1000;
       var ke = (etot - m);
       h+="<tr>";
-      h+="<td class='mc-fs-particle'>"
-        + GetParticle(fs.fpdgCode) 
-        + "</td><td class='mc-fs-energy'>"
-        + '<div class="collapsible-title" revealed="false">'
-        + "KE=" + ke.toFixed(1) + " MeV" 
-        + '</div>'
-         + '<div class="collapsible">'
-        + "  p=" + p.toFixed(1)  + " MeV/c<br/>"
-        + " px=" + px.toFixed(1) + " MeV/c<br/>"
-        + " py=" + py.toFixed(1) + " MeV/c<br/>"
-        + " pz=" + pz.toFixed(1) + " MeV/c<br/>"
-        + " E =" + etot.toFixed(1) + " MeV<br/>"
-        + " &theta;: " + (Math.acos(pz/p)*180/Math.PI).toFixed(1) +  "&deg;<br/>"
-        + " &phi;:   " + (Math.atan2(py,px)*180/Math.PI).toFixed(1) +  "&deg;<br/>"
-        + '</div>'
-        + "</td>";
+      h+="<td class='mc-fs-particle'>" +
+        GetParticle(fs.fpdgCode)  +
+        "</td><td class='mc-fs-energy'>" +
+        '<div class="collapsible-title" revealed="false">' +
+        "KE=" + ke.toFixed(1) + " MeV"  +
+        '</div>' +
+        '<div class="collapsible">' +
+        "  p=" + p.toFixed(1)  + " MeV/c<br/>" +
+        " px=" + px.toFixed(1) + " MeV/c<br/>" +
+        " py=" + py.toFixed(1) + " MeV/c<br/>" +
+        " pz=" + pz.toFixed(1) + " MeV/c<br/>" +
+        " E =" + etot.toFixed(1) + " MeV<br/>" +
+        " &theta;: " + (Math.acos(pz/p)*180/Math.PI).toFixed(1) +  "&deg;<br/>" +
+        " &phi;:   " + (Math.atan2(py,px)*180/Math.PI).toFixed(1) +  "&deg;<br/>" +
+        '</div>' +
+        "</td>";
       h+="</tr>";
     }
     h+= "</table>";
@@ -133,7 +133,7 @@ MCInfo.prototype.NewRecord = function()
       // alert("interaction " + $(ui.newHeader).attr('interaction')); // jQuery object, activated header
     });
 
-}
+};
 
 function overbar(a) { return "<span style='text-decoration: overline'>"+a+"</span>"; }
 
@@ -304,8 +304,8 @@ ChannelCode[2] = "Res";
 ChannelCode[3] = "DIS";
 ChannelCode[4] = "Coh &pi;";
 ChannelCode[5] = "AMNUGAMMA";
-ChannelCode[6] = "Inv &\mu; decay";
-ChannelCode[7] = "&\nu<sub>e</sub> elastic";
+ChannelCode[6] = "Inv &mu; decay";
+ChannelCode[7] = "&nu<sub>e</sub> elastic";
 ChannelCode[8] = "Unknown";
 
 CurrentCode = [];
@@ -356,8 +356,8 @@ function GetParticle(code)
      var A = Math.floor(code/10)%1000;
      var Z = Math.floor(code/10000)%1000;
      var el = ElementName[Z];
-     if(el == undefined) el = Z;
-     var p = "<sup>"+A+"</sup>"+el;
+     if(el === undefined) el = Z;
+     p = "<sup>"+A+"</sup>"+el;
      if(I>0) p += "<sup>*</sup>";
      return p;
    }
