@@ -1230,7 +1230,7 @@ void RecordComposer::composeMC()
     // However, I think the only thing in there we care about is the track number...?
 
     for(size_t i=0;i<v_mctruths.size();i++) {      
-      TTreeFormula ttf("tff",string(name+"obj.fPartList["+std::to_string(i)+"].ftrackId").c_str(),fTree);
+      TTreeFormula ttf("tff",string(name+"obj.fPartList["+std::to_string((long long)i)+"].ftrackId").c_str(),fTree);
       int npart = ttf.GetNdata();
       JsonArray trackids;
       for(int j = 0;j<npart; j++) {

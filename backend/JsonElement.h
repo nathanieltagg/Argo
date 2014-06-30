@@ -189,7 +189,7 @@ inline
 JsonArray::JsonArray(const std::vector<JsonObject>& in) :   fElements(0)
 {
   fixed();
-  typename std::vector<JsonObject>::const_iterator itr;
+  std::vector<JsonObject>::const_iterator itr;
   for ( itr = in.begin(); itr != in.end(); ++itr ) this->add(*itr);
 }
 
