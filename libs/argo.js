@@ -17,22 +17,20 @@
 // 'Main' scripts for argo.html
 // Used to be in 'head', but it was too unwieldly.
 //
-/*jshint laxcomma:true */
-
 
 // Global error handler: tell the user something good to do about it.
 window.onerror = function(arg1,arg2,arg3) {
   var subject = "Script error to report";
-  var body = "Script error: "+ escape(arg1) +
-             "\nfile: "+ escape(arg2) +
-             "\nline: " + escape(arg3) +
-             escape("\nFrom event:")+escape(gUrlToThisEvent) +
-             escape("\n Url: "+window.location) ;
+  var body = "Script error: "+ escape(arg1)
+            +"\nfile: "+ escape(arg2)
+            +"\nline: " + escape(arg3)
+            +escape("\nFrom event:")+escape(gUrlToThisEvent)
+            +escape("\n Url: "+window.location);
   var email = "<a href='mailto:ntagg@otterbein.edu?subject=" + subject + "&body="+body+"'>Send Bug Report</a>";
   $('#status').attr('class', 'status-error').html(
     "Script Error!<br/>"+arg1+" "+arg2+" line"+arg3 + "</br>" + email
   );  
-};
+}
 
 gPhColorScaler = new ColorScaler();
 gPhColorScaler.max=10;
@@ -137,7 +135,7 @@ $(function(){
   if(!isIOS()) {
     headers.each(function(){
       if($('#'+$(this).parents(".portlet:first").attr("id")+"-help-text").length>0)
-        $(this).prepend('<span class="ui-icon ui-icon-help"></span>');                             
+        $(this).prepend('<span class="ui-icon ui-icon-help"></span>')                             
     });
     headers.prepend('<span class="ui-icon ui-icon-print"></span>');                       
   }
@@ -354,7 +352,7 @@ $(function(){
       if(jQuery.inArray(this.id,  hidden_list)>=0) {should_be_hidden=true; this_portlet_is_configured=true;}
       if(jQuery.inArray(this.id,unhidden_list)>=0) {should_be_hidden=false; this_portlet_is_configured=true;}
 
-      if(this_portlet_is_configured===false) return;
+      if(this_portlet_is_configured==false) return;
 
       var ishidden = $(".portlet-content",this).is(":hidden");
       // console.log(this,"ishidden:"+ishidden,"should be hidden:"+should_be_hidden);
@@ -377,7 +375,7 @@ $(function(){
        if(!cval ) return;
        var list = cval.split(',');
        for(var i=list.length-1;i>=0;i--){
-         if(list[i]==="") continue;
+         if(list[i]=="") continue;
          // Move through the list backwards. For each item, remove it from it's current location and insert at the top of the list.
          $(this).prepend($('#'+list[i]));
          // Fire the element's dom-change callback
@@ -389,7 +387,7 @@ $(function(){
      // console.log("***RESTORING CONTROLS****");
       $(".saveable").each(function(){
         var val = $.cookie(slot+":"+this.id);
-        if(val!==null){
+        if(val!=null){
           // console.log("restoring:",this.id,val);
           var changed = false;
           if($(this).is(':checkbox')){
@@ -422,7 +420,7 @@ $(function(){
   // Clear all cookies.
   $("#ctl-restore-defaults").button().click(function(){
     var Cookies = $.cookie();
-    for (var key in Cookies) {
+    for (key in Cookies) {
       console.log("removing "+ key);
       $.removeCookie(key);
     }
@@ -458,9 +456,6 @@ $(function(){
 
 // So, not crazy, IF the data volume reduction is sufficient to increase speed.
 
-// Further notes: gzip makes it less attractive - data saving is not as dramatic, and 
-// the data format becomes less easy to use.
-
 var gHitArrayHeader = [];
 var gHitArray = [];
 
@@ -490,11 +485,11 @@ function convertHitsToArray()
   console.log("Length after  Array-izing:",string_of_array.length);
   
   console.time("parse_hits");
-   hits = JSON.parse(string_of_hits);
+  var hits = JSON.parse(string_of_hits);
   console.timeEnd("parse_hits");
 
   console.time("parse_array");
-   array = JSON.parse(string_of_array);
+  var array = JSON.parse(string_of_array);
   console.timeEnd("parse_array");
  
   
@@ -513,7 +508,7 @@ function convertArrayToHits()
     for(var j=0;j<gHitArrayHeader.length;j++) {
       hit[gHitArrayHeader[j]] = row[j];
     }
-    gRebuildHits.push(hit);
+    gRebuildHits.push(hit)
   }
   
   console.timeEnd("convertArrayToHits()");
