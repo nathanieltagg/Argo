@@ -38,7 +38,7 @@
 <!-- firebug lite, for debugging on random browswers. -->
 <!-- <script type='text/javascript' 
         src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
-<script type="text/javascript" ">
+<script type="text/javascript">
   if (window['loadFirebugConsole']) {
       window.loadFirebugConsole();
   } else {
