@@ -50,7 +50,7 @@ function GetUrlParameter( name )
   var regexS = "[\\?&]"+name+"=([^&#]*)";
   var regex = new RegExp( regexS );
   var results = regex.exec( window.location.href );
-  if( results === null )
+  if( results == null )
     return null;
   else
     return results[1];
@@ -280,7 +280,7 @@ $(function(){
   // Look at each portlet: this is a debugging check at page-load.
   $(".portlet").each(function(){
      var myid = this.id;
-     if(myid==="" || myid===null || myid===undefined) 
+     if(myid=="" || myid==null || myid==undefined) 
        console.warn("Did not define an ID for one of the porlets:",$(".portlet-header",this).text());
   });
   
