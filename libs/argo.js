@@ -72,7 +72,7 @@ function make_collapsibles(elem)
                                                       .toggleClass('ui-icon-triangle-1-s');
                            $(this).next().toggle();                       
                          })
-                         .filter("[revealed=false]")
+                         .filter("[data-revealed=false]")
                          .click();
 }
   

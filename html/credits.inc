@@ -1,5 +1,5 @@
-<table border="0" style="display:inline;"><tr>
-   <td><img src="images/Otterbein.png" width="100px" height="100px" /></td>
+<table style="display:inline; border:0;"><tr>
+   <td><img src="images/Otterbein.png" width="100" height="100" alt="logo"/></td>
    <td>
      Argo Event Display, Built and Maintained by <a href="http://faculty.otterbein.edu/NTagg">Nathaniel Tagg</a>,
        <a href="http://www.otterbein.edu">Otterbein College</a><br/>
@@ -9,7 +9,7 @@
      <p style="font-size: 0.875em">About the name <a href="http://en.wikipedia.org/wiki/Arachne">Arachne</a></p>
    </td>
    <td>
-     <img src="images/ublogo.jpg" height="100px" />
+     <img src="images/ublogo.jpg" height="100" alt="ublogo" />
    </td>
    </tr>
 </table>

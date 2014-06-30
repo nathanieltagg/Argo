@@ -31,8 +31,8 @@
         <div><input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" class="saveable show-wireimg" checked="checked"/><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>
         <div><b>(Shift-W)</b>
           <span class="align-right">
-          <input type="radio" id="ctl-show-wireimg-raw" value="raw" name="show-wireimg-type" class="saveable show-wireimg-raw"              ><label for="show-wireimg-raw">Raw</label>
-          <input type="radio" id="ctl-show-wireimg-cal" value="cal" name="show-wireimg-type" class="saveable show-wireimg-cal" checked><label for="show-wireimg-cal">Calibrated</label>
+          <input type="radio" id="ctl-show-wireimg-raw" value="raw" name="show-wireimg-type" class="saveable show-wireimg-raw"         /><label for="ctl-show-wireimg-raw">Raw</label>
+          <input type="radio" id="ctl-show-wireimg-cal" value="cal" name="show-wireimg-type" class="saveable show-wireimg-cal" checked />     <label for="ctl-show-wireimg-cal">Calibrated</label>
           </span>
           <div style="clear:both;"></div>
           </div>
