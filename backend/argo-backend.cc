@@ -145,6 +145,8 @@ int main(int argc, char **argv)
             cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
             _exit(0);
           }
+          
+          ResultComposer::events_served++;
         }
 
       }

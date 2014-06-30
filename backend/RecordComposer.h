@@ -8,6 +8,7 @@
 #include "TObject.h"
 #include <math.h>
 #include <vector>
+#include <memory>
 
 class TTree;
 class TreeElementLooter;

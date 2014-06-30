@@ -27,6 +27,8 @@ class ResultComposer
    TFile* rootfile;
    TTree* tree;
    JsonObject result;
+   
+   static UInt_t events_served;
 };
 
 

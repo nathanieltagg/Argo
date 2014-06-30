@@ -25,7 +25,7 @@
 
 using namespace std; 
 
-static UInt_t events_served = 0;
+UInt_t ResultComposer::events_served = 0;
 
 TTime  gTimeStart;
 
@@ -44,7 +44,6 @@ string ResultComposer::compose(
          Long64_t inStart,
          Long64_t inEnd )
 {
-  events_served++;
 
   // Test code to see what serve_event.cgi will do if the process hangs on an event.
   // if(events_served>2)
