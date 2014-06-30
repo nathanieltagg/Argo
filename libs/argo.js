@@ -52,7 +52,7 @@ function GetUrlParameter( name )
   var regexS = "[\\?&]"+name+"=([^&#]*)";
   var regex = new RegExp( regexS );
   var results = regex.exec( window.location.href );
-  if( results === null )
+  if( results == null )
     return null;
   else
     return results[1];
@@ -282,7 +282,7 @@ $(function(){
   // Look at each portlet: this is a debugging check at page-load.
   $(".portlet").each(function(){
      var myid = this.id;
-     if(myid==="" || myid===null || myid===undefined) 
+     if(myid=="" || myid==null || myid==undefined) 
        console.warn("Did not define an ID for one of the porlets:",$(".portlet-header",this).text());
   });
   
@@ -354,7 +354,7 @@ $(function(){
       if(jQuery.inArray(this.id,  hidden_list)>=0) {should_be_hidden=true; this_portlet_is_configured=true;}
       if(jQuery.inArray(this.id,unhidden_list)>=0) {should_be_hidden=false; this_portlet_is_configured=true;}
 
-      if(this_portlet_is_configured===false) return;
+      if(this_portlet_is_configured==false) return;
 
       var ishidden = $(".portlet-content",this).is(":hidden");
       // console.log(this,"ishidden:"+ishidden,"should be hidden:"+should_be_hidden);
@@ -377,7 +377,7 @@ $(function(){
        if(!cval ) return;
        var list = cval.split(',');
        for(var i=list.length-1;i>=0;i--){
-         if(list[i]==="") continue;
+         if(list[i]=="") continue;
          // Move through the list backwards. For each item, remove it from it's current location and insert at the top of the list.
          $(this).prepend($('#'+list[i]));
          // Fire the element's dom-change callback
@@ -389,7 +389,7 @@ $(function(){
      // console.log("***RESTORING CONTROLS****");
       $(".saveable").each(function(){
         var val = $.cookie(slot+":"+this.id);
-        if(val!==null){
+        if(val!=null){
           // console.log("restoring:",this.id,val);
           var changed = false;
           if($(this).is(':checkbox')){
