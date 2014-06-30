@@ -64,6 +64,7 @@ int main(int argc, char **argv)
   signal (SIGINT, TerminationHandler);
   signal (SIGHUP, TerminationHandler);
   signal (SIGTERM, TerminationHandler);
+  signal (SIGCHLD, SIG_IGN);  // Ignore when a child dies - don't need to wait() or waitpid()
     
   try{
 
@@ -122,23 +123,28 @@ int main(int argc, char **argv)
           cout << "    Selection:--" << selection << "--" << endl;
           cout << "    From:     --" << entrystart << " to " << entryend << endl;
           cout << "    Options:  --" << options << endl;
-
-          long t1 = gSystem->Now();
-          // Now do your stuff.
-          ResultComposer rc;
-          std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
-          xml.append("\n");
-          long t2 = gSystem->Now();
-          // Send it out.
-          ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
-          cout << "Request served." << endl;
-          long t3 = gSystem->Now();
           
-          ss->Close(client);
-          long t4 = gSystem->Now();
-          cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
+          // fork a process to cope.
+          pid_t pid = fork();
+          if(pid ==0) {
+            // Child process
+            std::cout << "Child process: " << getpid() << std::endl;
+            long t1 = gSystem->Now();
+            // Now do your stuff.
+            ResultComposer rc;           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
+            std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
+            xml.append("\n");
+            long t2 = gSystem->Now();
+            // Send it out.
+            ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
+            cout << "Request served." << endl;
+            long t3 = gSystem->Now();
           
-          // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
+            ss->Close(client);
+            long t4 = gSystem->Now();
+            cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
+            _exit(0);
+          }
         }
 
       }
