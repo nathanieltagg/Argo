@@ -97,7 +97,7 @@ MCInfo.prototype.NewRecord = function()
       h+="<td class='mc-fs-particle'>" +
         GetParticle(fs.fpdgCode)  +
         "</td><td class='mc-fs-energy'>" +
-        '<div class="collapsible-title" revealed="false">' +
+        '<div class="collapsible-title" data-revealed="false">' +
         "KE=" + ke.toFixed(1) + " MeV"  +
         '</div>' +
         '<div class="collapsible">' +
