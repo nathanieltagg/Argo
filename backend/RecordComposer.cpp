@@ -1514,8 +1514,6 @@ void RecordComposer::composeAssociations()
     assn_list[a_name].add(b_name,j_a_to_b);
     assn_list[b_name].add(a_name,j_b_to_a);
     onetimer.addto(fStats);
-
-    
   }
 
   // Add maps to output object.
