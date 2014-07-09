@@ -53,8 +53,7 @@ tmp/ColorMap.o      tmp/RootToJson.o        tmp/cencode.o \
 tmp/FormString.o    tmp/SocketServer.o \
 tmp/FormulaLooter.o tmp/Timer.o 	    tmp/crc32checksum.o\
 tmp/JsonElement.o   tmp/RecordComposer.o    tmp/TreeElementLooter.o \
-tmp/Cint.o \
-art_Persistency_Common_dict.o
+tmp/Cint.o 
 
 #Where to look for source files
 vpath %.cpp $(uboonedaq_datatypes_src)/datatypes
