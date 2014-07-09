@@ -7,6 +7,7 @@
   <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em> to avoid loading wires</p>
   Recent updates: <br/>
   <ul> 
+    <li> Backend now correctly parses all association objects! (July 7)</li>
     <li> Added length-scale in corner of WireViews (May 23)</li>
     <li> Attempted performance boost (May 10) - should load faster.</li>
     <li> Added decoder for Bruces' ROI-based recob::Wire </li>
