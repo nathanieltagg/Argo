@@ -57,6 +57,8 @@ public:
 
 MySocketServer* ss = 0;
 
+bool forking_ = false;
+
 int main(int argc, char **argv)
 {
   
@@ -125,7 +127,8 @@ int main(int argc, char **argv)
           cout << "    Options:  --" << options << endl;
           
           // fork a process to cope.
-          pid_t pid = fork();
+          pid_t pid = 0;
+          if(forking_) pid = fork();          
           if(pid ==0) {
             // Child process
             std::cout << "Child process: " << getpid() << std::endl;
@@ -143,7 +146,7 @@ int main(int argc, char **argv)
             ss->Close(client);
             long t4 = gSystem->Now();
             cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
-            _exit(0);
+            if(forking_) _exit(0);
           }
           
           ResultComposer::events_served++;
