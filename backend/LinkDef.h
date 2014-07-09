@@ -12,6 +12,7 @@
 #pragma link C++ class JsonObject+;
 #pragma link C++ class JsonArray+;
 
+#pragma link C++ class vector<vector<unsigned int> >+;
 #pragma link C++ function FormulaMakeElement;
 
 #pragma link C++ function FormulaMakeArray;

@@ -1,11 +1,16 @@
 CACHE MANIFEST
 
-# Cache manifest version 1.0
+CACHE:
+index.html
+argo.html
 
-CACHE
 
-#no cache
-
-NETWORK
+# Resources that require the user to be online.
+NETWORK:
 *
 
+FALLBACK:
+# thing fallback
+# If 'thing' resource is unavailable, instead load 'fallback'.
+# could be useful for jquery libraries, which are hosted at google
+local.css default_local.css

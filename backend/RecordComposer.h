@@ -62,6 +62,8 @@ public:
   // Monte carlo
   void  composeMC();
 
+  // Assns.
+  void  composeAssociations();
 
   // Utility functions.
   std::vector<std::string> findLeafOfType(std::string pattern);
