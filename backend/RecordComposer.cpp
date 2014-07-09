@@ -50,6 +50,8 @@ public:
   Timer t;
   TimeReporter(const std::string& name="") :fName(name), t() {};
   ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
+  
+  void addto(JsonObject& stats) { stats.add(fName,t.Count()); }
 };
 
 
@@ -238,7 +240,7 @@ void RecordComposer::composeHits()
     delete planeProfile[1];
     delete planeProfile[2];    
     hist_list.add(stripdots(name),hists);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   fOutput.add("hits",reco_list);
   fOutput.add("hit_hists",hist_list);
@@ -297,7 +299,7 @@ void RecordComposer::composeClusters()
       jClusters.add(jclus);
     }
     reco_list.add(stripdots(name),jClusters);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   } 
   fOutput.add("clusters",reco_list);
 }
@@ -333,7 +335,7 @@ void  RecordComposer::composeVertex2d()
       jlist.add(jpt);
     }
     reco_list.add(stripdots(name),jlist);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   } 
   fOutput.add("endpoint2d",reco_list);  
 }
@@ -373,7 +375,7 @@ void  RecordComposer::composeSpacepoints()
       jSpacepoints.add(jsp);
     }
     reco_list.add(stripdots(name),jSpacepoints);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }  
   fOutput.add("spacepoints",reco_list);
 }
@@ -431,7 +433,7 @@ void  RecordComposer::composeTracks()
     }
 
     reco_list.add(stripdots(name),jTracks);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }  
   fOutput.add("tracks",reco_list);
 
@@ -486,7 +488,7 @@ void  RecordComposer::composeOpFlashes()
       jOpFlashes.add(jflash);
     }
     reco_list.add(stripdots(name),jOpFlashes);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }   
   fOutput.add("opflashes",reco_list);
 }
@@ -562,7 +564,7 @@ void  RecordComposer::composeOpPulses()
     }
     
     reco_list.add(stripdots(name),joppulses);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   fOutput.add("oppulses",reco_list);
   
@@ -597,7 +599,7 @@ void  RecordComposer::composeOpHits()
     }
     
     reco_list.add(stripdots(name),jophits);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   fOutput.add("ophits",reco_list);
   
@@ -796,7 +798,7 @@ void RecordComposer::composeCal()
     if(roiLooter)    delete roiLooter;
     
     reco_list.add(stripdots(name),r);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   fOutput.add("cal",reco_list);
 }
@@ -921,7 +923,7 @@ void RecordComposer::composeRaw()
     delete planeProfile[1];
     delete planeProfile[2];
     reco_list.add(stripdots(name),r);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   fOutput.add("raw",reco_list);
 }
@@ -1071,7 +1073,7 @@ void RecordComposer::composeMC()
     JsonArray gtruth_arr = ftr.makeArray(list);
         
     truth_list.add(stripdots(name),gtruth_arr);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   mc.add("gtruth",truth_list);
 
@@ -1149,7 +1151,7 @@ void RecordComposer::composeMC()
     }
     JsonArray arr(v_mctruths);
     mctruth_list.add(stripdots(name),arr);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
     
   }
   mc.add("mctruth",mctruth_list);
@@ -1281,7 +1283,7 @@ void RecordComposer::composeMC()
     JsonElement::sfDecimals=2;
 
     particle_list.add(stripdots(name),j_particles);
-    fStats.add(name,timer.t.Count());
+    timer.addto(fStats);
   }
   mc.add("particles",particle_list);
   
@@ -1328,7 +1330,7 @@ void RecordComposer::compose()
   {
     TimeReporter timer("GetEntry");
     bytesRead = fTree->GetEntry(fEntry);
-    fStats.add("GetEntry",timer.t.Count());
+    timer.addto(fStats);
   }
   if(bytesRead<0) {
     cout << "Error: I/O error on GetEntry trying to read entry " << fEntry;
@@ -1511,8 +1513,8 @@ void RecordComposer::composeAssociations()
     // Now push these into the maps.
     assn_list[a_name].add(b_name,j_a_to_b);
     assn_list[b_name].add(a_name,j_b_to_a);
+    onetimer.addto(fStats);
 
-    fStats.add(stripdots(name),onetimer.t.Count());
     
   }
 
