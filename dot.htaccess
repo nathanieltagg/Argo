@@ -3,6 +3,8 @@ AddHandler cgi-script .cgi
 AddHandler server-parsed .html
 AddHandler server-parsed .inc
 
+AddType text/cache-manifest .manifest
+
 # This bit changes a request like "get blah.1231231.css" into "get blah.css"
 # This removes the versioning information I put in using subversion.
 RewriteEngine on

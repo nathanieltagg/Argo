@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <TTreeFormula.h>
 
+
 #include "RecordComposer.h"
 #include "JsonElement.h"
 #include "TreeReader.h"
@@ -37,6 +38,7 @@
 #include "ColorMap.h"
 #include "MakePng.h"
 #include "RootToJson.h"
+#include "crc32checksum.h"
 #include <stdlib.h>
 
 
@@ -1410,6 +1412,12 @@ void RecordComposer::compose()
   fTree->SetBranchStatus("raw::RawDigits*",doRaw); // Speed!
   fTree->SetBranchStatus("recob::Wires*"  ,doCal); // Speed!
   
+  fTree->SetBranchStatus("anab::*",0); // Don't analyze this yet.
+  fTree->SetBranchStatus("sim::Photonss*",0); // Don't analyze this yet.
+  fTree->SetBranchStatus("sim::Channels*",0); // Don't analyze this yet.
+  fTree->SetBranchStatus("sim::AuxDetChannels*",0); // Don't analyze this yet.
+  
+  
   // Remove from the list anything which looks like a prespill or a postspill window if
   // it's being de-requested.
   if( std::string::npos != fOptions.find("_NoPreSpill_"))  fTree->SetBranchStatus("raw::RawDigits_daq_preSpill*",0);
@@ -1463,13 +1471,166 @@ void RecordComposer::compose()
   
   composeMC();
   
+  RecordComposer::composeAssociations();
+    
   fOutput.add("stats",fStats);
   
   
 }
 
+void RecordComposer::composeAssociations()
+{
+  TimeReporter timer("Associations");
+  
+  JsonObject assns;
+  std::map<std::string, JsonObject> assn_list;
+  std::map<std::string, JsonObject>::iterator assn_list_itr;
+  
+  // First, create a lookup table of all the tree branches.
+  std::map<uint32_t,TBranch*> branchmap;
+  TObjArray* branches = fTree->GetListOfBranches();
+  int n = branches->GetEntriesFast();
+  for(int i=0;i<n;i++) {
+    TObject* o = branches->At(i);
+    TBranch* b = (TBranch*)o;
+    std::string bname = b->GetName();
+    uint32_t    branchid = crc32checksum(bname);
+    branchmap[branchid] = b;
+    //std::cout << branchid << "\t" << bname << std::endl;
+  }
+  
+  // Next, load the BranchIDLists
+  TFile* file = fTree->GetCurrentFile();
+  TTree* metaData = dynamic_cast<TTree*>(file->Get("MetaData"));
+  if(!metaData) {
+    std::cout << "Grr! Can't find metadata tree!";
+    assns.add("error","Can't find metadata tree.");
+    fOutput.add("associations",assns);
+    return;
+  }
+
+  metaData->GetEntry(0);
+  
+  // TreeElementLooter l(metaData,"BranchIDLists");
+  // const std::vector< std::vector<unsigned int> > *branchidlists = l.get<std::vector< std::vector<unsigned int> > >(0);
+  
+  // Note that we have to have a LinkDef.h for this to work, which includes the line
+  // #pragma link C++ class vector<vector<unsigned int> >+;
+
+  vector< vector< uint32_t > > *branchidlists = 0;
+  metaData->SetBranchAddress("BranchIDLists",&branchidlists);
+  metaData->GetEntry(0);
+  if(branchidlists==0) {
+    std::cout << "Grr! Can't get branchidlists!";
+    assns.add("error","Can't get branchidlists from metadata tree.");
+    fOutput.add("associations",assns);
+    return;
+  }
+  //std::cout << " branchidlists size: " << (*branchidlists).size() << std::endl;
+
+  // Now actually get a list of associations.
+  vector<string> names = findLeafOfType("art::Wrapper<art::Assns");
+  for(size_t iname=0; iname<names.size(); iname++) {
+    std::string& name = names[iname];
+    TimeReporter onetimer(name);
+    cout << "Looking at association " << name << endl;
+
+    if(!fTree->GetBranchStatus(name.c_str())) {
+      std::cout << " Skipping " << name << std::endl;
+      continue;
+    }
+    
+    // Attempt to pull association data.
+    TTreeFormula f_a("f_a",std::string(name+".obj.ptr_data_1_.second").c_str(),fTree);
+    TTreeFormula f_b("f_b",std::string(name+".obj.ptr_data_2_.second").c_str(),fTree);
+
+    TTreeFormula f_a_processId("f_a_processId",std::string(name+".obj.ptr_data_1_.first.id_.processIndex_").c_str(),fTree);
+    TTreeFormula f_a_productId("f_a_productId",std::string(name+".obj.ptr_data_1_.first.id_.productIndex_").c_str(),fTree);
+    TTreeFormula f_b_processId("f_b_processId",std::string(name+".obj.ptr_data_2_.first.id_.processIndex_").c_str(),fTree);
+    TTreeFormula f_b_productId("f_b_productId",std::string(name+".obj.ptr_data_2_.first.id_.productIndex_").c_str(),fTree);
+
+    int na = f_a.GetNdata();
+    int nb = f_b.GetNdata();
+    if(na!=nb) cout << "Error: Association " << name << " has mismatched entry lists " << std::endl;
+    if(na == 0) continue;  // Don't bother with empty association lists.
+
+    // Also eval the other formulas:
+    if(f_a_processId.GetNdata() ==0) continue;
+    if(f_a_productId.GetNdata() ==0) continue;
+    if(f_b_processId.GetNdata() ==0) continue;
+    if(f_b_productId.GetNdata() ==0) continue;
+    
+    // At this point, we'll assume that no association is heterogeneous.
+    size_t a_processId = f_a_processId.EvalInstance(0);
+    size_t a_productId = f_a_productId.EvalInstance(0);
+    size_t b_processId = f_b_processId.EvalInstance(0);
+    size_t b_productId = f_b_productId.EvalInstance(0);
+    
+    // Now we can get the branches for these guys.
+    // What a complex mess!
+    uint32_t a_branchid = (*branchidlists)[a_processId-1][a_productId-1];
+    TBranch* a_branch = branchmap[ a_branchid ];
+    uint32_t b_branchid = (*branchidlists)[b_processId-1][b_productId-1];
+    TBranch* b_branch = branchmap[ b_branchid ];
+
+    if(!a_branch) { cout<< "  Can't find A branch!" << endl;  continue;}
+    if(!b_branch) { cout<< "  Can't find B branch!" << endl;  continue;}
+    
+    std::string a_name = stripdots(a_branch->GetName());
+    std::string b_name = stripdots(b_branch->GetName());
+    
+    std::cout << "  A branch: " << a_name << endl;
+    std::cout << "  B branch: " << b_name << endl;
+    
+    // OK, so now we're ready to build the association maps.
+    std::vector< std::vector<int> > a_to_b;
+    std::vector< std::vector<int> > b_to_a;
+    for(Int_t i=0;i<na;i++) {
+      int a_id = f_a.EvalInstance(i);
+      int b_id = f_a.EvalInstance(i);
+      if(a_to_b.size() <= a_id) a_to_b.resize(a_id+1);
+      a_to_b[a_id].push_back(b_id);
+      if(b_to_a.size() <= b_id) b_to_a.resize(b_id+1);
+      b_to_a[b_id].push_back(a_id);
+    }
+    
+    // Create the JSON objects, which are also arrays-of-arrays. Some arrays are null.
+    JsonArray j_a_to_b;
+    for(size_t j=0;j<a_to_b.size();j++) { j_a_to_b.add(JsonArray(a_to_b[j])); }
+    JsonArray j_b_to_a;
+    for(size_t j=0;j<b_to_a.size();j++) { j_b_to_a.add(JsonArray(b_to_a[j])); }
+
+    // Now push these into the maps.
+    assn_list[a_name].add(b_name,j_a_to_b);
+    // assn_list[b_name].add(a_name,j_b_to_a);
+
+    fStats.add(stripdots(name),onetimer.t.Count());
+    
+  }
+
+  // Add maps to output object.
+  for(assn_list_itr = assn_list.begin(); assn_list_itr != assn_list.end(); assn_list_itr++) {
+    assns.add(assn_list_itr->first, assn_list_itr->second);
+  }
+  // fOutput.add("associations",assns);
+  fStats.add("Associations",timer.t.Count());
+}
+
 
 // Utility functions.
+
+//
+// Association notes.
+// The branch for an association is a TBranchElement.
+// It has a class name of "art::Wrapper<art::Assns<A,B> >" where A and B are types like recob::Hit
+// It has a branch name like ABvoidart::Assns_NAME__Reco3D
+//
+// This doesn't appear to uniquely identify a list of objects, unless the name is correc.
+// The items in the ptr_data_1 and ptr_data_2 are:
+// xxx.obj.ptr_data_1.first.id_.processIndex_ | Same for all entries probably indicating the correct object.
+// xxx.obj.ptr_data_1.first.id_.productIndex_ |
+// xxx.obj.ptr_data_1.second -> The actual thing
+
 
 AssList RecordComposer::GetAssociations(const string& type1, const string& type2)
 {

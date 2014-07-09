@@ -313,6 +313,7 @@ function StartEvent()
 
 function DoPerformanceStats()
 {
+  if(!gRecord.backend_monitor) return;
   var nserved = gRecord.backend_monitor.events_served;
   var walltime = gRecord.backend_monitor.WallClockTime;
 
