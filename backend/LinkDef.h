@@ -12,10 +12,18 @@
 #pragma link C++ class JsonObject+;
 #pragma link C++ class JsonArray+;
 
-#pragma link C++ class vector<vector<unsigned int> >+;
-#pragma link C++ function FormulaMakeElement;
 
+#pragma link C++ function FormulaMakeElement;
 #pragma link C++ function FormulaMakeArray;
 //#pragma link C++ function test_fma;
+
+
+#pragma link C++ class vector<vector<unsigned int> >+;
+
+//#pragma link C++ class art::ProductID+;
+//#pragma link C++ class art::RefCore+;
+//#pragma link C++ class art::RefCore::RefCoreTransients+;
+//#pragma link C++ class art::Assn+;
+
 
 #endif

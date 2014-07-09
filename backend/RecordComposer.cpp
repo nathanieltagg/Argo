@@ -39,6 +39,7 @@
 #include "MakePng.h"
 #include "RootToJson.h"
 #include "crc32checksum.h"
+#include "ArtlikeObjects.h"
 #include <stdlib.h>
 
 
@@ -51,32 +52,6 @@ public:
   ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
 };
 
-// This is a total cheat class to hack into associations in a fast way.
-class ProductID {
-public:
-  unsigned short processIndex_;
-  unsigned short productIndex_;
-};
-
-class RefCore 
-{
-public:
-  struct RefCoreTransients {
-    // itemPtr_ is the address of the item for which the Ptr in which
-    // this RefCoreTransients object resides is a pointer.
-    void const * itemPtr_; // transient
-    void const * prodGetter_; // transient
-  }; // RefCoreTransients
-  ProductID id_;
-  RefCoreTransients transients_;
-};
-
-class Assn {
-public:
-  typedef std::vector<std::pair<RefCore, size_t> > ptr_data_t; 
-  ptr_data_t ptr_data_1_;
-  ptr_data_t ptr_data_2_;
-};
 
 using namespace std;
 
@@ -247,39 +222,6 @@ void RecordComposer::composeHits()
       // h.add("\u03C3t", ftr.getJson(lhit_sigt   ,i) ); //unused
       v.push_back(h);                              
     }
-      
-
-
-    // Attempt to find association data. Look for a match to the name above, take the last match.
-    // SHOULD be good enough.
-    vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
-    for(size_t iass=0;iass<assnames.size(); iass++) {
-      std::string assname = assnames[iass];
-      cout << "Finding association to clusters " << assname << endl;
-      size_t u1 = assname.find_first_of("_");
-      size_t u2 = assname.find_first_of("_",u1+1);
-      std::string shortname("clusid");
-      shortname += assname.substr(u1,u2-u1);
-
-      // Attempt to pull association data.
-      TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
-      TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
-      int n = forma.GetNdata();
-              formb.GetNdata(); // need this line to goose formula into evaluating
-      cout << shortname << "  Association formula has " << n << " entries" << endl;
-      cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
-      for(Int_t i=0;i<n;i++) {
-        int cluster_id = forma.EvalInstance(i);
-        int hit_id     = formb.EvalInstance(i);
-        // cout << "  " << hit_id << " --> " << cluster_id << endl;
-        if(hit_id< (int)v.size() && hit_id >= 0) {
-          v[hit_id].add(shortname,cluster_id);
-        }
-      }
-      
-
-    }
-
 
     for(size_t i=0;i<v.size();i++) arr.add(v[i]);        
     reco_list.add(stripdots(name),arr);
@@ -337,39 +279,6 @@ void RecordComposer::composeClusters()
     TreeElementLooter sigmaStartPos(fTree,name+"obj.fSigmaStartPos");
     TreeElementLooter sigmaEndPos  (fTree,name+"obj.fSigmaEndPos");
 
-    //
-    // I would like to also put this stuff here, instead of just in the hits area.
-    // Also, I really should support multiple hit lists...
-    //
-    // Attempt to find association data to hits.
-    std::map<int,std::vector<int> > map_to_hits;
-    
-    vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
-    for(size_t iass=0;iass<assnames.size(); iass++) {
-      std::string assname = assnames[iass];
-      cout << "Finding association to clusters " << assname << endl;
-      size_t u1 = assname.find_first_of("_");
-      size_t v1 = name.find_first_of("_");
-      std::cout << "Looking for match between " << name << " and " << assname << endl;
-      if(assname.substr(u1+1)!=name.substr(v1+1)) {
-        continue;
-      }
-      // std::cout << "---> Got a match." << endl;
-    
-      // Attempt to pull association data.
-      TTreeFormula forma("a",std::string(assname+".obj.ptr_data_1_.second").c_str(),fTree);
-      TTreeFormula formb("b",std::string(assname+".obj.ptr_data_2_.second").c_str(),fTree);
-      int n = forma.GetNdata();
-              formb.GetNdata(); // need this line to goose formula into evaluating
-      // cout << shortname << "  Association formula has " << n << " entries" << endl;
-      // cout << shortname << " Association formula b has " << formb.GetNdata() << " entries" << endl;
-      for(Int_t i=0;i<n;i++) {
-        int cluster_id = forma.EvalInstance(i);
-        int hit_id     = formb.EvalInstance(i);
-        map_to_hits[cluster_id].push_back(hit_id);
-      }    
-    }
-
     for(int i=0;i<nclusters;i++) {
       JsonObject jclus;
       jclus.add("totalCharge",ftr.getJson(name+"obj.fTotalCharge",i));
@@ -384,9 +293,7 @@ void RecordComposer::composeClusters()
       jclus.add("endPos"        ,GetClusterWireAndTDC(endPos,i));
       jclus.add("sigmaStartPos" ,GetClusterWireAndTDC(sigmaStartPos,i));
       jclus.add("sigmaEndPos"   ,GetClusterWireAndTDC(sigmaEndPos,i));
-
-      jclus.add("hits",JsonArray(map_to_hits[i]));
-
+      
       jClusters.add(jclus);
     }
     reco_list.add(stripdots(name),jClusters);
@@ -1377,17 +1284,7 @@ void RecordComposer::composeMC()
     fStats.add(name,timer.t.Count());
   }
   mc.add("particles",particle_list);
- 
-  leafnames = findLeafOfType("art::Wrapper<art::Assns<simb::MCTruth,simb::MCParticle,void>");
-  for(size_t iname = 0; iname<leafnames.size(); iname++) {
-    std::string name = leafnames[iname];
-    TBranch* br = fTree->GetBranch((name+"obj").c_str());
-    const Assn* assn = (const Assn*) br->GetAddress();
-    if(assn) {
-      std::cout << "Got assn" << name << " number of elements: " << assn->ptr_data_1_.size() << " and " << assn->ptr_data_2_.size() << std::endl;
-    }
-  }
- 
+  
   fOutput.add("mc",mc);
   
 }
@@ -1583,26 +1480,37 @@ void RecordComposer::composeAssociations()
     std::cout << "  B branch: " << b_name << endl;
     
     // OK, so now we're ready to build the association maps.
-    std::vector< std::vector<int> > a_to_b;
-    std::vector< std::vector<int> > b_to_a;
+    std::vector< JsonArray > a_to_b;
+    std::vector< JsonArray > b_to_a;
     for(Int_t i=0;i<na;i++) {
       int a_id = f_a.EvalInstance(i);
-      int b_id = f_a.EvalInstance(i);
+      int b_id = f_b.EvalInstance(i);
       if(a_to_b.size() <= a_id) a_to_b.resize(a_id+1);
-      a_to_b[a_id].push_back(b_id);
+      a_to_b[a_id].add(b_id);
       if(b_to_a.size() <= b_id) b_to_a.resize(b_id+1);
-      b_to_a[b_id].push_back(a_id);
+      b_to_a[b_id].add(a_id);
     }
     
-    // Create the JSON objects, which are also arrays-of-arrays. Some arrays are null.
+    // Create the JSON objects, which are also arrays-of-arrays. Some arrays are empty.
     JsonArray j_a_to_b;
-    for(size_t j=0;j<a_to_b.size();j++) { j_a_to_b.add(JsonArray(a_to_b[j])); }
+    for(size_t j=0;j<a_to_b.size();j++) { j_a_to_b.add(a_to_b[j]); }
     JsonArray j_b_to_a;
-    for(size_t j=0;j<b_to_a.size();j++) { j_b_to_a.add(JsonArray(b_to_a[j])); }
+    for(size_t j=0;j<b_to_a.size();j++) { j_b_to_a.add(b_to_a[j]); }
+
+    // Create the JSON objects, which are here coded as map-to-arrays.
+    // This works too, but actually leads to bigger output and slower parse times, since it's not very sparse. 
+    // JsonObject j_a_to_b;
+    // for(size_t j=0;j<a_to_b.size();j++) {
+    //   if(a_to_b[j].size()>0) j_a_to_b.add(std::to_string(j),JsonArray(a_to_b[j]));
+    //  }
+    // JsonObject j_b_to_a;
+    // for(size_t j=0;j<b_to_a.size();j++) {
+    //   if(b_to_a[j].size()>0) j_b_to_a.add(std::to_string(j),JsonArray(b_to_a[j]));
+    // }
 
     // Now push these into the maps.
     assn_list[a_name].add(b_name,j_a_to_b);
-    // assn_list[b_name].add(a_name,j_b_to_a);
+    assn_list[b_name].add(a_name,j_b_to_a);
 
     fStats.add(stripdots(name),onetimer.t.Count());
     
@@ -1612,65 +1520,14 @@ void RecordComposer::composeAssociations()
   for(assn_list_itr = assn_list.begin(); assn_list_itr != assn_list.end(); assn_list_itr++) {
     assns.add(assn_list_itr->first, assn_list_itr->second);
   }
-  // fOutput.add("associations",assns);
+  cout << "Association total size: " << assns.str().length() << std::endl;
+  fOutput.add("associations",assns);
   fStats.add("Associations",timer.t.Count());
 }
 
 
 // Utility functions.
 
-//
-// Association notes.
-// The branch for an association is a TBranchElement.
-// It has a class name of "art::Wrapper<art::Assns<A,B> >" where A and B are types like recob::Hit
-// It has a branch name like ABvoidart::Assns_NAME__Reco3D
-//
-// This doesn't appear to uniquely identify a list of objects, unless the name is correc.
-// The items in the ptr_data_1 and ptr_data_2 are:
-// xxx.obj.ptr_data_1.first.id_.processIndex_ | Same for all entries probably indicating the correct object.
-// xxx.obj.ptr_data_1.first.id_.productIndex_ |
-// xxx.obj.ptr_data_1.second -> The actual thing
-
-
-AssList RecordComposer::GetAssociations(const string& type1, const string& type2)
-{
-  AssList retval;
-  // e.g.:   "art::Wrapper<art::Assns<recob::Cluster,recob::Hit"
-  string type("art::Wrapper<art::Assns<");
-  type.append(type1).append(",").append(type2);
-  vector<string> assnames = findLeafOfType("art::Wrapper<art::Assns<recob::Cluster,recob::Hit");
-
-
-  for(size_t iass=0;iass<assnames.size(); iass++) {
-    AssPtr_t e(new Association);
-    e->type1 = type1;
-    e->type2 = type2;
-    e->assname = assnames[iass];
-    
-    // Between the two underscores is the name of this particular association.
-    size_t u1 = e->assname.find_first_of("_");
-    size_t u2 = e->assname.find_first_of("__",u1+1);
-    e->shortname = e->assname.substr(u1,u2-u1);
-
-    // Attempt to pull association data.
-    TTreeFormula forma("a",std::string(e->assname+".obj.ptr_data_1_.second").c_str(),fTree);
-    TTreeFormula formb("b",std::string(e->assname+".obj.ptr_data_2_.second").c_str(),fTree);
-    int na = forma.GetNdata();
-    int nb = formb.GetNdata();
-    if(na!=nb) cout << "Error: Association " << e->assname << " has mismatched entry lists " << std::endl;
-    e->n = std::min(na,nb);
-    for(Int_t i=0;i<e->n;i++) {
-      int a_id = forma.EvalInstance(i);
-      int b_id = formb.EvalInstance(i);
-      if(e->a_to_b.size() <= a_id) e->a_to_b.resize(a_id+1,-1);
-      e->a_to_b[a_id] = b_id;
-      if(e->b_to_a.size() <= b_id) e->b_to_a.resize(b_id+1,-1);
-      e->b_to_a[b_id] = a_id;
-    }
-    retval.push_back(e);
-  }
-  return retval;
-}
 
 vector<string>  RecordComposer::findLeafOfType(std::string pattern)
 {

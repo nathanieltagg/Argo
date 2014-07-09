@@ -573,25 +573,30 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 {
-  // ID: 0
-  // dQdW: -999
-  // dTdW: -999
-  // endPos: Object
-  // sigmaEndPos: Object
-  // sigmaStartPos: Object
-  // sigmadQdW: 0
-  // sigmadTdW: 0
-  // startPos: Object
-  // totalCharge: 279631.85
-  // view: 2
-  console.log("DrawClusters");
+  // console.log("DrawClusters");
   if(!gRecord.clusters) return;
-  var clusters = gRecord.clusters[$("#ctl-ClusterLists").val()];
+  var clustername = $("#ctl-ClusterLists").val();
+  var clusters = gRecord.clusters[clustername];
   if(!clusters) return;  
 
-  var hits = [];
-  gHitsListName = $("#ctl-HitLists").val();
-  if(gHitsListName) hits = gRecord.hits[gHitsListName];
+  
+  // Find the hits that are associated with this cluster.
+  // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
+  if(!gRecord.associations) {console.err("Can't find associations"); return; }
+  var assns = gRecord.associations[clustername];
+  var hitname = null;
+  for(var name in assns) {
+    if( (/^recob::Hits/).test(name) ) { 
+      // its a hit list! This is what we want.
+      hitname = name; break;
+    }
+  }
+  if(!hitname) return;
+  
+  var hitassn = assns[hitname];
+  var hits = gRecord.hits[hitname];
+  // gHitsListName = $("#ctl-HitLists").val();
+  // if(gHitsListName) hits = gRecord.hits[gHitsListName];
 
   this.clusterHulls = [];
 
@@ -616,10 +621,10 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     // var cs = new ColorScaleIndexed(clus.ID);
     // this.ctx.fillStyle = "rgba(" + cs.GetColor() + ",0.5)";
 
-    if(!clus.hits) continue;
+    chits = hitassn[i]; // Look up in the association table
     var points = [];
-    for(var ihit=0;ihit<clus.hits.length;ihit++) {
-      var hid = clus.hits[ihit];
+    for(var ihit=0;ihit<chits.length;ihit++) {
+      var hid = chits[ihit];
       var h = hits[hid];
       if(h.plane == this.plane) {
         points.push( [ this.GetX(h.wire), this.GetY(h.t) ] );        

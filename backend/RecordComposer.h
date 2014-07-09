@@ -14,20 +14,6 @@ class TTree;
 class TreeElementLooter;
 class TLorentzVector;
 
-// types
-struct Association 
-{
-  std::string type1;
-  std::string type2;
-  std::string assname;
-  std::string shortname;
-  int n;
-  std::vector<int> a_to_b;
-  std::vector<int> b_to_a;
-};
-typedef std::shared_ptr<Association> AssPtr_t;
-typedef std::vector<AssPtr_t> AssList;
-
 
 
 class RecordComposer {
@@ -67,18 +53,6 @@ public:
 
   // Utility functions.
   std::vector<std::string> findLeafOfType(std::string pattern);
-  AssList GetAssociations(const std::string& type1, const std::string& type2);
-
-  class association { public:
-    association() {};
-    // Holds an Assn object that links a to b.
-    std::string a;
-    std::string b;
-    std::vector< std::vector<int> > a_to_b;
-    std::vector< std::vector<int> > b_to_a;
-  };
-
-  std::vector<association> getAssociation(std::string pattern);
   
   void        hsvToRgb(unsigned char* out, float h, float s, float v);
   std::string stripdots(const std::string& s);
