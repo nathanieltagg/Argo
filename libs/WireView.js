@@ -839,7 +839,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
   function DetectorXyzToScreenXY(x,y,z) {
     return [
       self.GetX( gGeo.yzToWire( self.plane,y,z) ),
-      self.GetY( gGeo.getTDCofX(self.plane,x ) )
+      self.GetY( gGeo.getTDCofX(self.plane,x ) +3200) 
       ];
   }
   
