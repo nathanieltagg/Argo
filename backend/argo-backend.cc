@@ -70,6 +70,8 @@ public:
 
 
 MySocketServer* ss = 0;
+bool isChild = false;
+int  childClient = -1;
 
 
 int main(int argc, char **argv)
@@ -104,6 +106,10 @@ int main(int argc, char **argv)
   signal (SIGINT, TerminationHandler);
   signal (SIGHUP, TerminationHandler);
   signal (SIGTERM, TerminationHandler);
+  // signal ( SIGBUS, TerminationHandler);
+  // signal ( SIGSEGV, TerminationHandler);
+  // signal ( SIGILL, TerminationHandler);
+  signal ( SIGFPE, TerminationHandler);
   signal (SIGCHLD, SIG_IGN);  // Ignore when a child dies - don't need to wait() or waitpid()
     
   try{
@@ -156,10 +162,12 @@ int main(int argc, char **argv)
         if(r==5) {
           //Successful conversion. Give it a try.
           cout << "Got a valid request at " << TTimeStamp().AsString() << endl;          
+
           // fork a process to cope.
           pid_t pid = 0;
           if(forking_) pid = fork();          
           if(pid ==0) {
+            if(forking_) { isChild=true; childClient = client; }
             long long unsigned int mypid = getpid();
             // pid=0 either means no forking, or we're the child process
             std::string logfilename = "argo_backend_" + std::to_string(mypid) + ".log";
@@ -167,7 +175,9 @@ int main(int argc, char **argv)
               std::cout << "Serving by child process: " << mypid << "  filename " << logfilename << std::endl;
               
               freopen(logfilename.c_str(),"w",stdout);
-              freopen(logfilename.c_str(),"w",stderr);
+              freopen(logfilename.c_str(),"a",stderr);
+              // dup2(fileno(stdout), fileno(stderr));
+              // freopen(logfilename.c_str(),"w",stderr);
             }
             
             cout << "Request Parameters:" << endl;
@@ -209,10 +219,20 @@ int main(int argc, char **argv)
 
 void TerminationHandler(int signal)
 {
-  cout << "Kill signal. Shutting down the server.\n";
-  if(ss) delete ss; // Shut down the socket server cleanly.
-  ss = 0;
-  _exit(0);
+  cerr << "Received signal " << signal << ". Shutting down the server.\n";
+  if(isChild) {
+    cerr << "Closing client " << childClient << "\n";
+    if(childClient>-1) {
+      std::string errormsg("{\"error\":\"Backend crashed hard when reading this event. Maybe a bad input file?\"}\n");
+      ss->SendTo(childClient, (unsigned char*)errormsg.c_str(), errormsg.length() );
+      close(childClient);
+    }
+    _exit(1);
+  } else {
+    if(ss) delete ss;// Shut down the socket server cleanly.
+    ss = 0;
+    exit(1);
+  }
 }
 
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
