@@ -38,24 +38,21 @@ public:
   
   static std::string sfFileStoragePath;
   static std::string sfUrlToFileStorage;
-  
-  std::vector<unsigned char> fPalette;
-  std::vector<unsigned char> fPaletteTrans;
-  
+    
   // State things:
   int fmintdc;
   int fmaxtdc;
   
   
-  int inline static tanscale(float adc) 
-  {
-    return int(atan(adc/25.)/M_PI*256.) + 127;  
-  }
-
-  float inline static inv_tanscale(int y) 
-  {
-    return tan((y-127)*M_PI/256)*25.;
-  }
+  // int inline static tanscale(float adc)
+  // {
+  //   return int(atan(adc/25.)/M_PI*256.) + 127;
+  // }
+  //
+  // float inline static inv_tanscale(int y)
+  // {
+  //   return tan((y-127)*M_PI/256)*25.;
+  // }
   
 };
 
