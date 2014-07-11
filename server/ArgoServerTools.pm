@@ -55,7 +55,7 @@ sub serve
   # zip it.
   open($serving_fh, '<', \$serving);
   open($zipped_fh, '>' , \$zipped);
-  gzip $serving_fh => $zipped_fh, -Level=>9
+  gzip $serving_fh => $zipped_fh, -Level=>3
          or die "gzip failed: $GzipError\n";
          
          
