@@ -195,7 +195,7 @@ sub start_server
   #     # my $pwd = getcwd;
   #     # system("echo $pwd >> ntuple-server.pid");
   #     # print  $pwd . "\n";
-      my $cmd = "../backend/$exec_name $ntuple_server_port >>$exec_name.log 2>&1";
+      my $cmd = "../backend/$exec_name -p $ntuple_server_port >>$exec_name.log 2>&1";
       if( -r "../backend/setup.sh ") { $cmd = "source ../backend/setup.sh; " . $cmd; }
       print "Running: $cmd\n";
       $val = system($cmd);

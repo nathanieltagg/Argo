@@ -271,10 +271,14 @@ int SocketServer::SendTo(int fd,
 int SocketServer::Close( int i )
 {
   close(i); // bye!
+  return RemoveClient(i);// remove from master set  
+}
+
+int SocketServer::RemoveClient( int i )
+{
   FD_CLR(i, &mClients); // remove from master set  
   return 0;
 }
-
 
 int SocketServer::ClientIsConnected( void )
 {

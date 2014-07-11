@@ -23,6 +23,20 @@
 #include "ResultComposer.h"
 
 #include <signal.h>
+#include <algorithm>
+
+// Quick and dirty option parsing, from StackOverflow.
+char* getCmdOption(char ** begin, char ** end, const std::string & option)
+{
+    char ** itr = std::find(begin, end, option);
+    if (itr != end && ++itr != end) return *itr;
+    return 0;
+}
+
+bool cmdOptionExists(char** begin, char** end, const std::string& option)
+{
+    return std::find(begin, end, option) != end;
+}
 
 
 using namespace std;
@@ -31,7 +45,6 @@ VoidFuncPtr_t initfuncs[] = { 0 };
 TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg);
 void TerminationHandler(int signal);
-
 
 
 
@@ -57,10 +70,34 @@ public:
 
 MySocketServer* ss = 0;
 
-bool forking_ = false;
 
 int main(int argc, char **argv)
 {
+  int tcpPortNumber = 9092;
+  bool forking_ = true;
+
+  std::string progname = argv[0];
+  
+  if(cmdOptionExists(argv, argv+argc, "-h")) {
+    cout << "Usage:" <<endl;
+    cout << "  -h         help" << endl;
+    cout << "  -p <port>  set listener port " << endl;
+    cout << "  -n         no forking (for profiling) " << endl;
+    return 0;
+  }
+  if(cmdOptionExists(argv, argv+argc, "-n")) {
+    forking_ = false;
+  }
+
+  char * filename = getCmdOption(argv, argv + argc, "-p");
+  if (filename) sscanf(filename,"%d",&tcpPortNumber);
+  
+  
+  
+    // if(argc>1) {
+    //   sscanf(argv[1],"%d",&tcpPortNumber);
+    // }
+
   
   // termination handling.
   signal (SIGINT, TerminationHandler);
@@ -70,12 +107,9 @@ int main(int argc, char **argv)
     
   try{
 
-    int tcpPortNumber = 9092;
-    if(argc>1) {
-      sscanf(argv[1],"%d",&tcpPortNumber);
-    }
-    cout << argv[0] << " starting up at " <<  TTimeStamp().AsString() << " on port " << tcpPortNumber << endl;
-  
+    cout << progname << " starting up at " <<  TTimeStamp().AsString() << " on port " << tcpPortNumber << endl;
+    if(forking_) cout << "  Will fork on new clients." << endl;
+    else         cout << "  Forking turned off for profiling." << endl;
     SetErrorHandler(MyErrorHandler);
 
     ss = new MySocketServer(tcpPortNumber);
@@ -130,7 +164,7 @@ int main(int argc, char **argv)
           pid_t pid = 0;
           if(forking_) pid = fork();          
           if(pid ==0) {
-            // Child process
+            // pid=0 either means no forking, or we're the child process
             std::cout << "Child process: " << getpid() << std::endl;
             long t1 = gSystem->Now();
             // Now do your stuff.
@@ -148,6 +182,7 @@ int main(int argc, char **argv)
             cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
             if(forking_) _exit(0);
           }
+          ss->RemoveClient(client); // Make sure we're not servicing the client in the main fork anymore.
           
           ResultComposer::events_served++;
         }
