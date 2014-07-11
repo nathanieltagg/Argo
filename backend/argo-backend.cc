@@ -154,18 +154,27 @@ int main(int argc, char **argv)
         int r =  sscanf((char*)dataRecvd,"%99[^,\n],%900[^,\n],%900[^,\n],%lld,%lld\n",options,filename,selection,&entrystart,&entryend);
         if(r==5) {
           //Successful conversion. Give it a try.
-          cout << "Got a valid request at " << TTimeStamp().AsString() << endl;
-          cout << "    Filename: --" << filename << "--" << endl;
-          cout << "    Selection:--" << selection << "--" << endl;
-          cout << "    From:     --" << entrystart << " to " << entryend << endl;
-          cout << "    Options:  --" << options << endl;
-          
+          cout << "Got a valid request at " << TTimeStamp().AsString() << endl;          
           // fork a process to cope.
           pid_t pid = 0;
           if(forking_) pid = fork();          
           if(pid ==0) {
+            pid_t mypid = getpid();
             // pid=0 either means no forking, or we're the child process
-            std::cout << "Child process: " << getpid() << std::endl;
+            std::string logfilename = "serve_log_" + std::to_string(mypid) + ".log";
+            if(forking_) {
+              std::cout << "Serving by child process: " << mypid << "  filename " << logfilename << std::endl;
+              
+              freopen(logfilename.c_str(),"w",stdout);
+              freopen(logfilename.c_str(),"w",stderr);
+            }
+            
+            cout << "Request Parameters:" << endl;
+            cout << "    Filename: --" << filename << "--" << endl;
+            cout << "    Selection:--" << selection << "--" << endl;
+            cout << "    From:     --" << entrystart << " to " << entryend << endl;
+            cout << "    Options:  --" << options << endl;
+            
             long t1 = gSystem->Now();
             // Now do your stuff.
             ResultComposer rc;           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
