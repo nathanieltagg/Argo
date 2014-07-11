@@ -24,6 +24,7 @@
 
 #include <signal.h>
 #include <algorithm>
+#include <string>
 
 // Quick and dirty option parsing, from StackOverflow.
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -159,7 +160,7 @@ int main(int argc, char **argv)
           pid_t pid = 0;
           if(forking_) pid = fork();          
           if(pid ==0) {
-            pid_t mypid = getpid();
+            long long unsigned int mypid = getpid();
             // pid=0 either means no forking, or we're the child process
             std::string logfilename = "serve_log_" + std::to_string(mypid) + ".log";
             if(forking_) {
