@@ -152,7 +152,7 @@ int SocketServer::Listen( double inWaitSecs,
           if (newfd < mFdMin) mFdMin = newfd;
           mClientTimers[newfd].Reset();
           cerr << Form("SocketServer::Listen() Got new client %s on socket %d\n", inet_ntoa(mClientAddress.sin_addr), newfd);
-
+          outWhichClient = i;
           outGotNewClient = true;
         }		
       } else {
