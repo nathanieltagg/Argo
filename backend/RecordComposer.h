@@ -6,6 +6,7 @@
 #include "JsonElement.h"
 #include "TreeReader.h"
 #include "TObject.h"
+#include "WirePalette.h"
 #include <math.h>
 #include <vector>
 #include <memory>
@@ -83,8 +84,6 @@ public:
   static std::string sfFileStoragePath;
   static std::string sfUrlToFileStorage;
   
-  std::vector<unsigned char> fPalette;
-  std::vector<unsigned char> fPaletteTrans;
 };
 
 
