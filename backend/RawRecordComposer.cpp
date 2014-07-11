@@ -52,21 +52,11 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   : fOutput(output)
   , fRecord(record)
   , fOptions(options)
-  , fPalette(256*3) 
-  , fPaletteTrans(256) 
   , fmintdc(0)
   , fmaxtdc(0)
   , fPlexus("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE")
 
 {
-  unsigned char vv[] =   { 
-    #include "palette.inc" 
-  };
-  fPalette.assign(&vv[0], &vv[0]+sizeof(vv));
-  unsigned char vvt[] =   { 
-    #include "palette_trans.inc" 
-  };
-  fPaletteTrans.assign(&vvt[0], &vvt[0]+sizeof(vvt));
 };
   
 RawRecordComposer::~RawRecordComposer()
@@ -220,7 +210,7 @@ void RawRecordComposer::composeTPC()
   if(wires_read<=0) cerr << "Got no wires!" << std::endl;
   int nwire = 8254;
   ColorMap colormap;
-  MakePng png (ntdc,nwire, MakePng::palette_alpha,fPalette,fPaletteTrans);
+  MakePng png (ntdc,nwire, MakePng::palette_alpha,gWirePalette.fPalette,gWirePalette.fPaletteTrans);
   MakePng epng(ntdc,nwire,MakePng::rgb);
   std::vector<unsigned char> imagedata(ntdc);
   std::vector<unsigned char> encodeddata(ntdc*3);

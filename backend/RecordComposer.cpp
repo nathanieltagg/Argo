@@ -39,7 +39,7 @@
 #include "MakePng.h"
 #include "RootToJson.h"
 #include "crc32checksum.h"
-#include "ArtlikeObjects.h"
+#include "WirePalette.h"
 #include <stdlib.h>
 
 
@@ -55,6 +55,8 @@ public:
 };
 
 
+WirePalette gWirePalette; // Create at program start as a singleton.
+
 using namespace std;
 
 std::string RecordComposer::sfFileStoragePath = "../datacache";
@@ -66,17 +68,7 @@ std::string RecordComposer::sfUrlToFileStorage = "datacache";
 
 RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
   : fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree)
-    ,fPalette(256*3) 
-   ,fPaletteTrans(256) 
 {
-  unsigned char vv[] =   { 
-    #include "palette.inc" 
-  };
-  fPalette.assign(&vv[0], &vv[0]+sizeof(vv));
-  unsigned char vvt[] =   { 
-    #include "palette_trans.inc" 
-  };
-  fPaletteTrans.assign(&vvt[0], &vvt[0]+sizeof(vvt));
 }
   
 RecordComposer::~RecordComposer()
@@ -674,7 +666,7 @@ void RecordComposer::composeCal()
   
     JsonObject r;
     // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-    MakePng png(width,8254,MakePng::palette_alpha,fPalette,fPaletteTrans);
+    MakePng png(width,8254,MakePng::palette_alpha,gWirePalette.fPalette,gWirePalette.fPaletteTrans);
     MakePng encoded(width,8254,MakePng::rgb);
     ColorMap colormap;
   
@@ -749,7 +741,7 @@ void RecordComposer::composeCal()
         
         wiresum+=fabs(adc);
         // colormap.get(&imagedata[k*3],adc/4000.);
-        imagedata[k] = tanscale(adc);
+        imagedata[k] = gWirePalette.tanscale((short)adc);
       
         // Save bitpacked data as image map.
         int fadc = adc + float(0x8000);
@@ -852,7 +844,7 @@ void RecordComposer::composeRaw()
     // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
     size_t width = ptr->size();
 
-    MakePng png(width,ndig, MakePng::palette_alpha,fPalette,fPaletteTrans);
+    MakePng png(width,ndig, MakePng::palette_alpha,gWirePalette.fPalette,gWirePalette.fPaletteTrans);
     MakePng epng(width,ndig,MakePng::rgb);
     std::vector<unsigned char> imagedata(width);
     std::vector<unsigned char> encodeddata(width*3);
@@ -879,7 +871,7 @@ void RecordComposer::composeRaw()
         short raw = (*ptr)[k];
         short pedcorr = raw - pedestal;
         // colormap.get(&imagedata[k*3],float(raw)/4000.);
-        imagedata[k] = tanscale(pedcorr);
+        imagedata[k] = gWirePalette.tanscale(pedcorr);
       
         // Save bitpacked data as image map.
         int iadc = raw + 0x8000;
