@@ -12,7 +12,7 @@ var gOpTimeHistogram = null;
 var gOpDetColorScaler = new ColorScaler("CurtColorPalette");
 var gOpDetMode = {
   variable      : "peakTime",
-  variableScale : 1/1000,
+  variableScale : 1,
   variableName  : "Time (µs)",
   cut           : {min: -1e99, max: 1e99},
   weight        : "pe",
@@ -81,6 +81,8 @@ OpTimeHistogram.prototype.NewRecord = function()
     if(ophits.length===0) return;
     // First run through to get limits.
     var  oh;
+    tmin = 1e99;
+    tmax = -1e99;
     for(i=0;i<ophits.length;i++) {
       oh = ophits[i];
       var t = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
@@ -91,12 +93,13 @@ OpTimeHistogram.prototype.NewRecord = function()
     tmin -= width*0.05;
     tmax += width*0.05;
     nbins = Math.floor((tmax-tmin));
+    // console.error(nbins,tmin,tmax);
     while(nbins>100) nbins = Math.floor(nbins/2);
   
     this.hist = new Histogram(nbins,tmin,tmax);
     for(i=0;i<ophits.length;i++) {
       oh = ophits[i];
-      if(gOpDetMode.weight != 1)
+      if(gOpDetMode.weight !== 1)
         this.hist.Fill(oh[gOpDetMode.variable]*gOpDetMode.variableScale,oh[gOpDetMode.weight]);
       else  
         this.hist.Fill(oh[gOpDetMode.variable]*gOpDetMode.variableScale);

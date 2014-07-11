@@ -334,7 +334,7 @@ function DoPerformanceStats()
   
   $("#debuginfo").html(
       "Time for backend to build JSON from disk: " + t_backend + "ms<br/>" +
-      "Time to transfer JSON over network: " + t_get + " ms<br/>" +
+      "Time to gzip JSON and transfer over network: " + t_get + " ms<br/>" +
       "Time to parse JSON on client: " + t_parse + " ms<br/>" +
       "Time to build and draw event: " +  t_draw + " ms<br/>" +
       "Backend: " + nserved + " events served, running unstopped for " + wallstring
