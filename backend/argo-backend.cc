@@ -162,7 +162,7 @@ int main(int argc, char **argv)
           if(pid ==0) {
             long long unsigned int mypid = getpid();
             // pid=0 either means no forking, or we're the child process
-            std::string logfilename = "serve_log_" + std::to_string(mypid) + ".log";
+            std::string logfilename = "argo_backend_" + std::to_string(mypid) + ".log";
             if(forking_) {
               std::cout << "Serving by child process: " << mypid << "  filename " << logfilename << std::endl;
               
@@ -212,7 +212,7 @@ void TerminationHandler(int signal)
   cout << "Kill signal. Shutting down the server.\n";
   if(ss) delete ss; // Shut down the socket server cleanly.
   ss = 0;
-  exit(0);
+  _exit(0);
 }
 
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
@@ -221,6 +221,6 @@ void MyErrorHandler(int level, Bool_t abort, const char *location, const char *m
   TString m(msg);
   if(m.BeginsWith("unknown branch")) return;
   
-  DefaultErrorHandler(level, abort, location, msg);
+  //DefaultErrorHandler(level, abort, location, msg);
 //  exit(1);
 }
