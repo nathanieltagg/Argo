@@ -458,7 +458,7 @@ void  RecordComposer::composeOpFlashes()
     
   
     TreeElementLooter tel_fPEperOpDet(fTree,name+"obj.fPEperOpDet");
-    TreeElementLooter tel_fWireCenter(fTree,name+"obj.fWireCenter");
+    TreeElementLooter tel_fWireCenter(fTree,name+"obj.fWireCenters");
     TreeElementLooter tel_fWireWidths(fTree,name+"obj.fWireWidths");
 
     for(int i=0;i<n;i++) {

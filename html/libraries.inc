@@ -89,8 +89,10 @@
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
 <script type="text/javascript" src="libs/MCDigraph.js"></script> 
 <script type="text/javascript" src="libs/TriDView.js"></script> 
-<script type="text/javascript" src="libs/OpTimeHistogram.js"></script> 
+<script type="text/javascript" src="libs/OpHitHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 
+<script type="text/javascript" src="libs/OpFlashHistogram.js"></script> 
+<script type="text/javascript" src="libs/OpFlashMap.js"></script> 
 <script type="text/javascript" src="libs/MRI.js"></script> 
 <script type="text/javascript" src="libs/dEdXTool.js"></script> 
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
