@@ -97,7 +97,7 @@ HistCanvas.prototype.ResetDefaultRange = function()
 
 HistCanvas.prototype.Draw = function()
 {
-  console.log("HistCanvas::Draw",this);
+  // console.log("HistCanvas::Draw",this);
   this.Clear();
   this.DrawFrame();
   this.DrawRegions();

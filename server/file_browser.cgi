@@ -158,7 +158,7 @@ if( scalar(@files) ==0 ) {
     $f_enc =~ s/([^-_.~\/A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
     print Tr(
              td( a({-href=>"$link_target#entry=0&filename=$f_enc"},"$f"))
-            ,td({-class=>"date"},strftime("%b %e, %Y %H:%M",localtime($info[9])))
+            ,"<td sorttable_customkey=".$info[9]." class='date'>".strftime("%b %e, %Y %H:%M",localtime($info[9]))."</td>"
             ,"<td sorttable_customkey=".$info[7].">".get_filesize_str($info[7])."</td>"
             );
   }

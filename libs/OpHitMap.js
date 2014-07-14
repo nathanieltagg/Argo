@@ -36,7 +36,7 @@ function OpHitMap( element  )
     
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('opHitScaleChange',this,"Draw");
+  gStateMachine.BindObj('opScaleChange',this,"Draw");
   
   this.ophits = [];
   this.drawn_flashes = [];
@@ -85,7 +85,7 @@ OpHitMap.prototype.NewRecord = function()
       hit.pulse = p;
       this.ophits.push(hit);
     }    
-    gOpDetMode.variable = "peakTime";
+    gOpMode.hitVariable = "peakTime";
   }
   
   this.ophits.sort(
@@ -114,45 +114,45 @@ OpHitMap.prototype.Draw = function()
   this.ctx.stroke();
   
   var i, x,y,wx,wy,w,c, det;
-  // Draw Flashes.
-  this.drawn_flashes = [];
-  if(gRecord && gRecord.opflashes){
-    for(i=0;i<gRecord.opflashes.length;i++){
-      var flash = gRecord.opflashes[i];
-      x = this.GetX(flash.zCenter);
-      y = this.GetY(flash.yCenter);
-      wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
-      wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
-      w = flash.time*gOpDetMode.variableScale;
-      if(w<gOpDetMode.cut.min) continue;
-      if(w>gOpDetMode.cut.max) continue;
-      
-      this.drawn_flashes.push(
-        { flash: flash,
-          x: x,
-          y: y,
-          wx: wx,
-          wy: wy}
-      );
-      c = gOpDetColorScaler.GetColor(w);
-      if(gHoverState.obj == flash) c = "0,0,0";
-      var grad = this.ctx.createRadialGradient(0,0,0, 0,0,1);
-      grad.addColorStop(0,   'rgba('+c+',1)'); // red
-      grad.addColorStop(1,   'rgba('+c+',0)'); // Transparent
-      this.ctx.save();
-      this.ctx.translate(x,y);
-      this.ctx.scale(wx,wy);
-      this.ctx.beginPath();
-      this.ctx.arc(0,0,1,0,Math.PI*1.999,false);
-      this.ctx.fillStyle=grad;
-      this.ctx.strokeStyle="#AAAAAA";
-      this.ctx.lineWidth=1/wx;
-      
-      this.ctx.fill();
-      this.ctx.stroke();
-      this.ctx.restore();
-    }
-  }
+  // // Draw Flashes.
+  // this.drawn_flashes = [];
+  // if(gRecord && gRecord.opflashes){
+  //   for(i=0;i<gRecord.opflashes.length;i++){
+  //     var flash = gRecord.opflashes[i];
+  //     x = this.GetX(flash.zCenter);
+  //     y = this.GetY(flash.yCenter);
+  //     wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
+  //     wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
+  //     w = flash.time*gOpMode.hitVariableScale;
+  //     if(w<gOpMode.cut.min) continue;
+  //     if(w>gOpMode.cut.max) continue;
+  //
+  //     this.drawn_flashes.push(
+  //       { flash: flash,
+  //         x: x,
+  //         y: y,
+  //         wx: wx,
+  //         wy: wy}
+  //     );
+  //     c = gOpColorScaler.GetColor(w);
+  //     if(gHoverState.obj == flash) c = "0,0,0";
+  //     var grad = this.ctx.createRadialGradient(0,0,0, 0,0,1);
+  //     grad.addColorStop(0,   'rgba('+c+',1)'); // red
+  //     grad.addColorStop(1,   'rgba('+c+',0)'); // Transparent
+  //     this.ctx.save();
+  //     this.ctx.translate(x,y);
+  //     this.ctx.scale(wx,wy);
+  //     this.ctx.beginPath();
+  //     this.ctx.arc(0,0,1,0,Math.PI*1.999,false);
+  //     this.ctx.fillStyle=grad;
+  //     this.ctx.strokeStyle="#AAAAAA";
+  //     this.ctx.lineWidth=1/wx;
+  //
+  //     this.ctx.fill();
+  //     this.ctx.stroke();
+  //     this.ctx.restore();
+  //   }
+  // }
   
   this.pmtRadius = 15.2; // Size of the TPB Coating, according to the root geometry file.
   var r = this.pmtRadius * this.span_x/(this.max_u-this.min_u); // Radius in screen pixels.
@@ -162,9 +162,9 @@ OpHitMap.prototype.Draw = function()
   // Draw OpHits
   for(i=0;i<this.ophits.length;i++) {
     var oh = this.ophits[i];
-    w = oh[gOpDetMode.variable]*gOpDetMode.variableScale;
-    if(w<gOpDetMode.cut.min) continue;
-    if(w>gOpDetMode.cut.max) continue;
+    w = oh[gOpMode.hitVariable]*gOpMode.hitVariableScale;
+    if(w<gOpMode.cut.min) continue;
+    if(w>gOpMode.cut.max) continue;
     if(oh.opDetChan<0) continue; // Bad channel number
     
     det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
@@ -174,7 +174,7 @@ OpHitMap.prototype.Draw = function()
     }
     x = this.GetX(det.z);
     y = this.GetY(det.y);
-    c = gOpDetColorScaler.GetColor(w);
+    c = gOpColorScaler.GetColor(w);
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.beginPath();
     this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
