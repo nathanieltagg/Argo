@@ -918,7 +918,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
       if(this.fMouseInContentArea) {
         var offset = getAbsolutePosition(this.canvas);
         var lastpt = points[points.length-1];
-        SetOverlayPosition(offset.x + lastpt.p1.x, offset.y + lastpt.p1.y);  
+        SetOverlayPosition(offset.x + lastpt.x, offset.y + lastpt.y);  
       }
 
       this.ctx.lineWidth = 5;
@@ -1228,6 +1228,7 @@ WireView.prototype.DoMouse = function(ev)
       this.fDragging = false;
       // Update thorough
       gStateMachine.Trigger("zoomChange"); 
+      this.dirty = false;
       // Draw gets issued by the trigger.
     }
     return;
@@ -1362,9 +1363,11 @@ WireView.prototype.DoMouse = function(ev)
   } else if(ev.type === 'mousemove' ) {
     // Update quick.
     if(this.fDragging){
-      gStateMachine.Trigger("zoomChangeFast"); 
+      gStateMachine.Trigger("zoomChangeFast");
+      // this.dirty = false;  // Draw gets issued by the trigger.
     }
-    this.dirty=true; // Do a slow draw in this view.    
+    // this.dirty = false;  // Draw gets issued by the trigger.
+    this.dirty=true; // Do a slow draw in this view.
   } 
     
 };
