@@ -48,9 +48,9 @@ $(function(){
 });
 
 
-function ChangeEvent( event )
+function ChangeEvent( )
 {
-  console.log("ChangeEvent",event);
+  console.log("ChangeEvent");
   // Clear all selection targets.
   $("input").blur();
 
@@ -104,7 +104,7 @@ function QueryServer( par, myurl )
 {
   console.log("QueryServer",par);
     $("input").blur();
-
+    
     var data = {};
     // Used for next/prev increment buttons.
     // if(querytype == 'last_query_type') querytype = gLastQueryType;
@@ -112,12 +112,25 @@ function QueryServer( par, myurl )
     var opts = "_NoPreSpill_NoPostSpill_";
 
     // look at reco only:
-    if(/fast/.test(window.location.pathname)) opts+= "_NORAW__NOCAL_";
-    // Are we looking at wires? If not, don't request them.
+    // if(/fast/.test(window.location.pathname)) opts+= "_NORAW__NOCAL_";
+    // // Are we looking at wires? If not, don't request them.
+    // if(par.loadwires) { // eval to true if parameter exists and set to non-false non-zero
+    //   if(par.loadwires === "false" || par.loadwires === "no" || par.loadwires==="0") {opts += "_NORAW__NOCAL_";}
+    //
+    //   // load wires: normal operation.
+    // } else {
+    //   opts += "_NORAW__NOCAL_";
+    // }
+    
+    
     if (!$(".show-wireimg").is(":checked")) {
-      // opts += "_NORAW__NOCAL_";
+      opts += "_NORAW__NOCAL_";
+      $('#loading_feedback').html("<i>Not loading RawDigit or Wire data for speed.</i><br/>");
+    } else {
+      $('#loading_feedback').html("<b>Loading RawDigit or Wire data.. may be slower! Uncheck \"Show Wires\" to disable.</b></br/>");
     }
     
+
 
     // Default: do file-and-entry read from parameters. Should check for other options first.
     data ={ filename:  par.filename  || "standard_reco_uboone.root" ,
