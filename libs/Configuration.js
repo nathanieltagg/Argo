@@ -38,7 +38,7 @@ $(function(){
 
 
   /// Important: callback to load wire data if user re-checks the box.
-  $('#ctl-show-wireimg').click(CheckWireDataReload);
+  $('#ctl-show-wireimg').change(CheckWireDataReload);
   
   // prevent controls from capturing the keyboard events.  Remove focus if gathereed.
   $('#config-port input').on("focus",function(ev){this.blur();});
@@ -62,7 +62,7 @@ function CheckWireDataReload()
     if(lists>0 && valid===0) {
       // We need to go back to the server.
       // Don't push a hashchange; we need to be more
-      QueryServer();
+      ChangeEvent(); //QueryServer();
     }
   }
 }

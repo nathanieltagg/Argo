@@ -3,8 +3,8 @@
   <div id="load-progressbar"></div>
   <img style='float:left; padding: 10px;' src="images/busy.gif" alt="busy"/> 
   <p>Querying server for event data...</p>
+  <div id="loading_feedback"></div>
   <p><em>Message of the day:</em></p>
-  <p><em>Too slow for you? Try <a href="fast.html">FAST mode</a></em> to avoid loading wires</p>
   Recent updates: <br/>
   <ul> 
     <li> Backend now correctly parses all association objects! (July 7)</li>
