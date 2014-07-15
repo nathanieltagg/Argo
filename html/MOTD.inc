@@ -7,9 +7,8 @@
   <p><em>Message of the day:</em></p>
   Recent updates: <br/>
   <ul> 
+    <li> No longer loads wires/rawdigits by default, for faster build times (July 15)</li>
+    <li> OpHit and OpFlash refactoring (July 14)</li>
     <li> Backend now correctly parses all association objects! (July 7)</li>
-    <li> Added length-scale in corner of WireViews (May 23)</li>
-    <li> Attempted performance boost (May 10) - should load faster.</li>
-    <li> Added decoder for Bruces' ROI-based recob::Wire </li>
   </ul>
 </div> 
