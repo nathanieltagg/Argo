@@ -179,29 +179,36 @@ Pad.prototype.SetMagnify = function()
 
 Pad.prototype.MouseCallBack = function(ev,scrollDist)
 {
+  var profname = "mousecallback"+this.UniqueId;
   // All mouse-related callbacks are routed through here.
   this.dirty = false;  // flag that tells us if we need a draw or not.
 
+
+  if( (ev.type === 'mousemove' || ev.type === 'touchenter') &&
+      ( ! this.fMouseInContentArea ) &&
+      ( ! ev.which ) ) {
+    // mouse move without buttons outside the content area. This is not relevant.
+    return;  
+  } 
+
+
+  if(ev.type === 'mouseenter' || ev.type === 'touchenter') { 
+    this.fMouseInContentArea = true;
+    // Don't redraw unless there's a mousemove event. if(this.fMagnifierOn) this.dirty=true; 
+  }
+
+
   // Set a redraw if we've moved inside the pad.
   if(ev.type === 'mousemove' || ev.type === 'touchenter') { 
-    if(this.fMouseInContentArea) {
-      if(this.fMagnifierOn) this.dirty=true;
-    } else {
-      if(!ev.which) return; // No reason the object needs to know about mouse moves when mouse is up.
-    }
-    // console.warn("Pad mousemove",this.fMouseInContentArea,this.plane);
-    
+    if(this.fMouseInContentArea && this.fMagnifierOn) { this.dirty=true; }
   }
+  
   // If the mouse enters or leaves (or element) then flag the correct thing to do.
   if(ev.type === 'mouseout' || ev.type == 'touchend')     { 
     this.fMouseInContentArea = false;
     if(this.fMagnifierOn) this.dirty=true; 
   }
-  if(ev.type === 'mouseenter' || ev.type === 'touchenter') { 
 
-    this.fMouseInContentArea = true;
-    // Don't redraw unless there's a mousemove event. if(this.fMagnifierOn) this.dirty=true; 
-  }
 
   // Do computations once for the subclass.
   var offset = getAbsolutePosition(this.element);
@@ -212,14 +219,16 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
   this.fMousePos.u = this.GetU(this.fMousePos.x);
   this.fMousePos.v = this.GetV(this.fMousePos.y);
 
+  // console.profile(profname);
+
   var bubble;
   if(ev.type === 'mousewheel') bubble=this.DoMouseWheel(ev,scrollDist);
-  else                        bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
+  else                         bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
   // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);
 
 
-
   if(this.dirty) this.Draw();
+  // console.profileEnd();
   return bubble;
 };
 
