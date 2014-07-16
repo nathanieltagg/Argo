@@ -76,4 +76,8 @@ my $serve_time =  Time::HiRes::gettimeofday();
 
 print PROFLOG "Time to req: " . ($req_time - $start_time) . " time to serve: " . ($serve_time - $req_time) . "\n";
 
+#remove old log files, more than 1/2 day old.
+for ( glob "argo_backend*.log" ) {
+  unlink $_ if ( -M $_ > 0.5 );
+}
 

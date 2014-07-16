@@ -106,9 +106,9 @@ int main(int argc, char **argv)
   signal (SIGINT, TerminationHandler);
   signal (SIGHUP, TerminationHandler);
   signal (SIGTERM, TerminationHandler);
-  // signal ( SIGBUS, TerminationHandler);
-  // signal ( SIGSEGV, TerminationHandler);
-  // signal ( SIGILL, TerminationHandler);
+  signal ( SIGBUS, TerminationHandler);
+  signal ( SIGSEGV, TerminationHandler);
+  signal ( SIGILL, TerminationHandler);
   signal ( SIGFPE, TerminationHandler);
   signal (SIGCHLD, SIG_IGN);  // Ignore when a child dies - don't need to wait() or waitpid()
     
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 
     // write a PID file.
     {
-      std::string pidfilename(argv[0]);
+      std::string pidfilename(progname);
       pidfilename+=".pid";
       ofstream pidfile(pidfilename.c_str());
       pidfile << gSystem->GetPid();
