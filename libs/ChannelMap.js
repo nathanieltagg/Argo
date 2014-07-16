@@ -56,7 +56,7 @@ function ChannelMap( element, path, override_settings)
   $(this.top_element).append("<div class='pad channel-map-adjunct' />");
   this.adjunctpad = $('div.channel-map-adjunct',this.top_element).get(0);
   $(this.adjunctpad).css("display","inline-block");
-  // $(this.adjunctpad).css("float","left");
+  $(this.adjunctpad).css("float","left");
   $(this.adjunctpad).css("height","150");
   $(this.adjunctpad).css("width","50%");
 
@@ -67,11 +67,13 @@ function ChannelMap( element, path, override_settings)
   <div class="channel-map-ctl">\
     <label><input type="radio" value="value" name="channel-map-radio" checked="checked"/>Value</label>\
     <label><input type="radio" value="diff"  name="channel-map-radio"                  />Diff</label>\
+    <label><input type="radio" value="sigmadiff"  name="channel-map-radio"                  />Sigma Diff</label><br/>\
+    <span><input type="checkbox" name="ctl-histo-logscale" checked="yes" class="ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale </label></span>\
   </div>\
   ';
-  $(this.adjunctpad).append(ctl);
+  $(this.top_element).append(ctl);
   this.ctl_element = $('div.channel-map-ctl', this.top_element).get(0);
-  $(this.ctl_element).css("display","inline-block");
+  // $(this.ctl_element).css("display","inline-block");
   // console.warn($("input[value='value']",this.radios));
   $(":radio",this.ctl_element).click(function(e){
     self.ChangeView();
@@ -107,10 +109,13 @@ function ChannelMap( element, path, override_settings)
   
   $(this.top_element).on("remove."+this.mynamespace, function(){return self.Remove()}); 
   
+  this.ctl_histo_logscale= GetBestControl(this.top_element,".ctl-histo-logscale")
+  $(this.ctl_histo_logscale).on("change."+this.mynamespace, function(){return self.ChangeView();});
+  
   gOmData.add(this.path); 
   gRefData.add(this.path);
   
-}
+};
 
 ChannelMap.prototype.Remove = function()
 {
@@ -118,7 +123,8 @@ ChannelMap.prototype.Remove = function()
   gOmData.remove(this.path);
   $(document).off("OmDataRecieved."+this.mynamespace);
   $(document).off("OmRefDataRecieved."+this.mynamespace);
-}
+  $(this.ctl_histo_logscale).off("change."+this.mynamespace);
+};
 
 ChannelMap.prototype.NewRecord = function()
 {
@@ -132,7 +138,10 @@ ChannelMap.prototype.NewRecord = function()
   // $("div.title",this.top_element).html(this.map.title);
 
   // Need histogram _slightly_ bigger than max_content
-  this.hist = CreateGoodHistogram(50, 1e-5, this.map.max_content);
+  var min = 1e99;
+  var val;
+  for(var i=0;i<this.map.n;i++) { val = this.map.data[i]; if((val!=0) && (val< min)) min = val; }
+  this.hist = CreateGoodHistogram(50,  min, this.map.max_content);
   
   for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
     for(var card=4;card<20;card++) {      
@@ -147,7 +156,8 @@ ChannelMap.prototype.NewRecord = function()
   this.cs.max = this.hist.max;
   
   if(this.refmap) {
-    this.diff_hist = new Histogram(1000,-100,100);
+    this.sigmadiff_hist = new Histogram(20,-10,10);
+    this.diff_hist      = new Histogram(2,-1,1);
     for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
       for(var card=4;card<20;card++) {      
         for(var channel=0;channel<64;channel++) {
@@ -162,16 +172,21 @@ ChannelMap.prototype.NewRecord = function()
            var denom = Math.sqrt(ex*ex+ey*ey);
            if(denom<=0) denom = 1;
            var ediff = diff/denom;
-           this.diff_hist.Fill(ediff);
+           if(ediff>9.9) ediff = 9.9;
+           if(ediff<-9.9) ediff = -9.9;
+           this.sigmadiff_hist.Fill(ediff);
+           this.diff_hist.TwoSideExpandFill(diff);
         }
       }
     }
+    // while(this.sigmadiff_hist.n > 100) { this.sigmadiff_hist.RebinBy(2); }
+    // while(this.diff_hist.n      > 100) { this.diff_hist.RebinBy(2); }
   }
   
   var self = this;
   
   this.associate_hist.FinishRangeChange = function(){self.Draw();}
-  this.associate_hist.ChangeRange = function(minu,maxu){self.cs.min = minu; self.cs.max = maxu; HistCanvas.prototype.ChangeRange.call(this,minu,maxu);}
+  this.associate_hist.ChangeRange = function(minu,maxu){HistCanvas.prototype.ChangeRange.call(this,minu,maxu); self.cs.min = this.min_u; self.cs.max = this.max_u; }
   this.ChangeView();
 }
 
@@ -182,23 +197,37 @@ ChannelMap.prototype.NewRecord = function()
 ChannelMap.prototype.ChangeView = function()
 {
   this.view_state = $(":checked",this.ctl_element).val();
+  this.associate_hist.SetLogy( $(this.ctl_histo_logscale).is(":checked") );
   // console.warn(this.view_state);
   
-  this.associate_hist.SetLogy(false);
   if(this.view_state=='diff' && this.refmap) {
-    this.associate_hist.xlabel = "(Current-Ref)/Sigma";
+    this.associate_hist.xlabel = "Current-Reference";
     this.associate_hist.ylabel = "Num Channels";
     this.associate_hist.min = this.diff_hist.min_x;
     this.associate_hist.max = this.diff_hist.max_x;
     this.associate_hist.SetHist(this.diff_hist,this.cs);
     this.associate_hist.ResetToHist(this.diff_hist); 
+    this.associate_hist.bound_u_min=this.diff_hist.min;
+    this.associate_hist.bound_u_max=this.diff_hist.max;
+  } else if(this.view_state=='sigmadiff' && this.refmap) { 
+    this.associate_hist.xlabel = "(Current-Ref)/Sigma";
+    this.associate_hist.ylabel = "Num Channels";
+    this.associate_hist.min = this.sigmadiff_hist.min_x;
+    this.associate_hist.max = this.sigmadiff_hist.max_x;
+    this.associate_hist.SetHist(this.sigmadiff_hist,this.cs);
+    this.associate_hist.ResetToHist(this.sigmadiff_hist);     
+    this.associate_hist.bound_u_min=this.sigmadiff_hist.min;
+    this.associate_hist.bound_u_max=this.sigmadiff_hist.max;
   } else {
     this.associate_hist.xlabel = this.map.ylabel || this.map.title;
     this.associate_hist.ylabel = "Num Channels";
     this.associate_hist.min = this.hist.min;
     this.associate_hist.max = this.hist.max;
     this.associate_hist.SetHist(this.hist,this.cs);
-    this.associate_hist.ResetToHist(this.hist);     
+    this.associate_hist.ResetToHist(this.hist);
+    this.associate_hist.bound_u_min=this.hist.min;
+    this.associate_hist.bound_u_max=this.hist.max;
+         
   }
   this.cs.min = this.associate_hist.min;
   this.cs.max = this.associate_hist.max;
@@ -324,7 +353,10 @@ ChannelMap.prototype.DrawOneCrate = function(crate, drawbox, cratebox)
       var x = this.map.data[ccc];
       var val = x;
       if(this.do_diff) {
-        x = this.map.data[ccc];
+        var y = this.refmap.data[ccc];
+        val = x-y;
+      }
+      if(this.do_sigma) {
         var y = this.refmap.data[ccc];
         var ex = Math.sqrt(x);
         if(this.map.errs) ex = this.map.errs[ccc];
@@ -333,7 +365,10 @@ ChannelMap.prototype.DrawOneCrate = function(crate, drawbox, cratebox)
         var diff = x-y;
         var denom = Math.sqrt(ex*ex+ey*ey);
         if(denom<=0) denom = 1;
-        val = diff/denom;
+        var ediff = diff/denom;
+        if(ediff>9.9) ediff = 9.9;
+        if(ediff<-9.9) ediff = -9.9;
+        val = ediff;
       }
 
       if(val>=this.cs.min && val<=this.cs.max ) {
@@ -365,7 +400,7 @@ ChannelMap.prototype.DrawOne = function(umin,umax,vmin,vmax)
   if(!this.map) return;
 
   this.do_diff = (this.view_state=='diff' && this.refmap);
-
+  this.do_sigma = (this.view_state=='sigmadiff' && this.refmap);
 
   var drawbox = {u1:umin,u2:umax,v1:vmin,v2:vmax};
   // cs.min =500;
@@ -426,7 +461,32 @@ ChannelMap.prototype.DoMouse = function(ev)
   if(null!=this.fMouseInCard) txt += "Card: " + this.fMouseInCard + "<br/>";
   if(null!=this.fMouseInChannel) txt += "Channel: " + this.fMouseInChannel + "<br/>";
   var h = this.map;  
-  if(this.fMouseInChannel) txt += "Value: " + h.data[this.GetCCCIndex(this.fMouseInCrate,this.fMouseInCard,this.fMouseInChannel)] + "<br/>";
+  if(this.fMouseInChannel) {
+    txt += "<br/>";
+    var ccc = this.GetCCCIndex(this.fMouseInCrate,this.fMouseInCard,this.fMouseInChannel);
+    var x = this.map.data[ccc];
+    var ex = Math.sqrt(x);
+    if(this.map.errs) {ex = this.map.errs[ccc];}
+    
+    txt += "Value: " + x;
+    if(this.map.errs) {txt += "&pm;" + ex;}
+    txt += "<br/>";
+    if(this.refmap) {
+      var y = this.refmap.data[ccc];
+      var ey = Math.sqrt(y);
+      if(this.refmap.errs) ey = this.refmap.errs[ccc];
+      var diff = x-y;
+      var denom = Math.sqrt(ex*ex+ey*ey);
+      if(denom<=0) denom = 1;
+      var ediff = diff/denom;
+
+      txt += "Reference value: " + y; 
+      if(this.refmap.errs) { txt += "&pm;" + ey; }
+      txt += "<br/>";
+      txt += "Difference: " + diff + " (" + ediff.toFixed(1) + " sigma)<br/>";
+        
+    }
+  }
 
   $(".infopane",this.top_element).html(txt);
   console.log(this.fMouseInCrate,this.fMouseInCard,this.fMouseInChannel);

@@ -23,7 +23,7 @@ function HistCanvas( element, options )
       // console.log("HistCanvas: NULL element supplied."); 
       return;
   }
-  
+
   var settings = {
     // default settings:
     log_y : false,
@@ -95,7 +95,7 @@ function HistCanvas( element, options )
 HistCanvas.prototype.ResetDefaultRange = function()
 {
   this.ResetToHist(this.fHists[0]);
-}
+};
 
 
 HistCanvas.prototype.Draw = function()
@@ -107,11 +107,11 @@ HistCanvas.prototype.Draw = function()
   this.DrawHists();
   if(this.adjunct_display) this.DrawAdjunct();
   this.DrawMarker();
-}
+};
 
 HistCanvas.prototype.DrawRegions = function()
 {
-}
+};
 
 HistCanvas.prototype.DrawAdjunct = function()
 {
@@ -144,7 +144,7 @@ HistCanvas.prototype.DrawAdjunct = function()
 		var x2 = this.GetX(datum.uend);
 		this.ctx.fillRect(x1,this.origin_y-this.adjunct_height,x2-x1,this.adjunct_height);
 	}
-}
+};
 
 HistCanvas.prototype.DrawMarker = function()
 {
@@ -156,7 +156,7 @@ HistCanvas.prototype.DrawMarker = function()
     var dy = (this.origin_y) - y1;
     this.ctx.fillRect( x1, y1, dx, dy );    
   }
-}
+};
 
 HistCanvas.prototype.SetMarker = function(t)
 {
@@ -164,7 +164,7 @@ HistCanvas.prototype.SetMarker = function(t)
     this.marker = t;
     this.Draw();    
   }
-}
+};
 
 HistCanvas.prototype.ClearHists = function(  )
 {
@@ -177,6 +177,7 @@ HistCanvas.prototype.ClearHists = function(  )
 HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
 {
   if(this.fNHist === 0 ){ this.ResetToHist(inHist); }
+  if(typeof alpha === 'undefined' || alpha === null) alpha = 1;  
   this.fHists[this.fNHist] = inHist;
   this.fColorScales[this.fNHist] = inColorScale;
   this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
@@ -190,7 +191,7 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
   if(inHist.min_content < this.min_v) this.min_v = inHist.min_content;
   if(inHist.max_content > this.max_v) this.max_v = inHist.max_content;
   //console.log(this.fName + ".AddHist " + this.min_u + " " + this.max_u);
-}
+};
 
 HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
 {
@@ -205,7 +206,7 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   if(inHist.binlabels) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   this.FinishRangeChange();
-}
+};
 
 HistCanvas.prototype.ResetScales = function ( )
 {
@@ -224,7 +225,7 @@ HistCanvas.prototype.ResetScales = function ( )
 HistCanvas.prototype.SetAdjunctData = function ( inAdjunct )
 {
 	this.fAdjunctData = inAdjunct;
-}
+};
 
 HistCanvas.prototype.ResetToHist = function( inHist ) {
   this.min_u = inHist.min; // Minimum value shown on x-axis  FIXME - make adjustable.
@@ -234,17 +235,17 @@ HistCanvas.prototype.ResetToHist = function( inHist ) {
   this.max_v= inHist.max_content*1.02;  // maximum value shown on Y-axis
   if(this.min_v == this.max_v) this.max_v = this.min_v + 1.02; // If min and max are both 0, adjust the max to be 1 unit bigger
   this.SetLogy(this.log_y);
-}
+};
 
 HistCanvas.prototype.SetLogy = function( inOn )
 {
   if(inOn) {
     this.log_y=true;
-    if(this.min_v <=0) this.min_v = 1e-10;
+    if(this.min_v <=0) this.min_v = 0.5;
   } else {
     this.log_y=false;
   }
-}
+};
 
 
 
@@ -255,7 +256,7 @@ HistCanvas.prototype.GetY = function( f )
   }
   if(f<=0) f = this.min_v; // Protect against floating point errors
   return this.origin_y - this.adjunct_height - this.span_y*(Math.log(f)-Math.log(this.min_v))/(Math.log(this.max_v)-Math.log(this.min_v));
-}
+};
 
 HistCanvas.prototype.GetF = function( y ) 
 {
@@ -289,16 +290,18 @@ HistCanvas.prototype.DrawHists = function( )
      var barwidth = (hist.max-hist.min)/(hist.n)*this.span_x/(this.max_u-this.min_u) ;
      if(barwidth>2) barwidth -= 1;
      
+     var i,t,t2,f,x1,x2,y;
+     
      if(o.doLine) {
        this.ctx.beginPath();
        this.ctx.moveTo(this.origin_x, this.origin_y);
-       for (var i = 0; i < hist.n; i++) {
-         var t = hist.GetX(i);
-         var t2 = hist.GetX(i+1);
-         var f = hist.data[i];
-         var x1 = this.GetX(t);
-         var x2 = this.GetX(t2);
-         var y = this.GetY(f);
+       for (i = 0; i < hist.n; i++) {
+         t = hist.GetX(i);
+         t2 = hist.GetX(i+1);
+         f = hist.data[i];
+         x1 = this.GetX(t);
+         x2 = this.GetX(t2);
+         y = this.GetY(f);
          if(x2<this.origin_x) continue;
          if(x1>(this.origin_x + this.span_x)) continue;
          if(x1<this.origin_x) x1 = this.origin_x;
@@ -309,13 +312,13 @@ HistCanvas.prototype.DrawHists = function( )
        this.ctx.stroke();
      }
      if(o.doFill) {
-       for (var i = 0; i < hist.n; i++) {
-         if(hist.data[i]==0) continue;
-         var t = hist.GetX(i);
-         var t2 = hist.GetX(i+1);
-         var f = hist.data[i];
-         var x = this.GetX(t);
-         var y = this.GetY(f);
+       for (i = 0; i < hist.n; i++) {
+         if(hist.data[i]===0) continue;
+         t = hist.GetX(i);
+         t2 = hist.GetX(i+1);
+         f = hist.data[i];
+         x = this.GetX(t);
+         y = this.GetY(f);
          if(x+barwidth<this.origin_x) continue;
          if(x>this.origin_x+this.span_x) continue;
          var bw = barwidth;
@@ -354,7 +357,7 @@ HistCanvas.prototype.DrawHists = function( )
      }
  }
    
-}    
+};    
 
 
 
@@ -382,13 +385,13 @@ HistCanvas.prototype.ChangeRange = function( minu,maxu )
 
   this.Draw();  
   this.FastRangeChange();
-}
+};
 
 HistCanvas.prototype.FinishRangeChange = function()
-{}
+{};
 
 HistCanvas.prototype.FastRangeChange = function()
-{}
+{};
 
 HistCanvas.prototype.DoMouseOverContent = function( u, v )
 {}
@@ -451,6 +454,7 @@ HistCanvas.prototype.DoMouse = function( ev )
     }
     else if(this.fDragMode === "scaleX") {
       // Find the new scale factor.
+      relx = x - offset.x - this.origin_x;
       if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
       // Want the T I started at to move to the current posistion by scaling.
       var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
@@ -472,13 +476,13 @@ HistCanvas.prototype.DoMouse = function( ev )
     this.FinishRangeChange();
   }  
   return false; // Handled.
-} 
+}; 
 
 HistCanvas.prototype.DoTouch = function( ev )
 {
-  var t1 = new Date().getTime();
-  console.log(ev.type + " " + (t1-this.touchtime));
-  this.touchtime = t1;
+  var tt = new Date().getTime();
+  console.log(ev.type + " " + (tt-this.touchtime));
+  this.touchtime = tt;
   if(ev.type === 'touchend' && this.fIsBeingDragged) {
     // Mouseup - finish what you're doing.
     
@@ -552,6 +556,6 @@ HistCanvas.prototype.DoTouch = function( ev )
   this.lastTouch = touch;
   return true;
 
-}
+};
 
 

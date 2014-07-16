@@ -45,6 +45,7 @@ class SocketServer {
   int Send( const unsigned char* data, size_t size );
   int SendTo( int fd, const unsigned char* data, size_t size);
   int Close( int fd );
+  int RemoveClient( int fd ); // usually you want Close() instead.
   int ClientIsConnected( void );
   void CheckForBadClients();
 };

@@ -9,6 +9,7 @@ use IO::Socket;
 use IO::Select;
 use Cwd;
 use Encode qw(encode_utf8);
+use IO::Compress::Gzip qw(gzip $GzipError) ;
 
 use JSON qw(encode_json);
 use Exporter 'import';
@@ -40,17 +41,90 @@ sub serve
 {
   # print to the stored version of $stdout to actually get it out the door.
   # Note that we encode everything that nominally went to stdout/stderr and ship it as the 'serve_event_log'.
-  
-  print $oldout header(-type => 'application/json',
-               -Access_Control_Allow_Origin => "*");
-  print $oldout '{';
-  print $oldout '"record":';
-  print $oldout @_;
-  # Convert $msglog to something printable in html.
+
+
+  #package and manually gzip. 
   $msglog =~ s/\n/\<br\/\>/g;
-  print $oldout ',"serve_event_log":"';
-  print $oldout encode_utf8 "$msglog";
-  print $oldout '"}';
+  
+  my $serving = '{"record":' . $_[0] . ',"serve_event_log":"' . encode_utf8($msglog) . '"}';
+  my $zipped = ""; 
+  
+  my $start_time =  Time::HiRes::gettimeofday();
+  
+  # zip it.
+  open($serving_fh, '<', \$serving);
+  open($zipped_fh, '>' , \$zipped);
+  gzip $serving_fh => $zipped_fh, -Level=>3
+         or die "gzip failed: $GzipError\n";
+         
+         
+ my $size = length($zipped);
+ my $zip_time =  Time::HiRes::gettimeofday();
+         
+  print main::PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
+
+ #  my $head = header(-type => 'application/json',
+ #                     -charset => "UTF-8",
+ #                     -Access_Control_Allow_Origin => "*",
+ #                     -Content_Encoding => 'gzip',
+ #                     -Content_Length => $size);
+ #   if($_[1]>0) {
+ #     $head = header(-type => 'application/json',
+ #                         -charset => "UTF-8",
+ #                         -Access_Control_Allow_Origin => "*",
+ #                         -Content_Length => $size,
+ #                         -Content_Encoding => 'gzip',                         
+ #                         -attachment => 'event.json'
+ #                         );
+ # }
+ print $oldout "Content-type:application/json\r\n";
+ print $oldout "charset: UTF-8\r\n";
+ print $oldout "Access-Control-Allow-Origin: *\r\n";
+ print $oldout "Content-Encoding: gzip\r\n";
+ print $oldout "Content-Length: $size\r\n";
+ if($_[1]>0) {
+   print $oldout "attachment: event.json\r\n";
+ }  
+ print $oldout "\r\n";
+
+ binmode $oldout;
+ 
+ print $oldout $head;
+ print $oldout $zipped;
+ close $oldout;
+ 
+  # estimate total length.
+  # my $thing1 = '{';
+  # $thing1 .= '"record":';
+  # 
+  # $msglog =~ s/\n/\<br\/\>/g;
+  # my $thing2 = ',"serve_event_log":"';
+  # $thing2 .= encode_utf8 "$msglog";
+  # $thing2 .= '"}';
+  # 
+  # my $size = length($thing1) + length($_[0]) + length($thing2);
+  # 
+  # 
+  # my $headertype = 'application/json';
+  # my $head = header(-type => 'application/json',
+  #                   -charset => "UTF-8",
+  #                   -Access_Control_Allow_Origin => "*",
+  #                   -Content_Length => $size);
+  # if($_[1]>0) {
+  #   $head = header(-type => 'application/json',
+  #                       -charset => "UTF-8",
+  #                       -Access_Control_Allow_Origin => "*",
+  #                       -Content_Length => $size,
+  #                       -attachment => 'event.json'
+  #                       );
+  # }
+  # print $oldout $head;  
+  # print $oldout $thing1;
+  # print $oldout $_[0];
+  # print $oldout $thing2;
+  # 
+  # #trick: see if closing STDOUT will force the session to end.
+  # close $oldout;
 }
 
 sub myerror
@@ -105,17 +179,21 @@ sub start_server
       rename "$exec_name.log.1", "$exec_name.log.2";
       rename "$exec_name.log",   "$exec_name.log.1";
       unlink "$exec_name.log";
-      open STDIN,  '</dev/null';
-      open STDOUT, ">$exec_name.log";
-      open STDERR, '>&STDOUT';
+      open (STDIN,  '</dev/null');
+      open (STDOUT, ">$exec_name.log");
+      open (STDERR, '>&STDOUT');
+      print "Starting a new job...<br/>\n";
+
+      print "Environemnt...\n";
+      system("bash -c 'set' >>$exec_name.log 2>&1");
   #     my $pid = getppid();
   #     # system("echo $pid > ntuple-server.pid");
   #     # my $pwd = getcwd;
   #     # system("echo $pwd >> ntuple-server.pid");
   #     # print  $pwd . "\n";
-      my $cmd = "../backend/$exec_name $ntuple_server_port";
-      if( -r "../backend/setup.sh" ) { $cmd = "source ../backend/setup.sh; $cmd"; }
-      print  "Running: $cmd<br/>\n";
+      my $cmd = "../backend/$exec_name -p $ntuple_server_port >>$exec_name.log 2>&1";
+      if( -r "../backend/setup.sh ") { $cmd = "source ../backend/setup.sh; " . $cmd; }
+      print "Running: $cmd\n";
       $val = system($cmd);
       $pid = $!;
       # unlink "ntuple-server.pid";
@@ -162,11 +240,12 @@ sub request
     start_server();
     
     print "Looking for socket on newly restarted process.\n";
-    my $startup_timeout_tries = 1;
+    my $startup_timeout_tries = 10;
     
     my $startup_time = 0;
     while($startup_time < $startup_timeout_tries) {
-      sleep(10);
+      sleep(1);
+      print "Trying...";
       undef $sock;
       $sock = get_sock();
       last if ($sock); # exit if we have it.
@@ -193,12 +272,25 @@ sub request
   
   @ready = $sel->can_read($timeout_seconds);
   if(@ready) {
+    $time_start_req = [gettimeofday];
+    # print REQUESTLOG "Got a read hit.\n";
     $result = "";
-    while(<$sock>) {
-      $result .= $_;
-    }
+    # while(<$sock>) {
+    #   # print REQUESTLOG "Got " . length($_) . " bytes\n";
+    #   $result .= $_;
+    #   print "Got data chunk at time: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
+    # }
+    
+    # This version is not as robust as the above one 
+    #  (e.g. pretty-print might clobber it) 
+    #  but it returns considerably faster! Somehow, waiting for the socket to 
+    #  close in that while() loop can take many seconds!
+    $result = <$sock>;
+    # print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
+    
     print "Got result from ntuple-server. Length: " . length($result) . " bytes\n<br/>";
-    print "Time to get response: " . tv_interval( $time_start, [gettimeofday])*1000 . " ms\n<br/>";
+    print "Time to send query:   " . tv_interval( $time_start, $time_start_req)*1000 . " ms\n<br/>";
+    print "Time to get response: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
     
     return $result;
   } else {
@@ -209,6 +301,7 @@ sub request
     goto RESTART;
   }
 
+ 
 }
 
 1;

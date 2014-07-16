@@ -66,7 +66,7 @@ int SocketServer::Setup( void )
   mMyAddress.sin_addr.s_addr = INADDR_ANY;
   mMyAddress.sin_port = htons(mPort);
   memset(&(mMyAddress.sin_zero), '\0', 8);
-  if (::bind(mListener, (struct sockaddr *)&mMyAddress, sizeof(mMyAddress)) == -1) {
+  if( -1 == ::bind(mListener, (struct sockaddr *)&mMyAddress, sizeof(mMyAddress)) ) {
     cout << Form("SocketServer::Setup Cannot bind socket: %s\n",strerror(errno));
     return 1;
     
@@ -152,7 +152,7 @@ int SocketServer::Listen( double inWaitSecs,
           if (newfd < mFdMin) mFdMin = newfd;
           mClientTimers[newfd].Reset();
           cerr << Form("SocketServer::Listen() Got new client %s on socket %d\n", inet_ntoa(mClientAddress.sin_addr), newfd);
-
+          outWhichClient = i;
           outGotNewClient = true;
         }		
       } else {
@@ -197,7 +197,7 @@ int SocketServer::Listen( double inWaitSecs,
   }
 
   return 0;
-};
+}
 
 
 int SocketServer::Send(const unsigned char* data, 
@@ -271,10 +271,14 @@ int SocketServer::SendTo(int fd,
 int SocketServer::Close( int i )
 {
   close(i); // bye!
+  return RemoveClient(i);// remove from master set  
+}
+
+int SocketServer::RemoveClient( int i )
+{
   FD_CLR(i, &mClients); // remove from master set  
   return 0;
 }
-
 
 int SocketServer::ClientIsConnected( void )
 {

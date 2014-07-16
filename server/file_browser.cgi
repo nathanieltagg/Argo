@@ -11,7 +11,7 @@ use Cwd qw/getcwd realpath/;
 #default configuration
 $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
-$cookie_name = 'arachne_file_browser';
+$cookie_name = 'argo_file_browser';
 $link_target = "../arachne.html";
 $restrict_to = [ getcwd(), "/uboone","/minos","/minerva"];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
@@ -50,7 +50,7 @@ if(! -d $default_path) { $default_path = `pwd`; chomp $default_path;}
 $cur_path = $default_path;
 $cook_path = cookie($cookie_name);
 if(defined $cook_path) {
-  # $cur_path = $cook_path;
+   $cur_path = $cook_path;
 }
 if(defined param('path')) {$cur_path = param('path');};
 
@@ -68,7 +68,8 @@ $scripts = [
               -src      => 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'
             },
             { -type => 'text/javascript',
-              -src      => '../js/jquery.tablesorter.js'
+              # -src      => '../js/jquery.tablesorter.js'
+              -src      => '../js/sorttable.js'
             },
             { -type => 'text/javascript',
               -src      => 'file_browser.js'}              
@@ -94,7 +95,7 @@ $req_path_abs = realpath($cur_path);
 $good=0;
 foreach $basepath (@$restrict_to)
 {
-  if( $cur_path=~/^$basepath/ ) {$good=1;}
+  if( $req_path_abs=~/^$basepath/ ) {$good=1;}
 }
 if($good==0) {
   print p("$cur_path");
@@ -148,7 +149,7 @@ if( scalar(@files) ==0 ) {
 } else {
 
   print start_table({-class=>"filetable tablesorter"});
-  print thead(Tr({-style=>"text-align:left;"},th("File"),th("Date"),th("Size")));
+  print thead(Tr({-style=>"text-align:left;"},th("File"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
   print start_tbody;
   foreach $f (@files)
   {
@@ -157,9 +158,8 @@ if( scalar(@files) ==0 ) {
     $f_enc =~ s/([^-_.~\/A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
     print Tr(
              td( a({-href=>"$link_target?filename=$f_enc"},"$f"))
-            ,td({-class=>"date"},strftime("%b %e, %Y %H:%M",localtime($info[9])))
-            ,td({-class=>"size"},get_filesize_str($info[7]))
-          
+            ,"<td sorttable_customkey=".$info[9]." class='date'>".strftime("%b %e, %Y %H:%M",localtime($info[9]))."</td>"
+            ,"<td sorttable_customkey=".$info[7].">".get_filesize_str($info[7])."</td>"
             );
   }
   print end_tbody;
