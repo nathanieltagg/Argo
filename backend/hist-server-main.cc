@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <signal.h>
+#include <algorithm>
 
 #include <TROOT.h>
 #include <TRint.h>
