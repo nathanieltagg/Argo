@@ -24,7 +24,7 @@ const std::string JsonElement::quotestring( const std::string& input )
 {
   std::ostringstream ss;
   ss << "\"";
-   for (auto iter = input.begin(); iter != input.end(); iter++) {
+   for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
    //C++98/03:
    //for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
        switch (*iter) {

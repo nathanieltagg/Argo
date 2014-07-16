@@ -8,6 +8,7 @@
 #include <math.h>
 #include <cmath>
 #include <vector>
+#include <cstdio>
 
 class JsonElement;
 class JsonObject;
@@ -111,7 +112,7 @@ public:
     if(!std::isfinite(value)) { fContent << "\"nan\""; return; }
     // Find exponent
     int X = (int)floor(log10(value));
-    char buff[S+10];
+    char* buff = new char[S+10];
     if((X+1<S) ||  (X > S+4) ){
       // For most of the above cases, the %g format works well!
       sprintf(buff,"%.*g",S,value);
@@ -119,6 +120,7 @@ public:
       sprintf(buff,"%d",(int)value);
     }
     fContent << buff;
+    delete [] buff;
   }
 };
 
@@ -149,6 +151,7 @@ class JsonArray : public JsonElement
 public:
   JsonArray() : JsonElement(), fElements(0) { fContent.str(""); };
   JsonArray(const JsonArray& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
+  JsonArray(const std::vector<JsonObject>& in);
   template<typename T>
     JsonArray(const std::vector<T>& in);
   
@@ -181,6 +184,16 @@ JsonArray::JsonArray(const std::vector<T>& in) :   fElements(0)
   for ( itr = in.begin(); itr != in.end(); ++itr ) this->add(JsonElement(*itr));
 }
 
+
+
+// Deal explicitly with objects, which shouldn't be cast.
+inline
+JsonArray::JsonArray(const std::vector<JsonObject>& in) :   fElements(0)
+{
+  fixed();
+  std::vector<JsonObject>::const_iterator itr;
+  for ( itr = in.begin(); itr != in.end(); ++itr ) this->add(*itr);
+}
 
 #endif 
 

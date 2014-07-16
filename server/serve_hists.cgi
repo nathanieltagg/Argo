@@ -17,7 +17,7 @@ use URI::Escape;
 
 ArgoServerTools::setup();
 
-my @paths_to_check = ("/",".","/online/om","/datalocal/om", "./data/");
+my @paths_to_check = ("/","./data","/online/om","/datalocal/om", "./data/");
 $fileglob = "current.root";
 
 
@@ -40,10 +40,12 @@ if(defined param('filename')) {
 } else {
   print "Filename undefined <br/>";
   $run = 1;
-
   $subrun = "*";
   if( defined param('run')    ) {$run    = sprintf("%08d",param('run'));       }
   if( defined param('subrun') ) {$subrun = sprintf("%03d",param('subrun')); }
+
+  print "Using run: -" . $run . "-<br/>";
+  print "Using subrun: -" . $subrun . "-<br/>";
   $fileglob = "run_" . $run . "_" . $subrun .".om.root";    
 }
 
