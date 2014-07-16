@@ -81,3 +81,8 @@ $filename = $files[0];
 my $resp = ArgoServerTools::request($filename,$hists,$options);
 
 ArgoServerTools::serve($resp);
+
+#remove old log files, more than 1/2 day old.
+for ( glob "argo_backend*.log" ) {
+  unlink $_ if ( -M $_ > 0.5 );
+}
