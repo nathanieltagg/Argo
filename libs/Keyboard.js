@@ -39,6 +39,11 @@ $(function() {
     // r: reset
       return $('.ctl-histo-reset').click();
       break;
+
+    case 98: 
+    // b: flip
+      return $('.ctl-histo-flip').click();
+      break;
       
     case 80:
       // console.log("P:",event);

@@ -278,88 +278,92 @@ HistCanvas.prototype.DrawHists = function( )
   //log(this.fName + "::DrawHists");
   // Draw the data.
   if (!this.ctx) return;
-   for(var iHist = 0; iHist< this.fNHist; iHist++){
-     //log("  drawing hist "+iHist);
-     var hist = this.fHists[iHist];
-     var colorscale = this.fColorScales[iHist];
-     var alpha = 1.0;
-     var do_fill = true;
-     var do_line = false;
-     var o = this.fHistOptions[iHist];
-     this.ctx.strokeStyle = o.strokeStyle;
-     this.ctx.lineWidth = o.lineWidth;
-     
-     // Width of a single vertical histogram bar.
-     var barwidth = (hist.max-hist.min)/(hist.n)*this.span_x/(this.max_u-this.min_u) ;
-     if(barwidth>2) barwidth -= 1;
-     
-     var i,t,t2,f,x1,x2,y;
-     
-     if(o.doLine) {
-       this.ctx.beginPath();
-       this.ctx.moveTo(this.origin_x, this.origin_y);
-       for (i = 0; i < hist.n; i++) {
-         t = hist.GetX(i);
-         t2 = hist.GetX(i+1);
-         f = hist.data[i];
-         x1 = this.GetX(t);
-         x2 = this.GetX(t2);
-         y = this.GetY(f);
-         if(x2<this.origin_x) continue;
-         if(x1>(this.origin_x + this.span_x)) continue;
-         if(x1<this.origin_x) x1 = this.origin_x;
-         if(x2>(this.origin_x + this.span_x)) x2 = this.origin_x+this.span_x;
-         this.ctx.lineTo(x1,y);
-         this.ctx.lineTo(x2,y);       
-       }
-       this.ctx.stroke();
-     }
-     if(o.doFill) {
-       for (i = 0; i < hist.n; i++) {
-         if(hist.data[i]===0) continue;
-         t = hist.GetX(i);
-         t2 = hist.GetX(i+1);
-         f = hist.data[i];
-         x = this.GetX(t);
-         y = this.GetY(f);
-         if(x+barwidth<this.origin_x) continue;
-         if(x>this.origin_x+this.span_x) continue;
-         var bw = barwidth;
-         if(x<this.origin_x) {// partial-width bar at front.
-           bw = barwidth-this.origin_x+x; 
-           x = this.origin_x; 
-         }
-         bw = Math.min(bw, this.origin_x + this.span_x - x); // partial-width at end.
-         var c = colorscale.GetColor((t+t2)/2);
-         this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
-         this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
-       }
-     }
-     
-     if(hist.binlabelsx) {
-       this.ctx.font = this.tick_label_font;
-       this.ctx.textAlign = 'center';
-       this.ctx.textBaseline = 'top';
-       
-        for (var i = 0; i < hist.n; i++) {
-          var t1 = hist.GetX(i);
-          var t2 = hist.GetX(i+1);
-          var x1 = this.GetX(t1);
-          var x2 = this.GetX(t2);
-          var x = (x1+x2)/2;
-          var arr = getLines(this.ctx,hist.binlabelsx[i],x2-x1,this.ctx.font);
-          console.warn("getLines",arr);
-          var y = this.origin_y+8;
-          for(var j=0;j<arr.length;j++) {
-            console.warn(x,y,arr[j]);
-            this.ctx.fillText(arr[j], x, y);
-            y += 10;
-          }
-        }
-       
-     }
- }
+  for(var iHist = 0; iHist< this.fNHist; iHist++){
+     this.DrawHist(iHist);
+  }
+}
    
+HistCanvas.prototype.DrawHist = function( iHist ) 
+{
+   //log("  drawing hist "+iHist);
+   var hist = this.fHists[iHist];
+   var colorscale = this.fColorScales[iHist];
+   var alpha = 1.0;
+   var do_fill = true;
+   var do_line = false;
+   var o = this.fHistOptions[iHist];
+   this.ctx.strokeStyle = o.strokeStyle;
+   this.ctx.lineWidth = o.lineWidth;
+   
+   // Width of a single vertical histogram bar.
+   var barwidth = (hist.max-hist.min)/(hist.n)*this.span_x/(this.max_u-this.min_u) ;
+   if(barwidth>2) barwidth -= 1;
+   
+   var i,t,t2,f,x1,x2,y;
+   
+   if(o.doLine) {
+     this.ctx.beginPath();
+     this.ctx.moveTo(this.origin_x, this.origin_y);
+     for (i = 0; i < hist.n; i++) {
+       t = hist.GetX(i);
+       t2 = hist.GetX(i+1);
+       f = hist.data[i];
+       x1 = this.GetX(t);
+       x2 = this.GetX(t2);
+       y = this.GetY(f);
+       if(x2<this.origin_x) continue;
+       if(x1>(this.origin_x + this.span_x)) continue;
+       if(x1<this.origin_x) x1 = this.origin_x;
+       if(x2>(this.origin_x + this.span_x)) x2 = this.origin_x+this.span_x;
+       this.ctx.lineTo(x1,y);
+       this.ctx.lineTo(x2,y);       
+     }
+     this.ctx.stroke();
+   }
+   if(o.doFill) {
+     for (i = 0; i < hist.n; i++) {
+       if(hist.data[i]===0) continue;
+       t = hist.GetX(i);
+       t2 = hist.GetX(i+1);
+       f = hist.data[i];
+       x = this.GetX(t);
+       y = this.GetY(f);
+       if(x+barwidth<this.origin_x) continue;
+       if(x>this.origin_x+this.span_x) continue;
+       var bw = barwidth;
+       if(x<this.origin_x) {// partial-width bar at front.
+         bw = barwidth-this.origin_x+x; 
+         x = this.origin_x; 
+       }
+       bw = Math.min(bw, this.origin_x + this.span_x - x); // partial-width at end.
+       var c = colorscale.GetColor((t+t2)/2);
+       this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
+       this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
+     }
+   }
+   
+   if(hist.binlabelsx) {
+     this.ctx.font = this.tick_label_font;
+     this.ctx.textAlign = 'center';
+     this.ctx.textBaseline = 'top';
+     
+      for (var i = 0; i < hist.n; i++) {
+        var t1 = hist.GetX(i);
+        var t2 = hist.GetX(i+1);
+        var x1 = this.GetX(t1);
+        var x2 = this.GetX(t2);
+        var x = (x1+x2)/2;
+        var arr = getLines(this.ctx,hist.binlabelsx[i],x2-x1,this.ctx.font);
+        console.warn("getLines",arr);
+        var y = this.origin_y+8;
+        for(var j=0;j<arr.length;j++) {
+          console.warn(x,y,arr[j]);
+          this.ctx.fillText(arr[j], x, y);
+          y += 10;
+        }
+      }
+     
+   }   
 };    
 
 
@@ -450,7 +454,7 @@ HistCanvas.prototype.DoMouse = function( ev )
       if(this.log_y) {
         this.max_v = Math.exp((this.span_y)*(Math.log(this.fDragStartF) - Math.log(this.min_v))/z);        
       } else {        
-        this.max_v = (this.span_y)*(this.fDragStartF - this.min_v)/z;
+        this.max_v = (this.span_y)*(this.fDragStartF - this.min_v)/z + this.min_v;
       }
       this.Draw();
   

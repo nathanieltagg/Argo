@@ -16,7 +16,8 @@ function OmHistCanvas( element, path )
   $(this.top_element).append('<span class="stats"></span><span class="mouseover-info"></span><br/>');
   
   $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-logscale" checked="yes" class="ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale </label></span>');
-  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-fill" checked="yes" class="ctl-histo-fill"/><label for="ctl-histo-fill"><b>(f)</b>ill</label></span>');
+  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-fill" checked="yes"     class="ctl-histo-fill"/><label for="ctl-histo-fill"><b>(f)</b>ill</label></span>');
+  $(this.top_element).append('<span><input type="checkbox" name="ctl-histo-flip"                   class="ctl-histo-flip"/><label for="ctl-histo-flip"><b>(b)</b>reference on top</label></span>');
   $(this.top_element).append('<span><button type="button" name="ctl-histo-reset" checked="yes" class="ctl-histo-reset"><b>(r)</b>eset</button></span>');
   this.path = path;
   var settings = {
@@ -42,6 +43,9 @@ function OmHistCanvas( element, path )
   this.ctl_histo_fill = GetBestControl(this.element,".ctl-histo-fill")
   $(this.ctl_histo_fill).on("change."+this.mynamespace, function(){return self.Draw();});
 
+  this.ctl_histo_flip = GetBestControl(this.element,".ctl-histo-flip")
+  $(this.ctl_histo_flip).on("change."+this.mynamespace, function(){return self.Draw();});
+
   this.ctl_histo_reset = GetBestControl(this.element,".ctl-histo-reset")
   $(this.ctl_histo_reset).on("click."+this.mynamespace, function(){self.ResetScales(); self.Draw()});
   
@@ -60,6 +64,7 @@ OmHistCanvas.prototype.Remove = function()
   $(document).off("OmRefDataRecieved."+this.mynamespace);
   $(this.ctl_histo_logscale).off("change."+this.mynamespace);
   $(this.ctl_histo_fill).off("change."+this.mynamespace);
+  $(this.ctl_histo_flip).off("change."+this.mynamespace);
   $(this.ctl_histo_reset).off("click."+this.mynamespace);
 }
 
@@ -105,11 +110,13 @@ OmHistCanvas.prototype.Update = function()
     if("draw_zero_suppress" in this.hist.info)  this.zero_suppress = this.hist.info.draw_zero_suppress;
     this.controls_init = true; // don't do on update of histogram.
   }
+
   this.ClearHists();
+
   if(this.refhist  ) this.AddHist(this.refhist,new ColorScaleIndexed(1),
-                                {doLine:true,doFill:false,strokeStyle:"red",alpha:0.5});
-  if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:0.9});
-  // this.ResetToHist(this.hist);
+                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1});
+  if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:1});
+
   this.Draw();
 
   var stats = "";
@@ -130,7 +137,7 @@ OmHistCanvas.prototype.Draw = function()
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
  
   if(this.zero_suppress) { this.min_v = this.hist.min_content; if(this.refhist) this.min_v = Math.min(this.hist.min_content, this.refhist.min_content); }
-  
+
   for(var i=0;i<this.fHistOptions.length;i++) {
     if( $(this.ctl_histo_fill).is(":checked") ) {
       this.fHistOptions[i].doFill=true;
@@ -142,6 +149,17 @@ OmHistCanvas.prototype.Draw = function()
   }
   
    HistCanvas.prototype.Draw.call(this);
+}
+
+OmHistCanvas.prototype.DrawHists = function( ) 
+{
+  var flip = $(this.ctl_histo_flip).is(":checked");
+  console.log("flipping:",flip);
+  if(flip) {
+    for(var iHist = this.fNHist-1; iHist>= 0; iHist--) this.DrawHist(iHist);    
+  } else {
+    for(var iHist = 0; iHist< this.fNHist; iHist++) this.DrawHist(iHist);        
+  }
 }
 
 OmHistCanvas.prototype.DoMouseOverContent = function( u, v )
