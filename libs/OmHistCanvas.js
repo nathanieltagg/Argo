@@ -146,6 +146,23 @@ OmHistCanvas.prototype.Draw = function()
 
 OmHistCanvas.prototype.DoMouseOverContent = function( u, v )
 {
-  $(".mouseover-info",this.top_element).html("u: "+u+"v: "+v);
-  
+  // console.log(u,v);
+  var txt = "";
+  if(u !== null) {
+    if(this.hist) {
+      var bin = this.hist.GetBin(u);
+      var x = this.hist.GetX(bin);
+      txt = "<span><b>";
+      txt += "Content: " + x + " : " + this.hist.data[bin];
+      if(this.hist.errs) txt += " &pm; " + this.hist.errs[bin];
+      if(this.refhist) {
+        bin = this.refhist.GetBin(u);
+        x = this.refhist.GetX(bin);
+        txt += " Reference: " + x + " : " + this.refhist.data[bin];
+        if(this.refhist.errs) txt += " &pm; " + this.refhist.errs[bin];
+      }
+      txt += "</b></span>";
+    }
+  }
+  $(".mouseover-info",this.top_element).html(txt);
 }
