@@ -65,6 +65,7 @@ function HistCanvas( element, options )
 
   // State model:
   this.fIsBeingDragged = false;
+  this.fMouseInContent = false;
   this.fDragMode = "none";
   this.fDragStartX = 0; // start drag X coordinate, absolute, in pixels
   this.fDragStartT = 0; // start drag X coordinate, in display units.
@@ -77,6 +78,8 @@ function HistCanvas( element, options )
   var self = this;
   if(!isIOS()){
     $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
+    // $(this.element).bind('mouseleave',function(ev) { return self.fMouseInContent = true;; });
+    // $(this.element).bind('mouseenter',function(ev) { return self.fMouseInContent = true;; });
     $(window)    .bind('mousemove',function(ev) { return self.DoMouse(ev); });
     $(window)    .bind('mouseup',  function(ev) { return self.DoMouse(ev); });
   }
@@ -182,7 +185,7 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
   this.fColorScales[this.fNHist] = inColorScale;
   this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
   this.fNHist++;
-  if(inHist.binlabels) 
+  if(inHist.binlabelsx) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   
   // Adjust scales.
@@ -203,7 +206,7 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.min_v = inHist.min_content;                // minimum value shown on Y-axis
   if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
-  if(inHist.binlabels) 
+  if(inHist.binlabelsx) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   this.FinishRangeChange();
 };
@@ -429,8 +432,8 @@ HistCanvas.prototype.DoMouse = function( ev )
   } else {
     // Either mousemove or mouseup.
     if(this.fIsBeingDragged !== true) {
-      if(x>this.origin_x && y<this.origin_y
-        && x<this.width && y> 0) this.DoMouseOverContent(this.GetU(x),this.GetV(y));
+      if(relx>this.origin_x && rely<this.origin_y
+        && relx<this.width && rely> 0) this.DoMouseOverContent(this.GetU(relx),this.GetV(rely));
       else  this.DoMouseOverContent(null,null);
     }
     if(this.fDragMode === "shiftX") {
