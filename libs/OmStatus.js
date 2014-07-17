@@ -133,7 +133,7 @@ OmStatus.prototype.UpdateData = function()
   h+= " <td><b>Reference</b></td>";
   h+= " <td>" + gRefData.status + "</td>";
   h+= " <td>" + gRefData.data_size + " bytes</td>";
-  h+=  "<td>" + filename   + "</td>"
+  h+=  "<td>" + reffilename   + "</td>"
   h+=  "<td><a href='" + gRefData.myurl + '?' + gRefData.param + "'>last call</a></td>"
   h+= "</table>";
 
