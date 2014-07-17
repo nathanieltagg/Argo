@@ -62,7 +62,7 @@ function SetupPortlets(container)
   $(".portlet-header .ui-icon-print",container).click(function(){    
                                                       var portlet = $(this).parents(".portlet:first");
                                                       var content = $('.portlet-content',portlet);
-                                                      return DoPrint(content);
+                                                      return DoPrint(portlet);
                                                     } );
 
                                      
