@@ -103,8 +103,14 @@ OmHistCanvas.prototype.Update = function()
   }
   this.time_on_x   = this.hist.time_on_x;
   
+  var do_errors = ("errs" in this.hist);
   if(this.controls_init == false) {
     console.warn("draw_fill",this.hist.info.draw_fill);
+    if(this.hist.classname == "TProfile") {
+      $(this.ctl_histo_fill).prop('checked',false);
+      $(this.ctl_histo_logscale).prop('checked',false);
+      this.zero_suppress = true;
+    }
     if("draw_fill"          in this.hist.info) $(this.ctl_histo_fill).prop('checked',this.hist.info.draw_fill);
     if("draw_logy"          in this.hist.info) $(this.ctl_histo_logscale).prop('checked',this.hist.info.draw_logy);
     if("draw_zero_suppress" in this.hist.info)  this.zero_suppress = this.hist.info.draw_zero_suppress;
@@ -114,8 +120,14 @@ OmHistCanvas.prototype.Update = function()
   this.ClearHists();
 
   if(this.refhist  ) this.AddHist(this.refhist,new ColorScaleIndexed(1),
-                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1});
+                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1,doErrors:do_errors});
   if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:1});
+  if(this.zero_suppress) { 
+    this.min_v = this.hist.min_content; 
+    if(this.refhist) this.min_v = Math.min(this.hist.min_content, this.refhist.min_content); 
+  }
+  if(this.min_v >= this.max_v) this.min_v = this.max_v*0.9;
+  if(this.min_v >= this.max_v) this.min_v = this.max_v-1;
 
   this.Draw();
 
@@ -136,7 +148,6 @@ OmHistCanvas.prototype.Draw = function()
 {
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
  
-  if(this.zero_suppress) { this.min_v = this.hist.min_content; if(this.refhist) this.min_v = Math.min(this.hist.min_content, this.refhist.min_content); }
 
   for(var i=0;i<this.fHistOptions.length;i++) {
     if( $(this.ctl_histo_fill).is(":checked") ) {
