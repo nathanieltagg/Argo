@@ -103,6 +103,7 @@ OmHistCanvas.prototype.Update = function()
   }
   this.time_on_x   = this.hist.time_on_x;
   
+<<<<<<< HEAD
   var do_errors = ("errs" in this.hist);
   if(this.controls_init == false) {
     console.warn("draw_fill",this.hist.info.draw_fill);
@@ -111,6 +112,8 @@ OmHistCanvas.prototype.Update = function()
       $(this.ctl_histo_logscale).prop('checked',false);
       this.zero_suppress = true;
     }
+
+  if((this.controls_init == false) && (this.hist.info)) {
     if("draw_fill"          in this.hist.info) $(this.ctl_histo_fill).prop('checked',this.hist.info.draw_fill);
     if("draw_logy"          in this.hist.info) $(this.ctl_histo_logscale).prop('checked',this.hist.info.draw_logy);
     if("draw_zero_suppress" in this.hist.info)  this.zero_suppress = this.hist.info.draw_zero_suppress;
