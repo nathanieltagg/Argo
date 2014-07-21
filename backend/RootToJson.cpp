@@ -62,8 +62,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
     h.add("binlabelsx",binlabels);
   }
   h.add("n",hist->GetNbinsX());
-  h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),9));
-  h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),9));
+  h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),10));
+  h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),10));
   h.add("underflow",hist->GetBinContent(0));
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
   double stats[4];

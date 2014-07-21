@@ -341,6 +341,25 @@ HistCanvas.prototype.DrawHist = function( iHist )
        this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
      }
    }
+   if(o.doErrors && hist.errs) {
+     for (i = 0; i < hist.n; i++) {
+       t1 = hist.GetX(i);
+       t2 = hist.GetX(i+1);
+       var t = (t1+t2)/2;
+       f = hist.data[i];
+       f1 = f + hist.errs[i];
+       f2 = f - hist.errs[i];
+       x1 = this.GetX(t);
+       var y1 = this.GetY(f1);
+       var y2 = this.GetY(f2);
+       if(x1<this.origin_x) continue;
+       if(x1>(this.origin_x + this.span_x)) continue;
+       if(y2>this.origin_y) y2 = this.origin_y;
+       this.ctx.lineTo(x1,y1);
+       this.ctx.lineTo(x1,y2);       
+     }
+     this.ctx.stroke(); 
+   }
    
    if(hist.binlabelsx) {
      this.ctx.font = this.tick_label_font;
