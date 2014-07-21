@@ -1,3 +1,4 @@
+base_location.pl
 *.pid
 *.log
 .htaccess
