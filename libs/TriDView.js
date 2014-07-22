@@ -93,16 +93,16 @@ TriDView.prototype.HoverChange = function()
     case "cluster":
     case "spacepoint":
     case "track":
-    case "mcparticle":
+    case "mcparticles":
       this.Draw(); break;
     default: break;
   }
-  switch(gHoverState.last.type) {
+  switch(gLastHoverState.type) {
     case "hit": 
     case "cluster":
     case "spacepoint":
     case "track":
-    case "mcparticle":
+    case "mcparticles":
       this.Draw(); break;
     default: break;  
   }
@@ -228,7 +228,7 @@ TriDView.prototype.CreateTracks = function()
   if(!$("#ctl-TrackLists").val()) return;
   var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
   console.warn(tracks,gRecord.tracks,$("#ctl-TrackLists").val());
-  for(var itrk in tracks) {
+  for(var itrk=0;itrk<tracks.length;itrk++) {
     var trk = tracks[itrk];
     console.log(trk);
     var hovobj = {obj:trk, type:"track", collection: tracks};    
@@ -274,7 +274,7 @@ TriDView.prototype.CreateMC = function()
     var dx_from_t0 = 0;
     if(move_t0) dx_from_t0 =  gGeo.getXofTDC(0,t0/500.0);
     
-    console.log("TriDView::CreateMC particle at time ",t0, p.trajectory.length);
+    // console.log("TriDView::CreateMC particle at time ",t0, p.trajectory.length);
     var hovobj = {obj:p, type:"mcparticle", collection: particles};
     if(!p.trajectory || p.trajectory.length===0) continue;
     

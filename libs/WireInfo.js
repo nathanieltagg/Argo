@@ -179,8 +179,7 @@ WireInfo.prototype.Draw = function()
     h+="Pedestal:" + gRecord.raw[gCurName.raw].pedestals[chan] + '<br/>';
 
 
-  if(gHoverState.type == "wire") {    
-  } else if(gHoverState.type == "hit") {
+  if(gHoverState.type == "hit") {
     // console.warn("hit hover: ",gHoverState.obj);
     tdc = Math.max(Math.floor(gHoverState.obj.t),0);
     wire = gHoverState.obj.wire;
@@ -192,14 +191,7 @@ WireInfo.prototype.Draw = function()
     h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
     h += "TDC: " +tdc + '<br/>';
     showgraph = true;
- 
-  } else if(gHoverState.type == "cluster") {
-      // console.warn("hit hover: ",gHoverState.obj);
-      h += "Cluster: " + gHoverState.obj.ID;
-  } else {
-    h += gHoverState.type;
   }
-    
   $(this.txt_element).html(h);
   
   

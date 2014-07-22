@@ -167,8 +167,8 @@ OpHitHistogram.prototype.HoverChange = function()
 {
   if(  (gHoverState.type == "opdet")  ||
        (gHoverState.type == "opflash") ||
-       (gHoverState.last.type == "opdet")  ||
-       (gHoverState.last.type == "opflash") ) this.ResetAndDraw();
+       (gLastHoverState.type == "opdet")  ||
+       (gLastHoverState.type == "opflash") ) this.ResetAndDraw();
 };
 
 

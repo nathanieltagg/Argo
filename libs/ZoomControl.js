@@ -174,8 +174,8 @@ ZoomControl.prototype.AutoZoom = function()
   console.warn("Zoom Control Source:",source);
   
   if(source){
-    if(source.timeHist){
-      var timeHist = $.extend(true,new Histogram(1,0,1), source.timeHist);
+    if(source.timeHist){      
+      var timeHist = HistogramFrom(source.timeHist);
       var time_bounds = timeHist.GetROI(0.03);
       gZoomRegion.tdc[0] = time_bounds[0]-20;
       gZoomRegion.tdc[1] = time_bounds[1]+20;  
@@ -187,14 +187,16 @@ ZoomControl.prototype.AutoZoom = function()
   
   
     if(source.planeHists) {
-      var plane0Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[0]);
+      var plane0Hist = HistogramFrom(source.planeHists[0]);
       var plane0_bounds = plane0Hist.GetROI(sacrifice);
       console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
 
+      delete source.planeHists[1]._owner;
       var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
       var plane1_bounds = plane1Hist.GetROI(sacrifice);
       console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
 
+      delete source.planeHists[2]._owner;
       var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
       var plane2_bounds = plane2Hist.GetROI(sacrifice);
       console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());

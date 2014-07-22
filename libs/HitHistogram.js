@@ -147,7 +147,7 @@ HitHistogram.prototype.BuildHistogram = function()
 
 HitHistogram.prototype.HoverChange = function( )
 {
-  if(gHoverState.type == "hit" || gHoverState.last.type == "hit") this.Draw();
+  if(gHoverState.type == "hit" || gLastHoverState.type == "hit") this.Draw();
 };
 
 HitHistogram.prototype.Draw = function( )
@@ -158,7 +158,7 @@ HitHistogram.prototype.Draw = function( )
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
   if(this.hist) {
-    if(gHoverState.type == "hit") {
+    if(gHoverState.type== "hit") {
       var hit = gHoverState.obj; 
       // new histogram 
       var val = hit[$(this.ctl_hit_field).val()];

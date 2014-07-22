@@ -66,7 +66,7 @@ TimeHistogram.prototype.NewRecord = function()
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
   if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) {
     wiredesc = gRecord.hit_hists[hitsListName].timeHist; 
-    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc);
+    this.hist = HistogramFrom(wiredesc);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.bound_u_min = this.hist.min;
     this.bound_u_max = this.hist.max;
@@ -75,7 +75,7 @@ TimeHistogram.prototype.NewRecord = function()
   } 
   else if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {
     wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
-    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.timeHist);
+    this.hist = HistogramFrom(wiredesc.timeHist);
 
     // Use this for testing out color schemes.
     // cs.colorScale = new HueColorScale(1.0,0.15);
