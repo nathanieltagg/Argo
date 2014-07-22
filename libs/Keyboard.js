@@ -102,6 +102,10 @@ $(function() {
         $('#ctl-show-tracks').click();
         return false;
         
+      case 111: // 'o' 
+        $('#ctl-track-shift-window').click();
+        return false;
+        
       case 84: // 'T'
         $('#ctl-TrackLists').cycle_dropdown().trigger("change");
         return false;

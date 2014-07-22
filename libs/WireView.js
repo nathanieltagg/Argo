@@ -115,6 +115,7 @@ function WireView( element, options )
   this.ctl_show_endpoint=  GetBestControl(this.element,".show-endpoint2d");
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
+  this.ctl_track_shift  =  GetBestControl(this.element,".track-shift-window");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
   this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
@@ -129,6 +130,7 @@ function WireView( element, options )
 
   $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
+  $(this.ctl_track_shift) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
@@ -154,6 +156,7 @@ function WireView( element, options )
 WireView.prototype.HoverChange = function()
 {
   // Only need a redraw if the over change affected something we care about.
+  console.warn("WireView checking hoverchange",gHoverState.type,gLastHoverState.type);
   switch(gHoverState.type) {
     case "hit": 
     case "endpoint2d": 
@@ -161,7 +164,7 @@ WireView.prototype.HoverChange = function()
     case "spacepoint":
     case "track":
     case "mcparticle":
-      this.Draw(); break;
+      this.Draw(); return;
     default: break;
   }
   switch(gLastHoverState.type) {
@@ -171,7 +174,7 @@ WireView.prototype.HoverChange = function()
     case "spacepoint":
     case "track":
     case "mcparticle":
-      this.Draw(); break;
+      this.Draw(); return;
     default: break;  
   }
 };
@@ -737,6 +740,10 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
   var tracklistname = $("#ctl-TrackLists").val();
   if(!tracklistname) return;
+
+  this.offset_track_ticks = 0;
+  if($("#ctl-track-shift-window").prop("checked")) this.offset_track_ticks = 3200;
+
   var bezier = tracklistname.match(/bezier/)!==null;
   if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }
   var tracks = gRecord.tracks[tracklistname];
@@ -754,7 +761,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     for(var j=0;j<points.length;j++) {
       // Fixme: bezier
       var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
-      var v = gGeo.getTDCofX(this.plane,points[j].x) + 3200; // Move it off by 1 frame
+      var v = gGeo.getTDCofX(this.plane,points[j].x) + this.offset_track_ticks; // Move it off by 1 frame
       var coords = [this.GetX(u), this.GetY(v)];
       pts.push(coords);      
     }
@@ -802,7 +809,8 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     for(j=1;j<pts.length;j++) 
       this.mouseable.push({type:"track", 
                           coords: [[pts[j-1][0],pts[j-1][1]],
-                                    pts[j][0],pts[j][1] ], 
+                                   [pts[j][0]  ,pts[j][1]  ] 
+                                  ], 
                           r:this.ctx.lineWidth, obj: trk});
 
     this.ctx.stroke();
@@ -811,10 +819,17 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 };
 
 
+WireView.prototype.DetectorXyzToScreenXY = function(x,y,z)
+{
+    return [
+      this.GetX( gGeo.yzToWire( this.plane,y,z) ),
+      this.GetY( gGeo.getTDCofX(this.plane,x ) + this.offset_track_ticks) 
+      ];
+}
+
 WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast) 
 {
   var tracklistname = $("#ctl-TrackLists").val();
-  var bezier = tracklistname.match(/bezier/)!==null;
   var tracks = gRecord.tracks[tracklistname];
   if(!tracks) return;
   
@@ -839,13 +854,6 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
 
   function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
   // Return an x,y screen coords tuple
-  var self = this;
-  function DetectorXyzToScreenXY(x,y,z) {
-    return [
-      self.GetX( gGeo.yzToWire( self.plane,y,z) ),
-      self.GetY( gGeo.getTDCofX(self.plane,x ) +3200) 
-      ];
-  }
   
   for(var i=0;i<tracks.length;i++)
   {
@@ -861,10 +869,10 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     // start point.
     var pt = points[0];
     var s = {
-      p0: DetectorXyzToScreenXY(pt.x - pt.vx, 
+      p0: this.DetectorXyzToScreenXY(pt.x - pt.vx, 
                                 pt.y - pt.vy,
                                 pt.z - pt.vz),
-      p1: DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
+      p1: this.DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
     };
     s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
     s.c1 = s.p1;
@@ -888,26 +896,26 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
 
       // console.log(dp_,"v0",v0_,signa,scale_a,"v1",v1_,signb,scale_b);
       segments.push({
-        p0: DetectorXyzToScreenXY(p0.x,p0.y,p0.z),
-        p1: DetectorXyzToScreenXY(p1.x,p1.y,p1.z),
-        c0: DetectorXyzToScreenXY(p0.x + scale_a*p0.vx,
-                                  p0.y + scale_a*p0.vy,
-                                  p0.z + scale_a*p0.vz
-                                ),
-        c1: DetectorXyzToScreenXY(p1.x - scale_b*p1.vx,
-                                  p1.y - scale_b*p1.vy,
-                                  p1.z - scale_b*p1.vz
-                                ),
+        p0: this.DetectorXyzToScreenXY(p0.x,p0.y,p0.z),
+        p1: this.DetectorXyzToScreenXY(p1.x,p1.y,p1.z),
+        c0: this.DetectorXyzToScreenXY(p0.x + scale_a*p0.vx,
+                                       p0.y + scale_a*p0.vy,
+                                       p0.z + scale_a*p0.vz
+                                     ),
+        c1: this.DetectorXyzToScreenXY(p1.x - scale_b*p1.vx,
+                                       p1.y - scale_b*p1.vy,
+                                       p1.z - scale_b*p1.vz
+                                     ),
       });
     }
     
     // Last point
     pt = points[points.length-1];
     s = {
-      p0: DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
-      p1: DetectorXyzToScreenXY(pt.x + pt.vx, 
-                                pt.y + pt.vy,
-                                pt.z + pt.vz)
+      p0: this.DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
+      p1: this.DetectorXyzToScreenXY(pt.x + pt.vx, 
+                                     pt.y + pt.vy,
+                                     pt.z + pt.vz)
     };
     s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
     s.c1 = s.p1;
@@ -919,11 +927,6 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     // Draw underlay
     // Draw underlay for a selected track.
     if(gSelectState.obj && (gSelectState.obj == trk)){      
-      if(this.fMouseInContentArea) {
-        var offset = getAbsolutePosition(this.canvas);
-        var lastpt = points[points.length-1];
-        SetOverlayPosition(offset.x + lastpt.x, offset.y + lastpt.y);  
-      }
 
       this.ctx.lineWidth = 5;
       this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
@@ -938,6 +941,12 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
       this.ctx.stroke();
       this.ctx.lineWidth =2;
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
+      
+      if(this.fMouseInContentArea) {
+        var offset = getAbsolutePosition(this.canvas);
+        var lastpt = segments[segments.length-1].p1;
+        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
+      }
       
     }
   
@@ -959,7 +968,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     // make circles at the nodes.
     this.ctx.fillStyle = this.ctx.strokeStyle;
     for(j=0;j<segments.length-1;j++) {
-         this.ctx.fillStyle = "rgba(89, 169, 28, 1)";
+      this.ctx.fillStyle = "rgba(89, 169, 28, 1)";
       this.ctx.beginPath();
       this.ctx.arc(segments[j].p0[0],segments[j].p0[1],1.5,0,1.99*Math.PI,false);
       this.ctx.fill();
@@ -980,8 +989,8 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
     // for mouseovering
     for(j=0;j<segments.length-1;j++) {
        this.mouseable.push({type:"track", 
-                            coords: [[segments[j].p0[0],segments[j].p1[0]], [segments[j].p0[1],segments[j].p1[1]]],
-                            r:this.ctx.lineWidth, obj: trk});
+                            coords: [[segments[j].p0[0],segments[j].p0[1]], [segments[j].p1[0],segments[j].p1[1]]],
+                            r:2.0, obj: trk});
      }
   }
   this.ctx.restore();
@@ -998,6 +1007,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
   if(move_t0) console.warn('moving mc t0');
   
+  console.warn("Drawing MC",particles.length);
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
@@ -1018,7 +1028,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
       var y = this.GetY(tdc);
       // This clips out track segments.
       // if(x>=0 && x<this.width && y>=0 && y<=this.height)
-      //   pts.push([x,y]);
+      pts.push([x,y]);
     }
     if(pts.length<2) continue;
     
@@ -1050,18 +1060,21 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     if(gHoverState.obj && (gHoverState.obj.ftrackId == p.ftrackId)){ // hovering
       this.ctx.lineWidth = 2;
       this.ctx.strokeStyle = "rgba(255,20,20,1)";
+      if(this.fMouseInContentArea) {
+        var offset = getAbsolutePosition(this.canvas);
+        var lastpt = pts[pts.length-1];
+        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
+      }      
     } else if(pdg == 22 || pdg == 2112 || pdg == 12 || pdg == 14 || pdg == 16) {
       // Make them grey
       if(show_neutrals) this.ctx.strokeStyle ="rgba(200,200,200,0.5)";    
       else continue;  // Or skip 'em.
     }
   
-    
-
     // Draw main track.
     this.ctx.beginPath();
     this.ctx.moveTo(pts[0][0],pts[0][1]);
-    for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
+    for(j=1;j<pts.length;j++) { this.ctx.lineTo(pts[j][0],pts[j][1]);  }
     this.ctx.stroke();
     
     

@@ -51,6 +51,8 @@
         <div><b>(shift-S)</b> <select id="ctl-SpacepointLists"  class="align-right"></select><div style="clear:both;"></div></div>
         <div><input type="checkbox" id="ctl-show-tracks"  name="show-tracks"  class="saveable show-tracks"  checked="checked"/><label for="ctl-show-tracks">  <b>(t)</b> Show Tracks </label></div>
         <div><b>(shift-T)</b> <select id="ctl-TrackLists"  class="align-right"></select><div style="clear:both;"></div></div>
+        <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-track-shift-window"      name="track-shift-window"      class="saveable track-shift-window"  /><label for="track-shift-window">      <b>(o)</b> Shift Tracks 1 Window</label></div>
+            
         <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      checked="checked"/><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>
         <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-show-mc-neutrals"      name="show-mc-neutrals"      class="saveable show-mc-neutrals"  /><label for="ctl-show-mc">      <b>(M)</b> Show neutral particles </label></div>
         <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-mc-move-tzero"      name="ctl-mc-move-tzero"      class="saveable ctl-mc-move-tzero"  /><label for="ctl-mc-move-tzero">      <b>(z)</b> Fake t-zero </label></div>
