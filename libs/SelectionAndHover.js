@@ -37,7 +37,7 @@ function ChangeHover( datum )
   if(!datum) {ClearHover(); return;}
   
   if(gHoverState.obj!=datum.obj) {
-    var last = $.extend({},gHoverState);  // make copy
+    gLastHoverState = $.extend({},gHoverState);  // make copy
     gHoverState = $.extend({},datum);     // make copy
 
     console.log("HoverChange:",datum);
@@ -96,22 +96,14 @@ $(function(){
   gStateMachine.Bind("newRecord",function(){ $('#selected-object-info.floating').hide();});
   gStateMachine.Bind("selectChange",DrawObjectInfo);
   $('#selected-object-info.floating').hide();
-  // $('#selected-object-info .unit-ctl').buttonset();
-  // $('#selected-object-info .unit-ctl input').click(DrawObjectInfo);
+  $('#selected-object-info .unit-ctl').buttonset();
+  $('#selected-object-info .unit-ctl input').click(DrawObjectInfo);
 
-  // $('#selected-object-info.dialog').dialog({
-  //     autoOpen: false,
-  //     position: 'right',
-  //     width: 200,
-  //     // dragStop: function(event,ui) {
-  //     //   if(clip_muon)   clip_muon.reposition();  // Fix floating copy boxes
-  //     //   if(clip_proton) clip_proton.reposition();
-  //     // },
-  //     // resizeStop: function(event,ui) {
-  //     //   if(clip_muon)   clip_muon.reposition();  // Fix floating copy boxes
-  //     //   if(clip_proton) clip_proton.reposition();
-  //     // }
-  // });
+  $('#selected-object-info.dialog').dialog({
+      autoOpen: false,
+      position: 'right',
+      width: 200
+  });
 });
 
 function DrawObjectInfo() 
@@ -214,7 +206,7 @@ function ComposeMCParticleInfo(s)
 function ComposeTrackInfo(s)
 {
   var trk = s.obj;
-  var id = trk.id;
+  var id = trk._idx;
   var start =  trk.points[0];
   var listname = $('#ctl-TrackLists').val();
 
@@ -309,17 +301,17 @@ HoverInfo.prototype.Draw = function ()
     $(this.element).html("");
     return;
   }
+  h="";
+  if(sel) 
+    h += "<h3>Selected: " + state.type + "</h3>";
+  else 
+    h += "<h3>Hover: " + state.type + "</h3>";
   
   switch(state.type) {
-    case "mcparticle": h=ComposeMCParticleInfo(state); break;
-    case "track": h=ComposeTrackInfo(state); break;
+    case "mcparticle": h+=ComposeMCParticleInfo(state); break;
+    case "track": h+=ComposeTrackInfo(state); break;
     
     default:
-      h="";
-      if(sel) 
-        h += "<h3>Selected:" + state.type + "</h3>";
-      else 
-        h += "<h3>Hover:" + state.type + "</h3>";
       h += "<table class='.hoverinfo'>";
       var a = "<tr><td class='hoverinfo-key'>";
       var b = "</td><td class='hoverinfo-val'>";
