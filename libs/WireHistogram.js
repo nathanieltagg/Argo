@@ -66,7 +66,8 @@ WireHistogram.prototype.NewRecord = function()
   if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) {
     
     wiredesc = gRecord.hit_hists[hitsListName]; // e.g. gRecord.raw."recob::rawwire"
-    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
+    delete wiredesc._owner;
+    this.hist = HistogramFrom(wiredesc.planeHists[this.plane]);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
     this.bound_u_min = 0;
@@ -75,7 +76,7 @@ WireHistogram.prototype.NewRecord = function()
   } 
   else  if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {    
     wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; // e.g. gRecord.raw."recob::rawwire"
-    this.hist = $.extend(true,new Histogram(1,0,1), wiredesc.planeHists[this.plane]);
+    this.hist = HistogramFrom(wiredesc.planeHists[this.plane]);
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
     this.bound_u_min = 0;

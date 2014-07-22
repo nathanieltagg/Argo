@@ -29,6 +29,32 @@ function DoInitialBookmarking()
   
   var i;
   
+  // Attach index numbers to EVERYTHING.
+  // This ensures that anything that is in an array has an _idx property set to that array's element number.
+  // Pretty cool, and only takes a ~30 milliseconds
+  // has_list stuff tries to only label things that have arrays of objects.
+  console.time("indexing");
+  function indexArraysIn(o,owner,name) {
+    var has_list = false;
+    if(o instanceof Object){
+      var j;
+      console.log ('recursing',name);
+      if(o instanceof Array) {        
+        for(j=0;j<o.length;j++) if(o[j] instanceof Object) {o[j]._idx = j; o[j]._owner = name;}
+      } else {
+        for(j in o){
+          has_list |= indexArraysIn(o[j],name,j);  
+        }
+      }
+      // if(name)  o._name  = name;
+      // if(owner) o._owner = owner;
+    }
+    return has_list;
+  }
+  indexArraysIn(gRecord,null,null);
+  console.timeEnd("indexing");
+  
+  
   if(gRecord.raw) {
     for(i in gRecord.raw) { // element can be set to null; just key exists if not loaded.
       if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) {gCurName.raw = i; break;}

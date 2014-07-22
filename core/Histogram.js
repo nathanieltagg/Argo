@@ -12,6 +12,13 @@
 /// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
 ///
 
+function HistogramFrom(o)
+{
+  delete o._owner; // if it exists.
+  for(var j in o) { delete o[j]._owner; }
+  return $.extend(true,new Histogram(1,0,1), o);  
+}
+
 function Histogram(n, min, max)
 {
     this.n = n;

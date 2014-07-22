@@ -55,7 +55,7 @@ MCDigraph.prototype.HoverChanged = function()
   if(!this.st) return;
   $('.mc-jit-node-hover').removeClass("mc-jit-node-hover"); // clear on any hover change.
   // this.st.clearNodesInPath();
-  if(gHoverState.type!="mcparticle") return;
+  if(gHoverState.type!="mcparticles") return;
   var id = "particle-track-"+gHoverState.obj.ftrackId;
   // this.st.addNodeInPath(id);
    $('#'+id).addClass("mc-jit-node-hover");

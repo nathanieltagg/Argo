@@ -1,29 +1,46 @@
 // Hoverstate should also hold "channel" and "sample" if it relates to a specific wire.
 
-var gHoverState = {
-  obj:  null,
-  type: "none",
-  collection: null,
-  last: { obj:  null,type: "none", collection: null}
-};
-
-
-var gSelectState = {
-  obj:  null,
-  type: "none",
-  collection: null
-};
-
-
-function ChangeHover( arg )
+function Datum(type,obj)
 {
-  if(!arg) {ClearHover(); return;}
+  // example:
+  this.type  = type || "none";
+  this.obj   = obj  || null;
+}
+
+Datum.prototype.type = function ()
+{
+  return this.type;
+  // if(!this.path) return 'none';
+  // var type = this.path[0];
+  // switch(type) {
+  //   case "hits" : return "hit";
+  //   case "clusters" : return "cluster";
+  //   case "opflashes": return "opflash";
+  //   case "ophit" : return "ophit";
+  //   case "oppulses" : return "oppulse";
+  //   case "spacepoints" : return "spacepoint";
+  //   case "tracks" : return "track";
+  //   case "mc" : return this.path[1];
+  //   default: return type;
+  // }
+};
+
+
+var gHoverState = new Datum();
+var gLastHoverState = new Datum();
+
+var gSelectState = new Datum();
+
+
+function ChangeHover( datum )
+{
+  if(!datum) {ClearHover(); return;}
   
-  if(arg.obj!=gHoverState.obj) {
-    var last = $.extend({},gHoverState);
-    gHoverState = $.extend({},arg);
-    gHoverState.last = last;
-    console.log("HoverChange:",arg);
+  if(gHoverState.obj!=datum.obj) {
+    var last = $.extend({},gHoverState);  // make copy
+    gHoverState = $.extend({},datum);     // make copy
+
+    console.log("HoverChange:",datum);
     gStateMachine.Trigger("hoverChange");
   }
 }
@@ -31,12 +48,8 @@ function ChangeHover( arg )
 function ClearHover()
 {
   if(gHoverState.obj !== null) {
-    var last = $.extend({},gHoverState);
-    var type = gHoverState.type;
-    gHoverState.obj = null;
-    gHoverState.type = "none";
-    gHoverState.collection = null;
-    gHoverState.last = last;
+    gLastHoverState = $.extend({},gHoverState);
+    gHoverState = new Datum();
     gStateMachine.Trigger("hoverChange");
     
   }
@@ -44,25 +57,24 @@ function ClearHover()
 
 function ClearSelection( )
 {
-  if(gSelectState.obj) {
-    gSelectState = {obj:  null, type: "none", collection: null};
-    gStateMachine.Trigger("selectChange");
-  }
+  var old = (gSelectState.obj != null); 
+  gSelectState = new Datum();
+  if(old) gStateMachine.Trigger("selectChange");
+  
 }
 
-function ChangeSelection( arg )
+function ChangeSelection( datum )
 {
-  if(!arg.obj) { ClearSelection(); return; }
-  if(arg.obj && arg.obj==gSelectState.obj) {
+  if(!datum.obj) { ClearSelection(); return; }
+  if(datum.obj && datum.obj==gSelectState.obj) {
     // Untoggle.
-    gSelectState = {obj:  null, type: "none", collection: null};
+    gSelectState = new Datum();
   } else {
-    gSelectState = $.extend({},arg);
+    gSelectState = $.extend({},datum);
     console.warn("Selecting new object",gSelectState.obj,gSelectState.type," gHover is ",gHoverState.type);
   }
   
   gStateMachine.Trigger("selectChange");
-  
 }
 
 
@@ -80,8 +92,7 @@ function SetOverlayPosition(x,y)
 
 ////////// Initialization
 $(function(){
-  gStateMachine.Bind("newRecord",ClearHover);
-  gStateMachine.Bind("newRecord",ClearSelection);
+  gStateMachine.Bind("newRecord",function(){gLastHoverState = gHoverState = new Datum();gSelectionState = new Datum();});
   gStateMachine.Bind("newRecord",function(){ $('#selected-object-info.floating').hide();});
   gStateMachine.Bind("selectChange",DrawObjectInfo);
   $('#selected-object-info.floating').hide();
@@ -123,19 +134,25 @@ function DrawObjectInfo()
     case "UserTrack": h="User Track"; break;
     
     default:
-      h = "<h3>Selected:" + state.type + "</h3>";
-      h += "<table class='.hoverinfo'>";
-      var a = "<tr><td class='hoverinfo-key'>";
-      var b = "</td><td class='hoverinfo-val'>";
-      var c = "</td></tr>";  
-      for(var k in state.obj) {
-        if( Object.prototype.toString.call( state.obj[k] ) === '[object Array]' ) {
-          h+= a + k + b + state.obj[k].length + " items" + c;
-        } else {
-          h+= a + k + b + state.obj[k] + c;          
-        }
-      }
-      h+= "</table>";
+      // don't draw anything
+      txt = "<span class='track_id'>No Object Selected</span><br/>";
+      $(".selected-object-info",e).html(txt);
+      $('#selected-object-info').stop(true,true).fadeOut();
+      return;
+
+      // h = "<h3>Selected:" + state.type + "</h3>";
+      // h += "<table class='.hoverinfo'>";
+      // var a = "<tr><td class='hoverinfo-key'>";
+      // var b = "</td><td class='hoverinfo-val'>";
+      // var c = "</td></tr>";
+      // for(var k in state.obj) {
+      //   if( Object.prototype.toString.call( state.obj[k] ) === '[object Array]' ) {
+      //     h+= a + k + b + state.obj[k].length + " items" + c;
+      //   } else {
+      //     h+= a + k + b + state.obj[k] + c;
+      //   }
+      // }
+      // h+= "</table>";
   }
 
   $(".selected-object-info",e).html(h);      
@@ -275,6 +292,7 @@ function HoverInfo( element )
   // console.debug("MCInfo::ctor",element);
   this.element = element;
   gStateMachine.BindObj("hoverChange",this,"Draw");
+  gStateMachine.BindObj("selectChange",this,"Draw");
 }
 
 HoverInfo.prototype.Draw = function ()
@@ -317,8 +335,44 @@ HoverInfo.prototype.Draw = function ()
   }
   
   h+= "</table>";
-  console.warn("HoverInfo",h);
+
+  h+= "Associated with:<br/>"
+  var list_name = state.obj._owner;
+  var idx = state.obj._idx;
+  if(list_name && (idx !== undefined) && gRecord && gRecord.associations&& gRecord.associations[list_name]) {
+    for(var other in gRecord.associations[list_name]) {
+      var assn = gRecord.associations[list_name][other][idx];
+      if(!assn) continue;
+      if(!assn.length) continue;
+      h+= other + " [";
+      var ln = assn.length;
+      if(ln>10) ln == 10;
+      for(var k=0;k<assn.length;k++) {
+        var txt = assn[k];
+        var link = "selectByDescription('"+other+"',"+txt+");";
+        // h+= "<span onclick=\"" + link +"\">" + txt + "</span> ";
+        h+= txt + " ";
+      }
+      if(ln<assn.length) h+= " ...";
+      h+= "]</br>";
+    }
+  }
+
   $(this.element).html(h);
   
 };
 
+
+function selectByDescription(list,idx)
+{
+  for(var i in gRecord) {
+    if(i=="associations") continue;
+    for(var j in gRecord[i]) {
+      if(j == list) { 
+        console.log("Changing to",i,j,idx,gRecord[i][j][idx]);
+        ChangeSelection(new Datum("unknown",gRecord[i][j][idx]));
+        return;
+      }
+    }
+  }
+}

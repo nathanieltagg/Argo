@@ -164,7 +164,7 @@ WireView.prototype.HoverChange = function()
       this.Draw(); break;
     default: break;
   }
-  switch(gHoverState.last.type) {
+  switch(gLastHoverState.type) {
     case "hit": 
     case "endpoint2d": 
     case "cluster":
@@ -200,9 +200,9 @@ WireView.prototype.NewRecord_hits = function()
   this.visHits = [];
   this.hasContent = false;
 
-  gHitsListName = $("#ctl-HitLists").val();
-  if(!gHitsListName) return;
-  var hits = gRecord.hits[gHitsListName];
+  this.hitsListName = $("#ctl-HitLists").val();
+  if(!this.hitsListName) return;
+  var hits = gRecord.hits[this.hitsListName];
   // Go through gHits, and find hits that match our view.
   for(var i=0;i<hits.length;i++) {
     if(hits[i].plane == this.plane) this.myHits.push(hits[i]);
@@ -604,6 +604,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   clusterLoop:
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
+    clus._index = i;
     // FIXME: in principle this should work, but it appears the view numbers are actually
     // plane numbers in the early 2013 MC.  So, instead, we'll break out later....
     // if(gGeo.planeOfView(clus.view) != this.plane) continue;
@@ -664,6 +665,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
   var endpoints = gRecord.endpoint2d[$("#ctl-EndpointLists").val()];
   for(var i=0;i<endpoints.length;i++) {
       var pt = endpoints[i];
+      pt._index = i;
       if(pt.plane != this.plane) continue;
       
       var u = pt.wire;
@@ -698,6 +700,7 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.save();
   for(var i = 0; i<sps.length;i++) {
     var sp = sps[i];
+    sp._index = i;
     this.ctx.fillStyle = "rgba(0, 150, 150, 1)";
     this.ctx.strokeStyle = "rgba(0, 150, 150, 1)";
     this.ctx.lineWidth = 1;
@@ -743,6 +746,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   for(var i=0;i<tracks.length;i++)
   {
     var trk = tracks[i];
+    trk._index = i;
     var points = trk.points;
     if(points.length<2) continue;
     // compile points
@@ -1337,7 +1341,7 @@ WireView.prototype.DoMouse = function(ev)
         }      
       } else { // not a click, but a mousemove.
         // mousemove.
-        // add hover coordinates.
+        // add hover coordinates.        
         match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u);
         match.sample  = this.fMousePos.v;
         ChangeHover(match); // match might be null.
@@ -1397,7 +1401,7 @@ WireView.prototype.FindMouseableMatch = function()
       }
     }
   }
-  return  {obj: {}, type:"wire"}; // by default, it's a wire.
+  return  {obj: null, type:"wire"}; // by default, it's a wire.
 
 };
 
