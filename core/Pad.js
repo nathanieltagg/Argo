@@ -41,9 +41,9 @@ function scientific_notation(x)
   //³⁴⁵⁶⁷⁸⁹⁰⁻⁺
   var s= x.toExponential().split('e');
   // s[1].replace("e","×10")
-  var s0 = s;
+  var s0;
   if(s[0] === "1") s0 = "";
-  else s0 = s[0]+"";
+  else s0 = s[0]+ "×";
   var s1 = s[1].replace("-","⁻")
                .replace("+","") //"⁺"
                .replace("1","¹")
@@ -472,7 +472,7 @@ Pad.prototype.DrawFrame = function()
             this.ctx.fillStyle = "rgba(20,20,20,1.0)";
             //this.ctx.drawTextRight(font,fontsize,this.origin_x-tickLen,y+asc/2,String(ftick));
             var stick = String(ftick);
-            if(stick.length>5) stick = scientific_notation(ftick);
+            if(ftick>100 || ftick< 0.01) stick = scientific_notation(ftick);
             this.ctx.fillText(stick, this.origin_x-tickLen-1, y);
           }
         }
