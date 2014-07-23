@@ -39,6 +39,7 @@ function scientific_notation(x)
   // 2e-6 becomes 2×10⁻⁶
   // 1e+9 becomes 10⁹
   //³⁴⁵⁶⁷⁸⁹⁰⁻⁺
+  if(x==0) return 0;
   var s= x.toExponential().split('e');
   // s[1].replace("e","×10")
   var s0;
