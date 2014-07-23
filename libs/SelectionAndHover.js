@@ -338,14 +338,14 @@ HoverInfo.prototype.Draw = function ()
       if(!assn.length) continue;
       h+= other + " [";
       var ln = assn.length;
-      if(ln>10) ln == 10;
-      for(var k=0;k<assn.length;k++) {
+      if(ln>12) ln == 10;
+      for(var k=0;k<ln;k++) {
         var txt = assn[k];
         var link = "selectByDescription('"+other+"',"+txt+");";
-        // h+= "<span onclick=\"" + link +"\">" + txt + "</span> ";
-        h+= txt + " ";
+        h+= "<span class='onclickfn' onclick=\"" + link +"\">" + txt + "</span> ";
+        // h+= txt + " ";
       }
-      if(ln<assn.length) h+= " ...";
+      if(ln<assn.length) h+= " ..."+ (assn.length-ln) + " more..." ;
       h+= "]</br>";
     }
   }
@@ -362,8 +362,20 @@ function selectByDescription(list,idx)
     for(var j in gRecord[i]) {
       if(j == list) { 
         console.log("Changing to",i,j,idx,gRecord[i][j][idx]);
-        ChangeSelection(new Datum("unknown",gRecord[i][j][idx]));
+        var type = i; 
+        type = type.replace(/s$/, "");
+        ChangeSelection(new Datum(type,gRecord[i][j][idx]));
         return;
+      } 
+      for(var k in gRecord[i][j]) {
+        if(k == list) { 
+          var type = j; 
+          type = type.replace(/s$/, "");
+          console.log("Changing to",i,j,k,idx,gRecord[i][j][k][idx]);
+          ChangeSelection(new Datum(type,gRecord[i][j][k][idx]));
+          return;
+        } 
+        
       }
     }
   }

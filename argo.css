@@ -418,6 +418,12 @@ div.ui-dialog { font-size: 0.9em;}
   text-decoration: underline;
 }
 
+.onclickfn
+{
+  text-decoration:underline;
+  cursor: pointer;
+}
+
 tr.rowstripe
 {
   background-color: #FBE9CA;
