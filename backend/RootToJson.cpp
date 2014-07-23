@@ -71,8 +71,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   h.add("total",JsonElement(stats[0],9));
   h.add("sum_x",JsonElement(stats[2],9));
   h.add("sum_x2",JsonElement(stats[3],9));
-  h.add("max_content",JsonElement(hist->GetMaximum(),3));
-  h.add("min_content",JsonElement(hist->GetMinimum(),3));
+  h.add("max_content",JsonElement(hist->GetMaximum(),4));
+  h.add("min_content",JsonElement(hist->GetMinimum(),4));
   h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
   JsonArray data;
   JsonArray errs;
@@ -81,8 +81,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   double max_content_with_err = hist->GetMaximum();
   double min_content_with_err = hist->GetMaximum();
   for(int i=1; i <= hist->GetNbinsX();i++) {
-    data.add(JsonSigFig(hist->GetBinContent(i),3));
-    errs.add(JsonSigFig(hist->GetBinError(i),3));
+    data.add(JsonSigFig(hist->GetBinContent(i),4));
+    errs.add(JsonSigFig(hist->GetBinError(i),4));
     double ehigh = hist->GetBinContent(i)+hist->GetBinError(i);
     double elow  = hist->GetBinContent(i)-hist->GetBinError(i);
     if(ehigh> max_content_with_err) max_content_with_err = ehigh;
@@ -92,8 +92,8 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   h.add("data",data);
   if(has_err) {
     h.add("errs",errs);
-    h.add("min_content_with_err",JsonElement(min_content_with_err,3));
-    h.add("max_content_with_err",JsonElement(max_content_with_err,3));
+    h.add("min_content_with_err",JsonElement(min_content_with_err,4));
+    h.add("max_content_with_err",JsonElement(max_content_with_err,4));
   }
   h.add("info",getObjectInfo(inHist));
   
