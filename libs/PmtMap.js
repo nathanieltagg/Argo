@@ -115,6 +115,8 @@ function PmtMap( element, path, override_settings )
   $(this.element).mousemove(this.DoMouse.bind(this));
   $(this.element).click(this.DoMouse.bind(this));
   this.SetMagnify();
+  this.fMagnifierOn = false;
+  
   
   this.mynamespace= "mns" + this.gUniqueIdCounter;
   $(document).on("OmDataRecieved."+this.mynamespace, function(){return self.NewRecord()});  

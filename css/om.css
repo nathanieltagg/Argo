@@ -34,6 +34,13 @@ body {
 }
 
 
+div.about {
+  font-family: "Georgia", Times, serif;
+   font-style: italic;
+   font-size: small;
+}
+
+
 table.omstatus {
 	border: 1px solid white;
 

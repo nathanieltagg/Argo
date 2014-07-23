@@ -6,9 +6,11 @@ OmHistCanvas.prototype = new HistCanvas(null);
 
 function OmHistCanvas( element, path )
 {
-  if(element==null) return;
+  if(element===null) return;
   this.top_element = element;
   $(this.top_element).append("<div class='title' />");
+  $(this.top_element).append("<div class='about' />");
+
   $(this.top_element).append("<div class='pad main' />");
   this.main_element = $('div.main',this.top_element).get(0);
   $(this.main_element).css("height","200px");
@@ -29,25 +31,24 @@ function OmHistCanvas( element, path )
   HistCanvas.call(this, this.main_element, settings); // Give settings to Pad contructor.
 
   this.controls_init = false;
-  this.zero_suppress = false;
 
   var self = this;  
   this.mynamespace= "ns" + this.UniqueId;
-  $(document).on("OmDataRecieved."+this.mynamespace, function(){return self.UpdateData()});  
-  $(document).on("OmRefDataRecieved."+this.mynamespace, function(){return self.UpdateRefData()});  
-  $(this.top_element).on("remove."+this.mynamespace, function(){return self.Remove()});  
+  $(document).on("OmDataRecieved."+this.mynamespace, function(){return self.UpdateData();});  
+  $(document).on("OmRefDataRecieved."+this.mynamespace, function(){return self.UpdateRefData();});  
+  $(this.top_element).on("remove."+this.mynamespace, function(){return self.Remove();});  
 
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale")
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).on("change."+this.mynamespace, function(){return self.Draw();});
 
-  this.ctl_histo_fill = GetBestControl(this.element,".ctl-histo-fill")
+  this.ctl_histo_fill = GetBestControl(this.element,".ctl-histo-fill");
   $(this.ctl_histo_fill).on("change."+this.mynamespace, function(){return self.Draw();});
 
-  this.ctl_histo_flip = GetBestControl(this.element,".ctl-histo-flip")
+  this.ctl_histo_flip = GetBestControl(this.element,".ctl-histo-flip");
   $(this.ctl_histo_flip).on("change."+this.mynamespace, function(){return self.Draw();});
 
-  this.ctl_histo_reset = GetBestControl(this.element,".ctl-histo-reset")
-  $(this.ctl_histo_reset).on("click."+this.mynamespace, function(){self.ResetScales(); self.Draw()});
+  this.ctl_histo_reset = GetBestControl(this.element,".ctl-histo-reset");
+  $(this.ctl_histo_reset).on("click."+this.mynamespace, function(){self.ResetScales(); self.Draw();});
   
   console.log($(element).data("options"));
   console.log("OmHistCanvas with path",this.path,"element",this.top_element);
@@ -66,7 +67,7 @@ OmHistCanvas.prototype.Remove = function()
   $(this.ctl_histo_fill).off("change."+this.mynamespace);
   $(this.ctl_histo_flip).off("change."+this.mynamespace);
   $(this.ctl_histo_reset).off("click."+this.mynamespace);
-}
+};
 
 OmHistCanvas.prototype.UpdateData = function()
 {
@@ -75,7 +76,7 @@ OmHistCanvas.prototype.UpdateData = function()
   // $("div.title",this.top_element).html(this.hist.title);
 
   this.Update();
-}
+};
 
 OmHistCanvas.prototype.UpdateRefData = function()
 {
@@ -86,13 +87,14 @@ OmHistCanvas.prototype.UpdateRefData = function()
   // $("div.title",this.top_element).html(this.hist.title);
 
   this.Update();
-}
+};
 
 
 OmHistCanvas.prototype.Update = function()
 {
   if(!this.hist) return;
   $(".portlet-title",$(this.top_element).parent()).html(this.hist.title);
+  if(this.hist.info.about) $(".about",this.top_element).html(this.hist.info.about);
   this.xlabel = this.hist.xlabel;
   this.ylabel = this.hist.ylabel;
   this.bound_u_min = this.hist.min;
@@ -103,32 +105,28 @@ OmHistCanvas.prototype.Update = function()
   }
   this.time_on_x   = this.hist.time_on_x;
   
-<<<<<<< HEAD
   var do_errors = ("errs" in this.hist);
-  if(this.controls_init == false) {
-    console.warn("draw_fill",this.hist.info.draw_fill);
+  if((!this.controls_init) && (this.hist.info)) {
     if(this.hist.classname == "TProfile") {
       $(this.ctl_histo_fill).prop('checked',false);
       $(this.ctl_histo_logscale).prop('checked',false);
-      this.zero_suppress = true;
+      this.suppress_zero = true;
     }
-
-  if((this.controls_init == false) && (this.hist.info)) {
     if("draw_fill"          in this.hist.info) $(this.ctl_histo_fill).prop('checked',this.hist.info.draw_fill);
     if("draw_logy"          in this.hist.info) $(this.ctl_histo_logscale).prop('checked',this.hist.info.draw_logy);
-    if("draw_zero_suppress" in this.hist.info)  this.zero_suppress = this.hist.info.draw_zero_suppress;
+    if("draw_zero_suppress" in this.hist.info)  this.suppress_zero = this.hist.info.draw_zero_suppress;
     this.controls_init = true; // don't do on update of histogram.
   }
 
   this.ClearHists();
 
   if(this.refhist  ) this.AddHist(this.refhist,new ColorScaleIndexed(1),
-                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1,doErrors:do_errors});
-  if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:1});
-  if(this.zero_suppress) { 
-    this.min_v = this.hist.min_content; 
-    if(this.refhist) this.min_v = Math.min(this.hist.min_content, this.refhist.min_content); 
-  }
+                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1});
+  if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:1,doErrors:do_errors});
+  // if(this.suppress_zero) {
+  //   this.min_v = this.hist.min_content;
+  //   if(this.refhist) this.min_v = Math.min(this.hist.min_content, this.refhist.min_content);
+  // }
   if(this.min_v >= this.max_v) this.min_v = this.max_v*0.9;
   if(this.min_v >= this.max_v) this.min_v = this.max_v-1;
 
@@ -144,8 +142,7 @@ OmHistCanvas.prototype.Update = function()
   $(".stats",this.top_element).html(stats);
   console.timeStamp("Drawing "+this.path);
   console.log("Done drawing "+this.path,this.bound_u_min,this.hist,this.refhist);
-  
-}
+};
 
 OmHistCanvas.prototype.Draw = function()
 {
@@ -163,18 +160,19 @@ OmHistCanvas.prototype.Draw = function()
   }
   
    HistCanvas.prototype.Draw.call(this);
-}
+};
 
 OmHistCanvas.prototype.DrawHists = function( ) 
 {
   var flip = $(this.ctl_histo_flip).is(":checked");
   console.log("flipping:",flip);
+  var iHist;
   if(flip) {
-    for(var iHist = this.fNHist-1; iHist>= 0; iHist--) this.DrawHist(iHist);    
+    for(iHist = this.fNHist-1; iHist>= 0; iHist--) this.DrawHist(iHist);    
   } else {
-    for(var iHist = 0; iHist< this.fNHist; iHist++) this.DrawHist(iHist);        
+    for(iHist = 0; iHist< this.fNHist; iHist++) this.DrawHist(iHist);        
   }
-}
+};
 
 OmHistCanvas.prototype.DoMouseOverContent = function( u, v )
 {
@@ -197,4 +195,4 @@ OmHistCanvas.prototype.DoMouseOverContent = function( u, v )
     }
   }
   $(".mouseover-info",this.top_element).html(txt);
-}
+};

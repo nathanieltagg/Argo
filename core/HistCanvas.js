@@ -203,9 +203,17 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.fHists = [inHist];
   this.fColorScales = [inColorScale];
   this.fHistOptions = [$.extend({},this.default_options,options)];
+  
+  // For supressed zero:
   this.min_v = inHist.min_content;                // minimum value shown on Y-axis
+  if("min_content_with_err" in inHist)  this.min_v = inHist.min_content_with_err;
+  
+  // For unsupressed zero:
   if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
+
   this.max_v= inHist.max_content;  // maximum value shown on Y-axis
+  if(inHist.max_content_with_err)  this.max_v = inHist.max_content_with_err
+
   if(inHist.binlabelsx) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   this.FinishRangeChange();
@@ -233,10 +241,22 @@ HistCanvas.prototype.SetAdjunctData = function ( inAdjunct )
 HistCanvas.prototype.ResetToHist = function( inHist ) {
   this.min_u = inHist.min; // Minimum value shown on x-axis  FIXME - make adjustable.
   this.max_u = inHist.max; // Maximum value shown on y-axis
-  this.min_v =inHist.min_content;                // minimum value shown on Y-axis
+
+
+  // For supressed zero:
+  this.min_v = inHist.min_content;                // minimum value shown on Y-axis
+  if("min_content_with_err" in inHist)  this.min_v = inHist.min_content_with_err;
+
+  // For unsupressed zero:
   if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
-  this.max_v= inHist.max_content*1.02;  // maximum value shown on Y-axis
-  if(this.min_v == this.max_v) this.max_v = this.min_v + 1.02; // If min and max are both 0, adjust the max to be 1 unit bigger
+
+  this.max_v= inHist.max_content;  // maximum value shown on Y-axis
+  if("max_content_with_err" in inHist)  this.max_v = inHist.max_content_with_err
+
+  var dv = (this.max_v-this.min_v);
+  if(dv<=0) dv =1;
+  this.max_v += (dv*0.02);  // maximum value shown on Y-axis
+  if(this.suppress_zero) this.min_v -= (dv*0.02);
   this.SetLogy(this.log_y);
 };
 
@@ -355,7 +375,7 @@ HistCanvas.prototype.DrawHist = function( iHist )
        if(x1<this.origin_x) continue;
        if(x1>(this.origin_x + this.span_x)) continue;
        if(y2>this.origin_y) y2 = this.origin_y;
-       this.ctx.lineTo(x1,y1);
+       this.ctx.moveTo(x1,y1);
        this.ctx.lineTo(x1,y2);       
      }
      this.ctx.stroke(); 
