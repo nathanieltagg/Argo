@@ -37,16 +37,16 @@ function Navigation(element, options)
 
   var self = this;
   gOmData.add("HLIST");
-  $(document).on("OmDataRecieved", function(){return self.GetListing()});
+  $(document).on("OmDataRecieved", function(){return self.GetListing();});
   console.timeStamp("Starting query.");
   gOmData.get();
   
-  $(window).hashchange( function(){self.HashChange()} );
+  $(window).hashchange( function(){self.HashChange();} );
   $(".reload",this.element).click( function(){
     gOmData.add("HLIST");
     gOmData.get();
     self.first_load = true;
-  })
+  });
 }
 
 Navigation.prototype.GetListing = function()
@@ -86,7 +86,7 @@ Navigation.prototype.GetListing = function()
     // if(item.length>0) this.ItemClicked(item.get(0));
   }
   
-}
+};
 
 Navigation.prototype.HashChange = function(item) 
 {
@@ -95,7 +95,7 @@ Navigation.prototype.HashChange = function(item)
   if(hash.length <1) return;
   var item = $('a[href="'+window.location.hash+'"]', this.tree_element);
   if(item.length>0) this.ItemClicked(item.get(0));
-}
+};
 
 Navigation.prototype.ItemClicked = function(item)
 {
@@ -154,7 +154,7 @@ Navigation.prototype.ItemClicked = function(item)
     // var portlet_content = $('<div class="portlet-content" id="'+item.path+'"></div>');
     $(portlet).append('<div class="portlet-header"></div>')
     $(portlet).append('<div class="portlet-content" id="'+item.path+'"></div>');
-    $(".portlet-header",portlet).html('<span class="portlet-title">'+item.path+'</span>');
+    $(".portlet-header",portlet).html('<a class="portlet-title" href="#'+item.path+'">'+item.path+'</a>');
     var portlet_content = $(".portlet-content",portlet);
     console.log("Creating portlet",portlet," with content",portlet_content);
 
@@ -189,4 +189,4 @@ Navigation.prototype.ItemClicked = function(item)
   gOmData.get();
   gRefData.get();
   
-}
+};

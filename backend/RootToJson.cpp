@@ -78,12 +78,23 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   JsonArray errs;
   // Does it have errors that aren't just simple sqrt(N)?
   bool has_err = (hist->GetSumw2()->fN>0);
+  double max_content_with_err = hist->GetMaximum();
+  double min_content_with_err = hist->GetMaximum();
   for(int i=1; i <= hist->GetNbinsX();i++) {
     data.add(JsonSigFig(hist->GetBinContent(i),3));
     errs.add(JsonSigFig(hist->GetBinError(i),3));
+    double ehigh = hist->GetBinContent(i)+hist->GetBinError(i);
+    double elow  = hist->GetBinContent(i)-hist->GetBinError(i);
+    if(ehigh> max_content_with_err) max_content_with_err = ehigh;
+    if(elow < min_content_with_err) min_content_with_err = elow;
   }
+  
   h.add("data",data);
-  if(has_err) h.add("errs",errs);
+  if(has_err) {
+    h.add("errs",errs);
+    h.add("min_content_with_err",JsonElement(min_content_with_err,9));
+    h.add("max_content_with_err",JsonElement(max_content_with_err,9));
+  }
   h.add("info",getObjectInfo(inHist));
   
   if(htemp) delete htemp;

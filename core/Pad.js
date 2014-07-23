@@ -35,7 +35,29 @@ function zeropad(n, width) {
 
 function scientific_notation(x)
 {
-  return x.toExponential();
+  // Cleverness: Use unicode for superscript! Drawn correctly by the program.
+  // 2e-6 becomes 2×10⁻⁶
+  // 1e+9 becomes 10⁹
+  //³⁴⁵⁶⁷⁸⁹⁰⁻⁺
+  var s= x.toExponential().split('e');
+  // s[1].replace("e","×10")
+  var s0 = s;
+  if(s[0] === "1") s0 = "";
+  else s0 = s[0]+"";
+  var s1 = s[1].replace("-","⁻")
+               .replace("+","") //"⁺"
+               .replace("1","¹")
+               .replace("2","²")
+               .replace("3","³")
+               .replace("4","⁴")
+               .replace("5","⁵")
+               .replace("6","⁶")
+               .replace("7","⁷")
+               .replace("8","⁸")
+               .replace("9","⁹")
+               .replace("0","⁰");
+  return s0+"10"+s1;
+  
 }
 
 ///
@@ -148,7 +170,6 @@ function Pad( element, options )
   $(this.element).on('touchout.'  +this.NameSpace, fn);
 
 
-  // Bind the magnifier draw commands.
   this.Clear();
 }
 
@@ -258,7 +279,7 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
 {
   // console.warn("GetGoodTicks:",min,max,maxticks,logscale);
   var dumbTickWidth = (max - min) / maxticks;
-  var thelog = 0.4342944 * Math.log(dumbTickWidth);  // ie. log10(dumbTickWidth)
+  var thelog = Math.LOG10E * Math.log(dumbTickWidth);  // ie. log10(dumbTickWidth)
   var multiplier = Math.pow(10, Math.floor(thelog));
   var abcissa = Math.pow(10, thelog) / multiplier;
   // Gives a number between 1 and 9.999
@@ -291,8 +312,8 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
       //cout << "Good width " << goodTickWidth << endl;
       return retval;
   } else {
-      var low10 = Math.ceil(0.4342944 * Math.log(min));
-      var high10 = Math.ceil(0.4342944 * Math.log(max));
+      var low10 = Math.ceil(Math.LOG10E * Math.log(min));
+      var high10 = Math.ceil(Math.LOG10E * Math.log(max));
       var width = 1;
       // console.log(low10,high10,width,maxticks,width);
       while (((high10 - low10) / width) > maxticks) width += 1;
@@ -584,6 +605,10 @@ Pad.prototype.DoMouse = function(ev)
   // Override me to read the mouse position.
 }
 
+Pad.prototype.DrawOne = function(umin,umax,vmin,vmax,arg)
+{
+  // Override me to read do a draw
+}
 
 // utility to do text wrapping.
 function getLines(ctx,phrase,maxPxLength,textStyle) {
