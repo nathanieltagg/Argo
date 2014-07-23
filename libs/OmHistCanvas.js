@@ -104,6 +104,7 @@ OmHistCanvas.prototype.Update = function()
     this.bound_u_max = Math.max(this.hist.max,this.refhist.max);
   }
   this.time_on_x   = this.hist.time_on_x;
+  if(this.time_on_x) this.tick_pixels_x  = 60;
   
   var do_errors = ("errs" in this.hist);
   if((!this.controls_init) && (this.hist.info)) {
