@@ -2,6 +2,9 @@
 .PHONY: all
 all: depend bin
 
+IGNORE := $(shell bash -c "source root/bin/thisroot.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv") 
+include makeenv 
+
 pwd := $(shell pwd)
 
 ifeq ($(origin UBOONEDAQ_DATATYPES_DIR), undefined)

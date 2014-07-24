@@ -53,6 +53,7 @@ function TriDView( element, options ){
   // Data model state.
   gStateMachine.Bind('recordChange',this.Rebuild.bind(this));
   gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
+  gStateMachine.Bind('selectChange',this.SelectChange.bind(this));
   gStateMachine.Bind('changeMRIslice',this.Rebuild.bind(this));
 
   var self = this;
@@ -85,8 +86,14 @@ function TriDView( element, options ){
   this.ResetView();
 }
 
+TriDView.prototype.SelectChange = function()
+{
+  this.Draw(); return;
+}
+
 TriDView.prototype.HoverChange = function()
 {
+  this.Draw(); return;
   // Only need a redraw if the over change affected something we care about.
   switch(gHoverState.type) {
     case "hit": 
@@ -94,7 +101,7 @@ TriDView.prototype.HoverChange = function()
     case "spacepoint":
     case "track":
     case "mcparticles":
-      this.Draw(); break;
+      this.Draw(); return;
     default: break;
   }
   switch(gLastHoverState.type) {
@@ -103,7 +110,7 @@ TriDView.prototype.HoverChange = function()
     case "spacepoint":
     case "track":
     case "mcparticles":
-      this.Draw(); break;
+      this.Draw(); return;
     default: break;  
   }
 };
@@ -649,7 +656,7 @@ TriDView.prototype.should_highlight = function(obj)
 {
   if(!obj.source) return false;
   if(!obj.source.obj) return false;
-  if(! gHoverState.obj) return false;
+  if(!gHoverState.obj) return false;
   if((obj.source.obj == gHoverState.obj) ||
     ((obj.source.obj.ftrackId)&&(obj.source.obj.ftrackId == gHoverState.obj.ftrackId))) 
     return true;
@@ -681,19 +688,20 @@ TriDView.prototype.DrawFinish = function()
   }
 };
 
-TriDView.prototype.HoverObject = function(selected)
+TriDView.prototype.HoverObject = function(thing)
 {
-  ClearHover();
   if(selected) {
-    ChangeHover(selected);
+    ChangeHover(thing);
+  } else {
+    ClearHover();    
   }
-  //this.Draw();
+  this.Draw();
 };
 
-TriDView.prototype.ClickObject = function(selected)
+TriDView.prototype.ClickObject = function(thing)
 {
   console.warn("trid click");
-  if(selected) ChangeSelection(selected);
+  if(thing) ChangeSelection(thing);
   else ClearSelection();
   //this.Draw();
 };
