@@ -152,7 +152,7 @@ HitHistogram.prototype.HoverChange = function( )
 
 HitHistogram.prototype.Draw = function( )
 {
-  console.warn("HitHistogram::Draw()");
+  // console.warn("HitHistogram::Draw()");
   var cs = gHitColorScaler;
   if(!$(this.ctl_show_hits).is(":checked")) cs = this.blandColorScale;
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
@@ -198,7 +198,7 @@ HitHistogram.prototype.FastRangeChange = function()
 
 HitHistogram.prototype.FinishRangeChange = function()
 {
-  console.warn("HitHistogram::FinishRangeChange");
+  // console.warn("HitHistogram::FinishRangeChange");
   gHitCut.field = $(this.ctl_hit_field).val();
   gHitCut.min = this.min_u;
   gHitCut.max = this.max_u;

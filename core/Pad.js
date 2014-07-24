@@ -241,7 +241,7 @@ Pad.prototype.Resize = function()
   if( !$(this.element).is(":hidden") ) {
     width = $(this.element).width();
     height = $(this.element).height(); 
-    console.log("Resize",this,width,height);
+    // console.log("Resize",this,width,height);
   }
   // console.log("Resize",$(this.element),width,height);
 
