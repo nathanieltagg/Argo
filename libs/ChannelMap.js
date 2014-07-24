@@ -156,8 +156,13 @@ ChannelMap.prototype.NewRecord = function()
   this.cs.max = this.hist.max;
   
   if(this.refmap) {
-    this.sigmadiff_hist = new Histogram(20,-10,10);
-    this.diff_hist      = new Histogram(2,-1,1);
+    var diff_vals = [];
+    var sigma_vals = [];
+    var max_sigma = 0;
+    var min_sigma = 0;
+    var max_diff = 0;
+    var min_diff = 0;
+
     for(var crate=this.crate_start;crate<=this.crate_end;crate++) {
       for(var card=4;card<20;card++) {      
         for(var channel=0;channel<64;channel++) {
@@ -174,11 +179,23 @@ ChannelMap.prototype.NewRecord = function()
            var ediff = diff/denom;
            if(ediff>9.9) ediff = 9.9;
            if(ediff<-9.9) ediff = -9.9;
-           this.sigmadiff_hist.Fill(ediff);
-           this.diff_hist.TwoSideExpandFill(diff);
+           sigma_vals.push(ediff);
+           diff_vals.push(diff);
+           //this.sigmadiff_hist.Fill(ediff);
+           //this.diff_hist.TwoSideExpandFill(diff);
+           if(max_sigma < ediff) max_sigma = ediff;
+           if(min_sigma > ediff) min_sigma = ediff;
+           if(max_diff < diff ) max_diff = diff;
+           if(min_diff > diff)  min_diff = diff;
         }
       }
     }
+    this.sigmadiff_hist = new Histogram(50,min_sigma,max_sigma);
+    for(var i = 0;i<sigma_vals.length;i++) this.sigmadiff_hist.Fill(sigma_vals[i]);
+    this.diff_hist      = new Histogram(50,min_diff,max_diff);
+    for(var i = 0;i<diff_vals.length;i++) this.diff_hist.Fill(diff_vals[i]);
+
+
     // while(this.sigmadiff_hist.n > 100) { this.sigmadiff_hist.RebinBy(2); }
     // while(this.diff_hist.n      > 100) { this.diff_hist.RebinBy(2); }
   }
