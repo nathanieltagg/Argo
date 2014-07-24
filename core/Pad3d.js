@@ -720,9 +720,9 @@ Pad3d.prototype.mouseMove = function(ev)
   if(this.dragging) return;
   ev.originalEvent.preventDefault();
    
-  var selected = this.findObjectUnderMouse(ev);
+  var thing = this.findObjectUnderMouse(ev);
   
-  this.HoverObject(selected);  
+  this.HoverObject(thing);  
 };
 
 Pad3d.prototype.click = function(ev)

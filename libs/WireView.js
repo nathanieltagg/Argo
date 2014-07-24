@@ -156,7 +156,7 @@ function WireView( element, options )
 WireView.prototype.HoverChange = function()
 {
   // Only need a redraw if the over change affected something we care about.
-  console.warn("WireView checking hoverchange",gHoverState.type,gLastHoverState.type);
+  // console.warn("WireView checking hoverchange",gHoverState.type,gLastHoverState.type);
   switch(gHoverState.type) {
     case "hit": 
     case "endpoint2d": 
@@ -1007,7 +1007,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
   if(move_t0) console.warn('moving mc t0');
   
-  console.warn("Drawing MC",particles.length);
+  // console.warn("Drawing MC",particles.length);
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
@@ -1439,7 +1439,7 @@ WireView.prototype.DoMouseWheel = function(ev,dist)
     gZoomRegion.setLimits(this.plane,new_u_min, new_u_max);
     gZoomRegion.changeTimeRange(new_v_min, new_v_max);
     
-    console.warn("DoMouseWheel",this.fMousePos.u,ev,dist,this.min_u,new_u_min,this.max_u,new_u_max);
+    // console.warn("DoMouseWheel",this.fMousePos.u,ev,dist,this.min_u,new_u_min,this.max_u,new_u_max);
     gStateMachine.Trigger("zoomChange"); 
    
     return false;
