@@ -88,6 +88,46 @@ $(function(){
 ///
 /// Code that sets up portlets.
 ///
+
+// portlet resizing:
+function resizePortlet(portlet,oldheight,newheight)
+{
+  // var portlet = ui.element[0];
+  // Look for things in the portlet that are squeezable. Mostly this is pads right now, but include the option
+  var squeezables = $(".squeezable,.pad",portlet).filter(function(){
+    // Filter out objects being floated.
+    var parents = $(this).parents();
+    for(var ip=0;ip<parents.length;ip++) {
+      if(parents[ip]==portlet) return true;
+      var float = $(parents[ip]).css("float");
+      if(float && float !=="none") return false;
+    }
+  });
+
+  if(squeezables.length==0) return;
+  console.log("Squeezables:",squeezables);
+  var h1 = oldheight;
+  var h2 = newheight;
+  var pixels_needed = h2-h1;
+  var squeezable_heights = [];
+  squeezables.each(function(){
+    squeezable_heights.push($(this).height());
+  });
+  var total_squeezable_height =0;
+  for(var i=0;i<squeezable_heights.length;i++) total_squeezable_height+=squeezable_heights[i];
+  var new_total = total_squeezable_height + pixels_needed;
+  if(new_total<0) return;
+  var ratio = new_total/total_squeezable_height;
+  console.log("h1",h1,"h2",h2,"total_squeezable",total_squeezable_height,"newtotal",new_total,"ratio",ratio);
+  // Apply to all pads, not just the primaries.
+  $(".squeezable,.pad",portlet).each(function(){
+    var h = $(this).height(); $(this).height(h*ratio);
+  });
+    
+  console.log("resize",portlet);
+  $(portlet).trigger("resize")
+}
+
 $(function(){
   
   // style portlets and add icons.
@@ -208,10 +248,18 @@ $(function(){
   // The problems with this:
   // - Does not constrain horizontal
   // - Does not scale inner objects.
-  // $(".portlet-content").resizable({
-  //   containment: 'parent' 
-  //  
-  // });  
+  $(".portlet").resizable({
+    containment: 'parent',
+    handles: "s,se",
+    
+    stop: function(event,ui) { resizePortlet(ui.element[0], ui.originalSize.height, ui.size.height); }
+  });
+
+  // Issue custom commands to resize inner content.
+  // $(".dock").bind('sortstop', function(event, ui) {
+  //   $('.pad',ui.item).trigger("resize");
+  // });
+
 
   // Make portlets sortable.
   $(".dock").sortable({
