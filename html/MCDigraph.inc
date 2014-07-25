@@ -3,6 +3,6 @@
     
     <div class="portlet-header"><span class="title">MC Digraph</span></div>
     <div class="portlet-content" >
-        <div  id="MCDigraph-1" class="A-MCDigraph" style='height: 300px; background-color:white'></div>
+        <div  id="MCDigraph-1" class="A-MCDigraph squeezable" style='height: 300px; background-color:white'></div>
     </div> 
 </div>
