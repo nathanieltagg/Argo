@@ -92,6 +92,7 @@ $(function(){
 // portlet resizing:
 function resizePortlet(portlet,oldheight,newheight)
 {
+  console.log("resizePortlet",portlet,oldheight,newheight);
   // var portlet = ui.element[0];
   // Look for things in the portlet that are squeezable. Mostly this is pads right now, but include the option
   var squeezables = $(".squeezable,.pad",portlet).filter(function(){
@@ -137,39 +138,48 @@ $(function(){
   
   // fullscreen
   headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
-  $('.portlet-header .icon-explode').click(function() {
-      var element = $(this).parents(".portlet:first")[0];  
-      var oldheight = $(element).height();
+  $('.portlet-header .icon-explode').click(function() {      
+      var portlet = $(this).parents(".portlet:first")[0];
+      console.log("Explode",portlet);  
+      var oldheight = $(portlet).height();
+      console.log("oldheight",oldheight);
+      $(portlet).data('unexploded-height',oldheight);
       var oldheights = [];
-      var pads = $("div.pad",element);
+      var pads = $("div.pad",portlet);
       for(var i =0 ;i<pads.length;i++) oldheights[i] = $(pads[i]).height();
       
-      console.log("exploding",element);
-      if (element.requestFullscreen) {
+      gEnbiggening = true;
+      console.log("exploding",portlet);
+      $(portlet).addClass('full-screen');
+      if (portlet.requestFullscreen) {
         console.log("requestFullscreen");
-        element.requestFullscreen();
-      } else if (element.mozRequestFullScreen) {
+        portlet.requestFullscreen();
+      } else if (portlet.mozRequestFullScreen) {
         console.log("mozRequestFullscreen");
-        element.mozRequestFullScreen();
-      } else if (element.webkitRequestFullScreen) {
+        portlet.mozRequestFullScreen();
+      } else if (portlet.webkitRequestFullScreen) {
         console.log("webkitRequestFullscreen");
-        element.webkitRequestFullScreen();
-           /*
-               *Kept here for reference: keyboard support in full screen
-               * marioVideo.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-           */
-       }
-       $(element).addClass("full-screen");
-      //  var newheight =window.innerHeight;
-      //  for(var i =0 ;i<pads.length;i++) {
-      //    var h = oldheights[i] * newheight / oldheight;
-      //    console.log("Exploding.",oldheight,newheight,oldheights[i],h);
-      //    $(pads[i]).height(h*2);
-      //    $(pads[i]).trigger('resize');
-      //  }
-       $(window).trigger('resize');      
-      
+        // portlet.webkitRequestFullScreen();
+        portlet.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+       }      
   });
+  
+  $("div.portlet").on("webkitfullscreenchange mozfullscreenchange fullscreenchange",function(event) {
+    console.log("doing fullscreen callback",event,gEnbiggening,this);
+    if(gEnbiggening) {
+      var h = $(this).height();
+      $(this).data('exploded-height',h);
+      console.log('enbiggening from ',$(this).data('unexploded-height'),"to",h);
+      resizePortlet(this,$(this).data('unexploded-height'),h);
+      gEnbiggening = false;
+    } else {
+      $(this).removeClass('full-screen');
+
+      console.log('deenbiggening from ',$(this).data('exploded-height'),"to",$(this).data('unexploded-height'));
+      resizePortlet(this,$(this).data('exploded-height'),$(this).data('unexploded-height'));
+    }
+  });
+  
 
   // print icon
   if(!isIOS()) {
@@ -291,6 +301,7 @@ $(function(){
 
   // Issue custom commands to resize inner content.
   $(".dock").bind('sortstop', function(event, ui) {
+    $(ui.item).width("100%");
     $('.pad',ui.item).trigger("resize");
   });
   
