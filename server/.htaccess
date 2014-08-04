@@ -1,2 +1,10 @@
+<IFModule mod_deflate.c>
+   RemoveOutputFilter DEFLATE
+</IFModule>
+
+AddHandler php5-script .php
+AddType text/html .php
+
 Options +ExecCGI
 AddHandler cgi-script .cgi
+
