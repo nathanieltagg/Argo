@@ -18,7 +18,7 @@ print "\r\n";
 @sortfiles = sort @files;
 $filename = pop @sortfiles;
 
-print 'data: {"filename":"' .$filename . '"};\n\n';
+print "data: {\"filename\":\"" .$filename . "\"}\n\n";
 STDOUT->flush();
 
 $id = 0;
@@ -47,7 +47,24 @@ $id = 0;
 #
 $timeout = 1; # 1 second timeout before giveing up.
 $tail = 0;
-if($ENV{"HTTP_LAST_EVENT_ID"} ne ""){ $tail = 10; }
+if((!defined $ENV{"HTTP_LAST_EVENT_ID"}) || ($ENV{"HTTP_LAST_EVENT_ID"} eq "")){
+  $tail = 200;
+  #
+  #
+  # print "data: {\"newjob\":\"" .$tail . "\"}\n\n";
+  # STDOUT->flush();
+  # # Client browser did not pass a line number. That indicates the browser is probably starting up for the first time, so send some backtrack data.
+  # $file1=File::Tail->new(name=>$filename, interval=>0.1, tail=>100, nowait=>1);
+  # while (defined($line=$file1->read)) {
+  #   if(length($line)==0) {last;}
+  #   $id++;
+  #   chomp $line;
+  #   print "id: " . $id . "\n";
+  #   print "data: " . $line . "\n\n";
+  #   STDOUT->flush();
+  # }
+  
+}
 
 $file=File::Tail->new(name=>$filename, interval=>0.05, tail=>$tail);
 my @selectlist=();
@@ -58,7 +75,7 @@ while(1) {
             File::Tail::select(undef,undef,undef,$timeout,@selectlist);
   unless ($nfound) {
     # timeout
-    return; # close this socket. Let the browswer to go error-and-open.
+    exit; # close this socket. Let the browser to go error-and-open.
   } else {
     foreach (@pending) {
         $id++;
@@ -67,7 +84,6 @@ while(1) {
         print "id: " . $id . "\n";
         print "data: " . $line . "\n\n";
         STDOUT->flush();
-
      }
   }
 
