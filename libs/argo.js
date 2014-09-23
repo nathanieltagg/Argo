@@ -88,6 +88,47 @@ $(function(){
 ///
 /// Code that sets up portlets.
 ///
+
+// portlet resizing:
+function resizePortlet(portlet,oldheight,newheight)
+{
+  console.log("resizePortlet",portlet,oldheight,newheight);
+  // var portlet = ui.element[0];
+  // Look for things in the portlet that are squeezable. Mostly this is pads right now, but include the option
+  var squeezables = $(".squeezable,.pad",portlet).filter(function(){
+    // Filter out objects being floated.
+    var parents = $(this).parents();
+    for(var ip=0;ip<parents.length;ip++) {
+      if(parents[ip]==portlet) return true;
+      var float = $(parents[ip]).css("float");
+      if(float && float !=="none") return false;
+    }
+  });
+
+  if(squeezables.length==0) return;
+  console.log("Squeezables:",squeezables);
+  var h1 = oldheight;
+  var h2 = newheight;
+  var pixels_needed = h2-h1;
+  var squeezable_heights = [];
+  squeezables.each(function(){
+    squeezable_heights.push($(this).height());
+  });
+  var total_squeezable_height =0;
+  for(var i=0;i<squeezable_heights.length;i++) total_squeezable_height+=squeezable_heights[i];
+  var new_total = total_squeezable_height + pixels_needed;
+  if(new_total<0) return;
+  var ratio = new_total/total_squeezable_height;
+  console.log("h1",h1,"h2",h2,"total_squeezable",total_squeezable_height,"newtotal",new_total,"ratio",ratio);
+  // Apply to all pads, not just the primaries.
+  $(".squeezable,.pad",portlet).each(function(){
+    var h = $(this).height(); $(this).height(h*ratio);
+  });
+    
+  console.log("resize",portlet);
+  $(portlet).trigger("resize")
+}
+
 $(function(){
   
   // style portlets and add icons.
@@ -97,39 +138,48 @@ $(function(){
   
   // fullscreen
   headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
-  $('.portlet-header .icon-explode').click(function() {
-      var element = $(this).parents(".portlet:first")[0];  
-      var oldheight = $(element).height();
+  $('.portlet-header .icon-explode').click(function() {      
+      var portlet = $(this).parents(".portlet:first")[0];
+      console.log("Explode",portlet);  
+      var oldheight = $(portlet).height();
+      console.log("oldheight",oldheight);
+      $(portlet).data('unexploded-height',oldheight);
       var oldheights = [];
-      var pads = $("div.pad",element);
+      var pads = $("div.pad",portlet);
       for(var i =0 ;i<pads.length;i++) oldheights[i] = $(pads[i]).height();
       
-      console.log("exploding",element);
-      if (element.requestFullscreen) {
+      gEnbiggening = true;
+      console.log("exploding",portlet);
+      $(portlet).addClass('full-screen');
+      if (portlet.requestFullscreen) {
         console.log("requestFullscreen");
-        element.requestFullscreen();
-      } else if (element.mozRequestFullScreen) {
+        portlet.requestFullscreen();
+      } else if (portlet.mozRequestFullScreen) {
         console.log("mozRequestFullscreen");
-        element.mozRequestFullScreen();
-      } else if (element.webkitRequestFullScreen) {
+        portlet.mozRequestFullScreen();
+      } else if (portlet.webkitRequestFullScreen) {
         console.log("webkitRequestFullscreen");
-        element.webkitRequestFullScreen();
-           /*
-               *Kept here for reference: keyboard support in full screen
-               * marioVideo.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-           */
-       }
-       $(element).addClass("full-screen");
-      //  var newheight =window.innerHeight;
-      //  for(var i =0 ;i<pads.length;i++) {
-      //    var h = oldheights[i] * newheight / oldheight;
-      //    console.log("Exploding.",oldheight,newheight,oldheights[i],h);
-      //    $(pads[i]).height(h*2);
-      //    $(pads[i]).trigger('resize');
-      //  }
-       $(window).trigger('resize');      
-      
+        // portlet.webkitRequestFullScreen();
+        portlet.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+       }      
   });
+  
+  $("div.portlet").on("webkitfullscreenchange mozfullscreenchange fullscreenchange",function(event) {
+    console.log("doing fullscreen callback",event,gEnbiggening,this);
+    if(gEnbiggening) {
+      var h = $(this).height();
+      $(this).data('exploded-height',h);
+      console.log('enbiggening from ',$(this).data('unexploded-height'),"to",h);
+      resizePortlet(this,$(this).data('unexploded-height'),h);
+      gEnbiggening = false;
+    } else {
+      $(this).removeClass('full-screen');
+
+      console.log('deenbiggening from ',$(this).data('exploded-height'),"to",$(this).data('unexploded-height'));
+      resizePortlet(this,$(this).data('exploded-height'),$(this).data('unexploded-height'));
+    }
+  });
+  
 
   // print icon
   if(!isIOS()) {
@@ -208,10 +258,18 @@ $(function(){
   // The problems with this:
   // - Does not constrain horizontal
   // - Does not scale inner objects.
-  // $(".portlet-content").resizable({
-  //   containment: 'parent' 
-  //  
-  // });  
+  $(".portlet").resizable({
+    containment: 'parent',
+    handles: "s,se",
+    
+    stop: function(event,ui) { resizePortlet(ui.element[0], ui.originalSize.height, ui.size.height); }
+  });
+
+  // Issue custom commands to resize inner content.
+  // $(".dock").bind('sortstop', function(event, ui) {
+  //   $('.pad',ui.item).trigger("resize");
+  // });
+
 
   // Make portlets sortable.
   $(".dock").sortable({
@@ -243,6 +301,7 @@ $(function(){
 
   // Issue custom commands to resize inner content.
   $(".dock").bind('sortstop', function(event, ui) {
+    $(ui.item).width("100%");
     $('.pad',ui.item).trigger("resize");
   });
   

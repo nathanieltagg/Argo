@@ -68,7 +68,7 @@ function ABoundObject(element, options)
 
   // Merge in options from element
   var element_settings = $(element).data('options');
-  console.log("ABoundObject::Constructor element options:",element_settings);
+  // console.log("ABoundObject::Constructor element options:",element_settings);
   if(element_settings) {
     // console.log(element_settings, element_settings_obj);
     $.extend(true,this,element_settings); // Change default settings by provided overrides.  
