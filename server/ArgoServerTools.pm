@@ -33,6 +33,7 @@ sub setup
   open($oldout, ">&STDOUT") or die "Can't dup STDOUT: $!";;
   open($olderr, ">&STDERR") or die "Can't dup STDERR: $!";;
   close STDOUT;
+  close STDERR;
   open(STDOUT, ">", \$msglog);  
   open(STDERR, ">", \$msglog);
   print "testing\n";
@@ -150,12 +151,12 @@ sub kill_running_server
       my $exec_pid = `cat $exec_name.pid`;
   } 
   if($exec_pid>0) {
-      print "Found pid file with value $pid \n";
-      unless(kill(9,$pid))
+      print "Found pid file with value $exec_pid \n";
+      unless(kill(9,$exec_pid))
       {
         print "Could not signal that process.\n";
       }
-      if(kill(0,$pid)) {
+      if(kill(0,$exec_pid)) {
         print "The process still freaking exists. I don't know how to kill it.\n"
       } else {
         print "Looks like it's dead, Jim.\n";
