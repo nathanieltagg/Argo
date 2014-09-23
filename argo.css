@@ -412,6 +412,10 @@ div.ui-dialog { font-size: 0.9em;}
   background-color:Orange;
 }
 
+.stateMachineStat {
+  display: block;
+}
+
 .keyhint
 {
   font-weight: bold;

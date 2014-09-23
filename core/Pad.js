@@ -241,7 +241,7 @@ Pad.prototype.Resize = function()
   if( !$(this.element).is(":hidden") ) {
     width = $(this.element).width();
     height = $(this.element).height(); 
-    console.log("Resize",this,width,height);
+    // console.log("Resize",this,width,height);
   }
   // console.log("Resize",$(this.element),width,height);
 
@@ -263,9 +263,13 @@ Pad.prototype.Resize = function()
     
   this.origin_x = this.margin_left;
   this.origin_y = height - this.margin_bottom;
-
+  
   this.span_x = width-this.margin_right -this.origin_x;
   this.span_y = this.origin_y-this.margin_top;
+  
+  // Protect against the crazy.
+  if(this.span_x < 10) this.span_x = 10;
+  if(this.span_y < 10) this.span_y = 10;
 };
 
 Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale ) 

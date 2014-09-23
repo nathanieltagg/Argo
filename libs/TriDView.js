@@ -68,12 +68,12 @@ function TriDView( element, options ){
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");  
   this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
 
-  $(this.ctl_show_hits).change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_hits)     .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_trid_hits).change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_clus).change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_spoints).change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_tracks) .change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_mc     ).change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_clus)     .change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_spoints)  .change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_tracks)   .change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_mc     )   .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Rebuild(); });
 
@@ -234,10 +234,8 @@ TriDView.prototype.CreateTracks = function()
 {
   if(!$("#ctl-TrackLists").val()) return;
   var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
-  console.warn(tracks,gRecord.tracks,$("#ctl-TrackLists").val());
   for(var itrk=0;itrk<tracks.length;itrk++) {
     var trk = tracks[itrk];
-    console.log(trk);
     var hovobj = {obj:trk, type:"track", collection: tracks};    
     var points = trk.points;
     for(var i=0;i<points.length-1;i++) {
@@ -690,17 +688,17 @@ TriDView.prototype.DrawFinish = function()
 
 TriDView.prototype.HoverObject = function(thing)
 {
-  if(selected) {
+  // console.log("Mouse is over: ",thing);
+  if(thing) {
     ChangeHover(thing);
   } else {
     ClearHover();    
   }
-  this.Draw();
 };
 
 TriDView.prototype.ClickObject = function(thing)
 {
-  console.warn("trid click");
+  // console.warn("trid click");
   if(thing) ChangeSelection(thing);
   else ClearSelection();
   //this.Draw();

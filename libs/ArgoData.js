@@ -38,7 +38,7 @@ function DoInitialBookmarking()
     var has_list = false;
     if(o instanceof Object){
       var j;
-      console.log ('recursing',name);
+      // console.log ('recursing',name);
       if(o instanceof Array) {        
         for(j=0;j<o.length;j++) if(o[j] instanceof Object) {o[j]._idx = j; o[j]._owner = name;}
       } else {
