@@ -3,7 +3,7 @@
 all: depend bin
 
 IGNORE := $(shell bash -c "source root/bin/thisroot.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv") 
-include makeenv 
+#include makeenv 
 
 pwd := $(shell pwd)
 
@@ -21,8 +21,8 @@ endif
 uboonedaq           = $(HOME)/development/uboonedaq/projects
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations
-CPP := g++44 -std=c++0x
-#CPP := g++ 
+#CPP := g++44 -std=c++0x
+CPP := g++ 
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -90,12 +90,12 @@ BLIBS += -L${BOOST_LIB}
 
 # Root.
 export ROOTSYS ?= ${pwd}/root  # Usually defined for us, use local symlink ./root if not
-export LD_LIBRARY_PATH=${ROOTSYS}/lib
+export LD_LIBRARY_PATH+=${ROOTSYS}/lib
 ifeq ($(UNAME),Darwin)
 	LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
 endif
 PATH+=:${ROOTSYS}/bin
-LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer 
+LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
 CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
 
@@ -149,11 +149,11 @@ tmp/%.o : %.cc
 RHEADERS = JsonElement.h FormulaLooter.h ArtlikeObjects.h
 Cint.cpp : $(RHEADERS) LinkDef.h
 	@echo "Running rootcint... " $(RHEADERS) LinkDef.h
-	LD_LIBRARY_FLAGS=${ROOTSYS}/lib
+	#export LD_LIBRARY_FLAGS+=${ROOTSYS}/lib
 	rootcint -v3 -f $@ -c -g -I./ -pthread -m64 $(RHEADERS) LinkDef.h
 	
-tmp/Cint.o : Cint.cpp
-	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -c $< -o $@ 
+#tmp/Cint.o : Cint.cpp
+#	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -c $< -o $@ 
 
 
 
