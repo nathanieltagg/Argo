@@ -1,0 +1,5 @@
+source /home/argo/larsoft/setup
+setup mrb
+setup gitflow
+setup gcc v4_8_2
+setup root v5_34_18d -q e5:nu:prof
