@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head> 
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<title>Argo</title>
+<!--#include virtual="basetag.inc"-->
+<!-- My little icon in the link url -->
+<link rel="icon"  type="image/png" href="images/ArgoIcon" />  
+
+<!-- Activate some overrides to basic configuration. -->
+<!--#set var="PageStyle" value="standard" -->
+<script type="text/javascript" >
+// These lines pull the Server-side-include (SSI) strings.
+gPageName='<!--#echo encoding="none" var="PageStyle"-->';
+// This is used to get a query string supplied to the page on the server side, but hidden
+// from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
+gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRING"-->');
+</script>
+
+<!-- Main CSS sheet for basic layout, custom mods. -->
+<link rel="stylesheet" href="argo.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="selected-object-info.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="local.css" type="text/css" media="all"/>
+
+<!-- Javascript libraries and code. -->
+<!--(#)include virtual="html/libraries.inc"-->
+<!--#include virtual="libraries.cgi"-->
+<script type="text/javascript" charset="utf-8">
+
+$(function(){
+  $('div.floating-pane').resizable().draggable({containment: '#desktop-main', handle:"h3"});
+  
+  $('.myIcon.myhitmap').click(function(){
+    // Create the window.
+    //alert('blah');
+    $('#the_hitmap').toggle();
+    }
+  );
+});
+</script>
+
+
+<style type="text/css">
+
+h1 { margin: 0; }
+body,html {
+  margin: 0;
+  padding: 0;
+  color:#000;
+  background: #a7a09a;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+}
+
+#everything
+{
+  width: 100%;
+  height: 100%;
+  background: white;
+}
+
+#desktop-header
+{
+  width: 100%;
+  height: 50px;
+  background: red;
+}
+#desktop-main
+{
+  style: inline-block;
+  width: 100%;
+  height: 100%;
+  margin-left:55px;
+/*  overflow: hidden;*/
+  background: lightblue;
+}
+
+
+#desktop-sidebar 
+{
+  float:left;
+  background: green;
+  overflow: hidden;
+  width:55px;
+  height: 100%;
+  margin-bottom: 50px; /* Room for footer*/
+}
+
+#desktop-footer
+{
+  display:block;
+  position:absolute;
+  height: 30px;
+  width: 100%;
+  top: auto;
+  left: 0;
+  bottom:0;
+  clear:both;
+  background: blue;
+}
+
+.myIcon {
+	display: block;
+	background-image: url(icons.png);
+	width: 50px;
+	height: 50px;
+	float: left;
+}
+
+.myIcon.myphhistogram       { background-position: 0px 0px; }
+.myIcon.myphhistogram:hover { background-position: 0px -50px; }
+.myIcon.myhitmap            { background-position: -50px 0px; }
+.myIcon.myhitmap:hover      { background-position: -50px -50px; }
+
+
+.floating-pane
+{
+  width: 150px; height: 150px; padding: 0.5em;
+  display: none;
+}
+
+.floating-pane h3 { text-align: left; border: 0px; font-size: 0.5em;  margin: 0; cursor: move;}
+
+
+
+
+</style>
+
+</head>
+
+
+<body>
+<div id='everything'>
+<div id='desktop-header'>
+  <h1>Header</h1>
+</div> <!-- sidebar -->
+
+<div id='desktop-sidebar'>
+  <h1>Sidebar</h1>
+  <a class="myIcon myphhistogram"></a>
+  <a class="myIcon myhitmap"></a>
+</div> <!-- sidebar -->
+
+<div id='desktop-main'>
+  <h1>Desktop</h1>
+
+
+<div id='the_hitmap' class='floating-pane ui-widget-content'>
+  <h3 class='ui-widget-header'>HitMap</h3>
+  My Stuff goes here.</br>
+  yadda yadda yadda.
+</div>
+
+</div> <!-- desktop -->
+
+<div id='desktop-footer'>
+  Footer
+</div> <!-- desktop -->
+
+
+  <!-- hidden stuff. -->
+  <!--#include virtual="html/MOTD.inc" -->
+  <!--#include virtual="html/Keyboard.inc" -->
+  <div id="warning-dialog" title="Warning">
+     <p id="warning-dialog-message"></p>
+   </div>
+   <!--#include virtual="html/SelectionInfoOverlay.inc" -->
+
+
+</div> <!-- Everything -->
+
+
+
+</body>
+</html>
