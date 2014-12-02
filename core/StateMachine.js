@@ -79,8 +79,10 @@ StateMachine.prototype.SimplifyQueue = function(  )
     var add = 1;
     for(var j=0;j<m;j++) {
       if(this.eventQueue[i]===newlist[j]) add = 0;
+      console.warn("removing from statemachine queue:",this.eventQueue[i]);
     }
     if(add>0) newlist.push(this.eventQueue[i]);
+    else console.warn("removing from statemachine queue:",this.eventQueue[i]);
   }
   this.eventQueue = newlist;
 };
