@@ -12,6 +12,16 @@
 /// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
 ///
 
+function getAbsolutePosition(element) {
+   var r = { x: element.offsetLeft, y: element.offsetTop };
+   if (element.offsetParent) {
+     var tmp = getAbsolutePosition(element.offsetParent);
+     r.x += tmp.x;
+     r.y += tmp.y;
+   }
+   return r;
+}
+
 // This class is a core base class for
 // models that bind to views.
 // The default arguments are the element it's attaching to,
