@@ -21,7 +21,7 @@
 gPageName='<!--#echo encoding="none" var="PageStyle"-->';
 // This is used to get a query string supplied to the page on the server side, but hidden
 // from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
-gHiddenQueryString='<!--#echo encoding="none" var="QUERY_STRING"-->';
+gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRING"-->');
 </script>
 
 

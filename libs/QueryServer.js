@@ -133,7 +133,7 @@ function QueryServer( par, myurl )
 
 
     // Default: do file-and-entry read from parameters. Should check for other options first.
-    data ={ filename:  par.filename  || "standard_reco_uboone.root" ,
+    data ={ filename:  encodeURIComponent(par.filename)  || "standard_reco_uboone.root" ,
             selection: par.selection || 1 ,
             entry:     par.entry     || 0 ,
             options:   par.options   || opts

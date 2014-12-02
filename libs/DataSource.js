@@ -74,8 +74,12 @@ DataSource.prototype.NewRecord = function()
     path.replace("fast","");
   }
   
-  gUrlToThisEvent = window.location.protocol + "//" + window.location.hostname + path + par + hash;
-  var fasturl     = window.location.protocol + "//" + window.location.hostname + fastpath + par + hash;
+  // Sanitize the hash to prevent someone from putting a script in there.
+  // hash = hash.replace(/(<([^>]+)>)/ig,"");
+  // hash = hash.replace(/\"\'/ig,"");
+  
+  gUrlToThisEvent = window.location.protocol + "//" + window.location.hostname + path + par + "#" + hash;
+  var fasturl     = window.location.protocol + "//" + window.location.hostname + fastpath + par +  "#" + hash;
   
   
    // baseurl + "?"
@@ -83,10 +87,14 @@ DataSource.prototype.NewRecord = function()
    //                  +"&entry="+gEntry
    //                  // +"&slice="+gCurrentSlice
    //                  ;    
+   // Doing it this way is less efficient, but it prevents XSS attacks in the hash part of the URL
   $('#link-to-this-event').html(
-     '<a href="'+gUrlToThisEvent+'">Link to this event</a><br/>'+
-     '<a href="'+fasturl+'">Fast link to this event</a><br/>'
+     '<a class="linkslow" href="#">Link to this event</a><br/>'+
+     '<a class="linkfast" href="#">Fast link to this event</a><br/>'
   );
+  $('#link-to-this-event a.linkslow').attr('href',gUrlToThisEvent);
+  $('#link-to-this-event a.linkfast').attr('href',fasturl);
+  
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Arachne Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
 };
 

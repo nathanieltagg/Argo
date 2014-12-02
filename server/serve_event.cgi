@@ -4,6 +4,7 @@ use POSIX qw(setsid);
 use IO::Socket;
 use Cwd;
 use File::Spec;
+use URI::Escape;
 use ArgoServerTools qw(setup myerror);
 
 #
@@ -32,7 +33,6 @@ my $entryend = 1000000000;
 if(defined param('selection')) {
     $selection=param('selection');
 }
-
 if(defined param('entry')) {
     $entrystart=param('entry');
 }
@@ -42,7 +42,7 @@ if(defined param('filename')){
     # 
     # Requested a DST file.
     #
-    $pathglob=param('filename');
+    $pathglob=uri_unescape(param('filename'));
 } 
 
 my $print_pathglob = $pathglob;

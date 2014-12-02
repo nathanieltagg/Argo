@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
+use URI::Escape;
 
 #
 # Script to take in an uploaded XML file and simply echo it back to the requester.
@@ -21,7 +22,7 @@ if(defined param('data') && defined param('file'))
   open(FILE,">$file");
   print FILE param('data');
   close(FILE);
-  print "Yup. $file";
+  print "Yup. Saved in file " . use uri_escape($file); # XSS killer
 } else {
   print "Nope.";
 }

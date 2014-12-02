@@ -25,3 +25,6 @@ RewriteRule ^(.*)\.[\d]{10}\.(css|js)$ $1.$2 [PT]
 </IFModule>
 
 
+RedirectMatch 404 /\\.svn(/|$)
+RedirectMatch 404 /\\.git(/|$)
+
