@@ -2,7 +2,7 @@ Options +ExecCGI -Indexes
 AddHandler cgi-script .cgi
 
 RewriteEngine On
-RewriteBase /~tagg/Argo/datacache
+RewriteBase /datacache
 #RewriteCond %{REQUEST_FILENAME} !-f
 #RewriteCond %{REQUEST_FILENAME} !-d
 

@@ -7,3 +7,4 @@ testx
 tmp
 *.pid
 Cint.*
+setup.sh
