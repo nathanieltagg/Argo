@@ -1,4 +1,9 @@
 source /home/argo/larsoft/setup
+export PATH=/usr/krb5/bin/:$PATH
+export KRB5CCNAME=FILE:/tmp/krb5cc_${UID}_cron$$
+kcron
+kx509 -d
+voms-proxy-init -noregen -rfc -voms fermilab:/fermilab/uboone/
 setup mrb
 setup gitflow
 setup gcc v4_8_2

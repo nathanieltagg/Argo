@@ -3,6 +3,8 @@ use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody e
 use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
 use POSIX qw(strftime);
 use Cwd qw/getcwd realpath/;
+use HTML::Entities;
+
 #
 # Script to browse ROOT files on the server. Mild security hassle as viewers on the web
 #  can see directory structrures and ROOT files.
@@ -13,7 +15,7 @@ $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
 $cookie_name = 'argo_file_browser';
 $link_target = "../arachne.html";
-$restrict_to = [ getcwd(), "/uboone","/minos","/minerva"];
+$restrict_to = [ getcwd(), "/uboone","/minos","/minerva","/pnfs"];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
 
 # Different configuration.
@@ -52,7 +54,9 @@ $cook_path = cookie($cookie_name);
 if(defined $cook_path) {
    $cur_path = $cook_path;
 }
-if(defined param('path')) {$cur_path = param('path');};
+
+# note: encoding prevents XSS attacks.
+if(defined param('path')) {$cur_path = HTML::Entities::encode(param('path'));};
 
 
 $cookie = cookie(-name=>$cookie_name,
@@ -98,8 +102,11 @@ foreach $basepath (@$restrict_to)
   if( $req_path_abs=~/^$basepath/ ) {$good=1;}
 }
 if($good==0) {
-  print p("$cur_path");
+  
+  print p(HTML::Entities::encode("$cur_path"));
   print p("This path is not a standard file location. Contact Nathaniel if you need to see this area.");
+  print p(@$restrict_to);
+
   print end_html;
   exit(0);
 }

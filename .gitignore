@@ -3,3 +3,5 @@
 .nfs*
 basetag.inc
 config
+local.css
+mysetup
