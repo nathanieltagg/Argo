@@ -116,7 +116,7 @@ JsonElement TreeReader::jsonF(const std::string& formula, int index)
 // Make array of objects using formulae.
 
 
-std::vector<JsonObject> TreeReader::makeVector(const vector<pair< string,string> >& key_leaf_pairs)
+std::vector<JsonObject> TreeReader::makeVector(const vector<pair< string,string> >& key_leaf_pairs, int limit)
 { 
   std::vector<JsonObject> retval; 
   // Find the leaves.
@@ -136,6 +136,7 @@ std::vector<JsonObject> TreeReader::makeVector(const vector<pair< string,string>
       if(n>count) count=n;
     }
   }
+  if(count>limit) count = limit; // Crudely limit number of outputted objects.
   // Create the results.
   for(Int_t jj=0; jj< count; jj++) {
     JsonObject t;    
