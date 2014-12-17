@@ -22,7 +22,7 @@ if(defined param('data') && defined param('file'))
   open(FILE,">$file");
   print FILE param('data');
   close(FILE);
-  print "Yup. Saved in file " . use uri_escape($file); # XSS killer
+  print "Yup. Saved in file " .  uri_escape($file); # XSS killer
 } else {
   print "Nope.";
 }
