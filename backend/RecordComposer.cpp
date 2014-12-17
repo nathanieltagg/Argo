@@ -430,7 +430,43 @@ void  RecordComposer::composeTracks()
   fOutput.add("tracks",reco_list);
 
 }
+
+void RecordComposer::composePFParticles()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::PFParticle>");
+
+  JsonObject reco_list;
+
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
+    TimeReporter timer(name);
+    std::cout << "Looking at PFParticles object " << (name+"obj_").c_str() << endl;
+
+    JsonArray jPFParticles;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "Found " << n << " objects" << endl;
+   
+    TreeElementLooter lootDaughters(fTree,name+"obj.fDaughters");
+    for(int i=0;i<n;i++) {
+      JsonObject jpf;
+    
+      jpf.add("self"    ,ftr.getJson(name+"obj.fSelf"          ,i));
+      jpf.add("pdg"     ,ftr.getJson(name+"obj.fPdgCode"       ,i));
+      jpf.add("parent"  ,ftr.getJson(name+"obj.fParent"        ,i));
+      const std::vector<unsigned long> *ptr = lootDaughters.get<std::vector<unsigned long> >(i);
+      JsonArray daughters(*ptr);
+      jpf.add("daughters",daughters);
+      jPFParticles.add(jpf);
+    }
+    reco_list.add(stripdots(name),jPFParticles);
+    timer.addto(fStats);
+  }  
+  fOutput.add("pfparticles",reco_list);
   
+}
+    
 // Optical
 void  RecordComposer::composeOpFlashes()
 {
@@ -1175,9 +1211,14 @@ void RecordComposer::composeMC()
     key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , name+"obj.fstatus"                  ));
     key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , name+"obj.ftrackId"                 ));
     key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , name+"obj.fWeight"                  ));
-    std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs);
+
+    // Quick hack to make it finish in finite time. FIXME
+    int max_particles_to_process = 200;
+    std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs, max_particles_to_process);
+
     std::cout << "Making particle list " << name << " " << v_particles.size() << std::endl;
     TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
+      
     for(size_t i=0;i<v_particles.size();i++) {
       if(l.ok()){        
         // Add  the trajectory points.
@@ -1352,6 +1393,7 @@ void RecordComposer::compose()
   composeVertex2d();
   composeSpacepoints();
   composeTracks();
+  composePFParticles();
   
   // Optical
   composeOpPulses();

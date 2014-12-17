@@ -23,8 +23,9 @@ public:
     JsonElement(const std::string& value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const char*        value) { fixed(); fContent << quotestring(value); }; 
     JsonElement(const unsigned int value) { fixed(); fContent << value; }
-    JsonElement(const       int value) { fixed(); fContent << value; }
-    JsonElement(const      long value) { fixed(); fContent << value; }
+    JsonElement(const       int value)     { fixed(); fContent << value; }
+    JsonElement(const      long value)     { fixed(); fContent << value; }
+    JsonElement(const unsigned long value) { fixed(); fContent << value; }
     JsonElement(const long long value) { fixed(); fContent << value; }
     JsonElement(const float value, int prec=-999) { fixed(prec); if(std::isnan(value)) fContent << "\"nan\""; else fContent << value; }
     JsonElement(const double value,int prec=-999) { fixed(prec); if(std::isnan(value)) fContent << "\"nan\""; else fContent << value; }
