@@ -52,6 +52,7 @@ function WireView( element, options )
   // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
   
   var settings = {
+    nlayers: 2,
     plane: 0, // default, override this
     margin_bottom : 40,
     margin_top    : 5,
@@ -379,7 +380,10 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     
   }  
   this.ctx.restore();
-  
+
+  // this.ClearOverlays();
+  // this.ctxs[1].fillStyle="green";
+  // this.ctxs[1].fillRect(0,0,100,100);
 };
 
 
