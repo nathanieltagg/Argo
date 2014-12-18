@@ -57,6 +57,8 @@ function Pad( element, options )
 
   // Options - defaults. Sensible for a wide range of stuff.  
   var defaults = {
+    nlayers: 1,
+    
     width: 10,
     height: 10,
     margin_bottom : 5,
@@ -91,28 +93,40 @@ function Pad( element, options )
   };
   // override defaults with options.
   $.extend(true,defaults,options);
-  
   ABoundObject.call(this, element, defaults); // Give settings to ABoundObject contructor.
   
-  // Look for an existing canvas, and build one if it's not there.
-  if($('canvas',this.element).length<1) {
-    this.canvas = document.createElement("canvas");
-    this.element.appendChild(this.canvas);
-
-    if (typeof FlashCanvas != "undefined") {
-        FlashCanvas.initElement(this.canvas);
-    }
-
-  } else {
-    this.canvas = $('canvas',this.element).get(0);    
-  }
-  $(this.canvas).css("height",0);
-
-  // Build the drawing context.
-  this.ctx = this.canvas.getContext('2d');
-  if(initCanvas) this.ctx = initCanvas(this.canvas).getContext('2d');
-  if(!this.ctx) console.log("Problem getting context!");
+  this.layers = [];
+  this.ctxs = [];
+  this.layer0 = this.canvas;
+  this.layers[0] = this.canvas;
+  $(this.element).css("position","relative");
+  $(this.canvas).attr("style","position: absolute; left: 0; top: 0; z-index: 0;");
   
+  // Look for an existing canvas, and build one if it's not there.
+  for(var i=0;i<this.nlayers;i++) {
+    var layername = "layer"+i;
+    if($('canvas.'+layername,this.element).length<1) {
+      var c = document.createElement("canvas");      
+      $(c).addClass(layername);
+      $(c).css("height",0);
+      if(i>0)
+        $(c).attr("style","position: absolute; left: 0; top: 0; z-index: "+i+";");
+      this.element.appendChild(c);
+      this[layername] = c; 
+      this.layers[i] = c;
+
+      // Build the drawing context.
+      var ctx = c.getContext('2d');
+      if(initCanvas) ctx = initCanvas(c).getContext('2d');
+      if(!ctx) console.log("Problem getting context!");
+      this.ctxs[i] = ctx;      
+    } else {
+      this[layername] = this.layers[i] = $('canvas.'+layername,this.element).get(0);
+    }      
+  }
+  this.canvas = this.layers[0];
+  this.ctx    = this.ctxs[0];
+    
   // console.warn("Pad created canvas with ", $(this.canvas).css("height"),$(this.canvas).height());
   // Resize the canvas to the coordinates specified, either in html, the css, or options provided.
   this.Resize();
@@ -243,23 +257,31 @@ Pad.prototype.Resize = function()
     height = $(this.element).height(); 
     // console.log("Resize",this,width,height);
   }
-  // console.log("Resize",$(this.element),width,height);
+  this.width = width;
+  this.height = height;
 
-  this.canvas.width = this.width = width;
-  this.canvas.height = this.height = height;
   this.padPixelScaling = 1;
-  
   if(window.devicePixelRatio > 1) {
     // Retina display! Cool!
     this.padPixelScaling = window.devicePixelRatio;
   }
+
+  // console.log("Resize",$(this.element),width,height);
+  for(var i=0;i<this.nlayers;i++) {
+    this.layers[i].width = width;
+    this.layers[i].height = height;
+    this.layers[i].setAttribute('width', width *  this.padPixelScaling);
+    this.layers[i].setAttribute('height', height *  this.padPixelScaling);
+    $(this.layers[i]).css('width', width );
+    $(this.layers[i]).css('height', height );
+    this.ctxs[i].scale(this.padPixelScaling,this.padPixelScaling);
+    // if(i>0) {
+    //   $(this.layers[i]).css('left',-width/2);
+    //   $(this.layers[i]).css('top',-height/2);
+    // }
+  }
   // this.canvas.width = width * window.devicePixelRatio;
   // this.canvas.height = height * window.devicePixelRatio;
-  this.canvas.setAttribute('width', width *  this.padPixelScaling);
-  this.canvas.setAttribute('height', height *  this.padPixelScaling);
-  $(this.canvas).css('width', width );
-  $(this.canvas).css('height', height );
-  this.ctx.scale(this.padPixelScaling,this.padPixelScaling);
     
   this.origin_x = this.margin_left;
   this.origin_y = height - this.margin_bottom;
@@ -351,7 +373,23 @@ Pad.prototype.Clear = function()
   if (!this.ctx) return;
   this.ctx.fillStyle = "rgb("+this.bg_color+")";
   this.ctx.fillRect(0,0,this.width,this.height);
+  // Clear overlays too if you clear everything.
+  this.ClearOverlays();
 };
+
+Pad.prototype.ClearOverlays = function()
+{
+  for(var i = 1; i<this.nlayers; i++) this.ClearLayer(i);
+  
+}
+
+Pad.prototype.ClearLayer = function(lay)
+{
+  //console.log("Pad.Clear()");
+  if (!this.ctxs[lay]) return;
+  this.ctxs[lay].clearRect(0,0,this.width,this.height);
+};
+
 
 Pad.prototype.DrawFrame = function()
 {
@@ -484,8 +522,13 @@ Pad.prototype.Draw = function()
 {
   this.Clear();
   this.DrawFrame();
+  this.DrawOverlays();
 };
 
+Pad.prototype.DrawOverlays = function()
+{
+  
+}
 
 Pad.prototype.GetX = function( u ) 
 {
