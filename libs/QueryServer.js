@@ -64,6 +64,7 @@ function ChangeEvent( )
   
   var par = $.deparam.fragment(true);
   if( par.localFile ) ReadLocalFile(par);
+  if( par.serverfile) QueryServer(par,par.serverfile);
   if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
   else QueryServer(par,"server/default_event.json");
 }

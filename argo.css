@@ -443,6 +443,11 @@ tr.rowstripe
   background-color: red;
 }
 
+.pf-jit-node-hover {
+  background-color: red;
+}
+
+
 :-webkit-full-screen .portlet {
   width: 100% !important;
   height: 100% !important;
