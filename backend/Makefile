@@ -2,7 +2,7 @@
 .PHONY: all
 all: depend bin
 
-IGNORE := $(shell bash -c "source root/bin/thisroot.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv") 
+#IGNORE := $(shell bash -c "source root/bin/thisroot.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv") 
 #include makeenv 
 
 pwd := $(shell pwd)
@@ -18,7 +18,7 @@ else
 endif
 
 #override, since setup is poor.
-uboonedaq           = $(HOME)/development/uboonedaq/projects
+uboonedaq  = $(HOME)/development/uboonedaq/projects
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations
 #CPP := g++44 -std=c++0x
@@ -64,7 +64,7 @@ vpath %.cpp $(uboonedaq)/dispatcher
 vpath %.cpp $(uboonedaq)/online_monitor
 #Where to look for include files
 
-CPPFLAGS += -I $(uboonedaq)/projects
+CPPFLAGS += -I $(uboonedaq)
 CPPFLAGS += -I $(uboonedaq_datatypes)/projects
 CPPFLAGS += -D nullptr=0
 
