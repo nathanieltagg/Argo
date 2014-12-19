@@ -52,7 +52,7 @@ function WireView( element, options )
   // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
   
   var settings = {
-    nlayers: 2,
+    nlayers: 1,
     plane: 0, // default, override this
     margin_bottom : 40,
     margin_top    : 5,
@@ -1361,6 +1361,7 @@ WireView.prototype.DoMouse = function(ev)
         // add hover coordinates.        
         match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u);
         match.sample  = this.fMousePos.v;
+        if(!match.obj) match.obj = match.channel + "|" + match.sample;
         ChangeHover(match); // match might be null.
       }
     }
