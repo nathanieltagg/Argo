@@ -97,6 +97,7 @@ span.ZoomControl-Info
 }
 
 
+
 #mag-sliders label {
 }
 
@@ -249,6 +250,8 @@ span.keypress-hint {
 {
    padding: 4px 4px 4px 4px !important;
  }
+
+
 
 div.A-EventInfo {
   overflow: scroll;
@@ -483,6 +486,14 @@ div.A-WireView {
 
 div.A-WireHistogram {
   height: 100px;
+}
+
+div.A-ZoomControl {
+ height: 180px;
+}
+
+div.A-TimeHistogram {
+ height: 120px;
 }
 
 
