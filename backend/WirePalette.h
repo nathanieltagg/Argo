@@ -12,6 +12,8 @@ class WirePalette;
 class WirePalette
 {
 public:
+  static WirePalette* gWirePalette;
+
   inline int tanscale(short adc) { return fLookupTanscaleShort[(adc+4096)];};
     
   std::vector<unsigned char> fPalette;

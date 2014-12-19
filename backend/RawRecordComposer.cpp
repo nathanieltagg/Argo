@@ -34,7 +34,9 @@
 #include "ColorMap.h"
 #include "MakePng.h"
 #include "RootToJson.h"
+#include "WirePalette.h"
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include "datatypes/eventRecord.h"
 
@@ -42,8 +44,6 @@ using namespace std;
 using namespace gov::fnal::uboone::datatypes;
 using gov::fnal::uboone::online::Plexus;
 
-std::string RawRecordComposer::sfFileStoragePath = "../datacache";
-std::string RawRecordComposer::sfUrlToFileStorage = "datacache";
 
 
 RawRecordComposer::RawRecordComposer(JsonObject& output,   
@@ -54,9 +54,15 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   , fOptions(options)
   , fmintdc(0)
   , fmaxtdc(0)
-  , fPlexus("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE")
+  , fPlexus()
 
 {
+  fPlexus.buildHardcoded();
+  //fPlexus.buildFromPostgresql("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE")
+
+  fCacheStoragePath     = "../live_event_cache"
+  fCacheStorageUrl      = "live_event_cache";
+  fCurrentEventDirname  = "live";
 };
   
 RawRecordComposer::~RawRecordComposer()
@@ -69,9 +75,21 @@ void RawRecordComposer::compose()
   // have the record unpack itself.
   fRecord->updateIOMode(IO_GRANULARITY_CHANNEL);
   
+  std::string id = Form("r%08d_s%04d_e%08d"
+                            ,fRecord->getGlobalHeaderPtr()->getRunNumber()    
+                            ,fRecord->getGlobalHeaderPtr()->getSubrunNumber() 
+                            ,fRecord->getGlobalHeaderPtr()->getEventNumber()  
+                            );
+  fCurrentEventDirname = Form("%s/%s.event/"
+                            ,fCacheStoragePath.c_str(), id.c_str());
+  fCurrentEventUrl      = Form("%s/%s.event/"
+                            ,fCacheStorageUrl.c_str(), id.c_str());
+  
+  mkdir(fCurrentEventName,0777);
+  composeHeader();
   composeTPC();
   composePMTs();
-  composeHeader();
+
 }
 
 void RawRecordComposer::composeHeader()
@@ -156,7 +174,7 @@ void RawRecordComposer::composeTPC()
 
           // Find the wire number of this channel.
           Plexus::PlekPtr_t p = fPlexus.get(crate,card,channel);
-          int wire = p->wirenum;
+          int wire = p->wirenum();
           // std::cout << "found wire " << wire << std::endl;
           if(wire<0) continue;
 
@@ -210,7 +228,7 @@ void RawRecordComposer::composeTPC()
   if(wires_read<=0) cerr << "Got no wires!" << std::endl;
   int nwire = 8254;
   ColorMap colormap;
-  MakePng png (ntdc,nwire, MakePng::palette_alpha,gWirePalette.fPalette,gWirePalette.fPaletteTrans);
+  MakePng png (ntdc,nwire, MakePng::palette_alpha,WirePalette::gWirePalette->fPalette,WirePalette::gWirePalette->fPaletteTrans);
   MakePng epng(ntdc,nwire,MakePng::rgb);
   std::vector<unsigned char> imagedata(ntdc);
   std::vector<unsigned char> encodeddata(ntdc*3);
@@ -234,7 +252,7 @@ void RawRecordComposer::composeTPC()
       for(int k=0;k<ntdc;k++) {
         short raw = waveform[k];
         // colormap.get(&imagedata[k*3],float(raw)/4000.);
-        imagedata[k] = tanscale(raw);
+        imagedata[k] = WirePalette::gWirePalette->tanscale(raw);
         // Save bitpacked data as image map.
         int iadc = raw + 0x8000;
         encodeddata[k*3]   = 0xFF&(iadc>>8);
@@ -255,7 +273,7 @@ void RawRecordComposer::composeTPC()
       // Do not have wire info.
       
       for(int k=0;k<ntdc;k++) {
-        imagedata[k] = 256; // Saturate!
+        imagedata[k] = 255; // Saturate!
         // Save bitpacked data as image map.
         encodeddata[k*3]   = 0;
         encodeddata[k*3+1] = 0;
@@ -269,9 +287,9 @@ void RawRecordComposer::composeTPC()
   timeProfile.SetContent(&timeProfileData[0]);
   png.Finish();
   epng.Finish();
-  std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
+  std::string wireimg = png.writeToUniqueFile(fCurrentEventDirname);
   std::string wireimg_thumb = wireimg+".thumb.png";
-  BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
+  BuildThumbnail(fCurrentEventDirname+wireimg,fCurrentEventDirname+wireimg_thumb);
 
   JsonObject r;
   r.add("wireimg_url",sfUrlToFileStorage+wireimg);
