@@ -1,7 +1,9 @@
 #include "WirePalette.h"
 
 // Create the singleton at program start. (Before forking!)
-// WirePalette::gWirePalette = new WirePalette;
+WirePalette* WirePalette::gWirePalette = new WirePalette;
+
+
 
 WirePalette::WirePalette()
   :  fLookupTanscaleShort(8192)

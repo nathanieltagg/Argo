@@ -65,7 +65,7 @@ vpath %.cpp $(uboonedaq)/online_monitor
 #Where to look for include files
 
 CPPFLAGS += -I $(uboonedaq)
-CPPFLAGS += -I $(uboonedaq_datatypes)/projects
+CPPFLAGS += -I $(uboonedaq_datatypes_inc)
 CPPFLAGS += -D nullptr=0
 
 
@@ -84,8 +84,8 @@ ifeq ($(UNAME),Darwin)
   CPPFLAGS +=  -ftemplate-depth=512
 endif
 
-CPPFLAGS += -I/$(BOOST_INC) 
-BLIBS += -L${BOOST_LIB}
+CPPFLAGS += -I $(BOOST_INC) 
+BLIBS += -L ${BOOST_LIB}
 
 
 # Root.
@@ -107,7 +107,7 @@ LIBS += -L/opt/X11/lib -lpng
 # postresql
 ifeq ($(UNAME),Darwin)
   # Use the Postgres app, instead of a fullblown installation.
-  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib
+  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
 endif
 ifneq ($(origin POSTGRES_INC), undefined)
