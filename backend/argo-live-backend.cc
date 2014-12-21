@@ -58,14 +58,17 @@ void CleanCacheDirectory(std::string dir, int max)
   std::string globstr = dir + "/*.event";
   glob_t g;
   int r = glob(globstr.c_str(),0, NULL, &g);
+  if(r == GLOB_NOMATCH) return;
   if(r) {
-    logError << "Can't glob";
+    logError << "Glob error";
     return;
   }
-  int n = g.gl_matchc;
   std::vector<std::string> events;
-  for(int i=0;i<n;i++) if(g.gl_pathv[i]) events.push_back(g.gl_pathv[i]);
-  // for(int i=0;i<events.size();i++) cout << events[i] << endl;
+  int i=0;
+  while(g.gl_pathv[i]) { 
+    events.push_back(g.gl_pathv[i]);
+    i++;
+  }
   // These should already be sorted. Nuke some of them. 
   while(events.size()>max) {
     std::string todelete = events[0];
@@ -124,6 +127,7 @@ int main(int argc, char **argv)
   configfile.close();
   KvpSet config(configstr);
   
+  
   // Connect to dispatcher.
   // FIXME: Make configurable.
   oDispHost      = config.getString("dispatcherHost","localhost");
@@ -135,6 +139,16 @@ int main(int argc, char **argv)
   oMaxFiles      = config.getInt("maxFiles",30);
   oConfigJson = KvpToJson(config);
   JsonObject result;
+
+  // Create PID file.
+  std::string pidfilename = oCacheDir + "/argo-live-backend.pid";
+  ofstream pidfile(pidfilename);
+  if(!pidfile.good()) {
+    logError << "Cannot write PID file " <<pidfilename << " to cache area.";
+    return 1;
+  }
+  pidfile << getpid();
+  pidfile.close();
 
   
   Client client(false);
