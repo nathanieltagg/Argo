@@ -101,6 +101,11 @@ function DoInitialBookmarking()
   for(i in gRecord.tracks) { 
     $('#ctl-TrackLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
+
+  $('#ctl-PFParticleLists').empty();
+  for(i in gRecord.pfparticles) { 
+    $('#ctl-PFParticleLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
+  }
   
   if(gRecord.oppulses) {
     for(i in gRecord.oppulses) { 

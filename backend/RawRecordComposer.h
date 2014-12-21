@@ -36,23 +36,19 @@ public:
   
   gov::fnal::uboone::online::Plexus fPlexus;
   
-  static std::string sfFileStoragePath;
-  static std::string sfUrlToFileStorage;
+  // Configuration:
+  std::string fCacheStoragePath;
+  std::string fCacheStorageUrl;
+
+  std::string fCurrentEventDirname;
+  std::string fCurrentEventUrl;
+  
     
   // State things:
   int fmintdc;
   int fmaxtdc;
   
   
-  // int inline static tanscale(float adc)
-  // {
-  //   return int(atan(adc/25.)/M_PI*256.) + 127;
-  // }
-  //
-  // float inline static inv_tanscale(int y)
-  // {
-  //   return tan((y-127)*M_PI/256)*25.;
-  // }
   
 };
 

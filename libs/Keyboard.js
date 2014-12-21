@@ -101,14 +101,23 @@ $(function() {
       case 116: // 't' 
         $('#ctl-show-tracks').click();
         return false;
+
+      case 84: // 'T'
+        $('#ctl-TrackLists').cycle_dropdown().trigger("change");
+        return false;
+
+      case 102: // 'f' 
+        $('#ctl-show-pfparticles').click();
+        return false;
+
+      case 70: // 'F' 
+        $('#ctl-PFParticleLists').cycle_dropdown().trigger("change");
+        return false;
         
       case 111: // 'o' 
         $('#ctl-track-shift-window').click();
         return false;
         
-      case 84: // 'T'
-        $('#ctl-TrackLists').cycle_dropdown().trigger("change");
-        return false;
 
         
       case 109: // 'm'

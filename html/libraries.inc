@@ -88,6 +88,7 @@
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
 <script type="text/javascript" src="libs/MCDigraph.js"></script> 
+<script type="text/javascript" src="libs/PFDigraph.js"></script> 
 <script type="text/javascript" src="libs/TriDView.js"></script> 
 <script type="text/javascript" src="libs/OpHitHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 

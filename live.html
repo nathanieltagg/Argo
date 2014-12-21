@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head> 
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<title>Argo</title>
+<!--(#)include virtual="basetag.inc"-->
+
+
+<!-- My little icon in the link url -->
+<link rel="icon"  type="image/png" href="images/ArgoIcon" />  
+
+<!-- Activate some overrides to basic configuration. -->
+<!--#set var="PageStyle" value="standard" -->
+<script type="text/javascript" >
+// These lines pull the Server-side-include (SSI) strings.
+gPageName='<!--#echo encoding="none" var="PageStyle"-->';
+// This is used to get a query string supplied to the page on the server side, but hidden
+// from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
+// URI encoding (server side) and decoding (javascript/clientside) prevents XSS attacks.
+gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRING"-->');
+</script>
+
+<!-- Main CSS sheet for basic layout, custom mods. -->
+<link rel="stylesheet" href="argo.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="selected-object-info.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="local.css" type="text/css" media="all"/>
+
+<style>
+div.A-ZoomControl {
+  height: 100px;
+}
+div.A-TimeHistogram {
+ height: 80px;
+}
+</style>
+
+
+<!-- Javascript libraries and code. -->
+<!--(#)include virtual="html/libraries.inc"-->
+<!--#include virtual="libraries.cgi"-->
+
+
+</head>
+
+
+<body>
+<div id='everything'>
+
+  <div style="float:left;">
+    <!-- <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span> -->
+      <img src="images/new-argo-logo.png" alt="Argo - the Microboone Web Event Display" style="height:50px;">
+  </div>
+  
+  <table style="width: 50%; border:"><tr>
+  <td style="width: 5%;">Status:</td><td><div id="status">Script loading...</div></td>
+  </tr></table>
+  <div id='live-info'>EventID: 1000|01|00001   Time: 12:01:01 12/12/14 (4 days ago)</div>
+
+  <div style="clear:both;"></div>
+  <div id="expando-target" style="z-index:998;"></div>
+
+
+  <!--#include virtual="html/WireViewBig.inc" -->
+  <div style="float:left; width:59%;">
+    <!--#include virtual="html/OpHits.inc" -->
+  </div>
+  <div style="float:right: width: 39%">
+  <!--#include virtual="html/TimeHistogram.inc" -->
+  <!--#include virtual="html/ZoomControl.inc" -->
+  
+  </div>
+  <div style="clear:both;"></div>
+    <!--#include virtual="html/WireView.inc" -->
+
+  <!-- <div style="clear: both;"></div> -->
+
+  
+  <div id="footer">
+    <!--#include virtual="html/Debugging.inc" -->
+    
+  <!--#include virtual="html/credits.inc" -->
+  
+  </div> <!-- footer -->
+  
+  <!-- hidden stuff. -->
+  <div id="static-config" style="display:none;">
+
+
+    <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
+      <div id="mag-sliders">
+        <div>
+        <label for="ctl-magnifier-size">Mag. Size:</label>         
+        <input id="ctl-magnifier-size" class="saveable" type="text" value="60" size="4" />
+        </div>
+        <div id="ctl-magnifier-size-slider"></div>
+        <div>
+        <label for="ctl-magnifier-mag">Magnification:</label>         
+        <input id="ctl-magnifier-mag"  class="saveable" type="text" value="3" size="4" />          
+        </div>
+        <div id="ctl-magnifier-mag-slider"></div>
+      </div>
+      <div><input type="checkbox" id="ctl-histo-logscale" name="ctl-histo-logscale" checked="checked" class="saveable  ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale Histograms</label></div>
+      <div><input type="checkbox" id="ctl-show-labels" name="ctl-show-labels" checked="checked" class="saveable"/><label for="ctl-show-labels">Draw Axis Labels</label></div>
+      <div><input type="checkbox" id="ctl-show-tick-labels" name="ctl-show-tick-labels" checked="checked" class="saveable"/><label for="ctl-show-tick-labels">Draw Tick Values</label></div>
+      <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio" checked="checked"  class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
+      <div><input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" checked="checked" class="saveable show-wireimg" /><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>
+      <div><b>(Shift-W)</b>
+        <span class="align-right">
+        <input type="radio" id="ctl-show-wireimg-raw" value="raw" name="show-wireimg-type" class="saveable show-wireimg-raw"   checked="checked"      /><label for="ctl-show-wireimg-raw">Raw</label>
+        <input type="radio" id="ctl-show-wireimg-cal" value="cal" name="show-wireimg-type" class="saveable show-wireimg-cal"  />     <label for="ctl-show-wireimg-cal">Calibrated</label>
+        </span>
+        <div style="clear:both;"></div>
+        </div>
+      
+      <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"  /><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>
+        <div><b>(shift-H)</b> <select id="ctl-HitLists"  class="align-right"></select><div style="clear:both;"></div></div>
+        
+      <div><input type="checkbox" id="ctl-show-clus"    name="show-clus"    class="saveable show-clus"                 /><label for="ctl-show-clus">    <b>(c)</b> Show Clusters </label></div>
+      <div><b>(shift-C)</b> <select id="ctl-ClusterLists"  class="align-right"></select><div style="clear:both;"></div></div>
+
+
+      <div><input type="checkbox" id="ctl-show-endpoint2d"    name="show-endpoint2d"    class="saveable show-endpoint2d"                 /><label for="ctl-show-endpoint2d"> <b>(e)</b>  Show Endpoint2Ds </label></div>
+      <div> <b>(shift-E)</b><select id="ctl-EndpointLists"  class="align-right"></select><div style="clear:both;"></div></div>
+      
+      <div><input type="checkbox" id="ctl-show-spoints" name="show-spoints" class="saveable show-spoints"              /><label for="ctl-show-spoints"> <b>(s)</b> Show Spacepoints </label></div>
+      <div><b>(shift-S)</b> <select id="ctl-SpacepointLists"  class="align-right"></select><div style="clear:both;"></div></div>
+
+      <div><input type="checkbox" id="ctl-show-tracks"  name="show-tracks"  class="saveable show-tracks"  /><label for="ctl-show-tracks">  <b>(t)</b> Show Tracks </label></div>
+      <div><b>(shift-T)</b> <select id="ctl-TrackLists"  class="align-right"></select><div style="clear:both;"></div></div>
+      <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-track-shift-window"      name="track-shift-window"      class="saveable track-shift-window"  /><label for="track-shift-window">      <b>(o)</b> Shift Tracks 1 Window</label></div>
+
+      <div><label><input type="checkbox" id="ctl-show-pfparticles"  name="show-pfparticles"  class="saveable show-pfparticles"  /><b>(f)</b> Show PFParticles </label></input></div>
+      <div><b>(shift-F)</b> <select id="ctl-PFParticleLists"  class="align-right"></select><div style="clear:both;"></div></div>
+          
+      <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      /><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>
+      <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-show-mc-neutrals"      name="show-mc-neutrals"      class="saveable show-mc-neutrals"  /><label for="ctl-show-mc">      <b>(M)</b> Show neutral particles </label></div>
+      <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-mc-move-tzero"      name="ctl-mc-move-tzero"      class="saveable ctl-mc-move-tzero"  /><label for="ctl-mc-move-tzero">      <b>(z)</b> Fake t-zero </label></div>
+        <!-- <div class="align-right"><div id="ctl-MCLists"></div><div style="clear:both;"></div></div> -->
+
+    
+  </div>
+
+  <!--#include virtual="html/MOTD.inc" -->
+  <!--#include virtual="html/Keyboard.inc" -->
+  
+  <div id="warning-dialog" title="Warning">
+     <p id="warning-dialog-message"></p>
+   </div>
+   
+   <!--#include virtual="html/SelectionInfoOverlay.inc" -->
+   
+</div> <!-- Everything -->
+</body>
+</html>
