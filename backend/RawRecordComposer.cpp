@@ -60,7 +60,7 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   fPlexus.buildHardcoded();
   //fPlexus.buildFromPostgresql("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE")
 
-  fCacheStoragePath     = "../live_event_cache"
+  fCacheStoragePath     = "../live_event_cache";
   fCacheStorageUrl      = "live_event_cache";
   fCurrentEventDirname  = "live";
 };
@@ -85,7 +85,7 @@ void RawRecordComposer::compose()
   fCurrentEventUrl      = Form("%s/%s.event/"
                             ,fCacheStorageUrl.c_str(), id.c_str());
   
-  mkdir(fCurrentEventName,0777);
+  mkdir(fCurrentEventDirname.c_str(),0777);
   composeHeader();
   composeTPC();
   composePMTs();
@@ -292,10 +292,10 @@ void RawRecordComposer::composeTPC()
   BuildThumbnail(fCurrentEventDirname+wireimg,fCurrentEventDirname+wireimg_thumb);
 
   JsonObject r;
-  r.add("wireimg_url",sfUrlToFileStorage+wireimg);
-  r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
-  r.add("wireimg_encoded_url",sfUrlToFileStorage+
-                            epng.writeToUniqueFile(sfFileStoragePath)
+  r.add("wireimg_url",fCurrentEventUrl+wireimg);
+  r.add("wireimg_url_thumb",fCurrentEventDirname+wireimg_thumb);
+  r.add("wireimg_encoded_url",fCurrentEventDirname+
+                            epng.writeToUniqueFile(fCurrentEventDirname)
                             );
 
   r.add("timeHist",TH1ToHistogram(&timeProfile));

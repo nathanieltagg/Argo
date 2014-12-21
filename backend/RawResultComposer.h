@@ -11,6 +11,15 @@ extern Timer gStartTimer;
 class TTree;
 class TFile;
 
+JsonObject KvpToJson(KvpSet& kvp)
+{
+  JsonObject j;
+  for(int i=0;i<kvp.n();i++) {
+    j.add(kvp.getKey(i), kvp.getVal(i));
+  }
+  return j;
+}
+
 class RawResultComposer
 {
   public:
