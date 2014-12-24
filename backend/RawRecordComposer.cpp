@@ -315,9 +315,164 @@ void RawRecordComposer::composeTPC()
     
   
 }
+
+uint32_t resolveFrame(uint32_t frameCourse,uint32_t frameFine, uint32_t bitmask)
+{
+  /// 
+  /// Figure out the correct roll-over.  Given a frame number frameCourse which is usually the
+  /// event readout frame, figure out which absolute frame number should be assigned to frameFine, 
+  /// which contains only <bitmask> bits of specific information.
+  /// eg. (0x100,0x1,0xf) resolves to 0x101, which is the nearest solution,
+  /// but (0x100,0xe,0xF) resolves to 0x9e, which is closer.
+  ///
+  // note that modulus = bitmask + 1. E.g. bitmask=0x7 means modulus-8 arithmetic.
+  // This could probably be optimized, but my brain is a little fuzzy today.
+  uint32_t option1 = (frameCourse - (frameCourse & bitmask)) | (frameFine & bitmask);
+  int max = (bitmask+1)/2; // This is half-way point; you should never be further than this.
+  int diff = option1-frameCourse;
+  if(diff >  max) return option1 - (bitmask+1);
+  if(diff < -max) return option1 + (bitmask+1);
+  return option1;
+}
+
+
+void RawRecordComposer::getPmtFromCrateCardChan(
+  int icrate, int icard,int ichan, // channel input
+  int& outPmt,  // pmt or optical detector number
+  int& outGain, // gain of channel 1=low, 2=high
+  std::string& outSpecial // special name
+    )
+{
+  // This function is totally bogus, but it will at least give me a framework.
+  (void)icrate; // unused parameter
+  
+  if(icard<7) {
+    outGain = -1;
+    outPmt = -1;
+    outSpecial = "";
+    return;
+  }
+  if(ichan<30) {    
+    if(icard>7) outGain = 1; // low gain
+    else        outGain = 2; // high gain
+    outPmt = ichan;
+  } 
+  else {   
+    outGain = -1;
+    outPmt = -1;
+    outSpecial = std::string("special_").append(std::to_string(ichan));
+  }
+  
+}
   
 void RawRecordComposer::composePMTs()
 {
+  uint32_t  pmt_readout_frame_mod8  = 0xFFFFFFFF;
+  uint32_t  pmt_readout_frame = 0xFFFFFFFF;
+  uint32_t  pmt_readout_sample = 0xFFFFFFFF;
+
+  JsonArray ophits;
+
+  const eventRecord::sebMapPMT_t& pmt_map = fRecord->getSEBPMTMap();
+  eventRecord::sebMapPMT_t::const_iterator pmt_it;
+  for( pmt_it = pmt_map.begin(); pmt_it != pmt_map.end(); pmt_it++){
+    //get the crateHeader/crateData objects
+    const crateHeader& crate_header = pmt_it->first;
+    const crateDataPMT& crate_data = pmt_it->second;
+    int crate = crate_header.getCrateNumber();
+
+    //now get the card map (for the current crate), and do a loop over all cards
+    const crateDataPMT::cardMap_t&  card_map = crate_data.getCardMap();
+    crateDataPMT::cardMap_t::const_iterator card_it;
+
+    // Loop cards
+    for(card_it = card_map.begin(); card_it != card_map.end(); card_it++){    
+      const cardHeaderPMT& card_header = card_it->first;
+      const cardDataPMT&   card_data   = card_it->second;
+      int card = card_header.getModule();
+      
+      uint32_t pmt_event_frame      = card_header.getFrame();
+      uint32_t pmt_trig_frame_mod16 = card_header.getTrigFrameMod16();
+      uint32_t pmt_trig_frame       = card_header.getTrigFrame(); // The resolved version, fully specified.
+      uint32_t pmt_trig_sample_2MHz = card_header.getTrigSample();
+      
+      std::map<int,channelDataPMT> channel_map = card_data.getChannelMap();
+      std::map<int,channelDataPMT>::iterator channel_it;
+
+      // Loop channels
+      for(channel_it = channel_map.begin(); channel_it != channel_map.end(); channel_it++){
   
+        int channel = channel_it->first;
+        const channelDataPMT& data = channel_it->second;
+        int pmt;
+        int gain;
+        std::string special;
+        getPmtFromCrateCardChan(crate, card, channel, pmt, gain, special);
+        
+        // Loop windows.
+        const channelDataPMT::windowMap_t& windows = data.getWindowMap();
+        channelDataPMT::windowMap_t::const_iterator it;
+        for(it = windows.begin(); it != windows.end(); it++) {
+          const windowHeaderPMT& window_header = it->first;
+          int disc = window_header.getDiscriminant();
+          // if((disc&0x3)>0)      nwindows_disc++;
+          // if((disc&0x4) == 0x4) nwindows_beam++;
+
+          uint32_t frame = resolveFrame(pmt_event_frame,window_header.getFrame(),0x7);
+          uint32_t sample = window_header.getSample();
+          if( (pmt_readout_frame==0xFFFFFFFF) && ((window_header.getDiscriminant()&0x4)==4) ) {
+            // Set the readout start time here.
+            pmt_readout_frame_mod8  = window_header.getFrame();
+            pmt_readout_frame = frame;
+            pmt_readout_sample = sample;
+          }
+          const windowDataPMT&   window_data   = it->second;
+          const uint16_t* ptr = (uint16_t*) (window_data.getWindowDataPtr());
+          int nsamp = window_data.getWindowDataSize()/sizeof(uint16_t);
+          int peaksamp = 0;
+          int peakval = 0;
+          int ped = ptr[0]&0xfff;
+          double sumw  = 0;
+          double sumwx = 0;
+          double sumwxx = 0;
+          for(int j=0;j<nsamp;j++) {
+            double val = (ptr[j]&0xfff) - ped;
+            sumw += val;
+            sumwx += val*j;
+            sumwxx += val*j*j;
+            if(val>peakval) {peakval = val; peaksamp = j;}
+          }
+          if(sumw==0) sumw = 1e-9;
+          double meanTime = sumwx/sumw;
+          double widthTime = sqrt(fabs(sumwxx/sumw - meanTime*meanTime));
+          double peakTime = ( ((frame-pmt_readout_frame)*102400.) + (peaksamp+sample-pmt_readout_sample) ) / 64e6; // 64 mhz ticks
+          
+        
+          double pe = sumw/2;       // Crude calibration: 2 ADC/pe low gain
+          if(gain==2) pe = sumw/20; // 20 ADC/pe high gain
+          
+          JsonObject jobj;
+      
+          jobj.add("opDetChan"     ,pmt);
+          jobj.add("opDetGain"     ,gain);          
+          if(special.length()>0) 
+            jobj.add("opDetSpecial"  ,special);          
+          jobj.add("disc",disc);
+          jobj.add("peakTime"      ,peakTime);
+          jobj.add("pe"            ,pe);
+          jobj.add("sample", sample);
+          jobj.add("frame",frame);
+          ophits.add(jobj);
+        }
+  
+      } // loop channels
+        
+    } // loop cards
+    
+    
+  } // Loop PMT crates
+  JsonObject reco_list;
+  reco_list.add("DAQ",ophits);
+  fOutput.add("ophits",reco_list);   
 }
   
