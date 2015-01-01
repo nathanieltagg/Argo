@@ -18,7 +18,7 @@ my $start_time = Time::HiRes::gettimeofday();
 
 
 ArgoServerTools::setup();
-open(PROFLOG,">>serve_event_profile.log");
+
 
 
 if( -r "server_config.pl" ) {
@@ -74,7 +74,7 @@ ArgoServerTools::serve($resp,$download);
 
 my $serve_time =  Time::HiRes::gettimeofday();
 
-print PROFLOG "Time to req: " . ($req_time - $start_time) . " time to serve: " . ($serve_time - $req_time) . "\n";
+print ArgoServerTools::PROFLOG "Time to req: " . ($req_time - $start_time) . " time to serve: " . ($serve_time - $req_time) . "\n";
 
 #remove old log files, more than 1/2 day old.
 for ( glob "argo_backend*.log" ) {

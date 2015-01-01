@@ -152,7 +152,6 @@ void RawRecordComposer::composeTPC()
     crateHeader crate_header = seb_it->first;
     crateData crate_data = seb_it->second;
     int crate = crate_header.getCrateNumber();
-    if(crate<10) {// FIXME don't hardcode this?
 
       //now get the card map (for the current crate), and do a loop over all cards
       std::map<cardHeader,cardData>::iterator card_it;
@@ -217,7 +216,6 @@ void RawRecordComposer::composeTPC()
           }
         } // loop channels
       } // loop cards
-    } // if TPC crate
   } // loop seb/crate
   
   // Now we should have a semi-complete map.
@@ -225,7 +223,7 @@ void RawRecordComposer::composeTPC()
   fmintdc = 0;
   fmaxtdc = ntdc;
 
-  if(wires_read<=0) cerr << "Got no wires!" << std::endl;
+  if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
   int nwire = 8254;
   ColorMap colormap;
   MakePng png (ntdc,nwire, MakePng::palette_alpha,WirePalette::gWirePalette->fPalette,WirePalette::gWirePalette->fPaletteTrans);
@@ -346,12 +344,12 @@ void RawRecordComposer::getPmtFromCrateCardChan(
   // This function is totally bogus, but it will at least give me a framework.
   (void)icrate; // unused parameter
   
-  if(icard<7) {
-    outGain = -1;
-    outPmt = -1;
-    outSpecial = "";
-    return;
-  }
+  // if(icard<7) {
+  //   outGain = -1;
+  //   outPmt = -1;
+  //   outSpecial = "";
+  //   return;
+  // }
   if(ichan<30) {    
     if(icard>7) outGain = 1; // low gain
     else        outGain = 2; // high gain
@@ -452,13 +450,13 @@ void RawRecordComposer::composePMTs()
           if(gain==2) pe = sumw/20; // 20 ADC/pe high gain
           
           JsonObject jobj;
-      
+          jobj.add("ccc"     ,(crate*1000 + card)*1000+channel);      
           jobj.add("opDetChan"     ,pmt);
           jobj.add("opDetGain"     ,gain);          
           if(special.length()>0) 
             jobj.add("opDetSpecial"  ,special);          
           jobj.add("disc",disc);
-          jobj.add("peakTime"      ,peakTime);
+          jobj.add("peakTime"      ,peakTime*1e9); // nanoseconds
           jobj.add("pe"            ,pe);
           jobj.add("sample", sample);
           jobj.add("frame",frame);

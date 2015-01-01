@@ -134,7 +134,6 @@ int main(int argc, char **argv)
   oPeriod        = config.getDouble("period",10.0);
   oMaxFiles      = config.getInt   ("maxFiles",30);
   oConfigJson = KvpToJson(config);
-  JsonObject result;
 
   
   Client client(false);
@@ -143,6 +142,7 @@ int main(int argc, char **argv)
 
   // Main loop.
   while(true) {
+    
     JsonObject heartbeatInfo;
     heartbeatInfo.add("config",oConfigJson);
     
@@ -186,6 +186,8 @@ int main(int argc, char **argv)
     }
     KvpSet md(metadata);
     JsonObject mdj = KvpToJson(md);
+
+    JsonObject result;
     result.add("dispatcher_header",mdj);
     heartbeatInfo.add("dispatcher_header",mdj);
     logInfo << "Got reply: payload: " << data->payload_size() << " bytes, metadata: "
@@ -212,7 +214,7 @@ int main(int argc, char **argv)
 
        composer.compose();
        std::string filename = composer.fCurrentEventDirname + "/" + "event.json";
-       ofstream json(filename);
+       ofstream json(filename,std::ios_base::trunc);
        json << composer.fOutput;
        json.close();
     }
