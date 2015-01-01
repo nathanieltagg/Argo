@@ -63,7 +63,7 @@ OpFlashHistogram.prototype.NewRecord = function()
   var tmin = 1e99;
   var tmax = -1e99;
   var flash;
-  if(gOphitsListName && gRecord.opflashes[gOpflashesListName] && gRecord.opflashes[gOpflashesListName].length>0) {
+  if(gOpflashesListName && gRecord.opflashes[gOpflashesListName] && gRecord.opflashes[gOpflashesListName].length>0) {
     var flashes = gRecord.opflashes[gOpflashesListName];
     console.warn("flashes",flashes);
 
@@ -94,18 +94,19 @@ OpFlashHistogram.prototype.NewRecord = function()
         this.hist.Fill(flash[gOpMode.flashVariable]*gOpMode.flashVariableScale);
     }    
 
-  } 
   
   
-  this.SetHist(this.hist,gOpColorScaler);
-  this.ResetToHist(this.hist);
+    this.SetHist(this.hist,gOpColorScaler);
+    this.ResetToHist(this.hist);
 
-  gOpColorScaler.min = tmin;
-  gOpColorScaler.max = tmax;  
-  gOpMode.cut.min = tmin;
-  gOpMode.cut.max = tmax;
+    gOpColorScaler.min = tmin;
+    gOpColorScaler.max = tmax;  
+    gOpMode.cut.min = tmin;
+    gOpMode.cut.max = tmax;
   
+  } 
   this.Draw();
+
 };
 
 

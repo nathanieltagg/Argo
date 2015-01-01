@@ -466,8 +466,8 @@ void main() {
   vec4 inc = texture2D(texture, v_texCoord);
   //float adc = (color.r + color.g/256.)*256.-; // 256 to translate from 0-1 space to ADC space.
   float adc = (inc.r*256. + inc.g - 128.)*256.;
-  // float tanscale = (atan(adc/300.)/3.1415928) +0.5 ;
-  float tanscale = adc;
+  float tanscale = (atan(adc/300.)/3.1415928) +0.5 ;
+  //float tanscale = adc;
   // float adc = 0.999;
   vec4 color;
   color.r = texture2D(maptexture, vec2(tanscale)).r;

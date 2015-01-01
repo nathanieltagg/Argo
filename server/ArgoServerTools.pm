@@ -20,6 +20,7 @@ our $ntuple_server_port = 9092;
 our $ntuple_server_host = 'localhost';
 our $exec_name = 'argo-backend';
 
+
 do("../config/server_config.pl"); #|| die; # load file if present.
 
 
@@ -37,6 +38,7 @@ sub setup
   open(STDOUT, ">", \$msglog);  
   open(STDERR, ">", \$msglog);
   print "testing\n";
+  open(PROFLOG,">>serve_event_profile.log");
 }
 
 sub serve
@@ -63,7 +65,8 @@ sub serve
  my $size = length($zipped);
  my $zip_time =  Time::HiRes::gettimeofday();
          
-  print main::PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
+ print main::PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
+
 
  #  my $head = header(-type => 'application/json',
  #                     -charset => "UTF-8",

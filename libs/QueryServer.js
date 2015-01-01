@@ -44,13 +44,15 @@ $(function(){
   
   
   // Do intial trigger on page load.
+  console.log("Doing intitial hashchange trigger");
   $(window).hashchange();
 });
 
 
 function ChangeEvent( )
 {
-  console.log("ChangeEvent");
+  var par = $.deparam.fragment(true);
+  console.log("ChangeEvent",par);
   // Clear all selection targets.
   $("input").blur();
 
@@ -62,10 +64,9 @@ function ChangeEvent( )
             message:    $('#MOTD')
         });
   
-  var par = $.deparam.fragment(true);
-  if( par.localFile ) ReadLocalFile(par);
-  if( par.serverfile) QueryServer(par,par.serverfile);
-  if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
+  if     ( par.localFile ) ReadLocalFile(par);
+  else if( par.serverfile) QueryServer(par,par.serverfile);
+  else if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
   else QueryServer(par,"server/default_event.json");
 }
 
@@ -103,7 +104,7 @@ function ReadLocalFileSuccess()
 
 function QueryServer( par, myurl )
 {
-  console.log("QueryServer",par);
+    console.log("QueryServer",par);
     $("input").blur();
     
     var data = {};
@@ -243,6 +244,7 @@ function QueryError(jqxhr, textStatus, errorThrown )
 
 function QuerySuccess(data,textStatus,jqxhr)
 {
+  console.log("QuerySuccess");
   document.body.style.cursor='auto';
   $.unblockUI();
   gClientParseTime = (new Date()).getTime();
@@ -279,23 +281,25 @@ function QuerySuccess(data,textStatus,jqxhr)
 
 function StartEvent()
 {
-  if(!gRecord.source) {
+  $("#status").text("StartEvent (Drawing)...");
+  if(gRecord.source) {
+    // Get some basic info.  
+    if(gRecord.source.file)  gFile   = gRecord.source.file;
+    if(gRecord.source.entry) gEntry  = gRecord.source.entry;
+    // Fill the title bar.
+    var file_short = gFile.replace(/^.*\/|\.[^.]*$/g, '');
+    window.document.title = "Argo: event "+gEntry + " in "+file_short;
+
+  } else {
     $('#status').attr('class', 'status-error');
     $("#status").text("Problem with data: " + gRecord.error);
     window.document.title = "Argo (error)";
-    return;
+    
   }
-  $("#status").text("Drawing...");
   console.log(gRecord);
   gEventsLoadedThisSession +=1;
 
-  // Get some basic info.  
-  if(gRecord.source.file)  gFile   = gRecord.source.file;
-  if(gRecord.source.entry) gEntry  = gRecord.source.entry;
   
-  // Fill the title bar.
-  var file_short = gFile.replace(/^.*\/|\.[^.]*$/g, '');
-  window.document.title = "Argo: event "+gEntry + " in "+file_short;
   
   
   // Populate data from header, when that's available.
