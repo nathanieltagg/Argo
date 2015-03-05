@@ -33,11 +33,6 @@ public:
   std::string fOptions;
   std::shared_ptr<gov::fnal::uboone::datatypes::eventRecord> fRecord;
   
-  
-  
-  
-  gov::fnal::uboone::online::Plexus fPlexus;
-  
   // Configuration:
   std::string fCacheStoragePath;
   std::string fCacheStorageUrl;
@@ -53,6 +48,9 @@ public:
   
   
 };
+
+extern gov::fnal::uboone::online::Plexus gPlexus;
+
 
 
 

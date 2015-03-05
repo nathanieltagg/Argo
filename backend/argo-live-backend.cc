@@ -19,6 +19,9 @@
 #include "dispatcher/Client.h"
 #include "dispatcher/KvpSet.h"
 #include "dispatcher/ConvertDispatcherToEventRecord.h"
+#include "datatypes/eventRecord.h"
+#include "online_monitor/Plexus.h"
+
 
 #include <signal.h>
 #include <glob.h>
@@ -59,7 +62,7 @@ void CleanCacheDirectory(std::string dir, int max)
   glob_t g;
   int r = glob(globstr.c_str(),0, NULL, &g);
   if(r) {
-    logError << "Can't glob";
+    // logError << "Can't glob";
     return;
   }
   int n = g.gl_matchc;
@@ -123,6 +126,37 @@ int main(int argc, char **argv)
   }
   configfile.close();
   KvpSet config(configstr);
+  
+  
+  // Plexus.
+  std::string  plexSource     = config.getString("plexusInterface","postgresql");
+  std::string  plexConnection = config.getString("plexusConnection","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
+
+  if(plexSource=="postgresql") {
+    gPlexus.buildFromPostgresql(plexConnection);
+    if(!gPlexus.is_ok()) {
+      logWarn << "Cannot connect to database using " << plexSource << " and " << plexConnection;
+    } else {
+      logInfo << "Connected to plex database";
+    }
+  }
+  if(!gPlexus.is_ok()) {
+    plexSource     = config.getString("plexusInterface_fallback","postgresql");
+    plexConnection = config.getString("plexusConnection_fallback","host=localhost port=5432");
+    if(plexSource=="postgresql") {
+      gPlexus.buildFromPostgresql(plexConnection);
+      if(!gPlexus.is_ok()) {
+        logWarn << "Cannot connect to database using " << plexSource << " and " << plexConnection;
+      } else {
+        logInfo << "Connected to fallback plex database.";
+      }
+    }
+  }
+  if(!gPlexus.is_ok()) {
+    logWarn << "Reverting to hard-coded connections mapping, since no DB is working.";
+  }
+  gPlexus.buildHardcoded();
+  
   
   // Connect to dispatcher.
   // FIXME: Make configurable.
@@ -206,7 +240,28 @@ int main(int argc, char **argv)
        continue;
      }
     
-    
+     try {
+       record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CARD);      // The business end of things.
+     }
+     catch (std::runtime_error& error) {
+       std::string s = "Error: could not unpack card data ";
+       s+=error.what();
+       logInfo << s;
+       SaveHeartbeat(heartbeatInfo, s);
+       continue;
+    }
+
+    try {
+      record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CHANNEL);      // The business end of things.
+    }
+    catch (std::runtime_error& error) {
+        std::string s = "Error: could not unpack channel data ";
+        s+=error.what();
+        logInfo << s;
+        SaveHeartbeat(heartbeatInfo, s);
+        continue;
+     }
+      
     RawRecordComposer composer(result,record,oOptions);
     try {
        composer.fCacheStoragePath     = oCacheDir;

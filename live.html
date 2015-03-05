@@ -57,7 +57,11 @@ div.A-TimeHistogram {
   <table style="width: 50%; border:"><tr>
   <td style="width: 5%;">Status:</td><td><div id="status">Script loading...</div></td>
   </tr></table>
-  <div id='live-info'>Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   Time: <span class='event-time'></span></div>
+  <div id='live-info'>Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
+    <span class="val event-date"></span>
+    <span class="val event-time"></span>
+    (<span class="val event-age"></span> ago)
+  </div>
 
   <div style="clear:both;"></div>
   <div id="expando-target" style="z-index:998;"></div>
@@ -75,24 +79,30 @@ div.A-TimeHistogram {
   <div style="clear:both;"></div>
     <!--#include virtual="html/WireView.inc" -->
 
-  <!-- <div style="clear: both;"></div> -->
 
-<div class="portlet" id="eventinfo-port"> 
-<div class="portlet-header">Event Info</div>
-  <div  class="portlet-content">
-    <div class="A-EventInfo">
-      <table class="eventinfo"><tbody>
-        <tr><td class="key">Run</td>        <td class="val event-run">?</td></tr>
-        <tr><td class="key">SubRun</td>     <td class="val event-subrun">?</td></tr>
-        <tr><td class="key">Event</td>      <td class="val event-event">?</td></tr>
-        <tr><td class="key">Data Type</td>  <td class="val event-datatype">MC</td></tr>
-        <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
-        <tr><td class="key">Date:</td>      <td class="val event-time"></td></tr>
-      </tbody></table>
-    </div>
+  <div style="float:left; width:49%;">
+    <div class="portlet" id="eventinfo-port"> 
+    <div class="portlet-header">Event Info</div>
+      <div  class="portlet-content">
+        <div class="A-EventInfo">
+          <table class="eventinfo"><tbody>
+            <tr><td class="key">Run</td>        <td class="val event-run">?</td></tr>
+            <tr><td class="key">SubRun</td>     <td class="val event-subrun">?</td></tr>
+            <tr><td class="key">Event</td>      <td class="val event-event">?</td></tr>
+            <tr><td class="key">Data Type</td>  <td class="val event-datatype">MC</td></tr>
+            <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
+            <tr><td class="key">Date:</td>      <td class="val event-time"></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>  <!-- portlet -->
   </div>
-</div>  <!-- portlet -->
 
+  <div style="float:right; width:49%">
+    <!--#include virtual="html/WireInfo.inc" -->
+  </div>
+
+  <div style="clear:both;"></div>
 
   
   <div id="footer">
