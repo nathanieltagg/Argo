@@ -57,6 +57,24 @@ EventInfo.prototype.NewRecord = function()
     $(".event-datatype").text(gRecord.header.isRealData?"Real":"MC"); 
   }
 
+  if(gRecord.tpc && gRecord.tpc.crates && gRecord.tpc.crates.length>0){
+    var milliseconds = gRecord.tpc.crates[0].sebSec * 1000 + gRecord.tpc.crates[0].sebUsec / 1000;
+    var date = new Date(milliseconds);
+    var s =  date.toLocaleDateString + date.toLocaleTimeString();
+    var now = new Date;
+    var dt = (now.getTime() - date.getTime())/1000.
+    var age = dt;
+    if(dt<60*2)             age = dt.toFixed(0) + " sec";
+    else if(dt<3600*2)      age = (dt/60).toFixed(0) + " min";
+    else if(dt<86400*2)     age = (dt/3600).toFixed(0) + " hours";
+    else if(dt<24*3600*400) age = (dt/86400).toFixed(1) + " days";
+    else                    age = (dt/31536000).toFixed(1) + " years";
+    var dts = 
+
+    $(".event-date").text(date.toLocaleDateString());
+    $(".event-time").text(date.toLocaleTimeString());
+    $(".event-age").text(age);
+  }
   
   if(gRecord.source) {
     if("file" in gRecord.source)  $(".event-file").text(gRecord.source.file);

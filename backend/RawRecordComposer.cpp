@@ -44,6 +44,7 @@ using namespace std;
 using namespace gov::fnal::uboone::datatypes;
 using gov::fnal::uboone::online::Plexus;
 
+gov::fnal::uboone::online::Plexus gPlexus;
 
 
 RawRecordComposer::RawRecordComposer(JsonObject& output,   
@@ -54,11 +55,7 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   , fOptions(options)
   , fmintdc(0)
   , fmaxtdc(0)
-  , fPlexus()
-
 {
-  fPlexus.buildHardcoded();
-  //fPlexus.buildFromPostgresql("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE")
 
   fCacheStoragePath     = "../live_event_cache";
   fCacheStorageUrl      = "live_event_cache";
@@ -140,7 +137,7 @@ void wireOfChannel(int channel, int& plane, int& wire)
   
 void RawRecordComposer::composeTPC()
 {
-  if(!fPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
+  if(!gPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
   // The big wire map.
   typedef std::vector<int16_t> waveform_t;
   typedef std::shared_ptr<waveform_t> waveform_ptr_t;
@@ -160,6 +157,7 @@ void RawRecordComposer::composeTPC()
     //get the crateHeader/crateData objects
     crateHeader crate_header = seb_it->first;
     crateData crate_data = seb_it->second;
+    crate_data.decompress(); 
     int crate = crate_header.getCrateNumber();
 
     JsonArray jCards;
@@ -187,12 +185,11 @@ void RawRecordComposer::composeTPC()
           
           num_card_channels++;
           // Find the wire number of this channel.
-          Plexus::PlekPtr_t p = fPlexus.get(crate,card,channel);
+          Plexus::PlekPtr_t p = gPlexus.get(crate,card,channel);
           int wire = p->wirenum();
           // std::cout << "found wire " << wire << std::endl;
           if(wire<0) continue;
 
-          // FIXME: not right for huffman.
           int nsamp = data.getChannelDataSize()/sizeof(uint16_t);
 
           // Waveform storage.
@@ -206,9 +203,8 @@ void RawRecordComposer::composeTPC()
           waveform_t& waveform = *(inserted.first->second.get());
                   
           // Copy the channel data to my own signed vector array
-          // FIXME: do huffman decoding or decimation recover here!
           uint16_t* rawdata = (uint16_t*)(data.getChannelDataPtr());
-          for(int i=0;i<nsamp;i++) waveform[i] = rawdata[i];
+          for(int i=0;i<nsamp;i++) waveform[i] = (rawdata[i] & 0xfff);
           
           wires_read++;
           if(ntdc<nsamp) ntdc = nsamp;
@@ -220,7 +216,7 @@ void RawRecordComposer::composeTPC()
           int16_t pedestal = 0;
           uint16_t max_counts = 0;
           for(int i=0;i<nsamp;i++){
-            int bin = waveform[i]&0xFFF;
+            int bin = waveform[i];
             int counts = ++histogram[bin];
             if(counts > max_counts) { max_counts = counts; pedestal = bin;}
           } 
@@ -287,7 +283,7 @@ void RawRecordComposer::composeTPC()
       for(int k=0;k<ntdc;k++) {
         short raw = waveform[k];
         // colormap.get(&imagedata[k*3],float(raw)/4000.);
-        imagedata[k] = WirePalette::gWirePalette->tanscale(raw);
+        imagedata[k] = WirePalette::gWirePalette->tanscale(raw*10);
         // Save bitpacked data as image map.
         int iadc = raw + 0x8000;
         encodeddata[k*3]   = 0xFF&(iadc>>8);
