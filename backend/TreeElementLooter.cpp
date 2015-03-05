@@ -47,9 +47,9 @@ TreeElementLooter::TreeElementLooter(TTree* t, const std::string& branchname)
   }
     
   eoffset = fBranch->GetOffset();
-   offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
+   // offset = eoffset + fBranch->GetInfo()->GetOffsets()[fBranch->GetID()];
   // ROOT v5_34_21b
-  //offset = eoffset + fBranch->GetInfo()->GetElementOffset(fBranch->GetID());
+  offset = eoffset + fBranch->GetInfo()->GetElementOffset(fBranch->GetID());
   fOK = true;
 }
 

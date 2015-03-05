@@ -67,6 +67,7 @@ function ChangeEvent( )
   if     ( par.localFile ) ReadLocalFile(par);
   else if( par.serverfile) QueryServer(par,par.serverfile);
   else if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
+  else if( par.live      ) QueryServer(par, "server/serve_live.cgi");
   else QueryServer(par,"server/default_event.json");
 }
 

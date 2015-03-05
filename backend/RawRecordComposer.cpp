@@ -80,7 +80,7 @@ void RawRecordComposer::compose()
                             ,fRecord->getGlobalHeaderPtr()->getSubrunNumber() 
                             ,fRecord->getGlobalHeaderPtr()->getEventNumber()  
                             );
-  fCurrentEventDirname = Form("%s/%s.event/"
+  fCurrentEventDirname = Form("%s/%s.working/" // Will get renamed to .event on closeout.
                             ,fCacheStoragePath.c_str(), id.c_str());
   fCurrentEventUrl      = Form("%s/%s.event/"
                             ,fCacheStorageUrl.c_str(), id.c_str());
