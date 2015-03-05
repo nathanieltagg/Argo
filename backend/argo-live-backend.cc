@@ -217,6 +217,11 @@ int main(int argc, char **argv)
        ofstream json(filename,std::ios_base::trunc);
        json << composer.fOutput;
        json.close();
+       // atomic rename from working area to final area.
+       std::string finalDirName = composer.fCurrentEventDirname;
+       size_t pos = finalDirName.find(".working",0);
+       if(pos != std::string::npos) finalDirName.replace(pos,8,".event");
+       rename(composer.fCurrentEventDirname.c_str(),finalDirName.c_str());
     }
     catch(...) {
         logInfo << "Error: could not compose JSON result";
