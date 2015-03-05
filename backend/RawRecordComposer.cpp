@@ -100,11 +100,17 @@ void RawRecordComposer::composeHeader()
   header.add("event"   ,fRecord->getGlobalHeaderPtr()->getEventNumber()  );
   header.add("triggerword"   , fRecord->getTriggerDataPtr()->getTrigEventType() );
 
-  // time_t daqSec = fRecord->getGlobalHeader().getSeconds();
-  // int daqNanoSec = (fRecord->getGlobalHeader().getMilliSeconds()*1000000)
-  //                + (fRecord->getGlobalHeader().getMicroSeconds()*1000) // FIXME: Not sure if right.
-  //                + (fRecord->getGlobalHeader().getNanoSeconds()); // FIXME: Not sure if right.
-
+  header.add("seconds",fRecord->getGlobalHeader().getSeconds());
+  header.add("milliSeconds",fRecord->getGlobalHeader().getMilliSeconds());
+  header.add("microSeconds",fRecord->getGlobalHeader().getMicroSeconds());
+  header.add("nanoSeconds",fRecord->getGlobalHeader().getNanoSeconds());
+  int daqSec = fRecord->getGlobalHeader().getSeconds();
+  int daqNanoSec = (fRecord->getGlobalHeader().getMilliSeconds()*1000000)
+                 + (fRecord->getGlobalHeader().getMicroSeconds()*1000) // FIXME: Not sure if right.
+                 + (fRecord->getGlobalHeader().getNanoSeconds()); // FIXME: Not sure if right.
+  double daqtime = daqSec*1000 + daqNanoSec*1e-9;
+  
+  header.add("daqTime",daqtime);
   header.add("recordOrigin", fRecord->getGlobalHeaderPtr()->getRecordOrigin());
   
   // Add my own things. 
@@ -139,6 +145,9 @@ void RawRecordComposer::composeTPC()
   typedef std::vector<int16_t> waveform_t;
   typedef std::shared_ptr<waveform_t> waveform_ptr_t;
   typedef std::map<int, waveform_ptr_t > wiremap_t;
+    
+  JsonObject jTPC;
+  JsonArray jCrates;
 
   wiremap_t wireMap;
   int ntdc = 0;
@@ -153,6 +162,8 @@ void RawRecordComposer::composeTPC()
     crateData crate_data = seb_it->second;
     int crate = crate_header.getCrateNumber();
 
+    JsonArray jCards;
+
       //now get the card map (for the current crate), and do a loop over all cards
       std::map<cardHeader,cardData>::iterator card_it;
       std::map<cardHeader,cardData,compareCardHeader> card_map = crate_data.getCardMap();
@@ -162,6 +173,9 @@ void RawRecordComposer::composeTPC()
         cardData card_data = card_it->second;
         int card = card_header.getID();
         
+        JsonObject jCard;
+        jCard.add("cardId",crate);
+        int num_card_channels = 0;
         
         
         std::map<int,channelData> channel_map = card_data.getChannelMap();
@@ -170,7 +184,8 @@ void RawRecordComposer::composeTPC()
 
           int channel       = channel_it->first;
           channelData& data = channel_it->second;
-
+          
+          num_card_channels++;
           // Find the wire number of this channel.
           Plexus::PlekPtr_t p = fPlexus.get(crate,card,channel);
           int wire = p->wirenum();
@@ -215,7 +230,23 @@ void RawRecordComposer::composeTPC()
             waveform[i] -= pedestal;
           }
         } // loop channels
+
+        jCard.add("num_channels",num_card_channels);
+        jCards.add(jCard);        
       } // loop cards
+      
+      JsonObject jCrate;
+      jCrate.add("cards",jCards);
+      jCrate.add("crateNumber",crate_header.getCrateNumber());
+      jCrate.add("cardCount",crate_header.getCardCount());
+      jCrate.add("sebSec",crate_header.getSebTimeSec());
+      jCrate.add("sebUsec",crate_header.getSebTimeUsec());
+      jCrate.add("type",crate_header.getCrateType());
+      jCrate.add("eventNumber",crate_header.getCrateEventNumber());
+      jCrate.add("frameNumber",crate_header.getCrateFrameNumber());
+      jCrate.add("cardCount",crate_header.getCardCount());
+      jCrates.add(jCrate);
+      
   } // loop seb/crate
   
   // Now we should have a semi-complete map.
@@ -237,6 +268,12 @@ void RawRecordComposer::composeTPC()
   planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
   planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
   planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+
+  // std::vector<TH1*> planeHistogram;
+  // planeHistogram.push_back(new TH1D("planeHistogram0","planeHistogram0",2398,0,2398));
+  // planeHistogram.push_back(new TH1D("planeHistogram1","planeHistogram1",2398,0,2398));
+  // planeHistogram.push_back(new TH1D("planeHistogram2","planeHistogram2",3456,0,3456));
+
   // waveform_t blank(ntdc,0);
   for(int wire=0;wire<nwire;wire++) 
   {
@@ -291,8 +328,8 @@ void RawRecordComposer::composeTPC()
 
   JsonObject r;
   r.add("wireimg_url",fCurrentEventUrl+wireimg);
-  r.add("wireimg_url_thumb",fCurrentEventDirname+wireimg_thumb);
-  r.add("wireimg_encoded_url",fCurrentEventDirname+
+  r.add("wireimg_url_thumb",fCurrentEventUrl+wireimg_thumb);
+  r.add("wireimg_encoded_url",fCurrentEventUrl+
                             epng.writeToUniqueFile(fCurrentEventDirname)
                             );
 
@@ -311,6 +348,8 @@ void RawRecordComposer::composeTPC()
   reco_list.add("DAQ",r);
   fOutput.add("raw",reco_list);
     
+  jTPC.add("crates",jCrates);
+  fOutput.add("tpc",jTPC);
   
 }
 
@@ -371,6 +410,8 @@ void RawRecordComposer::composePMTs()
 
   JsonArray ophits;
 
+  JsonArray jCrates;
+  
   const eventRecord::sebMapPMT_t& pmt_map = fRecord->getSEBPMTMap();
   eventRecord::sebMapPMT_t::const_iterator pmt_it;
   for( pmt_it = pmt_map.begin(); pmt_it != pmt_map.end(); pmt_it++){
@@ -383,6 +424,8 @@ void RawRecordComposer::composePMTs()
     const crateDataPMT::cardMap_t&  card_map = crate_data.getCardMap();
     crateDataPMT::cardMap_t::const_iterator card_it;
 
+    JsonArray jCards;
+    
     // Loop cards
     for(card_it = card_map.begin(); card_it != card_map.end(); card_it++){    
       const cardHeaderPMT& card_header = card_it->first;
@@ -397,6 +440,9 @@ void RawRecordComposer::composePMTs()
       std::map<int,channelDataPMT> channel_map = card_data.getChannelMap();
       std::map<int,channelDataPMT>::iterator channel_it;
 
+      
+      JsonArray jChannels;
+
       // Loop channels
       for(channel_it = channel_map.begin(); channel_it != channel_map.end(); channel_it++){
   
@@ -407,10 +453,12 @@ void RawRecordComposer::composePMTs()
         std::string special;
         getPmtFromCrateCardChan(crate, card, channel, pmt, gain, special);
         
+        int nwindows = 0;
         // Loop windows.
         const channelDataPMT::windowMap_t& windows = data.getWindowMap();
         channelDataPMT::windowMap_t::const_iterator it;
         for(it = windows.begin(); it != windows.end(); it++) {
+          nwindows ++;
           const windowHeaderPMT& window_header = it->first;
           int disc = window_header.getDiscriminant();
           // if((disc&0x3)>0)      nwindows_disc++;
@@ -461,16 +509,45 @@ void RawRecordComposer::composePMTs()
           jobj.add("sample", sample);
           jobj.add("frame",frame);
           ophits.add(jobj);
+                    
         }
+        
+        JsonObject jChannel;
+        jChannel.add("channel",channel);
+        jChannel.add("nwindows",nwindows);
+        jChannel.add("pmt",pmt);
+        jChannel.add("gain",gain);
+        if(special.length()) jChannel.add("special",special);
+        jChannels.add(jChannel);
   
       } // loop channels
-        
+      
+      JsonObject jCard;
+      jCard.add("card",card);
+      jCard.add("channels",jChannels);
+      jCards.add(jCard);
     } // loop cards
-    
+
+    JsonObject jCrate;
+    jCrate.add("cards",jCards);
+    jCrate.add("crateNumber",crate_header.getCrateNumber());
+    jCrate.add("cardCount",crate_header.getCardCount());
+    jCrate.add("sebSec",crate_header.getSebTimeSec());
+    jCrate.add("sebUsec",crate_header.getSebTimeUsec());
+    jCrate.add("type",crate_header.getCrateType());
+    jCrate.add("eventNumber",crate_header.getCrateEventNumber());
+    jCrate.add("frameNumber",crate_header.getCrateFrameNumber());
+    jCrate.add("cardCount",crate_header.getCardCount());
+    jCrates.add(jCrate);
     
   } // Loop PMT crates
   JsonObject reco_list;
   reco_list.add("DAQ",ophits);
+  fOutput.add("ophits",reco_list);
+  
+  JsonObject jPMT;
+  jPMT.add("crates",jCrates);   
   fOutput.add("ophits",reco_list);   
+  fOutput.add("PMT",jPMT);   
 }
   
