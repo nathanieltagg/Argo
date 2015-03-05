@@ -207,8 +207,8 @@ int main(int argc, char **argv)
      }
     
     
+    RawRecordComposer composer(result,record,oOptions);
     try {
-       RawRecordComposer composer(result,record,oOptions);
        composer.fCacheStoragePath     = oCacheDir;
        composer.fCacheStorageUrl      = oCacheUrl;
 
@@ -222,6 +222,14 @@ int main(int argc, char **argv)
        size_t pos = finalDirName.find(".working",0);
        if(pos != std::string::npos) finalDirName.replace(pos,8,".event");
        rename(composer.fCurrentEventDirname.c_str(),finalDirName.c_str());
+    }
+    catch (const std::exception& error)
+    {
+      std::string s = "Error: could not compose JSON result: "; 
+      s+=error.what();
+      logInfo << s;
+      SaveHeartbeat(heartbeatInfo, s);
+      continue;
     }
     catch(...) {
         logInfo << "Error: could not compose JSON result";
