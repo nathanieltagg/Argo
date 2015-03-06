@@ -136,12 +136,10 @@ function QueryServer( par, myurl )
 
 
     // Default: do file-and-entry read from parameters. Should check for other options first.
-    data ={ filename:  encodeURIComponent(par.filename)  || "standard_reco_uboone.root" ,
-            selection: par.selection || 1 ,
-            entry:     par.entry     || 0 ,
-            options:   par.options   || opts
-         };
-    
+    data = $.extend({},par)
+    if(data.filename) data.filename = encodeURIComponent(par.filename);
+    if(!data.options) data.options = opts;
+        
     
     // if(querytype === "fe") {
     //   var file = $('#inFilename').val();
