@@ -147,6 +147,15 @@ OmHistCanvas.prototype.Update = function()
 
 OmHistCanvas.prototype.Draw = function()
 {
+  if(!this.hist)  {
+    this.ctx.save();
+    this.ctx.lineStyle = 'black'; 
+    this.ctx.font="20px Georgia";
+    this.ctx.strokeText("Waiting for data...",this.origin_x + this.span_x/2, this.origin_y - this.span_y/2);
+    this.ctx.restore();
+    return;
+  }
+  
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
  
 
