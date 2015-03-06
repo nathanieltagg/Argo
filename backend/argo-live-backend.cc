@@ -65,7 +65,7 @@ void CleanCacheDirectory(std::string dir, int max)
     // logError << "Can't glob";
     return;
   }
-  int n = g.gl_matchc;
+  int n = g.gl_pathc;
   std::vector<std::string> events;
   for(int i=0;i<n;i++) if(g.gl_pathv[i]) events.push_back(g.gl_pathv[i]);
   // for(int i=0;i<events.size();i++) cout << events[i] << endl;
