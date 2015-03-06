@@ -34,41 +34,43 @@ function LiveControl( element )
   $('#ctl-refresh-auto').click(self.refresh_live.bind(self));
   
 
-  function stop_auto_refresh()
-  {
-    // Highlight to user that we have flipped the switch off.
-    $('#ctl-refresh-auto').parents("div:first").effect("highlight", {}, 5000);
+  gStateMachine.BindObj("recordChange",this,"NewRecord");
 
-    $('#ctl-refresh-auto').attr('checked', false);
-  }
-  
 }
 
 LiveControl.prototype.Refresh = function() 
 {
+  console.warn("LivecControl::Refresh()",this);
   var par = {live: 1};
-  if(self.recent_cache_file) { 
-    par.latest_cache_file = self.latest_cache_file; 
-    par.recent_cache_file = self.recent_cache_file; 
+  if(this.recent_cache_file) { 
+    par.latest_cache = this.latest_cache_file; 
+    par.recent_cache = this.recent_cache_file; 
   }
   QueryServer(par,"server/serve_live.cgi");
 }
 
 LiveControl.prototype.refresh_live = function( force ) {
-  console.log("refresh_live","force=",force);
+  console.log("refresh_live","force=",force,"checkbox=",$('#ctl-refresh-auto').is(":checked"));
   if(this.refreshTimeout) clearTimeout(this.refreshTimeout);
-  // console.log('refresh',$('#ctl-refresh-auto'),$('#ctl-refresh-auto').is(":checked"));
 
   if($('#ctl-refresh-auto').is(":checked") || force) this.Refresh();
-
 
   if($('#ctl-refresh-auto').is(":checked")) {
     // restart timer.
     var delay = parseFloat($('#ctl-refresh-period').val())*1000;
     this.refreshTimeout = setTimeout(this.refresh_live.bind(this),delay);
-    // console.log('Starting refresh timer',gRefreshTimeout,delay);
   }
 }
+
+
+LiveControl.prototype.stop_auto_refresh = function()
+{
+  // Highlight to user that we have flipped the switch off.
+  $('#ctl-refresh-auto').parents("div:first").effect("highlight", {}, 5000);
+
+  $('#ctl-refresh-auto').attr('checked', false);
+}
+
 
 LiveControl.prototype.stop_auto_refresh = function()
 {
