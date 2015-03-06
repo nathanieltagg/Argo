@@ -58,9 +58,16 @@ div.A-TimeHistogram {
   <td style="width: 5%;">Status:</td><td><div id="status">Script loading...</div></td>
   </tr></table>
   <div id='live-info'>Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
-    <span class="val event-date"></span>
-    <span class="val event-time"></span>
-    (<span class="val event-age"></span> ago)
+    <span class="val event-date">unknown</span>
+    <span class="val event-time">unknown</span>
+    (<span class="val event-age">unknown</span> ago)
+  </div>
+  <div class='A-LiveControl' style="display: inline-block; width:500px;">
+    <input class="ui-state-default ui-corner-all" type="button" id="go_livedata" value="Get Live Data!" style="float:left; margin:10px"/>
+    <div><label id="ctl-refresh-auto-label" for="ctl-refresh-auto">Auto-refresh Live Data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" /><br/></div>
+    <label for="ctl-refresh-period">Refresh data every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds
+    <br/>
+    
   </div>
 
   <div style="clear:both;"></div>
