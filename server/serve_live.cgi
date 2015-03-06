@@ -47,8 +47,8 @@ if( -r  $heartbeat_file) {
 }
 
 
-
-$entry = undef;
+print "Looking at cache....\n";
+$event = undef;
 
 # look at the available cached files.
 @cacheentries = glob("$cache_dir/*.event");
@@ -65,7 +65,7 @@ if(scalar @cacheentries == 0) {
   # There's something in the cache, so look through and pick the best one.
   
   $most_recent_event = $cacheentries[0];
-  my $event = $most_recent_event;   #default: go for the most up-to-date.
+  $event = $most_recent_event;   #default: go for the most up-to-date.
 
 
   # Check request params.
@@ -97,6 +97,7 @@ if(scalar @cacheentries == 0) {
 
 } 
 
+
 if(defined $event) { $result .= ",\"live_cache_file\":\"" . $event . "\""; }
 $result .= ",\"heartbeat\":" . $heartbeat;
   
@@ -106,17 +107,20 @@ if($need_to_restart>0) {
   print "Restarting the server.";
   # Touch the heartbeat file to make sure that no other script tries to do this at the same time,
   # leading to even more logjams.
-  open(HEARTBEAT,">$heartbeat_file") || myerror("Can't write to heartbeat file!");
-  print HEARTBEAT "{ \"server_restart\": "
-  . time()
-  . "}";
-  close HEARTBEAT;    
+  if ( open(HEARTBEAT,">$heartbeat_file") ) {
+    print HEARTBEAT "{ \"server_restart\": "
+    . time()
+    . "}";
+    close HEARTBEAT;    
+  }
   
 
   # First, kill any running process in case it's log-jammed.
+  print "Killing old server.<br>\n";
   ArgoServerTools::kill_running_server();
   
   # Then, spawn off a new process.
+  print "Starting new server.<br>\n";
   ArgoServerTools::start_server();
 }
 

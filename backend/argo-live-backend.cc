@@ -106,6 +106,16 @@ int main(int argc, char **argv)
 
   // Startup:
   
+  // write a PID file.
+  std::string progname = argv[0];
+  {
+      std::string pidfilename(progname);
+      pidfilename+=".pid";
+      ofstream pidfile(pidfilename.c_str());
+      pidfile << getpid();
+      pidfile.close();
+  }
+  
   // Load configuration from config file.
   std::string configfilename = "live.config";
   if(argc>1) configfilename = argv[1];
