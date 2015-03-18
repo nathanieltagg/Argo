@@ -4,132 +4,125 @@ use CGI qw/:standard/;
 use POSIX qw(setsid);
 use IO::Socket;
 use Cwd;
-use ArachneServerTools;
+use File::Spec;
+use URI::Escape;
+use ArgoServerTools qw(setup myerror);
 
-#
-# Script to get a an event from a root-file DST as an XML object.
-# 
-# This variant attempts to get the most recent gate from neartime-processed DSTs
-#
+#configuration
+# $updater_exec = 'argo-live-backend';
+$cache_dir = '../live_event_cache';
+$heartbeat_timeout = 30; #seconds
+$heartbeat_file = "$cache_dir/heartbeat.json";
 
+ArgoServerTools::setup();
 
+$ArgoServerTools::exec_name = "argo-live-backend";
 
-# defaults of configuration
-#$data_glob = "/minerva/data/users/minerva/data_processing/dst/*_DST*.root ./*DST*.root";
-$data_glob = 
-  "/minerva/data/online_processing/swap_area/NearlineCurrentNumibDST.root "
-. "/minerva/data/online_processing/swap_area/*_numi*DST.root "
-. "/minerva/data/users/minerva/data_processing/dst/*_DST*.root "
-. "/minerva/data/data_processing/minerva/dst/numip/v7r5p1_DEV_20100724/*/*/*/*/*_DST*.root "
-. "./*_DST*.root";
+# First, check the server heartbeat.
+$heartbeat = "{}";
 
-$max_event_duration = 50.0; #seconds
+$need_to_restart = 0;
+if( -r  $heartbeat_file) {
+  # When was the heartbeat last updated? 
+  open(HEARTBEAT,$heartbeat_file) || print "Can't open heartbeat for reading </br>\n";
+  $heartbeat = "";
+  while(<HEARTBEAT>) {
+    $heartbeat .= $_;
+  }
+  close HEARTBEAT;    
 
-print header(-type => 'text/xml',
-             -Access_Control_Allow_Origin => "*");
-print '<?xml version="1.0" encoding="ISO-8859-1"?>';
-print "<serving>";
-print "<serve_event_logging><![CDATA[";
-
-if( -r "server_config.pl" ) {
-    require "server_config.pl";
-}  
-
-
-@rawfiles = glob($data_glob);
-
-@files=();
-foreach $file (@rawfiles)
-{
-  if( $file=~/Linjc/ ) { next; }
-  push @files,$file;
+  # When was the heartbeat last updated? 
+  $t = (stat($heartbeat_file))[9];
+  $oldness = (time() - $t);
+  print "Heartbeat file is $oldness seconds old.";
+  if( $oldness > $heartbeat_timeout) {
+    # It's too old!  
+    print "Heartbeat file is too old!  Need server restart.";
+    $need_to_restart = 1;
+   }
+  
+} else {
+  $need_to_restart = 1;  # Heartbeat file not updated.
+  print "No heartbeat file. Need to restart."
 }
 
-# find mod times.
-foreach $file (@files) {
-  $modtime{$file} = ((stat($file))[9] || 0);  # the || guards against a nonexistant file
-  # print $file . "  " . ((stat($file))[9] || 0) . "\n";
+
+print "Looking at cache....\n";
+$event = undef;
+
+# look at the available cached files.
+@cacheentries = glob("$cache_dir/*.event");
+# Sort by filename
+@cacheentries = reverse sort @cacheentries;
+for $f (@cacheentries) {
+  print $f . "\n";
 }
+  
+if(scalar @cacheentries == 0) {
+  $result = '{"error":"No entries in cache."}';
 
-#Find file with highest run number.
-#@files = sort @files;
-#$filename = $files[-1];
-
-#find file with most recent modtime
-@files = sort {$modtime{$a} <=> $modtime{$b}} @files;
-@files = reverse(@files);
-
-
-for $most_recent_filename (@files)
-{
-  print "Checking $most_recent_filename for recent data.\n";
-  #print join(":\n",@files);
-  $most_recent_mtime = $modtime{$most_recent_filename};
+} else {
+  # There's something in the cache, so look through and pick the best one.
+  
+  $most_recent_event = $cacheentries[0];
+  $event = $most_recent_event;   #default: go for the most up-to-date.
 
 
-  #default: get the most recent event.
-  $entryStart = -1;
-  $entryEnd = 0;
-  $gate_first_served = time();
-
-  if(open(LASTFILE,"<live_file.txt")) {
-    @last = split(';',<LASTFILE>);
-    print "Last live event coordinates:\n";
-    print join("\n",@last);
-    $last_filename = $last[0]; # the name of the last file we served.
-    $last_mtime    = $last[1]; # the modification time of the file when we last looked at it
-    $last_entry    = $last[2]; # the last entry we've looked at
-    $last_served   = $last[3]; # first time that last_entry was served
-
-    if(($last_filename eq $most_recent_filename)  
-        && ($last_mtime eq $most_recent_mtime)) 
-        {
-          # The file has not changed since we last looked
-          $event_duration = time()-$last_served;
-          print "\n\nFile has not changed. Current event duration: $event_duration\n";
-          if($event_duration > $max_event_duration){
-            # we need to pick a new event now.
-            print "Picking new event.\n";
-            $entryStart = $last_entry-1;  # go back one. If in fact this goes to -1, that's ok: that just loops to the end of the file again!
-            $entryEnd = 0;
-            $gate_first_served = time();
-          } else {
-            # use the same entry as last time: no change in event.
-            print "Using old event.\n";
-            $entryStart = $last_entry;
-            $entryEnd = 0;
-            $gate_first_served = $last_served;
+  # Check request params.
+  if(defined param('latest_cache') && defined param('recent_cache')) {
+    $latest_cache = param('latest_cache'); #ID of the latest event yet seen by that client
+    $recent_cache = param('recent_cache'); #ID of the event they were just looking at.
+    # Has a new event come along since we last looked?
+    if($most_recent_event gt $latest_cache) {
+        $event = $most_recent_event;
+      } else {
+        print "Found no fresh event. Moving on to the next-most-stale-event from $recent_cache<br/>\n";
+        # Ok, nothing fresh. Find the next-most-stale event.
+        for $f (@cacheentries) {
+          print "Looking at $f<br/>\n";
+          if($f lt $recent_cache) {
+            print "Found stale file $f<br/>\n";
+            $event = $f; last;
           }
-        
-    } else {
-      print "\nFile $most_recent_filename was recently updated at time $most_recent_mtime, assuming it's the best result.\n";
-    }
-      
-    close(LASTFILE);
+        }
+      }
   }
 
-  my $options = "+REFRESH";
-  print "Requesting $most_recent_filename selection:1, start:$entryStart end:$entryEnd, options:$options\n";
-  $result = ArachneServerTools::request($most_recent_filename,"1",$entryStart,$entryEnd,$options);
-  print "Got server result. Checking it.\n";
-  # search the result for the actual used entry.
-  # print $result;
-  if($result =~ /<entry>(\d*)<\/entry>/) {
-    $most_recent_gate = $1;
-    print "Got entry = $most_recent_gate \n";
-    open(LASTFILE,">live_file.txt");
-    print LASTFILE $most_recent_filename . ";" . $most_recent_mtime . ";" . $entryStart . ";" . $gate_first_served;
-    close LASTFILE;
-
-    # open(LASTXML,">live_file.xml");
-    # print LASTXML $result;
-    
-    #hmm... what do I do if this ISN'T filled?
+  open(READCACHE,$event."/event.json") || print "Can't open $event for reading </br>\n";
+  $result = "";
+  while(<READCACHE>) {
+    $result .= $_;
   }
-  print "]]></serve_event_logging>";
-  print $result;
-  print "</serving>";
+  close READCACHE;
 
-  exit 0;
+} 
+
+
+if(defined $event) { $result .= ",\"live_cache_file\":\"" . $event . "\""; }
+$result .= ",\"heartbeat\":" . $heartbeat;
+  
+
+
+if($need_to_restart>0) {
+  print "Restarting the server.";
+  # Touch the heartbeat file to make sure that no other script tries to do this at the same time,
+  # leading to even more logjams.
+  if ( open(HEARTBEAT,">$heartbeat_file") ) {
+    print HEARTBEAT "{ \"server_restart\": "
+    . time()
+    . "}";
+    close HEARTBEAT;    
+  }
+  
+
+  # First, kill any running process in case it's log-jammed.
+  print "Killing old server.<br>\n";
+  ArgoServerTools::kill_running_server();
+  
+  # Then, spawn off a new process.
+  print "Starting new server.<br>\n";
+  ArgoServerTools::start_server();
 }
+
+ArgoServerTools::serve($result);
 

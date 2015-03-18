@@ -41,69 +41,83 @@ function EventInfo( element  )
 
 EventInfo.prototype.NewRecord = function()
 {
+  // Note that this code will fill all values on the entire page, not just the element given.
   
-  var h = "";
-  if(!gRecord) {
-    $(this.element).html("No data retrieved!");
-    return;
-  }
+  // Fill with default values.
+  if(this.element) $(".eventinfo .val",this.element).html("?");
 
-  h += "<table class='eventinfo'>";
-  var a = "<tr><td class='eventinfo-key'>";
-  var b = "</td><td class='eventinfo-val'>";
-  var c = "</td></tr>";
-  var i;
+  if(!gRecord) {
+    return; // leave defaults    
+  }
 
   if(gRecord.header){
-    h += a + "Run"    + b + gRecord.header.run + c;
-    h += a + "SubRun" + b + gRecord.header.subrun + c;
-    h += a + "Event"  + b + gRecord.header.event + c;
-    // h += a + "Experiment" + b + gRecord.header.experimentType + c;
-    h += a + "Data Type" + b + (gRecord.header.isRealData?"Real":"MC") + c;  
+    $(".event-run").text(gRecord.header.run);
+    $(".event-subrun").text(gRecord.header.subrun);
+    $(".event-event").text(gRecord.header.event);
+    $(".event-datatype").text(gRecord.header.isRealData?"Real":"MC"); 
   }
-  if(gRecord.source){
-    // h += a + "File"    + b + gRecord.source.file + c;
-    h += a + "Entry"    + b + gRecord.source.entry + "/" + gRecord.source.numEntriesInFile + c;    
+
+  if(gRecord.tpc && gRecord.tpc.crates && gRecord.tpc.crates.length>0){
+    var milliseconds = gRecord.tpc.crates[0].sebSec * 1000 + gRecord.tpc.crates[0].sebUsec / 1000;
+    var date = new Date(milliseconds);
+    var s =  date.toLocaleDateString + date.toLocaleTimeString();
+    var now = new Date;
+    var dt = (now.getTime() - date.getTime())/1000.
+    var age = dt;
+    if(dt<60*2)             age = dt.toFixed(0) + " sec";
+    else if(dt<3600*2)      age = (dt/60).toFixed(0) + " min";
+    else if(dt<86400*2)     age = (dt/3600).toFixed(0) + " hours";
+    else if(dt<24*3600*400) age = (dt/86400).toFixed(1) + " days";
+    else                    age = (dt/31536000).toFixed(1) + " years";
+    var dts = 
+
+    $(".event-date").text(date.toLocaleDateString());
+    $(".event-time").text(date.toLocaleTimeString());
+    $(".event-age").text(age);
+  }
+  
+  if(gRecord.source) {
+    if("file" in gRecord.source)  $(".event-file").text(gRecord.source.file);
+    if("entry" in gRecord.source) $(".event-entry").text(gRecord.source.entry);
+    if("numEntriesInFile" in gRecord.source) $(".event-numEntriesInFile").text(gRecord.source.entry);
   }
 
   var t = "";
   for(i in gRecord.raw) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Raw Wires" + b + (t.length?t:"Not present") + c;
-
+  $(".event-raw-wire-names").html(t.length?t:"Not present");
+  
   t="";
   for(i in gRecord.cal) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Cal Wires" + b + (t.length?t:"Not present") + c;
+  $(".event-cal-wire-names").html(t.length?t:"Not present");
 
   t="";  
   for(i in gRecord.hits) { t += gRecord.hits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Hits" + b + (t.length?t:"Not present") + c;
+  $(".event-hit-names").html(t.length?t:"Not present");
 
   t="";
   for(i in gRecord.clusters) { t += gRecord.clusters[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Clusters" + b +  (t.length?t:"Not present") + c;
+  $(".event-cluster-names").html(t.length?t:"Not present");
 
   t="";
   for(i in gRecord.spacepoints) { t += gRecord.spacepoints[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "SpacePoints" + b + (t.length?t:"Not present") + c;
+  $(".event-spacepoint-names").html(t.length?t:"Not present");
 
   t="";
   for(i in gRecord.tracks) { t += gRecord.tracks[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Tracks" + b + (t.length?t:"Not present") + c;
+  $(".event-track-names").html(t.length?t:"Not present");
   
   t="";
   for(i in gRecord.oppulses) { t += gRecord.oppulses[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Optical Pulses" + b + (t.length?t:"Not present") + c;
+  $(".event-oppulse-names").html(t.length?t:"Not present");
 
   t="";
   for(i in gRecord.ophits) { t += gRecord.ophits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Optical Hits" + b + (t.length?t:"Not present") + c;
+  $(".event-ophit-names").html(t.length?t:"Not present");
 
   t="";
   for(i in gRecord.opflashes) { t += gRecord.opflashes[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  h += a + "Optical Flashes" + b + (t.length?t:"Not present") + c;
+  $(".event-opflash-names").html(t.length?t:"Not present");
   
-  h+= "</table>";
-  $(this.element).html(h);
 };
 
 

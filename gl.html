@@ -1,0 +1,504 @@
+<head>
+
+<script>
+function SplineInterpolator(in_x,in_y) {
+    var n = in_x.length;
+    this.xa = [];
+    this.ya = [];
+    this.u = [];
+    this.y2 = [];
+
+    for (var i = 0; i < n; i++) {
+        this.xa.push(in_x[i]);
+        this.ya.push(in_y[i]);
+    }
+
+    this.u[0] = 0;
+    this.y2[0] = 0;
+
+    for (var i = 1; i < n - 1; ++i) {
+        // This is the decomposition loop of the tridiagonal algorithm. 
+        // y2 and u are used for temporary storage of the decomposed factors.
+        var wx = this.xa[i + 1] - this.xa[i - 1];
+        var sig = (this.xa[i] - this.xa[i - 1]) / wx;
+        var p = sig * this.y2[i - 1] + 2.0;
+
+        this.y2[i] = (sig - 1.0) / p;
+
+        var ddydx = 
+            (this.ya[i + 1] - this.ya[i]) / (this.xa[i + 1] - this.xa[i]) - 
+            (this.ya[i] - this.ya[i - 1]) / (this.xa[i] - this.xa[i - 1]);
+
+        this.u[i] = (6.0 * ddydx / wx - sig * this.u[i - 1]) / p;
+    }
+
+    this.y2[n - 1] = 0;
+
+    // This is the backsubstitution loop of the tridiagonal algorithm
+    for (var i = n - 2; i >= 0; --i) {
+        this.y2[i] = this.y2[i] * this.y2[i + 1] + this.u[i];
+    }
+}
+
+SplineInterpolator.prototype.interpolate = function(x) {
+    var n = this.ya.length;
+    var klo = 0;
+    var khi = n - 1;
+
+    // We will find the right place in the table by means of
+    // bisection. This is optimal if sequential calls to this
+    // routine are at random values of x. If sequential calls
+    // are in order, and closely spaced, one would do better
+    // to store previous values of klo and khi.
+    while (khi - klo > 1) {
+        var k = (khi + klo) >> 1;
+
+        if (this.xa[k] > x) {
+            khi = k; 
+        } else {
+            klo = k;
+        }
+    }
+
+    var h = this.xa[khi] - this.xa[klo];
+    var a = (this.xa[khi] - x) / h;
+    var b = (x - this.xa[klo]) / h;
+
+    // Cubic spline polynomial is now evaluated.
+    return a * this.ya[klo] + b * this.ya[khi] + 
+        ((a * a * a - a) * this.y2[klo] + (b * b * b - b) * this.y2[khi]) * (h * h) / 6.0;
+};
+
+function PsuedoColor( control_points ) 
+{
+  // control points is an array of {x: ,r: b: g: a:} values: x, red, blue, green.
+  this.control_points = control_points;
+  
+  
+  // Ensure they are sorted in x
+  this.control_points.sort(function(a, b) {
+      return a.x - b.x;
+  });
+  
+  var xs = [];
+  var rs = [];
+  var gs = [];
+  var bs = [];
+  var as = [];
+  for(var i=0;i<this.control_points.length;i++) {
+    xs.push(this.control_points[i].x);
+    rs.push(this.control_points[i].r);
+    gs.push(this.control_points[i].g);
+    bs.push(this.control_points[i].b);
+    as.push(this.control_points[i].a);
+  }
+  
+  this.splineRed   = new SplineInterpolator(xs,rs);
+  this.splineGreen = new SplineInterpolator(xs,gs);
+  this.splineBlue  = new SplineInterpolator(xs,bs);
+  this.splineAlpha = new SplineInterpolator(xs,as);
+
+  this.interpolate = function(x) {
+    return  {x: x,
+             r: this.splineRed  .interpolate(x),
+             g: this.splineGreen.interpolate(x),
+             b: this.splineBlue .interpolate(x),
+             a: this.splineAlpha.interpolate(x),
+          };  
+  };
+  
+  this.buildTexture = function(gl, pixels, start_x, stop_x) { 
+    // Creates an OpenGl texture, returns the texture ID.
+    var id = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, id);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    var width = pixels;
+    var height = 1;
+    var array = [];
+    for (var i = 0; i < pixels; i++) {
+      var x = start_x + (i)*(stop_x-start_x)/pixels; 
+      var color = this.interpolate(x);      
+      array.splice(array.length, 0, color.r, color.g, color.b, color.a);
+    }
+    
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(array));
+    return id;
+  }
+  
+  this.buildCanvas = function(pixels, start_x, stop_x) { 
+    // Creates an (offscreen) canvas, returns the canvas.
+    var buffer = document.createElement('canvas');
+    buffer.width = pixels;
+    buffer.height = 1;
+    var ctx = buffer.getContext('2d');
+    var imgData=ctx.createImageData(pixels,1);
+    for (var i=0;i<imgData.data.length;i+=4)
+    {
+      var x = start_x + (i/4)*(stop_x-start_x)/pixels;
+      var color = this.interpolate(x);
+      imgData.data[i+0]= color.r;
+      imgData.data[i+1]= color.g;
+      imgData.data[i+2]= color.b;
+      imgData.data[i+3]= color.a;
+    }
+    ctx.putImageData(imgData,0,0);
+    return buffer;
+  }
+  
+  this.buildImage  = function(pixels, start_x, stop_x) { 
+    // creates an image in the form of a base64 string. Inefficient, but useful for debugging
+    var buffer = this.buildCanvas(pixels,start_x,stop_x);    
+    var dataURL = buffer.toDataURL();
+    delete buffer;
+    return dataURL;
+  }
+};
+
+function createShaderFromScriptElement(  gl, scriptId, opt_shaderType, opt_errorCallback) {
+  var shaderSource = "";
+  var shaderType;
+  var shaderScript = document.getElementById(scriptId);
+  if (!shaderScript) {
+    throw("*** Error: unknown script element" + scriptId);
+  }
+  shaderSource = shaderScript.text;
+
+  if (!opt_shaderType) {
+    if (shaderScript.type == "x-shader/x-vertex") {
+      shaderType = gl.VERTEX_SHADER;
+    } else if (shaderScript.type == "x-shader/x-fragment") {
+      shaderType = gl.FRAGMENT_SHADER;
+    } else if (shaderType != gl.VERTEX_SHADER && shaderType != gl.FRAGMENT_SHADER) {
+      throw("*** Error: unknown shader type");
+      return null;
+    }
+  }
+
+   // Create the shader object
+   var shader = gl.createShader(shaderType);
+
+   // Load the shader source
+   gl.shaderSource(shader, shaderSource);
+
+   // Compile the shader
+   gl.compileShader(shader);
+
+   // Check the compile status
+   var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+   if (!compiled) {
+     // Something went wrong during compilation; get the error
+     lastError = gl.getShaderInfoLog(shader);
+     console.error("*** Error compiling shader ",shader, ":" ,lastError);
+     gl.deleteShader(shader);
+     return null;
+   }
+
+   return shader;
+};
+
+function render(image) {
+  // Get A WebGL context
+  var canvas = document.getElementById("canvas1");
+
+  console.time('render');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  gl = canvas.getContext('experimental-webgl');
+  if (!gl) {
+    return;
+  }
+
+  // setup GLSL program
+  vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
+  fragmentShader = createShaderFromScriptElement(gl, "2d-fragment-shader");
+  sepiaShader = createShaderFromScriptElement(gl, "sepia");
+  LUTShader = createShaderFromScriptElement(gl, "lutshade");
+
+  var program = gl.createProgram();
+  gl.attachShader(program,vertexShader);
+  // gl.attachShader(program,fragmentShader);
+  //gl.attachShader(program,sepiaShader);
+  gl.attachShader(program,LUTShader);
+  gl.linkProgram(program);
+
+  // Check the link status
+  var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (!linked) {
+       // something went wrong with the link
+       lastError = gl.getProgramInfoLog (program);
+       console.error("Error in program linking:" + lastError);
+
+       gl.deleteProgram(program);
+       return null;
+   }
+
+
+  gl.useProgram(program);
+
+  // look up where the vertex data needs to go.
+  var positionLocation = gl.getAttribLocation(program, "a_position");  
+  var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
+
+  // provide texture coordinates for the rectangle.
+  var texCoordBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      0.0,  0.0,
+      1.0,  0.0,
+      0.0,  1.0,
+      0.0,  1.0,
+      1.0,  0.0,
+      1.0,  1.0]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(texCoordLocation);
+  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+  // lookup uniforms
+  var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+
+  // set the resolution
+  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+
+
+  var inputTextureLocation = gl.getUniformLocation(program, "texture");
+  gl.uniform1i(inputTextureLocation, 1);
+
+
+  // The order of the following operations is important. OpenGL is stateful!
+
+  // Create an input texture from the wire readout
+  var texture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE1);  // or gl.TEXTURE0 + 7
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  // Set the parameters so we can render any size image.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  // Upload the image into the texture.
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+
+
+
+
+  // create the LUT texture
+  var control_points = [];
+  var nctl = 256;
+  for(var i=0;i<nctl;i++) {
+    var x = i/nctl*8192 - 4096;
+    var h = (i/nctl + 0.15)%1.0;
+    var s = 0.9;
+    var v = 1;
+    var pt = HSVtoRGB(h,s,v,x);
+    pt.a=255;    // console.log(pt);
+    control_points.push(pt);
+  }
+
+  var pseudo = new PsuedoColor(control_points);  
+  
+  var mapTextureLocation = gl.getUniformLocation(program, "maptexture");
+  gl.uniform1i(mapTextureLocation, 2);
+  gl.activeTexture(gl.TEXTURE2);
+  var mapTextureId = pseudo.buildTexture(gl,8192,-4096,4096);
+  gl.bindTexture(gl.TEXTURE_2D, mapTextureId);
+
+
+  // Create a buffer for the position of the rectangle corners.
+  var buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.enableVertexAttribArray(positionLocation);
+  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+  // Set a rectangle the same size as the image.
+  setRectangle(gl, 0, 0, image.width, image.height);
+
+  // Draw the rectangle.
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  console.timeEnd('render');
+}
+
+function setRectangle(gl, x, y, width, height) {
+  var x1 = x;
+  var x2 = x + width;
+  var y1 = y;
+  var y2 = y + height;
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+     x1, y1,
+     x2, y1,
+     x1, y2,
+     x1, y2,
+     x2, y1,
+     x2, y2]), gl.STATIC_DRAW);
+}
+
+function HSVtoRGB(h, s, v, x) {
+    var r, g, b, i, f, p, q, t;
+    if (h && s === undefined && v === undefined) {
+        s = h.s, v = h.v, h = h.h;
+    }
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return {
+      x: x, 
+      r: (r * 255),
+      g: (g * 255),
+      b: (b * 255)
+    };
+}
+
+
+window.onload = function() {
+  // var control_points = [
+  //   {x:-4096, r: 255, g: 46,  b:53,  a:255},
+  //   {x:-2730, r: 255, g: 178, b:17,  a:255},
+  //   {x:-1366, r: 233, g: 255, b:0,   a:255},
+  //   {x: 1366, r: 21,  g: 255, b:57,  a:255},
+  //   {x: 2730, r: 66 , g: 178, b:255, a:255},
+  //   {x: 4096, r: 104, g: 93,  b:255, a:255}
+  // ];
+  // var control_points = [
+  //   {x:-4096, r: 255, g: 0,  b:0,  a:255},
+  //   {x: 4096, r: 0  , g: 0,  b:0, a:255}
+  // ];
+
+  var control_points = [];
+  var nctl = 256;
+  for(var i=0;i<nctl;i++) {
+    var x = i/nctl*8192 - 4096;
+    var h = (i/nctl + 0.15)%1.0;
+    var s = 0.9;
+    var v = 1;
+    var pt = HSVtoRGB(h,s,v,x);
+    pt.a=255;    // console.log(pt);
+    control_points.push(pt);
+  }
+
+  var pseudo = new PsuedoColor(control_points);
+  var imgurl = pseudo.buildImage(100,-4096,4096);
+  document.getElementById('canvasImg').src = imgurl;
+  
+  // fx.canvas.myfunc = fx.wrap(myfunc);
+  var image = new Image();
+  image.src = "server/defaultimg/dQPcxegy.png";  // MUST BE SAME DOMAIN!!!
+  image.onload = function() {
+    render(image);
+  };
+
+};
+
+</script>
+
+<!-- vertex shader -->
+<script id="2d-vertex-shader" type="x-shader/x-vertex">
+attribute vec2 a_position;
+attribute vec2 a_texCoord;
+
+uniform vec2 u_resolution;
+
+varying vec2 v_texCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = a_position / u_resolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+   // pass the texCoord to the fragment shader
+   // The GPU will interpolate this value between points.
+   v_texCoord = a_texCoord;
+}
+</script>
+
+<script id="sepia" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D texture;
+
+varying vec2 v_texCoord;
+
+void main() {
+  vec4 color = texture2D(texture, v_texCoord);
+  //float adc = (color.r*256 + color.g - 128)*256; // 256 to translate from 0-1 space to ADC space.
+  //float tanscale = (atan(adc/50.)/3.1415928*256.) + 127;
+  float r = color.r;
+  float g = color.g;
+  float b = color.b;
+
+  color.r = min(1.0, (r * (1.0 - (0.607 * 0.998))) + (g * (0.769 * 0.998)) + (b * (0.189 * 0.998)));
+  color.g = min(1.0, (r * 0.349 * 0.998) + (g * (1.0 - (0.314 * 0.998))) + (b * 0.168 * 0.998));
+  color.b = min(1.0, (r * 0.272 * 0.998) + (g * 0.99834 * 0.998) + (b * (1.0 - (0.869 * 0.998))));
+  gl_FragColor = color;
+}
+
+</script>
+
+
+<script id="lutshade" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D texture;
+uniform sampler2D maptexture;
+
+varying vec2 v_texCoord;
+
+void main() {
+  vec4 inc = texture2D(texture, v_texCoord);
+  //float adc = (color.r + color.g/256.)*256.-; // 256 to translate from 0-1 space to ADC space.
+  float adc = (inc.r*256. + inc.g - 128.)*256.;
+  float tanscale = (atan(adc/300.)/3.1415928) +0.5 ;
+  //float tanscale = adc;
+  // float adc = 0.999;
+  vec4 color;
+  color.r = texture2D(maptexture, vec2(tanscale)).r;
+  color.g = texture2D(maptexture, vec2(tanscale)).g;
+  color.b = texture2D(maptexture, vec2(tanscale)).b;
+  color.a = texture2D(maptexture, vec2(tanscale)).a;
+
+  if(tanscale>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
+
+  gl_FragColor = color;
+}
+
+</script>
+
+<!-- fragment shader -->
+<script id="2d-fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+// our texture
+uniform sampler2D u_image;
+
+// the texCoords passed in from the vertex shader.
+varying vec2 v_texCoord;
+
+void main() {
+   gl_FragColor = texture2D(u_image, v_texCoord);
+}
+</script>
+
+</head>
+<img id="canvasImg" style="width: 300px; height:100;"/>
+<img id="image"  src="server/defaultimg/dQPcxegy.png"  style="display:none; border: solid 1px;"/>
+<p> OUTPUT BELOW </p>
+<canvas id="canvas1" style="border: 1px solid"></canvas>

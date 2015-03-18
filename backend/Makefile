@@ -17,8 +17,15 @@ else
   uboonedaq_datatypes_inc = $(UBOONEDAQ_DATATYPES_DIR)/include
 endif
 
+ifeq ($(origin UBOONEDAQ_DIR), undefined)
+  uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
+else
+  uboonedaq           = $(UBOONEDAQ_DIR)/source
+endif
+
+
 #override, since setup is poor.
-uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
+#uboonedaq  = $(HOME)/development/uboonedaq/projects
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations
 #CPP := g++44 -std=c++0x
@@ -89,13 +96,17 @@ BLIBS += -L ${BOOST_LIB}
 
 
 # Root.
-export ROOTSYS ?= ${pwd}/root  # Usually defined for us, use local symlink ./root if not
-export LD_LIBRARY_PATH+=${ROOTSYS}/lib
+ifeq ($(origin ROOTSYS), undefined)
+		export ROOTSYS ?= ${pwd}/root  # Usually defined for us, use local symlink ./root if not
+			export LD_LIBRARY_PATH+=${ROOTSYS}/lib
+endif
+
 ifeq ($(UNAME),Darwin)
 	LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
 endif
+
 PATH+=:${ROOTSYS}/bin
-LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer
+LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
 CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
 
@@ -107,14 +118,16 @@ LIBS += -L/opt/X11/lib -lpng
 # postresql
 ifeq ($(UNAME),Darwin)
   # Use the Postgres app, instead of a fullblown installation.
-  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
+#  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
 endif
 ifneq ($(origin POSTGRES_INC), undefined)
 	CPPFLAGS += -I ${POSTGRES_INC}
 endif
-POSTGRES_LIB ?= "postgres"  # Usually defined for us, use local symlink ./postgres if not
-# BLIBS += -L${POSTGRES_LIB} -lpq
+ifneq ($(origin POSTGRES_LIB), undefined)
+	BLIBS += -L $(POSTGRES_LIB)
+endif
+BLIBS += -lpq
 	
 
 #Dependency rule
@@ -163,6 +176,9 @@ argo-backend: $(backend_obj) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+
+argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 myroot: $(backend_obj) tmp/myroot-main.o tmp/Cint.o Makefile
