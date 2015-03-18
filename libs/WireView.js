@@ -106,6 +106,7 @@ function WireView( element, options )
   gStateMachine.Bind('hitChange',    this.TrimHits.bind(this) );
   gStateMachine.Bind('timeCutChange',this.TrimHits.bind(this) );
   
+  gStateMachine.BindObj("wireImageLoaded",this,"Draw"); // Callback when wire image loads
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
  
@@ -219,27 +220,35 @@ WireView.prototype.NewRecord_image = function()
   this.loaded_wireimg = false;
   this.loaded_thumbnail = false;
   
-  // Build offscreen image(s)
-  this.wireimg = new Image();
-  this.wireimg_thumb = new Image();
-  
-  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
+  this.show_image =  $(this.ctl_wireimg_type).filter(":checked").val(); 
+
   if(!gRecord[this.show_image]) return;
   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
-  var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
-  // e.g. gRecord.raw."recob::rawwire"
-  this.wireimg.src       = wiredesc.wireimg_url;
-  // this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;
-  // Callback when the png is actually there...
+  
+  // Store the image in the Record.
+  if(!("_wireimage" in gRecord) ) gRecord._wireimage = {};
+
+  // Build offscreen image(s)
+  if(!(this.show_image in gRecord._wireimage)) {
+    gRecord._wireimage[this.show_image] = {};
+    gRecord._wireimage[this.show_image].image   = new Image();
+    gRecord._wireimage[this.show_image].thumb = new Image();
+
+    var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
+    // e.g. gRecord.raw."recob::rawwire"
+    gRecord._wireimage[this.show_image].image.src = wiredesc.wireimg_url;
+    gRecord._wireimage[this.show_image].thumb.src = wiredesc.wireimg_url_thumb;
+  }
+  
   var self = this;
-  this.wireimg.onload = function() {
-      console.log("got wireimg");
-      self.loaded_wireimg = true;
-      self.Draw();
+  gRecord._wireimage[this.show_image].image.onload = function() {
+      console.log(self.element,"got wireimg");
+      gRecord._wireimage[self.show_image].image_loaded = true;
+      gStateMachine.Trigger("wireImageLoaded");
   };  
-  this.wireimg_thumb.onload = function() {
+  gRecord._wireimage[this.show_image].thumb.onload = function() {
       console.log("got wireimg thumb");
-      self.loaded_thumbnail = true;
+      gRecord._wireimage[self.show_image].thumb_loaded = true;
   }; 
 };
 
@@ -431,22 +440,23 @@ WireView.prototype.DrawScale = function()
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
-  if(!this.loaded_wireimg) do_thumbnail = true;
-  if(!this.wireimg) do_thumbnail = true;
+  console.log("DrawImage",this.loaded_wireimg);
+  if(!gRecord._wireimage[this.show_image].image_loaded) do_thumbnail = true;
+  if(!gRecord._wireimage[this.show_image].image) do_thumbnail = true;
   
   if(do_thumbnail) {
-    if(!this.loaded_thumbnail) do_thumbnail = false; // fallback to full image
-    if(!this.wireimg_thumb) do_thumbnail = false;
+    if(!gRecord._wireimage[this.show_image].thumb_loaded) do_thumbnail = false; // fallback to full image
+    if(!gRecord._wireimage[this.show_image].thumb) do_thumbnail = false;
   }
   
   if(!do_thumbnail) {
-    if(!this.loaded_wireimg) return; // no more fallbacks. 
-    if(!this.wireimg) return;
+    if(!gRecord._wireimage[this.show_image].image_loaded) return; // no more fallbacks. 
+    if(!gRecord._wireimage[this.show_image].image) return;
   }
   
   if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
    var min_tdc     = Math.max(0,this.min_v);
-   var max_tdc     = Math.min(this.wireimg.width,this.max_v); 
+   var max_tdc     = Math.min(gRecord._wireimage[this.show_image].image.width,this.max_v); 
    var min_wire    = Math.max(this.min_u,0);
    var max_wire    = Math.min(this.max_u,gGeo.numWires(this.plane));
    var min_channel = gGeo.channelOfWire(this.plane, min_wire);
@@ -482,7 +492,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   if(do_thumbnail) {
     // Draw from the thumbnail, which is resolution-reduced by a factor of 5.
     this.ctx.drawImage(
-      this.wireimg_thumb      // Source image.
+       gRecord._wireimage[this.show_image].thumb      // Source image.
       ,source_x/5
       ,source_y/5
       ,source_w/5
@@ -495,7 +505,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     
   } else {
     this.ctx.drawImage(
-      this.wireimg      // Source image.
+       gRecord._wireimage[this.show_image].image      // Source image.
       ,source_x
       ,source_y
       ,source_w
