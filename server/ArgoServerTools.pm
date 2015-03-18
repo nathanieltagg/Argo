@@ -16,9 +16,11 @@ use Exporter 'import';
 @EXPORT = qw(setup myerror serve request); # symbols to export
 
 
+our $do_gzip = 0;
 our $ntuple_server_port = 9092;
 our $ntuple_server_host = 'localhost';
 our $exec_name = 'argo-backend';
+
 
 do("../config/server_config.pl"); #|| die; # load file if present.
 
@@ -37,6 +39,7 @@ sub setup
   open(STDOUT, ">", \$msglog);  
   open(STDERR, ">", \$msglog);
   print "testing\n";
+  open(PROFLOG,">>serve_event_profile.log");
 }
 
 sub serve
@@ -54,16 +57,20 @@ sub serve
   my $start_time =  Time::HiRes::gettimeofday();
   
   # zip it.
-  open($serving_fh, '<', \$serving);
-  open($zipped_fh, '>' , \$zipped);
-  gzip $serving_fh => $zipped_fh, -Level=>3
-         or die "gzip failed: $GzipError\n";
+  if($do_gzip) {
+    open($serving_fh, '<', \$serving);
+    open($zipped_fh, '>' , \$zipped);
+    gzip $serving_fh => $zipped_fh, -Level=>3
+           or die "gzip failed: $GzipError\n";
          
          
- my $size = length($zipped);
- my $zip_time =  Time::HiRes::gettimeofday();
-         
-  print main::PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
+   my $size = length($zipped);
+   my $zip_time =  Time::HiRes::gettimeofday();
+   print PROFLOG "Time to gzip: " . ($zip_time - $start_time) . "\n";
+ } else {
+   $zipped = $serving;
+   $size = length($zipped);
+ }
 
  #  my $head = header(-type => 'application/json',
  #                     -charset => "UTF-8",
@@ -82,7 +89,7 @@ sub serve
  print $oldout "Content-type:application/json\r\n";
  print $oldout "charset: UTF-8\r\n";
  print $oldout "Access-Control-Allow-Origin: *\r\n";
- print $oldout "Content-Encoding: gzip\r\n";
+ if($do_gzip) { print $oldout "Content-Encoding: gzip\r\n"; }
  print $oldout "Content-Length: $size\r\n";
  if($_[1]>0) {
    print $oldout "attachment: event.json\r\n";

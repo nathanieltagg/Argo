@@ -204,11 +204,18 @@ table.eventinfo {
   border-spacing: 5px;
 }
 
-td.eventinfo-val {
+table.eventinfo td {
   border-left-width: 2px;
   border-left-style: solid;
   margin-top: 2px;
   margin-bottom: 2px;
+}
+
+table.eventinfo td.key {
+  border-left-width: 0px;
+  border-left-style: none;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 table.mc-info {

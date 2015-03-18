@@ -99,6 +99,7 @@
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
 <script type="text/javascript" src="libs/SaveSelection.js"></script> 
 
+<script type="text/javascript" src="libs/LiveControl.js"></script> 
 
 <!-- My classes for talking to the back-end and other displays-->
 <script type="text/javascript" src="libs/QueryServer.js"></script> 

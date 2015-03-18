@@ -11,7 +11,7 @@
 <link rel="icon"  type="image/png" href="images/ArgoIcon" />  
 
 <!-- Activate some overrides to basic configuration. -->
-<!--#set var="PageStyle" value="standard" -->
+<!--#set var="PageStyle" value="live" -->
 <script type="text/javascript" >
 // These lines pull the Server-side-include (SSI) strings.
 gPageName='<!--#echo encoding="none" var="PageStyle"-->';
@@ -22,6 +22,7 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
 </script>
 
 <!-- Main CSS sheet for basic layout, custom mods. -->
+<link rel="stylesheet" href="live.css" type="text/css" media="all"/>
 <link rel="stylesheet" href="argo.css" type="text/css" media="all"/>
 <link rel="stylesheet" href="selected-object-info.css" type="text/css" media="all"/>
 <link rel="stylesheet" href="local.css" type="text/css" media="all"/>
@@ -41,6 +42,7 @@ div.A-TimeHistogram {
 <!--#include virtual="libraries.cgi"-->
 
 
+
 </head>
 
 
@@ -55,7 +57,18 @@ div.A-TimeHistogram {
   <table style="width: 50%; border:"><tr>
   <td style="width: 5%;">Status:</td><td><div id="status">Script loading...</div></td>
   </tr></table>
-  <div id='live-info'>EventID: 1000|01|00001   Time: 12:01:01 12/12/14 (4 days ago)</div>
+  <div id='live-info'>Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
+    <span class="val event-date">unknown</span>
+    <span class="val event-time">unknown</span>
+    (<span class="val event-age">unknown</span> ago)
+  </div>
+  <div class='A-LiveControl' style="display: inline-block; width:500px;">
+    <input class="ui-state-default ui-corner-all" type="button" id="go_livedata" value="Get Live Data!" style="float:left; margin:10px"/>
+    <div><label id="ctl-refresh-auto-label" for="ctl-refresh-auto">Auto-refresh Live Data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" /><br/></div>
+    <label for="ctl-refresh-period">Refresh data every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds
+    <br/>
+    
+  </div>
 
   <div style="clear:both;"></div>
   <div id="expando-target" style="z-index:998;"></div>
@@ -73,7 +86,30 @@ div.A-TimeHistogram {
   <div style="clear:both;"></div>
     <!--#include virtual="html/WireView.inc" -->
 
-  <!-- <div style="clear: both;"></div> -->
+
+  <div style="float:left; width:49%;">
+    <div class="portlet" id="eventinfo-port"> 
+    <div class="portlet-header">Event Info</div>
+      <div  class="portlet-content">
+        <div class="A-EventInfo">
+          <table class="eventinfo"><tbody>
+            <tr><td class="key">Run</td>        <td class="val event-run">?</td></tr>
+            <tr><td class="key">SubRun</td>     <td class="val event-subrun">?</td></tr>
+            <tr><td class="key">Event</td>      <td class="val event-event">?</td></tr>
+            <tr><td class="key">Data Type</td>  <td class="val event-datatype">MC</td></tr>
+            <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
+            <tr><td class="key">Date:</td>      <td class="val event-time"></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>  <!-- portlet -->
+  </div>
+
+  <div style="float:right; width:49%">
+    <!--#include virtual="html/WireInfo.inc" -->
+  </div>
+
+  <div style="clear:both;"></div>
 
   
   <div id="footer">
@@ -82,6 +118,7 @@ div.A-TimeHistogram {
   <!--#include virtual="html/credits.inc" -->
   
   </div> <!-- footer -->
+  
   
   <!-- hidden stuff. -->
   <div id="static-config" style="display:none;">

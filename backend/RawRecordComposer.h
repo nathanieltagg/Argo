@@ -27,14 +27,11 @@ public:
   void composeTPC();
   void composePMTs();
 
+
+  void getPmtFromCrateCardChan(int icrate, int icard,int ichan, int& outPmt, int& outGain,  std::string& outSpecial);
   JsonObject& fOutput; // Top-level output object
   std::string fOptions;
   std::shared_ptr<gov::fnal::uboone::datatypes::eventRecord> fRecord;
-  
-  
-  
-  
-  gov::fnal::uboone::online::Plexus fPlexus;
   
   // Configuration:
   std::string fCacheStoragePath;
@@ -51,6 +48,9 @@ public:
   
   
 };
+
+extern gov::fnal::uboone::online::Plexus gPlexus;
+
 
 
 

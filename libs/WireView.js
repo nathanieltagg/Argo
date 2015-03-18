@@ -229,14 +229,16 @@ WireView.prototype.NewRecord_image = function()
   var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
   // e.g. gRecord.raw."recob::rawwire"
   this.wireimg.src       = wiredesc.wireimg_url;
-  this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;
+  // this.wireimg_thumb.src = wiredesc.wireimg_url_thumb;
   // Callback when the png is actually there...
   var self = this;
   this.wireimg.onload = function() {
+      console.log("got wireimg");
       self.loaded_wireimg = true;
       self.Draw();
   };  
   this.wireimg_thumb.onload = function() {
+      console.log("got wireimg thumb");
       self.loaded_thumbnail = true;
   }; 
 };
