@@ -1,5 +1,34 @@
 <head>
 
+<!-- Notes.
+  
+  This works on google chrome, but not firefox or safari. Safari fails silently, but firefox gives the problem: the textures are to danged big.
+  
+  good tutorial:
+  http://webglfundamentals.org/webgl/lessons/webgl-image-processing.html
+  
+  Max texture sizes are typically 4096x4096 (can be smaller on mobile systems).
+  This is small enough to encapsulate 1 plane x 1 readout window, requiring a total of 3 textures per context (if I assign each plane it's own gl context, not unreasonable.)
+  
+  Another issue is the LUT, which is 8192 wide: too wide.
+  I guess I could make it 2x4096, or do some other sort of mapping, but another possibility 
+  would be to build the spline interpolator directly into the fragment shader.  Some hints here:http://stackoverflow.com/questions/8087909/glsl-interpolate-color-tessellation-shader
+  
+  Another idea I want to incoroporate: use a filter that looks at input pixels and maps highest-ADC value from the range of inputs to the output. 
+  One way to do that is use anon-linear weighting on the inputs?  Something like:
+    outSum = inputPixel*inputpixel;
+    outputPixel = sqrt(outSum/pixels).  That would actually work pretty nicely, if all values were positive. they aren't though. Hm. Maybe cube-root? That would work.
+  
+  Problems to solve:
+  How do I change texImage2D on only part of the image? -> to build textures
+  Can I direct-draw to the 2d canvas? Probably not. What's better: render the whole image to offscreen bitmap for panning, or re-do on every screen draw? 
+  The former makes for faster panning and easier coding. The latter makes for faster color-scale-changing and might be faster in general.
+  
+  
+  Another idea (what are we up to now): Maybe openGL can do clustering for me! No idea how.
+   -->
+
+<!-- <script type="text/javascript" src="http://benvanik.github.com/WebGL-Inspector/core/embed.js"></script> -->
 <script>
 function SplineInterpolator(in_x,in_y) {
     var n = in_x.length;
@@ -203,9 +232,10 @@ function render(image) {
   // Get A WebGL context
   var canvas = document.getElementById("canvas1");
 
-  console.time('render');
   canvas.width = image.width;
   canvas.height = image.height;
+  // canvas.width =1600;
+  // canvas.height=1600;
   gl = canvas.getContext('experimental-webgl');
   if (!gl) {
     return;
@@ -237,12 +267,13 @@ function render(image) {
 
 
   gl.useProgram(program);
+  console.time('render');
 
   // look up where the vertex data needs to go.
-  var positionLocation = gl.getAttribLocation(program, "a_position");  
-  var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
+  var positionLocation = gl.getAttribLocation(program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the program.
+  var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");  // Ditto a_texCoord
 
-  // provide texture coordinates for the rectangle.
+  // provide texture coordinates for the rectangle we're drawing FROM
   var texCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
@@ -269,9 +300,9 @@ function render(image) {
   // The order of the following operations is important. OpenGL is stateful!
 
   // Create an input texture from the wire readout
-  var texture = gl.createTexture();
+  var textureId = gl.createTexture();
   gl.activeTexture(gl.TEXTURE1);  // or gl.TEXTURE0 + 7
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, textureId);
   // Set the parameters so we can render any size image.
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -280,10 +311,7 @@ function render(image) {
 
   // Upload the image into the texture.
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-
-
-
+  console.log("image upload",gl.getError());
 
   // create the LUT texture
   var control_points = [];
@@ -304,15 +332,15 @@ function render(image) {
   gl.uniform1i(mapTextureLocation, 2);
   gl.activeTexture(gl.TEXTURE2);
   var mapTextureId = pseudo.buildTexture(gl,8192,-4096,4096);
+  // var mapTextureId = pseudo.buildTexture(gl,4096,-2048,2048);
   gl.bindTexture(gl.TEXTURE_2D, mapTextureId);
 
 
-  // Create a buffer for the position of the rectangle corners.
+  // Create a buffer for the position of the rectangle corners we're drawing INTO.
   var buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.enableVertexAttribArray(positionLocation);
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
   // Set a rectangle the same size as the image.
   setRectangle(gl, 0, 0, image.width, image.height);
 
@@ -389,12 +417,13 @@ window.onload = function() {
   }
 
   var pseudo = new PsuedoColor(control_points);
-  var imgurl = pseudo.buildImage(100,-4096,4096);
+  var imgurl = pseudo.buildImage(8192,-4096,4096);
   document.getElementById('canvasImg').src = imgurl;
   
   // fx.canvas.myfunc = fx.wrap(myfunc);
   var image = new Image();
-  image.src = "server/defaultimg/dQPcxegy.png";  // MUST BE SAME DOMAIN!!!
+  // image.src = "server/defaultimg/dQPcxegy.png";  // MUST BE SAME DOMAIN!!!
+  image.src = "live_event_cache/r00012300_s0000_e00000105.event/0AbjzVx6.png";  // MUST BE SAME DOMAIN!!!
   image.onload = function() {
     render(image);
   };
@@ -429,6 +458,7 @@ void main() {
    v_texCoord = a_texCoord;
 }
 </script>
+
 
 <script id="sepia" type="x-shader/x-fragment">
 precision mediump float;
@@ -466,8 +496,8 @@ void main() {
   vec4 inc = texture2D(texture, v_texCoord);
   //float adc = (color.r + color.g/256.)*256.-; // 256 to translate from 0-1 space to ADC space.
   float adc = (inc.r*256. + inc.g - 128.)*256.;
-  float tanscale = (atan(adc/300.)/3.1415928) +0.5 ;
-  //float tanscale = adc;
+  // float tanscale = (atan(adc/1000.)/3.1415928) +0.5 ;
+  float tanscale = adc;
   // float adc = 0.999;
   vec4 color;
   color.r = texture2D(maptexture, vec2(tanscale)).r;
