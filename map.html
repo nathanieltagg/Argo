@@ -29,6 +29,15 @@ function DoDraw()
    pad.ctx.lineTo(x2,y1);
    pad.ctx.lineTo(x1,y1);
    pad.ctx.stroke();
+   pad.ctx.moveTo(pad.GetX(100),pad.GetY(0));
+   pad.ctx.lineTo(pad.GetX(300),pad.GetY(0));
+   pad.ctx.lineTo(pad.GetX(250),pad.GetY( 10));
+   pad.ctx.lineTo(pad.GetX(250),pad.GetY(-10));
+   pad.ctx.lineTo(pad.GetX(300),pad.GetY(0));
+   pad.ctx.stroke();
+   pad.ctx.fillStyle = "black";
+   pad.ctx.font="20px Verdana";
+   pad.ctx.fillText("beam",pad.GetX(100),pad.GetY(0));
    
    // Draw some wire grids
    var geowire;
@@ -201,6 +210,7 @@ background-color: #8dbdd8;
 
 <div id='results'>
 <div id='resulttext'></div>
+Note: beam is left-to-right in this picture. Z is to the right.
 <div id="cnvs1" style="width: 800px; height:300px;"></div>
 </div>
 
