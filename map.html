@@ -84,8 +84,9 @@ function DoDraw()
      pad.ctx.lineTo(pad.GetX(geowire.z2), pad.GetY(geowire.y2));
      pad.ctx.stroke();
      console.log(geowire);
-     txt += "wire " + wire + " plane " + plane;
-     txt += " LARSoft Channel " + chan + "<br/>";
+     txt += "Larsoft wire # " + wire + " plane " + plane;
+     txt += " LARSoft Channel " + chan;
+     txt += " DAQ wire # " + (8255-chan) + "<br/>";
    }
    $('#resulttext').html(txt);
    
