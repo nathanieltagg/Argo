@@ -1501,10 +1501,21 @@ void RecordComposer::composeAssociations()
     
     // Now we can get the branches for these guys.
     // What a complex mess!
-    uint32_t a_branchid = (*branchidlists)[a_processId-1][a_productId-1];
-    TBranch* a_branch = branchmap[ a_branchid ];
-    uint32_t b_branchid = (*branchidlists)[b_processId-1][b_productId-1];
-    TBranch* b_branch = branchmap[ b_branchid ];
+    TBranch* a_branch = 0;
+    TBranch* b_branch = 0;
+    
+    if(branchidlists->size() > (a_processId-1)) {
+      if( (*branchidlists)[a_processId-1].size() > (a_productId-1) ) {
+        uint32_t a_branchid = (*branchidlists)[a_processId-1][a_productId-1];
+        a_branch = branchmap[ a_branchid ];
+      }
+    }
+    if(branchidlists->size() > (b_processId-1)) {
+      if( (*branchidlists)[b_processId-1].size() > (b_productId-1) ) {
+        uint32_t b_branchid = (*branchidlists)[b_processId-1][b_productId-1];
+        b_branch = branchmap[ b_branchid ];
+      }
+    }
 
     if(!a_branch) { cout<< "  Can't find A branch!" << endl;  continue;}
     if(!b_branch) { cout<< "  Can't find B branch!" << endl;  continue;}
@@ -1521,6 +1532,8 @@ void RecordComposer::composeAssociations()
     for(Int_t i=0;i<na;i++) {
       int a_id = f_a.EvalInstance(i);
       int b_id = f_b.EvalInstance(i);
+      // Trap wierd values. 
+      if(a_id<0 || b_id <0) continue;
       if(a_to_b.size() <= a_id) a_to_b.resize(a_id+1);
       a_to_b[a_id].add(b_id);
       if(b_to_a.size() <= b_id) b_to_a.resize(b_id+1);
