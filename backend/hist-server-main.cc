@@ -134,6 +134,7 @@ int main(int argc, char **argv)
     ofstream pidfile(pidfilename.c_str());
     pidfile << gSystem->GetPid();
     pidfile.close();
+    cout << "Wrote pidfile " << pidfilename << endl;
   }
 
   gTimeStart = gSystem->Now();
