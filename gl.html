@@ -26,6 +26,12 @@
   
   
   Another idea (what are we up to now): Maybe openGL can do clustering for me! No idea how.
+
+    Ok, have some idea how.
+    k-cluster algorightms start with k seeds. For every input data point (or weight!), find the nearest seed. Find the center-of-mass for all points belonging
+    to that seed, then move seed to CM coordinates. Rinse and repeat. 
+  
+    The tricky bit is the output...
    -->
 
 <!-- <script type="text/javascript" src="http://benvanik.github.com/WebGL-Inspector/core/embed.js"></script> -->
@@ -231,9 +237,12 @@ function createShaderFromScriptElement(  gl, scriptId, opt_shaderType, opt_error
 function render(image) {
   // Get A WebGL context
   var canvas = document.getElementById("canvas1");
-
+  
+  // canvas.width = 3200;
+  // canvas.height = 3456;
   canvas.width = image.width;
   canvas.height = image.height;
+
   // canvas.width =1600;
   // canvas.height=1600;
   gl = canvas.getContext('experimental-webgl');
@@ -310,30 +319,35 @@ function render(image) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   // Upload the image into the texture.
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-  console.log("image upload",gl.getError());
+ 
+  console.time('Build sprite canvas');
+  // var spriteCanvas = document.createElement('canvas');
+  // var spriteCanvas = document.getElementById('spritecanvas');// var spriteCanvas = document.createElement('canvas');
+  //  spriteCanvas.width = 3200; // Samples in the window
+  //  spriteCanvas.height  = 3456; // Y plane has 3456 wires.
+  //  var sub_x = 3200; // 1 window in
+  //  var sub_y = 4798; // Y plane is 3rd,
+  //  var spriteContext = spriteCanvas.getContext('2d');
+  //  spriteContext.drawImage(image, sub_x, sub_y, spriteCanvas.width,spriteCanvas.height, 0,0,spriteCanvas.width, spriteCanvas.height);
+  //  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, spriteCanvas);
+  // // delete spriteCanvas;
+  // console.timeEnd('Build sprite canvas');
 
-  // create the LUT texture
-  var control_points = [];
-  var nctl = 256;
-  for(var i=0;i<nctl;i++) {
-    var x = i/nctl*8192 - 4096;
-    var h = (i/nctl + 0.15)%1.0;
-    var s = 0.9;
-    var v = 1;
-    var pt = HSVtoRGB(h,s,v,x);
-    pt.a=255;    // console.log(pt);
-    control_points.push(pt);
-  }
-
-  var pseudo = new PsuedoColor(control_points);  
+  console.time('Load texture with image');
   
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+  console.log("image upload",gl.getError());
+  console.timeEnd('Load texture with image');
+
+  console.time('LUT');  
   var mapTextureLocation = gl.getUniformLocation(program, "maptexture");
   gl.uniform1i(mapTextureLocation, 2);
   gl.activeTexture(gl.TEXTURE2);
   var mapTextureId = pseudo.buildTexture(gl,8192,-4096,4096);
   // var mapTextureId = pseudo.buildTexture(gl,4096,-2048,2048);
   gl.bindTexture(gl.TEXTURE_2D, mapTextureId);
+  console.timeEnd('LUT');
 
 
   // Create a buffer for the position of the rectangle corners we're drawing INTO.
@@ -342,7 +356,8 @@ function render(image) {
   gl.enableVertexAttribArray(positionLocation);
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
   // Set a rectangle the same size as the image.
-  setRectangle(gl, 0, 0, image.width, image.height);
+  // setRectangle(gl, 0, 0, image.width, image.height);
+  setRectangle(gl, 0, 0, 3200, 3456);
 
   // Draw the rectangle.
   gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -407,21 +422,24 @@ window.onload = function() {
   var control_points = [];
   var nctl = 256;
   for(var i=0;i<nctl;i++) {
-    var x = i/nctl*8192 - 4096;
+    var x =(i/nctl*8192 - 4096);
     var h = (i/nctl + 0.15)%1.0;
     var s = 0.9;
     var v = 1;
     var pt = HSVtoRGB(h,s,v,x);
+    pt.r = (i/nctl)*255;
+    pt.g = (i/nctl)*255;
+    pt.b = (i/nctl)*255;
     pt.a=255;    // console.log(pt);
     control_points.push(pt);
   }
 
-  var pseudo = new PsuedoColor(control_points);
+  pseudo = new PsuedoColor(control_points);
   var imgurl = pseudo.buildImage(8192,-4096,4096);
   document.getElementById('canvasImg').src = imgurl;
   
   // fx.canvas.myfunc = fx.wrap(myfunc);
-  var image = new Image();
+  image = new Image();
   // image.src = "server/defaultimg/dQPcxegy.png";  // MUST BE SAME DOMAIN!!!
   image.src = "live_event_cache/r00012300_s0000_e00000105.event/0AbjzVx6.png";  // MUST BE SAME DOMAIN!!!
   image.onload = function() {
@@ -497,7 +515,7 @@ void main() {
   //float adc = (color.r + color.g/256.)*256.-; // 256 to translate from 0-1 space to ADC space.
   float adc = (inc.r*256. + inc.g - 128.)*256.;
   // float tanscale = (atan(adc/1000.)/3.1415928) +0.5 ;
-  float tanscale = adc;
+  float tanscale = adc / 256. /256.;
   // float adc = 0.999;
   vec4 color;
   color.r = texture2D(maptexture, vec2(tanscale)).r;
@@ -505,7 +523,7 @@ void main() {
   color.b = texture2D(maptexture, vec2(tanscale)).b;
   color.a = texture2D(maptexture, vec2(tanscale)).a;
 
-  if(tanscale>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
+ // if(tanscale>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
 
   gl_FragColor = color;
 }
@@ -532,3 +550,4 @@ void main() {
 <img id="image"  src="server/defaultimg/dQPcxegy.png"  style="display:none; border: solid 1px;"/>
 <p> OUTPUT BELOW </p>
 <canvas id="canvas1" style="border: 1px solid"></canvas>
+<canvas id="spritecanvas" style="border: 1px solid"></canvas>
