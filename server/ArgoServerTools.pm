@@ -139,7 +139,6 @@ sub myerror
 
 sub kill_running_server
 {
-  print "Killing any running $exec_name process.\n";
   # kill any existing service, if PID file exists.
   if( -r "$exec_name.pid" ) {
       my $pid = `cat $exec_name.pid`;
@@ -153,6 +152,9 @@ sub kill_running_server
       } else {
         print "Looks like it's dead, Jim.\n";
       }
+  } else {
+    print "Couldn't find PID file. Killing any running $exec_name process.\n";
+    system("killall $exec_name");
   }
   
 }
