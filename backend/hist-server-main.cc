@@ -82,6 +82,7 @@ int main(int argc, char **argv)
 {
   int tcpPortNumber = 9092;
   bool forking_ = true;
+  bool log_fork_ = false;
   
 
   std::string progname = argv[0];
@@ -91,10 +92,14 @@ int main(int argc, char **argv)
     cout << "  -h         help" << endl;
     cout << "  -p <port>  set listener port " << endl;
     cout << "  -n         no forking (for profiling) " << endl;
+    cout << "  -l         log forks to individual files " << endl;
     return 0;
   }
   if(cmdOptionExists(argv, argv+argc, "-n")) {
     forking_ = false;
+  }
+  if(cmdOptionExists(argv, argv+argc, "-l")) {
+    log_fork_ = false;
   }
 
   char * filename = getCmdOption(argv, argv + argc, "-p");
@@ -176,10 +181,11 @@ int main(int argc, char **argv)
           // pid=0 either means no forking, or we're the child process
           std::string logfilename = "request_" + std::to_string(mypid) + ".log";
           if(forking_) {
-            std::cout << "Serving by child process: " << mypid << "  filename " << logfilename << std::endl;
-            
-            freopen(logfilename.c_str(),"w",stdout);
-            freopen(logfilename.c_str(),"a",stderr);
+            std::cout << "Serving by child process: " << mypid << "  filename " << logfilename << std::endl;            
+            if(log_fork_) {              
+              freopen(logfilename.c_str(),"w",stdout);
+              freopen(logfilename.c_str(),"a",stderr);
+              }
             // dup2(fileno(stdout), fileno(stderr));
             // freopen(logfilename.c_str(),"w",stderr);
           }
