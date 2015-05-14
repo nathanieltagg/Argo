@@ -283,6 +283,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
   JsonObject shipment;
   for(int ih=0;ih<histnames.size();ih++) {
     std::string hname = histnames[ih];
+    cout << "Trying to serve histname: " << hname << "\n";
 
     // Handle special case requests
     if(hname == "HLIST") {
@@ -309,6 +310,7 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
         path = "";
         name = hname;
       }
+      
       TDirectory* dir = f->GetDirectory(path.c_str(), false);
       if(!dir) {
         result.add("error","Could not find path "+path);
@@ -318,12 +320,13 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
       // Attempt to find object.
       TObject* o = dir->Get(name.c_str());
       if(!o) {
-        result.add("error","Could not find object "+name);
+        result.add("error","Could not find object "+name+" in directory "+path);
         continue;
       }
-  
+      
+      JsonObject jo;
       if(o->InheritsFrom(TH2::Class()))      shipment.add(hname,TH2ToHistogram((TH2*)o,maxbins)); 
-      else if(o->InheritsFrom(TH1::Class())) shipment.add(hname,TH1ToHistogram((TH2*)o,maxbins)); 
+      else if(o->InheritsFrom(TH1::Class())) shipment.add(hname,TH1ToHistogram((TH1*)o,maxbins)); 
       else if(o->InheritsFrom(TNamed::Class()) && name=="DirectoryInfo") {
         TNamed* info = dynamic_cast<TNamed*>(o);
         if(!info) continue;
