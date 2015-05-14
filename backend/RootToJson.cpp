@@ -34,11 +34,11 @@ JsonElement getObjectInfo( TH1* hist )
 
 JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
 {
-  // Convert a histogram into a JSON file.
   JsonObject h;
+  // Convert a histogram into a JSON file.
   h.add("name" ,inHist->GetName());
   h.add("title",inHist->GetTitle());
-
+ 
   // Rebin if requested.
   TH1* hist = inHist;
   TH1* htemp = 0;
@@ -66,7 +66,7 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),10));
   h.add("underflow",hist->GetBinContent(0));
   h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
-  double stats[4];
+  double stats[11];  // TProfile and TH2 each have 7 entries, TH3 has 11. Be safe: this caused an abort trap when called incorrectly.
   hist->GetStats(stats);
   h.add("total",JsonElement(stats[0],9));
   h.add("sum_x",JsonElement(stats[2],9));
@@ -88,7 +88,7 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
     if(ehigh> max_content_with_err) max_content_with_err = ehigh;
     if(elow < min_content_with_err) min_content_with_err = elow;
   }
-  
+
   h.add("data",data);
   if(has_err) {
     h.add("errs",errs);
@@ -96,7 +96,7 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
     h.add("max_content_with_err",JsonElement(max_content_with_err,4));
   }
   h.add("info",getObjectInfo(inHist));
-  
+
   if(htemp) delete htemp;
   return h;
 }

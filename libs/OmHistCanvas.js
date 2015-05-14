@@ -74,7 +74,7 @@ OmHistCanvas.prototype.UpdateData = function()
   this.hist = $.extend(true,new Histogram(1,0,1), 
                         gOmData.getObj(this.path));
   // $("div.title",this.top_element).html(this.hist.title);
-
+  console.log("got primary data for "+this.path);
   this.Update();
 };
 
@@ -82,11 +82,18 @@ OmHistCanvas.prototype.UpdateRefData = function()
 {
   console.timeStamp("Drawing "+this.path);
   
-  this.refhist = $.extend(true,new Histogram(1,0,1), 
-                  gRefData.getObj(this.path));
+  // Make sure reference data exists.
+  if(gRefData.getObj(this.path)) {
+    console.log("got ref data for "+this.path);
+    
+    this.refhist = $.extend(true,new Histogram(1,0,1), 
+                    gRefData.getObj(this.path));
+  } else {
+    console.warn("no ref data for "+this.path);
+  }
   // $("div.title",this.top_element).html(this.hist.title);
 
-  this.Update();
+  // this.Update();
 };
 
 

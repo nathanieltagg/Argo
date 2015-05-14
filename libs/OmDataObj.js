@@ -116,6 +116,8 @@ OmDataObj.prototype.get = function()
   // this.param = $.param(p);
   
   console.log("Requesting data:",this.myurl,this.param);
+  console.time("Query"+this.primary);
+  this.query_start_time = performance.now();
 
   var self = this;
   var req = $.ajax({
@@ -130,19 +132,31 @@ OmDataObj.prototype.get = function()
         }); 
         console.log(req);
   this.status = "getting";
+  this.last_url = this.myurl + "?" + $.param(p);
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
 }
 
 OmDataObj.prototype.QueryError = function(jqXHR, textStatus, errorThrown)
 {
+  this.query_end_time = performance.now();
+  this.query_time = this.query_end_time - this.query_start_time;
+  console.timeEnd("Query"+this.primary);
+  
+  console.error("QueryError",this.dataspec);
   this.status = "QueryError: "+textStatus;
   this.jqXHR = jqXHR;
   console.log("QueryError",jqXHR, textStatus, errorThrown);
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
+  
 }
 
 OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
 {
+  this.query_end_time = performance.now();
+  this.query_time = this.query_end_time - this.query_start_time;
+  console.timeEnd("Query"+this.primary);
+  
+  console.log("QuerySuccess",this.dataspec);
   this.status = "success";
   $.event.trigger({ type: "OmDataChangeState", state: this.status}) ;
   this.data_size = jqxhr.responseText.length;
@@ -151,14 +165,10 @@ OmDataObj.prototype.QuerySuccess = function(data,textStatus,jqxhr)
   if(data.error) { bad = true; this.status = data.error; }
   if(data.record && data.record.error) { bad = true; this.status = data.record.error; }
   if(bad) {
-    console.warn("Got error when retrieving data: ",this.status);
-    $.event.trigger({
-      type: "OmDataChangeState",
-      msg: "Backend error: "+data.error
-    }) ;
+    console.warn(this,"Got error when retrieving data: ",this.status);    
+    $.event.trigger({type: this.event_to_emit, msg: "Backend error: "+data.error}) ;
     return;
   }
-
   console.log("Got data on ",this.dataspec,". Triggering.");
   $.event.trigger({type: this.event_to_emit}) ;
 

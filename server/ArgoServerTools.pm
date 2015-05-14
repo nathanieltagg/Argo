@@ -293,7 +293,10 @@ sub request
     print "Got result from ntuple-server. Length: " . length($result) . " bytes\n<br/>";
     print "Time to send query:   " . tv_interval( $time_start, $time_start_req)*1000 . " ms\n<br/>";
     print "Time to get response: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
-    
+    if(length($result) == 0) {
+	$result = "{}";   # make json valid.
+    }    
+
     return $result;
   } else {
     #looks like the server had problems. restart.

@@ -119,22 +119,24 @@ OmStatus.prototype.UpdateData = function()
   h+="</form>";
 
   h+= "<table class='omstatus'><tr>";
-  h+= "<tr><th>Source</th><th>Status</th><th>Size</th><th>File</th><th>JSON data</th></tr>";
+  h+= "<tr><th>Source</th><th>Status</th><th>Size</th><th>Elapsed</th><th>File</th><th>JSON data</th></tr>";
   h+= "<tr>"
   h+= " <td><b>Monitor</b></td>";
   h+= " <td>" + gOmData.status + "</td>";
   h+= " <td>" + gOmData.data_size + " bytes</td>";
+  h+= " <td>" + parseFloat(gOmData.query_end_time - gOmData.query_start_time).toFixed(1)  + "  </td>";
   h+=  "<td>" + filename  + "</td>"
-  // h+=  "<td><a href='" + gOmData.myurl + '?' + gOmData.param + "'>last call</a></td>"
-  h+=  "<td><a href='#' id='omLastCallClick'>last call</a></td>";
+  h+=  "<td><a href='" + gOmData.last_url+ "'>last call</a></td>"
+  //h+=  "<td><a href='#' id='omLastCallClick'>last call</a></td>";
   
   
   h+= "</tr><tr>";
   h+= " <td><b>Reference</b></td>";
   h+= " <td>" + gRefData.status + "</td>";
   h+= " <td>" + gRefData.data_size + " bytes</td>";
+  h+= " <td>" + parseFloat(gRefData.query_end_time - gRefData.query_start_time).toFixed(1)  + " </td>";
   h+=  "<td>" + reffilename   + "</td>"
-  h+=  "<td><a href='" + gRefData.myurl + '?' + gRefData.param + "'>last call</a></td>"
+  h+=  "<td><a href='" + gRefData.last_url + "'>last call</a></td>"
   h+= "</table>";
 
   if(cycle) {

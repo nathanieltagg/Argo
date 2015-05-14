@@ -51,6 +51,7 @@ function Navigation(element, options)
 
 Navigation.prototype.GetListing = function()
 {  
+  console.time("Navigation::GetListing");
   var layout = gOmData.getObj('HLIST');
   if(!layout) return;
   console.timeStamp("GetListing.");
@@ -71,20 +72,35 @@ Navigation.prototype.GetListing = function()
 
   // $("a",layout).click(function(){self.ItemClicked(this);});
   // console.timeStamp("Done adding click callback.");
+  console.time("Navigation::GetListing add html");
+  $(this.tree_element).hide(); // temproary while we fill.
   $(this.tree_element).html(layout);
+  console.timeEnd("Navigation::GetListing add html");
+
   // console.log("GetListing() hiding all");
-  $("li>ul",this.tree_element).hide();
+
+  console.time("Navigation::GetListing hide");
+  // $("li>ul",this.tree_element).hide();
+  $(this.tree_element).children().show();
+  $(this.tree_element).children().children().show();
+  $(this.tree_element).show(); // Reveal
+  
+  console.timeEnd("Navigation::GetListing hide");
   
   
   // Highlight whichever one was in the url.
   if(this.first_load) {
+    console.time("Navigation::GetListing first hashchange");
     this.first_load = false;
     this.HashChange();
     // var item = $('a[href="'+window.location.hash+'"]', this.tree_element);
     // console.log(window.location.hash, 'a[href='+window.location.hash+']',item);
     // console.timeStamp("Calling ItemClicked with hashload.");    
     // if(item.length>0) this.ItemClicked(item.get(0));
+    console.timeEnd("Navigation::GetListing first hashchange");
   }
+  console.timeEnd("Navigation::GetListing");
+  
   
 };
 
