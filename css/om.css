@@ -105,8 +105,8 @@ table.omstatus td, table.omstatus th{
 
 /* Navigation */
 .A-navtree a.om-dir-title .ui-icon { float: left; }
-.A-navtree li { list-style: none;}
-.A-navtree ul { margin:0; padding-left: 2em;}
+.A-navtree li { list-style: none; } 
+.A-navtree ul { margin:0; padding-left: 2em; display:none;}/* Default: not seen! */
 
 
 

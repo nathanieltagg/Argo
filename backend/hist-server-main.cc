@@ -114,6 +114,7 @@ int main(int argc, char **argv)
   signal ( SIGSEGV, TerminationHandler);
   signal ( SIGILL, TerminationHandler);
   signal ( SIGFPE, TerminationHandler);
+  signal(SIGABRT, TerminationHandler);
   signal (SIGCHLD, SIG_IGN);  // Ignore when a child dies - don't need to wait() or waitpid()
     
   
