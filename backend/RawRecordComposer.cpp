@@ -158,7 +158,6 @@ void RawRecordComposer::composeTPC()
   for( ub_EventRecord::tpc_map_t::const_iterator crate_it = tpc_map.begin(); crate_it != tpc_map.end(); crate_it++){
     //get the crateHeader/crateData objects
     int crate = crate_it->first; // This seems more reliable than the crate daq header.
-    std::cout << "crate " << crate << std::endl;
     const tpc_crate_data_t& crate_data = crate_it->second;
     std::unique_ptr<tpc_crate_data_t::ub_CrateHeader_t> const& crate_header = crate_data.crateHeader();
 
@@ -242,6 +241,7 @@ void RawRecordComposer::composeTPC()
   fmaxtdc = ntdc;
 
   if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
+  cout << "Read " << wires_read << " wires\n";
   int nwire = 8254;
   ColorMap colormap;
   MakePng png (ntdc,nwire, MakePng::palette_alpha,WirePalette::gWirePalette->fPalette,WirePalette::gWirePalette->fPaletteTrans);
@@ -274,7 +274,7 @@ void RawRecordComposer::composeTPC()
       for(int k=0;k<ntdc;k++) {
         short raw = waveform[k];
         // colormap.get(&imagedata[k*3],float(raw)/4000.);
-        imagedata[k] = WirePalette::gWirePalette->tanscale(raw*10);
+        imagedata[k] = WirePalette::gWirePalette->tanscale(raw*3);
         // Save bitpacked data as image map.
         int iadc = raw + 0x8000;
         encodeddata[k*3]   = 0xFF&(iadc>>8);
@@ -306,9 +306,13 @@ void RawRecordComposer::composeTPC()
     }
     
   }
+  cout << "Loaded pngs\n";
+  
   timeProfile.SetContent(&timeProfileData[0]);
   png.Finish();
   epng.Finish();
+  cout << "Finished  pngs\n";
+  
   std::string wireimg = png.writeToUniqueFile(fCurrentEventDirname);
   std::string wireimg_thumb = wireimg+".thumb.png";
   BuildThumbnail(fCurrentEventDirname+wireimg,fCurrentEventDirname+wireimg_thumb);
@@ -319,6 +323,8 @@ void RawRecordComposer::composeTPC()
   r.add("wireimg_encoded_url",fCurrentEventUrl+
                             epng.writeToUniqueFile(fCurrentEventDirname)
                             );
+
+  cout << "Written pngs\n";
 
   r.add("timeHist",TH1ToHistogram(&timeProfile));
   JsonArray jPlaneHists;

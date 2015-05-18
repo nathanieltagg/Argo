@@ -226,11 +226,11 @@ WireInfo.prototype.Draw = function()
     this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(color)); 
   }
 
-  //insist that the graph be at least 20 ADC counts tall
+  //insist that the graph be at least 40 ADC counts tall
   var dv = this.graph.max_v - this.graph.min_v;
-  if( dv < 20) {
-     this.graph.max_v += (20-dv)/2; 
-     this.graph.min_v -= (20-dv)/2;   
+  if( dv < 40) {
+     this.graph.max_v += (40-dv)/2; 
+     this.graph.min_v -= (40-dv)/2;   
    }
   // if(this.graph.min_v > -100) this.graph.min_v = -100;
   // if(this.graph.max_v <  100) this.graph.max_v =  100;
