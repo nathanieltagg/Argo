@@ -22,9 +22,17 @@
 #include "SocketServer.h"
 #include "ResultComposer.h"
 
+#include "dispatcher/KvpSet.h"
+#include "online_monitor/Plexus.h"
+
 #include <signal.h>
 #include <algorithm>
 #include <string>
+
+
+extern gov::fnal::uboone::online::Plexus gPlexus;
+
+
 
 // Quick and dirty option parsing, from StackOverflow.
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -118,6 +126,19 @@ int main(int argc, char **argv)
     if(forking_) cout << "  Will fork on new clients." << endl;
     else         cout << "  Forking turned off for profiling." << endl;
     SetErrorHandler(MyErrorHandler);
+
+
+    // Plexus.
+    gPlexus.build( "sqlite", "../config/connection.db" );
+    if(!gPlexus.is_ok()) {
+      cout << "Can't configure plexus from sqlite." << endl;
+      gPlexus.build("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
+    }
+    if(!gPlexus.is_ok()) {
+      cout << "Can't configure plexus from postgres." << endl;
+      gPlexus.buildHardcoded();
+      cout << "Built plexus hardcoded; no other sources.\n";
+    }
 
     ss = new MySocketServer(tcpPortNumber);
     if(ss->Setup()) exit(1);  // Quit if socket won't bind.

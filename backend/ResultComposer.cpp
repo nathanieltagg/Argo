@@ -263,10 +263,19 @@ void ResultComposer::compose_from_raw(
   //
   // Here's where all the joy happens.
   RawRecordComposer composer(result,record,inOptions);
+  // Set it so it doesn't generate subdirectories like it does in live
   composer.fCacheStoragePath     = "../datacache";
   composer.fCacheStorageUrl      = "datacache";
-  
+  composer.fCreateSubdirCache = false;
   composer.compose();
+
+  // move files in datacache:
+  // std::string finalDirName = composer.fCurrentEventDirname;
+  // size_t pos = finalDirName.find(".working",0);
+  // if(pos != std::string::npos) finalDirName.replace(pos,8,".event");
+  // rename(composer.fCurrentEventDirname.c_str(),finalDirName.c_str());
+  
+
 
   return;
 }
