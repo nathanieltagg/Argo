@@ -189,11 +189,11 @@ int main(int argc, char **argv)
             long t1 = gSystem->Now();
             // Now do your stuff.
             ResultComposer rc;           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
-            std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
-            xml.append("\n");
+            std::shared_ptr<std::string> payload = rc.compose(options,filename,selection,entrystart,entryend);
+            payload->append("\n");
             long t2 = gSystem->Now();
             // Send it out.
-            ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
+            ss->SendTo(client, (unsigned char*)payload->c_str(),  payload->length() );
             cout << "Request served." << endl;
             long t3 = gSystem->Now();
           

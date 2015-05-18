@@ -45,6 +45,7 @@ endif
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
           $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) \
+          DaqFile.cpp \
           Plexus.cpp Plexus_hardcode_tpc.cpp \
           Client.cpp \
           DispatcherMessage.cpp \
@@ -114,6 +115,11 @@ CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/o
 # PNG
 LIBS += -L/opt/X11/lib -lpng -lcrypto
 
+
+CPPFLAGS := $(filter-out -stdlib=libc++,$(CPPFLAGS))
+LDFLAGS := $(filter-out -stdlib=libc++,$(LDFLAGS))
+LIBS := $(filter-out -stdlib=libc++,$(LIBS))
+
 # postgresql
 ifeq ($(UNAME),Darwin)
   # Use the Postgres app, instead of a fullblown installation.
@@ -171,8 +177,8 @@ Cint.cpp : $(RHEADERS) LinkDef.h
 
 .PHONY: bin
 bin: argo-backend 
-argo-backend: $(backend_obj) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
+argo-backend: $(OBJ) tmp/argo-backend.o Makefile
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
