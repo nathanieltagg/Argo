@@ -3,6 +3,5 @@ live_event_cache
 .htaccess
 .nfs*
 basetag.inc
-config
 local.css
 mysetup
