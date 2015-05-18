@@ -37,16 +37,15 @@ LDFLAGS = -g
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Darwin)
-  CPP = c++ -std=c++11 -stdlib=libc++
-  LD = c++ -std=c++11 -stdlib=libc++
-  shlibsuffix=dylib
+  CPP = clang++ -std=c++1y -Wno-return-type-c-linkage -O3
+  LD = clang++ -std=c++1y
   LDFLAGS = -bind_at_load -g
 endif
 
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
           $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) \
-          Plexus.cpp \
+          Plexus.cpp Plexus_hardcode_tpc.cpp \
           Client.cpp \
           DispatcherMessage.cpp \
           KvpSet.cpp \
@@ -113,9 +112,9 @@ CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/o
 
 # add any other desired libs here
 # PNG
-LIBS += -L/opt/X11/lib -lpng 
+LIBS += -L/opt/X11/lib -lpng -lcrypto
 
-# postresql
+# postgresql
 ifeq ($(UNAME),Darwin)
   # Use the Postgres app, instead of a fullblown installation.
 #  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
@@ -127,7 +126,7 @@ endif
 ifneq ($(origin POSTGRES_LIB), undefined)
 	BLIBS += -L $(POSTGRES_LIB)
 endif
-BLIBS += -lpq
+BLIBS += -lpq -lsqlite3
 	
 
 #Dependency rule
