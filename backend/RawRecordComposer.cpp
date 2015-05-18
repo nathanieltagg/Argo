@@ -53,13 +53,13 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   : fOutput(output)
   , fRecord(record)
   , fOptions(options)
+  , fCreateSubdirCache (true)
   , fmintdc(0)
   , fmaxtdc(0)
 {
 
   fCacheStoragePath     = "../live_event_cache";
   fCacheStorageUrl      = "live_event_cache";
-  fCurrentEventDirname  = "live";
 };
   
 RawRecordComposer::~RawRecordComposer()
@@ -77,12 +77,18 @@ void RawRecordComposer::compose()
                             ,fRecord->getGlobalHeader().getSubrunNumber() 
                             ,fRecord->getGlobalHeader().getEventNumber()  
                             );
-  fCurrentEventDirname = Form("%s/%s.working/" // Will get renamed to .event on closeout.
-                            ,fCacheStoragePath.c_str(), id.c_str());
-  fCurrentEventUrl      = Form("%s/%s.event/"
-                            ,fCacheStorageUrl.c_str(), id.c_str());
   
-  mkdir(fCurrentEventDirname.c_str(),0777);
+  if(fCreateSubdirCache) {
+    fCurrentEventDirname = Form("%s/%s.%s/" // Will get renamed to .event on closeout.
+                              ,fCacheStoragePath.c_str(), id.c_str(),fWorkingSuffix.c_str());
+    fCurrentEventUrl      = Form("%s/%s.%s/"
+                              ,fCacheStorageUrl.c_str(), id.c_str(),fFinalSuffix.c_str());
+  
+    mkdir(fCurrentEventDirname.c_str(),0777);
+  } else {
+    fCurrentEventDirname = fCacheStoragePath;
+    fCurrentEventUrl     = fCacheStorageUrl;
+  }
   composeHeader();
   composeTPC();
   composePMTs();
@@ -152,6 +158,7 @@ void RawRecordComposer::composeTPC()
   for( ub_EventRecord::tpc_map_t::const_iterator crate_it = tpc_map.begin(); crate_it != tpc_map.end(); crate_it++){
     //get the crateHeader/crateData objects
     int crate = crate_it->first; // This seems more reliable than the crate daq header.
+    std::cout << "crate " << crate << std::endl;
     const tpc_crate_data_t& crate_data = crate_it->second;
     std::unique_ptr<tpc_crate_data_t::ub_CrateHeader_t> const& crate_header = crate_data.crateHeader();
 
@@ -160,7 +167,7 @@ void RawRecordComposer::composeTPC()
     std::vector<tpc_crate_data_t::card_t> const& cards = crate_data.getCards();
     for(const tpc_crate_data_t::card_t& card_data: cards) {
       // const tpc_crate_data_t::card_t::ub_CardHeader_t& card_header = card_data.getHeader();
-      int card = card_data.getID();
+      int card = card_data.getModule();
       
       JsonObject jCard;
       jCard.add("cardId",crate);
@@ -329,7 +336,7 @@ void RawRecordComposer::composeTPC()
   fOutput.add("raw",reco_list);
     
   jTPC.add("crates",jCrates);
-  fOutput.add("tpc",jTPC);
+  fOutput.add("TPC",jTPC);
   
 }
 

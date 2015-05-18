@@ -27,9 +27,12 @@ public:
   std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> fRecord;
   
   // Configuration:
+  bool fCreateSubdirCache;
   std::string fCacheStoragePath;
   std::string fCacheStorageUrl;
-
+  std::string fWorkingSuffix;
+  std::string fFinalSuffix;
+  
   std::string fCurrentEventDirname;
   std::string fCurrentEventUrl;
   

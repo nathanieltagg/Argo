@@ -143,22 +143,24 @@ closedir(IMD);
 @thefiles = sort @thefiles;
 
 @dirs= ();
-@files=();
+@rootfiles=();
+@ubdaqfiles=();
 foreach $f (@thefiles)
 {
   if ($f =~ /^\./) { next; }
   if( -d "$cur_path/$f" ) {push @dirs,$f;}
-  if( $f =~ /\.root$/ ) {push @files,$f};
+  if( $f =~ /\.root$/ ) {push @rootfiles,$f};
+  if( $f =~ /\.ubdaq$/ ) {push @ubdaqfiles,$f};
 }
 
-if( scalar(@files) ==0 ) {
+if( scalar(@rootfiles) + scalar(@ubdaqfiles) ==0 ) {
   print p("No data files here.");
-} else {
-
+} 
+if( scalar(@rootfiles) > 0 ) {
   print start_table({-class=>"filetable tablesorter"});
-  print thead(Tr({-style=>"text-align:left;"},th("File"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
+  print thead(Tr({-style=>"text-align:left;"},th("Larsoft Filename"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
   print start_tbody;
-  foreach $f (@files)
+  foreach $f (@rootfiles)
   {
     @info = stat("$cur_path/$f");
     $f_enc = "$cur_path/$f";
@@ -173,8 +175,29 @@ if( scalar(@files) ==0 ) {
   print end_table;
 }
 
+if( scalar(@ubdaqfiles) > 0 ) {
+  print start_table({-class=>"filetable tablesorter"});
+  print thead(Tr({-style=>"text-align:left;"},th("Ubdaq Filename"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
+  print start_tbody;
+  foreach $f (@ubdaqfiles)
+  {
+    @info = stat("$cur_path/$f");
+    $f_enc = "$cur_path/$f";
+    $f_enc =~ s/([^-_.~\/A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
+    print Tr(
+             td( a({-href=>"$link_target#entry=0&filename=$f_enc"},"$f"))
+            ,"<td sorttable_customkey=".$info[9]." class='date'>".strftime("%b %e, %Y %H:%M",localtime($info[9]))."</td>"
+            ,"<td sorttable_customkey=".$info[7].">".get_filesize_str($info[7])."</td>"
+            );
+  }
+  print end_tbody;
+  print end_table;
+}
+
+
 foreach $f (@dirs)
 {
+  print  br . hr;
   print div({-class=>"subdir"}, a({-href=>url()."?path=$cur_path/$f"},"$f/") );
 }
 
