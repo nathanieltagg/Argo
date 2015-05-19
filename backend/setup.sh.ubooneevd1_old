@@ -1,16 +1,14 @@
-source /grid/fermiapp/products/uboone/setup_uboone.sh
-#export PATH=/usr/krb5/bin/:$PATH
+source /home/argo/larsoft/setup
+export PATH=/usr/krb5/bin/:$PATH
 #export KRB5CCNAME=FILE:/tmp/krb5cc_${UID}_cron$$
 #kcron
 #kx509 -d
 #voms-proxy-init -noregen -rfc -voms fermilab:/fermilab/uboone/
 setup mrb
 setup gitflow
-setup gcc v4_9_2
-setup root v5_34_25a -q e7:nu:prof
-setup boost v1_57_0 -q e7:prof
-setup postgresql v9_1_14
-setup sqlite v3_08_08_02
+setup gcc v4_8_2
+setup root v5_34_18d -q e5:nu:prof
+setup boost v1_55_0 -q e5:prof
 #export UBOONEDAQ_DATATYPES_DIR=/home/argo/ubdaq/uboonedaq-datatypes
 #export UBOONEDAQ_DATATYPES_DIR=/home/argo/ubdaq/uboonedaq
 

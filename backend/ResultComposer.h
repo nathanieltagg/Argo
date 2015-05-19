@@ -1,7 +1,7 @@
 #ifndef MAKE_XML_H
 #define MAKE_XML_H
 
-
+#include <memory>
 #include <TObject.h>
 #include <TTime.h>
 #include "JsonElement.h"
