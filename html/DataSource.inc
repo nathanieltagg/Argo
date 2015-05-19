@@ -2,7 +2,7 @@
 	<div class="portlet-header">Data Source</div>
   <div class="portlet-content" id='data-source-tabs'>  
 	<ul>
-    <li><a href="#input-fe">LArSoft File</a></li>
+    <li><a href="#input-fe">LArSoft File OR Raw ubdaq File</a></li>
     <!-- <li><a href="#input-larlight">LarLight File</a></li> -->
     <li><a href="#input-json">JSON Upload</a></li>
 	</ul>
