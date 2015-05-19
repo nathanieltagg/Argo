@@ -14,8 +14,10 @@ use HTML::Entities;
 $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
 $cookie_name = 'argo_file_browser';
+$cookie_name_recent = 'argo_file_browser_recent';
 $link_target = "../arachne.html";
 $restrict_to = [ getcwd(), "/uboone","/minos","/minerva","/pnfs"];
+$quick_links = [ "/uboone/app", "/uboone/data", "/pnfs/uboone"];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
 
 # Different configuration.
@@ -90,6 +92,8 @@ print start_html(
        ,-script=>$scripts
        );
 
+print start_div{-id=>"content"};
+
 print h2({-id=>"title"},$title);
 
 
@@ -112,6 +116,7 @@ if($good==0) {
 }
 
 print start_div({id=>"cur_path"});
+print b("Current Directory:");
 @breakdown = split('/',$cur_path);
 shift @breakdown;
 $bp = "";
@@ -194,11 +199,23 @@ if( scalar(@ubdaqfiles) > 0 ) {
   print end_table;
 }
 
+print  br . hr . b("Subdirectories:") . br;
 
 foreach $f (@dirs)
 {
-  print  br . hr;
   print div({-class=>"subdir"}, a({-href=>url()."?path=$cur_path/$f"},"$f/") );
 }
+print end_div; #content
+print start_div({-class=>'push'}).end_div;;
+
+print start_div({-id=>"footer"});
+print b({-class=>"link"},"Quick links:");
+foreach $f (@$quick_links) {
+  print a({-class=>"link",-href=>url()."?path=$f"},"$f");
+} 
+foreach $f (@$recent_locations) {
+  print a({-class=>"link",-href=>url()."?path=$f"},"$f");
+} 
+print end_div;
 
 print end_html;

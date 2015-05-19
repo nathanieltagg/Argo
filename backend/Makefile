@@ -29,7 +29,7 @@ endif
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations
 #CPP := g++44 -std=c++0x
-CPP := g++ 
+CPP := g++ -std=c++1y 
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -126,14 +126,20 @@ ifeq ($(UNAME),Darwin)
 #  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
 endif
-ifneq ($(origin POSTGRES_INC), undefined)
-	CPPFLAGS += -I ${POSTGRES_INC}
+ifneq ($(origin POSTGRESQL_INC), undefined)
+	CPPFLAGS += -I ${POSTGRESQL_INC} 
+	BLIBS += -L $(POSTGRESQL_LIBRARIES) -lpq
+else 
+  BLIBS += -lpq
 endif
-ifneq ($(origin POSTGRES_LIB), undefined)
-	BLIBS += -L $(POSTGRES_LIB)
+
+ifneq ($(origin SQLITE_INC), undefined)	
+         CPPFLAGS += -I ${SQLITE_INC} 
+         BLIBS += -L ${SQLITE_LIB}  -lsqlite3_ups
+else
+         BLIBS += -lsqlite3
 endif
-BLIBS += -lpq -lsqlite3
-	
+
 
 #Dependency rule
 tmp/%.d : %.cpp
