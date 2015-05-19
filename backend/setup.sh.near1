@@ -1,0 +1,17 @@
+# For use on ups systems, source this.
+source /uboonenew/setup
+setup gcc v4_9_2
+setup root v5_34_25a -q e7:debug
+setup boost v1_57_0 -q e7:debug
+setup postgresql v9_1_14
+
+
+#FIXME: replace with production.
+# using ~/ubdaq for the moment
+#export UBOONEDAQ_DATATYPES_DIR=/home/tagg/development_daq/install/uboonedaq_datatypes/v6_08_00/
+#export UBOONEDAQ_DIR=/home/tagg/development_daq/install/uboonedaq/v6_08_00/
+
+#setup boost v1_53_0 -q e2:debug
+#setup postgres
+#setup uboonedaq_datatypes v1_00_02 -q e2:debug
+#setup uboonedaq v1_00_02 -q e2:debug

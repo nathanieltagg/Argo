@@ -20,9 +20,14 @@ $restrict_to = [ getcwd(), "/uboone","/minos","/minerva","/pnfs"];
 $quick_links = [ "/uboone/app", "/uboone/data", "/pnfs/uboone"];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
 
-# Different configuration.
+# Config for Argo release:
 if( -r "file_browser_config.pl" ) {
     require "file_browser_config.pl" || die;
+}  
+
+# overrides for specific installation:
+if( -r "../config/file_browser_config.pl" ) {
+    require "../config/file_browser_config.pl" || die;
 }  
 
 sub get_filesize_str
