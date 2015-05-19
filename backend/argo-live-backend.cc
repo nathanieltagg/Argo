@@ -19,7 +19,7 @@
 #include "dispatcher/Client.h"
 #include "dispatcher/KvpSet.h"
 #include "dispatcher/ConvertDispatcherToEventRecord.h"
-#include "datatypes/eventRecord.h"
+#include "datatypes/raw_data_access.h"
 #include "online_monitor/Plexus.h"
 
 
@@ -28,7 +28,7 @@
 
 using namespace std; 
 using namespace gov::fnal::uboone::dispatcher;
-using gov::fnal::uboone::datatypes::eventRecord;
+using gov::fnal::uboone::datatypes::ub_EventRecord;
 
 using namespace std;
 
@@ -240,7 +240,7 @@ int main(int argc, char **argv)
       << " evMyEventNumber=" << md.get("evMyEventNumber")
         ;
   
-    std::shared_ptr<gov::fnal::uboone::datatypes::eventRecord> record;
+    std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record;
     try {
      record = ConvertDispatcherToEventRecord(data.get());
     }
@@ -250,27 +250,27 @@ int main(int argc, char **argv)
        continue;
      }
     
-     try {
-       record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CARD);      // The business end of things.
-     }
-     catch (std::runtime_error& error) {
-       std::string s = "Error: could not unpack card data ";
-       s+=error.what();
-       logInfo << s;
-       SaveHeartbeat(heartbeatInfo, s);
-       continue;
-    }
-
-    try {
-      record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CHANNEL);      // The business end of things.
-    }
-    catch (std::runtime_error& error) {
-        std::string s = "Error: could not unpack channel data ";
-        s+=error.what();
-        logInfo << s;
-        SaveHeartbeat(heartbeatInfo, s);
-        continue;
-     }
+    //  try {
+    //    record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CARD);      // The business end of things.
+    //  }
+    //  catch (std::runtime_error& error) {
+    //    std::string s = "Error: could not unpack card data ";
+    //    s+=error.what();
+    //    logInfo << s;
+    //    SaveHeartbeat(heartbeatInfo, s);
+    //    continue;
+    // }
+    //
+    // try {
+    //   record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CHANNEL);      // The business end of things.
+    // }
+    // catch (std::runtime_error& error) {
+    //     std::string s = "Error: could not unpack channel data ";
+    //     s+=error.what();
+    //     logInfo << s;
+    //     SaveHeartbeat(heartbeatInfo, s);
+    //     continue;
+    //  }
       
     RawRecordComposer composer(result,record,oOptions);
     try {

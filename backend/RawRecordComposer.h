@@ -5,21 +5,14 @@
 
 #include "JsonElement.h"
 #include "online_monitor/Plexus.h"
+#include "datatypes/ub_EventRecord.h"
 
 #include <math.h>
 
-namespace gov {namespace fnal {namespace uboone {namespace datatypes {
-        class eventRecord;
-        class channelData;
-        class cardHeader;
-        class cardData;
-        class crateHeader;
-        class crateData;
-}}}}
 
 class RawRecordComposer {
 public:
-  RawRecordComposer(JsonObject& output, std::shared_ptr<gov::fnal::uboone::datatypes::eventRecord> record, const std::string options);
+  RawRecordComposer(JsonObject& output, std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, const std::string options);
   ~RawRecordComposer();
 
   void compose();
@@ -31,12 +24,15 @@ public:
   void getPmtFromCrateCardChan(int icrate, int icard,int ichan, int& outPmt, int& outGain,  std::string& outSpecial);
   JsonObject& fOutput; // Top-level output object
   std::string fOptions;
-  std::shared_ptr<gov::fnal::uboone::datatypes::eventRecord> fRecord;
+  std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> fRecord;
   
   // Configuration:
+  bool fCreateSubdirCache;
   std::string fCacheStoragePath;
   std::string fCacheStorageUrl;
-
+  std::string fWorkingSuffix;
+  std::string fFinalSuffix;
+  
   std::string fCurrentEventDirname;
   std::string fCurrentEventUrl;
   

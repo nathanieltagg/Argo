@@ -98,9 +98,10 @@ TimeHistogram.prototype.FinishRangeChange = function()
 {
   // Select our time window so it's compatible with the 
   // TDC bounds
-  gZoomRegion.changeTimeRange( 
-              Math.max(this.min_u, gRecord.header.TDCStart) ,
-              Math.min(this.max_u, gRecord.header.TDCEnd  )
+  console.log("TimeHistogram::FinishRangeChange",this.min_u,this.max_u,gRecord.header.TDCStart,gRecord.header.TDCEnd );
+  gZoomRegion.changeTimeRange(
+              this.min_u, 
+              this.max_u
           );
   gStateMachine.Trigger("TimeCutChange");
 };
@@ -110,8 +111,8 @@ TimeHistogram.prototype.FastRangeChange = function()
   // Select our time window so it's compatible with the 
   // TDC bounds
   gZoomRegion.changeTimeRange(
-              Math.max(this.min_u, gRecord.header.TDCStart) ,
-              Math.min(this.max_u, gRecord.header.TDCEnd )
+              this.min_u,
+              this.max_u
           );
   gStateMachine.Trigger("zoomChangeFast");
 };

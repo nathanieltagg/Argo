@@ -14,13 +14,20 @@ use HTML::Entities;
 $title =  "Arachne File Browser";
 $default_path = "/minerva/data";
 $cookie_name = 'argo_file_browser';
+$cookie_name_recent = 'argo_file_browser_recent';
 $link_target = "../arachne.html";
 $restrict_to = [ getcwd(), "/uboone","/minos","/minerva","/pnfs"];
+$quick_links = [ "/uboone/app", "/uboone/data", "/pnfs/uboone"];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
 
-# Different configuration.
+# Config for Argo release:
 if( -r "file_browser_config.pl" ) {
     require "file_browser_config.pl" || die;
+}  
+
+# overrides for specific installation:
+if( -r "../config/file_browser_config.pl" ) {
+    require "../config/file_browser_config.pl" || die;
 }  
 
 sub get_filesize_str
@@ -90,6 +97,8 @@ print start_html(
        ,-script=>$scripts
        );
 
+print start_div{-id=>"content"};
+
 print h2({-id=>"title"},$title);
 
 
@@ -112,6 +121,7 @@ if($good==0) {
 }
 
 print start_div({id=>"cur_path"});
+print b("Current Directory:");
 @breakdown = split('/',$cur_path);
 shift @breakdown;
 $bp = "";
@@ -143,22 +153,24 @@ closedir(IMD);
 @thefiles = sort @thefiles;
 
 @dirs= ();
-@files=();
+@rootfiles=();
+@ubdaqfiles=();
 foreach $f (@thefiles)
 {
   if ($f =~ /^\./) { next; }
   if( -d "$cur_path/$f" ) {push @dirs,$f;}
-  if( $f =~ /\.root$/ ) {push @files,$f};
+  if( $f =~ /\.root$/ ) {push @rootfiles,$f};
+  if( $f =~ /\.ubdaq$/ ) {push @ubdaqfiles,$f};
 }
 
-if( scalar(@files) ==0 ) {
+if( scalar(@rootfiles) + scalar(@ubdaqfiles) ==0 ) {
   print p("No data files here.");
-} else {
-
+} 
+if( scalar(@rootfiles) > 0 ) {
   print start_table({-class=>"filetable tablesorter"});
-  print thead(Tr({-style=>"text-align:left;"},th("File"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
+  print thead(Tr({-style=>"text-align:left;"},th("Larsoft Filename"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
   print start_tbody;
-  foreach $f (@files)
+  foreach $f (@rootfiles)
   {
     @info = stat("$cur_path/$f");
     $f_enc = "$cur_path/$f";
@@ -173,9 +185,42 @@ if( scalar(@files) ==0 ) {
   print end_table;
 }
 
+if( scalar(@ubdaqfiles) > 0 ) {
+  print start_table({-class=>"filetable tablesorter"});
+  print thead(Tr({-style=>"text-align:left;"},th("Ubdaq Filename"),th("Date"),th({-class=>'sorttable_numeric'},"Size")));
+  print start_tbody;
+  foreach $f (@ubdaqfiles)
+  {
+    @info = stat("$cur_path/$f");
+    $f_enc = "$cur_path/$f";
+    $f_enc =~ s/([^-_.~\/A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
+    print Tr(
+             td( a({-href=>"$link_target#entry=0&filename=$f_enc"},"$f"))
+            ,"<td sorttable_customkey=".$info[9]." class='date'>".strftime("%b %e, %Y %H:%M",localtime($info[9]))."</td>"
+            ,"<td sorttable_customkey=".$info[7].">".get_filesize_str($info[7])."</td>"
+            );
+  }
+  print end_tbody;
+  print end_table;
+}
+
+print  br . hr . b("Subdirectories:") . br;
+
 foreach $f (@dirs)
 {
   print div({-class=>"subdir"}, a({-href=>url()."?path=$cur_path/$f"},"$f/") );
 }
+print end_div; #content
+print start_div({-class=>'push'}).end_div;;
+
+print start_div({-id=>"footer"});
+print b({-class=>"link"},"Quick links:");
+foreach $f (@$quick_links) {
+  print a({-class=>"link",-href=>url()."?path=$f"},"$f");
+} 
+foreach $f (@$recent_locations) {
+  print a({-class=>"link",-href=>url()."?path=$f"},"$f");
+} 
+print end_div;
 
 print end_html;

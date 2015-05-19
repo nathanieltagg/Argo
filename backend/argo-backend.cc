@@ -22,9 +22,17 @@
 #include "SocketServer.h"
 #include "ResultComposer.h"
 
+#include "dispatcher/KvpSet.h"
+#include "online_monitor/Plexus.h"
+
 #include <signal.h>
 #include <algorithm>
 #include <string>
+
+
+extern gov::fnal::uboone::online::Plexus gPlexus;
+
+
 
 // Quick and dirty option parsing, from StackOverflow.
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -119,6 +127,19 @@ int main(int argc, char **argv)
     else         cout << "  Forking turned off for profiling." << endl;
     SetErrorHandler(MyErrorHandler);
 
+
+    // Plexus.
+    gPlexus.build( "sqlite", "../config/connection.db" );
+    if(!gPlexus.is_ok()) {
+      cout << "Can't configure plexus from sqlite." << endl;
+      gPlexus.build("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
+    }
+    if(!gPlexus.is_ok()) {
+      cout << "Can't configure plexus from postgres." << endl;
+      gPlexus.buildHardcoded();
+      cout << "Built plexus hardcoded; no other sources.\n";
+    }
+
     ss = new MySocketServer(tcpPortNumber);
     if(ss->Setup()) exit(1);  // Quit if socket won't bind.
 
@@ -189,11 +210,11 @@ int main(int argc, char **argv)
             long t1 = gSystem->Now();
             // Now do your stuff.
             ResultComposer rc;           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
-            std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
-            xml.append("\n");
+            std::shared_ptr<std::string> payload = rc.compose(options,filename,selection,entrystart,entryend);
+            payload->append("\n");
             long t2 = gSystem->Now();
             // Send it out.
-            ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
+            ss->SendTo(client, (unsigned char*)payload->c_str(),  payload->length() );
             cout << "Request served." << endl;
             long t3 = gSystem->Now();
           

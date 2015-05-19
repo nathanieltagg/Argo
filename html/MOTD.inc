@@ -8,7 +8,7 @@
   <p><em>Message of the day:</em></p>
   Recent updates: <br/>
   <ul> 
-    <li> Now running on the new dedicated machine! MUCH FASTER! (Dec 16)</li> 
-    <li> PFParticle in, but not useful for much. </li>
+    <li> Argo now works on raw .ubdaq files! </li> 
+    <li> Full Argo installation now available on ubdaq-prod-near1.fnal.gov/Argo </li>
   </ul>
 </div> 
