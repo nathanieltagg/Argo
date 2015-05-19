@@ -29,7 +29,7 @@ endif
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations
 #CPP := g++44 -std=c++0x
-CPP := g++ 
+CPP := g++ -std=c++1y 
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -37,16 +37,16 @@ LDFLAGS = -g
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Darwin)
-  CPP = c++ -std=c++11 -stdlib=libc++
-  LD = c++ -std=c++11 -stdlib=libc++
-  shlibsuffix=dylib
+  CPP = clang++ -std=c++1y -Wno-return-type-c-linkage -O3
+  LD = clang++ -std=c++1y
   LDFLAGS = -bind_at_load -g
 endif
 
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
           $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) \
-          Plexus.cpp \
+          DaqFile.cpp \
+          Plexus.cpp Plexus_hardcode_tpc.cpp \
           Client.cpp \
           DispatcherMessage.cpp \
           KvpSet.cpp \
@@ -113,22 +113,33 @@ CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/o
 
 # add any other desired libs here
 # PNG
-LIBS += -L/opt/X11/lib -lpng 
+LIBS += -L/opt/X11/lib -lpng -lcrypto
 
-# postresql
+
+CPPFLAGS := $(filter-out -stdlib=libc++,$(CPPFLAGS))
+LDFLAGS := $(filter-out -stdlib=libc++,$(LDFLAGS))
+LIBS := $(filter-out -stdlib=libc++,$(LIBS))
+
+# postgresql
 ifeq ($(UNAME),Darwin)
   # Use the Postgres app, instead of a fullblown installation.
 #  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
 endif
-ifneq ($(origin POSTGRES_INC), undefined)
-	CPPFLAGS += -I ${POSTGRES_INC}
+ifneq ($(origin POSTGRESQL_INC), undefined)
+	CPPFLAGS += -I ${POSTGRESQL_INC} 
+	BLIBS += -L $(POSTGRESQL_LIBRARIES) -lpq
+else 
+  BLIBS += -lpq
 endif
-ifneq ($(origin POSTGRES_LIB), undefined)
-	BLIBS += -L $(POSTGRES_LIB)
+
+ifneq ($(origin SQLITE_INC), undefined)	
+         CPPFLAGS += -I ${SQLITE_INC} 
+         BLIBS += -L ${SQLITE_LIB}  -lsqlite3_ups
+else
+         BLIBS += -lsqlite3
 endif
-BLIBS += -lpq
-	
+
 
 #Dependency rule
 tmp/%.d : %.cpp
@@ -172,8 +183,8 @@ Cint.cpp : $(RHEADERS) LinkDef.h
 
 .PHONY: bin
 bin: argo-backend 
-argo-backend: $(backend_obj) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
+argo-backend: $(OBJ) tmp/argo-backend.o Makefile
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@

@@ -13,8 +13,9 @@
 #include <iostream>
 #include <fstream>
 
+#include "Rtypes.h"
 #include "SocketServer.h"
-#include "RawResultComposer.h"
+#include "RawRecordComposer.h"
 #include "Timer.h"
 
 #include <signal.h>
@@ -80,7 +81,6 @@ int main(int argc, char **argv)
       pidfile.close();
     }
 
-    gStartTimer.Reset();
 
     while (1) {
       //cout << ".";
@@ -117,8 +117,10 @@ int main(int argc, char **argv)
           cout << "    Options:  --" << options << endl;
 
           // Now do your stuff.
-          RawResultComposer rc;
-          std::string xml = rc.compose(options,filename,selection,entrystart,entryend);
+          
+          
+          // RawRecordComposer rc;
+          // std::string json = rc.compose(options,filename,selection,entrystart,entryend);
           // Send it out.
           ss->SendTo(client, (unsigned char*)xml.c_str(),  xml.length() );
           cout << "Request served." << endl;
