@@ -41,7 +41,7 @@ public:
   int fmintdc;
   int fmaxtdc;
   
-  
+  JsonObject fStats; // Processing metadata
   
 };
 

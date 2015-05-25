@@ -100,7 +100,6 @@ OpHitHistogram.prototype.NewRecord = function()
     tmax += width*0.05;
     nbins = Math.floor((tmax-tmin),500);
     while(nbins>800) nbins = Math.floor(nbins/2);
-    console.error(nbins,tmin,tmax);
     gOpMode.cut.min=tmin;
     gOpMode.cut.max=tmax;
   
