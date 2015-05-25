@@ -71,7 +71,10 @@
 <script type="text/javascript" src="core/DreamyScan.js"></script> 
 
 
+
 <!-- My classes for doing histograming and other displays-->
+<script type="text/javascript" src="libs/TiledImageCanvas.js"></script> 
+
 <script type="text/javascript" src="libs/Geometry.js"></script> 
 <script type="text/javascript" src="libs/Configuration.js"></script> 
 <script type="text/javascript" src="libs/DataSource.js"></script> 
@@ -98,6 +101,8 @@
 <script type="text/javascript" src="libs/dEdXTool.js"></script> 
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
 <script type="text/javascript" src="libs/SaveSelection.js"></script> 
+<script type="text/javascript" src="libs/PseudoColor.js"></script> 
+<script type="text/javascript" src="libs/GLEngine.js"></script> 
 
 <script type="text/javascript" src="libs/LiveControl.js"></script> 
 

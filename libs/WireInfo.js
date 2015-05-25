@@ -55,9 +55,8 @@ function WireInfo( element  )
   
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   $(this.ctl_wireimg_type).click(function(ev) { return self.Draw(); });
-  this.cal_offscreenCanvas = document.createElement("canvas");
-  this.raw_offscreenCanvas = document.createElement("canvas");
-
+  
+  
   gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
   gStateMachine.Bind("hoverChange", this.Draw.bind(this));
 }
@@ -65,60 +64,118 @@ function WireInfo( element  )
 WireInfo.prototype.NewRecord = function()
 {
   $(this.txt_element).html("");
-  this.cal_loaded = false;
-  this.raw_loaded = false;
-  // offscreen image.
-  this.cal_wire_img = new Image();
-  this.raw_wire_img = new Image();
-  
+
   var self = this;
 
-  if(gCurName.cal) this.cal_wire_img.src = gRecord.cal[gCurName.cal].wireimg_encoded_url;
-  if(gCurName.raw) this.raw_wire_img.src = gRecord.raw[gCurName.raw].wireimg_encoded_url;
-  this.cal_wire_img.onload = function() {   // Callback when the png is actually there...
-    self.MapCalData();
-  };
-  this.raw_wire_img.onload = function() {   // Callback when the png is actually there...
-    self.MapRawData();
-  };
+  if(!(gRecord._raw_tiled_canvas) && gCurName.raw)  {
+    var tile_urls = [];
 
+    // Old method. 2d array with 1 entry
+    if( gRecord.raw[gCurName.raw].wireimg_encoded_url ) 
+      tile_urls  = [ [ {url: gRecord.cal[gCurName.cal].wireimg_encoded_url} ] ];
+    
+    // new method
+    if( gRecord.raw[gCurName.raw].wireimg_encoded_tiles ) 
+      tile_urls= gRecord.raw[gCurName.raw].wireimg_encoded_tiles;
+      
+    gRecord._raw_tiled_canvas = new TiledImageCanvas( 
+                                    tile_urls,
+                                    function(){self.Draw()}
+                                    );
+       
+  }
+  
+  if(!(gRecord._cal_tiled_canvas) && gCurName.cal)  {
+    var tile_urls = [];
 
-  // // Experimental: used packed image, not the full one.
-  // this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
-  // this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
-  // this.packed_img = new Image();
-  // if(gCurName.cal) this.packed_img.src = gRecord[this.show_image][gCurName[this.show_image]].wireimg_encoded_url;
-  // this.packed_img.onload = function() {   // Callback when the png is actually there...
-  //   self.MapPackedData();
-  // }  
+    // Old method. 2d array with 1 entry
+    if( gRecord.cal[gCurName.cal].wireimg_encoded_url ) 
+      tile_urls  = [ [ {url: gRecord.cal[gCurName.cal].wireimg_encoded_url} ] ];
+    
+    // new method
+    if( gRecord.cal[gCurName.cal].wireimg_encoded_tiles ) 
+      tile_urls= gRecord.cal[gCurName.cal].wireimg_encoded_tiles;
+      
+    gRecord._cal_tiled_canvas = new TiledImageCanvas( 
+                                    tile_urls,
+                                    function(){self.Draw()}
+                                    );
+       
+  }
+
+};
+
+/*
+WireInfo.prototype.MapData = function(typ)
+{
+  var loaded = true;
+  var width = 0;
+  var height = 0;
+  var images = this[typ].images;
+  for(var irow=0;irow<images.length;irow++) {
+    var row_height = 0;
+    var row_width =0;
+    for(var icol=0;icol<images[irow].length;icol++) {
+      var img = images[irow][icol];
+      if( !(img.complete) ) loaded = false;
+      row_width  += img.width;
+      row_height = Math.max(row_height,img.height);
+    }
+    width = Math.max(width,row_width);
+    height += row_height;
+  }
+  this[typ].loaded = loaded;
+  if(!loaded) return;
+
+  // Make the offscreen canvas big enough to hold entire picture.
+  this[typ].offscreenCanvas.width = width;
+  this[typ].offscreenCanvas.height = height;
+  this[typ].offscreenCtx = this.cal.offscreenCanvas.getContext("2d");
+
+  // Draw all of the sub-pictures in place.
+  var x = 0;
+  var h = 0;
+  var y = 0;
+  for(var irow=0;irow<images.length;irow++) {
+    for(var icol=0;icol<images[irow].length;icol++) {
+      var img = images[irow][icol];
+      this[typ].offscreenCtx.drawImage( img, x, y);
+      x += img.width;
+      h = img.height;
+    }
+    y += h;
+  }
+
+  console.log("WireInfo " + typ + " loaded");
+  this.Draw();  
 };
 
 WireInfo.prototype.MapCalData = function()
 {
-  this.cal_loaded = true;
+  this.cal.loaded = true;
   // Load up the bitmap.
 
-  this.cal_offscreenCanvas.width  = this.cal_wire_img.width;
-  this.cal_offscreenCanvas.height = this.cal_wire_img.height;
-  this.cal_offscreenCtx = this.cal_offscreenCanvas.getContext("2d");
-  this.cal_offscreenCtx.drawImage(this.cal_wire_img,0,0);
+  this.cal.offscreenCanvas.width  = this.cal_wire_img.width;
+  this.cal.offscreenCanvas.height = this.cal_wire_img.height;
+  this.cal.offscreenCtx = this.cal_offscreenCanvas.getContext("2d");
+  this.cal.offscreenCtx.drawImage(this.cal_wire_img,0,0);
 
   this.Draw();  
 };
 
 WireInfo.prototype.MapRawData = function()
 {
-  this.raw_loaded = true;
+  this.raw.loaded = true;
   // Load up the bitmap.
 
-  this.raw_offscreenCanvas.width  = this.raw_wire_img.width;
-  this.raw_offscreenCanvas.height = this.raw_wire_img.height;
-  this.raw_offscreenCtx = this.raw_offscreenCanvas.getContext("2d");
-  this.raw_offscreenCtx.drawImage(this.raw_wire_img,0,0);
+  this.raw.offscreenCanvas.width  = this.raw_wire_img.width;
+  this.raw.offscreenCanvas.height = this.raw_wire_img.height;
+  this.raw.offscreenCtx = this.raw_offscreenCanvas.getContext("2d");
+  this.raw.offscreenCtx.drawImage(this.raw_wire_img,0,0);
 
   this.Draw();  
 };
-
+*/
 
 function getEncodedPngVal(imgdata, x)
 {
@@ -201,11 +258,11 @@ WireInfo.prototype.Draw = function()
   var offscreenCtx;
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
   
-  if(show_image == 'cal' && this.cal_loaded) {
-    offscreenCtx = this.cal_offscreenCtx;
+  if(show_image == 'cal' && gRecord._cal_tiled_canvas && gRecord._cal_tiled_canvas.loaded ) {
+    offscreenCtx = gRecord._cal_tiled_canvas.offscreenCtx;
     this.graph.ylabel="Cal ADC";
-  } else if(this.raw_loaded) {
-    offscreenCtx = this.raw_offscreenCtx;
+  } else if( gRecord._raw_tiled_canvas && gRecord._raw_tiled_canvas.loaded ) {
+    offscreenCtx = gRecord._raw_tiled_canvas.offscreenCtx;
     this.graph.ylabel="Raw ADC";    
   } else return;
 

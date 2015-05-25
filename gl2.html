@@ -77,6 +77,8 @@ function SplineInterpolator(in_x,in_y) {
 
 SplineInterpolator.prototype.interpolate = function(x) {
     var n = this.ya.length;
+    // if(x<=this.xa[0]) return this.ya[0];
+    // if(x>=this.xa[n-1]) return this.ya[n-1];
     var klo = 0;
     var khi = n - 1;
 
@@ -142,7 +144,76 @@ function PsuedoColor( control_points )
           };  
   };
   
-  this.buildTexture = function(gl, pixels, start_x, stop_x) { 
+  // this.buildTexture2D = function(gl, start_x, stop_x) {
+  //   // Creates an OpenGl texture, returns the texture ID.
+  //   // This version builds a 2d 256x256 texture.
+  //   var id = gl.createTexture();
+  //   gl.bindTexture(gl.TEXTURE_2D, id);
+  //   // Don't think I need this since it's a square texture at a power-of-two
+  //   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  //   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  //   // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  //   // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  //   var width = 256;
+  //   var height = 256;
+  //   var pixels = width*height;
+  //   var array = [];
+  //   for (var i = 0; i < pixels; i++) {
+  //     var x = start_x + (i)*(stop_x-start_x)/pixels;
+  //     var color = this.interpolate(x);
+  //     array.splice(array.length, 0, color.r, color.g, color.b, color.a);
+  //   }
+  //
+  //   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(array));
+  //   return id;
+  // }
+  this.buildTexture2D = function(gl, start_x, stop_x) { 
+    // Creates an OpenGl texture, returns the texture ID.
+    // This version builds a 2d 256x256 texture.
+    var canvas = document.createElement('canvas');
+    this.buildCanvas2d(canvas,start_x,stop_x);
+    var id = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, id);
+    // Don't think I need this since it's a square texture at a power-of-two
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    var canvas = document.getElementById('canvasImg');
+    // var canvas = document.createElement('canvas');
+    // canvas.width = 256;
+    // canvas.height = 256;
+    // this.buildCanvas2d( canvas, 256,256 );
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    console.log("built lookup texture in id",id);
+    return id;
+  }
+
+  this.buildTexture2DFromCanvas = function(gl,canvas) { 
+    // Creates an OpenGl texture, returns the texture ID.
+    // This version builds a 2d 256x256 texture.
+    var id = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, id);
+    // Don't think I need this since it's a square texture at a power-of-two
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    var canvas = this.buildCanvas2d( null, 256,256 );
+    var width = 256;
+    var height = 256;
+    var pixels = width*height;
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    console.log("built lookup texture in id",id)
+    return id;
+  }
+
+  
+  this.buildTexture1D = function(gl, start_x, stop_x, pixels) { 
     // Creates an OpenGl texture, returns the texture ID.
     var id = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, id);
@@ -183,9 +254,43 @@ function PsuedoColor( control_points )
     return buffer;
   }
   
+  
+  this.buildCanvas2d = function( canvas, start_x, stop_x ) {     
+    // Creates an OpenGl texture, returns the texture ID.
+    // This version builds a 2d 256x256 texture.
+    // canvas.width  = 256;
+    // canvas.height = 256;
+    var pixels = canvas.width*canvas.height;
+    var ctx = canvas.getContext('2d');
+    var imgData=ctx.createImageData(canvas.width,canvas.height);
+    console.log("imgData:", imgData.data.length);
+    var len = imgData.data.length;
+    for (var i=0;i<len;i+=4) {
+      var x = start_x + (i/4.)*(stop_x-start_x)/pixels; 
+      var color = this.interpolate(x);      
+      imgData.data[i+0]= color.r;
+      imgData.data[i+1]= color.g;
+      imgData.data[i+2]= color.b;
+      imgData.data[i+3]= color.a;
+    }
+    ctx.putImageData(imgData,0,0);
+  }
+  
   this.buildImage  = function(pixels, start_x, stop_x) { 
     // creates an image in the form of a base64 string. Inefficient, but useful for debugging
     var buffer = this.buildCanvas(pixels,start_x,stop_x);    
+    var dataURL = buffer.toDataURL();
+    delete buffer;
+    return dataURL;
+  }
+
+
+  this.buildImage2d  = function(pixels, start_x, stop_x) { 
+    // creates an image in the form of a base64 string. Inefficient, but useful for debugging
+    var buffer = document.createElement('canvas');
+    buffer.width = 256;
+    buffer.height = 256;
+    var buffer = this.buildCanvas2d(buffer,start_x,stop_x);    
     var dataURL = buffer.toDataURL();
     delete buffer;
     return dataURL;
@@ -234,14 +339,14 @@ function createShaderFromScriptElement(  gl, scriptId, opt_shaderType, opt_error
    return shader;
 };
 
-function render(image) {
+function render(image, pseudo) {
   // Get A WebGL context
   var canvas = document.getElementById("canvas1");
   
-  // canvas.width = 3200;
-  // canvas.height = 3456;
-  canvas.width = image.width;
-  canvas.height = image.height;
+  canvas.width = 3200;
+  canvas.height = 3456;
+  // canvas.width = image.width;
+  // canvas.height = image.height;
 
   // canvas.width =1600;
   // canvas.height=1600;
@@ -295,17 +400,24 @@ function render(image) {
   gl.enableVertexAttribArray(texCoordLocation);
   gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
-  // lookup uniforms
-  var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
-
-  // set the resolution
-  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-
+ 
 
   var inputTextureLocation = gl.getUniformLocation(program, "texture");
-  gl.uniform1i(inputTextureLocation, 1);
+  gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
 
 
+  console.time('LUT');  
+  var mapTextureLocation = gl.getUniformLocation(program, "maptexture");
+  gl.uniform1i(mapTextureLocation, 2);
+  gl.activeTexture(gl.TEXTURE2);
+  var mapTextureId = pseudo.buildTexture2D(gl,-4096,4096);
+  // var mapTextureId = pseudo.buildTexture1D(gl,-4096,4096,8192);
+  // var mapTextureId = pseudo.buildTexture(gl,4096,-2048,2048);
+  gl.bindTexture(gl.TEXTURE_2D, mapTextureId);
+  console.timeEnd('LUT');
+
+
+  //--- Draw 1 tile
   // The order of the following operations is important. OpenGL is stateful!
 
   // Create an input texture from the wire readout
@@ -319,35 +431,33 @@ function render(image) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   // Upload the image into the texture.
+
+  console.time('Load texture');
  
   console.time('Build sprite canvas');
-  // var spriteCanvas = document.createElement('canvas');
-  // var spriteCanvas = document.getElementById('spritecanvas');// var spriteCanvas = document.createElement('canvas');
-  //  spriteCanvas.width = 3200; // Samples in the window
-  //  spriteCanvas.height  = 3456; // Y plane has 3456 wires.
-  //  var sub_x = 3200; // 1 window in
-  //  var sub_y = 4798; // Y plane is 3rd,
-  //  var spriteContext = spriteCanvas.getContext('2d');
-  //  spriteContext.drawImage(image, sub_x, sub_y, spriteCanvas.width,spriteCanvas.height, 0,0,spriteCanvas.width, spriteCanvas.height);
-  //  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, spriteCanvas);
-  // // delete spriteCanvas;
-  // console.timeEnd('Build sprite canvas');
+  console.log('image size:',image.width,'x',image.height);
+    var spriteCanvas = document.createElement('canvas');
+   // var spriteCanvas = document.getElementById('spritecanvas');// var spriteCanvas = document.createElement('canvas');
+   spriteCanvas.width = 3200; // Samples in the window
+   spriteCanvas.height  = 3456; // Y plane has 3456 wires.
+   var sub_x = 3200; // 1 window in
+   var sub_y = 4798; // Y plane is 3rd,
+   var spriteContext = spriteCanvas.getContext('2d');
+   spriteContext.drawImage(image, sub_x, sub_y, spriteCanvas.width,spriteCanvas.height, 0,0,spriteCanvas.width, spriteCanvas.height);
+  delete spriteCanvas;
+  console.timeEnd('Build sprite canvas');
 
-  console.time('Load texture with image');
-  
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, spriteCanvas);  
+  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+  // lookup uniforms
+  var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+
+  // set the resolution
+  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
 
   console.log("image upload",gl.getError());
   console.timeEnd('Load texture with image');
-
-  console.time('LUT');  
-  var mapTextureLocation = gl.getUniformLocation(program, "maptexture");
-  gl.uniform1i(mapTextureLocation, 2);
-  gl.activeTexture(gl.TEXTURE2);
-  var mapTextureId = pseudo.buildTexture(gl,8192,-4096,4096);
-  // var mapTextureId = pseudo.buildTexture(gl,4096,-2048,2048);
-  gl.bindTexture(gl.TEXTURE_2D, mapTextureId);
-  console.timeEnd('LUT');
 
 
   // Create a buffer for the position of the rectangle corners we're drawing INTO.
@@ -357,10 +467,70 @@ function render(image) {
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
   // Set a rectangle the same size as the image.
   // setRectangle(gl, 0, 0, image.width, image.height);
-  setRectangle(gl, 0, 0, 3200, 3456);
+  setRectangle(gl, 0, 2399, 3200, 3456);
 
   // Draw the rectangle.
   gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+
+
+
+  //--- Draw 2 tile
+  // The order of the following operations is important. OpenGL is stateful!
+
+  // Create an input texture from the wire readout
+  var textureId = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE1);  // or gl.TEXTURE0 + 7
+  gl.bindTexture(gl.TEXTURE_2D, textureId);
+  // Set the parameters so we can render any size image.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  // Upload the image into the texture.
+
+  console.time('Load texture');
+ 
+  console.time('Build sprite canvas');
+  console.log('image size:',image.width,'x',image.height);
+    var spriteCanvas = document.createElement('canvas');
+   // var spriteCanvas = document.getElementById('spritecanvas');// var spriteCanvas = document.createElement('canvas');
+   spriteCanvas.width = 3200; // Samples in the window
+   spriteCanvas.height  = 2399; // u plane
+   var sub_x = 3200; // 1 window in
+   var sub_y = 0; // U plane is 3rd,
+   var spriteContext = spriteCanvas.getContext('2d');
+   spriteContext.drawImage(image, sub_x, sub_y, spriteCanvas.width,spriteCanvas.height, 0,0,spriteCanvas.width, spriteCanvas.height);
+  delete spriteCanvas;
+  console.timeEnd('Build sprite canvas');
+
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, spriteCanvas);  
+  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+  // lookup uniforms
+  var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+  // set the resolution
+  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+
+  console.log("image upload",gl.getError());
+  console.timeEnd('Load texture with image');
+
+
+  // Create a buffer for the position of the rectangle corners we're drawing INTO.
+  var buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.enableVertexAttribArray(positionLocation);
+  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+  // Set a rectangle the same size as the image.
+  // setRectangle(gl, 0, 0, image.width, image.height);
+  setRectangle(gl, 0, 0, 3200, 2399);
+
+  // Draw the rectangle.
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+
+
   console.timeEnd('render');
 }
 
@@ -406,44 +576,71 @@ function HSVtoRGB(h, s, v, x) {
 
 
 window.onload = function() {
-  var control_points = [
-    {x:-4096, r: 255, g: 46,  b:53,  a:255},
-    {x:-2730, r: 255, g: 178, b:17,  a:255},
-    {x:-1366, r: 233, g: 255, b:0,   a:255},
-    {x: 1366, r: 21,  g: 255, b:57,  a:255},
-    {x: 2730, r: 66 , g: 178, b:255, a:255},
-    {x: 4096, r: 104, g: 93,  b:255, a:255}
-  ];
   // var control_points = [
-  //   {x:-4096, r: 255, g: 0,  b:0,  a:255},
-  //   {x: 4096, r: 0  , g: 0,  b:0, a:255}
+  //   {x:-4096, r: 255, g: 46,  b:53,  a:255},
+  //   {x:-2730, r: 255, g: 178, b:17,  a:255},
+  //   {x:-1366, r: 233, g: 255, b:0,   a:255},
+  //   {x: 1366, r: 21,  g: 255, b:57,  a:255},
+  //   {x: 2730, r: 66 , g: 178, b:255, a:255},
+  //   {x: 4096, r: 104, g: 93,  b:255, a:255}
+  // ];
+  // var control_points = [
+  //   {x:-4095, r: 0, g: 0,  b:0,  a:255},
+  //   {x: 4095, r: 255  , g: 255,    b:255, a:255}
+  // ];
+  // var control_points = [
+  //   {x: 4095, r: 0, g: 0,  b:0,  a:255},
+  //   {x: 100, r: 0, g: 0,  b:0,  a:255},
+  //   {x:-100, r: 255  , g: 255,    b:255, a:255},
+  //   {x:-4095, r: 255  , g: 255,    b:255, a:255}
   // ];
 
-  // var control_points = [];
- //  var nctl = 256;
- //  for(var i=0;i<nctl;i++) {
- //    var x =(i/nctl*8192 - 4096);
- //    var h = (i/nctl + 0.15)%1.0;
- //    var s = 0.9;
- //    var v = 1;
- //    var pt = HSVtoRGB(h,s,v,x);
- //    pt.r = (i/nctl)*255;
- //    pt.g = (i/nctl)*255;
- //    pt.b = (i/nctl)*255;
- //    pt.a=255;    // console.log(pt);
- //    control_points.push(pt);
- //  }
+  // Logscale: puts the most dynamic range right near the low ADC counts.
+  var control_points = [];
+  var nctl = 256;
+  for(var i=0;i<nctl;i++) {
+    var x = (Math.atan(((i/nctl)-0.5)/200.)/3.14159) * 8196;
+    var xx =i/nctl;
+    var h = (xx*0.8 + 1.2)%1.0;
+    // console.log(x,xx,h);
+    var s = 0.9;
+    var v = 1;
+    var pt = HSVtoRGB(h,s,v,x);
+    pt.a=255;    // console.log(pt);
+    control_points.push(pt);
+  }
+ 
+  // var control_points = [
+ //    { x: -4096, r: 255, g:0, b:0,   a: 255 },
+ //    { x: -2000, r: 255, g:0, b:0,   a: 255 },
+ //    { x:  0, r: 255, g: 255, b:0,   a: 255 },
+ //    { x:  2000, r:   0, g:0, b:255, a: 255 },
+ //    { x:  4096, r:   0, g:0, b:255, a: 255 }
+ //  ];
+ // 
+
+  // var control_points = [
+  //   { x: -4095,   r: 255,   g:255,  b:255,   a: 255 },
+  //   { x: -10,     r: 0,   g:0,    b:255,   a: 255 },
+  //   { x: 0,       r: 255, g:255,  b:255,   a: 255 },
+  //   { x:  10,     r: 255, g:0,    b:0,     a: 255 },
+  //   { x:  4095,   r: 255, g:255,  b:255,     a: 255 }
+  // ];
+ 
 
   pseudo = new PsuedoColor(control_points);
-  var imgurl = pseudo.buildImage(8192,-4096,4096);
-  document.getElementById('canvasImg').src = imgurl;
+
+  var lutCanvas = document.getElementById('canvasImg');
+  pseudo.buildCanvas2d(lutCanvas,-4096,4096);
+  
+  
   
   // fx.canvas.myfunc = fx.wrap(myfunc);
   image = new Image();
   // image.src = "server/defaultimg/dQPcxegy.png";  // MUST BE SAME DOMAIN!!!
-  image.src = "live_event_cache/r00012300_s0000_e00000105.event/0AbjzVx6.png";  // MUST BE SAME DOMAIN!!!
+  image.src = "live_event_cache/r00012300_s0000_e00000105.event/74Up8Tee.png";  // MUST BE SAME DOMAIN!!!
   image.onload = function() {
-    render(image);
+    render(image,pseudo);
   };
 
 };
@@ -511,20 +708,39 @@ uniform sampler2D maptexture;
 varying vec2 v_texCoord;
 
 void main() {
+  // inc is now the RGBA color of the input pixel, with each color encoded as a float from 0 to 1.
   vec4 inc = texture2D(texture, v_texCoord);
-  //float adc = (color.r + color.g/256.)*256.-; // 256 to translate from 0-1 space to ADC space.
-  float adc = (inc.r*256. + inc.g - 128.)*256.;
-  // float tanscale = (atan(adc/1000.)/3.1415928) +0.5 ;
-  float tanscale = adc / 256. /256.;
+  
+  // 1d lookup.
+  // float adc = 256.*(inc.r*255. + inc.g - 128.);  // True ADC value; typical -4096 to 4096.
+  // adc *=10.; // Amplify so we can see detail - shouldn't need this in the final version.
+  // float lookup_coord = adc/8192. + 0.5; // this is a proper 1:1 mapping, but doesn't use enough dynamic range.
+  // vec2 lookup_coords = vec2(lookup_coord,0);
+  
+  // 2d lookup.
+  // Just use r,g. Red is most-significant, green is least-significant.  X is least, Y is most.
+  vec2 lookup_coords = vec2(inc.g,inc.r);
+  
+  
   // float adc = 0.999;
   vec4 color;
-  color.r = texture2D(maptexture, vec2(tanscale)).r;
-  color.g = texture2D(maptexture, vec2(tanscale)).g;
-  color.b = texture2D(maptexture, vec2(tanscale)).b;
-  color.a = texture2D(maptexture, vec2(tanscale)).a;
+  color.r = texture2D(maptexture, lookup_coords).r;
+  color.g = texture2D(maptexture, lookup_coords).g;
+  color.b = texture2D(maptexture, lookup_coords).b;
+  color.a = texture2D(maptexture, lookup_coords).a;
 
- // if(tanscale>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
+  // color.r =0.;
+  // color.b =0.;
+  // color.g =0.;
+  // if(adc>0.)        { color.r = 1.0; }
+  // else              { color.b = 1.0; }
+  if(lookup_coords.x>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
+  if(lookup_coords.y>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
 
+  // Debug: This just draws our input texture.
+  // color = texture2D(maptexture,v_texCoord);
+
+  // Output color is RGBA color with colors encoded between 0 and 1.
   gl_FragColor = color;
 }
 
@@ -546,8 +762,8 @@ void main() {
 </script>
 
 </head>
-<img id="canvasImg" style="width: 300px; height:100;"/>
-<img id="image"  src="server/defaultimg/dQPcxegy.png"  style="display:none; border: solid 1px;"/>
+<canvas id="canvasImg" width="256" height="256" style="width: 256 px; height:256 px;"></canvas>
+<img id="image"  src="server/defaultimg/dQPcxegy.png"  style="display:none; border: solid 1px;" />
 <p> OUTPUT BELOW </p>
 <canvas id="canvas1" style="border: 1px solid"></canvas>
 <canvas id="spritecanvas" style="border: 1px solid"></canvas>

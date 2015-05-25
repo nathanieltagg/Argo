@@ -56,6 +56,7 @@ function CheckWireDataReload()
     var lists = 0;
     var valid = 0;
     var i;
+    if(!gRecord) return;
     if(gRecord.cal) { for(i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_url) valid++; } }
     if(gRecord.raw) { for(i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) valid++; } }
     // alert("lists: " + lists + " valid:"+valid);

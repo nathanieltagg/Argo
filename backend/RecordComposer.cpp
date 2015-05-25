@@ -33,6 +33,7 @@
 
 #include "RecordComposer.h"
 #include "JsonElement.h"
+#include "TimeReporter.h"
 #include "TreeReader.h"
 #include "TreeElementLooter.h"
 #include "ColorMap.h"
@@ -43,16 +44,7 @@
 #include <stdlib.h>
 
 
-class TimeReporter
-{
-public:
-  std::string fName;
-  Timer t;
-  TimeReporter(const std::string& name="") :fName(name), t() {};
-  ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
-  
-  void addto(JsonObject& stats) { stats.add(fName,t.Count()); }
-};
+
 
 
 WirePalette gWirePalette; // Create at program start as a singleton.
