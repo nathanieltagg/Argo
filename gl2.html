@@ -343,8 +343,8 @@ function render(image, pseudo) {
   // Get A WebGL context
   var canvas = document.getElementById("canvas1");
   
-  canvas.width = 3200;
-  canvas.height = 3456;
+  canvas.width = 3200*3;
+  canvas.height = 3456+2399+2399;
   // canvas.width = image.width;
   // canvas.height = image.height;
 
@@ -354,6 +354,11 @@ function render(image, pseudo) {
   if (!gl) {
     return;
   }
+  
+  var incanvas = document.createElement('canvas');
+  incanvas.width = image.width;
+  incanvas.height = image.height;
+  incanvas.getContext('2d')
 
   // setup GLSL program
   vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
@@ -461,16 +466,7 @@ function render(image, pseudo) {
 
 
   // Create a buffer for the position of the rectangle corners we're drawing INTO.
-  var buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(positionLocation);
-  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-  // Set a rectangle the same size as the image.
-  // setRectangle(gl, 0, 0, image.width, image.height);
-  setRectangle(gl, 0, 2399, 3200, 3456);
-
-  // Draw the rectangle.
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  draw_to_rect(gl, 0, 2399, 3200, 3456);
 
 
 
@@ -516,7 +512,14 @@ function render(image, pseudo) {
   console.log("image upload",gl.getError());
   console.timeEnd('Load texture with image');
 
+  draw_to_rect(gl,0, 0, 3200, 2399);
 
+  console.timeEnd('render');
+}
+
+
+function draw_to_rect(gl, x, y, width, height, positionLocation ) 
+{
   // Create a buffer for the position of the rectangle corners we're drawing INTO.
   var buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -524,14 +527,21 @@ function render(image, pseudo) {
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
   // Set a rectangle the same size as the image.
   // setRectangle(gl, 0, 0, image.width, image.height);
-  setRectangle(gl, 0, 0, 3200, 2399);
+  var x1 = x;
+  var x2 = x + width;
+  var y1 = y;
+  var y2 = y + height;
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+     x1, y1,
+     x2, y1,
+     x1, y2,
+     x1, y2,
+     x2, y1,
+     x2, y2]), gl.STATIC_DRAW);
 
   // Draw the rectangle.
   gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-
-
-  console.timeEnd('render');
+  
 }
 
 function setRectangle(gl, x, y, width, height) {

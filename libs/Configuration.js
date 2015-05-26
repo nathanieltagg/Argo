@@ -57,8 +57,8 @@ function CheckWireDataReload()
     var valid = 0;
     var i;
     if(!gRecord) return;
-    if(gRecord.cal) { for(i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_url) valid++; } }
-    if(gRecord.raw) { for(i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_url) valid++; } }
+    if(gRecord.cal) { for(i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_encoded_tiles) valid++; } }
+    if(gRecord.raw) { for(i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_encoded_tiles) valid++; } }
     // alert("lists: " + lists + " valid:"+valid);
     if(lists>0 && valid===0) {
       // We need to go back to the server.
@@ -71,13 +71,13 @@ function CheckWireDataReload()
 function CheckWireData()
 {
   if(!gRecord) return;
-  if(gCurName.cal && gRecord.cal[gCurName.cal].wireimg_url) {
+  if(gCurName.cal && gRecord.cal[gCurName.cal].wireimg_encoded_tiles) {
     $('#ctl-show-wireimg-cal').prop('disabled', false);
   } else {
     $('#ctl-show-wireimg-cal').prop('disabled', true);
   }    
 
-  if(gCurName.raw && gRecord.raw[gCurName.raw].wireimg_url) {
+  if(gCurName.raw && gRecord.raw[gCurName.raw].wireimg_encoded_tiles) {
     $('#ctl-show-wireimg-raw').prop('disabled', false);
   } else {
     $('#ctl-show-wireimg-raw').prop('disabled', true);

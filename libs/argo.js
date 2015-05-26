@@ -500,6 +500,22 @@ $(function(){
   // By default, load the saved cookie.
   RestoreSettings("save");
 
+
+  // Scripts are ready for work!
+  //
+  $('#status').attr('class', 'status-ok');  
+  $("#status").text("Ready.");
+
+  
+  
+  // Initialize hashchange function.
+  $(window).hashchange( ChangeEvent );
+  
+  
+  // Do intial trigger on page load.
+  console.log("Doing intitial hashchange trigger");
+  $(window).hashchange();
+
 });
 
 

@@ -26,6 +26,28 @@ void main() {
 </script>
 
 
+<script id="sepia" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D texture;
+
+varying vec2 v_texCoord;
+
+void main() {
+  vec4 color = texture2D(texture, v_texCoord);
+  //float adc = (color.r*256 + color.g - 128)*256; // 256 to translate from 0-1 space to ADC space.
+  //float tanscale = (atan(adc/50.)/3.1415928*256.) + 127;
+  float r = color.r;
+  float g = color.g;
+  float b = color.b;
+
+  color.r = min(1.0, (r * (1.0 - (0.607 * 0.998))) + (g * (0.769 * 0.998)) + (b * (0.189 * 0.998)));
+  color.g = min(1.0, (r * 0.349 * 0.998) + (g * (1.0 - (0.314 * 0.998))) + (b * 0.168 * 0.998));
+  color.b = min(1.0, (r * 0.272 * 0.998) + (g * 0.99834 * 0.998) + (b * (1.0 - (0.869 * 0.998))));
+  gl_FragColor = color;
+}
+
+</script>
 
 
 <script id="lutshade" type="x-shader/x-fragment">
@@ -52,11 +74,12 @@ void main() {
   
   
   // float adc = 0.999;
-  vec4 color;
-  color.r = texture2D(maptexture, lookup_coords).r;
-  color.g = texture2D(maptexture, lookup_coords).g;
-  color.b = texture2D(maptexture, lookup_coords).b;
-  color.a = texture2D(maptexture, lookup_coords).a;
+  vec4 color = texture2D(maptexture, lookup_coords);
+  // vec4 color;
+  // color.r = texture2D(maptexture, lookup_coords).r;
+  // color.g = texture2D(maptexture, lookup_coords).g;
+  // color.b = texture2D(maptexture, lookup_coords).b;
+  // color.a = texture2D(maptexture, lookup_coords).a;
 
   // color.r =0.;
   // color.b =0.;
@@ -75,7 +98,7 @@ void main() {
 
 </script>
 
-<!-- simple blitter -->
+<!-- fragment shader -->
 <script id="2d-fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
 

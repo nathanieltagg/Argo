@@ -150,6 +150,8 @@ function PsTest(  )
 }
 
 
+gWirePseudoColor = new PsTest();
+
 // Test code
 // var ps = new PseudoColor (  [
 //     {x:-4096, r: 255, g: 46,  b:53,  a:255},
