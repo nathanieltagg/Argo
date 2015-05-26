@@ -108,7 +108,7 @@ void RawRecordComposer::composeHeader()
   header.add("run"           ,fRecord->getGlobalHeader().getRunNumber()    );
   header.add("subrun"        ,fRecord->getGlobalHeader().getSubrunNumber() );
   header.add("event"         ,fRecord->getGlobalHeader().getEventNumber()  );
-  header.add("triggerword"   , fRecord->triggerData().getTrigEventType() );
+  //  header.add("triggerword"   , fRecord->triggerData().getTrigEventType() );
 
   header.add("seconds",fRecord->getGlobalHeader().getSeconds());
   header.add("microSeconds",fRecord->getGlobalHeader().getMicroSeconds());
