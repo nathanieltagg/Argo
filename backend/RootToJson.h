@@ -7,8 +7,10 @@
 
 
 class TH1;
+class TH2;
 
-JsonObject TH1ToHistogram( TH1* hist );
+JsonObject TH1ToHistogram( TH1* hist, int maxbins = 0 );
+JsonObject TH2ToHistogram( TH2* hist, int maxbins = 0 );
 
 
 

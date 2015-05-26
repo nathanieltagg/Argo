@@ -128,23 +128,6 @@ void RawRecordComposer::composeHeader()
   fOutput.add("header",header);  
 }
   
-void wireOfChannel(int channel, int& plane, int& wire)
-{
-  if(channel < 2399) {
-    plane = 0; wire= channel; return;
-  }
-  else if(channel <4798) {
-    plane = 1; 
-    wire = channel - 2399;
-    return;
-  }
-  else{
-    plane = 2;
-    wire= channel-4798;
-    return;
-  }
-}
-
 
  
 void RawRecordComposer::composeTPC()
@@ -255,175 +238,16 @@ void RawRecordComposer::composeTPC()
   // Now we should have a semi-complete map.
   fmintdc = 0;
   fmaxtdc = ntdc;
-  int nwire = 8254;
+  int nwire = 1 + wireMap->rbegin()->first;
+  
   if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
   cout << "Read " << wires_read << " wires\n";
-  
-  {
-    TimeReporter timer_tiles("TPCMakeTiles");
-    // create tiles.
- 
-    std::cout << "Doing tile threads"<< std::endl;
-    boost::thread_group tile_threads;
-  
-    EncodedTileMaker tile_plane0window1( wireMap, 0, 2399, 0,    3200   , fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane0window2( wireMap, 0, 2399, 3200, 6400   , fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane0window3( wireMap, 0, 2399, 6400, ntdc   , fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane1window1( wireMap, 2399, 4798, 0,    3200, fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane1window2( wireMap, 2399, 4798, 3200, 6400, fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane1window3( wireMap, 2399, 4798, 6400, ntdc, fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane2window1( wireMap, 4798, 8254, 0,    3200, fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane2window2( wireMap, 4798, 8254, 3200, 6400, fCurrentEventDirname, fCurrentEventUrl ); 
-    EncodedTileMaker tile_plane2window3( wireMap, 4798, 8254, 6400, ntdc, fCurrentEventDirname, fCurrentEventUrl ); 
-
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window1));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window2));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window3));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window1));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window2));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window3));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window1));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window2));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window3));
-    tile_threads.join_all();
-  
-    std::cout << "Finished tile threads"<< std::endl;
-  
-    JsonArray tiles1; 
-    tiles1.add(tile_plane0window1.json());
-    tiles1.add(tile_plane0window2.json());
-    tiles1.add(tile_plane0window3.json());
-    JsonArray tiles2; 
-    tiles2.add(tile_plane1window1.json());
-    tiles2.add(tile_plane1window2.json());
-    tiles2.add(tile_plane1window3.json());
-    JsonArray tiles3; 
-    tiles3.add(tile_plane2window1.json());
-    tiles3.add(tile_plane2window2.json());
-    tiles3.add(tile_plane2window3.json());
-    JsonArray tiles;
-    tiles.add(tiles1);
-    tiles.add(tiles2);
-    tiles.add(tiles3);
-    
-    r.add("wireimg_encoded_tiles",tiles);
-    
-    timer_tiles.addto(fStats);    
-  }
-  
-  
-  // make stats.
-  {
-    TimeReporter timer_stats("TPCMakeStats");
-    TH1D timeProfile("timeProfile","timeProfile",ntdc,0,ntdc);
-    std::vector<TH1*> planeProfile;
-    std::vector<Double_t> timeProfileData(ntdc+2,0);
-    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-    // waveform_t blank(ntdc,0);
-    for(int wire=0;wire<nwire;wire++) 
-    {
-      wiremap_t::iterator it = wireMap->find(wire);
-      if(it != wireMap->end()) {
-        waveform_t& waveform = *(it->second.get());
-        double wiresum = 0;
-              
-        for(int k=0;k<ntdc;k++) {        
-          short raw = waveform[k];
-          double val = fabs(raw);
-          wiresum += val;
-          timeProfileData[k+1] += val;
-        }
-        int plane, planewire;
-        wireOfChannel(wire,plane,planewire);
-        planeProfile[plane]->Fill(planewire,wiresum);
-      }
-    }
-    timeProfile.SetContent(&timeProfileData[0]);
-    
-    r.add("timeHist",TH1ToHistogram(&timeProfile));
-    JsonArray jPlaneHists;
-    jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-    jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-    jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-    r.add("planeHists",jPlaneHists);
-
-    delete planeProfile[0];
-    delete planeProfile[1];
-    delete planeProfile[2];
-
-
-    timer_stats.addto(fStats);
-  }
-  
-  // Create images.
-/*  
-  {
-    TimeReporter timer_pngs("TPCMakePmgs");
-    
-    ColorMap colormap;
-    // All of the wire data is now contained in a the wireMap, which is a collection of vectors (one per wire)
-    MakePng png (ntdc,nwire, MakePng::palette_alpha,WirePalette::gWirePalette->fPalette,WirePalette::gWirePalette->fPaletteTrans);
-    // MakePng epng(ntdc,nwire,MakePng::rgb);
-    std::vector<unsigned char> imagedata(ntdc);
-    // std::vector<unsigned char> encodeddata(ntdc*3);
-
-    // waveform_t blank(ntdc,0);
-    for(int wire=0;wire<nwire;wire++) 
-    {
-      // waveform_t& waveform = blank;
-      wiremap_t::iterator it = wireMap->find(wire);
-      if(it != wireMap->end()) {
-        // We have a good wire recorded.0
-        waveform_t& waveform = *(it->second.get());
-
-        for(int k=0;k<ntdc;k++) {
-          short raw = waveform[k];
-          // colormap.get(&imagedata[k*3],float(raw)/4000.);
-          imagedata[k] = WirePalette::gWirePalette->tanscale(raw*3);
-          // // Save bitpacked data as image map.
-          // int iadc = raw + 0x8000;
-          // encodeddata[k*3]   = 0xFF&(iadc>>8);
-          // encodeddata[k*3+1] = iadc&0xFF;
-          // encodeddata[k*3+2] = 0;
-        }
-        png.AddRow(imagedata);
-        // epng.AddRow(encodeddata);
-      } else {
-        // Do not have wire info.      
-        for(int k=0;k<ntdc;k++) {
-          imagedata[k] = 255; // Saturate!
-          // // Save bitpacked data as image map.
-          // encodeddata[k*3]   = 0;
-          // encodeddata[k*3+1] = 0;
-          // encodeddata[k*3+2] = 0;
-        }
-        png.AddRow(imagedata);
-        // epng.AddRow(encodeddata);
-      }
-    
-    }
-    cout << "Loaded pngs\n";
-    png.Finish();
-    // epng.Finish();
-    cout << "Finished  pngs\n";
-  
-    std::string wireimg = png.writeToUniqueFile(fCurrentEventDirname);
-    std::string wireimg_thumb = wireimg+".thumb.png";
-    BuildThumbnail(fCurrentEventDirname+wireimg,fCurrentEventDirname+wireimg_thumb);
-
-    r.add("wireimg_url",fCurrentEventUrl+wireimg);
-    r.add("wireimg_url_thumb",fCurrentEventUrl+wireimg_thumb);
-    // r.add("wireimg_encoded_url",fCurrentEventUrl+
-    //                           epng.writeToUniqueFile(fCurrentEventDirname)
-                              // );
-
- 
-    timer_pngs.addto(fStats);
-  }
-  */
-
+  MakeEncodedTileset(     r,
+                          wireMap, 
+                          nwire,
+                          ntdc,
+                          fCurrentEventDirname,
+                          fCurrentEventUrl );
 
   reco_list.add("DAQ",r);
   fOutput.add("raw",reco_list);

@@ -59,7 +59,6 @@ public:
   void        hsvToRgb(unsigned char* out, float h, float s, float v);
   std::string stripdots(const std::string& s);
   JsonObject  GetClusterWireAndTDC(TreeElementLooter& l, int row);
-  void        wireOfChannel(int channel, int& plane, int& wire);
   int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
   
   
