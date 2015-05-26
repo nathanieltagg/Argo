@@ -65,43 +65,6 @@ WireInfo.prototype.NewRecord = function()
 {
   $(this.txt_element).html("");
 
-  var self = this;
-
-  if(!(gRecord._raw_tiled_canvas) && gCurName.raw)  {
-    var tile_urls = [];
-
-    // Old method. 2d array with 1 entry
-    if( gRecord.raw[gCurName.raw].wireimg_encoded_url ) 
-      tile_urls  = [ [ {url: gRecord.cal[gCurName.cal].wireimg_encoded_url} ] ];
-    
-    // new method
-    if( gRecord.raw[gCurName.raw].wireimg_encoded_tiles ) 
-      tile_urls= gRecord.raw[gCurName.raw].wireimg_encoded_tiles;
-      
-    gRecord._raw_tiled_canvas = new TiledImageCanvas( 
-                                    tile_urls,
-                                    function(){self.Draw()}
-                                    );
-       
-  }
-  
-  if(!(gRecord._cal_tiled_canvas) && gCurName.cal)  {
-    var tile_urls = [];
-
-    // Old method. 2d array with 1 entry
-    if( gRecord.cal[gCurName.cal].wireimg_encoded_url ) 
-      tile_urls  = [ [ {url: gRecord.cal[gCurName.cal].wireimg_encoded_url} ] ];
-    
-    // new method
-    if( gRecord.cal[gCurName.cal].wireimg_encoded_tiles ) 
-      tile_urls= gRecord.cal[gCurName.cal].wireimg_encoded_tiles;
-      
-    gRecord._cal_tiled_canvas = new TiledImageCanvas( 
-                                    tile_urls,
-                                    function(){self.Draw()}
-                                    );
-       
-  }
 
 };
 
@@ -258,11 +221,11 @@ WireInfo.prototype.Draw = function()
   var offscreenCtx;
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
   
-  if(show_image == 'cal' && gRecord._cal_tiled_canvas && gRecord._cal_tiled_canvas.loaded ) {
-    offscreenCtx = gRecord._cal_tiled_canvas.offscreenCtx;
+  if(show_image == 'cal'  && gRecord._cal && gRecord._cal._tiled_canvas && gRecord._cal.tiled_canvas.loaded ) {
+    offscreenCtx = gRecord._cal.tiled_canvas.ctx;
     this.graph.ylabel="Cal ADC";
-  } else if( gRecord._raw_tiled_canvas && gRecord._raw_tiled_canvas.loaded ) {
-    offscreenCtx = gRecord._raw_tiled_canvas.offscreenCtx;
+  } else if( gRecord._raw && gRecord._raw.tiled_canvas && gRecord._raw.tiled_canvas.loaded ) {
+    offscreenCtx = gRecord._raw.tiled_canvas.ctx;
     this.graph.ylabel="Raw ADC";    
   } else return;
 

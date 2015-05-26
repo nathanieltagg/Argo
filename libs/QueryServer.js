@@ -32,20 +32,6 @@ var gEventsLoadedThisSession = 0;
 
 
 $(function(){
-  // Scripts are ready for work!
-  //
-  $('#status').attr('class', 'status-ok');  
-  $("#status").text("Ready.");
-
-  
-  
-  // Initialize hashchange function.
-  $(window).hashchange( ChangeEvent );
-  
-  
-  // Do intial trigger on page load.
-  console.log("Doing intitial hashchange trigger");
-  $(window).hashchange();
 });
 
 
@@ -105,6 +91,7 @@ function ReadLocalFileSuccess()
 
 function QueryServer( par, myurl )
 {
+    gTimeStats_StartQuery = performance.now();
     console.log("QueryServer",par);
     $("input").blur();
     
@@ -243,6 +230,8 @@ function QueryError(jqxhr, textStatus, errorThrown )
 
 function QuerySuccess(data,textStatus,jqxhr)
 {
+  gTimeStats_QuerySuccess = performance.now();
+  
   console.log("QuerySuccess");
   document.body.style.cursor='auto';
   $.unblockUI();
@@ -314,6 +303,10 @@ function StartEvent()
   DoInitialBookmarking();
   
   // Trigger the automatic routines - stuff not yet pulled out of this routine.
+  gTimeStats_RecordChange = performance.now();
+  
+  MakeTiledImages(); // This works better here - get those image requests in soon!
+
   gStateMachine.Trigger('recordChange');
   $("#status").text("Done!");
   $('#status').attr('class', 'status-ok');

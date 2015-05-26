@@ -106,7 +106,7 @@ function WireView( element, options )
   gStateMachine.Bind('hitChange',    this.TrimHits.bind(this) );
   gStateMachine.Bind('timeCutChange',this.TrimHits.bind(this) );
   
-  gStateMachine.BindObj("wireImageLoaded",this,"Draw"); // Callback when wire image loads
+  gStateMachine.BindObj("colorWireMapsChanged",this,"Draw"); // Callback when wire image loads
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
  
@@ -195,7 +195,7 @@ WireView.prototype.NewRecord = function()
   //
   if(!gRecord) return;
   this.NewRecord_hits();
-  this.NewRecord_image();
+  // this.NewRecord_image();
   this.NewRecord_mc();
 };
 
@@ -215,42 +215,42 @@ WireView.prototype.NewRecord_hits = function()
   this.TrimHits();
 };
 
-WireView.prototype.NewRecord_image = function()
-{
-  this.loaded_wireimg = false;
-  this.loaded_thumbnail = false;
-  
-  this.show_image =  $(this.ctl_wireimg_type).filter(":checked").val(); 
-
-  if(!gRecord[this.show_image]) return;
-  if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
-  
-  // Store the image in the Record.
-  if(!("_wireimage" in gRecord) ) gRecord._wireimage = {};
-
-  // Build offscreen image(s)
-  if(!(this.show_image in gRecord._wireimage)) {
-    gRecord._wireimage[this.show_image] = {};
-    gRecord._wireimage[this.show_image].image   = new Image();
-    gRecord._wireimage[this.show_image].thumb = new Image();
-
-    var wiredesc = gRecord[this.show_image][gCurName[this.show_image]]; 
-    // e.g. gRecord.raw."recob::rawwire"
-    gRecord._wireimage[this.show_image].image.src = wiredesc.wireimg_url;
-    gRecord._wireimage[this.show_image].thumb.src = wiredesc.wireimg_url_thumb;
-  }
-  
-  var self = this;
-  gRecord._wireimage[this.show_image].image.onload = function() {
-      console.log(self.element,"got wireimg");
-      gRecord._wireimage[self.show_image].image_loaded = true;
-      gStateMachine.Trigger("wireImageLoaded");
-  };  
-  gRecord._wireimage[this.show_image].thumb.onload = function() {
-      console.log("got wireimg thumb");
-      gRecord._wireimage[self.show_image].thumb_loaded = true;
-  }; 
-};
+// WireView.prototype.NewRecord_image = function()
+// {
+//   this.loaded_wireimg = false;
+//   this.loaded_thumbnail = false;
+//
+//   this.show_image =  $(this.ctl_wireimg_type).filter(":checked").val();
+//
+//   if(!gRecord[this.show_image]) return;
+//   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
+//
+//   // Store the image in the Record.
+//   if(!("_wireimage" in gRecord) ) gRecord._wireimage = {};
+//
+//   // Build offscreen image(s)
+//   if(!(this.show_image in gRecord._wireimage)) {
+//     gRecord._wireimage[this.show_image] = {};
+//     gRecord._wireimage[this.show_image].image   = new Image();
+//     gRecord._wireimage[this.show_image].thumb = new Image();
+//
+//     var wiredesc = gRecord[this.show_image][gCurName[this.show_image]];
+//     // e.g. gRecord.raw."recob::rawwire"
+//     gRecord._wireimage[this.show_image].image.src = wiredesc.wireimg_url;
+//     gRecord._wireimage[this.show_image].thumb.src = wiredesc.wireimg_url_thumb;
+//   }
+//
+//   var self = this;
+//   gRecord._wireimage[this.show_image].image.onload = function() {
+//       console.log(self.element,"got wireimg");
+//       gRecord._wireimage[self.show_image].image_loaded = true;
+//       gStateMachine.Trigger("wireImageLoaded");
+//   };
+//   gRecord._wireimage[this.show_image].thumb.onload = function() {
+//       console.log("got wireimg thumb");
+//       gRecord._wireimage[self.show_image].thumb_loaded = true;
+//   };
+// };
 
 WireView.prototype.NewRecord_mc = function()
 {
@@ -440,23 +440,20 @@ WireView.prototype.DrawScale = function()
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
-  console.log("DrawImage",this.loaded_wireimg);
-  if(!gRecord._wireimage[this.show_image].image_loaded) do_thumbnail = true;
-  if(!gRecord._wireimage[this.show_image].image) do_thumbnail = true;
-  
-  if(do_thumbnail) {
-    if(!gRecord._wireimage[this.show_image].thumb_loaded) do_thumbnail = false; // fallback to full image
-    if(!gRecord._wireimage[this.show_image].thumb) do_thumbnail = false;
-  }
-  
-  if(!do_thumbnail) {
-    if(!gRecord._wireimage[this.show_image].image_loaded) return; // no more fallbacks. 
-    if(!gRecord._wireimage[this.show_image].image) return;
-  }
+
+  // look for offscreen canvas.
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
+  var objnm = '_' + this.show_image;
+  if(!gRecord[objnm]) return; // No such data.
+  if(!gRecord[objnm].colored_wire_map) return; // No such data.
+  if(!gRecord[objnm].colored_wire_map.canvas) return; // No such data.
+  var canvas = gRecord[objnm].colored_wire_map.canvas;
+
+  // FIXME: thumbnails for faster panning.
   
   if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
    var min_tdc     = Math.max(0,this.min_v);
-   var max_tdc     = Math.min(gRecord._wireimage[this.show_image].image.width,this.max_v); 
+   var max_tdc     = Math.min(canvas.width,this.max_v); 
    var min_wire    = Math.max(this.min_u,0);
    var max_wire    = Math.min(this.max_u,gGeo.numWires(this.plane));
    var min_channel = gGeo.channelOfWire(this.plane, min_wire);
@@ -489,23 +486,23 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    // console.log("drawImg dest", dest_x,   dest_y,  dest_w, dest_h);
    // console.log("drawImg rot ", rot_dest_x,   rot_dest_y,  rot_dest_w, rot_dest_h);
   
-  if(do_thumbnail) {
-    // Draw from the thumbnail, which is resolution-reduced by a factor of 5.
+  // if(do_thumbnail) {
+  //   // Draw from the thumbnail, which is resolution-reduced by a factor of 5.
+  //   this.ctx.drawImage(
+  //      gRecord._wireimage[this.show_image].thumb      // Source image.
+  //     ,source_x/5
+  //     ,source_y/5
+  //     ,source_w/5
+  //     ,source_h/5
+  //     ,rot_dest_x
+  //     ,rot_dest_y
+  //     ,rot_dest_w
+  //     ,rot_dest_h
+  //      );
+  //
+  // } else {
     this.ctx.drawImage(
-       gRecord._wireimage[this.show_image].thumb      // Source image.
-      ,source_x/5
-      ,source_y/5
-      ,source_w/5
-      ,source_h/5
-      ,rot_dest_x
-      ,rot_dest_y
-      ,rot_dest_w
-      ,rot_dest_h
-       );
-    
-  } else {
-    this.ctx.drawImage(
-       gRecord._wireimage[this.show_image].image      // Source image.
+       canvas      // Source image.
       ,source_x
       ,source_y
       ,source_w
@@ -516,7 +513,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
       ,rot_dest_h
     );
     
-  }
+  // }
   this.ctx.restore();   
 
 };
