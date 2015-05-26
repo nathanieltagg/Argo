@@ -629,22 +629,22 @@ void  RecordComposer::composeOpHits()
 }
 
 
-void RecordComposer::wireOfChannel(int channel, int& plane, int& wire)
-{
-  if(channel < 2399) {
-    plane = 0; wire= channel; return;
-  }
-  else if(channel <4798) {
-    plane = 1; 
-    wire = channel - 2399;
-    return;
-  }
-  else{
-    plane = 2;
-    wire= channel-4798;
-    return;
-  }
-}
+// void RecordComposer::wireOfChannel(int channel, int& plane, int& wire)
+// {
+//   if(channel < 2399) {
+//     plane = 0; wire= channel; return;
+//   }
+//   else if(channel <4798) {
+//     plane = 1;
+//     wire = channel - 2399;
+//     return;
+//   }
+//   else{
+//     plane = 2;
+//     wire= channel-4798;
+//     return;
+//   }
+// }
 
 
 void RecordComposer::composeCalAvailability()
@@ -695,9 +695,7 @@ void RecordComposer::composeCal()
     
     if(ntdc<=0) continue;
   
-    JsonObject r;
-    
-    
+    JsonObject r; 
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
     
     std::vector<float> wireArr(ntdc); // Storage.
@@ -743,232 +741,17 @@ void RecordComposer::composeCal()
     std::cout << "maxwire:" << nwire << " nwire:" << wireMap->size() << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     
-    {
-      TimeReporter timer_tiles("TPCMakeTiles");
-      // create tiles.
- 
-      std::cout << "Doing tile threads"<< std::endl;
-      boost::thread_group tile_threads;
-  
-      EncodedTileMaker tile_plane0window1( wireMap, 0, 2399, 0,    3200   , sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane0window2( wireMap, 0, 2399, 3200, 6400   , sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane0window3( wireMap, 0, 2399, 6400, ntdc   , sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane1window1( wireMap, 2399, 4798, 0,    3200, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane1window2( wireMap, 2399, 4798, 3200, 6400, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane1window3( wireMap, 2399, 4798, 6400, ntdc, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane2window1( wireMap, 4798, 8254, 0,    3200, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane2window2( wireMap, 4798, 8254, 3200, 6400, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane2window3( wireMap, 4798, 8254, 6400, ntdc, sfFileStoragePath, sfUrlToFileStorage ); 
-
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window1));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window2));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window3));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window1));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window2));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window3));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window1));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window2));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window3));
-      tile_threads.join_all();
-  
-      std::cout << "Finished tile threads"<< std::endl;
-  
-      JsonArray tiles1; 
-      tiles1.add(tile_plane0window1.json());
-      tiles1.add(tile_plane0window2.json());
-      tiles1.add(tile_plane0window3.json());
-      JsonArray tiles2; 
-      tiles2.add(tile_plane1window1.json());
-      tiles2.add(tile_plane1window2.json());
-      tiles2.add(tile_plane1window3.json());
-      JsonArray tiles3; 
-      tiles3.add(tile_plane2window1.json());
-      tiles3.add(tile_plane2window2.json());
-      tiles3.add(tile_plane2window3.json());
-      JsonArray tiles;
-      tiles.add(tiles1);
-      tiles.add(tiles2);
-      tiles.add(tiles3);
+    MakeEncodedTileset(     r,
+                            wireMap, 
+                            nwire,
+                            ntdc,
+                            sfFileStoragePath,
+                            sfUrlToFileStorage );
     
-      r.add("wireimg_encoded_tiles",tiles);
-    
-      timer_tiles.addto(fStats);    
-    }
-  
-  
-    // make stats.
-    {
-      TimeReporter timer_stats("TPCMakeStats");
-      TH1D timeProfile("timeProfile","timeProfile",ntdc,0,ntdc);
-      std::vector<TH1*> planeProfile;
-      std::vector<Double_t> timeProfileData(ntdc+2,0);
-      planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-      planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-      planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-      // waveform_t blank(ntdc,0);
-      for(int wire=0;wire<nwire;wire++) 
-      {
-        wiremap_t::iterator it = wireMap->find(wire);
-        if(it != wireMap->end()) {
-          waveform_t& waveform = *(it->second.get());
-          double wiresum = 0;
-              
-          for(int k=0;k<ntdc;k++) {        
-            short raw = waveform[k];
-            double val = fabs(raw);
-            wiresum += val;
-            timeProfileData[k+1] += val;
-          }
-          int plane, planewire;
-          wireOfChannel(wire,plane,planewire);
-          planeProfile[plane]->Fill(planewire,wiresum);
-        }
-      }
-      timeProfile.SetContent(&timeProfileData[0]);
-    
-      r.add("timeHist",TH1ToHistogram(&timeProfile));
-      JsonArray jPlaneHists;
-      jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-      jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-      jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-      r.add("planeHists",jPlaneHists);
 
-      delete planeProfile[0];
-      delete planeProfile[1];
-      delete planeProfile[2];
-
-
-      timer_stats.addto(fStats);
-      
-    }
     reco_list.add(stripdots(name),r);
     
-    // Notes: calibrated values of fSignal on wires go roughly from -100 to 2500
-    // MakePng png(ntdc,8254,MakePng::palette_alpha,gWirePalette.fPalette,gWirePalette.fPaletteTrans);
-    // MakePng encoded(ntdc,8254,MakePng::rgb);
-    // ColorMap colormap;
-    //
-    // std::vector<unsigned char> imagedata(ntdc);
-    // std::vector<unsigned char> encodeddata(ntdc*3);
-    //
-    // TH1D timeProfile("timeProfile","timeProfile",ntdc,0,ntdc);
-    // std::vector<Double_t> timeProfileData(ntdc+2,0);
-    // std::vector<TH1*> planeProfile;
-    // planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-    // planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-    // planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-    //
-    //
-    // // Map the rows in the data to wirenumbers
-    // std::vector<int> channelToRow(8254,-1);
-    // for(size_t irow=0;irow<nwires;irow++) {
-    //   int channel =ftr.getInt(lchannel,irow);
-    //   channelToRow[channel] = irow;
-    // }
-    //
-    //
-    // std::vector<float> wireArr(ntdc); // Storage.
-    // wireArr.reserve(ntdc);
-    //
-    // // Loop through logical channel number (i.e. logical wire number)
-    // for(long channel=0;channel<8254;channel++) {
-    //   // std::cout << "Doing wire " << i << std::endl;
-    //   // JsonObject wire;
-    //   // wire.add("view",ftr.getJson("recob::Wires_caldata__Reco.obj.fView",i));
-    //   // wire.add("signalType",ftr.getJson("recob::Wires_caldata__Reco.obj.fSignalType",i));
-    //   // wire.add("rdkey",ftr.getJson("recob::Wires_caldata__Reco.obj.fRawDigit.key_",i));
-    //
-    //   // Find the row in the data that matches.
-    //   int row = channelToRow[channel];
-    //   if(row<0) {
-    //     std::fill(wireArr.begin(), wireArr.end(), 0);
-    //   } else {
-    //
-    //     // Now actually get the data
-    //
-    //     // The simple way:
-    //     if(simpleLooter) {
-    //       const std::vector<float> *ptr = simpleLooter->get<std::vector<float> >(row);
-    //       wireArr = *ptr;
-    //     }
-    //
-    //     // The hard way: Bruce's new ROIs.
-    //     if(roiLooter) {
-    //       std::fill(wireArr.begin(), wireArr.end(), 0);
-    //       const vector<pair<unsigned int,vector<float> > >*ptr = roiLooter->get<vector<pair<unsigned int,vector<float> > > >(row);
-    //       for(size_t iroi=0;iroi<ptr->size();iroi++) {
-    //         unsigned int roi_loc = (*ptr)[iroi].first;
-    //         const vector<float>& roi_wave = (*ptr)[iroi].second;
-    //         for(size_t s=0;s<roi_wave.size();s++) {
-    //           wireArr[s+roi_loc] = roi_wave[s]; // copy it in.
-    //         }
-    //       }
-    //     }
-    //
-    //   }
-    //
-    //
-    //
-    //   // std::string signal("[");
-    //   double wiresum = 0;
-    //   for(size_t k = 0; k<ntdc; k++) {
-    //     // Color map.
-    //     float adc = wireArr[k];
-    //     //timeProfile.Fill(k,adc);
-    //     timeProfileData[k+1] += adc;
-    //
-    //     wiresum+=fabs(adc);
-    //     // colormap.get(&imagedata[k*3],adc/4000.);
-    //     imagedata[k] = gWirePalette.tanscale((short)adc);
-    //
-    //     // Save bitpacked data as image map.
-    //     int fadc = adc + float(0x8000);
-    //     int iadc = fadc;
-    //     encodeddata[k*3]   = 0xFF&(iadc>>8);
-    //     encodeddata[k*3+1] = iadc&0xFF;
-    //     encodeddata[k*3+2] = (unsigned char)((fadc-float(iadc))*255);
-    //   }
-    //   int wire, plane;
-    //   wireOfChannel(channel,plane,wire);
-    //   planeProfile[plane]->Fill(wire,wiresum);
-    //
-    //   png.AddRow(imagedata);
-    //   encoded.AddRow(encodeddata);
-    //
-    //   // This works, but is WAAYYYYYY TOO SLOW
-    //   //    wire.add("signal",ftr.makeSimpleFArray(Form("recob::Wires_caldata__Reco.obj[%ld].fSignal",i)));
-    //   // arr.add(wire);
-    // }
-    // timeProfile.SetContent(&timeProfileData[0]);
-    // png.Finish();
-    // encoded.Finish();
-    // // r.add("wires",arr);
-    // // Create histogram:
-    //
-    // std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
-    // std::string wireimg_thumb = wireimg+".thumb.png";
-    // BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
-    // r.add("wireimg_url",sfUrlToFileStorage+wireimg);
-    // r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
-    // r.add("wireimg_encoded_url",sfUrlToFileStorage+
-    //                           encoded.writeToUniqueFile(sfFileStoragePath)
-    //                           );
-    //
-    // r.add("timeHist",TH1ToHistogram(&timeProfile));
-    // JsonArray jPlaneHists;
-    // jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-    // jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-    // jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-    // r.add("planeHists",jPlaneHists);
-    //
-    // delete planeProfile[0];
-    // delete planeProfile[1];
-    // delete planeProfile[2];
-    // if(simpleLooter) delete simpleLooter;
-    // if(roiLooter)    delete roiLooter;
-    //
-    // reco_list.add(stripdots(name),r);
-    // timer.addto(fStats);
+ 
   }
   fOutput.add("cal",reco_list);
 }
@@ -1036,187 +819,13 @@ void RecordComposer::composeRaw()
     int nwire = 1 + wireMap->rbegin()->first;
     std::cout << "nwire:" << nwire << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
+    MakeEncodedTileset(     r,
+                            wireMap, 
+                            nwire,
+                            ntdc,
+                            sfFileStoragePath,
+                            sfUrlToFileStorage );
     
-    {
-      TimeReporter timer_tiles("TPCMakeTiles");
-      // create tiles.
- 
-      std::cout << "Doing tile threads"<< std::endl;
-      boost::thread_group tile_threads;
-  
-      EncodedTileMaker tile_plane0window1( wireMap, 0, 2399, 0,    3200   , sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane0window2( wireMap, 0, 2399, 3200, 6400   , sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane0window3( wireMap, 0, 2399, 6400, ntdc   , sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane1window1( wireMap, 2399, 4798, 0,    3200, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane1window2( wireMap, 2399, 4798, 3200, 6400, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane1window3( wireMap, 2399, 4798, 6400, ntdc, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane2window1( wireMap, 4798, 8254, 0,    3200, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane2window2( wireMap, 4798, 8254, 3200, 6400, sfFileStoragePath, sfUrlToFileStorage ); 
-      EncodedTileMaker tile_plane2window3( wireMap, 4798, 8254, 6400, ntdc, sfFileStoragePath, sfUrlToFileStorage ); 
-
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window1));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window2));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window3));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window1));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window2));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window3));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window1));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window2));
-      tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window3));
-      tile_threads.join_all();
-  
-      std::cout << "Finished tile threads"<< std::endl;
-  
-      JsonArray tiles1; 
-      tiles1.add(tile_plane0window1.json());
-      tiles1.add(tile_plane0window2.json());
-      tiles1.add(tile_plane0window3.json());
-      JsonArray tiles2; 
-      tiles2.add(tile_plane1window1.json());
-      tiles2.add(tile_plane1window2.json());
-      tiles2.add(tile_plane1window3.json());
-      JsonArray tiles3; 
-      tiles3.add(tile_plane2window1.json());
-      tiles3.add(tile_plane2window2.json());
-      tiles3.add(tile_plane2window3.json());
-      JsonArray tiles;
-      tiles.add(tiles1);
-      tiles.add(tiles2);
-      tiles.add(tiles3);
-    
-      r.add("wireimg_encoded_tiles",tiles);
-    
-      timer_tiles.addto(fStats);    
-    }
-  
-  
-    // make stats.
-    {
-      TimeReporter timer_stats("TPCMakeStats");
-      TH1D timeProfile("timeProfile","timeProfile",ntdc,0,ntdc);
-      std::vector<TH1*> planeProfile;
-      std::vector<Double_t> timeProfileData(ntdc+2,0);
-      planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-      planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-      planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-      // waveform_t blank(ntdc,0);
-      for(int wire=0;wire<nwire;wire++) 
-      {
-        wiremap_t::iterator it = wireMap->find(wire);
-        if(it != wireMap->end()) {
-          waveform_t& waveform = *(it->second.get());
-          double wiresum = 0;
-              
-          for(int k=0;k<ntdc;k++) {        
-            short raw = waveform[k];
-            double val = fabs(raw);
-            wiresum += val;
-            timeProfileData[k+1] += val;
-          }
-          int plane, planewire;
-          wireOfChannel(wire,plane,planewire);
-          planeProfile[plane]->Fill(planewire,wiresum);
-        }
-      }
-      timeProfile.SetContent(&timeProfileData[0]);
-    
-      r.add("timeHist",TH1ToHistogram(&timeProfile));
-      JsonArray jPlaneHists;
-      jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-      jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-      jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-      r.add("planeHists",jPlaneHists);
-
-      delete planeProfile[0];
-      delete planeProfile[1];
-      delete planeProfile[2];
-
-
-      timer_stats.addto(fStats);
-    }
-    /*
-    
-    // TLeaf* l_samples  = fTree->GetLeaf(string(name+"obj.fSamples").c_str());
-    const std::vector<short> *ptr = l.get<std::vector<short> >(0);
-    // FIXME: Naive assumption that all vectors will be this length. Will be untrue for compressed or decimated data!
-    size_t ntdc = ptr->size();
-
-    MakePng png(ntdc,ndig, MakePng::palette_alpha,gWirePalette.fPalette,gWirePalette.fPaletteTrans);
-    MakePng epng(ntdc,ndig,MakePng::rgb);
-    std::vector<unsigned char> imagedata(ntdc);
-    std::vector<unsigned char> encodeddata(ntdc*3);
-  
-    TH1D timeProfile("timeProfile","timeProfile",ntdc,0,ntdc);
-    std::vector<TH1*> planeProfile;
-    std::vector<Double_t> timeProfileData(ntdc+2,0);
-    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
-  
-    JsonArray jpedestals;
-    
-    for(int i=0;i<ndig;i++) {
-      short pedestal = ftr.getInt(l_pedestal,i);
-      if(pedestal<0) pedestal = 0; // Didn't read correctly.
-      jpedestals.add(pedestal);
-      
-      ptr= l.get<std::vector<short> >(i);
-      std::vector<short>::iterator it;
-      double wiresum = 0;
-    
-      // Waveform storage.
-      std::pair<wiremap_t::iterator,bool> inserted;
-      waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp));
-      inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
-
-      for(size_t k = 0; k<ntdc; k++) {
-        short raw = (*ptr)[k];
-        short pedcorr = raw - pedestal;
-        // colormap.get(&imagedata[k*3],float(raw)/4000.);
-        imagedata[k] = gWirePalette.tanscale(pedcorr);
-      
-        // Save bitpacked data as image map.
-        int iadc = raw + 0x8000;
-        encodeddata[k*3]   = 0xFF&(iadc>>8);
-        encodeddata[k*3+1] = iadc&0xFF;
-        encodeddata[k*3+2] = 0;
-        double val = fabs(pedcorr);
-        wiresum += val;
-        timeProfileData[k+1] += val;
-      }
-      png.AddRow(imagedata);
-      epng.AddRow(encodeddata);
-
-      int wire, plane;
-      wireOfChannel(i,plane,wire);
-      planeProfile[plane]->Fill(wire,wiresum);
-
-    }
-    timeProfile.SetContent(&timeProfileData[0]);
-    png.Finish();
-    epng.Finish();
-  
-    std::string wireimg = png.writeToUniqueFile(sfFileStoragePath);
-    std::string wireimg_thumb = wireimg+".thumb.png";
-    BuildThumbnail(sfFileStoragePath+wireimg,sfFileStoragePath+wireimg_thumb);
-    r.add("wireimg_url",sfUrlToFileStorage+wireimg);
-    r.add("wireimg_url_thumb",sfUrlToFileStorage+wireimg_thumb);
-    r.add("wireimg_encoded_url",sfUrlToFileStorage+
-                              epng.writeToUniqueFile(sfFileStoragePath)
-                              );
-
-    r.add("timeHist",TH1ToHistogram(&timeProfile));
-    JsonArray jPlaneHists;
-    jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-    jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-    jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-    r.add("planeHists",jPlaneHists);
-    r.add("pedestals",jpedestals);
-
-    delete planeProfile[0];
-    delete planeProfile[1];
-    delete planeProfile[2];
-    */
     
     reco_list.add(stripdots(name),r);
     timer.addto(fStats);

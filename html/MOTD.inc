@@ -8,7 +8,9 @@
   <p><em>Message of the day:</em></p>
   Recent updates: <br/>
   <ul> 
+    <li> New algorithms for working on wires! Much much faster! 
     <li> Argo now works on raw .ubdaq files! </li> 
     <li> Full Argo installation now available on ubdaq-prod-near1.fnal.gov/Argo </li>
+    
   </ul>
 </div> 
