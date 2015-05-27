@@ -129,8 +129,8 @@ OmHistCanvas.prototype.Update = function()
   this.ClearHists();
 
   if(this.refhist  ) this.AddHist(this.refhist,new ColorScaleIndexed(1),
-                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1});
-  if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:1,doErrors:do_errors});
+                                {doLine:true,doFill:false,strokeStyle:"red",alpha:1,composite:'darken'});
+  if(this.hist     ) this.AddHist(this.hist,new ColorScaleIndexed(0),{alpha:1,doErrors:do_errors,composite:'darken'});
   // if(this.suppress_zero) {
   //   this.min_v = this.hist.min_content;
   //   if(this.refhist) this.min_v = Math.min(this.hist.min_content, this.refhist.min_content);
