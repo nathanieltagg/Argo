@@ -46,6 +46,9 @@ function HistCanvas( element, options )
       doLine: false,
       lineWidth: 1,
       strokeStyle: "black",
+      composite: 'source-over',
+      error_stroke: "#EEEEEE",
+      error_lineWidth: '2',
       alpha: 1.0
     }
   };
@@ -322,6 +325,8 @@ HistCanvas.prototype.DrawHist = function( iHist )
    var i,t,t2,f,x1,x2,y;
    
    if(o.doLine) {
+     this.ctx.save();
+     this.ctx.globalCompositeOperation=o.composite;     
      this.ctx.beginPath();
      this.ctx.moveTo(this.origin_x, this.origin_y);
      for (i = 0; i < hist.n; i++) {
@@ -339,9 +344,13 @@ HistCanvas.prototype.DrawHist = function( iHist )
        this.ctx.lineTo(x2,y);       
      }
      this.ctx.stroke();
+     this.ctx.restore();
+     
    }
    if(o.doFill) {
-     for (i = 0; i < hist.n; i++) {
+     this.ctx.save();
+     this.ctx.globalCompositeOperation=o.composite;          
+     for (i = 0; i < hist.n; i++) {       
        if(hist.data[i]===0) continue;
        t = hist.GetX(i);
        t2 = hist.GetX(i+1);
@@ -360,8 +369,14 @@ HistCanvas.prototype.DrawHist = function( iHist )
        this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
        this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
      }
+     this.ctx.restore();
    }
    if(o.doErrors && hist.errs) {
+     this.ctx.save();
+     this.ctx.beginPath();     
+     this.ctx.globalCompositeOperation='xor';
+     this.ctx.strokeStyle=o.error_stroke;
+     this.ctx.lineWidth=o.error_lineWidth;
      for (i = 0; i < hist.n; i++) {
        t1 = hist.GetX(i);
        t2 = hist.GetX(i+1);
@@ -376,9 +391,10 @@ HistCanvas.prototype.DrawHist = function( iHist )
        if(x1>(this.origin_x + this.span_x)) continue;
        if(y2>this.origin_y) y2 = this.origin_y;
        this.ctx.moveTo(x1,y1);
-       this.ctx.lineTo(x1,y2);       
+       this.ctx.lineTo(x1,y2);
      }
-     this.ctx.stroke(); 
+     this.ctx.stroke();
+     this.ctx.restore();
    }
    
    if(hist.binlabelsx) {
