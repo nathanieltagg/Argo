@@ -473,7 +473,7 @@ Pad.prototype.DrawFrame = function()
             this.ctx.fillStyle = "rgba(20,20,20,1.0)";
             //this.ctx.drawTextRight(font,fontsize,this.origin_x-tickLen,y+asc/2,String(ftick));
             var stick = String(ftick);
-            if(ftick>100 || ftick< 0.01) stick = scientific_notation(ftick);
+            if(Math.abs(ftick)>100 || Math.abs(ftick)< 0.01) stick = scientific_notation(ftick);
             this.ctx.fillText(stick, this.origin_x-tickLen-1, y);
           }
         }

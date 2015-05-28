@@ -81,7 +81,7 @@ void getObjListing(TDirectory* dir, std::string path, JsonArray &arr)
  } 
 }*/
 
-void getObjHtmlListing(TDirectory* dir, std::string path, std::string &list)
+void getObjHtmlListing(TDirectory* dir, std::string path, std::string &list, int depth)
 {
   // Get a complete object tree, in the form required by jstree.jquery.js
 
@@ -115,17 +115,28 @@ void getObjHtmlListing(TDirectory* dir, std::string path, std::string &list)
   for(it = map_subdirs.begin(); it!=map_subdirs.end(); it++) {
     key = it->second;
     TDirectory* subdir = dir->GetDirectory(key->GetName());
-    if(subdir) {      
-      std::string children;  
-      getObjHtmlListing(subdir,path+key->GetName()+"/",children);
-
-      list += "<li class='om-dir' data-ompath='"+path+key->GetName()+"'>";
+    if(subdir) {
+      std::string subdirpath = path+key->GetName()+"/";
+      list += "<li class='om-dir' data-ompath='"+subdirpath+"'";
+      list +=     + ">";
       list += "<a href='#"+path+key->GetName()+"'";
       list += " class='om-dir-title'";
-      list += " data-ompath='"+path+key->GetName()+"'>" + key->GetName() + "</a>";
-      list += children;
+      list += " data-ompath='"+subdirpath+"'>" + key->GetName() + "</a>";
+      
+      if(depth>0) {
+        // Create a <ul> with the children
+        std::string children;  
+        getObjHtmlListing(subdir,subdirpath,children,depth-1);
+        list += children;
+      } else {
+        // Create an unused <ul>
+        list += "<ul class='om_subdirlist' ";
+        list +=   " data-ompath='"+path+"'";
+        list +=   " data-unfinished='1'";
+        list += "></ul>";
+      }
       list += "</li>";
-    }    
+   } 
   }
   
   for(it = map_hists.begin(); it!=map_hists.end(); it++) {
@@ -249,6 +260,16 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
     ::sscanf(options.c_str()+loc+7,"%d",&maxbins);
     std::cout << "Maxbins " << options.c_str()+loc << " set to " << maxbins << std::endl;    
   }
+
+  int maxListDepth = 999999;
+  // look for :maxListDepth<depth>:
+  loc = options.find(":maxListDepth");
+  if(loc != std::string::npos) {
+    ::sscanf(options.c_str()+loc+strlen(":maxListDepth"),"%d",&maxListDepth);
+    std::cout << "MaxListDepth " << options.c_str()+loc << " set to " << maxListDepth << std::endl;    
+  }
+
+
   // open file:
   JsonObject result;
   
@@ -286,12 +307,15 @@ std::string ComposeResult(const std::string& filename, const std::string& histna
     cout << "Trying to serve histname: " << hname << "\n";
 
     // Handle special case requests
-    if(hname == "HLIST") {
-      std::string list;
-      getObjHtmlListing(f,"",list);
-      shipment.add("HLIST",list);
+    if(hname.compare(0,5,"HLIST") == 0) {
+      std::string path = hname.substr(5);
+      if(path.length()==0) path = "/";
+      TDirectory* dir = f->GetDirectory(path.c_str());              
+      std::string list; 
+      if(dir) getObjHtmlListing(dir,path,list,maxListDepth);
+      shipment.add(hname,list);
       
-     } else if(hname == "LIST") {
+    } else if(hname == "LIST") {
       JsonArray arr;
       getObjListing(f,"",arr); 
       shipment.add("LIST",arr);      

@@ -1,8 +1,8 @@
 <!-- This library lets me use text functions for non-html5-compliant browsers, using the closest-thing-to-native you can get. -->
 <!-- General-purpose javascript library to help cross-platform compatibility and other issues. see http://jquery.com -->
 
-<link href="css/le-frog/jquery-ui.css" rel="stylesheet">
-<link href="css/le-frog/jquery.ui.theme.css" rel="stylesheet">
+<link href="css/vader/jquery-ui.css" rel="stylesheet">
+<link href="css/vader/jquery.ui.theme.css" rel="stylesheet">
 
 <script src="js/jquery-2.1.0.min.js"></script>
 <script src="js/jquery-ui-1.10.0.custom.js"></script>
