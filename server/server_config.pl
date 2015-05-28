@@ -1,3 +1,3 @@
-@paths_to_check = ("/",".","/online/om","/datalocal/om", "./data/");
+@paths_to_check = ("/datalocal/om", "./data/");
 
 1;
