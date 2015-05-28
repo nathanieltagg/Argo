@@ -33,6 +33,33 @@ function zeropad(n, width) {
   return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
 }
 
+function smart_sigfig(x,n)
+{
+  // Return an intelligent string with n sigfigs, using scientific where appropriate.
+  if(isNaN(x)) return x;
+  var s= parseFloat(x).toExponential().split('e');
+  // a x 10^b;
+  var a = parseFloat(s[0]).toFixed(n-1);
+  var b = parseInt(s[1]);
+  // Numbers close to 1: don't bother with sci. not.
+  if(b>=0 && b<3) return "" + (x).toFixed(n-1-b);
+  if(b<0 && b>-3)  return "" + (x).toFixed(n-1-b);
+  b = s[1].replace("-","⁻")
+         .replace("+","") //"⁺"
+         .replace("1","¹")
+         .replace("2","²")
+         .replace("3","³")
+         .replace("4","⁴")
+         .replace("5","⁵")
+         .replace("6","⁶")
+         .replace("7","⁷")
+         .replace("8","⁸")
+         .replace("9","⁹")
+         .replace("0","⁰");
+  return a+"×10"+b;
+  
+}
+
 function scientific_notation(x)
 {
   // Cleverness: Use unicode for superscript! Drawn correctly by the program.
