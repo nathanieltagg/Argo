@@ -6,7 +6,9 @@ OmHist2Canvas.prototype = new Hist2Canvas(null);
 
 function OmHist2Canvas( element, path )
 {
-  if(element==null) return;
+  if(element==null) {
+    console.error("OmHist2Canvas null element!")
+  };
   this.top_element = element;
   $(this.top_element).append("<div class='title' />");
   $(this.top_element).append("<div class='pad main' />");

@@ -101,7 +101,7 @@ OmHistCanvas.prototype.Update = function()
 {
   if(!this.hist) return;
   $(".portlet-title",$(this.top_element).parent()).html(this.hist.title);
-  if(this.hist.info.about) $(".about",this.top_element).html(this.hist.info.about);
+  if(this.hist.info && this.hist.info.about) $(".about",this.top_element).html(this.hist.info.about);
   this.xlabel = this.hist.xlabel;
   this.ylabel = this.hist.ylabel;
   this.bound_u_min = this.hist.min;

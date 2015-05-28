@@ -86,6 +86,7 @@ OmDataObj.prototype.getObj = function(path)
   return this.data.record.shipment[path];
 }
 
+
 OmDataObj.prototype.getCycle = function(path)
 {
   // Pull a specific path out of the results.
@@ -105,6 +106,8 @@ OmDataObj.prototype.get = function()
   var opts = ":";
   if($("input.ctl-low-resolution").is(":checked")){ opts = ":lowres128:"; }
   console.log("lowres check",$("input.ctl-low-resolution").is(":checked"),opts);
+  
+  opts += "maxListDepth2:";
   
   var p = $.extend({}
     ,this.dataspec
