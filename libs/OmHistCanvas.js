@@ -141,9 +141,9 @@ OmHistCanvas.prototype.Update = function()
   this.Draw();
 
   var stats = "";
-  stats += "<span>Entries: " + this.hist.total + " </span>";
-  stats += "<span>Mean: " + this.hist.GetMean().toFixed(1) + " </span>";
-  stats += "<span>RMS: " + this.hist.GetRMS().toFixed(1) + " </span>";
+  stats += "<span>Entries: " + smart_sigfig(this.hist.total,5) + " </span>";
+  stats += "<span>Mean: "    + smart_sigfig(this.hist.GetMean(),4) + " </span>";
+  stats += "<span>RMS: "     + smart_sigfig(this.hist.GetRMS(),3) + " </span>";
   stats += "<span>Underflow: " + this.hist.underflow + " </span>";
   stats += "<span>Overflow: " + this.hist.overflow + " </span>";
   
