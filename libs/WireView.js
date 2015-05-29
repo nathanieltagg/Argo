@@ -86,6 +86,7 @@ function WireView( element, options )
   
   this.loaded_wireimg = false;
   this.loaded_thumbnail = false;
+  $(this.canvas).css('image-rendering','pixelated');
   
   // $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   // $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
