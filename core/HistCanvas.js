@@ -172,6 +172,11 @@ HistCanvas.prototype.SetMarker = function(t)
   }
 };
 
+HistCanvas.prototype.SetAdjunctData = function ( inAdjunct )
+{
+	this.fAdjunctData = inAdjunct;
+};
+
 HistCanvas.prototype.ClearHists = function(  )
 {
   this.fNHist = 0;
@@ -192,11 +197,7 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   
   // Adjust scales.
-  if(inHist.min < this.min_u) this.min_u = inHist.min;
-  if(inHist.max > this.max_u) this.max_u = inHist.max;
-  if(inHist.min_content < this.min_v) this.min_v = inHist.min_content;
-  if(inHist.max_content > this.max_v) this.max_v = inHist.max_content;
-  //console.log(this.fName + ".AddHist " + this.min_u + " " + this.max_u);
+  this.ResetScales();
 };
 
 HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
@@ -207,59 +208,56 @@ HistCanvas.prototype.SetHist = function( inHist, inColorScale, options )
   this.fColorScales = [inColorScale];
   this.fHistOptions = [$.extend({},this.default_options,options)];
   
-  // For supressed zero:
-  this.min_v = inHist.min_content;                // minimum value shown on Y-axis
-  if("min_content_with_err" in inHist)  this.min_v = inHist.min_content_with_err;
-  
-  // For unsupressed zero:
-  if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
-
-  this.max_v= inHist.max_content;  // maximum value shown on Y-axis
-  if(inHist.max_content_with_err)  this.max_v = inHist.max_content_with_err
+  this.ResetScales();
 
   if(inHist.binlabelsx) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
   this.FinishRangeChange();
 };
 
-HistCanvas.prototype.ResetScales = function ( )
+HistCanvas.prototype.ResetScales = function ( inHist )
 {
-  this.min_u = this.fHists[0].min;
-  this.max_u = this.fHists[0].max;
-  this.min_v = this.fHists[0].min_content;                // minimum value shown on Y-axis
-  this.max_v=  this.fHists[0].max_content;  // maximum value shown on Y-axis
-  for(var i=0;i<this.fNHist;i++) {
-    if(this.fHists[i].min < this.min_u)         this.min_u = this.fHists[i].min;
-    if(this.fHists[i].max > this.max_u)         this.max_u = this.fHists[i].max;
-    if(this.fHists[i].min_content < this.min_v) this.min_v = this.fHists[i].min_content;
-    if(this.fHists[i].max_content > this.max_v) this.max_v = this.fHists[i].max_content;
+  // Ok, just one place to do all the scale setting.
+  // If inHist is not defined, it sets scales to ALL histograms.
+  // Subclasses are free to override this.
+  //   HistCanvas.call(this,inHist); 
+  //   this.min_u = ...
+
+  var hists = this.fHists;
+  if(inHist) hists = [inHist]; 
+  // First, get the max and min values for all hists. 
+  this.min_u = hists[0].min;
+  this.max_u = hists[0].max;
+  this.min_v = hists[0].min_content;                // minimum value shown on Y-axis
+  this.max_v=  hists[0].max_content;  // maximum value shown on Y-axis
+  for(var i=0;i<hists.length;i++) {
+    this.min_u = Math.min(this.min_u,hists[i].min);
+    this.max_u = Math.max(this.max_u,hists[i].max);
+    this.min_v = Math.min(this.min_v,hists[i].min_content)
+    this.max_v = Math.max(this.max_v,hists[i].max_content)
+    
+    // For unsupressed zero:
+    if(!this.suppress_zero) this.min_v = Math.min(0,hists[i].min_content);
+    
+    // For histograms with error bars:
+    if("min_content_with_err" in hists[i])  this.min_v = Math.min(this.min_v,hists[i].min_content_with_err); 
+    if("max_content_with_err" in hists[i])  this.max_v = Math.max(this.max_v,hists[i].max_content_with_err);
   }
-}
+  
+  var du = (this.max_u-this.min_u);
+  if(du<=0) this.max_u = this.min_u + 1; // Make sure we have SOME dynamic range.
 
-HistCanvas.prototype.SetAdjunctData = function ( inAdjunct )
-{
-	this.fAdjunctData = inAdjunct;
-};
-
-HistCanvas.prototype.ResetToHist = function( inHist ) {
-  this.min_u = inHist.min; // Minimum value shown on x-axis  FIXME - make adjustable.
-  this.max_u = inHist.max; // Maximum value shown on y-axis
-
-
-  // For supressed zero:
-  this.min_v = inHist.min_content;                // minimum value shown on Y-axis
-  if("min_content_with_err" in inHist)  this.min_v = inHist.min_content_with_err;
-
-  // For unsupressed zero:
-  if(!this.suppress_zero) this.min_v = Math.min(0,inHist.min_content);
-
-  this.max_v= inHist.max_content;  // maximum value shown on Y-axis
-  if("max_content_with_err" in inHist)  this.max_v = inHist.max_content_with_err
-
+  // Give us a little elbow room on the top side.
   var dv = (this.max_v-this.min_v);
   if(dv<=0) dv =1;
   this.max_v += (dv*0.02);  // maximum value shown on Y-axis
-  if(this.suppress_zero) this.min_v -= (dv*0.02);
+  if(this.min_v !==0 ) this.min_v -=(dv*0.02); // A little more, if not at zero exactly.
+}
+
+
+HistCanvas.prototype.ResetToHist = function( inHist ) {
+  
+  this.ResetScales(inHist);
   this.SetLogy(this.log_y);
 };
 
@@ -409,10 +407,10 @@ HistCanvas.prototype.DrawHist = function( iHist )
         var x2 = this.GetX(t2);
         var x = (x1+x2)/2;
         var arr = getLines(this.ctx,hist.binlabelsx[i],x2-x1,this.ctx.font);
-        console.warn("getLines",arr);
+        // console.warn("getLines",arr);
         var y = this.origin_y+8;
         for(var j=0;j<arr.length;j++) {
-          console.warn(x,y,arr[j]);
+          // console.warn(x,y,arr[j]);
           this.ctx.fillText(arr[j], x, y);
           y += 10;
         }
@@ -497,8 +495,8 @@ HistCanvas.prototype.DoMouse = function( ev )
       // Want to set the scale so that the new mouse position is at fDragStartF in display units.
       var z = this.origin_y - rely; // pixels above the origin of the mouse location.
       if(z<5) z=5;
-      if(this.log_y) {
-        this.max_v = Math.exp((this.span_y)*(Math.log(this.fDragStartF) - Math.log(this.min_v))/z);        
+      if(this.log_y) {        
+        this.max_v = Math.exp(  (this.span_y)*(Math.log(this.fDragStartF) - Math.log(this.min_v))/z + Math.log(this.min_v)  );        
       } else {        
         this.max_v = (this.span_y)*(this.fDragStartF - this.min_v)/z + this.min_v;
       }
