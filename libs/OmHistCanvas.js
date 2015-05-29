@@ -182,7 +182,7 @@ OmHistCanvas.prototype.Draw = function()
 OmHistCanvas.prototype.DrawHists = function( ) 
 {
   var flip = $(this.ctl_histo_flip).is(":checked");
-  console.log("flipping:",flip);
+  // console.log("flipping:",flip);
   var iHist;
   if(flip) {
     for(iHist = this.fNHist-1; iHist>= 0; iHist--) this.DrawHist(iHist);    

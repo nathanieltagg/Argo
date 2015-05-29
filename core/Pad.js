@@ -339,7 +339,9 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
 
       //cout << "Good width " << goodTickWidth << endl;
       return retval;
-  } else {
+      
+  } else { // Logscale == true
+
       var low10 = Math.ceil(Math.LOG10E * Math.log(min));
       var high10 = Math.ceil(Math.LOG10E * Math.log(max));
       var width = 1;
@@ -352,6 +354,11 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
           retval[i++] = Math.pow(10, p);
           p += width;
       }
+      if(retval.length<2) {
+        // there wasn't a whole factof of 10 in there.
+        return this.GetGoodTicks( min, max, 2, false ); // Find 2 regular ticks
+      }
+      
       return retval;
   }
 }
