@@ -21,7 +21,11 @@ $(function() {
   // $(document).bind('keydown','shift+s',function(){ $('#ctl-SpacepointLists').cycle_dropdown(); });
 
   $(window).keypress(function(event){
-    if($(event.target).is(":input")) return true;
+    // Don't fire on some special elements, where the keyboard is actually supposed to be used.
+    // text, textarea, password
+    if($(event.target).is("textarea,:text,:password")) { return true;} 
+
+    //if($(event.target).is(":input")) return true; // Bad. Locks keyboard focus on checkboxes and buttons.
     if(event.ctrlKey || event.altKey || event.metaKey) return true; // Don't intercept control-N for new window.
     console.log("keypress",event.which);
     // var sound = document.getElementById("sound1");
