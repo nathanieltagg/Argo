@@ -171,6 +171,46 @@ Hist2Canvas.prototype.DrawHists = function( )
          }
        }
    }
+   
+   if(hist.binlabelsx) {
+     this.ctx.font = this.tick_label_font;
+     this.ctx.textAlign = 'center';
+     this.ctx.textBaseline = 'top';
+     this.ctx.fillStyle ="black";
+     
+      for (var i = 0; i < hist.n_x; i++) {
+        var u1 = (i/hist.n_x)*(hist.max_x-hist.min_x) + hist.min_x;
+        var u2 = ((i+1)/hist.n_x)*(hist.max_x-hist.min_x) + hist.min_x;
+        var x1 = this.GetX(u1);
+        var x2 = this.GetX(u2);
+        var x = (x1+x2)/2;
+        var arr = getLines(this.ctx,hist.binlabelsx[i],x2-x1,this.ctx.font);
+        console.warn("getLines",arr);
+        var y = this.origin_y+8;
+        for(var j=0;j<arr.length;j++) {
+          console.warn(x,y,arr[j]);
+          this.ctx.fillText(arr[j], x, y);
+          y += 10;
+        }
+      }     
+   }
+   
+   if(hist.binlabelsy) {
+     this.ctx.font = this.tick_label_font;
+     this.ctx.textAlign = 'right';
+     this.ctx.textBaseline = 'center';
+     this.ctx.fillStyle ="black";
+     
+      for (var i = 0; i < hist.n_y; i++) {
+        var x = this.origin_x - 5;
+        var v1 = (i/hist.n_y)*(hist.max_y-hist.min_y) + hist.min_y;           
+        var v2 = ((i+1)/hist.n_y)*(hist.max_y-hist.min_y) + hist.min_y;           
+        var y = (this.GetY(v1) + this.GetY(v2))/2;
+        this.ctx.fillText(hist.binlabelsy[i],x,y);
+      }     
+   }
+   
+   
  }
    
 };    
@@ -183,7 +223,7 @@ function getAbsolutePosition(element) {
      r.y += tmp.y;
    }
    return r;
-}
+ };
 
 
 Hist2Canvas.prototype.ChangeRange = function( minu,maxu )

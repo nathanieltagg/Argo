@@ -21,13 +21,13 @@ function DreamyScan( element, options )
 
   // Options - defaults. Sensible for a wide range of stuff.  
   var defaults = {
-    dreamy_url: "scan/dreamy.cgi" ,
-    experiment: 'uboone' ,
-    project:    'tscans' ,
-    password:   null ,
-    user_name:  "Anonymous Coward" ,
-    demand_username: true , // dialog requres username. ,
-    load_form_from_db: false
+    dreamy_url: "scan/dreamy.cgi"
+    ,experiment: 'uboone'
+    ,project:    'tscans'
+    ,password:   null
+    ,user_name:  "Anonymous Coward"
+    ,demand_username: true // dialog requres username.
+    ,load_form_from_db: false
   };
   // override defaults with options.
   $.extend(true,defaults,options);

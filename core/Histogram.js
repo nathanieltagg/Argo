@@ -12,12 +12,28 @@
 /// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
 ///
 
+// Utility functions:
+
+// Build histogram out of JSON data
 function HistogramFrom(o)
 {
   delete o._owner; // if it exists.
   for(var j in o) { if(o[j]) delete o[j]._owner; }
   return $.extend(true,new Histogram(1,0,1), o);  
-}
+};
+
+// Create a histogram with good boundaries that will incorporate bins 'min' and 'max' into the view.
+
+function CreateGoodHistogram(nbins, min, max)
+{  
+  // Primative version does something reasonable, if not perfect:
+  var newmax = max;
+  if(max<=min) newmax = min+1;// Add 1 if we're in trouble
+  var h= new Histogram(nbins,min, newmax + (newmax-min)/nbins);
+
+  console.log("CreateGoodHistogram",nbins,min,max,h);
+  return h;  
+};
 
 function Histogram(n, min, max)
 {
@@ -41,7 +57,66 @@ Histogram.prototype.Clear = function()
   this.min_content = 0;
   this.total = 0;
   this.sum_x = 0;
-}; 
+  this.sum_x2 = 0;
+};
+
+Histogram.prototype.RebinBy = function(by) 
+{
+  // Decreases number of bins by a factor.
+  var newdata = [];
+  var newn = Math.floor(this.n/by);
+  var i;
+  for(i=0;i<newn; i++) newdata[i]=0;
+  for(i=0;i<this.n+1; i++){
+    newdata[Math.floor(i/by)]+=this.data[i];
+  }
+  this.data = newdata;
+  this.n = newn;
+}
+
+Histogram.prototype.TwoSideExpandFill = function(x,val) 
+{
+  // Fill a histogram, but always expand limits to grow, instead of overflowing.
+  // Expand both the upper and lower limits when you grow.
+  if(!val) val = 1;
+  var bin = this.GetBin(x);
+  var nadd = 0;
+  var newdata, i, binwidth;
+  if (bin<0) {
+    // console.log("expandlow");
+    // Instead of underflowing, figure out how many bins we need at the beginning to accomodate this.
+    nadd = -bin;
+  } else if (bin >= this.n) {
+    // Instead of overflowing, expand the histogram.    
+    // console.log("expandhigh");
+    nadd = bin + 1 - this.n;
+  }
+  
+  if(nadd>0) {
+    newdata = [];
+    for (i = 0; i < nadd; i++) newdata[i] = 0;
+    this.data = newdata.concat(this.data);
+    this.data = this.data.concat(newdata);    
+    binwidth = (this.max - this.min)/this.n;
+    this.min = this.min - binwidth*nadd;
+    this.max = this.max + binwidth*nadd;
+    console.warn("TwoSideExpand: x="+x+" min:"+this.min+" max:"+this.max);
+    this.n += nadd*2;
+    bin = this.GetBin(x); // should be 0 or n-1 now.
+  }
+    
+  this.total+=val;
+  this.sum_x += val*x;
+  this.sum_x2 += val*x*x;
+  if(x > this.max_x) this.max_x = x;
+  if(x < this.min_x) this.min_x = x;
+
+  this.data[bin]+=val;
+  if(this.data[bin] > this.max_content) this.max_content = this.data[bin];
+  if(this.data[bin] < this.min_content) this.min_content = this.data[bin];      
+  
+};
+
 
 Histogram.prototype.ExpandFill = function(x,val) 
 {
@@ -81,6 +156,7 @@ Histogram.prototype.ExpandFill = function(x,val)
   
   this.total+=val;
   this.sum_x += val*x;
+  this.sum_x2 += val*x*x;
   if(x > this.max_x) this.max_x = x;
   if(x < this.min_x) this.min_x = x;
 
@@ -97,12 +173,13 @@ Histogram.prototype.Fill = function(x,val)
       this.underflow+=val;
       return;
   }
-  if (x > this.max) {
+  if ( !(x < this.max) )  { // Cleverness: catches NaNs into overflow.
       this.overflow+=val;
       return;
   }
   this.total+=val;
   this.sum_x += val*x;
+  this.sum_x2 += val*x*x;
   if(x > this.max_x) this.max_x = x;
   if(x < this.min_x) this.min_x = x;
   var bin = this.GetBin(x);
@@ -119,9 +196,13 @@ Histogram.prototype.GetBin = function(x)
 
 Histogram.prototype.SetBinContent = function(bin,val) 
 {
-    this.total+=val;
     var x = this.GetX(bin);
+    this.total -=this.data[bin];
+    this.sum_x -=this.data[bin]*x;
+    this.sum_x2-=this.data[bin]*x*x;
+    this.total+=val;
     this.sum_x += val*x;
+    this.sum_x2 += val*x*x;
     if(x > this.max_x) this.max_x = x;
     if(x < this.min_x) this.min_x = x;
   
@@ -140,6 +221,13 @@ Histogram.prototype.GetX = function(bin)
 Histogram.prototype.GetMean = function()
 {
   return this.sum_x/this.total;
+};
+
+Histogram.prototype.GetRMS = function()
+{
+  var x = this.sum_x/this.total;
+  var rms2 = Math.abs(this.sum_x2/this.total -x*x); // As root TH1 does.
+  return Math.sqrt(rms2);
 };
 
 
