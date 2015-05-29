@@ -12,6 +12,8 @@
 /// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
 ///
 
+// Some utility functions.
+
 function getAbsolutePosition(element) {
    var r = { x: element.offsetLeft, y: element.offsetTop };
    if (element.offsetParent) {
@@ -20,13 +22,8 @@ function getAbsolutePosition(element) {
      r.y += tmp.y;
    }
    return r;
-}
+};
 
-// This class is a core base class for
-// models that bind to views.
-// The default arguments are the element it's attaching to,
-// and any configurable options you want to add to the class.
-// The object pulls data from the data-options field of the object.
 
 function ClosestMatch( element, selector )
 {
@@ -37,7 +34,7 @@ function ClosestMatch( element, selector )
   }
   // no match.
   return null;
-}
+};
 
 function GetLocalControl( element, selector )
 {
@@ -48,7 +45,7 @@ function GetLocalControl( element, selector )
     return c;
   }
   return $();
-}
+};
 
 function GetBestControl( element, selector )
 {
@@ -57,10 +54,16 @@ function GetBestControl( element, selector )
   c = $(selector,$('#config-port'));
   if(c.length>0) return c;
   return ClosestMatch(element,selector);
-}
+};
 
 
 var gUniqueIdCounter=100;
+
+// This class is a core base class for
+// models that bind to views.
+// The default arguments are the element it's attaching to,
+// and any configurable options you want to add to the class.
+// The object pulls data from the data-options field of the object.
 
 function ABoundObject(element, options)
 {

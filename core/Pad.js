@@ -33,9 +33,59 @@ function zeropad(n, width) {
   return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
 }
 
+function smart_sigfig(x,n)
+{
+  // Return an intelligent string with n sigfigs, using scientific where appropriate.
+  if(isNaN(x)) return x;
+  var s= parseFloat(x).toExponential().split('e');
+  // a x 10^b;
+  var a = parseFloat(s[0]).toFixed(n-1);
+  var b = parseInt(s[1]);
+  // Numbers close to 1: don't bother with sci. not.
+  if(b>=0 && b<3) return "" + (x).toFixed(n-1-b);
+  if(b<0 && b>-3)  return "" + (x).toFixed(n-1-b);
+  b = s[1].replace("-","⁻")
+         .replace("+","") //"⁺"
+         .replace("1","¹")
+         .replace("2","²")
+         .replace("3","³")
+         .replace("4","⁴")
+         .replace("5","⁵")
+         .replace("6","⁶")
+         .replace("7","⁷")
+         .replace("8","⁸")
+         .replace("9","⁹")
+         .replace("0","⁰");
+  return a+"×10"+b;
+  
+}
+
 function scientific_notation(x)
 {
-  return x.toExponential();
+  // Cleverness: Use unicode for superscript! Drawn correctly by the program.
+  // 2e-6 becomes 2×10⁻⁶
+  // 1e+9 becomes 10⁹
+  //³⁴⁵⁶⁷⁸⁹⁰⁻⁺
+  if(x==0) return 0;
+  var s= x.toExponential().split('e');
+  // s[1].replace("e","×10")
+  var s0;
+  if(s[0] === "1") s0 = "";
+  else s0 = s[0]+ "×";
+  var s1 = s[1].replace("-","⁻")
+               .replace("+","") //"⁺"
+               .replace("1","¹")
+               .replace("2","²")
+               .replace("3","³")
+               .replace("4","⁴")
+               .replace("5","⁵")
+               .replace("6","⁶")
+               .replace("7","⁷")
+               .replace("8","⁸")
+               .replace("9","⁹")
+               .replace("0","⁰");
+  return s0+"10"+s1;
+  
 }
 
 ///
@@ -153,7 +203,7 @@ function Pad( element, options )
     $(this.element).on('mouseout.'  +this.NameSpace, fn);
     $(window)      .on('mousemove.' +this.NameSpace, fn);
     $(window)      .on('mouseup.'   +this.NameSpace, fn);
-    $(this.element).on('mousewheel.'+this.NameSpace, function(ev,d){if (ev.ctrlKey) return fn(ev,d); return true;});
+    $(this.element).on('mousewheel.'+this.NameSpace, function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
   }
 
   $(this.element).on('touchstart.'+this.NameSpace, fn);
@@ -331,19 +381,26 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
 
       //cout << "Good width " << goodTickWidth << endl;
       return retval;
-  } else {
-      var low10 = Math.ceil(0.4342944 * Math.log(min));
-      var high10 = Math.ceil(0.4342944 * Math.log(max));
+      
+  } else { // Logscale == true
+
+      var low10 = Math.ceil(Math.LOG10E * Math.log(min));
+      var high10 = Math.ceil(Math.LOG10E * Math.log(max));
       var width = 1;
       // console.log(low10,high10,width,maxticks,width);
       while (((high10 - low10) / width) > maxticks) width += 1;
-      retval = [];
+      var retval = [];
       var p = low10;
-      i = 0;
+      var i = 0;
       while (p < high10) {
           retval[i++] = Math.pow(10, p);
           p += width;
       }
+      if(retval.length<2) {
+        // there wasn't a whole factof of 10 in there.
+        return this.GetGoodTicks( min, max, 2, false ); // Find 2 regular ticks
+      }
+      
       return retval;
   }
 };
@@ -398,7 +455,10 @@ Pad.prototype.DrawFrame = function()
     this.ctx.strokeStyle = "rgb(0,0,0)";
 
     // Sanity.
-    if(this.log_y && this.min_v <=0) this.min_v = 0.5;
+    if(this.log_y && this.min_v <=0) {      
+      this.min_v = Math.min(this.max_v/100 , 0.5);
+      
+    } 
     
     if(this.draw_axes) {
     // Draw the axes.
@@ -645,6 +705,32 @@ Pad.prototype.DoMouse = function(ev)
 Pad.prototype.DoMouseWheel = function(ev,dist)
 {
   // Override me to read the mouse position.
+  return true;
 };
 
+// utility to do text wrapping.
+function getLines(ctx,phrase,maxPxLength,textStyle) {
+    var wa=phrase.split(" "),
+        phraseArray=[],
+        lastPhrase=wa[0],
+        l=maxPxLength,
+        measure=0;
+    ctx.font = textStyle;
+    if(wa.length==1) return wa;
+    for (var i=1;i<wa.length;i++) {
+        var w=wa[i];
+        measure=ctx.measureText(lastPhrase+w).width;
+        if (measure<l) {
+            lastPhrase+=(" "+w);
+        }else {
+            phraseArray.push(lastPhrase);
+            lastPhrase=w;
+        }
+        if (i===wa.length-1) {
+            phraseArray.push(lastPhrase);
+            break;
+        }
+    }
+    return phraseArray;
+}
 
