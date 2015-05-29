@@ -6,6 +6,7 @@
 #include "RootToJson.h"
 #include <string>
 #include <map>
+#include <memory>
 
 typedef std::vector<int16_t> waveform_t;
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;
