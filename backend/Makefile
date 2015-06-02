@@ -182,12 +182,14 @@ Cint.cpp : $(RHEADERS) LinkDef.h
 
 
 .PHONY: bin
-bin: argo-backend 
+bin: argo-backend argo-live-backend
+
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
-argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+# Now integrated into main build
+#argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
+#	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
