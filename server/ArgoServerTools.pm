@@ -20,6 +20,7 @@ our $do_gzip = 0;
 our $ntuple_server_port = 9092;
 our $ntuple_server_host = 'localhost';
 our $exec_name = 'argo-backend';
+our $exec_arguments = "";
 
 
 do("../config/server_config.pl"); #|| die; # load file if present.
@@ -204,12 +205,8 @@ sub start_server
 
       print "Environemnt...\n";
       system("bash -c 'set' >>$exec_name.log 2>&1");
-  #     my $pid = getppid();
-  #     # system("echo $pid > ntuple-server.pid");
-  #     # my $pwd = getcwd;
-  #     # system("echo $pwd >> ntuple-server.pid");
-  #     # print  $pwd . "\n";
-      my $cmd = "../backend/$exec_name -p $ntuple_server_port >>$exec_name.log 2>&1";
+      my $exec_args = get_exec_arguments();
+      my $cmd = "../backend/$exec_name $exec_args >>$exec_name.log 2>&1";
       if( -e "../backend/setup.sh") { $cmd = "source ../backend/setup.sh; " . $cmd; }
       else { print "Not sourcing setup file.\n"; }
       print "Running: $cmd\n";
@@ -220,6 +217,10 @@ sub start_server
   }
 }
 
+sub get_exec_arguments()
+{
+  return $exec_arguments . " -p $ntuple_server_port "; 
+}
 
 sub get_sock
 {
