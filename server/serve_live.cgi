@@ -20,11 +20,12 @@ $ArgoServerTools::exec_name = "argo-live-backend";
 $ArgoServerTools::exec_arguments = "../server/live.config";
 
 # First, check the server heartbeat.
+$heartbeat_time = 0;
 $heartbeat = "{}";
 
 $need_to_restart = 0;
 if( -r  $heartbeat_file) {
-  # When was the heartbeat last updated? 
+  # Get heartbeat contents.
   open(HEARTBEAT,$heartbeat_file) || print "Can't open heartbeat for reading </br>\n";
   $heartbeat = "";
   while(<HEARTBEAT>) {
@@ -33,7 +34,7 @@ if( -r  $heartbeat_file) {
   close HEARTBEAT;    
 
   # When was the heartbeat last updated? 
-  $t = (stat($heartbeat_file))[9];
+  $heartbeat_time = (stat($heartbeat_file))[9];
   $oldness = (time() - $t);
   print "Heartbeat file is $oldness seconds old.";
   if( $oldness > $heartbeat_timeout) {
@@ -100,7 +101,7 @@ if(scalar @cacheentries == 0) {
 
 
 if(defined $event) { $result .= ",\"live_cache_file\":\"" . $event . "\""; }
-$result .= ",\"heartbeat\":" . $heartbeat;
+$result .= ",\"heartbeat\":" . $heartbeat . ",\"heartbeat_time\":" . $heartbeat_time;
   
 
 

@@ -3,7 +3,7 @@
 <head> 
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 
-<title>Argo</title>
+<title>Argo Live!</title>
 <!--(#)include virtual="basetag.inc"-->
 
 
@@ -57,7 +57,15 @@ div.A-TimeHistogram {
   <table style="width: 50%; border:"><tr>
   <td style="width: 5%;">Status:</td><td><div id="status">Script loading...</div></td>
   </tr></table>
-  <div id='live-info'>Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
+  <div id ='live-status'>
+    Backend Heartbeat:
+    <div id ='heartbeat-status'>
+      server not contacted yet
+    </div>
+  </div>
+  <div id='live-info'>
+    Shown: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
+    <br/>
     <span class="val event-date">unknown</span>
     <span class="val event-time">unknown</span>
     (<span class="val event-age">unknown</span> ago)

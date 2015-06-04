@@ -5,7 +5,7 @@ dispatcherHost=ubdaq-prod-evb-priv;
 dispatcherPort=2013;
 
 # Connection to plexus
-plexusInterface=mysql;
+plexusInterface=sqlite;
 plexusConnection=/uboonenew/online_database/plexus.db;
 plexusInterface_fallback=postgresql;
 plexusConnection_fallback= host=localhost port=5432;

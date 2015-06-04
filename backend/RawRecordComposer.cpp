@@ -95,7 +95,8 @@ void RawRecordComposer::compose()
     fCurrentEventUrl      = Form("%s/%s.%s/"
                               ,fCacheStorageUrl.c_str(), id.c_str(),fFinalSuffix.c_str());
   
-    mkdir(fCurrentEventDirname.c_str(),0777);
+    ::umask(0000); // need this first??
+    ::mkdir(fCurrentEventDirname.c_str(),0777);
   } else {
     fCurrentEventDirname = fCacheStoragePath;
     fCurrentEventUrl     = fCacheStorageUrl;
@@ -165,18 +166,13 @@ void getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> recor
 void RawRecordComposer::composeHeader()
 {
   JsonObject header;
-  header.add("run"           ,fRecord->getGlobalHeader().getRunNumber()    );
-  header.add("subrun"        ,fRecord->getGlobalHeader().getSubrunNumber() );
-  header.add("event"         ,fRecord->getGlobalHeader().getEventNumber()  );
-  //  header.add("triggerword"   , fRecord->triggerData().getTrigEventType() );
-
 
   // GET THE TIME
   getTime(fRecord,header);
 
-  header.add("seconds",fRecord->getGlobalHeader().getSeconds());
-  header.add("microSeconds",fRecord->getGlobalHeader().getMicroSeconds());
-  header.add("nanoSeconds",fRecord->getGlobalHeader().getNanoSeconds());
+  // header.add("seconds",fRecord->getGlobalHeader().getSeconds());
+  // header.add("microSeconds",fRecord->getGlobalHeader().getMicroSeconds());
+  // header.add("nanoSeconds",fRecord->getGlobalHeader().getNanoSeconds());
   int daqSec = fRecord->getGlobalHeader().getSeconds();
   int daqNanoSec = (fRecord->getGlobalHeader().getNanoSeconds()); // FIXME: Not sure if right.
   double daqtime = daqSec*1000 + daqNanoSec*1e-9;
@@ -286,7 +282,6 @@ void RawRecordComposer::composeTPC()
       JsonObject jCrate;
       jCrate.add("cards",jCards);
       jCrate.add("crateNumber",crate);
-      jCrate.add("cardCount",cards.size());
       jCrate.add("sebSec",crate_header->local_host_time.seb_time_sec);
       jCrate.add("sebUsec",crate_header->local_host_time.seb_time_usec);
       jCrate.add("type",crate_header->crate_type);
@@ -502,7 +497,6 @@ void RawRecordComposer::composePMTs()
     jCrate.add("type",crate_header->crate_type);
     jCrate.add("eventNumber",crate_header->event_number);
     jCrate.add("frameNumber",crate_header->frame_number);
-    jCrate.add("cardCount",crate_header->card_count);
     jCrates.add(jCrate);
     
   } // Loop PMT crates
@@ -512,7 +506,6 @@ void RawRecordComposer::composePMTs()
   
   JsonObject jPMT;
   jPMT.add("crates",jCrates);   
-  fOutput.add("ophits",reco_list);   
   fOutput.add("PMT",jPMT);   
   timer.addto(fStats);
 }
