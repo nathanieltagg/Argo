@@ -17,6 +17,7 @@ $heartbeat_file = "$cache_dir/heartbeat.json";
 ArgoServerTools::setup();
 
 $ArgoServerTools::exec_name = "argo-live-backend";
+$ArgoServerTools::exec_arguments = "../server/live.config";
 
 # First, check the server heartbeat.
 $heartbeat = "{}";

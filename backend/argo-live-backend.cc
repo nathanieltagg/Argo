@@ -119,6 +119,7 @@ int main(int argc, char **argv)
   // Load configuration from config file.
   std::string configfilename = "live.config";
   if(argc>1) configfilename = argv[1];
+
   ifstream configfile(configfilename);
   std::string configstr;
   while(configfile) {
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
     if(!gPlexus.is_ok()) {
       logWarn << "Cannot connect to database using " << plexSource << " and " << plexConnection;
     } else {
-      logInfo << "Connected to plex database";
+      logInfo << "Connected to plex database" << plexSource << " / " << plexConnection;
     }
   }
   if(!gPlexus.is_ok()) {
@@ -247,6 +248,12 @@ int main(int argc, char **argv)
     catch(...) {
        logInfo << "Error: could not unpack event record";
        SaveHeartbeat(heartbeatInfo, "Problem unpacking data from dispatcher.");
+       continue;
+     }
+     
+     if(!record) {
+       logInfo << "Error: no record!"; 
+       SaveHeartbeat(heartbeatInfo, "No record.");
        continue;
      }
     

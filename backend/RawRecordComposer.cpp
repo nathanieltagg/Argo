@@ -65,6 +65,8 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
 
   fCacheStoragePath     = "../live_event_cache";
   fCacheStorageUrl      = "live_event_cache";
+  fWorkingSuffix = "working";
+  fFinalSuffix   = "event";
 };
   
 RawRecordComposer::~RawRecordComposer()
@@ -76,6 +78,10 @@ void RawRecordComposer::compose()
 {
   // have the record unpack itself.
   //fRecord->updateIOMode(IO_GRANULARITY_CHANNEL);
+  if(!fRecord) {
+    fOutput.add("error","Bad record!");
+    return;
+  } 
   
   std::string id = Form("r%08d_s%04d_e%08d"
                             ,fRecord->getGlobalHeader().getRunNumber()    
@@ -102,6 +108,60 @@ void RawRecordComposer::compose()
 
 }
 
+
+ 
+  
+void getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& header)
+{
+  // check the event header.
+  uint32_t sec = record->getGlobalHeader().getSeconds();
+  uint32_t usec= record->getGlobalHeader().getMicroSeconds();
+  uint32_t nsec= record->getGlobalHeader().getNanoSeconds();
+  
+  // Fixme: look at GPS 
+  
+  if(sec < 1350000000) {
+    // Get the time from a trigger crate.
+    const ub_EventRecord::trig_map_t map = record->getTRIGSEBMap();
+    if(map.size()>0) {
+      auto const& cratedata = map.begin()->second;
+      auto const& ch = cratedata.crateHeader();
+      sec = ch->local_host_time.seb_time_sec;
+      usec = ch->local_host_time.seb_time_usec;      
+      nsec = ch->local_host_time.seb_time_usec*1000;
+    }
+  }
+  
+  if(sec < 1350000000) {
+    // Get the time from PMT crate.
+    const ub_EventRecord::pmt_map_t map = record->getPMTSEBMap();
+    if(map.size()>0) {
+      auto const& cratedata = map.begin()->second;
+      auto const& ch = cratedata.crateHeader();
+      sec = ch->local_host_time.seb_time_sec;
+      usec = ch->local_host_time.seb_time_usec;      
+      nsec = ch->local_host_time.seb_time_usec*1000;
+    }
+  }
+  
+  if(sec < 1350000000) {
+    // Get the time from PMT crate.
+    const ub_EventRecord::tpc_map_t map = record->getTPCSEBMap();
+    for(auto it:map) {
+      auto const& cratedata = it.second;
+      auto const& ch = cratedata.crateHeader();
+      sec = ch->local_host_time.seb_time_sec;
+      usec = ch->local_host_time.seb_time_usec;      
+      nsec = ch->local_host_time.seb_time_usec*1000;      
+    }
+  }
+  
+  header.add("seconds",sec);
+  header.add("microSeconds",usec);
+  header.add("nanoSeconds",nsec);
+}
+
+
 void RawRecordComposer::composeHeader()
 {
   JsonObject header;
@@ -109,6 +169,10 @@ void RawRecordComposer::composeHeader()
   header.add("subrun"        ,fRecord->getGlobalHeader().getSubrunNumber() );
   header.add("event"         ,fRecord->getGlobalHeader().getEventNumber()  );
   //  header.add("triggerword"   , fRecord->triggerData().getTrigEventType() );
+
+
+  // GET THE TIME
+  getTime(fRecord,header);
 
   header.add("seconds",fRecord->getGlobalHeader().getSeconds());
   header.add("microSeconds",fRecord->getGlobalHeader().getMicroSeconds());
@@ -128,6 +192,7 @@ void RawRecordComposer::composeHeader()
   fOutput.add("header",header);  
 }
   
+ 
 
  
 void RawRecordComposer::composeTPC()
