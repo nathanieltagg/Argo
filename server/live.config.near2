@@ -1,0 +1,27 @@
+# Configuration file. KVP format (param=value;)
+
+# Connection details to dispatcher server.
+dispatcherHost=ubdaq-prod-evb-priv;
+dispatcherPort=2013;
+
+# Connection to plexus
+plexusInterface=mysql;
+plexusConnection=/uboonenew/online_database/plexus.db;
+plexusInterface_fallback=postgresql;
+plexusConnection_fallback= host=localhost port=5432;
+
+
+# options used for building event.
+options=;
+
+# Cache file location.
+cacheDir=../live_event_cache;
+cacheUrl=live_event_cache;
+
+# Minimum time between calls for more data to dispatcher.
+# Could be slower if the processor bogs down
+period=20;
+
+# Maximum number of events to keep in the cache before deleting.
+maxFiles=30;
+
