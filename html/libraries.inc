@@ -54,6 +54,9 @@
     if (!window.console['profileEnd']) window.console.profileEnd  = function(){};
     if (!window.console['trace']     ) window.console.trace       = function(){};
     if (!window.console['error']     ) window.console.error       = function(){};
+    if (!window.console['timeStamp'] ) window.console.timeStamp   - function(){};
+    if (!window.performance)           window.performance = {};  
+    if (!window.performance['now']     ) window.performance.now = function(){};
   }
 </script>
 
