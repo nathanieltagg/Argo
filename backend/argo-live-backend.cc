@@ -120,54 +120,42 @@ int main(int argc, char **argv)
   std::string configfilename = "live.config";
   if(argc>1) configfilename = argv[1];
 
+  std::cout << "Loading config file " << configfilename << std::endl;
   ifstream configfile(configfilename);
   std::string configstr;
   while(configfile) {
     std::string line;
     std::getline(configfile,line);
-    std::cout << line << "--" << std::endl;
+    //std::cout << line << "--" << std::endl;
     size_t found = line.find_first_of("#");
     if (found != string::npos) {
-      std::cout << "found hash " << found << endl;
+      //std::cout << "found hash " << found << endl;
      	line.erase(found);
     }
-    std::cout << line << "--" << std::endl;
+    //std::cout << line << "--" << std::endl;
     
     configstr += line;
   }
   configfile.close();
   KvpSet config(configstr);
-  
+  std::cout << "----Configuration:----" << std::endl;
+  std::cout << config.pretty_print();
   
   // Plexus.
   std::string  plexSource     = config.getString("plexusInterface","postgresql");
   std::string  plexConnection = config.getString("plexusConnection","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
 
-  if(plexSource=="postgresql") {
-    gPlexus.buildFromPostgresql(plexConnection);
-    if(!gPlexus.is_ok()) {
-      logWarn << "Cannot connect to database using " << plexSource << " and " << plexConnection;
-    } else {
-      logInfo << "Connected to plex database" << plexSource << " / " << plexConnection;
-    }
-  }
+  gPlexus.build(plexSource,plexConnection);
   if(!gPlexus.is_ok()) {
+    std::cout << " Can't load plex from " << plexSource << " " << plexConnection << std::endl;
     plexSource     = config.getString("plexusInterface_fallback","postgresql");
     plexConnection = config.getString("plexusConnection_fallback","host=localhost port=5432");
-    if(plexSource=="postgresql") {
-      gPlexus.buildFromPostgresql(plexConnection);
-      if(!gPlexus.is_ok()) {
-        logWarn << "Cannot connect to database using " << plexSource << " and " << plexConnection;
-      } else {
-        logInfo << "Connected to fallback plex database.";
-      }
-    }
+    gPlexus.build(plexSource,plexConnection);
   }
   if(!gPlexus.is_ok()) {
     logWarn << "Reverting to hard-coded connections mapping, since no DB is working.";
+    gPlexus.buildHardcoded();
   }
-  gPlexus.buildHardcoded();
-  
   
   // Connect to dispatcher.
   // FIXME: Make configurable.
@@ -181,6 +169,11 @@ int main(int argc, char **argv)
   oConfigJson = KvpToJson(config);
 
   
+  JsonObject heartbeat_init;
+  heartbeat_init.add("config",oConfigJson);
+  heartbeat_init.add("starting",1);
+  SaveHeartbeat(heartbeat_init);
+  
   Client client(false);
   client.connect(oDispHost,oDispPort); 
   Timer retryTimer(0); // Zero means time is up.
@@ -190,6 +183,7 @@ int main(int argc, char **argv)
     
     JsonObject heartbeatInfo;
     heartbeatInfo.add("config",oConfigJson);
+    
     
     // Check for too many files. Delete as required
     CleanCacheDirectory(oCacheDir,oMaxFiles);
@@ -253,7 +247,7 @@ int main(int argc, char **argv)
      
      if(!record) {
        logInfo << "Error: no record!"; 
-       SaveHeartbeat(heartbeatInfo, "No record.");
+       SaveHeartbeat(heartbeatInfo, "Dispatcher has no data.");
        continue;
      }
     

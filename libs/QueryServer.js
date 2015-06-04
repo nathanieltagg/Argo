@@ -160,8 +160,8 @@ function QueryServer( par, myurl )
     // Modify the cursor to show we're fetching.
     document.body.style.cursor='wait';
 
-    console.log("Starting AJAX calls");
-
+    console.log("Starting AJAX calls:",myurl,param);
+    
     // JQuery call for compatibility.
     $.ajax({
             type: "GET",
@@ -225,7 +225,7 @@ function QueryError(jqxhr, textStatus, errorThrown )
   } else {
     $("#status").text("Problem with data: \""+textStatus+"\"");    
   }
-  window.document.title = "Argo (error)";
+  //window.document.title = "Argo (error)";
 }
 
 function QuerySuccess(data,textStatus,jqxhr)
@@ -242,10 +242,11 @@ function QuerySuccess(data,textStatus,jqxhr)
   gRecord = null;
   
   gServing = data;
+  if(gServing.heartbeat) UpdateHeartbeatStatus(gServing.heartbeat);
   if(gServing.error) { 
     $('#status').attr('class', 'status-error');
     $("#status").text('serve-event error: '+gServing.error);
-    window.document.title = "Argo (error)";
+    //window.document.title = "Argo (error)";
     return;
   }
   
@@ -257,7 +258,7 @@ function QuerySuccess(data,textStatus,jqxhr)
     if(gServing.record.error) { 
       $('#status').attr('class', 'status-error');
       $("#status").text('serve-event error: '+gServing.record.error);
-      window.document.title = "Argo (error)";
+      //window.document.title = "Argo (error)";
       return;
     }
     gRecord = gServing.record;
@@ -281,7 +282,7 @@ function StartEvent()
   } else {
     $('#status').attr('class', 'status-error');
     $("#status").text("Problem with data: " + gRecord.error);
-    window.document.title = "Argo (error)";
+    // window.document.title = "Argo (error)";
     
   }
   console.log(gRecord);
@@ -357,6 +358,20 @@ function DoPerformanceStats()
       "   parse:" + t_parse+ " ms " +
       "   draw: " + t_draw + " ms <br/>";
   $('#debugbench').html(h);
+  
+}
+
+function UpdateHeartbeatStatus(heartbeat)
+{
+  var elem = $('#heartbeat-status');
+  if(heartbeat.error) {
+    elem.text(heartbeat.error);
+    return;
+  }
+  if(heartbeat.server_restart) {
+    var d = new Date(heartbeat.server_restart*1000);
+    elem.text("Please wait; server restarted " + d.toString);
+  }
   
 }
 
