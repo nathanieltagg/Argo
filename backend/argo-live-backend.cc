@@ -164,7 +164,7 @@ int main(int argc, char **argv)
   oOptions       = config.getString("options","");
   oCacheDir      = config.getString("cacheDir","../live_event_cache");
   oCacheUrl      = config.getString("cacheUrl","live_event_cache");
-  oPeriod        = config.getDouble("period",10.0);
+  oPeriod        = config.getDouble("period",5.0);
   oMaxFiles      = config.getInt   ("maxFiles",30);
   oConfigJson = KvpToJson(config);
 
@@ -243,36 +243,14 @@ int main(int argc, char **argv)
        logInfo << "Error: could not unpack event record";
        SaveHeartbeat(heartbeatInfo, "Problem unpacking data from dispatcher.");
        continue;
-     }
+    }
      
-     if(!record) {
-       logInfo << "Error: no record!"; 
-       SaveHeartbeat(heartbeatInfo, "Dispatcher has no data.");
-       continue;
-     }
+    if(!record) {
+      logInfo << "Error: no record!"; 
+      SaveHeartbeat(heartbeatInfo, "Dispatcher has no data.");
+      continue;
+    }
     
-    //  try {
-    //    record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CARD);      // The business end of things.
-    //  }
-    //  catch (std::runtime_error& error) {
-    //    std::string s = "Error: could not unpack card data ";
-    //    s+=error.what();
-    //    logInfo << s;
-    //    SaveHeartbeat(heartbeatInfo, s);
-    //    continue;
-    // }
-    //
-    // try {
-    //   record->updateIOMode(gov::fnal::uboone::datatypes::IO_GRANULARITY_CHANNEL);      // The business end of things.
-    // }
-    // catch (std::runtime_error& error) {
-    //     std::string s = "Error: could not unpack channel data ";
-    //     s+=error.what();
-    //     logInfo << s;
-    //     SaveHeartbeat(heartbeatInfo, s);
-    //     continue;
-    //  }
-      
     RawRecordComposer composer(result,record,oOptions);
     try {
        composer.fCacheStoragePath     = oCacheDir;
