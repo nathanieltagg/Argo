@@ -1,0 +1,29 @@
+#live-status {
+  margin-left: 30px;
+  float: right;
+  font-size: 1.5em;
+}
+
+#live-info {
+  margin-left: 30px;
+  float: right;
+  font-size: 1.5em;
+}
+
+div#live-wireview-container{
+  width: 70%;
+  display: block;
+}
+div.A-WireView {
+  height: 280px;
+  width: 100%;
+}
+div.A-WireHist {
+  height: 8px;
+  width: 100%;
+}
+
+#live-rightbar {
+  float: right;
+  width:29%;
+}
