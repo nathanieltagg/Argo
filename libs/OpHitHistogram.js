@@ -193,7 +193,7 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
               this.highlight_hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale);          
           }
         }
-      } else { // pulses
+      } else if (gRecord.oppulses && gOpPulsesListName) { // pulses
         
         var oppulses = gRecord.oppulses[gOpPulsesListName];      
         if(oppulses && oppulses.length) {

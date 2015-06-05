@@ -152,7 +152,8 @@ function getEncodedPngVal(imgdata, x)
 
 WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc)
 {
-  
+  if(isNaN(channel)) return;
+  if(isNaN(tdc)) return;
   var y = channel;
   var x = tdc;
   var width = offScreenCtx.canvas.width;
