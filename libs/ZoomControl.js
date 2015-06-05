@@ -12,14 +12,12 @@ $(function(){
 // Subclass of Pad.
 ZoomControl.prototype = new ButtressedPad();
 
-// Global
-gZoomControl = null;
-gZoomRegion = new ZoomRegion();
 
 function ZoomRegion() {
   this.plane= [  [ gGeo.numWires(0)/2-250, gGeo.numWires(0)/2+250 ],
                  [ gGeo.numWires(1)/2-250, gGeo.numWires(1)/2+250 ],
                  [ gGeo.numWires(2)/2-250, gGeo.numWires(2)/2+250 ] ];
+                 console.log('created zoomRegion',this.plane[0][0],this.plane[0][1]);
 
   this.tdc = [0,3200];
 
@@ -52,8 +50,10 @@ function ZoomRegion() {
     if($('#ctl-lock-aspect-ratio').is(":checked")) {
       
       var newWireWidth = (high-low) / (gGeo.fTdcWirePitch * this.wireview_aspect_ratio);    
-      // console.log("adjusting for aspect ratio ",newWireWidth);
+      console.log("adjusting for aspect ratio ",newWireWidth);
       for(var ip=0;ip<3;ip++) {
+        console.log("changeTimeRange",ip);
+        
         var center = (this.plane[ip][0]+this.plane[ip][1])/2;
         this.plane[ip][0] = center - newWireWidth/2;
         this.plane[ip][1] = center + newWireWidth/2;
@@ -64,6 +64,8 @@ function ZoomRegion() {
 
   this.moveZoomCenter = function(plane,deltaWire)
   {
+    console.log("moveZoomCenter",plane,deltaWire);
+    
     var dwire = this.getDWire(plane,deltaWire);
     for(var ip=0;ip<3;ip++) {
       for(var il=0;il<2;il++) this.plane[ip][il]+=dwire[ip];
@@ -72,6 +74,8 @@ function ZoomRegion() {
   
   this.setLimits = function(plane,wireLow,wireHigh)
   {
+    console.log("setLimits",plane,wireLow,wireHigh);
+    console.log(this.plane[0][0],this.plane[0][1]);
     // Jump to a new set of coordinates.
     var oldCenter = this.getCenter();
     var halfWidth = (wireHigh - wireLow)/2;
@@ -81,6 +85,7 @@ function ZoomRegion() {
     for(var ip=0;ip<3;ip++) {
       this.plane[ip][0] = oldCenter[ip]+dcenter[ip] - halfWidth;
       this.plane[ip][1] = oldCenter[ip]+dcenter[ip] + halfWidth;
+      if(isNaN(this.plane[ip][0]) || isNaN(this.plane[ip][1]) ) {debugger;}
     }
     
     if($('#ctl-lock-aspect-ratio').is(":checked")) {    
@@ -94,6 +99,9 @@ function ZoomRegion() {
   
 }
 
+// Global
+gZoomControl = null;
+gZoomRegion = new ZoomRegion();
 
 function ZoomControl( element, options )
 {
@@ -171,7 +179,7 @@ ZoomControl.prototype.AutoZoom = function()
   else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
   // else return;
   
-  // console.warn("Zoom Control Source:",source);
+  console.warn("Zoom Control Source:",source);
   
   if(source){
     if(source.timeHist){      
@@ -179,7 +187,7 @@ ZoomControl.prototype.AutoZoom = function()
       var time_bounds = timeHist.GetROI(0.03);
       gZoomRegion.tdc[0] = time_bounds[0]-20;
       gZoomRegion.tdc[1] = time_bounds[1]+20;  
-      // console.log("AutoZoom: Time: ",gZoomRegion.tdc[0], gZoomRegion.tdc[1]);
+      console.log("AutoZoom: Time: ",gZoomRegion.tdc[0], gZoomRegion.tdc[1]);
     } else {
       gZoomRegion.tdc[0] = 0;
       gZoomRegion.tdc[1] = 3200;
@@ -189,22 +197,22 @@ ZoomControl.prototype.AutoZoom = function()
     if(source.planeHists) {
       var plane0Hist = HistogramFrom(source.planeHists[0]);
       var plane0_bounds = plane0Hist.GetROI(sacrifice);
-      // console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
+      console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
 
       delete source.planeHists[1]._owner;
       var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
       var plane1_bounds = plane1Hist.GetROI(sacrifice);
-      // console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
+      console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
 
       delete source.planeHists[2]._owner;
       var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
       var plane2_bounds = plane2Hist.GetROI(sacrifice);
-      // console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
+      console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
     
 
-      // gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
-      // gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
-      // gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+      gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
+      gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
+      gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
       if(!isNaN(plane2Hist.GetMean()))
         gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
       if(!isNaN(plane0Hist.GetMean()))
@@ -219,13 +227,13 @@ ZoomControl.prototype.AutoZoom = function()
     return;
    }
   
-  // console.log("zoomChange?");
+  console.log("zoomChange?");
   gStateMachine.Trigger("zoomChange");
 };
 
 ZoomControl.prototype.FullZoom = function()
 {
-  gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
+  gZoomRegion.changeTimeRange(0,9600);
   
   var h = gGeo.numWires(2)/2;
   gZoomRegion.plane[0]=[gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h];
