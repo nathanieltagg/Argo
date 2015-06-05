@@ -160,7 +160,39 @@ void getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> recor
   header.add("seconds",sec);
   header.add("microSeconds",usec);
   header.add("nanoSeconds",nsec);
+  double daqtime = sec*1000 + nsec*1e-9;
+  
+  header.add("daqTime",daqtime);
+
 }
+
+  
+bool getTriggerData(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& trig)
+{
+  
+   // get trigger card data.
+  const ub_EventRecord::trig_map_t trigmap = record->getTRIGSEBMap();
+  if(trigmap.size()==0) {
+    return false;
+  }
+  auto const& trigger = record->getTRIGSEBMap().begin()->second;
+  auto const& ch = trigger.crateHeader();
+  auto const& trigger_cards = trigger.getCards();
+  trig.add("trigger_cards",trigger_cards.size());
+  // Fixme: look at GPS 
+  if(trigger_cards.size()<1) return true;;
+  auto const& trigger_header = trigger_cards.begin()->header();
+  auto const& trigger_channels = trigger_cards.begin()->getChannels();
+  if(trigger_channels.size()<1) return true;;
+  auto const& trigger_data = trigger_channels.begin()->header();
+  
+  trig.add("triggerword",(trigger_data.trig_data_1 & 0x7FFF));
+  trig.add("frame",trigger_header.getFrame());
+  trig.add("sample_2MHz",trigger_header.get2MHzSampleNumber());
+  trig.add("sample_16MHz",((trigger_header.get2MHzSampleNumber())<<3) + trigger_header.get16MHzRemainderNumber());
+
+}
+
 
 
 void RawRecordComposer::composeHeader()
@@ -170,20 +202,24 @@ void RawRecordComposer::composeHeader()
   // GET THE TIME
   getTime(fRecord,header);
 
+  header.add("run"           ,fRecord->getGlobalHeader().getRunNumber()    );
+  header.add("subrun"        ,fRecord->getGlobalHeader().getSubrunNumber() );
+  header.add("event"         ,fRecord->getGlobalHeader().getEventNumber()  );
+  
+  
+  // Get trigger info.
+  
   // header.add("seconds",fRecord->getGlobalHeader().getSeconds());
   // header.add("microSeconds",fRecord->getGlobalHeader().getMicroSeconds());
   // header.add("nanoSeconds",fRecord->getGlobalHeader().getNanoSeconds());
-  int daqSec = fRecord->getGlobalHeader().getSeconds();
-  int daqNanoSec = (fRecord->getGlobalHeader().getNanoSeconds()); // FIXME: Not sure if right.
-  double daqtime = daqSec*1000 + daqNanoSec*1e-9;
-  
-  header.add("daqTime",daqtime);
   header.add("recordOrigin", fRecord->getGlobalHeader().getRecordOrigin());
   
-  // Add my own things. 
-  // FIXME: this should come from the event data, not be hardcoded, but this will have to do for the moment.
-  header.add("TDCStart",fmintdc); // get from raw wire info.
-  header.add("TDCEnd",fmaxtdc);
+  
+  // trigger data.
+  JsonObject trig;
+  getTriggerData(fRecord,trig);
+  header.add("trigger",trig);
+  
   
   fOutput.add("header",header);  
 }

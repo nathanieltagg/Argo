@@ -11,7 +11,7 @@ use ArgoServerTools qw(setup myerror);
 #configuration
 # $updater_exec = 'argo-live-backend';
 $cache_dir = '../live_event_cache';
-$heartbeat_timeout = 30; #seconds
+$heartbeat_timeout = 40; #seconds
 $heartbeat_file = "$cache_dir/heartbeat.json";
 
 ArgoServerTools::setup();
@@ -35,7 +35,7 @@ if( -r  $heartbeat_file) {
 
   # When was the heartbeat last updated? 
   $heartbeat_time = (stat($heartbeat_file))[9];
-  $oldness = (time() - $t);
+  $oldness = (time() - $heartbeat_time);
   print "Heartbeat file is $oldness seconds old.";
   if( $oldness > $heartbeat_timeout) {
     # It's too old!  
