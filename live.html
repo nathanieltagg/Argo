@@ -22,8 +22,8 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
 </script>
 
 <!-- Main CSS sheet for basic layout, custom mods. -->
-<link rel="stylesheet" href="live.css" type="text/css" media="all"/>
 <link rel="stylesheet" href="argo.css" type="text/css" media="all"/>
+<link rel="stylesheet" href="live.css" type="text/css" media="all"/>
 <link rel="stylesheet" href="selected-object-info.css" type="text/css" media="all"/>
 <link rel="stylesheet" href="local.css" type="text/css" media="all"/>
 
@@ -81,21 +81,7 @@ div.A-TimeHistogram {
   <div style="clear:both;"></div>
   <div id="expando-target" style="z-index:998;"></div>
 
-
-  <!--#include virtual="html/WireViewBig.inc" -->
-  <div style="float:left; width:59%;">
-    <!--#include virtual="html/OpHits.inc" -->
-  </div>
-  <div style="float:right: width: 39%">
-  <!--#include virtual="html/TimeHistogram.inc" -->
-  <!--#include virtual="html/ZoomControl.inc" -->
-  
-  </div>
-  <div style="clear:both;"></div>
-    <!--#include virtual="html/WireView.inc" -->
-
-
-  <div style="float:left; width:49%;">
+  <div id='live-rightbar'>
     <div class="portlet" id="eventinfo-port"> 
     <div class="portlet-header">Event Info</div>
       <div  class="portlet-content">
@@ -111,13 +97,51 @@ div.A-TimeHistogram {
         </div>
       </div>
     </div>  <!-- portlet -->
+
+    <!--#include virtual="html/WireInfo.inc" -->
+    <!--#include virtual="html/OpHits.inc" -->
+  <!--#include virtual="html/TimeHistogram.inc" -->
+  <!--#include virtual="html/ZoomControl.inc" -->
+
+  </div>
+  
+  <div id='live-wireview-container'>
+
+  <div class="portlet" id="live0-wireimg-port">
+    <div class="portlet-header">"U" View / View 0 / Plane 0</div>
+    <div class="portlet-content" style="background-color:white">
+         <div class="pad A-WireView"      data-options='{"plane": 0}'></div>
+         <div class="pad A-WireHistogram" data-options='{"plane": 0}'></div>
+    </div>
   </div>
 
-  <div style="float:right; width:49%">
-    <!--#include virtual="html/WireInfo.inc" -->
+
+  <div class="portlet" id="live1-wireimg-port">
+    <div class="portlet-header">"V" View / View 1 / Plane 1</div>
+    <div class="portlet-content" style="background-color:white">
+        <div class="pad A-WireView"      data-options='{"plane": 1}'></div>
+        <div class="pad A-WireHistogram" data-options='{"plane": 1}'></div>
+    </div>
   </div>
+
+  <div class="portlet" id="live2-wireimg-port">
+    <div class="portlet-header">"Y" View / View 2 / Plane 2</div>
+    <div class="portlet-content" style="background-color:white">
+        <div class="pad A-WireView"      data-options='{"plane": 2}'></div>
+        <div class="pad A-WireHistogram" data-options='{"plane": 2}'></div>
+    </div>
+  </div>
+
+  </div> <!-- live-wireview-container-->
 
   <div style="clear:both;"></div>
+  <div style="float:right: width: 39%">
+  
+  </div>
+
+
+  <div style="float:left; width:49%;">
+  </div>
 
   
   <div id="footer">
@@ -148,7 +172,7 @@ div.A-TimeHistogram {
       <div><input type="checkbox" id="ctl-histo-logscale" name="ctl-histo-logscale" checked="checked" class="saveable  ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale Histograms</label></div>
       <div><input type="checkbox" id="ctl-show-labels" name="ctl-show-labels" checked="checked" class="saveable"/><label for="ctl-show-labels">Draw Axis Labels</label></div>
       <div><input type="checkbox" id="ctl-show-tick-labels" name="ctl-show-tick-labels" checked="checked" class="saveable"/><label for="ctl-show-tick-labels">Draw Tick Values</label></div>
-      <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio" checked="checked"  class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
+      <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio"  class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
       <div><input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" checked="checked" class="saveable show-wireimg" /><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>
       <div><b>(Shift-W)</b>
         <span class="align-right">
