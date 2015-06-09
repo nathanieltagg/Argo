@@ -6,7 +6,7 @@
    
      Send any comments, bug reports, or suggestions to Nathaniel at NTagg (at) otterbein.edu.<br/>
      This work is supported by the <a href="www.nsf.gov">National Science Foundation</a>.<br/>
-     <p style="font-size: 0.875em">About the name <a href="http://en.wikipedia.org/wiki/Arachne">Arachne</a></p>
+     <p style="font-size: 0.875em">About the name <a href="http://argo-microboone.fnal.gov/help/#argo">Argo</a></p>
    </td>
    <td>
      <img src="images/ublogo.jpg" height="100" alt="ublogo" />
