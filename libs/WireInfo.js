@@ -44,7 +44,7 @@ function WireInfo( element  )
   this.graphdata = new Histogram(50,0,50);
   this.graph_data = [];
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
-    this.graph_data[i] = new Histogram(50,0,50); 
+    this.graph_data[i] = new Histogram(100,0,100); 
   }
 
   this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
