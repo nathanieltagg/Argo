@@ -487,6 +487,9 @@ Pad.prototype.DrawFrame = function()
       this.ctx.save();
       this.ctx.translate(this.width-this.margin_right, this.height);
       this.ctx.textBaseline = 'bottom';
+      // scale to fit.
+      var scale = (this.span_x+1) / (this.ctx.measureText(this.xlabel)+1);
+      if(scale < 1) this.ctx.scale(scale,scale);
       this.ctx.fillText(this.xlabel, 0,0);
       this.ctx.restore();
     }
@@ -496,6 +499,8 @@ Pad.prototype.DrawFrame = function()
       this.ctx.translate(0,this.margin_top);      
       this.ctx.rotate(-90*3.1416/180);
       //this.ctx.drawTextRight(font,fontsize,0,+asc,this.ylabel);
+      var scale = (this.span_y+1) / (this.ctx.measureText(this.ylabel)+1);
+      if(scale < 1) this.ctx.scale(scale,scale);
       this.ctx.textBaseline = 'top';
       this.ctx.fillText(this.ylabel, 0, 0);    
       this.ctx.restore();

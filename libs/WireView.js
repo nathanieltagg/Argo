@@ -446,9 +446,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
   var objnm = '_' + this.show_image;
   if(!gRecord[objnm]) return; // No such data.
-  if(!gRecord[objnm].colored_wire_map) return; // No such data.
-  if(!gRecord[objnm].colored_wire_map.canvas) return; // No such data.
-  var canvas = gRecord[objnm].colored_wire_map.canvas;
+  if(!gRecord[objnm].colored_wire_canvas) return; // No such data.
+  var canvas = gRecord[objnm].colored_wire_canvas;
 
   // FIXME: thumbnails for faster panning.
   

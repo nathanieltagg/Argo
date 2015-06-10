@@ -19,6 +19,7 @@ function HistogramFrom(o)
 {
   delete o._owner; // if it exists.
   for(var j in o) { if(o[j]) delete o[j]._owner; }
+  if(o.x_bins)   return $.extend(true,new HistogramV(1,0,1), o);  
   return $.extend(true,new Histogram(1,0,1), o);  
 };
 
@@ -194,6 +195,11 @@ Histogram.prototype.GetBin = function(x)
    return Math.floor((x - this.min) * this.n / (this.max - this.min));
 };
 
+Histogram.prototype.GetX = function(bin) 
+{
+    return (bin/this.n)*(this.max-this.min) + this.min;
+};
+
 Histogram.prototype.SetBinContent = function(bin,val) 
 {
     var x = this.GetX(bin);
@@ -213,10 +219,6 @@ Histogram.prototype.SetBinContent = function(bin,val)
 
 
     
-Histogram.prototype.GetX = function(bin) 
-{
-    return (bin/this.n)*(this.max-this.min) + this.min;
-};
 
 Histogram.prototype.GetMean = function()
 {
@@ -263,3 +265,33 @@ Histogram.prototype.GetROI = function(frac)
 
   return [this.GetX(bin_low),this.GetX(bin_high)];
 };
+
+///
+/// Support for variable-binned histogram
+//
+
+HistogramV.prototype = new Histogram();
+
+function HistogramV(n, min, max)
+{
+  Histogram.call(this, n, min, max); // Give settings to Pad contructor.
+  this.x_bins = [];
+  for(var i=0;i<n;i++) this.x_bins[i] = min + (max-min)*i/n;
+}
+
+HistogramV.prototype.GetBin = function(x) 
+{
+  var a=0;
+  var b=this.n-1;
+  while((b-a)>1) {
+    var c=Math.floor((b-a)/2);
+    if(x>this.x_bins(c)) a=c;
+    else b=c;
+  } return a;
+};
+
+HistogramV.prototype.GetX = function(bin) 
+{
+   return this.x_bins[bin];
+};
+

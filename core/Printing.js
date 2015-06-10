@@ -31,11 +31,11 @@ function DoPrint(objToPrint,execPrintOrder)
       
 
       // For now, let's use a new window, so we can look at it.
-      var windowType = "window";
+      var windowType = "frame";
       var outDoc, newWin, objFrame, jFrame;
       
       if(windowType == "window") {
-        newWin= window.open("");
+        newWin= window.open("", '_blank');
         outDoc = newWin.document;
       }
       
@@ -133,6 +133,7 @@ function DoPrint(objToPrint,execPrintOrder)
 
       
       if(windowType == "window") {
+        console.log("printing");
         if(execPrintOrder) newWin.print();
       } 
       if(windowType == "frame") {

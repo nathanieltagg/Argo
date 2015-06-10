@@ -10,6 +10,30 @@
 // create the slew of output .pngs using crafty 
 // threaded jobs
 
+const double warpbins[] = {
+    -4096
+  ,-2048
+  ,-1024
+  ,-512
+  ,-256
+  ,-128
+  ,-64
+  ,-32
+  -30,-28,-26,-24,-22-20,-18,-16,-14,-12,
+  -10,-9,-8,-7,-6,-5,-4,-3,-2,-1
+  ,0
+  ,1,2,3,4,5,6,7,8,9,10
+  ,12,14,16,18,20,22,24,26,28,30
+  ,32
+  ,64
+  ,128
+  ,256
+  ,512
+  ,1024
+  ,2048
+  ,4096
+};
+
 void MakeEncodedTileset(JsonObject& r,
                         std::shared_ptr<wiremap_t> wireMap, 
                         size_t nwire,
@@ -79,6 +103,8 @@ void MakeEncodedTileset(JsonObject& r,
     planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+    // TH1D hPedAdc("hPedAdc","hPedAdc",8192,-4096,4096);
+    std::vector<size_t> hPedAdc(8192,0);
     // waveform_t blank(ntdc,0);
     for(int wire=0;wire<nwire;wire++) 
     {
@@ -89,6 +115,8 @@ void MakeEncodedTileset(JsonObject& r,
             
         for(int k=0;k<ntdc;k++) {        
           short raw = waveform[k];
+          // hPedAdc->Fill(raw);
+          hPedAdc[raw+4096]++;
           double val = abs(raw);
           wiresum += val;
           timeProfileData[k+1] += val;
@@ -106,6 +134,16 @@ void MakeEncodedTileset(JsonObject& r,
     jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
     jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
     r.add("planeHists",jPlaneHists);
+
+    TH1D hPedAdcWarped("hPedAdcWarped","hPedAdcWarped",54,warpbins);
+    // for(int bin=1;bin<hPedAdc.GetNbinsX();bin++) {
+    //   hPedAdcWarped->Fill(hPedAdc->GetBinCenter(bin),hPedAdc->GetBinContent(bin));
+    // }
+    for(int bin=0;bin<hPedAdc.size();bin++) {
+      hPedAdcWarped.Fill(bin-4096,hPedAdc[bin]);
+    }
+    r.add("h_adc",TH1ToHistogram(&hPedAdcWarped));
+    
 
     delete planeProfile[0];
     delete planeProfile[1];

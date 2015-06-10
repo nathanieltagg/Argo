@@ -3,6 +3,8 @@
 #include <TH2.h>
 #include <TDirectory.h>
 
+#include <iostream>
+
 
 int findDivisor(int n, int m)
 {
@@ -61,6 +63,18 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
     }
     h.add("binlabelsx",binlabels);
   }
+  // Custom bin widths
+  if(hist->GetXaxis()->IsVariableBinSize()) {
+    std::cout << hist->GetName() << " has variable bins" << std::endl;
+    JsonArray xbins;
+    const TArrayD* Xbins = hist->GetXaxis()->GetXbins();
+    for(int bin=0;bin<hist->GetNbinsX();bin++) xbins.add(Xbins->At(bin));
+    h.add("x_bins",xbins);
+  } else {
+    std::cout << hist->GetName() << " does not have variable bins" << std::endl;
+    
+  }
+  
   h.add("n",hist->GetNbinsX());
   h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),10));
   h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),10));
@@ -168,11 +182,13 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
   // Does it have errors that aren't just simple sqrt(N)?
   bool has_err = (hist->GetSumw2()->fN>0);
 
+  int nx = hist->GetNbinsX();
+  int ny = hist->GetNbinsY();
   JsonArray data;
-  for(int i=1; i <= hist->GetNbinsX();i++) {
+  for(int i=1; i <= nx;i++) {
     JsonArray data2;
     JsonArray errs2;
-    for(int j=1; j<= hist->GetNbinsY(); j++) {
+    for(int j=1; j<= ny; j++) {
       int bin = hist->GetBin(i,j);
       data2.add(JsonSigFig(hist->GetBinContent(bin),3));
       errs2.add(JsonSigFig(hist->GetBinError  (bin),3));
@@ -182,6 +198,25 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
   }
   h.add("data",data);
   if(has_err) h.add("errs",errs);
+  
+  JsonArray underflow_x;
+  JsonArray overflow_x;
+  for(int j=1; j <= ny;j++)  {
+    underflow_x.add(JsonSigFig(hist->GetBinContent(hist->GetBin(0,j)),3));
+    overflow_x .add(JsonSigFig(hist->GetBinContent(hist->GetBin(0,nx+1)),3));
+  }
+  
+  JsonArray overflow_y;
+  JsonArray underflow_y;
+  for(int i=1; i <= nx;i++)  {
+    underflow_y.add(JsonSigFig(hist->GetBinContent(hist->GetBin(i,0)),3));
+    overflow_y.add(JsonSigFig(hist->GetBinContent(hist->GetBin(i,ny+1)),3));
+  }
+  h.add("underflow_x",underflow_x);  
+  h.add("overflow_x", overflow_x);  
+  h.add("underflow_y",underflow_y);  
+  h.add("overflow_y", overflow_y);  
+  
   h.add("info",getObjectInfo(inHist));
   
   if(htemp) delete htemp;

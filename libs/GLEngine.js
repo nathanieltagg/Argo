@@ -4,6 +4,7 @@
 //
 
 $(function(){
+  gGLEngine = new GLEngine();
   gStateMachine.Bind('TiledImageLoaded_raw',function(){ UpdateColoredWireMap("_raw"); });
   gStateMachine.Bind('TiledImageLoaded_cal',function(){ UpdateColoredWireMap("_cal"); });
 });
@@ -16,13 +17,14 @@ function UpdateColoredWireMap(typ)
   if(!gRecord) return;
   
   // FIXME: assumes only 1 type of raw or cal wires in any given loaded event.
-  if(gRecord[typ] && gRecord[typ].tiled_canvas) {//}&& !gRecord[typ].colored_wire_map) {
-      var gle = new GLEngine;
-      gRecord[typ].colored_wire_map = gle ;      
-      gle.draw_falsecolor_from_canvas(
-           gRecord[typ].tiled_canvas.canvas,
-           gWirePseudoColor, 
-           2048 //gle.gl.getParameter(gle.gl.MAX_TEXTURE_SIZE)/2
+  if(gRecord[typ] && gRecord[typ].tiled_canvas) {
+    gRecord[typ].colored_wire_canvas = document.createElement('canvas');
+    gRecord[typ].colored_wire_canvas.width = gRecord[typ].tiled_canvas.canvas.width;
+    gRecord[typ].colored_wire_canvas.height = gRecord[typ].tiled_canvas.canvas.height;
+    gGLEngine.draw_falsecolor_from_canvas(
+                       gRecord[typ].tiled_canvas.canvas,
+                       gRecord[typ].colored_wire_canvas,
+                       gWirePseudoColor 
       );
   }
   gStateMachine.Trigger('colorWireMapsChanged');
@@ -31,18 +33,25 @@ function UpdateColoredWireMap(typ)
 
 
 
-function GLEngine( canvas )
-{
-  // If a canvas is provided, use it.
-  // Otherwise, create an offscreen canvas.
-  if(canvas) { 
-    this.canvas = canvas;
-  } else {
-    this.canvas = document.createElement( 'canvas' );
-    this.canvas.width = 256;  // Fixme?
-    this.canvas.height = 256;
-  }
 
+
+function GLEngine( tilesize )
+{
+  // Create a workspace render canvas.
+  this.tilesize = tilesize || 2048;
+  this.renderCanvas = document.createElement('canvas');
+  this.renderCanvas.width = this.tilesize;
+  this.renderCanvas.height = this.tilesize;
+ 
+  console.time("GLEngine::create gl context");
+  try {
+    this.gl = this.renderCanvas.getContext('experimental-webgl');    
+  } catch(e) 
+  {
+    console.error("Cannot crate WebGL context: "  + e.toString());
+    return;
+  }
+  console.timeEnd("GLEngine::create gl context");
    
 }
 
@@ -177,29 +186,13 @@ GLEngine.prototype.draw_to_rect = function( x, y, width, height, positionLocatio
 }
 
 
-GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, pseudocolor, tilesize) 
+GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, outcanvas, pseudocolor) 
 {
   console.log('GLEngine::draw_falsecolor_from_canvas');
   
   console.time('GLEngine::draw_falsecolor_from_canvas');
 
-  this.canvas.width  = incanvas.width;
-  this.canvas.height = incanvas.height;
 
-  var renderCanvas = document.createElement('canvas');
-  renderCanvas.width = tilesize;
-  renderCanvas.height = tilesize;
-
-
-  console.time("GLEngine::create gl context")
-  try {
-    this.gl = renderCanvas.getContext('experimental-webgl');    
-  } catch(e) 
-  {
-    console.error("Cannot crate WebGL context: "  + e.toString());
-    return;
-  }
-  console.timeEnd("GLEngine::create gl context")
 
   // For simplicity
   var gl = this.gl;
@@ -208,12 +201,12 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, pseudocolor,
     console.error("Lost GL context somewhere.");
   }
   
-  this.canvas.width  = incanvas.width;
-  this.canvas.height = incanvas.height;
+  outcanvas.width  = incanvas.width;
+  outcanvas.height = incanvas.height;
   
    // This line is required if we change canvas size
   // after creating GL context
-  // this.gl.viewport(0,0,this.canvas.width,this.canvas.height);
+  // this.gl.viewport(0,0,outcanvas.width,outcanvas.height);
   
   // setup GLSL this.program
   var vertexShader = this.create_shader( "2d-vertex-shader");
@@ -267,26 +260,26 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, pseudocolor,
 
   // lookup uniforms
   var resolutionLocation = gl.getUniformLocation(this.program, "u_resolution");
-  gl.uniform2f(resolutionLocation, this.canvas.width, this.canvas.height);  
+  gl.uniform2f(resolutionLocation, outcanvas.width, outcanvas.height);  
 
   // $('body').prepend($(incanvas).css('width','50%'));
-  // $('body').prepend($(this.canvas).css('width','50%'));
+  // $('body').prepend($(outcanvas).css('width','50%'));
   // Now time to draw some tiles.
   var tileCanvas = document.createElement('canvas');
   
   // Figure out how many tiles we want to use:
-  var nx = Math.ceil(incanvas.width / tilesize);
-  var ny = Math.ceil(incanvas.height / tilesize);
+  var nx = Math.ceil(incanvas.width / this.tilesize);
+  var ny = Math.ceil(incanvas.height / this.tilesize);
   for(var ix = 0; ix<nx; ix++) {
     for (var iy =0; iy< ny; iy++) {
       // if(ix!=iy) continue; // debugging
       console.time('Build tile '+ix+' '+iy);
       
       // Copy rect coordinates:
-      var x = ix*tilesize;
-      var y = iy*tilesize;
-      var w = Math.min(tilesize, incanvas.width-x);
-      var h = Math.min(tilesize, incanvas.height-y);
+      var x = ix*this.tilesize;
+      var y = iy*this.tilesize;
+      var w = Math.min(this.tilesize, incanvas.width-x);
+      var h = Math.min(this.tilesize, incanvas.height-y);
       console.log(ix,iy,"xy",x,y,"wh",w,h);
       
       tileCanvas.width = w;
@@ -315,19 +308,19 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, pseudocolor,
  
       // Change viewport, draw into small viewport
       // gl.uniform2f(resolutionLocation, w,h);
-      // gl.viewport(x,this.canvas.height-y-h,w,h);
+      // gl.viewport(x,outcanvas.height-y-h,w,h);
       // this.draw_to_rect(0,0,w,h,positionLocation);
 
       // Use large viewport, draw into rect
-      // gl.uniform2f(resolutionLocation, this.canvas.width, this.canvas.height);
-      // gl.viewport(0,0,this.canvas.width,this.canvas.height);
+      // gl.uniform2f(resolutionLocation, outcanvas.width, outcanvas.height);
+      // gl.viewport(0,0,outcanvas.width,outcanvas.height);
       // this.draw_to_rect(x,y,w,h,positionLocation);
 
       // Use temporary renderCanvas.
-      gl.uniform2f(resolutionLocation, renderCanvas.width, renderCanvas.height);
-      // gl.viewport(0,0,this.canvas.width,this.canvas.height);
+      gl.uniform2f(resolutionLocation, this.renderCanvas.width, this.renderCanvas.height);
+      // gl.viewport(0,0,outcanvas.width,outcanvas.height);
       this.draw_to_rect(0,0,w,h,positionLocation);
-      this.canvas.getContext('2d').drawImage(renderCanvas,0,0,w,h, x,y,w,h);
+      outcanvas.getContext('2d').drawImage(this.renderCanvas,0,0,w,h, x,y,w,h);
 
       // this.draw_to_rect(x,y,w,h,positionLocation);
       console.timeEnd('Build tile '+ix+' '+iy);
@@ -391,9 +384,9 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, pseudocolor,
 //     this.tile_images.push(imagerow);
 //   }
 //
-//   this.canvas.width = total_width;
-//   this.canvas.height = total_height;
-//   this.gl.viewport(0,0,this.canvas.width,this.canvas.height); // This line is required if we change canvas size
+//   outcanvas.width = total_width;
+//   outcanvas.height = total_height;
+//   this.gl.viewport(0,0,outcanvas.width,outcanvas.height); // This line is required if we change canvas size
 //   // after creating GL context
 //
 //   // I don't THINK there could be a race condition: I don't think those callbacks activate until after this function has returned
@@ -452,7 +445,7 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, pseudocolor,
 //
 //   // lookup uniforms
 //   var resolutionLocation = gl.getUniformLocation(this.program, "u_resolution");
-//   gl.uniform2f(resolutionLocation, this.canvas.width, this.canvas.height);
+//   gl.uniform2f(resolutionLocation, outcanvas.width, outcanvas.height);
 //
 //
 //

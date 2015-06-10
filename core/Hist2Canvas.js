@@ -42,8 +42,9 @@ function Hist2Canvas( element, options )
     marker: null,
   	adjuct_display: false,
   	adjunct_height: 0,
-		adunct_label: null
-  };
+		adunct_label: null,
+    show_overflows: false
+    };
   $.extend(true,settings,options); // Change defaults
   
   Pad.call(this, element, settings); // Give settings to Pad contructor.
@@ -109,8 +110,6 @@ Hist2Canvas.prototype.SetHist = function( inHist, inColorScale )
   delete this.fHists;
   this.fHists = [inHist];
   this.fColorScales = [inColorScale];
-  this.min_v =inHist.min_content;                // minimum value shown on Y-axis
-  this.max_v= inHist.max_content;  // maximum value shown on Y-axis
   this.FinishRangeChange();
 };
 
@@ -119,15 +118,25 @@ Hist2Canvas.prototype.ResetToHist = function( inHist ) {
   this.max_u = inHist.max_x;
   this.min_v = inHist.min_y;
   this.max_v = inHist.max_y;
+  if(this.show_overflows) {
+    var ubin = (inHist.max_x - inHist.min_x)/inHist.n_x;
+    var vbin = (inHist.max_y - inHist.min_y)/inHist.n_y;
+    this.min_u -= ubin/2;
+    this.max_u += ubin/2;
+    this.min_v -= vbin/2;
+    this.max_v += vbin/2;;
+
+  }
 };
 
 
 Hist2Canvas.prototype.GetY = function( f ) 
 {
-  if(this.log_y === false) {  
+  // No logy.
+  // if(this.log_y === false) {
     return this.origin_y - this.adjunct_height - this.span_y*(f-this.min_v)/(this.max_v-this.min_v);
-  }
-  return this.origin_y - this.adjunct_height - this.span_y*(Math.log(f)-Math.log(this.min_v))/(Math.log(this.max_v)-Math.log(this.min_v));
+  // }
+  // return this.origin_y - this.adjunct_height - this.span_y*(Math.log(f)-Math.log(this.min_v))/(Math.log(this.max_v)-Math.log(this.min_v));
 };
 
 
@@ -138,7 +147,18 @@ Hist2Canvas.prototype.DrawHists = function( )
   //log(this.fName + "::DrawHists");
   // Draw the data.
   if (!this.ctx) return;
+
    for(var iHist = 0; iHist< this.fNHist; iHist++){
+     this.ctx.save()
+     // Clipping boundaries
+     this.ctx.beginPath();
+      this.ctx.moveTo(this.GetX(this.min_u), this.GetY(this.min_v));
+      this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.min_v));
+      this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.max_v));
+      this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.max_v));
+      this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
+      this.ctx.clip();
+      
      //log("  drawing hist "+iHist);
      var hist = this.fHists[iHist];
      var colorscale = this.fColorScales[iHist];
@@ -149,28 +169,42 @@ Hist2Canvas.prototype.DrawHists = function( )
      var boxheight = (hist.max_y-hist.min_y)/(hist.n_y)*this.span_y/(this.max_v-this.min_v) ;
      if(boxheight>2) boxheight -= 1;
      
+     var self = this;
+     function paintCell(i,j,z) {
+       if(z > colorscale.min && z <=colorscale.max) {
+         var u = (i/hist.n_x)*(hist.max_x-hist.min_x) + hist.min_x;
+         var v = (j/hist.n_y)*(hist.max_y-hist.min_y) + hist.min_y;           
+         var x = self.GetX(u);
+         var y = self.GetY(v);
+         var c = colorscale.GetColor(z);
+         console.log(i,j,z);
+         self.ctx.fillStyle = "rgba(" + c + ",1.0)";
+         self.ctx.fillRect(x, y-boxheight, boxwidth, boxheight);          
+       }
+     }
+     
      for (var i = 0; i < hist.n_x; i++) {
        for (var j =0; j< hist.n_y; j++) {
-         var z = hist.data[i][j];
-         if(z!==0) {
-           var u = (i/hist.n_x)*(hist.max_x-hist.min_x) + hist.min_x;
-           var v = (j/hist.n_y)*(hist.max_y-hist.min_y) + hist.min_y;           
-           var x = this.GetX(u);
-           var y = this.GetY(v);
-           var c = colorscale.GetColor(z);
-           console.log(u,v,z,colorscale.min,colorscale.max,c);
-           if(x+boxwidth<this.origin_x) continue;
-           if(x>this.origin_x+this.span_x) continue;
-           // FIXME if(y+boxheight>this.origin_y) continue;
-           // if(y<this.origin_y+this.span_y) continue;
-
-           // Fixme - partial boxes.
-
-           this.ctx.fillStyle = "rgba(" + c + ",1.0)";
-           this.ctx.fillRect(x, y-boxheight, boxwidth, boxheight);          
-         }
+         paintCell(i,j,hist.data[i][j]);
        }
-   }
+     }
+     
+     if(this.show_overflows && hist.underflow_y && hist.overflow_y) {
+       console.log("overunder y");
+       for (var i = 0; i < hist.n_x; i++) {
+         paintCell(i,-1,hist.underflow_y[i]);
+         paintCell(i,hist.n_y,hist.overflow_y[i]);
+       }
+     }
+
+     if(this.show_overflows && hist.underflow_x && hist.overflow_x) {
+       console.log("overunder x");
+       for (var j = 0; j < hist.n_y; j++) {
+         paintCell(-1,j,hist.underflow_x[j]);
+         paintCell(hist.n_x,j,hist.overflow_x[j]);
+       }
+     }
+     this.ctx.restore();
    
    if(hist.binlabelsx) {
      this.ctx.font = this.tick_label_font;
@@ -272,7 +306,12 @@ Hist2Canvas.prototype.DoMouse = function( ev )
     } 
   } else {
     // Either mousemove or mouseup.
-    if(this.fIsBeingDragged !== true) return true; // Not a handled event.
+    if(this.fIsBeingDragged !== true) {
+      if(relx>this.origin_x && rely<this.origin_y
+        && relx<this.width && rely> 0) this.DoMouseOverContent(this.GetU(relx),this.GetV(rely));
+      else  this.DoMouseOverContent(null,null);
+      return true; // Not a handled event.
+    }
     if(this.fDragMode === "shiftX") {
       // find current magnitude of the shift.
       var deltaX = x - this.fDragStartX;

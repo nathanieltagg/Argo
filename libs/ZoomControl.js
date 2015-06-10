@@ -245,7 +245,7 @@ ZoomControl.prototype.FullZoom = function()
 
 ZoomControl.prototype.NewRecord = function()
 {
-  this.AutoZoom();
+  this.FullZoom(); // A better default for the control room
 };
 
 
