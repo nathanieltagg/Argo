@@ -74,8 +74,6 @@ StateMachine.prototype.SimplifyQueue = function(  )
   // Remove redundant entries from an event queue.
   var newlist=[];
   var n = this.eventQueue.length;
-  var Q = "";
-  console.log("Q:",this.eventQueue.join(','));
   for(var i=0;i<n;i++) {
     var m = newlist.length;
     var add = 1;

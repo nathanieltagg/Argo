@@ -9,7 +9,7 @@
         <tr><td class="key">Data Type</td>  <td class="val event-datatype">MC</td></tr>
         <tr><td class="key">Date:</td>      <td><span class="val event-date"></span><br>
                                                 <span class="val event-time"></span><br>
-                                                <span class="val event-age"></span> ago</td></tr>
+                                                <span class="val event-age"></span></td></tr>
 
         <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
         <tr><td class="key">Raw Wires</td>  <td class="val event-raw-wire-names"></td></tr>

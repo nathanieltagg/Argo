@@ -39,6 +39,9 @@ function PseudoColor( control_points )
 
 };
 
+PseudoColor.prototype.GetColor = function(x) {
+};
+
 PseudoColor.prototype.interpolate = function(x) {
   return  {x: x,
            r: this.splineRed  .interpolate(x),
@@ -143,7 +146,8 @@ function PsTest(  )
     var s = 0.9;
     var v = 1;
     var pt = this.HSVtoRGB(h,s,v,x);
-    pt.a=255;    // console.log(pt);
+    pt.a=255;    
+    console.log(pt);
     points.push(pt);
   }
   PseudoColor.call(this,points); // Give settings to PS contructor.

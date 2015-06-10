@@ -242,7 +242,7 @@ function QuerySuccess(data,textStatus,jqxhr)
   gRecord = null;
   
   gServing = data;
-  if(gServing.heartbeat) UpdateHeartbeatStatus(gServing.heartbeat);
+  UpdateHeartbeatStatus();
   if(gServing.error) { 
     $('#status').attr('class', 'status-error');
     $("#status").text('serve-event error: '+gServing.error);
@@ -365,28 +365,23 @@ function UpdateHeartbeatStatus()
 {
   if(!gServing) return;
   var elem = $('#heartbeat-status');
-  if(gServing.heartbeat_time) {
-    var date = new Date(gServing.heartbeat_time*1000);
-    var now = new Date;
-    var dt = (now.getTime() - date.getTime())/1000.
-    var age = dt;
-    if(dt<60*2)             age = dt.toFixed(0) + " sec";
-    else if(dt<3600*2)      age = (dt/60).toFixed(0) + " min";
-    else if(dt<86400*2)     age = (dt/3600).toFixed(0) + " hours";
-    else if(dt<24*3600*400) age = (dt/86400).toFixed(1) + " days";
-    else                    age = (dt/31536000).toFixed(1) + " years";
-    elem.text(age + " ago");
-  }
+
   if(gServing.heartbeat) {
     if(gServing.heartbeat.error) {
       elem.text(gServing.heartbeat.error);
       return;
     }
+  }
+  if(gServing.heartbeat) {
     if(gServing.heartbeat.server_restart) {
-      var d = new Date(heartbeat.server_restart*1000);
-      elem.text("Please wait; server restarted " + d.toString);
+      elem.text("Please wait; server restarted " + CreateTimeAgoElement(gServing.heartbeat.server_restart*1000));
     }
   }
+
+  if(gServing.heartbeat_time) {
+    $(elem).addClass("TimeAgo");
+    $(elem).html(CreateTimeAgoElement(gServing.heartbeat_time*1000));
+  }  
   
 }
 

@@ -73,6 +73,7 @@
 <script type="text/javascript" src="core/Printing.js"></script> 
 <script type="text/javascript" src="core/GeometryUtils.js"></script> 
 <script type="text/javascript" src="core/DreamyScan.js"></script> 
+<script type="text/javascript" src="core/TimeAgo.js"></script> 
 
 
 
@@ -106,6 +107,7 @@
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
 <script type="text/javascript" src="libs/SaveSelection.js"></script> 
 <script type="text/javascript" src="libs/PseudoColor.js"></script> 
+<script type="text/javascript" src="libs/FalseColorControl.js"></script> 
 <script type="text/javascript" src="libs/GLEngine.js"></script> 
 
 <script type="text/javascript" src="libs/LiveControl.js"></script> 

@@ -191,7 +191,7 @@ HistCanvas.prototype.AddHist = function( inHist, inColorScale, options )
   if(typeof alpha === 'undefined' || alpha === null) alpha = 1;  
   this.fHists[this.fNHist] = inHist;
   this.fColorScales[this.fNHist] = inColorScale;
-  this.fHistOptions[this.fNHist] = $.extend({},this.default_options,options);
+  this.fHistOptions[this.fNHist] = $.extend({},this.default_options, options);
   this.fNHist++;
   if(inHist.binlabelsx) 
     this.draw_tick_labels_x = false; // Don't draw numeric tick labels.
@@ -317,8 +317,8 @@ HistCanvas.prototype.DrawHist = function( iHist )
    this.ctx.lineWidth = o.lineWidth;
    
    // Width of a single vertical histogram bar.
-   var barwidth = (hist.max-hist.min)/(hist.n)*this.span_x/(this.max_u-this.min_u) ;
-   if(barwidth>2) barwidth -= 1;
+   // var barwidth = (hist.max-hist.min)/(hist.n)*this.span_x/(this.max_u-this.min_u) ;
+   // if(barwidth>2) barwidth -= 1;
    
    var i,t,t2,f,x1,x2,y;
    
@@ -354,18 +354,16 @@ HistCanvas.prototype.DrawHist = function( iHist )
        t2 = hist.GetX(i+1);
        f = hist.data[i];
        x = this.GetX(t);
+       x2= this.GetX(t2);
        y = this.GetY(f);
-       if(x+barwidth<this.origin_x) continue;
+       if(x2<this.origin_x) continue;
        if(x>this.origin_x+this.span_x) continue;
-       var bw = barwidth;
-       if(x<this.origin_x) {// partial-width bar at front.
-         bw = barwidth-this.origin_x+x; 
-         x = this.origin_x; 
-       }
-       bw = Math.min(bw, this.origin_x + this.span_x - x); // partial-width at end.
-       var c = colorscale.GetColor((t+t2)/2);
+       if(x<this.origin_x) x = this.origin_x;
+       if(x2>this.origin_x+this.span_x) x2 = this.origin_x+this.span_x;
+       var bw = x2-x;
+       var c = colorscale.GetColor((t)/2);
        this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
-       this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));                 
+       this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));
      }
      this.ctx.restore();
    }
