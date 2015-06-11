@@ -95,11 +95,11 @@ $(function() {
         return false;
         
       case 115: // 's'
-        $('#ctl-show-spoints').click();
+        $('#ctl-show-showers').click();
         return false;
 
       case 83: // 'S'
-        $('#ctl-SpacepointLists').cycle_dropdown().trigger("change");
+        $('#ctl-ShowerLists').cycle_dropdown().trigger("change");
         return false;
 
       case 116: // 't' 

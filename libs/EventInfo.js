@@ -95,6 +95,11 @@ EventInfo.prototype.NewRecord = function()
   $(".event-track-names").html(t.length?t:"Not present");
   
   t="";
+  for(i in gRecord.showers) { t += gRecord.showers[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
+  $(".event-track-showers").html(t.length?t:"Not present");
+  
+
+  t="";
   for(i in gRecord.oppulses) { t += gRecord.oppulses[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   $(".event-oppulse-names").html(t.length?t:"Not present");
 
