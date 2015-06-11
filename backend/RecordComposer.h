@@ -30,6 +30,7 @@ public:
   void  composeVertex2d();
   void  composeSpacepoints();
   void  composeTracks();
+  void  composeShowers();
   void  composePFParticles();
 
   // Optical
