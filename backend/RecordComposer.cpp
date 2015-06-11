@@ -426,6 +426,62 @@ void  RecordComposer::composeTracks()
 
 }
 
+void  RecordComposer::composeShowers()
+{
+  vector<string> leafnames = findLeafOfType("vector<recob::Shower>");
+
+  JsonObject reco_list;
+
+  for(size_t iname = 0; iname<leafnames.size(); iname++) {    
+    std::string name = leafnames[iname];
+    TimeReporter timer(name);
+    std::cout << "Looking at shower object " << (name+"obj_").c_str() << endl;
+    JsonArray jShowers;
+    TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+    if(!l) continue;
+    int n = l->GetLen();
+    cout << "Found " << n << " objects" << endl;
+
+    TreeElementLooter tel_fTotalEnergy   (fTree,name+"obj.fTotalEnergy");
+    TreeElementLooter tel_fdEdx          (fTree,name+"obj.fdEdx");
+    TreeElementLooter tel_fTotalMIPEnergy(fTree,name+"obj.fTotalMIPEnergy");
+    
+    for(int i=0;i<n;i++) {
+      JsonObject jshw;
+    
+      jshw.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
+      JsonObject jstart;
+      jstart.add("x", ftr.getJson(name+"obj.fXYZstart.fX",i));
+      jstart.add("y", ftr.getJson(name+"obj.fXYZstart.fY",i));
+      jstart.add("z", ftr.getJson(name+"obj.fXYZstart.fZ",i));
+      jshw.add("start",jstart);
+      JsonObject jdir;
+      jdir.add("x", ftr.getJson(name+"obj.fDCosStart.fX",i));
+      jdir.add("y", ftr.getJson(name+"obj.fDCosStart.fY",i));
+      jdir.add("z", ftr.getJson(name+"obj.fDCosStart.fZ",i));        
+      jshw.add("dir",jdir);
+      
+      jshw.add("bestPlane",ftr.getJson(name+"obj.fBestPlane",i));
+      jshw.add("Length",ftr.getJson(name+"obj.Length",i));
+
+      const vector<double> *totEnergy   = tel_fTotalEnergy.get<vector<double>            >(i);
+      jshw.add("totalEnergy",JsonArray(*totEnergy));
+      const vector<double> *dEdx        = tel_fdEdx.get<vector<double>            >(i);
+      jshw.add("dEdx",JsonArray(*dEdx));
+      const vector<double> *totMIPEnergy= tel_fTotalMIPEnergy.get<vector<double>            >(i);
+      jshw.add("totMIPEnergy",JsonArray(*totMIPEnergy));
+
+      jShowers.add(jshw);
+    }
+
+    reco_list.add(stripdots(name),jShowers);
+    timer.addto(fStats);
+  }  
+  fOutput.add("showers",reco_list);
+
+}
+
+
 void RecordComposer::composePFParticles()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::PFParticle>");
@@ -1271,6 +1327,7 @@ void RecordComposer::compose()
   composeVertex2d();
   composeSpacepoints();
   composeTracks();
+  composeShowers();
   composePFParticles();
   
   // Optical
