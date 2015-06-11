@@ -10,29 +10,37 @@
 // create the slew of output .pngs using crafty 
 // threaded jobs
 
-const double warpbins[] = {
+const std::vector<double> warpbins({
     -4096
+  ,-2048-1024
   ,-2048
   ,-1024
+  ,-(1024+512)
+  ,-(1024+256)
+  , -768
   ,-512
   ,-256
   ,-128
-  ,-64
-  ,-32
-  -30,-28,-26,-24,-22-20,-18,-16,-14,-12,
-  -10,-9,-8,-7,-6,-5,-4,-3,-2,-1
+  ,-96,-64,-56
+  ,-48,-44,-40,-36,-32
+  ,-30,-28,-26,-24,-22,-20,-18,-16,-14,-12
+  ,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1
   ,0
   ,1,2,3,4,5,6,7,8,9,10
   ,12,14,16,18,20,22,24,26,28,30
-  ,32
-  ,64
+  ,32,36,40,44,48
+  ,56,64,96
   ,128
   ,256
   ,512
+  ,768
   ,1024
+  ,1024+256
+  ,1024+512
   ,2048
+  ,2048+1024
   ,4096
-};
+});
 
 void MakeEncodedTileset(JsonObject& r,
                         std::shared_ptr<wiremap_t> wireMap, 
@@ -135,10 +143,7 @@ void MakeEncodedTileset(JsonObject& r,
     jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
     r.add("planeHists",jPlaneHists);
 
-    TH1D hPedAdcWarped("hPedAdcWarped","hPedAdcWarped",54,warpbins);
-    // for(int bin=1;bin<hPedAdc.GetNbinsX();bin++) {
-    //   hPedAdcWarped->Fill(hPedAdc->GetBinCenter(bin),hPedAdc->GetBinContent(bin));
-    // }
+    TH1D hPedAdcWarped("hPedAdcWarped","hPedAdcWarped",warpbins.size()-1,&(warpbins[0]));
     for(int bin=0;bin<hPedAdc.size();bin++) {
       hPedAdcWarped.Fill(bin-4096,hPedAdc[bin]);
     }
