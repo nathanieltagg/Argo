@@ -119,6 +119,7 @@ function WireView( element, options )
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_track_shift  =  GetBestControl(this.element,".track-shift-window");
+  this.ctl_show_showers =  GetBestControl(this.element,".show-showers");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
   this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
@@ -133,6 +134,7 @@ function WireView( element, options )
 
   $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
+  $(this.ctl_show_showers).change(function(ev) { return self.Draw(false); });
   $(this.ctl_track_shift) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
@@ -349,6 +351,10 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.DrawTracks(min_u,max_u, min_v, max_v, fast);
     }
 
+    if ($(this.ctl_show_showers).is(":checked")) {
+      this.DrawShowers(min_u,max_u, min_v, max_v, fast);
+    }
+
     if ($(this.ctl_show_mc).is(":checked")) {
       this.DrawMC(min_u,max_u, min_v, max_v, fast);
     }  
@@ -441,6 +447,7 @@ WireView.prototype.DrawScale = function()
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
+  console.time("DrawImage");
 
   // look for offscreen canvas.
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
@@ -515,7 +522,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
     
   // }
   this.ctx.restore();   
-
+  console.timeEnd('DrawImage');
 };
 
 
@@ -831,6 +838,118 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.restore();
 };
 
+WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
+{
+  var showerlistname = $("#ctl-ShowerLists").val();
+  if(!showerlistname) return;
+
+  var showers = gRecord.showers[showerlistname];
+  if(!showers) return;
+
+  // find gRecord.associations.showername.recob::Hitsthingthing
+  var showerass = null;
+  var showerhitname = null;
+  var hitlist = null
+  var hitassn = null
+  if(gRecord.associations) showerass = gRecord.associations[showerlistname];
+  if(showerass) {
+    for( n in showerass ) {
+        if( n.indexOf( "::Hits" ) > -1 ) { showerhitname = n; }
+      }
+    if(showerhitname) {
+      hitassn = showerass[n]
+      hitlist = gRecord.hits[showerhitname];
+    }
+  }
+
+
+  this.ctx.save();
+  for(var i=0;i<showers.length;i++)
+  {
+    var shw = showers[i];
+    shw._index = i;
+
+    // Paint the hits!
+    if(hitlist && hitassn && !shw._hull ) { shw._hull =[] };
+    if(hitlist && hitassn && !shw._hull[this.plane] ) {
+      var pts = [];
+      for(var ihit=0;ihit<hitassn[shw._index].length;ihit++){
+        var hit = hitlist[ hitassn[shw._index][ihit] ];
+        if(hit.plane == this.plane) {
+          pts.push([hit.wire,hit.t]);
+        }
+      }
+      shw._hull[this.plane]  = GeoUtils.convexHull(pts);
+    }
+    
+    if(shw._hull && shw._hull[this.plane]) {
+      var hull = shw._hull[this.plane];
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.GetX(hull[0][0][0]),this.GetY(hull[0][0][1]));
+      for(var ipt=1;ipt<hull.length;ipt++) {
+        this.ctx.lineTo(this.GetX(hull[ipt][1][0]),this.GetY(hull[ipt][1][1]));
+      }
+      this.ctx.fillStyle = "rgba(255,92,0,0.5)";
+      this.ctx.fill();
+    }
+
+
+    var u1 = gGeo.yzToWire(this.plane,  shw.start.y, shw.start.z);
+    var v1 = gGeo.getTDCofX(this.plane,shw.start.x) + this.offset_track_ticks;
+    var u2 = gGeo.yzToWire(this.plane, shw.Length * shw.dir.y + shw.start.y, 
+                                       shw.Length * shw.dir.z + shw.start.z);
+    var v2 = gGeo.getTDCofX(this.plane,shw.Length * shw.dir.x + shw.start.x) + this.offset_track_ticks;
+    
+    var x1 = this.GetX(u1);
+    var y1 = this.GetY(v1);
+    var x2 = this.GetX(u2);
+    var y2 = this.GetY(v2);
+    
+    this.ctx.strokeStyle = "rgba(255, 28, 28, 1)";
+    this.ctx.lineWidth = 2;
+    
+    // Draw underlay
+    // Draw underlay for a selected shower.
+    if(gSelectState.obj && (gSelectState.obj == shw)){      
+      if(this.fMouseInContentArea) {
+        var offset = getAbsolutePosition(this.canvas);
+        SetOverlayPosition(offset.x + x2, offset.y + y2);  
+      }
+
+      this.ctx.lineWidth = 5;
+      this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1,y1);
+      this.ctx.lineTo(x2,y2);
+      this.ctx.stroke();
+      this.ctx.lineWidth =2;
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";    
+    }
+  
+    if(gHoverState.obj && (gHoverState.obj == shw)){ // hovering
+      this.ctx.strokeStyle = "rgba(255,20,20,1)";
+    }
+        
+    // Draw it.
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.GetX(u1),this.GetY(v1));
+    this.ctx.lineTo(this.GetX(u2),this.GetY(v2));
+    this.ctx.stroke();
+    
+
+    // for mouseovering
+      this.mouseable.push({type:"shower", 
+                    coords: [[x1,y1],
+                             [x2,y2] 
+                            ], 
+                    r:this.ctx.lineWidth, obj: shw});
+
+
+  }
+  this.ctx.restore();
+};
+
+
 
 WireView.prototype.DetectorXyzToScreenXY = function(x,y,z)
 {
@@ -1028,7 +1147,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 
     // compile points
     var pts = [];
-    var t0 = 0;
+    var t0 = 3200;
     if(move_t0 && p.trajectory.length>0) t0 = p.trajectory[0].t/500.0; // 500 ns per tick.
     
     for(var j=0;j<p.trajectory.length;j++) {

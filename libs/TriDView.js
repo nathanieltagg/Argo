@@ -63,6 +63,7 @@ function TriDView( element, options ){
   this.ctl_show_trid_hits    =  GetBestControl(this.element,".show-trid-hits");
   this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
+  this.ctl_show_showers =  GetBestControl(this.element,".show-showers");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");  
@@ -72,6 +73,7 @@ function TriDView( element, options ){
   $(this.ctl_show_trid_hits).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_clus)     .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_spoints)  .change(function(ev) { return self.Rebuild(); });
+  $(this.ctl_show_showers)  .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_tracks)   .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc     )   .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
@@ -130,6 +132,7 @@ TriDView.prototype.Rebuild = function ()
   if ($(this.ctl_show_clus).is(":checked"))    this.CreateClusters();
   if ($(this.ctl_show_spoints).is(":checked")) this.CreateSpacepoints();
   if ($(this.ctl_show_tracks ).is(":checked")) this.CreateTracks();
+  if ($(this.ctl_show_showers).is(":checked")) this.CreateShowers();
   if ($(this.ctl_show_mc     ).is(":checked")) this.CreateMC();
   
   this.CreateAuxDets();
@@ -247,6 +250,24 @@ TriDView.prototype.CreateTracks = function()
     }
   }
 };
+
+TriDView.prototype.CreateShowers = function()
+{
+  if(!$("#ctl-ShowerLists").val()) return;
+  var showers = gRecord.showers[$("#ctl-ShowerLists").val()];
+  var curColor = "rgba(255, 28, 28, 1)";
+  for(var ishw=0;ishw<showers.length;ishw++) {
+    var shw = showers[ishw];
+    var hovobj = {obj:shw, type:"shower", collection: showers};    
+    this.AddArrow(shw.start.x,shw.start.y,shw.start.z, 
+      shw.Length * shw.dir.x + shw.start.x,
+      shw.Length * shw.dir.y + shw.start.y,
+      shw.Length * shw.dir.z + shw.start.z,
+      shw.Length/4,
+      3, curColor, hovobj);
+  }
+};
+
 
 TriDView.prototype.CreateSpacepoints = function()
 {  

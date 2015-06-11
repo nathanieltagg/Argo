@@ -102,6 +102,11 @@ function DoInitialBookmarking()
     $('#ctl-TrackLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
 
+  $('#ctl-ShowerLists').empty();
+  for(i in gRecord.showers) { 
+    $('#ctl-ShowerLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
+  }
+
   $('#ctl-PFParticleLists').empty();
   for(i in gRecord.pfparticles) { 
     $('#ctl-PFParticleLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
