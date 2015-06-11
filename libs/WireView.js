@@ -142,6 +142,7 @@ function WireView( element, options )
   $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
+  $('#ctl-ShowerLists')      .change(function(ev) { return self.Draw(false); });
   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
   $('#ctl-HitLists'    ) .change(function(ev) { return self.NewRecord_hits(); });
   $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
@@ -869,7 +870,19 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
     var shw = showers[i];
     shw._index = i;
 
-    // Paint the hits!
+
+    if(hitlist && hitassn && !shw._hpts ) { shw._hpts = []; }
+    if(hitlist && hitassn && !shw._hpts[this.plane] ) {    
+      shw._hpts[this.plane] = [];
+      for(var ihit=0;ihit<hitassn[shw._index].length;ihit++){
+        var hit = hitlist[ hitassn[shw._index][ihit] ];
+        if(hit.plane == this.plane) {
+          shw._hpts[this.plane].push([hit.wire,hit.t]);
+        }
+      }
+    }
+
+    // Convex hul
     if(hitlist && hitassn && !shw._hull ) { shw._hull =[] };
     if(hitlist && hitassn && !shw._hull[this.plane] ) {
       var pts = [];
@@ -882,17 +895,34 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
       shw._hull[this.plane]  = GeoUtils.convexHull(pts);
     }
     
-    if(shw._hull && shw._hull[this.plane]) {
-      var hull = shw._hull[this.plane];
+    // Draw hull
+    
+    // if(shw._hull && shw._hull[this.plane]) {
+    //   var hull = shw._hull[this.plane];
+    //   this.ctx.beginPath();
+    //   this.ctx.moveTo(this.GetX(hull[0][0][0]),this.GetY(hull[0][0][1]));
+    //   for(var ipt=1;ipt<hull.length;ipt++) {
+    //     this.ctx.lineTo(this.GetX(hull[ipt][1][0]),this.GetY(hull[ipt][1][1]));
+    //   }
+    //   this.ctx.fillStyle = "rgba(255,92,0,0.5)";
+    //   this.ctx.fill();
+    // }
+
+    if(shw._hpts && shw._hpts[this.plane]) {
       this.ctx.beginPath();
-      this.ctx.moveTo(this.GetX(hull[0][0][0]),this.GetY(hull[0][0][1]));
-      for(var ipt=1;ipt<hull.length;ipt++) {
-        this.ctx.lineTo(this.GetX(hull[ipt][1][0]),this.GetY(hull[ipt][1][1]));
+      var pts = shw._hpts[this.plane];
+      for(var ipt=0;ipt<pts.length;ipt++) {
+        this.ctx.beginPath();
+        this.ctx.arc(this.GetX(pts[ipt][0]),this.GetY(pts[ipt][1]), 4, 0,1.99*Math.PI) ;
+        this.ctx.fillStyle = 'orange';
+        this.ctx.fill();
       }
-      this.ctx.fillStyle = "rgba(255,92,0,0.5)";
-      this.ctx.fill();
     }
 
+
+
+    // Draw the vector
+    
 
     var u1 = gGeo.yzToWire(this.plane,  shw.start.y, shw.start.z);
     var v1 = gGeo.getTDCofX(this.plane,shw.start.x) + this.offset_track_ticks;
