@@ -284,14 +284,17 @@ HistogramV.prototype.GetBin = function(x)
   var a=0;
   var b=this.n-1;
   while((b-a)>1) {
-    var c=Math.floor((b-a)/2);
-    if(x>this.x_bins(c)) a=c;
+    var c=Math.floor((b+a)/2);
+    if(x>this.x_bins[c]) a=c;
     else b=c;
-  } return a;
+  } 
+  return a;
 };
 
 HistogramV.prototype.GetX = function(bin) 
 {
-   return this.x_bins[bin];
+  var b = Math.floor(bin);
+  var frac = b%1;
+  return this.x_bins[b] + (this.x_bins[b+1]-this.x_bins[b])*frac;
 };
 
