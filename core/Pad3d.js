@@ -372,6 +372,39 @@ Pad3d.prototype.AddArcYZ = function(x,y,z,r,nstep,theta_start,theta_end,width,co
   }
 };
 
+Pad3d.prototype.AddArrow = function(x,y,z,x2,y2,z2,head_size,width,color,obj)
+{
+  function NormalizeVector(n) {
+    var l = Math.sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+    if(l>0){ n.x /= l; n.y /= l;  n.z /=l; }
+  }
+  var n = {x: x2-x, y: y2-y, z: z2-z};
+  NormalizeVector(n);
+  this.AddLine(x,y,z,x2,y2,z2,width,color,obj);
+  // Vector direction
+
+  // find a perpendicular vector. This is a cheat.
+  var u = {x: n.y, y:n.x, z:0};
+  if(n.z>0.9) u = {x:0, y:n.z, z:n.y};
+  var v = {x: (n.y*u.z - n.z*u.y),
+           y: (n.z*u.x - n.x*u.z),
+           z: (n.x*u.y - n.y*u.x)
+  };
+
+  this.AddLine(x2,y2,z2,
+              x2 - 2*n.x*head_size + v.x*head_size,
+              y2 - 2*n.y*head_size + v.y*head_size,
+              z2 - 2*n.z*head_size + v.z*head_size,
+              width, color, obj);
+  this.AddLine(x2,y2,z2,
+              x2 - 2*n.x*head_size - v.x*head_size,
+              y2 - 2*n.y*head_size - v.y*head_size,
+              z2 - 2*n.z*head_size - v.z*head_size,
+              width, color, obj);
+
+
+}
+
 
 Pad3d.prototype.Resize = function()
 {
