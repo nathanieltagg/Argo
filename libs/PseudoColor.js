@@ -37,17 +37,27 @@ function PseudoColor( control_points )
   this.splineBlue  = new SplineInterpolator(xs,bs);
   this.splineAlpha = new SplineInterpolator(xs,as);
 
+  this.offset = 0;
 };
 
+// Treat as ColorScaler
 PseudoColor.prototype.GetColor = function(x) {
+  var c = this.interpolate(x);
+  if(c.r>255) c.r=255;
+  if(c.g>255) c.g=255;
+  if(c.b>255) c.b=255;
+  var r =  parseInt(c.r)+","+parseInt(c.g)+","+parseInt(c.b);
+  return r;  
 };
 
 PseudoColor.prototype.interpolate = function(x) {
+  var ox = x - this.offset;
   return  {x: x,
-           r: this.splineRed  .interpolate(x),
-           g: this.splineGreen.interpolate(x),
-           b: this.splineBlue .interpolate(x),
-           a: this.splineAlpha.interpolate(x),
+          ox: ox,
+           r: this.splineRed  .interpolate(ox),
+           g: this.splineGreen.interpolate(ox),
+           b: this.splineBlue .interpolate(ox),
+           a: this.splineAlpha.interpolate(ox),
         };  
 };
 
@@ -103,7 +113,7 @@ PseudoColor.prototype.buildImage  = function(pixels, start_x, stop_x)
     return dataURL;
 }
 
-PseudoColor.prototype.HSVtoRGB = function(h, s, v, x) 
+PseudoColor.prototype.HSVtoRGB = function(h, s, v) 
 {
       var r, g, b, i, f, p, q, t;
       if (h && s === undefined && v === undefined) {
@@ -123,7 +133,6 @@ PseudoColor.prototype.HSVtoRGB = function(h, s, v, x)
           case 5: r = v, g = p, b = q; break;
       }
       return {
-        x: x, 
         r: (r * 255),
         g: (g * 255),
         b: (b * 255)
@@ -131,30 +140,78 @@ PseudoColor.prototype.HSVtoRGB = function(h, s, v, x)
 };
 
 
-
-// Subclass.
-PsTest.prototype = new PseudoColor();
-function PsTest(  )
+PsTest2.prototype = new PseudoColor();
+function PsTest2( hue )
 {
+  if(hue === undefined) hue = 0;
   var points = [];
   var nctl = 256;
   for(var i=0;i<nctl;i++) {
     var x = (Math.atan(((i/nctl)-0.5)/200.)/3.14159) * 8196;
     var xx =i/nctl;
-    var h = (xx*0.8 + 1.2)%1.0;
+    var h = (xx*0.8 + 1.2 + hue)%1.0;
     // console.log(x,xx,h);
     var s = 0.9;
     var v = 1;
-    var pt = this.HSVtoRGB(h,s,v,x);
-    pt.a=255;    
-    console.log(pt);
+    var pt = this.HSVtoRGB(h,s,v);
+    pt.a=255;  pt.x = x;  
+    // console.log(pt);
     points.push(pt);
   }
   PseudoColor.call(this,points); // Give settings to PS contructor.
 }
 
 
-gWirePseudoColor = new PsTest();
+
+
+// Subclass.
+LogColor.prototype = new PseudoColor();
+function LogColor( )
+{
+  this.adcScale = 200;
+  this.hueScale = 0.8;
+  this.hueOffset= 0;
+  this.saturation = 0.9;
+
+  this.Rebuild();
+}
+
+LogColor.prototype.Rebuild = function( )
+{
+  var points = [];
+  var nctl = 256;
+  for(var i=0;i<nctl;i++) {
+    var dial = i/nctl;
+    var pt = this.ColorDialToColor(dial);
+    pt.x = this.ColorDialToAdc(dial);
+    pt.a = 255;
+    points.push(pt);
+  }
+  PseudoColor.call(this,points);
+}
+
+LogColor.prototype.AdcToColorDial = function( adc )
+{
+  // adc can legally be -4096 to 4096.
+  // colorDial is a 0-1 number, where 0.5 is the mid point (0adc)
+  return Math.tan(adc*Math.PI/8192)*this.adcScale + 0.5;
+}
+
+LogColor.prototype.ColorDialToAdc = function( colorDial )
+{
+  // colorDial is a 0-1 number, where 0.5 is the mid point (0adc)
+  // colors change evenly from 0-1 on colordial.
+  // adc can legally be -4096 to 4096.
+  return Math.atan( (colorDial-0.5)/this.adcScale ) * 8196 * Math.PI;
+}
+
+LogColor.prototype.ColorDialToColor = function( colorDial )
+{
+  var hue = (colorDial*this.hueScale + 1.2 + (this.hueOffset%1))%1.0;
+  return this.HSVtoRGB(hue,this.saturation,1.0);  
+}
+
+gWirePseudoColor = new LogColor();
 
 // Test code
 // var ps = new PseudoColor (  [

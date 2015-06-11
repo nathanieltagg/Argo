@@ -52,6 +52,57 @@ function GLEngine( tilesize )
     return;
   }
   console.timeEnd("GLEngine::create gl context");
+
+
+  // For simplicity
+  var gl = this.gl;
+  
+  if(!this.gl) {
+    console.error("Lost GL context somewhere.");
+  }
+    
+   // This line is required if we change canvas size
+  // after creating GL context
+  // this.gl.viewport(0,0,outcanvas.width,outcanvas.height);
+  
+  // setup GLSL this.program
+  var vertexShader = this.create_shader( "2d-vertex-shader");
+  var LUTShader    = this.create_shader( "lutshade");
+
+  this.program = gl.createProgram();
+  gl.attachShader(this.program,vertexShader);
+  gl.attachShader(this.program,LUTShader);
+  gl.linkProgram(this.program);
+
+  // Check the link status
+  var linked = gl.getProgramParameter(this.program, gl.LINK_STATUS);
+  if (!linked) {
+       // something went wrong with the link
+       lastError = gl.getProgramInfoLog (this.program);
+       console.error("Error in this.program linking:" + lastError);
+
+       gl.deleteProgram(this.program);
+       return null;
+   }
+
+
+  gl.useProgram(this.program);
+
+
+  // provide texture coordinates for the rectangle we're drawing FROM
+  var texCoordBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      0.0,  0.0,
+      1.0,  0.0,
+      0.0,  1.0,
+      0.0,  1.0,
+      1.0,  0.0,
+      1.0,  1.0]), gl.STATIC_DRAW);
+  var texCoordLocation = gl.getAttribLocation(this.program, "a_texCoord");  // Ditto a_texCoord
+  gl.enableVertexAttribArray(texCoordLocation);
+  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
    
 }
 
@@ -193,62 +244,10 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, outcanvas, p
   console.time('GLEngine::draw_falsecolor_from_canvas');
 
 
-
-  // For simplicity
-  var gl = this.gl;
-  
-  if(!this.gl) {
-    console.error("Lost GL context somewhere.");
-  }
-  
-  outcanvas.width  = incanvas.width;
-  outcanvas.height = incanvas.height;
-  
-   // This line is required if we change canvas size
-  // after creating GL context
-  // this.gl.viewport(0,0,outcanvas.width,outcanvas.height);
-  
-  // setup GLSL this.program
-  var vertexShader = this.create_shader( "2d-vertex-shader");
-  var LUTShader    = this.create_shader( "lutshade");
-
-  this.program = gl.createProgram();
-  gl.attachShader(this.program,vertexShader);
-  gl.attachShader(this.program,LUTShader);
-  gl.linkProgram(this.program);
-
-  // Check the link status
-  var linked = gl.getProgramParameter(this.program, gl.LINK_STATUS);
-  if (!linked) {
-       // something went wrong with the link
-       lastError = gl.getProgramInfoLog (this.program);
-       console.error("Error in this.program linking:" + lastError);
-
-       gl.deleteProgram(this.program);
-       return null;
-   }
-
-
-  gl.useProgram(this.program);
+  var gl = this.gl; // for convenience
 
   // look up where the vertex data needs to go.
   var positionLocation = gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
-  var texCoordLocation = gl.getAttribLocation(this.program, "a_texCoord");  // Ditto a_texCoord
-
-  // provide texture coordinates for the rectangle we're drawing FROM
-  var texCoordBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-      0.0,  0.0,
-      1.0,  0.0,
-      0.0,  1.0,
-      0.0,  1.0,
-      1.0,  0.0,
-      1.0,  1.0]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(texCoordLocation);
-  gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-
 
   console.time('Build LUT');  
   var mapTextureLocation = gl.getUniformLocation(this.program, "maptexture");
@@ -330,8 +329,8 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, outcanvas, p
   console.timeEnd('GLEngine::draw_falsecolor_from_canvas');
   console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
   console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
-  gl.deleteProgram(this.program);
-  this.gl = null;
+  // gl.deleteProgram(this.program);
+  // this.gl = null;
   
 }
 

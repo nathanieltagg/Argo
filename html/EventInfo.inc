@@ -18,6 +18,7 @@
         <tr><td class="key">Clusters</td>   <td class="val event-cluster-names">none</td></tr>
         <tr><td class="key">SpacePoints</td><td class="val event-spacepoint-names">none</td></tr>
         <tr><td class="key">Tracks</td>     <td class="val event-track-names">none</td></tr>
+        <tr><td class="key">Showers</td>     <td class="val event-shower-names">none</td></tr>
         <tr><td class="key">Optical Pulses</td> <td class="val event-oppulse-names">none</td></tr>
         <tr><td class="key">Optical Hits</td>   <td class="val event-ophit-names">none</td></tr>
         <tr><td class="key">Optical Flashes</td>  <td class="val event-opflash-names">none</td></tr>

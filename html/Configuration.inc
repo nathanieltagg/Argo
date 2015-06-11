@@ -47,12 +47,16 @@
         <div><input type="checkbox" id="ctl-show-endpoint2d"    name="show-endpoint2d"    class="saveable show-endpoint2d"                 /><label for="ctl-show-endpoint2d"> <b>(e)</b>  Show Endpoint2Ds </label></div>
         <div> <b>(shift-E)</b><select id="ctl-EndpointLists"  class="align-right"></select><div style="clear:both;"></div></div>
         
-        <div><input type="checkbox" id="ctl-show-spoints" name="show-spoints" class="saveable show-spoints"              /><label for="ctl-show-spoints"> <b>(s)</b> Show Spacepoints </label></div>
-        <div><b>(shift-S)</b> <select id="ctl-SpacepointLists"  class="align-right"></select><div style="clear:both;"></div></div>
+        <div><input type="checkbox" id="ctl-show-spoints" name="show-spoints" class="saveable show-spoints"              /><label for="ctl-show-spoints"> <b></b> Show Spacepoints </label></div>
+        <div> <select id="ctl-SpacepointLists"  class="align-right"></select><div style="clear:both;"></div></div>
 
         <div><input type="checkbox" id="ctl-show-tracks"  name="show-tracks"  class="saveable show-tracks"  checked="checked"/><label for="ctl-show-tracks">  <b>(t)</b> Show Tracks </label></div>
         <div><b>(shift-T)</b> <select id="ctl-TrackLists"  class="align-right"></select><div style="clear:both;"></div></div>
         <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-track-shift-window"      name="track-shift-window"   checked="checked"   class="saveable track-shift-window"  /><label for="track-shift-window">      <b>(o)</b> Shift Tracks 1 Window</label></div>
+
+        <div><input type="checkbox" id="ctl-show-showers"  name="show-showers"  class="saveable show-showers"  checked="checked"/><label for="ctl-show-showers">  <b>(s)</b> Show Showers </label></div>
+        <div><b>(shift-S)</b> <select id="ctl-ShowerLists"  class="align-right"></select><div style="clear:both;"></div></div>
+
 
         <div><label><input type="checkbox" id="ctl-show-pfparticles"  name="show-pfparticles"  class="saveable show-pfparticles"  checked="checked"/><b>(f)</b> Show PFParticles </label></input></div>
         <div><b>(shift-F)</b> <select id="ctl-PFParticleLists"  class="align-right"></select><div style="clear:both;"></div></div>
