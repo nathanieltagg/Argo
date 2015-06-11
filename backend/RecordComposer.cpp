@@ -171,14 +171,17 @@ void RecordComposer::composeHits()
 
     TLeaf* lhit_wire    = fTree->GetLeaf( (name+"obj.fWireID.Wire"     ).c_str());
     TLeaf* lhit_plane   = fTree->GetLeaf( (name+"obj.fWireID.Plane"    ).c_str());
-    // TLeaf* lhit_view    = fTree->GetLeaf( (name+"obj.fView"            ).c_str());
-    // TLeaf* lhit_m       = fTree->GetLeaf( (name+"obj.fMultiplicity"    ).c_str());
-    TLeaf* lhit_q       = fTree->GetLeaf( (name+"obj.fCharge"          ).c_str());
-    // TLeaf* lhit_sigq    = fTree->GetLeaf( (name+"obj.fSigmaCharge"     ).c_str());
+    TLeaf* lhit_q       = fTree->GetLeaf( (name+"obj.fIntegral"        ).c_str()); // new mcc6
+    if(!lhit_q) lhit_q =  fTree->GetLeaf( (name+"obj.fCharge"          ).c_str()); // old
+    
     TLeaf* lhit_t       = fTree->GetLeaf( (name+"obj.fPeakTime"        ).c_str());
-    // TLeaf* lhit_sigt    = fTree->GetLeaf( (name+"obj.fSigmaPeakTime"   ).c_str());
-    TLeaf* lhit_t1      = fTree->GetLeaf( (name+"obj.fStartTime"       ).c_str());
-    TLeaf* lhit_t2      = fTree->GetLeaf( (name+"obj.fEndTime"         ).c_str());
+    TLeaf* lhit_t1      = fTree->GetLeaf( (name+"obj.fStartTick"       ).c_str());  // new mcc 6
+    if(!lhit_t1) lhit_t1 =fTree->GetLeaf( (name+"obj.fStartTime"       ).c_str()); //old
+    
+    
+    TLeaf* lhit_t2      = fTree->GetLeaf( (name+"obj.fEndTick"         ).c_str()); // new mcc 6
+    if(!lhit_t2) lhit_t2 =fTree->GetLeaf( (name+"obj.fEndTime"         ).c_str()); //old
+    
     
     // Hit histograms.
     TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
@@ -462,7 +465,7 @@ void  RecordComposer::composeShowers()
       jshw.add("dir",jdir);
       
       jshw.add("bestPlane",ftr.getJson(name+"obj.fBestPlane",i));
-      jshw.add("Length",ftr.getJson(name+"obj.Length",i));
+      jshw.add("Length",ftr.getJson(name+"obj.fLength",i));
 
       const vector<double> *totEnergy   = tel_fTotalEnergy.get<vector<double>            >(i);
       jshw.add("totalEnergy",JsonArray(*totEnergy));
