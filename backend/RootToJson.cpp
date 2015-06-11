@@ -65,7 +65,6 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
   }
   // Custom bin widths
   if(hist->GetXaxis()->IsVariableBinSize()) {
-    std::cout << hist->GetName() << " has variable bins" << std::endl;
     JsonArray xbins;
     const TArrayD* Xbins = hist->GetXaxis()->GetXbins();
     for(int bin=0;bin<hist->GetNbinsX();bin++) xbins.add(Xbins->At(bin));
