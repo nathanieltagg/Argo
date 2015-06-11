@@ -245,7 +245,10 @@ ZoomControl.prototype.FullZoom = function()
 
 ZoomControl.prototype.NewRecord = function()
 {
-  this.FullZoom(); // A better default for the control room
+  if(gRecord.raw.DAQ)
+    this.FullZoom(); // A better default for the control room
+  else 
+    this.AutoZoom();
 };
 
 
