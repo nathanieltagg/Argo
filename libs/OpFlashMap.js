@@ -151,20 +151,22 @@ OpFlashMap.prototype.Draw = function()
       
   }
   
-  this.pmtRadius = 15.2; // Size of the TPB Coating, according to the root geometry file.
-  var r = this.pmtRadius * this.span_x/(this.max_u-this.min_u); // Radius in screen pixels.
+  scale = this.span_x/(this.max_u-this.min_u); 
   // Draw PMTs
   
   var dets = gGeo.opDets.opticalDetectors;
   this.ctx.strokeStyle = "black";
   for(i=0;i<dets.length;i++){
     det = dets[i];
-    if(det == gHoverState.obj) { this.ctx.lineWidth = 2;} 
+    if(det == gHoverState.obj) { this.ctx.lineWidth = 3;} 
     else                       { this.ctx.lineWidth = 1;} 
     x = this.GetX(det.z);
     y = this.GetY(det.y);
-    this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
+    this.ctx.save();
+    this.ctx.translate(x,y);
+    this.ctx.scale(scale,scale);
+    gGeo.opDets.pathYZ(this.ctx,det.type)
+    this.ctx.restore();
     this.ctx.stroke();
   }
   

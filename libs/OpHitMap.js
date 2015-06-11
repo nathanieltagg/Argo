@@ -157,7 +157,7 @@ OpHitMap.prototype.Draw = function()
   this.pmtRadius = 15.2; // Size of the TPB Coating, according to the root geometry file.
   var r = this.pmtRadius * this.span_x/(this.max_u-this.min_u); // Radius in screen pixels.
   
-  
+  var scale = this.span_x/(this.max_u-this.min_u);// cm to screen pixels.
   
   // Draw OpHits
   for(i=0;i<this.ophits.length;i++) {
@@ -175,10 +175,17 @@ OpHitMap.prototype.Draw = function()
     x = this.GetX(det.z);
     y = this.GetY(det.y);
     c = gOpColorScaler.GetColor(w);
+    this.ctx.save();
     this.ctx.fillStyle = "rgb(" + c + ")";
-    this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
+    this.ctx.translate(x,y);
+    this.ctx.scale(scale,scale);
+    gGeo.opDets.pathYZ(this.ctx,det.type);
+    // this.ctx.beginPath();
+    // this.ctx.arc(0,0,this.pmtRadius,0,Math.PI*1.999,false);
+    this.ctx.scale(1,1);
     this.ctx.fill();
+    this.ctx.restore();
+    
   }
   
   // Draw PMTs
@@ -187,13 +194,20 @@ OpHitMap.prototype.Draw = function()
   this.ctx.strokeStyle = "black";
   for(i=0;i<dets.length;i++){
     det = dets[i];
-    if(det == gHoverState.obj) { this.ctx.lineWidth = 2;} 
+    if(det == gHoverState.obj) { this.ctx.lineWidth = 3;} 
     else                       { this.ctx.lineWidth = 1;} 
     x = this.GetX(det.z);
     y = this.GetY(det.y);
-    this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*1.999,false);
+    this.ctx.save();
+    this.ctx.fillStyle = "rgb(" + c + ")";
+    this.ctx.translate(x,y);
+    this.ctx.scale(scale,scale);
+    gGeo.opDets.pathYZ(this.ctx,det.type)
+    // this.ctx.beginPath();
+    // this.ctx.arc(0,0,this.pmtRadius,0,Math.PI*1.999,false);
+    this.ctx.restore();
     this.ctx.stroke();
+
   }
   
 };
