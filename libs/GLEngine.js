@@ -7,6 +7,12 @@ $(function(){
   gGLEngine = new GLEngine();
   gStateMachine.Bind('TiledImageLoaded_raw',function(){ UpdateColoredWireMap("_raw"); });
   gStateMachine.Bind('TiledImageLoaded_cal',function(){ UpdateColoredWireMap("_cal"); });
+
+  gStateMachine.Bind('ChangePsuedoColor',function(){ 
+    this.show_image = $(this.ctl_wireimg_type).filter(":checked").val() || "raw";
+    var objnm = '_' + this.show_image;
+    UpdateColoredWireMap(objnm); 
+  });
 });
 
 function UpdateColoredWireMap(typ)
@@ -15,7 +21,6 @@ function UpdateColoredWireMap(typ)
   // console.log("UpdateColoredWireMap",typ);
   // Create the LUT-translated colored wiremaps images.
   if(!gRecord) return;
-  
   // FIXME: assumes only 1 type of raw or cal wires in any given loaded event.
   if(gRecord[typ] && gRecord[typ].tiled_canvas) {
     gRecord[typ].colored_wire_canvas = document.createElement('canvas');
@@ -151,19 +156,21 @@ GLEngine.prototype.create_shader = function( scriptId  )
 
 
 
-GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x ) 
+GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x, canvas ) 
 {     
   // Creates an OpenGl texture, returns the texture ID.
   // This version builds a 2d 256x256 texture.
   // Colors go top-to-bottom (most sigificant changes) and left-to-right (least significant)
   // This forms a full 256x256 lookup table usable by the shader.
   // I _think_ that this would work with smaller resolution, but color changes at small ADC value wont' be visable.
-  var canvas = document.createElement("canvas");
+  if(!canvas) canvas = document.createElement("canvas");
   canvas.width  = 256;
   canvas.height = 256;
-  var pixels = canvas.width*canvas.height;
+  var pixels = 0x2000; // Total pixels possible from -4096 to 4096
   var ctx = canvas.getContext('2d');
-  var imgData=ctx.createImageData(canvas.width,canvas.height);
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0,0,256,256);
+  var imgData=ctx.createImageData(256,32); // 256*16 = 0x8000 possible values.
   var len = imgData.data.length;
   for (var i=0;i<len;i+=4) {
     var x = start_x + (i/4.)*(stop_x-start_x)/pixels; 
@@ -173,7 +180,7 @@ GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x )
     imgData.data[i+2]= color.b;
     imgData.data[i+3]= color.a;
   }
-  ctx.putImageData(imgData,0,0);
+  ctx.putImageData(imgData,0,112); // Shift up 1/4 to cover unused portion.
   return canvas;
 }
 

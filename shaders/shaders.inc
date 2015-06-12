@@ -70,7 +70,7 @@ void main() {
   
   // 2d lookup.
   // Just use r,g. Red is most-significant, green is least-significant.  X is least, Y is most.
-  vec2 lookup_coords = vec2(inc.g,inc.r);
+  vec2 lookup_coords = vec2(inc.g, inc.r);
   
   
   // float adc = 0.999;

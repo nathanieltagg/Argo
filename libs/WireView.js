@@ -448,7 +448,7 @@ WireView.prototype.DrawScale = function()
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
-  console.time("DrawImage");
+    console.time("DrawImage");
 
   // look for offscreen canvas.
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
@@ -1527,7 +1527,7 @@ WireView.prototype.DoMouse = function(ev)
   }
 
     
-  if(ev.type === 'mousedown') {
+  if(ev.type === 'mousedown' && this.fMouseInContentArea) {
     // Check to see if object is draggable, instead of the view.
     $.extend(this.fMouseStart,this.fMousePos); // copy.
     $.extend(this.fMouseLast ,this.fMousePos); // copy.
@@ -1547,7 +1547,7 @@ WireView.prototype.DoMouse = function(ev)
       // this.dirty = false;  // Draw gets issued by the trigger.
     }
     // this.dirty = false;  // Draw gets issued by the trigger.
-    this.dirty=true; // Do a slow draw in this view.
+    // this.dirty=true; // Do a slow draw in this view.
   } 
     
 };
