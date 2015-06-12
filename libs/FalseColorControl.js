@@ -174,7 +174,7 @@ FalseColorControl.prototype.Draw = function( )
   
   this.DrawHists();
 
-  var lines=[-500,-50,-20,-5,0,5,20,50,500,gWirePseudoColor.adcScale,-gWirePseudoColor.adcScale];
+  var lines=[-500,-50,-20,-5,0,5,20,50,500];
   for(var i =0;i<lines.length;i++) {
     var u = gWirePseudoColor.AdcToColorDial(lines[i]);
       if(u>this.hist.min_x && u<this.hist.max_x) {
