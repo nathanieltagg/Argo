@@ -8,6 +8,7 @@
 //
 
 // Globals:
+gWirePseudoColor = new LogColor();
 
 
 // Automatic runtime configuration.
@@ -15,8 +16,6 @@
 $(function(){
   $('#false-color-type').addClass("saveable").change(ChangeFalseColorScale);
 
-  gWirePseudoColor = new LogColor();
-  // ChangeFalseColorScale();
 
   $('div.A-FalseColorControl').each(function(){
     gFalseColorControl = new FalseColorControl(this);
@@ -175,7 +174,7 @@ FalseColorControl.prototype.Draw = function( )
   
   this.DrawHists();
 
-  var lines=[-500,-50,-20,-5,0,5,20,50,500];
+  var lines=[-500,-50,-20,-5,0,5,20,50,500,gWirePseudoColor.adcScale,-gWirePseudoColor.adcScale];
   for(var i =0;i<lines.length;i++) {
     var u = gWirePseudoColor.AdcToColorDial(lines[i]);
       if(u>this.hist.min_x && u<this.hist.max_x) {

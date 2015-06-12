@@ -8,8 +8,8 @@
   <div class="portlet-header">Wire False Color</div>
   <div class="portlet-content">
     <div class="A-FalseColorControl" style="height: 120px"></div>
-    <select class="false-color-type saveable" id="false-color-type">
-      <option value="1"     selected="selected">Blue-Green</option>
+    <!-- <select class="false-color-type saveable" id="false-color-type">
+      <option value="1"     selected="selected">Blue-Green</option> -->
       <!-- <option value="2"                        >Threshold</option> -->
     </select>
     <!-- <button class="falseColorMinus1">-1</button>
