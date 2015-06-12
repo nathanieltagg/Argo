@@ -4,6 +4,7 @@
 //
 
 
+/*
 function PseudoColor( control_points ) 
 {
   if(control_points === undefined) return;
@@ -161,13 +162,50 @@ function PsTest2( hue )
   PseudoColor.call(this,points); // Give settings to PS contructor.
 }
 
+*/
+
+// A Pseudo Color _must_ satisfy:
+// interpolate(x) - for x as an ADC value from -4096 to 4096, give color as rgba object
+// But other things in FalseColor are good too.
+
+function PseudoColor()
+{
+  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
+  this.dialScale = 1;
+  this.dialOffset = 0;
+  this.hueOffset= 0.2;
+  this.saturation = 0.9;
+} 
 
 
 
+PseudoColor.prototype.HSVtoRGB = function(h, s, v) 
+{
+      var r, g, b, i, f, p, q, t;
+      if (h && s === undefined && v === undefined) {
+          s = h.s, v = h.v, h = h.h;
+      }
+      i = Math.floor(h * 6);
+      f = h * 6 - i;
+      p = v * (1 - s);
+      q = v * (1 - f * s);
+      t = v * (1 - (1 - f) * s);
+      switch (i % 6) {
+          case 0: r = v, g = t, b = p; break;
+          case 1: r = q, g = v, b = p; break;
+          case 2: r = p, g = v, b = t; break;
+          case 3: r = p, g = q, b = v; break;
+          case 4: r = t, g = p, b = v; break;
+          case 5: r = v, g = p, b = q; break;
+      }
+      return {
+        r: (r * 255),
+        g: (g * 255),
+        b: (b * 255)
+      };
+};
 
-
-
-
+// LogColor: a Hue-rotation scheme. 
 // Subclass.
 LogColor.prototype = new PseudoColor();
 function LogColor( )
@@ -178,23 +216,8 @@ function LogColor( )
   this.dialOffset = 0;
   this.hueOffset= 0.2;
   this.saturation = 0.9;
-
-  // this.Rebuild();
 }
 
-// LogColor.prototype.Rebuild = function( )
-// {
-//   var points = [];
-//   var nctl = 256;
-//   for(var i=0;i<nctl;i++) {
-//     var dial = i/nctl;
-//     var pt = this.ColorDialToColor(dial);
-//     pt.x = this.ColorDialToAdc(dial);
-//     pt.a = 255;
-//     points.push(pt);
-//   }
-//   PseudoColor.call(this,points);
-// }
 
 LogColor.prototype.ColorDialToAdc = function( colorDial )
 {
@@ -235,16 +258,27 @@ LogColor.prototype.interpolate = function(x) {
   return c;
 };
 
-gWirePseudoColor = new LogColor();
-
-// Test code
-// var ps = new PseudoColor (  [
-//     {x:-4096, r: 255, g: 46,  b:53,  a:255},
-//     {x:-2730, r: 255, g: 178, b:17,  a:255},
-//     {x:-1366, r: 233, g: 255, b:0,   a:255},
-//     {x: 1366, r: 21,  g: 255, b:57,  a:255},
-//     {x: 2730, r: 66 , g: 178, b:255, a:255},
-//     {x: 4096, r: 104, g: 93,  b:255, a:255}
-//   ] );
 
 
+// LogColor: Very sharp transition at the threshold from one color to another;
+// Subclass.
+ThresholdColor.prototype = new LogColor();
+function ThresholdColor( )
+{
+  LogColor.call(this);
+  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
+  this.dialScale = 2;
+  this.dialOffset = 0;
+  this.hueOffset= 0.2;
+  this.saturation = 0.9;
+}
+
+ 
+ThresholdColor.prototype.ColorDialToColor = function( colorDial )
+{
+  var d = 0;
+  if(colorDial>0.5) d = 1;
+  if(colorDial<-0.5) d = -1;
+  var hue = (((d+this.dialOffset)*this.dialScale)%1 + (this.hueOffset%1) + 1.0)%1.0;
+  return this.HSVtoRGB(hue,this.saturation,1.0);
+}
