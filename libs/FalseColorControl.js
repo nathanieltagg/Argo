@@ -39,27 +39,36 @@ function FalseColorControl( element  )
   this.element = element;
   var settings = {
     label_font: "10pt",
-    xlabel: "ADC (Ped-subtracted)",
-    ylabel: "TPC Samples",
+    // xlabel: "ADC (Ped-subtracted)",
+    // ylabel: "TPC Samples",
+    ylabel: "ADCs",
     draw_ticks_x: false,
     tick_pixels_y: 15,
     margin_left: 42,
     margin_bottom: 30,
-    log_y:true,
+    log_y:false,
     min_u: 0,
     max_u: 500
   };
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
-  this.hist = new Histogram(10,-4096,4096);  
+  // this.hist = new Histogram(10,-4096,4096);
   this.cs =  gWirePseudoColor;
 
   this.temporary_offset = 0;
   this.final_offset = 0;
   
-  // this.cs.min = this.hist.min
-  // this.cs.max = this.hist.max;
-  this.SetHist(this.hist,gWirePseudoColor,{});
+  var c1 = gWirePseudoColor.AdcToColorDial(-2096);
+  var c2 = gWirePseudoColor.AdcToColorDial( 2096);
+  this.hist = new Histogram(1000,c1,c2);
+  for(var i =0;i<this.hist.n;i++) {
+    this.hist.SetBinContent(i,gWirePseudoColor.ColorDialToAdc(this.hist.GetX(i)));
+  }
+  this.SetHist(this.hist,new ColorScaleIndexed(0),{doFill:false,doLine:true});
+  this.log_y = false;
+  
+
+  
   
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
@@ -73,30 +82,48 @@ function FalseColorControl( element  )
 
 FalseColorControl.prototype.NewRecord = function()
 {
-  if(gRecord && gRecord.raw && gCurName.raw && gRecord.raw[gCurName.raw] && gRecord.raw[gCurName.raw].h_adc) {
-    this.vhist = HistogramFrom(gRecord.raw[gCurName.raw].h_adc);
-    var nh = $.extend({},gRecord.raw[gCurName.raw].h_adc);
-    
-    // Hack the histogram. Make the draw-er believe it's not a variable-width histo, but add labels that are right.
-    nh.binlabelsx = [];
-    for(var b = 0;b<nh.n; b++) nh.binlabelsx.push("");
-    var l = [-100,-10,0,10,100];
-    for(var i = 0;i<l.length; i++) nh.binlabelsx[this.vhist.GetBin(l[i])]= l[i].toString() ;
-    for(var i = 0;i<nh.data.length-1; i++) nh.data[i] = Math.max(nh.data[i]/(nh.x_bins[i+1]-nh.x_bins[i]),1);
-    nh.x_bins=null;
-    this.hist = HistogramFrom(nh);
-    this.SetHist(this.hist,this.cs,{});
-    this.Draw();
-  }
+  this.Draw();
+  // if(gRecord && gRecord.raw && gCurName.raw && gRecord.raw[gCurName.raw] && gRecord.raw[gCurName.raw].h_adc) {
+  //   this.vhist = HistogramFrom(gRecord.raw[gCurName.raw].h_adc);
+  //   var nh = $.extend({},gRecord.raw[gCurName.raw].h_adc);
+  //
+  //   // Hack the histogram. Make the draw-er believe it's not a variable-width histo, but add labels that are right.
+  //   nh.binlabelsx = [];
+  //   for(var b = 0;b<nh.n; b++) nh.binlabelsx.push("");
+  //   var l = [-100,-10,0,10,100];
+  //   for(var i = 0;i<l.length; i++) nh.binlabelsx[this.vhist.GetBin(l[i])]= l[i].toString() ;
+  //   for(var i = 0;i<nh.data.length-1; i++) nh.data[i] = Math.max(nh.data[i]/(nh.x_bins[i+1]-nh.x_bins[i]),1);
+  //   nh.x_bins=null;
+  //   this.hist = HistogramFrom(nh);
+  //   this.SetHist(this.hist,this.cs,{});
+  //   this.Draw();
+  // }
   // $(this.element).prepend(gGLEngine.build_LUT_canvas(this.cs,-4065,4096));
 };
 
 
 FalseColorControl.prototype.Draw = function( )
 {
-  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  // this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
-  HistCanvas.prototype.Draw.call(this);
+  this.Clear();
+  this.DrawFrame();
+  this.ctx.save();
+  var my_gradient=this.ctx.createLinearGradient(0,0,this.span_x,0);
+  for(var i =0;i<this.hist.n;i++) {
+    var u = this.hist.GetX(i);
+    var c = gWirePseudoColor.ColorDialToColor(u);
+    my_gradient.addColorStop(i/this.hist.n,
+                             "rgba("+
+    parseInt(c.r)+","+
+    parseInt(c.g)+","+
+    parseInt(c.b)+","+0.5+")"
+                            );
+    this.ctx.fillStyle=my_gradient;
+    this.ctx.fillRect(this.origin_x,this.origin_y-this.span_y,this.span_x,this.span_y);
+  }
+  this.ctx.restore();
+  this.DrawHists();
   
 };
 
