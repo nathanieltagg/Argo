@@ -285,7 +285,7 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
 
   // console.profile(profname);
 
-  var bubble;
+  var bubble = true;
   if(ev.type === 'mousewheel') bubble=this.DoMouseWheel(ev,scrollDist);
   else                         bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
   // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);

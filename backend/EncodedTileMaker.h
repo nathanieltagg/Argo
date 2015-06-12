@@ -46,6 +46,7 @@ public:
         
         for(int k=0;k<ntdc;k++) {
           int iadc = waveform[k+m_tdcStart] + 0x8000;
+          // iadc = (k+m_tdcStart - 4800)/2 + 0x8000; // Testing only :generates a linear slope map
           encodeddata[k*3]   = 0xFF&(iadc>>8);
           encodeddata[k*3+1] = iadc&0xFF;
           encodeddata[k*3+2] = 0;

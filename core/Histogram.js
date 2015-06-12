@@ -32,7 +32,6 @@ function CreateGoodHistogram(nbins, min, max)
   if(max<=min) newmax = min+1;// Add 1 if we're in trouble
   var h= new Histogram(nbins,min, newmax + (newmax-min)/nbins);
 
-  console.log("CreateGoodHistogram",nbins,min,max,h);
   return h;  
 };
 

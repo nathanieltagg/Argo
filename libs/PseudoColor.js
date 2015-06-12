@@ -164,53 +164,76 @@ function PsTest2( hue )
 
 
 
+
+
+
+
 // Subclass.
 LogColor.prototype = new PseudoColor();
 function LogColor( )
 {
 //   this.adcScale = 200;
-  this.adcScale = 200;
-  this.hueScale = 0.8;
-  this.hueOffset= 0;
+  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
+  this.dialScale = 1;
+  this.dialOffset = 0;
+  this.hueOffset= 0.2;
   this.saturation = 0.9;
 
-  this.Rebuild();
+  // this.Rebuild();
 }
 
-LogColor.prototype.Rebuild = function( )
+// LogColor.prototype.Rebuild = function( )
+// {
+//   var points = [];
+//   var nctl = 256;
+//   for(var i=0;i<nctl;i++) {
+//     var dial = i/nctl;
+//     var pt = this.ColorDialToColor(dial);
+//     pt.x = this.ColorDialToAdc(dial);
+//     pt.a = 255;
+//     points.push(pt);
+//   }
+//   PseudoColor.call(this,points);
+// }
+
+LogColor.prototype.ColorDialToAdc = function( colorDial )
 {
-  var points = [];
-  var nctl = 256;
-  for(var i=0;i<nctl;i++) {
-    var dial = i/nctl;
-    var pt = this.ColorDialToColor(dial);
-    pt.x = this.ColorDialToAdc(dial);
-    pt.a = 255;
-    points.push(pt);
-  }
-  PseudoColor.call(this,points);
+  // colorDial is a number -1 to 1, where 0 is the mid point (0adc)
+  // colors change evenly from 0-1 on colordial.
+  // adc can legally be -4096 to 4096.
+  return Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
 }
 
 LogColor.prototype.AdcToColorDial = function( adc )
 {
   // adc can legally be -4096 to 4096.
-  // colorDial is a 0-1 number, where 0.5 is the mid point (0adc)
-  return Math.tan(adc*Math.PI/8192)*this.adcScale + 0.5;
+  // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
+  return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
 }
 
-LogColor.prototype.ColorDialToAdc = function( colorDial )
-{
-  // colorDial is a 0-1 number, where 0.5 is the mid point (0adc)
-  // colors change evenly from 0-1 on colordial.
-  // adc can legally be -4096 to 4096.
-  return Math.atan( (colorDial-0.5)/this.adcScale) * 8196 / Math.PI;
-}
 
 LogColor.prototype.ColorDialToColor = function( colorDial )
 {
-  var hue = ((colorDial*this.hueScale)%1 + 1.2 + (this.hueOffset%1))%1.0;
+  var hue = (((colorDial+this.dialOffset)*this.dialScale)%1 + (this.hueOffset%1) + 1.0)%1.0;
   return this.HSVtoRGB(hue,this.saturation,1.0);  
 }
+
+LogColor.prototype.ColorDialToCtxColor = function( colorDial )
+{
+  var c = this.ColorDialToColor(colorDial);
+  return "rgb("+
+                        parseInt(c.r)+","+
+                        parseInt(c.g)+","+
+                        parseInt(c.b)+")";
+}
+
+LogColor.prototype.interpolate = function(x) {
+  var dial = this.AdcToColorDial(x);
+  var c = this.ColorDialToColor(dial);
+  c.x = x;
+  c.a = 255.0;
+  return c;
+};
 
 gWirePseudoColor = new LogColor();
 

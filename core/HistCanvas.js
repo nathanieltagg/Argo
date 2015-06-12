@@ -44,6 +44,8 @@ function HistCanvas( element, options )
     default_options : {
       doFill: true,
       doLine: false,
+      doGraph: false,
+      doDots: false,
       lineWidth: 1,
       strokeStyle: "black",
       composite: 'source-over',
@@ -321,30 +323,60 @@ HistCanvas.prototype.DrawHist = function( iHist )
    // if(barwidth>2) barwidth -= 1;
    
    var i,t,t2,f,x1,x2,y;
+   var xoff = o.xoffset || 0;
+   var yoff = o.yoffset || 0;
    
-   if(o.doLine) {
+   
+   if(o.doLine || o.doGraph) {
      this.ctx.save();
      this.ctx.globalCompositeOperation=o.composite;     
+     this.ctx.lineWidth = o.lineWidth;
+     this.ctx.strokeStyle = o.strokeStyle;
      this.ctx.beginPath();
-     this.ctx.moveTo(this.origin_x, this.origin_y);
+     if(!o.doGraph) this.ctx.moveTo(this.origin_x+xoff, this.origin_y+yoff);
+     else           this.ctx.moveTo(this.GetX(hist.GetX(0))+xoff, this.GetY(hist.data[0])+xoff);
      for (i = 0; i < hist.n; i++) {
        t = hist.GetX(i);
        t2 = hist.GetX(i+1);
        f = hist.data[i];
-       x1 = this.GetX(t);
-       x2 = this.GetX(t2);
-       y = this.GetY(f);
+       x1 = this.GetX(t)  +xoff;
+       x2 = this.GetX(t2) +xoff;
+       y = this.GetY(f)   +yoff;
        if(x2<this.origin_x) continue;
        if(x1>(this.origin_x + this.span_x)) continue;
        if(x1<this.origin_x) x1 = this.origin_x;
        if(x2>(this.origin_x + this.span_x)) x2 = this.origin_x+this.span_x;
        this.ctx.lineTo(x1,y);
-       this.ctx.lineTo(x2,y);       
+       if(!o.doGraph) this.ctx.lineTo(x2,y);       
      }
      this.ctx.stroke();
      this.ctx.restore();
-     
    }
+   
+   if(o.doDots) {
+     var r = Math.min(6,this.span_x/hist.n/2);
+     r = Math.max(r,2);
+     
+     this.ctx.save();
+     this.ctx.globalCompositeOperation=o.composite;     
+     for (i = 0; i < hist.n; i++) {
+       t = hist.GetX(i);
+       f = hist.data[i];
+       x = this.GetX(t);
+       y = this.GetY(f);
+       if(x<this.origin_x) continue;
+       if(x>(this.origin_x + this.span_x)) continue;
+       this.ctx.beginPath();
+       var c = colorscale.GetColor(t,f);
+       console.log("dotcolor",t,f,c,colorscale);
+       this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
+       this.ctx.arc(x,y,r,0,1.999*Math.PI);
+       this.ctx.fill();
+     }
+     this.ctx.stroke();
+     this.ctx.restore();
+   } 
+   
    if(o.doFill) {
      this.ctx.save();
      this.ctx.globalCompositeOperation=o.composite;          
@@ -361,7 +393,7 @@ HistCanvas.prototype.DrawHist = function( iHist )
        if(x<this.origin_x) x = this.origin_x;
        if(x2>this.origin_x+this.span_x) x2 = this.origin_x+this.span_x;
        var bw = x2-x;
-       var c = colorscale.GetColor((t)/2);
+       var c = colorscale.GetColor(t,f);
        this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
        this.ctx.fillRect(x, y, bw, (this.origin_y-this.adjunct_height-y));
      }

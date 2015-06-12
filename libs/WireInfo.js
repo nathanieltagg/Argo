@@ -22,8 +22,8 @@ function WireInfo( element  )
   gWireInfo = this;
   this.element = element;
   var settings = {
-    show_nwires_below: 0,
-    show_nwires_above: 0
+    show_nwires_below: 2,
+    show_nwires_above: 2
     // show_nwires_below: 2,
     // show_nwires_above: 2
   };
@@ -40,8 +40,8 @@ function WireInfo( element  )
   this.txt_element   = $(".WireInfo-text",this.element)[0];
   this.graph_element = $(".WireInfo-graph",this.element)[0];
 
-  this.graph = new GraphCanvas( this.graph_element, {xlabel:"TDC", ylabel:"ADC", margin_left: 40} );
-  this.graphdata = new Histogram(50,0,50);
+  this.graph = new HistCanvas( this.graph_element, {xlabel:"TDC", ylabel:"ADC", margin_left: 40} );
+  this.graphdata = new Histogram(100,0,100);
   this.graph_data = [];
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     this.graph_data[i] = new Histogram(100,0,100); 
@@ -64,81 +64,8 @@ function WireInfo( element  )
 WireInfo.prototype.NewRecord = function()
 {
   $(this.txt_element).html("");
-
-
 };
 
-/*
-WireInfo.prototype.MapData = function(typ)
-{
-  var loaded = true;
-  var width = 0;
-  var height = 0;
-  var images = this[typ].images;
-  for(var irow=0;irow<images.length;irow++) {
-    var row_height = 0;
-    var row_width =0;
-    for(var icol=0;icol<images[irow].length;icol++) {
-      var img = images[irow][icol];
-      if( !(img.complete) ) loaded = false;
-      row_width  += img.width;
-      row_height = Math.max(row_height,img.height);
-    }
-    width = Math.max(width,row_width);
-    height += row_height;
-  }
-  this[typ].loaded = loaded;
-  if(!loaded) return;
-
-  // Make the offscreen canvas big enough to hold entire picture.
-  this[typ].offscreenCanvas.width = width;
-  this[typ].offscreenCanvas.height = height;
-  this[typ].offscreenCtx = this.cal.offscreenCanvas.getContext("2d");
-
-  // Draw all of the sub-pictures in place.
-  var x = 0;
-  var h = 0;
-  var y = 0;
-  for(var irow=0;irow<images.length;irow++) {
-    for(var icol=0;icol<images[irow].length;icol++) {
-      var img = images[irow][icol];
-      this[typ].offscreenCtx.drawImage( img, x, y);
-      x += img.width;
-      h = img.height;
-    }
-    y += h;
-  }
-
-  console.log("WireInfo " + typ + " loaded");
-  this.Draw();  
-};
-
-WireInfo.prototype.MapCalData = function()
-{
-  this.cal.loaded = true;
-  // Load up the bitmap.
-
-  this.cal.offscreenCanvas.width  = this.cal_wire_img.width;
-  this.cal.offscreenCanvas.height = this.cal_wire_img.height;
-  this.cal.offscreenCtx = this.cal_offscreenCanvas.getContext("2d");
-  this.cal.offscreenCtx.drawImage(this.cal_wire_img,0,0);
-
-  this.Draw();  
-};
-
-WireInfo.prototype.MapRawData = function()
-{
-  this.raw.loaded = true;
-  // Load up the bitmap.
-
-  this.raw.offscreenCanvas.width  = this.raw_wire_img.width;
-  this.raw.offscreenCanvas.height = this.raw_wire_img.height;
-  this.raw.offscreenCtx = this.raw_offscreenCanvas.getContext("2d");
-  this.raw.offscreenCtx.drawImage(this.raw_wire_img,0,0);
-
-  this.Draw();  
-};
-*/
 
 function getEncodedPngVal(imgdata, x)
 {
@@ -237,6 +164,7 @@ WireInfo.prototype.Draw = function()
   var maxwire = gGeo.numWires(plane);
   this.graph.max_v = -1e9;
   this.graph.min_v =  1e9;
+
   
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     var c = i+chan;
@@ -244,9 +172,19 @@ WireInfo.prototype.Draw = function()
     if(c<0) continue;
     if(wire>maxwire) continue;
     this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
-    var color =i;
-    if(i<0) color = 10-color;
-    this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(color)); 
+  }
+  
+  var dotcolor = {
+    GetColor: function(t,f) { var c=gWirePseudoColor.ColorDialToColor(gWirePseudoColor.AdcToColorDial(f)); 
+      return parseInt(c.r)+','+parseInt(c.g)+','+parseInt(c.b); }
+  };
+  
+  this.graph.SetHist(this.graph_data[0],dotcolor,{doDots: true, doGraph:true, doFill:false, lineWidth: 2});
+  
+  for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
+    if(i==0) continue;
+    this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(1),
+      {doDots: false, doGraph:true, doFill:false, lineWidth:0.5, xoffset:0, yoffset:i*30});
   }
 
   //insist that the graph be at least 40 ADC counts tall
@@ -259,7 +197,59 @@ WireInfo.prototype.Draw = function()
   // if(this.graph.max_v <  100) this.graph.max_v =  100;
   // this.LoadHistogramWithWireData(this.graphdata,offscreenCtx,chan,tdc);
   // this.graph.ResetToHist(this.graphdata);
-  this.graph.Draw();
+
+  /// ------ Manual Draw
+  // this.graph.Draw();
+  this.graph.Clear();
+  this.graph.DrawFrame();
+  this.graph.DrawHists();
+
+  /*
+  if (!this.graph.ctx) return;
+  this.graph.ctx.save();
+   for(var iHist = 0; iHist< this.graph.hists.length; iHist++){
+     //log("  drawing hist "+iHist);
+     var hist = this.graph.hists[iHist];
+     var colorscale = this.graph.colorscales[iHist];
+     var i, t, f, x, y;
+     
+     if(this.graph.show_lines) {
+       this.graph.ctx.lineCap = "round";
+       this.graph.ctx.lineJoin="round";
+       this.graph.ctx.lineWidth=1;
+       this.graph.ctx.strokeStyle =  "rgba(" + colorscale.GetColor() + ",1.0)";
+       this.graph.ctx.beginPath();
+       for (i = 0; i < hist.n; i++) {
+         t = hist.GetX(i);
+         f = hist.data[i];
+         x = Math.floor(this.graph.GetX(t)) + this.graph.waterfall_offset[0]*iHist;
+         y = Math.floor(this.graph.GetY(f)) - this.graph.waterfall_offset[1]*iHist;
+         if(i===0) this.graph.ctx.moveTo(x,y);
+         else     this.graph.ctx.lineTo(x,y);
+       }
+       this.graph.ctx.stroke();
+     }
+
+     var r = Math.min(6,this.graph.span_x/hist.n/2);
+     r = Math.max(r,2);
+     
+     if(this.graph.show_points) {
+       
+       for (i = 0; i < hist.n; i++) {
+         this.graph.ctx.beginPath();
+         t = hist.GetX(i);
+         f = hist.data[i];
+         x = Math.floor(this.graph.GetX(t)) + this.graph.waterfall_offset[0]*iHist;
+         y = Math.floor(this.graph.GetY(f)) - this.graph.waterfall_offset[1]*iHist;
+         this.graph.ctx.fillStyle =  gWirePseudoColor.ColorDialToCtxColor(gWirePseudoColor.AdcToColorDial(f));
+         this.graph.ctx.arc(x,y,r,0,1.999*Math.PI);
+         this.graph.ctx.fill();
+       }
+     }
+     
+   }
+   this.graph.ctx.restore();
+   */
   
 };
 
