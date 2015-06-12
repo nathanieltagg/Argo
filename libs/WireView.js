@@ -962,8 +962,10 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
         
     // Draw it.
     this.ctx.beginPath();
-    this.ctx.moveTo(this.GetX(u1),this.GetY(v1));
-    this.ctx.lineTo(this.GetX(u2),this.GetY(v2));
+    this.ctx.arc(x1,y1,6,0,1.99*Math.PI);
+    
+    this.ctx.moveTo(x1,y1);
+    this.ctx.lineTo(x2,y2);
     this.ctx.stroke();
     
 
