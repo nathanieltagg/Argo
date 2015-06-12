@@ -168,6 +168,7 @@ function PsTest2( hue )
 LogColor.prototype = new PseudoColor();
 function LogColor( )
 {
+//   this.adcScale = 200;
   this.adcScale = 200;
   this.hueScale = 0.8;
   this.hueOffset= 0;
@@ -202,12 +203,12 @@ LogColor.prototype.ColorDialToAdc = function( colorDial )
   // colorDial is a 0-1 number, where 0.5 is the mid point (0adc)
   // colors change evenly from 0-1 on colordial.
   // adc can legally be -4096 to 4096.
-  return Math.atan( (colorDial-0.5)/this.adcScale ) * 8196 * Math.PI;
+  return Math.atan( (colorDial-0.5)/this.adcScale) * 8196 / Math.PI;
 }
 
 LogColor.prototype.ColorDialToColor = function( colorDial )
 {
-  var hue = (colorDial*this.hueScale + 1.2 + (this.hueOffset%1))%1.0;
+  var hue = ((colorDial*this.hueScale)%1 + 1.2 + (this.hueOffset%1))%1.0;
   return this.HSVtoRGB(hue,this.saturation,1.0);  
 }
 
