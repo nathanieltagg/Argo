@@ -100,7 +100,7 @@ function FalseColorControl( element  )
   
   $('div#psuedoDialScaleSlider').slider({
     value: $('input#psuedoDialScale').val(),
-    min: 0.05,
+    min: -2,
     max: 2,
     step: 0.1,
     slide: function(ev,ui) { $('input#psuedoDialScale').val(ui.value).trigger('change'); return true;},

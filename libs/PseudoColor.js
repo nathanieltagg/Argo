@@ -237,7 +237,7 @@ LogColor.prototype.AdcToColorDial = function( adc )
 
 LogColor.prototype.ColorDialToColor = function( colorDial )
 {
-  var hue = (((colorDial+this.dialOffset)*this.dialScale)%1 + (this.hueOffset%1) + 1.0)%1.0;
+  var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
   return this.HSVtoRGB(hue,this.saturation,1.0);  
 }
 
@@ -279,6 +279,6 @@ ThresholdColor.prototype.ColorDialToColor = function( colorDial )
   var d = 0;
   if(colorDial>0.5) d = 1;
   if(colorDial<-0.5) d = -1;
-  var hue = (((d+this.dialOffset)*this.dialScale)%1 + (this.hueOffset%1) + 1.0)%1.0;
+  var hue = (((d+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
   return this.HSVtoRGB(hue,this.saturation,1.0);
 }
