@@ -50,7 +50,7 @@ function GLEngine( tilesize )
  
   console.time("GLEngine::create gl context");
   try {
-    this.gl = this.renderCanvas.getContext('experimental-webgl');    
+    this.gl = this.renderCanvas.getContext('webgl',{ alpha: false, antialias: false,  depth: false });    
   } catch(e) 
   {
     console.error("Cannot crate WebGL context: "  + e.toString());

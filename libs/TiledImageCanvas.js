@@ -104,8 +104,8 @@ function TiledImageCanvas( urlarray, callbackfunction, iname )
   }
   this.canvas.width = total_width;
   this.canvas.height = total_height;
-  this.ctx = this.canvas.getContext("2d");
-
+  this.ctx = this.canvas.getContext("2d",{alpha:false, willReadFrequently:true});
+  this.ctx.imageSmoothingEnabled= false
 };
 
 TiledImageCanvas.prototype.MapData = function(jrow,jcol)

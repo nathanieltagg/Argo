@@ -889,7 +889,7 @@ Pad3d.prototype.PrintHQ = function()
   canvas.height = saveHeight * gPrintScale;
   // this.width  = saveWidth * gPrintScale;
   // this.height = saveHeight * gPrintScale;
-  this.ctx = this.canvas.getContext("2d");
+  this.ctx = this.canvas.getContext("2d",{alpha:false});
   if(initCanvas) this.ctx = initCanvas(this.canvas).getContext('2d');
 
   // Now do the actual draw

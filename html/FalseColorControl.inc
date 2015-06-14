@@ -16,7 +16,7 @@
     <button class="falseColorPlus1">+1</button> -->
     <div class='psuedoColorRow' > <span class='pslabel'>Shift</span>
               <div id='psuedoDialOffsetSlider' class='psslide'></div>
-              <input class='psval savable' type="number" id='psuedoDialOffset' value='0' width='3'/></div>
+              <input class='psval savable' type="number" id='psuedoDialOffset' value='-0.17503753776026354' width='3'/></div>
 
     <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
               <div id='psuedoAdcScaleSlider'class='psslide'></div> 
@@ -24,7 +24,7 @@
 
     <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
               <div id='psuedoDialScaleSlider' class='psslide'></div>
-              <input class='psval savable'  type="text" id='psuedoDialScale' value='1' width='3'/> </div>
+              <input class='psval savable'  type="text" id='psuedoDialScale' value='0.8' width='3'/> </div>
 
     <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
               <div id='psuedoSaturationSlider' class='psslide'></div>

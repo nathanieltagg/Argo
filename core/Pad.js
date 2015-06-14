@@ -630,8 +630,9 @@ Pad.prototype.PrintHQ = function()
   canvas.height = saveHeight * gPrintScale;
   // this.width  = saveWidth * gPrintScale;
   // this.height = saveHeight * gPrintScale;
-  this.ctx = this.canvas.getContext("2d");
-  if(initCanvas) this.ctx = initCanvas(this.canvas).getContext('2d');
+  this.ctx = this.canvas.getContext("2d",{alpha:false}); // canvas is not transparent - may speed up some engines.  
+  this.ctx.imageSmoothingEnabled= false
+  this.ctx.mozImageSmoothingEnabled= false
 
   // Now do the actual draw
   // this.Resize();
