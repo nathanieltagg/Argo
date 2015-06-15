@@ -179,12 +179,13 @@ WireInfo.prototype.Draw = function()
       return parseInt(c.r)+','+parseInt(c.g)+','+parseInt(c.b); }
   };
   
+  
   this.graph.SetHist(this.graph_data[0],dotcolor,{doDots: true, doGraph:true, doFill:false, lineWidth: 2});
   
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     if(i==0) continue;
     this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(1),
-      {doDots: false, doGraph:true, doFill:false, lineWidth:0.5, xoffset:0, yoffset:i*30});
+      {doDots: false, doGraph:true, doFill:false, lineWidth:0.5, xoffset:-10*i, yoffset:i*30});
   }
 
   //insist that the graph be at least 40 ADC counts tall
@@ -199,10 +200,11 @@ WireInfo.prototype.Draw = function()
   // this.graph.ResetToHist(this.graphdata);
 
   /// ------ Manual Draw
-  // this.graph.Draw();
-  this.graph.Clear();
-  this.graph.DrawFrame();
-  this.graph.DrawHists();
+  this.graph.Draw();
+  // this.graph.Clear();
+  // this.graph.DrawFrame();
+  //
+  // this.graph.DrawHists();
 
   /*
   if (!this.graph.ctx) return;

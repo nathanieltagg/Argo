@@ -112,7 +112,19 @@ HistCanvas.prototype.Draw = function()
   this.Clear();
   this.DrawFrame();
   this.DrawRegions();
+  // Clip region.
+  this.ctx.save();
+  this.ctx.beginPath();
+  this.ctx.moveTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.clip();
+    
   this.DrawHists();
+  
+  this.ctx.restore();
   if(this.adjunct_display) this.DrawAdjunct();
   this.DrawMarker();
 };
@@ -238,13 +250,15 @@ HistCanvas.prototype.ResetScales = function ( inHist )
     this.min_v = Math.min(this.min_v,hists[i].min_content)
     this.max_v = Math.max(this.max_v,hists[i].max_content)
     
-    // For unsupressed zero:
-    if(!this.suppress_zero) this.min_v = Math.min(0,hists[i].min_content);
-    
+   
     // For histograms with error bars:
     if("min_content_with_err" in hists[i])  this.min_v = Math.min(this.min_v,hists[i].min_content_with_err); 
     if("max_content_with_err" in hists[i])  this.max_v = Math.max(this.max_v,hists[i].max_content_with_err);
   }
+  
+  // For unsupressed zero:
+  if(!this.suppress_zero) this.min_v = Math.min(0,this.min_v);
+  
   
   var du = (this.max_u-this.min_u);
   if(du<=0) this.max_u = this.min_u + 1; // Make sure we have SOME dynamic range.
