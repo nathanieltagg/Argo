@@ -1180,7 +1180,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     // compile points
     var pts = [];
     var t0 = 3200;
-    if(move_t0 && p.trajectory.length>0) t0 = p.trajectory[0].t/500.0; // 500 ns per tick.
+    if(move_t0 && p.trajectory.length>0) t0 = 3200+ p.trajectory[0].t/500.0; // 500 ns per tick.
     
     for(var j=0;j<p.trajectory.length;j++) {
       var point = p.trajectory[j];
