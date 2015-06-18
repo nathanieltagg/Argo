@@ -33,7 +33,10 @@ function LiveControl( element )
     console.log("go_livedata");
     self.refresh_live(true);
   });
-  $('#ctl-refresh-auto').click(self.refresh_live.bind(self));
+  $('#ctl-refresh-auto').click(function(){
+    $(this).parents("div:first").effect("highlight", {}, 5000);
+    self.refresh_live.bind(self)
+  });
   
 
   gStateMachine.BindObj("recordChange",this,"NewRecord");
@@ -48,17 +51,25 @@ LiveControl.prototype.Refresh = function()
     par.latest_cache = this.latest_cache_file; 
     par.recent_cache = this.recent_cache_file; 
   }
+  this.time_last_refresh = Date.now();
   QueryServer(par,"server/serve_live.cgi");
 }
 
 LiveControl.prototype.refresh_live = function( force ) {
   console.log("refresh_live","force=",force,"checkbox=",$('#ctl-refresh-auto').is(":checked"));
-  if(this.refreshTimeout) clearTimeout(this.refreshTimeout);
+
+  // if(this.refreshTimeout) clearTimeout(this.refreshTimeout);
 
   if($('#ctl-refresh-auto').is(":checked")) {
     // restart timer.
-    var delay = parseFloat($('#ctl-refresh-period').val())*1000;
-    this.refreshTimeout = setTimeout(this.refresh_live.bind(this),delay);
+    // var delay = parseFloat($('#ctl-refresh-period').val())*1000;
+    //this.refreshTimeout = setTimeout(this.refresh_live.bind(this),delay);
+    this.clockInterval = setInterval(do_clock,1000);    
+  } else {
+    if(this.clockInterval) {
+      clearInterval(this.clockInterval);
+      clockface('#refresh-clock',0);      
+    }
   }
   
   if($('#ctl-refresh-auto').is(":checked") || force) this.Refresh();
@@ -69,17 +80,10 @@ LiveControl.prototype.stop_auto_refresh = function()
 {
   // Highlight to user that we have flipped the switch off.
   $('#ctl-refresh-auto').parents("div:first").effect("highlight", {}, 5000);
-
   $('#ctl-refresh-auto').attr('checked', false);
 }
 
 
-LiveControl.prototype.stop_auto_refresh = function()
-{
-  // Highlight to user that we have flipped the switch off.
-  $('#ctl-refresh-auto').parents("div:first").effect("highlight", {}, 5000);
-  $('#ctl-refresh-auto').attr('checked', false);
-}
 
 LiveControl.prototype.NewRecord = function()
 {
@@ -88,6 +92,14 @@ LiveControl.prototype.NewRecord = function()
   if(gServing.live_cache_file  > this.latest_cache_file) this.latest_cache_file = gServing.live_cache_file;
 }
 
+
+function do_clock()
+{
+  var time_spent = Date.now() - gLiveControl.time_last_refresh;
+  var frac =time_spent / (parseFloat($('#ctl-refresh-period').val())*1000);
+  if(frac > 1 ) gLiveControl.refresh_live(false);
+  // clockface('#refresh-clock',frac);
+}
 
 
 function clockface(elem,frac) {

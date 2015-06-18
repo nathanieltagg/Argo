@@ -72,9 +72,9 @@ div.A-TimeHistogram {
   </div>
   <div class='A-LiveControl' style="display: inline-block; width:500px;">
     <input class="ui-state-default ui-corner-all" type="button" id="go_livedata" value="Get Live Data!" style="float:left; margin:10px"/>
-    <div><label id="ctl-refresh-auto-label" for="ctl-refresh-auto">Auto-refresh Live Data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" /><br/></div>
-    <label for="ctl-refresh-period">Refresh data every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds
-    <br/>
+    <span style='float:left;'><label id="ctl-refresh-auto-label" for="ctl-refresh-auto">Auto-refresh Live Data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" /><br/>
+    <label for="ctl-refresh-period">Refresh data every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds</span>
+    <div id='refresh-clock' style='float:left; display:inline-block; width:50px; height:50px'></div>
     
   </div>
 
