@@ -1,5 +1,5 @@
 $(function(){
-  // window.setInterval(UpdateTimeAgoElements,2000);
+   window.setInterval(UpdateTimeAgoElements,2000);
 });
 
 function TimeAgoText(t)
