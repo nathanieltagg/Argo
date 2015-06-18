@@ -18,7 +18,7 @@ function TimeAgoText(t)
 
 function UpdateTimeAgoElements()
 {
-  console.error("Doing update time ago elements");
+  //console.error("Doing update time ago elements");
   $(".TimeAgo").each(function(){
     var t = $(this).data('time');
     if(t) $(this).text(TimeAgoText(t));
