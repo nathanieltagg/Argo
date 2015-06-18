@@ -121,18 +121,38 @@ MCDigraph.prototype.NewRecord = function()
   }
   
   // build root node.
-  var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
-   // Modify the root object to be the interaction.
-  
-  var inters = gRecord.mc.gtruth[gMCTruthListName];
-  if(inters && inters[0]) {
-    var inter = inters[0];
-    var incE = inter.fProbeP4_fE;
-    root.name = incE.toFixed(3)  + " GeV"  +
-               " " + GetParticle(inter.fProbePDG) +
-               " " + InteractionCode[inter.fGint] +
-               " " + ScatterCode[inter.fGscatter];  
+  // Find the right mctruth object.
+  var mctruth = null;
+  for(n in gRecord.mc.mctruth)  mctruth = gRecord.mc.mctruth[n];  // get anything.
+  for(n in gRecord.mc.mctruth) {
+    if(/generatory/.test(n)) mctruth = gRecord.mc.mctruth[n];
   }
+
+  var root = { id: 0, data: mctruth[0], children:[] };
+   // Modify the root object to be the interaction.
+
+  if(mctruth[0]) {
+    var inter = mctruth[0];
+    var incE = inter.fMCNeutrino_fNu_fGvtx_fE;
+    root.name = incE.toFixed(3)  + " GeV"  +
+               " " + GetParticle(inter.fMCNeutrino_fNu_fpdgCode) +
+               // " " + InteractionCode[inter.fMCNeutrino_fInteractionType] +
+               " " + ScatterCode[inter.fMCNeutrino_fMode+1];
+  }
+
+
+  // var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
+  //  // Modify the root object to be the interaction.
+  //
+  // var inters = gRecord.mc.gtruth[gMCTruthListName];
+  // if(inters && inters[0]) {
+  //   var inter = inters[0];
+  //   var incE = inter.fProbeP4_fE;
+  //   root.name = incE.toFixed(3)  + " GeV"  +
+  //              " " + GetParticle(inter.fProbePDG) +
+  //              " " + InteractionCode[inter.fGint] +
+  //              " " + ScatterCode[inter.fGscatter];
+  // }
   for(var i=0;i<particles.length; i++) {
     if(particles[i].fmother === 0){
       // console.log("adding to root:",particles[i],particles[i].ftrackId);
