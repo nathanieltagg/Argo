@@ -38,6 +38,13 @@ function LiveControl( element )
     self.refresh_live.bind(self)
   });
   
+  $('#refresh-clock').circleProgress({
+      value: 0,
+      size: 50,
+      fill: {
+          gradient: ["green", "orange"]
+      }
+  });
 
   gStateMachine.BindObj("recordChange",this,"NewRecord");
 
@@ -68,7 +75,7 @@ LiveControl.prototype.refresh_live = function( force ) {
   } else {
     if(this.clockInterval) {
       clearInterval(this.clockInterval);
-      clockface('#refresh-clock',0);      
+      $('#refresh-clock').circleProgress('value', 0);
     }
   }
   
@@ -98,6 +105,8 @@ function do_clock()
   var time_spent = Date.now() - gLiveControl.time_last_refresh;
   var frac =time_spent / (parseFloat($('#ctl-refresh-period').val())*1000);
   if(frac > 1 ) gLiveControl.refresh_live(false);
+  $('#refresh-clock').circleProgress('value', frac);
+
   // clockface('#refresh-clock',frac);
 }
 
