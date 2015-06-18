@@ -25,6 +25,7 @@
 <script type="text/javascript" src="js/jquery.ba-hashchange.js"></script>
 <script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript" src="js/jit.js"></script>
+<script type="text/javascript" src="js/circle-progress.js"></script>
 
 
 
