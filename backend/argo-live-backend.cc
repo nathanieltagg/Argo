@@ -202,7 +202,7 @@ int main(int argc, char **argv)
     }
     logInfo << "Connected";
   
-    std::string request_str = "requestTime=0;requestStale=1;";
+    std::string request_str = "requestTime=0;requestStale=0;";
     logInfo << "Requesting. " << request_str;
     if(!client.send_request(request_str)) {
       logInfo << "Can't send request.";

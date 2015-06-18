@@ -115,9 +115,12 @@ void RawRecordComposer::compose()
 void getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& header)
 {
   // check the event header.
-  uint32_t sec = record->getGlobalHeader().getSeconds();
-  uint32_t usec= record->getGlobalHeader().getMicroSeconds();
-  uint32_t nsec= record->getGlobalHeader().getNanoSeconds();
+  // uint32_t sec = record->getGlobalHeader().getSeconds();
+  // uint32_t usec= record->getGlobalHeader().getMicroSeconds();
+  // uint32_t nsec= record->getGlobalHeader().getNanoSeconds();
+  uint32_t sec = 0;
+  uint32_t usec= 0;
+  uint32_t nsec= 0;
   
   // Fixme: look at GPS 
   
@@ -225,7 +228,29 @@ void RawRecordComposer::composeHeader()
 }
   
  
+void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data) 
+{
+  // Copy the channel data to my own signed vector array
+  channel_data.decompress(waveform);
+  size_t nsamp = waveform.size();
+  
+  // Find the pedestal manually.
+  // FIXME: add configurable hook to look up.
+  // Histogram of values:
+  vector<uint16_t> histogram(0x1000,0);
+  int16_t pedestal = 0;
+  uint16_t max_counts = 0;
+  for(int i=0;i<nsamp;i++){
+    int bin = waveform[i];
+    int counts = ++histogram[bin];
+    if(counts > max_counts) { max_counts = counts; pedestal = bin;}
+  } 
 
+  // subtract ped.
+  for(int i=0;i<nsamp;i++){
+    waveform[i] -= pedestal;
+  }  
+}
  
 void RawRecordComposer::composeTPC()
 {
@@ -242,9 +267,13 @@ void RawRecordComposer::composeTPC()
   int ntdc = 0;
   TimeReporter timer("TPC");    
   
+  bool superspeed = false;
+  if( std::string::npos != fOptions.find("_SUPERSPEED_")) superspeed=true;
+  
   int wires_read = 0;
   
   {
+    boost::thread_group unpack_threads;    
     TimeReporter timer_read("TPCReadDAQ");  
     
     // Loop through all channels.
@@ -273,6 +302,8 @@ void RawRecordComposer::composeTPC()
           // Find the wire number of this channel.
           const Plexus::Plek& p = gPlexus.get(crate,card,channel);
           int wire = p.wirenum();
+          
+          if(superspeed && (wire%4)!=0) continue;
           // std::cout << "found wire " << wire << std::endl;
           if(wire<0) continue;
           size_t nsamp = channel_data.data().size();
@@ -286,29 +317,13 @@ void RawRecordComposer::composeTPC()
             continue;
           }
           waveform_t& waveform = *(inserted.first->second.get());
-                  
-          // Copy the channel data to my own signed vector array
-          channel_data.decompress(waveform);
-        
+          
+          
+          // unpack_channel(waveform,channel_data);
+          unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data)));
+          nsamp = waveform.size();
           wires_read++;
           if(ntdc<nsamp) ntdc = nsamp;
-          
-          // Find the pedestal manually.
-          // FIXME: add configurable hook to look up.
-          // Histogram of values:
-          vector<uint16_t> histogram(0x1000,0);
-          int16_t pedestal = 0;
-          uint16_t max_counts = 0;
-          for(int i=0;i<nsamp;i++){
-            int bin = waveform[i];
-            int counts = ++histogram[bin];
-            if(counts > max_counts) { max_counts = counts; pedestal = bin;}
-          } 
-        
-          // subtract ped.
-          for(int i=0;i<nsamp;i++){
-            waveform[i] -= pedestal;
-          }
         } // loop channels
 
         jCard.add("num_channels",num_card_channels);
@@ -328,6 +343,7 @@ void RawRecordComposer::composeTPC()
       
     } // loop seb/crate
   
+    unpack_threads.join_all();
     timer_read.addto(fStats);
   }
   
