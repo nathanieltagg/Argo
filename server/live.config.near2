@@ -23,5 +23,5 @@ cacheUrl=live_event_cache;
 period=5;
 
 # Maximum number of events to keep in the cache before deleting.
-maxFiles=50;
+maxFiles=20;
 
