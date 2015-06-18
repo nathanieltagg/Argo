@@ -105,7 +105,7 @@ $result .= ",\"heartbeat\":" . $heartbeat . ",\"heartbeat_time\":" . $heartbeat_
   
 
 
-if($need_to_restart>0) {
+if($ArgoServerTools::allow_live_restart>0 && $need_to_restart>0) {
   print "Restarting the server.";
   # Touch the heartbeat file to make sure that no other script tries to do this at the same time,
   # leading to even more logjams.

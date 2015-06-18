@@ -55,13 +55,13 @@ LiveControl.prototype.refresh_live = function( force ) {
   console.log("refresh_live","force=",force,"checkbox=",$('#ctl-refresh-auto').is(":checked"));
   if(this.refreshTimeout) clearTimeout(this.refreshTimeout);
 
-  if($('#ctl-refresh-auto').is(":checked") || force) this.Refresh();
-
   if($('#ctl-refresh-auto').is(":checked")) {
     // restart timer.
     var delay = parseFloat($('#ctl-refresh-period').val())*1000;
     this.refreshTimeout = setTimeout(this.refresh_live.bind(this),delay);
   }
+  
+  if($('#ctl-refresh-auto').is(":checked") || force) this.Refresh();
 }
 
 
