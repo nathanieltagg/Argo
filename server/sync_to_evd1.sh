@@ -12,3 +12,8 @@ rsync --link-dest="$targetdiff" --archive "$source" "tagg@ubooneevd1.fnal.gov:$t
 ssh tagg@ubooneevd1.fnal.gov "ln -sfn $target $targetdiff;"
 # Delete old files.  Script on remote host, but run under this cron.
 ssh tagg@ubooneevd1.fnal.gov "/localdata/argo_live_event_cache/delete_old.sh"
+
+# contents of the delete_old.sh script:
+# !/bin/bash
+# rm -rf "`ls -rd /localdata/argo_live_event_cache/cache_* | awk 'NR>2'`"
+#
