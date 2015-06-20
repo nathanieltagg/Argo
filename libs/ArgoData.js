@@ -149,5 +149,6 @@ function DoInitialBookmarking()
     }
     
   }
+  RestoreControlSettings("save",$('div.per-event-controls'));
 
 }
