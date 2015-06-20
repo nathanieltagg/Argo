@@ -326,7 +326,126 @@ $(function() {
 
   
 
+////////////////////////////////////////
+// Save
+////////////////////////////////////////
+function SaveSettings( slot ) {
+  // Cookie expiration date.
+  expdate = new Date();
+  expdate.setFullYear(2020);
+  
+  var hidden_list = [];
+  var unhidden_list = [];
+  $(".portlet").each(function(){
+    if($(".portlet-content",this).is(":hidden"))   hidden_list.push(this.id);
+    else                                         unhidden_list.push(this.id);
+  });
 
+  $.cookie(slot+":hidden-portlets",     hidden_list.join(","),{expires: expdate});
+  $.cookie(slot+":unhidden-portlets", unhidden_list.join(","),{expires: expdate});
+  // console.log("saving ","hidden-portlets",hidden_list.join(","));
+  // console.log("saving ","unhidden-portlets",unhidden_list.join(","));
+  
+  // Save portlet positions.
+  $(".dock").each(function(){
+    $.cookie(slot+":dock:"+this.id,
+              $(this).sortable("toArray")
+              ,{expires: expdate});
+    // console.log("saving ","dock:"+this.id,$(this).sortable("toArray"));
+    
+  });
+  
+  // Save misc. configuration boxes.
+  $(".saveable").each(function(){
+    val = $(this).val();
+    if($(this).is(":checkbox")) val = $(this).is(":checked");
+    $.cookie(slot+":"+this.id,val);
+    // console.log("saving ",this.id,val);
+  });
+
+  console.log("cookies saved.");
+  $.blockUI({ 
+      message: '<h1>Configuration Saved.</h1>'
+  }); 
+
+  setTimeout($.unblockUI, 800); 
+}
+
+
+
+////////////////////////////////////////
+// Restore
+////////////////////////////////////////
+function RestoreControlSettings( slot, elements ) {
+  $(".saveable",elements).each(function(){
+    var val = $.cookie(slot+":"+this.id);
+    if(val!=null){
+      // console.log("restoring:",this.id,val);
+      var changed = false;
+      if($(this).is(':checkbox')){
+
+        if( (val=='true') != $(this).is(':checked')) changed = true;
+        $(this).attr('checked',val=='true');
+
+      } else {
+        if( val != $(this).val() ) changed = true;
+        $(this).val(val);
+      } 
+
+      if(changed) $(this).trigger('change'); // Just in case
+     }
+  });
+}
+
+function RestoreSettings( slot ) {
+  console.log("RestoreSettings, slot=",slot);
+  // see ideas at http://www.shopdev.co.uk/blog/sortable-lists-using-jquery-ui/
+  var hidden_list_str   = $.cookie(slot+":hidden-portlets");
+  var unhidden_list_str = $.cookie(slot+":unhidden-portlets");
+  if(!hidden_list_str  ) hidden_list_str = "";
+  if(!unhidden_list_str) unhidden_list_str = "";
+  var hidden_list = hidden_list_str.split(',');
+  var unhidden_list = unhidden_list_str.split(',');
+  
+  $(".portlet").each(function(){
+    var should_be_hidden = false;
+    var this_portlet_is_configured = false;
+    if(jQuery.inArray(this.id,  hidden_list)>=0) {should_be_hidden=true; this_portlet_is_configured=true;}
+    if(jQuery.inArray(this.id,unhidden_list)>=0) {should_be_hidden=false; this_portlet_is_configured=true;}
+
+    if(this_portlet_is_configured==false) return;
+
+    var ishidden = $(".portlet-content",this).is(":hidden");
+    // console.log(this,"ishidden:"+ishidden,"should be hidden:"+should_be_hidden);
+    if(ishidden != should_be_hidden) {
+         // hide or expose it
+         console.warn("Toggling!",$('.portlet-header',this).text());
+         $(".portlet-header .icon-shrink",this).toggleClass("ui-icon-minusthick")
+                                           .toggleClass("ui-icon-plusthick");
+         $(".portlet-content",this)
+           .toggle()
+           .trigger("resize");
+     }
+   });
+
+   // console.log("RestoreSettings, slot=",slot);
+   // The hard part: rebuilding the docks.
+   $(".dock").each(function(){
+     var cval = $.cookie(slot+":dock:"+this.id);
+     // console.log("evaluating cookie","dock:"+this.id,cval);
+     if(!cval ) return;
+     var list = cval.split(',');
+     for(var i=list.length-1;i>=0;i--){
+       if(list[i]=="") continue;
+       // Move through the list backwards. For each item, remove it from it's current location and insert at the top of the list.
+       $(this).prepend($('#'+list[i]));
+       // Fire the element's dom-change callback
+       $('#'+list[i]+" .pad").trigger("resize");
+     }
+   });
+   
+   RestoreControlSettings(slot,$('body'));
+}
 
 ///
 /// Code that sets up configuration callbacks.
@@ -343,126 +462,9 @@ $(function(){
        console.warn("Did not define an ID for one of the porlets:",$(".portlet-header",this).text());
   });
   
-  ////////////////////////////////////////
-  // Save
-  ////////////////////////////////////////
-  function SaveSettings( slot ) {
-    // Cookie expiration date.
-    expdate = new Date();
-    expdate.setFullYear(2020);
-    
-    var hidden_list = [];
-    var unhidden_list = [];
-    $(".portlet").each(function(){
-      if($(".portlet-content",this).is(":hidden"))   hidden_list.push(this.id);
-      else                                         unhidden_list.push(this.id);
-    });
-
-    $.cookie(slot+":hidden-portlets",     hidden_list.join(","),{expires: expdate});
-    $.cookie(slot+":unhidden-portlets", unhidden_list.join(","),{expires: expdate});
-    // console.log("saving ","hidden-portlets",hidden_list.join(","));
-    // console.log("saving ","unhidden-portlets",unhidden_list.join(","));
-    
-    // Save portlet positions.
-    $(".dock").each(function(){
-      $.cookie(slot+":dock:"+this.id,
-                $(this).sortable("toArray")
-                ,{expires: expdate});
-      // console.log("saving ","dock:"+this.id,$(this).sortable("toArray"));
-      
-    });
-    
-    // Save misc. configuration boxes.
-    $(".saveable").each(function(){
-      val = $(this).val();
-      if($(this).is(":checkbox")) val = $(this).is(":checked");
-      $.cookie(slot+":"+this.id,val);
-      // console.log("saving ",this.id,val);
-    });
-
-    console.log("cookies saved.");
-    $.blockUI({ 
-        message: '<h1>Configuration Saved.</h1>'
-    }); 
-
-    setTimeout($.unblockUI, 800); 
-  }
-
   $('#ctl-save-config').button().click(function() {
     SaveSettings("save");
   });
-
-  ////////////////////////////////////////
-  // Restore
-  ////////////////////////////////////////
-  function RestoreSettings( slot ) {
-    console.log("RestoreSettings, slot=",slot);
-    // see ideas at http://www.shopdev.co.uk/blog/sortable-lists-using-jquery-ui/
-    var hidden_list_str   = $.cookie(slot+":hidden-portlets");
-    var unhidden_list_str = $.cookie(slot+":unhidden-portlets");
-    if(!hidden_list_str  ) hidden_list_str = "";
-    if(!unhidden_list_str) unhidden_list_str = "";
-    var hidden_list = hidden_list_str.split(',');
-    var unhidden_list = unhidden_list_str.split(',');
-    
-    $(".portlet").each(function(){
-      var should_be_hidden = false;
-      var this_portlet_is_configured = false;
-      if(jQuery.inArray(this.id,  hidden_list)>=0) {should_be_hidden=true; this_portlet_is_configured=true;}
-      if(jQuery.inArray(this.id,unhidden_list)>=0) {should_be_hidden=false; this_portlet_is_configured=true;}
-
-      if(this_portlet_is_configured==false) return;
-
-      var ishidden = $(".portlet-content",this).is(":hidden");
-      // console.log(this,"ishidden:"+ishidden,"should be hidden:"+should_be_hidden);
-      if(ishidden != should_be_hidden) {
-           // hide or expose it
-           console.warn("Toggling!",$('.portlet-header',this).text());
-           $(".portlet-header .icon-shrink",this).toggleClass("ui-icon-minusthick")
-                                             .toggleClass("ui-icon-plusthick");
-           $(".portlet-content",this)
-             .toggle()
-             .trigger("resize");
-       }
-     });
-
-     // console.log("RestoreSettings, slot=",slot);
-     // The hard part: rebuilding the docks.
-     $(".dock").each(function(){
-       var cval = $.cookie(slot+":dock:"+this.id);
-       // console.log("evaluating cookie","dock:"+this.id,cval);
-       if(!cval ) return;
-       var list = cval.split(',');
-       for(var i=list.length-1;i>=0;i--){
-         if(list[i]=="") continue;
-         // Move through the list backwards. For each item, remove it from it's current location and insert at the top of the list.
-         $(this).prepend($('#'+list[i]));
-         // Fire the element's dom-change callback
-         $('#'+list[i]+" .pad").trigger("resize");
-       }
-     });
-
-     // Reset controls in list 
-     // console.log("***RESTORING CONTROLS****");
-      $(".saveable").each(function(){
-        var val = $.cookie(slot+":"+this.id);
-        if(val!=null){
-          // console.log("restoring:",this.id,val);
-          var changed = false;
-          if($(this).is(':checkbox')){
-
-            if( (val=='true') != $(this).is(':checked')) changed = true;
-            $(this).attr('checked',val=='true');
-
-          } else {
-            if( val != $(this).val() ) changed = true;
-            $(this).val(val);
-          } 
-
-          if(changed) $(this).trigger('change'); // Just in case
-         }
-      });
-  }
 
   $('#ctl-load-config').button().click(function(){
     RestoreSettings("save");
