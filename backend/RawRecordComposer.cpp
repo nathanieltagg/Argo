@@ -200,6 +200,7 @@ bool getTriggerData(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord
   trig.add("sample_2MHz",trigger_header.get2MHzSampleNumber());
   trig.add("sample_16MHz",((trigger_header.get2MHzSampleNumber())<<3) + trigger_header.get16MHzRemainderNumber());
 
+  return true;
 }
 
 
@@ -232,9 +233,12 @@ void RawRecordComposer::composeHeader()
   
   fOutput.add("header",header);  
 }
+
+
+boost::mutex sChanMutex;
   
- 
-void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data) 
+
+void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, int plane, int planewire, JsonArray& outhits) 
 {
   // Copy the channel data to my own signed vector array
   channel_data.decompress(waveform);
@@ -256,6 +260,96 @@ void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_c
   for(int i=0;i<nsamp;i++){
     waveform[i] -= pedestal;
   }  
+
+  // find ped RMS.
+  // Truncated RMS about the mode
+  int kTruncatedRmsHalfWidth = 20;
+  int low = pedestal - kTruncatedRmsHalfWidth;
+  int high = pedestal + kTruncatedRmsHalfWidth;
+  int lowbin = std::max(0,low);
+  int highbin = std::min(0x1000,high);
+  double sumsq = 0;
+  double sum = 0;
+  double n = 0;
+  for(int i=lowbin;i<=highbin;i++) {
+    double w = histogram[i];
+    double x = i;
+    n += w;
+    sum += x*w;
+    sumsq += x*x*w;
+  }
+  double pedsig = sqrt(fabs((sumsq - sum*sum/n)/(n-1.)));
+  double pederr = pedsig/sqrt(n-1);
+
+  double thresh = ceil(4.0*pedsig);
+      
+  double last = waveform[0];
+
+  // double Blast = 0;
+  double B =0;
+  //double Clast = 0;
+  double Dlast = 0;
+  double Dlast2 = 0;
+  double tau = 10.0; // tuneable.
+  double tauOverTauPlusOne = tau/(tau+1.0);
+
+  for(size_t j=1;j<nsamp;j++) {
+    double val = waveform[j];
+    double dA = val-last;
+    
+    // simulated CR differentiator + RC integrator shaping circuit.
+    // The point here is to remove pedestal by differentiating, and integrating again but with smoothing to get a good signal for pulse-height.
+    // This function acts as a simulated CR differentiator. This is good for step-function integration, but lousy for this...
+    // double B = tau1 * (Blast + dA) /(tau1+1.0);
+    // instead, I'll just use a pure differentiation. 
+  
+  
+    B = dA;
+    if(plane<2) {
+      B=-B;        // invert: we're looking for negative slopes
+      //if(B<0) B=0; // Clamp: we're looking ONLY for negative slopes. 
+      // NO! Clamping here will drive the baseline wonky!
+    } 
+    //else {
+    //  B=B;  // Don't invert or clamp: we're looking for positive slopes
+    //  }
+
+    // Now, simulate a shaping integrator RC circuit with time constant tau2. Feed differential as input.
+    // B = tau * dC/dt + C
+    // or 
+    // B = tau * (C-Clast) + C
+    //double C = (B + tau*Clast)/(tau+1.0);
+
+    // Use it. Look for peaks.
+    // Then scale up by tau+1
+    //double D = C*(tau+1.0);
+    double D = B + tauOverTauPlusOne*Dlast;
+  
+    waveform[j] = D; /// write it back out.
+    double dD2 = Dlast-Dlast2;
+    double dD = D-Dlast;
+    // Find a place where slope goes from positive to negative -that's a peak.
+    if((dD2>0) && (dD<=0) && (Dlast>thresh)) {
+      JsonObject hit;
+      hit.add("wire",planewire);
+      hit.add("plane",plane);
+      hit.add("q",Dlast);
+      hit.add("t",j-1);
+      hit.add("t1",j-2);
+      hit.add("t2",j);
+      {
+        // Scope a lock.
+        boost::mutex::scoped_lock(sChanMutex);
+        outhits.add(hit);        
+      }
+    }
+    last = val;
+    // Clast = C;
+    Dlast2= Dlast;
+    Dlast = D;
+  }
+  {
+  }
 }
  
 void RawRecordComposer::composeTPC()
@@ -277,6 +371,7 @@ void RawRecordComposer::composeTPC()
   if( std::string::npos != fOptions.find("_SUPERSPEED_")) superspeed=true;
   
   int wires_read = 0;
+  JsonArray hits;
   
   {
     boost::thread_group unpack_threads;    
@@ -308,6 +403,8 @@ void RawRecordComposer::composeTPC()
           // Find the wire number of this channel.
           const Plexus::Plek& p = gPlexus.get(crate,card,channel);
           int wire = p.wirenum();
+          int plane = p.plane();
+          int planewire = p.planewire();
           
           if(superspeed && (wire%4)!=0) continue;
           // std::cout << "found wire " << wire << std::endl;
@@ -326,7 +423,8 @@ void RawRecordComposer::composeTPC()
           
           
           // unpack_channel(waveform,channel_data);
-          unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data)));
+          unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data),
+                                                  plane, planewire, boost::ref(hits)));
           nsamp = waveform.size();
           wires_read++;
           if(ntdc<nsamp) ntdc = nsamp;
@@ -372,6 +470,12 @@ void RawRecordComposer::composeTPC()
     
   jTPC.add("crates",jCrates);
   fOutput.add("TPC",jTPC);
+
+
+  // hits.
+  JsonObject hits_lists;
+  hits_lists.add("DAQ",hits);
+  fOutput.add("hits",hits_lists);
   
   timer.addto(fStats);
 }
