@@ -233,7 +233,7 @@ void RawRecordComposer::composeHeader()
 boost::mutex sChanMutex;
   
 
-void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, int plane, int planewire, JsonArray& outhits) 
+void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, int plane, int planewire, int wirenum, JsonArray& outhits) 
 {
   // Copy the channel data to my own signed vector array
   channel_data.decompress(waveform);
@@ -329,6 +329,7 @@ void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_c
       hit.add("wire",planewire);
       hit.add("plane",plane);
       hit.add("q",Dlast);
+      hit.add("wirenum",wirenum);
       hit.add("t",j-1);
       hit.add("t1",j-2);
       hit.add("t2",j);
@@ -419,7 +420,7 @@ void RawRecordComposer::composeTPC()
           
           // unpack_channel(waveform,channel_data);
           unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data),
-                                                  plane, planewire, boost::ref(hits)));
+                                                  plane, planewire, wire, boost::ref(hits)));
         } // loop channels
 
         jCard.add("num_channels",num_card_channels);
