@@ -227,6 +227,14 @@ void ResultComposer::compose_from_raw(
     return;
   }
     
+    
+  // Ensure full dissection is on.
+  // Explicitly turn on unpacking.
+  pmt_crate_data_t::doDissect(true);
+  tpc_crate_data_t::doDissect(true);
+  trig_crate_data_t::doDissect(true);
+  
+  
   // OK, find the entry in question.
 
   // Scan through entries, looking for specified selection.

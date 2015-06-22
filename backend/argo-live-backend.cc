@@ -168,6 +168,11 @@ int main(int argc, char **argv)
   oMaxFiles      = config.getInt   ("maxFiles",30);
   oConfigJson = KvpToJson(config);
 
+  // explicitly unpack.
+  pmt_crate_data_t::doDissect(true);
+  tpc_crate_data_t::doDissect(true);
+  trig_crate_data_t::doDissect(true);
+
   
   JsonObject heartbeat_init;
   heartbeat_init.add("config",oConfigJson);
