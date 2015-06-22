@@ -68,11 +68,6 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   fWorkingSuffix = "working";
   fFinalSuffix   = "event";
 
-  // Explicitly turn on unpacking.
-  pmt_crate_data_t::doDissect(true);
-  tpc_crate_data_t::doDissect(true);
-  trig_crate_data_t::doDissect(true);
-  
 };
   
 RawRecordComposer::~RawRecordComposer()
@@ -339,7 +334,7 @@ void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_c
       hit.add("t2",j);
       {
         // Scope a lock.
-        boost::mutex::scoped_lock(sChanMutex);
+        boost::mutex::scoped_lock lock(sChanMutex);
         outhits.add(hit);        
       }
     }
@@ -425,9 +420,6 @@ void RawRecordComposer::composeTPC()
           // unpack_channel(waveform,channel_data);
           unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data),
                                                   plane, planewire, boost::ref(hits)));
-          nsamp = waveform.size();
-          wires_read++;
-          if(ntdc<nsamp) ntdc = nsamp;
         } // loop channels
 
         jCard.add("num_channels",num_card_channels);
@@ -451,13 +443,20 @@ void RawRecordComposer::composeTPC()
     timer_read.addto(fStats);
   }
   
+  for(auto it: *wireMap) {
+    wires_read++;
+    int nsamp = it.second->size();
+    if(ntdc<nsamp) ntdc = nsamp;
+  }
+  
+  
   // Now we should have a semi-complete map.
   fmintdc = 0;
   fmaxtdc = ntdc;
   int nwire = 1 + wireMap->rbegin()->first;
   
   if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
-  cout << "Read " << wires_read << " wires\n";
+  cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
   MakeEncodedTileset(     r,
                           wireMap, 
                           nwire,
