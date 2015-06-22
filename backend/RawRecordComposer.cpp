@@ -67,6 +67,12 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   fCacheStorageUrl      = "live_event_cache";
   fWorkingSuffix = "working";
   fFinalSuffix   = "event";
+
+  // Explicitly turn on unpacking.
+  pmt_crate_data_t::doDissect(true);
+  tpc_crate_data_t::doDissect(true);
+  trig_crate_data_t::doDissect(true);
+  
 };
   
 RawRecordComposer::~RawRecordComposer()
