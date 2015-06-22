@@ -35,6 +35,16 @@ body {
         font-size: 10pt;
 }
 
+div.important-links a
+{
+  white-space: nowrap;
+  margin: 2px;
+  padding:4px;
+  border: blue solid 1px;
+  border-radius: 6px;
+  display:inline-block;
+}
+
 #BigWireView
 {
   image-rendering: auto;  
