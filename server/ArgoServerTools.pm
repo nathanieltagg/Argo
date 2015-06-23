@@ -183,6 +183,13 @@ sub start_server
       myerror("couldn't fork!");
   } elsif($pid==0) {
     # This is the forked process.
+      close STDIN;
+      close STDOUT;
+      close STDERR;
+      open (STDIN,  '</dev/null');
+      open (STDOUT, ">$exec_name.log");
+      open (STDERR, '>&STDOUT');
+      setsid();
     
       $ROOTSYS="../backend/root";
       $BOOSTSYS="../backend/boost";
@@ -198,9 +205,6 @@ sub start_server
       rename "$exec_name.log.1", "$exec_name.log.2";
       rename "$exec_name.log",   "$exec_name.log.1";
       unlink "$exec_name.log";
-      open (STDIN,  '</dev/null');
-      open (STDOUT, ">$exec_name.log");
-      open (STDERR, '>&STDOUT');
       print "Starting a new job...<br/>\n";
 
       print "Environemnt...\n";

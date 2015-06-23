@@ -854,6 +854,7 @@ void RecordComposer::composeRaw()
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
     size_t ntdc = 0;
     
+    std::vector<short> waveform;
     
     for(int i=0;i<ndig;i++) {
       short pedestal = ftr.getInt(l_pedestal,i);
@@ -864,12 +865,18 @@ void RecordComposer::composeRaw()
       jpedestals.add(pedestal);
       
       const std::vector<short> *ptr = l.get<std::vector<short> >(i);
-      std::vector<short>::iterator it;
-      double wiresum = 0;
     
       // Waveform storage.
       std::pair<wiremap_t::iterator,bool> inserted;
       waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( (*ptr) )); // make a copy
+      // std::cout << "Setting pedestal. " << pedestal << " " << (*waveform_ptr)[0] << std::endl;
+      // pedestal = (*waveform_ptr)[0];
+      if(pedestal>0) {
+        for(int iii=0;iii<waveform_ptr->size();iii++){
+          (*waveform_ptr)[iii] -= pedestal;
+        }
+      }
+      
       inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
       ntdc = max(ntdc,ptr->size());
     }

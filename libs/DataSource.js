@@ -95,7 +95,7 @@ DataSource.prototype.NewRecord = function()
   $('#link-to-this-event a.linkslow').attr('href',gUrlToThisEvent);
   $('#link-to-this-event a.linkfast').attr('href',fasturl);
   
-  $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Arachne Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
+  $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Argo Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
 };
 
 
