@@ -38,6 +38,11 @@ function LiveControl( element )
     self.refresh_live.bind(self)
   });
   
+  $('#ctl-refresh-period').change(function() {
+    self.refresh_period = parseFloat($(this).val())*1000;
+  });
+  self.refresh_period = parseFloat($('#ctl-refresh-period').val())*1000;
+  
   $('#refresh-clock').circleProgress({
       value: 0,
       size: 50,
@@ -103,7 +108,7 @@ LiveControl.prototype.NewRecord = function()
 function do_clock()
 {
   var time_spent = Date.now() - gLiveControl.time_last_refresh;
-  var frac =time_spent / (parseFloat($('#ctl-refresh-period').val())*1000);
+  var frac =time_spent / gLiveControl.refresh_period;
   if(frac > 1 ) gLiveControl.refresh_live(false);
   $('#refresh-clock').circleProgress('value', frac);
 
