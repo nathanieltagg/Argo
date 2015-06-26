@@ -44,6 +44,7 @@
 #include "datatypes/ub_EventRecord.h"
 
 #include "boost/thread/thread.hpp"
+#include "waveform_tools.h"
 
 using namespace std;
 using namespace gov::fnal::uboone::datatypes;
@@ -233,119 +234,52 @@ void RawRecordComposer::composeHeader()
 boost::mutex sChanMutex;
   
 
-void unpack_channel(waveform_t& waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, int plane, int planewire, int wirenum, JsonArray& outhits) 
+void unpack_channel(waveform_t waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, 
+                    int plane, int planewire, int wirenum, 
+                    JsonArray& outhits) 
 {
   // Copy the channel data to my own signed vector array
+  waveform.reserve(9600);
   channel_data.decompress(waveform);
   size_t nsamp = waveform.size();
   
-  // Find the pedestal manually.
-  // FIXME: add configurable hook to look up.
-  // Histogram of values:
-  vector<uint16_t> histogram(0x1000,0);
-  int16_t pedestal = 0;
-  uint16_t max_counts = 0;
-  for(int i=0;i<nsamp;i++){
-    int bin = waveform[i];
-    int counts = ++histogram[bin];
-    if(counts > max_counts) { max_counts = counts; pedestal = bin;}
-  } 
+  // // Find the pedestal manually.
+  waveform_tools::pedestal_computer pedcomp;
+  for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+  int ped = pedcomp.ped();
+  int rms = pedcomp.rms(); // auto-adjusted rms.
 
-  // subtract ped.
-  for(int i=0;i<nsamp;i++){
-    waveform[i] -= pedestal;
-  }  
+  double thresh = ceil(3.5*rms);
+  double sign = -1;
+  if(plane==2) sign = -1;
 
-  // find ped RMS.
-  // Truncated RMS about the mode
-  int kTruncatedRmsHalfWidth = 20;
-  int low = pedestal - kTruncatedRmsHalfWidth;
-  int high = pedestal + kTruncatedRmsHalfWidth;
-  int lowbin = std::max(0,low);
-  int highbin = std::min(0x1000,high);
-  double sumsq = 0;
-  double sum = 0;
-  double n = 0;
-  for(int i=lowbin;i<=highbin;i++) {
-    double w = histogram[i];
-    double x = i;
-    n += w;
-    sum += x*w;
-    sumsq += x*x*w;
+  waveform_tools::peak_finder pf(thresh,sign,2); // last is # of samples required over threshold.
+  for(size_t i =0; i< nsamp; i++) {
+    assert(waveform[i]>=0);
+    assert(waveform[i]<4096);
+    waveform[i] -= ped;
+    assert(waveform[i]>-4095);
+    assert(waveform[i]<4095);
+    pf(waveform[i]);
   }
-  double pedsig = sqrt(fabs((sumsq - sum*sum/n)/(n-1.)));
-  double pederr = pedsig/sqrt(n-1);
-
-  double thresh = ceil(4.0*pedsig);
-      
-  double last = waveform[0];
-
-  // double Blast = 0;
-  double B =0;
-  //double Clast = 0;
-  double Dlast = 0;
-  double Dlast2 = 0;
-  double tau = 10.0; // tuneable.
-  double tauOverTauPlusOne = tau/(tau+1.0);
-
-  for(size_t j=1;j<nsamp;j++) {
-    double val = waveform[j];
-    double dA = val-last;
-    
-    // simulated CR differentiator + RC integrator shaping circuit.
-    // The point here is to remove pedestal by differentiating, and integrating again but with smoothing to get a good signal for pulse-height.
-    // This function acts as a simulated CR differentiator. This is good for step-function integration, but lousy for this...
-    // double B = tau1 * (Blast + dA) /(tau1+1.0);
-    // instead, I'll just use a pure differentiation. 
   
-  
-    B = dA;
-    if(plane<2) {
-      B=-B;        // invert: we're looking for negative slopes
-      //if(B<0) B=0; // Clamp: we're looking ONLY for negative slopes. 
-      // NO! Clamping here will drive the baseline wonky!
-    } 
-    //else {
-    //  B=B;  // Don't invert or clamp: we're looking for positive slopes
-    //  }
-
-    // Now, simulate a shaping integrator RC circuit with time constant tau2. Feed differential as input.
-    // B = tau * dC/dt + C
-    // or 
-    // B = tau * (C-Clast) + C
-    //double C = (B + tau*Clast)/(tau+1.0);
-
-    // Use it. Look for peaks.
-    // Then scale up by tau+1
-    //double D = C*(tau+1.0);
-    double D = B + tauOverTauPlusOne*Dlast;
-  
-    waveform[j] = D; /// write it back out.
-    double dD2 = Dlast-Dlast2;
-    double dD = D-Dlast;
-    // Find a place where slope goes from positive to negative -that's a peak.
-    if((dD2>0) && (dD<=0) && (Dlast>thresh)) {
-      JsonObject hit;
-      hit.add("wire",planewire);
-      hit.add("plane",plane);
-      hit.add("q",Dlast);
-      hit.add("wirenum",wirenum);
-      hit.add("t",j-1);
-      hit.add("t1",j-2);
-      hit.add("t2",j);
-      {
-        // Scope a lock.
-        boost::mutex::scoped_lock lock(sChanMutex);
-        outhits.add(hit);        
-      }
+  for(auto peak: pf) {
+    JsonObject hit;
+    hit.add("wire",planewire);
+    hit.add("plane",plane);
+    hit.add("q",peak.integral);
+    hit.add("wirenum",wirenum);
+    hit.add("t",peak.tpeak);
+    hit.add("t1",peak.tstart);
+    hit.add("t2",peak.tstop);
+    {
+      // Scope a lock.
+      boost::mutex::scoped_lock lock(sChanMutex);
+      std::string str = hit.str();
+      outhits.add(hit);
     }
-    last = val;
-    // Clast = C;
-    Dlast2= Dlast;
-    Dlast = D;
   }
-  {
-  }
+
 }
  
 void RawRecordComposer::composeTPC()
@@ -369,8 +303,8 @@ void RawRecordComposer::composeTPC()
   int wires_read = 0;
   JsonArray hits;
   
+  
   {
-    boost::thread_group unpack_threads;    
     TimeReporter timer_read("TPCReadDAQ");  
     
     // Loop through all channels.
@@ -382,6 +316,7 @@ void RawRecordComposer::composeTPC()
       std::unique_ptr<tpc_crate_data_t::ub_CrateHeader_t> const& crate_header = crate_data.crateHeader();
 
       JsonArray jCards;
+      boost::thread_group unpack_threads;    
 
       std::vector<tpc_crate_data_t::card_t> const& cards = crate_data.getCards();
       for(const tpc_crate_data_t::card_t& card_data: cards) {
@@ -391,6 +326,7 @@ void RawRecordComposer::composeTPC()
         JsonObject jCard;
         jCard.add("cardId",crate);
         int num_card_channels = 0;
+        
         
         const std::vector<tpc_crate_data_t::card_t::card_channel_type>& channels = card_data.getChannels();
         for( const tpc_crate_data_t::card_t::card_channel_type& channel_data : channels) {
@@ -418,7 +354,7 @@ void RawRecordComposer::composeTPC()
           waveform_t& waveform = *(inserted.first->second.get());
           
           
-          // unpack_channel(waveform,channel_data);
+          // unpack_channel(waveform,channel_data,plane,planewire,wire,hits);
           unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data),
                                                   plane, planewire, wire, boost::ref(hits)));
         } // loop channels
@@ -426,6 +362,7 @@ void RawRecordComposer::composeTPC()
         jCard.add("num_channels",num_card_channels);
         jCards.add(jCard);        
       } // loop cards
+      unpack_threads.join_all();
     
       JsonObject jCrate;
       jCrate.add("cards",jCards);
@@ -440,7 +377,6 @@ void RawRecordComposer::composeTPC()
       
     } // loop seb/crate
   
-    unpack_threads.join_all();
     timer_read.addto(fStats);
   }
   
@@ -449,6 +385,11 @@ void RawRecordComposer::composeTPC()
     int nsamp = it.second->size();
     if(ntdc<nsamp) ntdc = nsamp;
   }
+  // Ensure uniform length. Can happen due to 0x503f issue.
+  for(auto it: *wireMap) {
+    it.second->resize(ntdc,0);
+  }
+  
   
   
   // Now we should have a semi-complete map.
@@ -473,6 +414,9 @@ void RawRecordComposer::composeTPC()
 
 
   // hits.
+  cout << "Created " << hits.length() << " hits" << endl;
+  cout.flush();
+  
   JsonObject hits_lists;
   hits_lists.add("DAQ",hits);
   fOutput.add("hits",hits_lists);

@@ -232,6 +232,10 @@ int main(int argc, char **argv)
     }
     delete ss;
   }
+  catch(std::exception& e) {
+    cout << "Exception: " << e.what() << endl;
+    exit(2);
+  }
   catch(...) {
     cout << "Exception!" << endl;
     exit(2);
