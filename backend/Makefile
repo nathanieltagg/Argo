@@ -27,7 +27,7 @@ endif
 #override, since setup is poor.
 #uboonedaq  = $(HOME)/development/uboonedaq/projects
 
-CPPFLAGS := -g -I.. -Wno-deprecated-declarations
+CPPFLAGS := -g -I.. -Wno-deprecated-declarations -O3
 #CPP := g++44 -std=c++0x
 CPP := g++ -std=c++1y 
 LD := $(CPP)
@@ -37,7 +37,7 @@ LDFLAGS = -g
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Darwin)
-  CPP = clang++ -std=c++1y -Wno-return-type-c-linkage
+  CPP = clang++ -std=c++1y -Wno-return-type-c-linkage 
   LD = clang++ -std=c++1y
   LDFLAGS = -bind_at_load -g
 endif
