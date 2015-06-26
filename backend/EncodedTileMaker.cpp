@@ -123,6 +123,8 @@ void MakeEncodedTileset(JsonObject& r,
             
         for(int k=0;k<ntdc;k++) {        
           short raw = waveform[k];
+          // assert(raw+4096>=0);
+          // assert(raw+4096<8192);
           // hPedAdc->Fill(raw);
           hPedAdc[raw+4096]++;
           double val = abs(raw);

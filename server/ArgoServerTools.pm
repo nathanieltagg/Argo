@@ -102,6 +102,8 @@ sub serve
  print $oldout $head;
  print $oldout $zipped;
  close $oldout;
+ close $olderr;
+ close STDIN;
  
   # estimate total length.
   # my $thing1 = '{';
