@@ -251,9 +251,9 @@ void unpack_channel(waveform_t waveform, const tpc_crate_data_t::card_t::card_ch
 
   double thresh = ceil(3.5*rms);
   double sign = -1;
-  if(plane==2) sign = -1;
+  if(plane==2) sign = 1;
 
-  waveform_tools::peak_finder pf(thresh,sign,2); // last is # of samples required over threshold.
+  waveform_tools::peak_finder pf(thresh,sign,3); // last is # of samples required over threshold.
   for(size_t i =0; i< nsamp; i++) {
     assert(waveform[i]>=0);
     assert(waveform[i]<4096);
@@ -380,34 +380,41 @@ void RawRecordComposer::composeTPC()
     timer_read.addto(fStats);
   }
   
-  for(auto it: *wireMap) {
-    wires_read++;
-    int nsamp = it.second->size();
-    if(ntdc<nsamp) ntdc = nsamp;
-  }
-  // Ensure uniform length. Can happen due to 0x503f issue.
-  for(auto it: *wireMap) {
-    it.second->resize(ntdc,0);
-  }
-  
-  
-  
-  // Now we should have a semi-complete map.
-  fmintdc = 0;
-  fmaxtdc = ntdc;
-  int nwire = 1 + wireMap->rbegin()->first;
-  
-  if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
-  cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
-  MakeEncodedTileset(     r,
-                          wireMap, 
-                          nwire,
-                          ntdc,
-                          fCurrentEventDirname,
-                          fCurrentEventUrl );
 
-  reco_list.add("DAQ",r);
-  fOutput.add("raw",reco_list);
+  
+  
+  if( std::string::npos != fOptions.find("_NORAW_")) {
+    reco_list.add("DAQ",JsonElement());
+    fOutput.add("raw",reco_list);    
+  } else {
+    for(auto it: *wireMap) {
+      wires_read++;
+      int nsamp = it.second->size();
+      if(ntdc<nsamp) ntdc = nsamp;
+    }
+    // Ensure uniform length. Can happen due to 0x503f issue.
+    for(auto it: *wireMap) {
+      it.second->resize(ntdc,0);
+    }
+    
+    // Now we should have a semi-complete map.
+    fmintdc = 0;
+    fmaxtdc = ntdc;
+    int nwire = 1 + wireMap->rbegin()->first;
+  
+    if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
+    cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
+    MakeEncodedTileset(     r,
+                            wireMap, 
+                            nwire,
+                            ntdc,
+                            fCurrentEventDirname,
+                            fCurrentEventUrl );
+
+    reco_list.add("DAQ",r);
+    fOutput.add("raw",reco_list);
+  }
+  
     
   jTPC.add("crates",jCrates);
   fOutput.add("TPC",jTPC);
