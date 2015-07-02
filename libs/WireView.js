@@ -877,26 +877,25 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
       for(var ihit=0;ihit<hitassn[shw._index].length;ihit++){
         var hit = hitlist[ hitassn[shw._index][ihit] ];
         if(hit.plane == this.plane) {
-          shw._hpts[this.plane].push([hit.wire,hit.t]);
+          shw._hpts[this.plane].push(hit);
         }
       }
     }
 
-    // Convex hul
-    if(hitlist && hitassn && !shw._hull ) { shw._hull =[] };
-    if(hitlist && hitassn && !shw._hull[this.plane] ) {
-      var pts = [];
-      for(var ihit=0;ihit<hitassn[shw._index].length;ihit++){
-        var hit = hitlist[ hitassn[shw._index][ihit] ];
-        if(hit.plane == this.plane) {
-          pts.push([hit.wire,hit.t]);
-        }
-      }
-      shw._hull[this.plane]  = GeoUtils.convexHull(pts);
-    }
-    
-    // Draw hull
-    
+    // // Convex hull
+    // if(hitlist && hitassn && !shw._hull ) { shw._hull =[] };
+    // if(hitlist && hitassn && !shw._hull[this.plane] ) {
+    //   var pts = [];
+    //   for(var ihit=0;ihit<hitassn[shw._index].length;ihit++){
+    //     var hit = hitlist[ hitassn[shw._index][ihit] ];
+    //     if(hit.plane == this.plane) {
+    //       pts.push([hit.wire,hit.t]);
+    //     }
+    //   }
+    //   shw._hull[this.plane]  = GeoUtils.convexHull(pts);
+    // }
+    //
+    // // Draw hull:
     // if(shw._hull && shw._hull[this.plane]) {
     //   var hull = shw._hull[this.plane];
     //   this.ctx.beginPath();
@@ -913,8 +912,11 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
       var pts = shw._hpts[this.plane];
       for(var ipt=0;ipt<pts.length;ipt++) {
         this.ctx.beginPath();
-        this.ctx.arc(this.GetX(pts[ipt][0]),this.GetY(pts[ipt][1]), 4, 0,1.99*Math.PI) ;
-        this.ctx.fillStyle = 'orange';
+        //this.ctx.fillStyle = 'orange';
+        var c = new ColorScaleIndexed(i+3).GetColor();
+        this.ctx.fillStyle = "rgb("+c+")";
+        var r = Math.sqrt(pts[ipt].q)/10;
+        this.ctx.arc(this.GetX(pts[ipt].wire),this.GetY(pts[ipt].t), r, 0,1.99*Math.PI) ;
         this.ctx.fill();
       }
     }
@@ -923,7 +925,6 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
 
     // Draw the vector
     
-
     var u1 = gGeo.yzToWire(this.plane,  shw.start.y, shw.start.z);
     var v1 = gGeo.getTDCofX(this.plane,shw.start.x) + this.offset_track_ticks;
     var u2 = gGeo.yzToWire(this.plane, shw.Length * shw.dir.y + shw.start.y, 

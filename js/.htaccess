@@ -1,5 +1,5 @@
 #Far Future Expires Header
-<FilesMatch "\.(gif|png|jpg|js|css|swf)$">
-    ExpiresActive On
-    ExpiresDefault "access plus 10 years"
-</FilesMatch>
+#<FilesMatch "\.(gif|png|jpg|js|css|swf)$">
+#    ExpiresActive On
+#    ExpiresDefault "access plus 10 years"
+#</FilesMatch>

@@ -13,6 +13,10 @@ img {  border-style: none; }
   float: right;
 }
 
+select.align-right{
+  direction:rtl;
+}
+
 .center {
   display: block;
   margin-left: auto;
