@@ -387,6 +387,14 @@ function RestoreControlSettings( slot, elements ) {
         if( (val=='true') != $(this).is(':checked')) changed = true;
         $(this).attr('checked',val=='true');
 
+      } else if($(this).is('select')) {
+        console.log("changing selectbox to ",val);
+        if($("option[value='"+val+"']",this).length!=0) {
+          // Change it only if the option exists.
+          if( val != $(this).val() ) changed = true;
+          $(this).val(val);          
+        }
+                
       } else {
         if( val != $(this).val() ) changed = true;
         $(this).val(val);
