@@ -10,7 +10,7 @@ setup postgresql v9_1_14
 # using ~/ubdaq for the moment
 #export UBOONEDAQ_DATATYPES_DIR=/home/tagg/development_daq/install/uboonedaq_datatypes/v6_08_00/
 #export UBOONEDAQ_DIR=/home/tagg/development_daq/install/uboonedaq/v6_08_00/
-setup uboonedaq_datatypes  -q e7:debug
+#setup uboonedaq_datatypes  -q e7:debug
 setup uboonedaq -q e7:debug
 #setup uboonedaq_datatypes v6_11_05a -q e7:debug
 #setup uboonedaq v6_11_06b -q e7:debug
