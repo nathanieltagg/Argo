@@ -36,7 +36,8 @@ std::string getLastFile(const std::string& dir, const std::string& suffix )
 
 int watch_directory_for_new(const std::string& dir, const std::string& suffix, double heartbeat_secs)
 {
-  int inotifyFd = inotify_init(); 
+  using namespace std;
+  int inotifyFd = inotify_init1( IN_NONBLOCK); 
   if (inotifyFd == -1) {
       std::cerr << "Error. inotify_init()" << endl;
       return 1;
@@ -57,12 +58,13 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
     // Block until there is some data to read. do heartbeats until true.
     fd_set set;
     struct timeval timeout;
-     FD_ZERO(&set); /* clear the set */
-    FD_SET(inotifyFd, &set); /* add our file descriptor to the set */
-    while(1) {
-      timeout.tv_sec = floor(heartbeat_secs);      
-      timeout.tv_nsec = fmod(heartbeat_secs,1.0)*1000000000;
-      int rv = select(inotifyFd + 1, &set, NULL, NULL, &timeout);
+    int rv = 0;
+    while(rv == 0) {
+      timeout.tv_sec = floor(heartbeat_secs);
+      timeout.tv_usec = fmod(heartbeat_secs,1.0)*1000000;
+      FD_ZERO(&set); /* clear the set */
+      FD_SET(inotifyFd, &set); /* add our file descriptor to the set */
+      rv = select(inotifyFd + 1, &set, NULL, NULL, &timeout);
       if(rv==0) report(""); // heartbeat.
     }
     
