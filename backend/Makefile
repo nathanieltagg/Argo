@@ -1,6 +1,14 @@
 
+UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
+
+buildtargets = argo-backend argo-live-backend
+ifeq ($(UNAME),Linux)
+  buildtargets += notify-live.cgi
+endif
+.PHONY: bin
+bin: $(buildtargets)
 
 #IGNORE := $(shell bash -c "source root/bin/thisroot.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv") 
 #include makeenv 
@@ -34,7 +42,6 @@ LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
 
-UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Darwin)
   CPP = clang++ -std=c++1y -Wno-return-type-c-linkage 
@@ -181,9 +188,6 @@ Cint.cpp : $(RHEADERS) LinkDef.h
 
 
 
-.PHONY: bin
-bin: argo-backend argo-live-backend
-
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
@@ -193,6 +197,12 @@ argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 
 argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+
+
+notify-live.cgi:  tmp/notify_live.o
+	$(CPP) $(filter %.o,$^) -o $@
+  
+
 
 myroot: $(backend_obj) tmp/myroot-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
