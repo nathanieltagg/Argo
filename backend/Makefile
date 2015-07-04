@@ -3,10 +3,7 @@ UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
 
-buildtargets = argo-backend argo-live-backend
-ifeq ($(UNAME),Linux)
-  buildtargets += notify-live.cgi
-endif
+buildtargets = argo-backend argo-live-backend notify-live.cgi
 .PHONY: bin
 bin: $(buildtargets)
 

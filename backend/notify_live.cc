@@ -1,17 +1,25 @@
 #include <iostream>
-#include <sys/inotify.h>
 #include <glob.h>
 #include <string>
 #include <vector>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <math.h>
 
-std::string getLastFile()
+
+std::string getLastFile(const std::string& dir, const std::string& suffix );
+int watch_directory_for_new(const std::string& dir, const std::string& suffix, double heartbeat_secs);
+void report(const std::string& filename);
+
+
+
+std::string getLastFile(const std::string& dir, const std::string& suffix )
 {
   glob_t globbuf;
   globbuf.gl_offs = 0;
-  glob("../live_event_cache/*.event",
+  std::string globstr = dir + "*" + suffix;
+  glob( globstr.c_str(),
         0, // flags
         NULL, //errfunc
         &globbuf);
@@ -21,31 +29,20 @@ std::string getLastFile()
   return first;
   
 }
+/////////////////////////////////////////////////////////////////////////
+// Linux version: use inotify.
+#ifdef __linux__
+#include <sys/inotify.h>
 
-int main()
+int watch_directory_for_new(const std::string& dir, const std::string& suffix, double heartbeat_secs)
 {
-  using std::endl;
-  using std::cout;
-  using std::cerr;
-  
-  int id =0;
-  std::cout << "Content-Type: text/event-stream\r\n";
-  std::cout << "Cache-Control: no-cache\r\n";
-  std::cout << "\r\n";
-
-  std::string lastfile = getLastFile();
-    
-  std::cout << "id: " << id++ << "\n";
-  std::cout << "data: " <<  lastfile << "\n\n";
-
-
   int inotifyFd = inotify_init(); 
   if (inotifyFd == -1) {
       std::cerr << "Error. inotify_init()" << endl;
       return 1;
     }
   
-  int wd = inotify_add_watch(inotifyFd, "../live_event_cache/", IN_MOVED_TO|IN_CREATE);
+  int wd = inotify_add_watch(inotifyFd, dir.c_str(),  IN_MOVED_TO|IN_CREATE);
   if (wd == -1) {
       std::cerr << "Error. inotify_init()" << endl;
       return 1;
@@ -56,6 +53,19 @@ int main()
   char buffer[kBuffSize];
   
   while(1) {
+    
+    // Block until there is some data to read. do heartbeats until true.
+    fd_set set;
+    struct timeval timeout;
+     FD_ZERO(&set); /* clear the set */
+    FD_SET(inotifyFd, &set); /* add our file descriptor to the set */
+    while(1) {
+      timeout.tv_sec = floor(heartbeat_secs);      
+      timeout.tv_nsec = fmod(heartbeat_secs,1.0)*1000000000;
+      int rv = select(inotifyFd + 1, &set, NULL, NULL, &timeout);
+      if(rv==0) report(""); // heartbeat.
+    }
+    
     int numRead = read(inotifyFd, buffer, kBuffSize);
     if (numRead == 0) {
         std::cerr << "read() from inotify fd returned 0!";
@@ -91,27 +101,151 @@ int main()
       // std::cout << "\n\n";
 
       if(event->len > 0) {
-        std::string suffix = ".event";
         std::string name = event->name;
-        if(name.rfind(suffix) != std::string::npos) {
-          if(name != lastfile) {
-            lastfile = name;
-    
-            std::cout << "id: " << id++ << "\n";
-            std::cout << "data: " <<  lastfile << "\n\n";
-            
-            
-          }
+        if(name.rfind(suffix) != std::string::npos) {    
+            report(name);
         }
       }
-
       
       size_t bytes = sizeof(struct inotify_event) + event->len;
       ptr += bytes;
       numRead -=  bytes;
-    }
-
-    
+    } 
   }
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////
+// Macintosh version: use kqueues
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <fcntl.h>
+
+std::string flagstring(int flags)
+{
+    std::string ret;
+    std::string orr = "";
+ 
+    if (flags & NOTE_DELETE) {ret+=orr; ret+="NOTE_DELETE";  orr="|";}
+    if (flags & NOTE_WRITE)  {ret+=orr; ret+="NOTE_WRITE";   orr="|";}
+    if (flags & NOTE_EXTEND) {ret+=orr; ret+="NOTE_EXTEND";  orr="|";}
+    if (flags & NOTE_ATTRIB) {ret+=orr; ret+="NOTE_ATTRIB";  orr="|";}
+    if (flags & NOTE_LINK)   {ret+=orr; ret+="NOTE_LINK";    orr="|";}
+    if (flags & NOTE_RENAME) {ret+=orr; ret+="NOTE_RENAME";  orr="|";}
+    if (flags & NOTE_REVOKE) {ret+=orr; ret+="NOTE_REVOKE";  orr="|";}
+ 
+    return ret;
+}
+
+
+int watch_directory_for_new(const std::string& dir, const std::string& suffix, double heartbeat_secs)
+{
+  int kq;
+  int event_fd;
+  struct kevent events_to_monitor[1];
+  struct kevent event_data[1];
+  void *user_data;
+  struct timespec timeout;
+  unsigned int vnode_events;
+
+  // Open a kernel queue. 
+  if ((kq = kqueue()) < 0) {
+      fprintf(stderr, "Could not open kernel queue.  Error was %s.\n", strerror(errno));
+  }
+
+  // Open a file descriptor for the file/directory that you
+  // want to monitor.
+       
+  event_fd = open(dir.c_str(), O_EVTONLY);
+  if (event_fd <=0) {
+      fprintf(stderr, "The file %s could not be opened for monitoring.  Error was %s.\n", dir.c_str(), strerror(errno));
+      exit(-1);
+  }
+
+  // Set the timeout to wake us if we want to do heartbeats.
+  timeout.tv_sec = floor(heartbeat_secs);      
+  timeout.tv_nsec = fmod(heartbeat_secs,1.0)*1000000000;
+
+  /* Set up a list of events to monitor. */
+  vnode_events =   NOTE_WRITE | NOTE_LINK | NOTE_RENAME ;
+  EV_SET( &events_to_monitor[0], event_fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnode_events, 0, (void*)(dir.c_str()));
+
+  /* Handle events. */
+  int num_files = 1;
+  while (1) {
+      int event_count = kevent(kq, events_to_monitor, 1, event_data, num_files, &timeout);
+      if ((event_count < 0) || (event_data[0].flags == EV_ERROR)) {
+          /* An error occurred. */
+          fprintf(stderr, "An error occurred (event count %d).  The error was %s.\n", event_count, strerror(errno));
+          break;
+      }
+      if (event_count) {
+        report(getLastFile(dir,suffix));
+          // printf("Event %ld occurred.  Filter %d, flags %d, filter flags %s, filter data %lu , path %s\n",
+          //     event_data[0].ident,
+          //     event_data[0].filter,
+          //     event_data[0].flags,
+          //     flagstring(event_data[0].fflags).c_str(),
+          //     event_data[0].data,
+          //     (char *)event_data[0].udata);
+      } else {
+        report(""); 
+        //printf("No event.\n");
+      }
+
+      // Reset the timeout.  In case of a signal interrruption, the values may change.
+      timeout.tv_sec = floor(heartbeat_secs);      
+      timeout.tv_nsec = fmod(heartbeat_secs,1.0)*1000000000;
+  }
+  close(event_fd);
+  return 0;
+}
+
+
+#endif
+
+/////////////////////////////////////////////////////////////////////////
+
+
+unsigned long gId = 0;
+std::string   gLastFile = "";
+
+void report(const std::string& filename)
+{
+  if(filename == "") {
+    std::cout << "id: " << gId++ << "\n";
+    std::cout << "data: " <<  "HEARTBEAT" << "\n\n";
+    return;
+  }
+  if(filename == gLastFile) return;  // Don't over-report.
+  
+  std::cout << "id: " << gId++ << "\n";
+  std::cout << "data: " <<  filename << "\n\n";
+  gLastFile = filename;
+}
+
+
+
+
+int main()
+{
+  using std::endl;
+  using std::cout;
+  using std::cerr;
+  
+  std::cout << "Content-Type: text/event-stream\r\n";
+  std::cout << "Cache-Control: no-cache\r\n";
+  std::cout << "\r\n";
+  
+  std::string dir = "../live_event_cache/"; // Should be slash-terminated.
+  std::string suffix = ".event";
+  
+  report(getLastFile(dir,suffix));
+  
+
+  return watch_directory_for_new(dir,suffix,5);
+  
   
 }
