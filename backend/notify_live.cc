@@ -235,7 +235,6 @@ int main()
 {
   using std::endl;
   using std::cout;
-  using std::cerr;
   
   std::cout << "Content-Type: text/event-stream\r\n";
   std::cout << "Cache-Control: no-cache\r\n";
