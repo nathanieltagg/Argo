@@ -34,7 +34,7 @@ endif
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations -O3
 #CPP := g++44 -std=c++0x
-CPP := g++ -std=c++1y 
+CPP := g++ -std=c++1y -O3
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
