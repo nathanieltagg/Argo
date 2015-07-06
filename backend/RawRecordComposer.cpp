@@ -247,9 +247,9 @@ void unpack_channel(waveform_t waveform, const tpc_crate_data_t::card_t::card_ch
   waveform_tools::pedestal_computer pedcomp;
   for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
   int ped = pedcomp.ped();
-  int rms = pedcomp.rms(); // auto-adjusted rms.
+  double rms = pedcomp.rms(); // auto-adjusted rms.
 
-  double thresh = ceil(3.5*rms);
+  double thresh = ceil(4.0*rms);
   double sign = -1;
   if(plane==2) sign = 1;
 
@@ -279,7 +279,11 @@ void unpack_channel(waveform_t waveform, const tpc_crate_data_t::card_t::card_ch
       outhits.add(hit);
     }
   }
-
+  
+  // {
+  //   boost::mutex::scoped_lock lock(sChanMutex);
+  //   std::cout << "wirenum:" << wirenum << "\t ped: " << ped << " rms: " << rms << " hits" << pf.size() << std::endl;
+  // }
 }
  
 void RawRecordComposer::composeTPC()
@@ -384,6 +388,7 @@ void RawRecordComposer::composeTPC()
   
   
   if( std::string::npos != fOptions.find("_NORAW_")) {
+    std::cout << "Not doing wire images." << std::endl;
     reco_list.add("DAQ",JsonElement());
     fOutput.add("raw",reco_list);    
   } else {

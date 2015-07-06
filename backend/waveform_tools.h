@@ -128,7 +128,7 @@ struct pedestal_computer
      uint16_t c = ++_hist[xx]; if(c>_ped_count) {_ped_count = c; _ped=xx; } 
    };
   
-  double rms(int halfwidth = 8) {
+  double rms(int halfwidth = 10) {
     int low = _ped - halfwidth;
     int high = _ped + halfwidth;
     int lowbin = std::max(0,low);
@@ -144,7 +144,7 @@ struct pedestal_computer
       sumsq += x*x*w;
     }    
     double xrms = sqrt(fabs((sumsq - sum*sum/n)/(n-1.)));
-    if(xrms> halfwidth/2) return rms(halfwidth*2);
+    if(xrms> halfwidth*0.45) return rms(halfwidth*2);
     return xrms;
   }
   double ped() { return _ped; }
