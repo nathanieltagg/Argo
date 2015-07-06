@@ -382,7 +382,6 @@ HistCanvas.prototype.DrawHist = function( iHist )
        if(x>(this.origin_x + this.span_x)) continue;
        this.ctx.beginPath();
        var c = colorscale.GetColor(t,f);
-       console.log("dotcolor",t,f,c,colorscale);
        this.ctx.fillStyle = "rgba(" + c + "," +o.alpha+ ")";
        this.ctx.arc(x,y,r,0,1.999*Math.PI);
        this.ctx.fill();
