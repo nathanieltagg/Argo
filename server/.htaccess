@@ -1,6 +1,7 @@
 Options +ExecCGI
 AddHandler cgi-script .cgi
 
+# I will do my OWN compression, thankyouverymuch
 <IFModule mod_deflate.c>
    RemoveOutputFilter DEFLATE
 </IFModule>
