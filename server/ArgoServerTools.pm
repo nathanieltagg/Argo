@@ -21,7 +21,7 @@ our $ntuple_server_port = 9092;
 our $ntuple_server_host = 'localhost';
 our $exec_name = 'argo-backend';
 our $exec_arguments = "";
-
+our $allow_live_restart = 1;
 
 do("../config/server_config.pl"); #|| die; # load file if present.
 
