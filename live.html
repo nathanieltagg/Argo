@@ -71,11 +71,18 @@ div.A-TimeHistogram {
     (<span class="val event-age">unknown</span>)
   </div>
   <div class='A-LiveControl' style="display: inline-block; width:500px;">
-    <input class="ui-state-default ui-corner-all" type="button" id="go_livedata" value="Get Live Data!" style="float:left; margin:10px"/>
-    <span style='float:left;'><label id="ctl-refresh-auto-label" for="ctl-refresh-auto">Auto-refresh Live Data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" /><br/>
-    <label for="ctl-refresh-period">Refresh data every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds</span>
-    <div id='refresh-clock' style='float:left; display:inline-block; width:50px; height:50px'></div>
-    
+    <div style="border: solid 1px black; ">
+      <input class="ui-state-default ui-corner-all" type="button" id="go_livedata" value="Get Live Data!" style="float:left; margin:10px"/>
+      <div id='refresh-clock' style='float:left; width: 25px; margin:10px; display:inline-block;'></div>
+      <span><label for="ctl-refresh-auto">Auto-refresh live data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" /><br/>
+      <label for="ctl-refresh-period">Refresh data every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds</span>
+    </div>
+
+    <div style="clear:both; border: solid 1px black; ">
+      <label for="ctl-live-keep-up">Keep up with all events:</label><input id="ctl-live-keep-up" name="ctl-live-keep-up" type="checkbox" />
+      (For laser / low event rate use)  
+      <div  id='recentEvents'></div>
+    </div>
   </div>
 
   <div style="clear:both;"></div>

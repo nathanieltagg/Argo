@@ -69,9 +69,12 @@ if(scalar @cacheentries == 0) {
   $most_recent_event = $cacheentries[0];
   $event = $most_recent_event;   #default: go for the most up-to-date.
 
-
   # Check request params.
-  if(defined param('latest_cache') && defined param('recent_cache')) {
+
+  if(defined param('request_cache') ) {
+    $event = param('request_cache');
+  }
+  elsif(defined param('latest_cache') && defined param('recent_cache')) {
     $latest_cache = param('latest_cache'); #ID of the latest event yet seen by that client
     $recent_cache = param('recent_cache'); #ID of the event they were just looking at.
     # Has a new event come along since we last looked?

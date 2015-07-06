@@ -29,3 +29,21 @@ div.A-WireHist {
   float: right;
   width:29%;
 }
+
+#recentEvents {
+  white-space:nowrap;
+  overflow-x:auto;
+}
+
+#recentEvents span {
+  cursor: pointer;
+  text-decoration: underline;
+  color: blue;
+}
+
+#recentEvents span.current-event-highlight
+{
+  font-weight: bold;
+  color: black;
+}
+  
