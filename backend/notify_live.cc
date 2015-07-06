@@ -6,15 +6,14 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <vector>
 
 
 std::string getLastFile(const std::string& dir, const std::string& suffix );
 int watch_directory_for_new(const std::string& dir, const std::string& suffix, double heartbeat_secs);
 void report(const std::string& filename);
 
-
-
-std::string getLastFile(const std::string& dir, const std::string& suffix )
+void getFileList(const std::string& dir, const std::string& suffix, std::vector<std::string>& out)
 {
   glob_t globbuf;
   globbuf.gl_offs = 0;
@@ -25,10 +24,19 @@ std::string getLastFile(const std::string& dir, const std::string& suffix )
         &globbuf);
         
   std::string first = globbuf.gl_pathv[0];
+  for(size_t i = 0; i< globbuf.gl_pathc; i++) {
+    out.push_back(globbuf.gl_pathv[i]);
+  }
   globfree(&globbuf);
-  return first;
-  
 }
+
+std::string getLastFile(const std::string& dir, const std::string& suffix )
+{
+  std::vector<std::string> glob;
+  getFileList(dir,suffix,glob);
+  return (glob.back());
+}
+
 /////////////////////////////////////////////////////////////////////////
 // Linux version: use inotify.
 #ifdef __linux__
@@ -219,12 +227,14 @@ void report(const std::string& filename)
   if(filename == "") {
     std::cout << "id: " << gId++ << "\n";
     std::cout << "data: " <<  "HEARTBEAT" << "\n\n";
+    std::cout.flush();
     return;
   }
   if(filename == gLastFile) return;  // Don't over-report.
   
   std::cout << "id: " << gId++ << "\n";
   std::cout << "data: " <<  filename << "\n\n";
+  std::cout.flush();
   gLastFile = filename;
 }
 
@@ -238,12 +248,25 @@ int main()
   
   std::cout << "Content-Type: text/event-stream\r\n";
   std::cout << "Cache-Control: no-cache\r\n";
+  std::cout << "Connection: keep-alive\r\n";
   std::cout << "\r\n";
+  std::cout.flush();
   
   std::string dir = "../live_event_cache/"; // Should be slash-terminated.
   std::string suffix = ".event";
   
-  report(getLastFile(dir,suffix));
+  std::vector<std::string> list;
+  getFileList(dir,suffix,list);
+  for(auto s:list) {
+    report(s);
+  }
+  // while(!list.empty()) {
+  //   report(list.back());
+  //   list.pop_back();
+  // }
+
+  
+  // report(getLastFile(dir,suffix));
   
 
   return watch_directory_for_new(dir,suffix,5);
