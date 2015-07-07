@@ -185,12 +185,20 @@ sub start_server
       myerror("couldn't fork!");
   } elsif($pid==0) {
     # This is the forked process.
+      rename "$exec_name.log.4", "$exec_name.log.5";
+      rename "$exec_name.log.3", "$exec_name.log.4";
+      rename "$exec_name.log.2", "$exec_name.log.3";
+      rename "$exec_name.log.1", "$exec_name.log.2";
+      rename "$exec_name.log",   "$exec_name.log.1";
+      unlink "$exec_name.log";
+
+      # open(LOG, '>', "$exec_name.log")
       close STDIN;
       close STDOUT;
       close STDERR;
       open (STDIN,  '</dev/null');
-      open (STDOUT, ">$exec_name.log");
-      open (STDERR, '>&STDOUT');
+      open (STDOUT, '>', "$exec_name.log");
+      open (STDERR, '>>&', STDOUT);
       setsid();
     
       $ROOTSYS="../backend/root";
@@ -201,25 +209,24 @@ sub start_server
       $ENV{"DYLD_LIBRARY_PATH"}="$ROOTSYS/lib:$BOOSTSYS/lib";
 
       setsid();
-      rename "$exec_name.log.4", "$exec_name.log.5";
-      rename "$exec_name.log.3", "$exec_name.log.4";
-      rename "$exec_name.log.2", "$exec_name.log.3";
-      rename "$exec_name.log.1", "$exec_name.log.2";
-      rename "$exec_name.log",   "$exec_name.log.1";
-      unlink "$exec_name.log";
       print "Starting a new job...<br/>\n";
 
-      print "Environemnt...\n";
-      system("bash -c 'set' >>$exec_name.log 2>&1");
+      print "Environment...\n";
+      # system("bash -c 'set' >>$exec_name.log 2>&1");
+      system("bash -c 'set' $exec_name.log ");
       my $exec_args = get_exec_arguments();
       my $cmd = "../backend/$exec_name $exec_args >>$exec_name.log 2>&1";
       if( -e "../backend/setup.sh") { $cmd = "source ../backend/setup.sh; " . $cmd; }
       else { print "Not sourcing setup file.\n"; }
       print "Running: $cmd\n";
+      for (glob "/proc/$$/fd/*") {
+        print "open file handle: $1\n";
+         # POSIX::close($1) if m{/(\d+)$};
+       } # CLOSE EVERY GODAMN FILE HANDLE
+ 
       $val = system($cmd);
       $pid = $!;
 
-      # for (glob "/proc/$$/fd/*") { POSIX::close($1) if m{/(\d+)$}; } # CLOSE EVERY GODAMN FILE HANDLE
       # unlink "ntuple-server.pid";
       exit($val);
   }
