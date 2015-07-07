@@ -184,9 +184,11 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
       
       if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length) {
         var ophits = gRecord.ophits[gOphitsListName];
+        console.log("one pmt hist", ophits.length,gHoverState.obj);
+        
         for(i=0;i<ophits.length;i++) {
           var oh = ophits[i];
-          if(oh.opDetChan == gHoverState.obj.chan) {
+          if(oh.opDetChan == gHoverState.obj.opdet) {
             if(gOpMode.hitWeight != 1)
               this.highlight_hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale,oh[gOpMode.hitWeight]);
             else  
@@ -199,7 +201,7 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
         if(oppulses && oppulses.length) {
           for(i=0;i<oppulses.length;i++) {
             var p = oppulses[i];
-            if(p.opDetChan == gHoverState.obj.chan) {
+            if(p.opDetChan == gHoverState.obj.opdet) {
               for(var s = 0; s<p.waveform.length; s++) {
                 var adc = p.waveform[s];
                 if(adc>0) this.highlight_hist.Fill ( p.tdc + s, adc );
@@ -209,6 +211,7 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
         }
       }
       
+      console.log("adding hist",this.hist,this.highlight_hist);
       this.AddHist(this.highlight_hist,gOpColorScaler);        
       
     } else {

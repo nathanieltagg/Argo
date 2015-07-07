@@ -218,6 +218,8 @@ sub start_server
       print "Running: $cmd\n";
       $val = system($cmd);
       $pid = $!;
+
+      # for (glob "/proc/$$/fd/*") { POSIX::close($1) if m{/(\d+)$}; } # CLOSE EVERY GODAMN FILE HANDLE
       # unlink "ntuple-server.pid";
       exit($val);
   }
