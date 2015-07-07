@@ -22,6 +22,7 @@ our $ntuple_server_host = 'localhost';
 our $exec_name = 'argo-backend';
 our $exec_arguments = "";
 our $allow_live_restart = 1;
+our $log_path = '../logs';
 
 do("../config/server_config.pl"); #|| die; # load file if present.
 
@@ -40,7 +41,7 @@ sub setup
   open(STDOUT, ">", \$msglog);  
   open(STDERR, ">", \$msglog);
   print "testing\n";
-  open(PROFLOG,">>serve_event_profile.log");
+  open(PROFLOG,">>$log_path/serve_event_profile.log");
 }
 
 sub serve
@@ -177,52 +178,44 @@ sub kill_running_server
 
 sub start_server
 {
-  print "Starting up a new $exec_name process.\n";
+  print "Starting up a new $exec_name process.<br/>\n";
   # fork off a new process.
   my $pid = fork();
 
   if(not defined $pid) {
       myerror("couldn't fork!");
   } elsif($pid==0) {
-    # This is the forked process.
-      rename "$exec_name.log.4", "$exec_name.log.5";
-      rename "$exec_name.log.3", "$exec_name.log.4";
-      rename "$exec_name.log.2", "$exec_name.log.3";
-      rename "$exec_name.log.1", "$exec_name.log.2";
-      rename "$exec_name.log",   "$exec_name.log.1";
-      unlink "$exec_name.log";
+      mkdir $log_path;
+      my $logfile = "$log_path/$exec_name.log";
+      
+      # This is the forked process.
+      rename "$logfile.4", "$logfile.5";
+      rename "$logfile.3", "$logfile.4";
+      rename "$logfile.2", "$logfile.3";
+      rename "$logfile.1", "$logfile.2";
+      rename "$logfile",   "$logfile.1";
+      unlink "$logfile";
 
-      # open(LOG, '>', "$exec_name.log")
-      close STDIN;
+
+      close STDIN;  # Close all standard filehandles, so main thread is able to close.
       close STDOUT;
       close STDERR;
-      open (STDIN,  '</dev/null');
-      open (STDOUT, '>', "$exec_name.log");
-      open (STDERR, '>>&', STDOUT);
+      open (STDIN,  '</dev/null'); # No input
+      open (STDOUT, '>', $logfile); # Output to log file
+      open (STDERR, ">&STDOUT");
       setsid();
-    
-      $ROOTSYS="../backend/root";
-      $BOOSTSYS="../backend/boost";
-      $ENV{"ROOTSYS"}="$ROOTSYS";
-      $ENV{"BOOSTSYS"}="$BOOSTSYS";
-      $ENV{"LD_LIBRARY_PATH"}="$ROOTSYS/lib:$BOOSTSYS/lib";
-      $ENV{"DYLD_LIBRARY_PATH"}="$ROOTSYS/lib:$BOOSTSYS/lib";
 
-      setsid();
-      print "Starting a new job...<br/>\n";
+      my $cur_path = cwd();
 
-      print "Environment...\n";
-      # system("bash -c 'set' >>$exec_name.log 2>&1");
-      system("bash -c 'set' $exec_name.log ");
+      print "Starting a new job...\n";
       my $exec_args = get_exec_arguments();
-      my $cmd = "../backend/$exec_name $exec_args >>$exec_name.log 2>&1";
+      my $cmd = "cd $log_path; $cur_path/../backend/$exec_name $exec_args >>$logfile 2>&1";
       if( -e "../backend/setup.sh") { $cmd = "source ../backend/setup.sh; " . $cmd; }
       else { print "Not sourcing setup file.\n"; }
+
+      # print "Environment...\n";
+      # system("/bin/bash -c set >> $logfile");
       print "Running: $cmd\n";
-      for (glob "/proc/$$/fd/*") {
-        print "open file handle: $1\n";
-         # POSIX::close($1) if m{/(\d+)$};
-       } # CLOSE EVERY GODAMN FILE HANDLE
  
       $val = system($cmd);
       $pid = $!;
