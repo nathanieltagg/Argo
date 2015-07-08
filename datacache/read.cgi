@@ -7,7 +7,8 @@ use File::Path qw(make_path remove_tree);
 
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
                                                 localtime(time);
-
+                                                
+close STDERR;
 open STDERR, ">>", "read." . ($year+1900) . ($mon+1) . ($mday) . ".log";
 
 print STDERR "HI";
@@ -32,8 +33,13 @@ if(-r $filename) {
   my $buff = "";
   while(read(FH,$buff,20240)) { print $buff; }
   close(FH);
+  close(STDOUT);
   unlink $filename;       
   print STDERR "Deleted $filename\n";
+} else {
+  print $query->header({type=>$type,-status=>401});
+  
+  close(STDOUT);
 }
 
 #do cleanup. Look for any .png files that are too old
