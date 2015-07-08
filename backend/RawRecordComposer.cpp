@@ -106,6 +106,7 @@ void RawRecordComposer::compose()
   composeHeader();
   composeTPC();
   composePMTs();
+  composeLaser();
   fOutput.add("stats",fStats);
   
 
@@ -234,11 +235,12 @@ void RawRecordComposer::composeHeader()
 boost::mutex sChanMutex;
   
 
-void unpack_channel(waveform_t waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, 
+void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t::card_channel_type& channel_data, 
                     int plane, int planewire, int wirenum, 
                     JsonArray& outhits) 
 {
   // Copy the channel data to my own signed vector array
+  waveform_t& waveform = *waveform_ptr;
   waveform.reserve(9600);
   channel_data.decompress(waveform);
   size_t nsamp = waveform.size();
@@ -355,11 +357,11 @@ void RawRecordComposer::composeTPC()
             cerr << "Two channels with wire number " << wire << " seem to have the same crate/card/channel map." << endl;
             continue;
           }
-          waveform_t& waveform = *(inserted.first->second.get());
+          // waveform_t& waveform = *(inserted.first->second.get());
           
           
-          // unpack_channel(waveform,channel_data,plane,planewire,wire,hits);
-          unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data),
+          // unpack_channel(waveform_ptr,channel_data,plane,planewire,wire,hits);
+          unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
                                                   plane, planewire, wire, boost::ref(hits)));
         } // loop channels
 
@@ -627,4 +629,40 @@ void RawRecordComposer::composePMTs()
   fOutput.add("PMT",jPMT);   
   timer.addto(fStats);
 }
+
+void RawRecordComposer::composeLaser()
+{
+  // Protect against earlier versions of Datatypes without laser code. Remove this ifdef after it becomes final.
+#ifdef _UBOONETYPES_LASERDATA_H
+  const ub_EventRecord::laser_map_t& map = fRecord->getLASERSEBMap();
+  if(map.size() ==0) return;
+  ub_EventRecord::laser_map_t::const_iterator laser_it;
+  JsonObject jlaser;
+  for( laser_it = map.begin(); laser_it != map.end(); laser_it++){
+    JsonObject j;
+    int index = laser_it->first;
+    const ub_LaserData& data = laser_it->second;
+    j.add("ID",data.getID());
+    j.add("Status",data.getStatus());
+    j.add("PositionRotary",data.getPositionRotary());
+    j.add("PositionLinear",data.getPositionLinear());
+    j.add("PositionAttenuator",data.getPositionAttenuator());
+    j.add("PositionIris",data.getPositionIris());
+    j.add("TimeSec",data.getTimeSec());
+    j.add("TimeUSec",data.getTimeUSec());
+    j.add("CountTrigger",data.getCountTrigger());
+    j.add("CountRun",data.getCountRun());
+    j.add("CountLaser",data.getCountLaser());
+    j.add("TOMGBoxAxis1",data.getTOMGBoxAxis1());
+    j.add("TOMGBoxAxis2",data.getTOMGBoxAxis2());
+    j.add("TOMGFlangeAxis1",data.getTOMGFlangeAxis1());
+    j.add("TOMGFlangeAxis2",data.getTOMGFlangeAxis2());
+    jlaser.add(std::to_string(index),j);
+  };
+  JsonObject reco_list;
+  fOutput.add("laser",jlaser);
+  
+#endif
+}
+
   

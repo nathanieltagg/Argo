@@ -55,48 +55,51 @@ void MakeEncodedTileset(JsonObject& r,
 
     std::cout << "Doing tile threads"<< std::endl;
     boost::thread_group tile_threads;
+    
+    typedef std::vector<EncodedTileMaker> row_t;
+    typedef std::vector<row_t> table_t;
+    
+    table_t table;
+    row_t row0;
+    row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 0,    3200   , path, url));
+    row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 3200, 6400   , path, url));
+    row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 6400, ntdc   , path, url));
+    table.push_back(row0);
+    row_t row1;
+    row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 0,    3200, path, url));
+    row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 3200, 6400, path, url));
+    row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 6400, ntdc, path, url));
+    table.push_back(row1);
+    row_t row2;
 
-    EncodedTileMaker tile_plane0window1( wireMap, 0, 2399, 0,    3200   , path, url ); 
-    EncodedTileMaker tile_plane0window2( wireMap, 0, 2399, 3200, 6400   , path, url ); 
-    EncodedTileMaker tile_plane0window3( wireMap, 0, 2399, 6400, ntdc   , path, url ); 
-    EncodedTileMaker tile_plane1window1( wireMap, 2399, 4798, 0,    3200, path, url ); 
-    EncodedTileMaker tile_plane1window2( wireMap, 2399, 4798, 3200, 6400, path, url ); 
-    EncodedTileMaker tile_plane1window3( wireMap, 2399, 4798, 6400, ntdc, path, url ); 
-    EncodedTileMaker tile_plane2window1( wireMap, 4798, nwire, 0,    3200, path, url ); 
-    EncodedTileMaker tile_plane2window2( wireMap, 4798, nwire, 3200, 6400, path, url ); 
-    EncodedTileMaker tile_plane2window3( wireMap, 4798, nwire, 6400, ntdc, path, url ); 
+    row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 0,    3200, path, url));
+    row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 3200, 6400, path, url));
+    row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 6400, ntdc, path, url));
+    table.push_back(row2);
 
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window1));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window2));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane0window3));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window1));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window2));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane1window3));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window1));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window2));
-    tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tile_plane2window3));
+    for(int i=0;i<table.size();i++) {
+      row_t& row = table[i];
+      for(int j=0;j<row.size();j++) {
+        EncodedTileMaker& tilemaker = row[j];
+        tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tilemaker));
+      }
+    }
     tile_threads.join_all();
 
     std::cout << "Finished tile threads"<< std::endl;
 
-    JsonArray tiles1; 
-    tiles1.add(tile_plane0window1.json());
-    tiles1.add(tile_plane0window2.json());
-    tiles1.add(tile_plane0window3.json());
-    JsonArray tiles2; 
-    tiles2.add(tile_plane1window1.json());
-    tiles2.add(tile_plane1window2.json());
-    tiles2.add(tile_plane1window3.json());
-    JsonArray tiles3; 
-    tiles3.add(tile_plane2window1.json());
-    tiles3.add(tile_plane2window2.json());
-    tiles3.add(tile_plane2window3.json());
-    JsonArray tiles;
-    tiles.add(tiles1);
-    tiles.add(tiles2);
-    tiles.add(tiles3);
+    JsonArray jtiles;
+    for(int i=0;i<table.size();i++) {
+      row_t& row = table[i];
+      JsonArray jrow;
+      for(int j=0;j<row.size();j++) {
+        EncodedTileMaker& tilemaker = row[j];
+        jrow.add(tilemaker.json());
+      }
+      jtiles.add(jrow);      
+    }
   
-    r.add("wireimg_encoded_tiles",tiles);
+    r.add("wireimg_encoded_tiles",jtiles);
   
     timer_tiles.addto(r);    
   }
