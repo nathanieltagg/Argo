@@ -106,6 +106,7 @@ void RawRecordComposer::compose()
   composeHeader();
   composeTPC();
   composePMTs();
+  composeLaser();
   fOutput.add("stats",fStats);
   
 
@@ -627,4 +628,40 @@ void RawRecordComposer::composePMTs()
   fOutput.add("PMT",jPMT);   
   timer.addto(fStats);
 }
+
+void RawRecordComposer::composeLaser()
+{
+  // Protect against earlier versions of Datatypes without laser code. Remove this ifdef after it becomes final.
+#ifdef _UBOONETYPES_LASERDATA_H
+  const ub_EventRecord::laser_map_t& map = fRecord->getLASERSEBMap();
+  if(map.size() ==0) return;
+  ub_EventRecord::laser_map_t::const_iterator laser_it;
+  JsonObject jlaser;
+  for( laser_it = map.begin(); laser_it != map.end(); laser_it++){
+    JsonObject j;
+    int index = laser_it->first;
+    const ub_LaserData& data = laser_it->second;
+    j.add("ID",data.getID());
+    j.add("Status",data.getStatus());
+    j.add("PositionRotary",data.getPositionRotary());
+    j.add("PositionLinear",data.getPositionLinear());
+    j.add("PositionAttenuator",data.getPositionAttenuator());
+    j.add("PositionIris",data.getPositionIris());
+    j.add("TimeSec",data.getTimeSec());
+    j.add("TimeUSec",data.getTimeUSec());
+    j.add("CountTrigger",data.getCountTrigger());
+    j.add("CountRun",data.getCountRun());
+    j.add("CountLaser",data.getCountLaser());
+    j.add("TOMGBoxAxis1",data.getTOMGBoxAxis1());
+    j.add("TOMGBoxAxis2",data.getTOMGBoxAxis2());
+    j.add("TOMGFlangeAxis1",data.getTOMGFlangeAxis1());
+    j.add("TOMGFlangeAxis2",data.getTOMGFlangeAxis2());
+    jlaser.add(std::to_string(index),j);
+  };
+  JsonObject reco_list;
+  fOutput.add("laser",jlaser);
+  
+#endif
+}
+
   
