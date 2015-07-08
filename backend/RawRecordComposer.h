@@ -19,6 +19,7 @@ public:
   void composeHeader();
   void composeTPC();
   void composePMTs();
+  void composeLaser();
 
 
   void getPmtFromCrateCardChan(int icrate, int icard,int ichan, int& outPmt, int& outGain,  std::string& outSpecial);

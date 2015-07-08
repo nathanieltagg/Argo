@@ -69,6 +69,20 @@ EventInfo.prototype.NewRecord = function()
     if("entry" in gRecord.source) $(".event-entry").text(gRecord.source.entry);
     if("numEntriesInFile" in gRecord.source) $(".event-numEntriesInFile").text(gRecord.source.entry);
   }
+  
+  if(gRecord.laser) {
+    var txt = "";
+    for(i in gRecord.laser) {
+      var data = gRecord.laser[i];
+      txt += "<h4 class='laser-info'>Laser " + i + ":</h4>";
+      txt += "<table class='laser-info'>";
+      for( a in data ) {
+        txt += "<tr><td>"+a+"</td><td>"+data[a]+"</td></tr>";
+      }
+      txt+="</table>";
+    }
+    $(".event-laser-info").html(txt);
+  }
 
   var t = "";
   for(i in gRecord.raw) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
