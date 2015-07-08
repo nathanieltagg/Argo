@@ -235,11 +235,12 @@ void RawRecordComposer::composeHeader()
 boost::mutex sChanMutex;
   
 
-void unpack_channel(waveform_t waveform, const tpc_crate_data_t::card_t::card_channel_type& channel_data, 
+void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t::card_channel_type& channel_data, 
                     int plane, int planewire, int wirenum, 
                     JsonArray& outhits) 
 {
   // Copy the channel data to my own signed vector array
+  waveform_t& waveform = *waveform_ptr;
   waveform.reserve(9600);
   channel_data.decompress(waveform);
   size_t nsamp = waveform.size();
@@ -356,11 +357,11 @@ void RawRecordComposer::composeTPC()
             cerr << "Two channels with wire number " << wire << " seem to have the same crate/card/channel map." << endl;
             continue;
           }
-          waveform_t& waveform = *(inserted.first->second.get());
+          // waveform_t& waveform = *(inserted.first->second.get());
           
           
-          // unpack_channel(waveform,channel_data,plane,planewire,wire,hits);
-          unpack_threads.create_thread(boost::bind(unpack_channel,boost::ref(waveform),boost::cref(channel_data),
+          // unpack_channel(waveform_ptr,channel_data,plane,planewire,wire,hits);
+          unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
                                                   plane, planewire, wire, boost::ref(hits)));
         } // loop channels
 
