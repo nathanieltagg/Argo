@@ -196,14 +196,15 @@ sub start_server
       rename "$logfile",   "$logfile.1";
       unlink "$logfile";
 
-
+      setsid();
       close STDIN;  # Close all standard filehandles, so main thread is able to close.
       close STDOUT;
       close STDERR;
+      close $oldout;
+      close $olderr;
       open (STDIN,  '</dev/null'); # No input
       open (STDOUT, '>', $logfile); # Output to log file
       open (STDERR, ">&STDOUT");
-      setsid();
 
       my $cur_path = cwd();
 
