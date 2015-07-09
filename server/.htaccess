@@ -1,7 +1,9 @@
-Options +ExecCGI
+AddDefaultCharset UTF-8
+Options +ExecCGI -Includes
 AddHandler cgi-script .cgi
 
+SetEnv no-gzip 1
+
+
 # I will do my OWN compression, thankyouverymuch
-<IFModule mod_deflate.c>
-   RemoveOutputFilter DEFLATE
-</IFModule>
+RemoveOutputFilter DEFLATE
