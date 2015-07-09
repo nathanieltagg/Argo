@@ -95,7 +95,8 @@ void MakeEncodedTileset(JsonObject& output,
                         size_t nwires,
                         size_t ntdc,
                         const std::string& path,
-                        const std::string& url);
+                        const std::string& url,
+                        const std::string& options="");
 
 
 #endif /* end of include guard: ENCODEDTILEMAKER_H_FE65EB56 */

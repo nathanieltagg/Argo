@@ -47,7 +47,8 @@ void MakeEncodedTileset(JsonObject& r,
                         size_t nwire,
                         size_t ntdc,
                         const std::string& path,
-                        const std::string& url)
+                        const std::string& url,
+                        const std::string& options)
 {
   {
     TimeReporter timer_tiles("time_to_make_tiles");
@@ -60,22 +61,50 @@ void MakeEncodedTileset(JsonObject& r,
     typedef std::vector<row_t> table_t;
     
     table_t table;
-    row_t row0;
-    row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 0,    3200   , path, url));
-    row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 3200, 6400   , path, url));
-    row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 6400, ntdc   , path, url));
-    table.push_back(row0);
-    row_t row1;
-    row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 0,    3200, path, url));
-    row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 3200, 6400, path, url));
-    row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 6400, ntdc, path, url));
-    table.push_back(row1);
-    row_t row2;
+    size_t p = options.find("_tilesize");
+    if(p==std::string::npos) {
+      std::cout << "Doing standard 9-tile layout." << std::endl;
+      row_t row0;
+      row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 0,    3200   , path, url));
+      row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 3200, 6400   , path, url));
+      row0.push_back(EncodedTileMaker(wireMap, 0, 2399, 6400, ntdc   , path, url));
+      table.push_back(row0);
+      row_t row1;
+      row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 0,    3200, path, url));
+      row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 3200, 6400, path, url));
+      row1.push_back(EncodedTileMaker(wireMap, 2399, 4798, 6400, ntdc, path, url));
+      table.push_back(row1);
+      row_t row2;
 
-    row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 0,    3200, path, url));
-    row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 3200, 6400, path, url));
-    row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 6400, ntdc, path, url));
-    table.push_back(row2);
+      row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 0,    3200, path, url));
+      row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 3200, 6400, path, url));
+      row2.push_back(EncodedTileMaker(wireMap, 4798, nwire, 6400, ntdc, path, url));
+      table.push_back(row2);
+    } else {
+      int tilesize = 0;
+      std::istringstream ss(options.substr(p+9));
+      ss >> tilesize;
+      if(tilesize <= 0 || tilesize > 10000) tilesize = 2048;
+      
+      int rows = ceil((float)nwire/(float)tilesize);
+      int cols = ceil((float)ntdc/(float)tilesize);
+      std::cout << "Doing tilesize " << tilesize << " with " << rows << " x " << cols << std::endl;
+      
+      for(int i=0;i<rows;i++) {
+        row_t row;
+        for(int j=0;j<cols;j++) {
+          int x1 = i*tilesize;
+          int x2 = x1+tilesize;
+          if(x2>nwire) x2=nwire;
+          int y1 = j*tilesize;
+          int y2 = y1+tilesize;
+          if(y2>ntdc) y2=ntdc;
+          std::cout << "tile" << x1 << " " << x2 << " " << y1 << " " << y2 << std::endl;
+          row.push_back(EncodedTileMaker(wireMap, x1,x2, y1,y2, path, url));
+        }
+        table.push_back(row);
+      }      
+    }
 
     for(int i=0;i<table.size();i++) {
       row_t& row = table[i];
