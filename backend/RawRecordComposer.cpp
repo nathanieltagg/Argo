@@ -416,7 +416,8 @@ void RawRecordComposer::composeTPC()
                             nwire,
                             ntdc,
                             fCurrentEventDirname,
-                            fCurrentEventUrl );
+                            fCurrentEventUrl,
+                            fOptions);
 
     reco_list.add("DAQ",r);
     fOutput.add("raw",reco_list);
