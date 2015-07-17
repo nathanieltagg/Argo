@@ -204,7 +204,7 @@ $(function(){
   $(".portlet-header .ui-icon-print").click(function(){    
                                                       var portlet = $(this).parents(".portlet:first");
                                                       var content = $('.portlet-content',portlet);
-                                                      return DoPrint(content);
+                                                      return DoPrint(content,false,true);
                                                     } );
 
                                      
