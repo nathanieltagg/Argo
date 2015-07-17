@@ -314,7 +314,6 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   this.DrawFrame();
   
-  this.DrawScale();
 
   // Set clipping region for all further calls, just to make things simpler.
   this.ctx.save();
@@ -398,6 +397,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     
     
   }  
+  
+  this.DrawScale();
+  
   this.ctx.restore();
 
   // this.ClearOverlays();
