@@ -74,6 +74,8 @@ function OpHitHistogram( element  )
 
 OpHitHistogram.prototype.NewRecord = function()
 {
+  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  
   var tmin = 1e99;
   var tmax = -1e99;
   var i, width, nbins, p;
