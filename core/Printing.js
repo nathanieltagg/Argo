@@ -14,7 +14,7 @@
 gPrintBuffer = "";
 gPrintScale = 5;
 
-function DoPrint(objToPrint,execPrintOrder)
+function DoPrint(objToPrint,execPrintOrder,openWindow)
 {     
       console.log("Printing",objToPrint);
 
@@ -29,9 +29,10 @@ function DoPrint(objToPrint,execPrintOrder)
       // Based of idea at http://www.bennadel.com/blog/1591-Ask-Ben-Print-Part-Of-A-Web-Page-With-jQuery.htm
       //
       
+      var windowType = "frame";
+      if(openWindow) windowType = "window";
 
       // For now, let's use a new window, so we can look at it.
-      var windowType = "frame";
       var outDoc, newWin, objFrame, jFrame;
       
       if(windowType == "window") {
