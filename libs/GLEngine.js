@@ -81,7 +81,7 @@ function GLEngine( tilesize )
 
   // Check the link status
   var linked = gl.getProgramParameter(this.program, gl.LINK_STATUS);
-  if (!linked) {
+  if (!linked) {kl
        // something went wrong with the link
        lastError = gl.getProgramInfoLog (this.program);
        console.error("Error in this.program linking:" + lastError);
@@ -156,7 +156,7 @@ GLEngine.prototype.create_shader = function( scriptId  )
 
 
 
-GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x, canvas ) 
+GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x ) 
 {     
   // Creates an OpenGl texture, returns the texture ID.
   // This version builds a 2d 256x256 texture.
@@ -165,7 +165,7 @@ GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x, ca
   // Note that range of values accessible is only -4096 to 4096, (-0x1000 to 0x1000), so only needs 0x2000 values out of 0x10000 pixels
   // in a 256x256 image. So, only fills 1/8 of image space. Need to push it up 
   // I _think_ that this would work with smaller resolution, but color changes at small ADC value wont' be visable.
-  if(!canvas) canvas = document.createElement("canvas");
+  var canvas = document.createElement("canvas");
   canvas.width  = 256;
   canvas.height = 256;
   var pixels = 0x2000; // Total pixels possible from -4096 to 4096
@@ -335,6 +335,7 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, outcanvas, p
       gl.deleteTexture(textureId);
     }
   }
+  gl.deleteTexture(lutTextureId);
   console.timeEnd('GLEngine::draw_falsecolor_from_canvas');
   console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
   console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
