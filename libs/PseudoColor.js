@@ -216,6 +216,8 @@ function LogColor( )
   this.dialOffset = 0;
   this.hueOffset= 0.2;
   this.saturation = 0.9;
+  this.cutoffLow = 0;
+  this.cutoffHigh = 0;
 }
 
 
@@ -224,13 +226,16 @@ LogColor.prototype.ColorDialToAdc = function( colorDial )
   // colorDial is a number -1 to 1, where 0 is the mid point (0adc)
   // colors change evenly from 0-1 on colordial.
   // adc can legally be -4096 to 4096.
-  return Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
+  var adc = Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
+  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
+  return adc;
 }
 
 LogColor.prototype.AdcToColorDial = function( adc )
 {
   // adc can legally be -4096 to 4096.
   // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
+  if(adc > this.cutoffLow && adc < this.cutoffHigh) {console.log("truncate",adc); return 0;} // truncate
   return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
 }
 
@@ -255,6 +260,7 @@ LogColor.prototype.interpolate = function(x) {
   var c = this.ColorDialToColor(dial);
   c.x = x;
   c.a = 255.0;
+  if(x>50 && x<60) console.log(x,dial,c);
   return c;
 };
 

@@ -74,10 +74,12 @@ function FalseColorControl( element  )
   $('.falseColorPlus1' ).click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
   $('.falseColorMinus1').click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(-1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
 
-  $('input#psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val());  self.Draw();});
-  $('input#psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val());  self.Draw();});
-  $('input#psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val());  self.Draw();});
-  $('input#psuedoSaturation') .change(function(){gWirePseudoColor.saturation= parseFloat($(this).val());  self.Draw();});
+  $('input#psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val());  this.blur(); self.Draw();});
+  $('input#psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val());  this.blur(); self.Draw();});
+  $('input#psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val());  this.blur(); self.Draw();});
+  $('input#psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw();});
+  $('input#psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
+  $('input#psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
 
 
   $('div#psuedoDialOffsetSlider').slider({
@@ -115,6 +117,24 @@ function FalseColorControl( element  )
     slide: function(ev,ui) { $('input#psuedoSaturation').val(ui.value).trigger('change'); return true;},
     stop:  function(ev,ui) { $('input#psuedoSaturation').val(ui.value).trigger('change'); self.FinishRangeChange();}
   });
+
+  $('div#psuedoCutoffLow').slider({
+    value: $('input#psuedoCutoffLow').val(),
+    min: 0,
+    max: 1,
+    step: 0.01,
+    slide: function(ev,ui) { $('input#psuedoCutoffLow').val(ui.value).trigger('change'); return true;},
+    stop:  function(ev,ui) { $('input#psuedoCutoffLow').val(ui.value).trigger('change'); self.FinishRangeChange();}
+  });
+  $('div#psuedoCutoffHigh').slider({
+    value: $('input#psuedoCutoffHigh').val(),
+    min: 0,
+    max: 1,
+    step: 0.01,
+    slide: function(ev,ui) { $('input#psuedoCutoffHigh').val(ui.value).trigger('change'); return true;},
+    stop:  function(ev,ui) { $('input#psuedoCutoffHigh').val(ui.value).trigger('change'); self.FinishRangeChange();}
+  });
+
 }
 
 FalseColorControl.prototype.NewRecord = function()
@@ -163,7 +183,8 @@ FalseColorControl.prototype.Draw = function( )
   this.ctx.save();
   for(var i =0;i<this.hist.n;i++) {
     var u = this.hist.GetX(i);
-    var cc = gWirePseudoColor.ColorDialToCtxColor(u);
+    var cc = gWirePseudoColor.ColorDialToCtxColor(gWirePseudoColor.AdcToColorDial(gWirePseudoColor.ColorDialToAdc(u)));
+    // var cc = gWirePseudoColor.ColorDialToCtxColor(u);
     this.ctx.fillStyle = cc;
     this.ctx.fillRect(this.GetX(u),this.origin_y-this.span_y,1,this.span_y);
     // Don't trust gradients: they lie.

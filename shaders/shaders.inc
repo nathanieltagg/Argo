@@ -64,33 +64,28 @@ void main() {
   
   // 1d lookup.
   // float adc = 256.*(inc.r*255. + inc.g - 128.);  // True ADC value; typical -4096 to 4096.
-  // adc *=10.; // Amplify so we can see detail - shouldn't need this in the final version.
   // float lookup_coord = adc/8192. + 0.5; // this is a proper 1:1 mapping, but doesn't use enough dynamic range.
   // vec2 lookup_coords = vec2(lookup_coord,0);
   
   // 2d lookup.
   // Just use r,g. Red is most-significant, green is least-significant.  X is least, Y is most.
-  vec2 lookup_coords = vec2(inc.g, inc.r);
+  
+  // July 27
+  // Add a 0.5 pixel offset, to be sure that the nearest pixel we map to in the maptexture is the correct one!
+  vec2 lookup_coords = vec2( (floor(inc.g*256.0)+0.5)/256.0 , (floor(inc.r*256.0)+0.5)/256.0 );
   
   
   // float adc = 0.999;
   vec4 color = texture2D(maptexture, lookup_coords);
-  // vec4 color;
-  // color.r = texture2D(maptexture, lookup_coords).r;
-  // color.g = texture2D(maptexture, lookup_coords).g;
-  // color.b = texture2D(maptexture, lookup_coords).b;
-  // color.a = texture2D(maptexture, lookup_coords).a;
-
-  // color.r =0.;
-  // color.b =0.;
-  // color.g =0.;
+  
   // if(adc>0.)        { color.r = 1.0; }
   // else              { color.b = 1.0; }
-  if(lookup_coords.x>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
-  if(lookup_coords.y>1.0) {color.r = 0.; color.g = 255.; color.b = 0.;}
+  // if(lookup_coords.x>1.0) {color.r = 255.; color.g = 255.; color.b = 255.;}
+ //  if(lookup_coords.y>1.0) {color.r = 255.; color.g = 255.; color.b = 255.;}
 
   // Debug: This just draws our input texture.
   // color = texture2D(maptexture,v_texCoord);
+  
 
   // Output color is RGBA color with colors encoded between 0 and 1.
   gl_FragColor = color;
