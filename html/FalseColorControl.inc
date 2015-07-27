@@ -29,6 +29,11 @@
     <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
               <div id='psuedoSaturationSlider' class='psslide'></div>
               <input class='psval savable'  type="text" id='psuedoSaturation' value='0.9' width='3'/> </div>
+
+    <div class='psuedoColorRow' >Cutoff: &nbsp;
+      <input class='psval savable'  type="text" id='psuedoCutoffLow' value='0' width='5'/>&nbsp; to &nbsp;
+      <input class='psval savable'  type="text" id='psuedoCutoffHigh' value='0' width='5'/></span>&nbsp; ADC &nbsp;</div>
+
   </div>
 </div>
 

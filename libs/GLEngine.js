@@ -162,6 +162,8 @@ GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x, ca
   // This version builds a 2d 256x256 texture.
   // Colors go top-to-bottom (most sigificant changes) and left-to-right (least significant)
   // This forms a full 256x256 lookup table usable by the shader.
+  // Note that range of values accessible is only -4096 to 4096, (-0x1000 to 0x1000), so only needs 0x2000 values out of 0x10000 pixels
+  // in a 256x256 image. So, only fills 1/8 of image space. Need to push it up 
   // I _think_ that this would work with smaller resolution, but color changes at small ADC value wont' be visable.
   if(!canvas) canvas = document.createElement("canvas");
   canvas.width  = 256;
@@ -170,7 +172,7 @@ GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x, ca
   var ctx = canvas.getContext('2d');
   ctx.fillStyle = 'black';
   ctx.fillRect(0,0,256,256);
-  var imgData=ctx.createImageData(256,32); // 256*16 = 0x8000 possible values.
+  var imgData=ctx.createImageData(256,32); // 256*16 = 8192 = 0x2000 possible values.
   var len = imgData.data.length;
   for (var i=0;i<len;i+=4) {
     var x = start_x + (i/4.)*(stop_x-start_x)/pixels; 
@@ -180,7 +182,7 @@ GLEngine.prototype.build_LUT_canvas = function( pseudocolor, start_x, stop_x, ca
     imgData.data[i+2]= color.b;
     imgData.data[i+3]= color.a;
   }
-  ctx.putImageData(imgData,0,112); // Shift up 1/4 to cover unused portion.
+  ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.
   return canvas;
 }
 
@@ -191,17 +193,17 @@ GLEngine.prototype.texture_from_canvas  = function(canvas)
   var id = gl.createTexture();
   this.gl.bindTexture(this.gl.TEXTURE_2D, id);
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 
   function ispoweroftwo(x) { return (x & (x-1)) ==0; }
   
   if((canvas.width == canvas.height) && ispoweroftwo(canvas.width)) {
   } else {
     // Don't think I need this since it's a square texture at a power-of-two
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   }
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, canvas);
   return id;
 }
@@ -260,7 +262,7 @@ GLEngine.prototype.draw_falsecolor_from_canvas = function(incanvas, outcanvas, p
   var mapTextureLocation = gl.getUniformLocation(this.program, "maptexture");
   gl.uniform1i(mapTextureLocation, 7);
   gl.activeTexture(gl.TEXTURE7);
-  var lutTextureId = this.build_LUT_texture(pseudocolor,-4095,4096);
+  var lutTextureId = this.build_LUT_texture(pseudocolor,-4096,4096);
   gl.bindTexture(gl.TEXTURE_2D, lutTextureId);
   console.timeEnd('Build LUT');
 
