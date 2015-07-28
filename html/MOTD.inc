@@ -10,6 +10,7 @@
   <ul> 
     <li> FIXED false-color display artifacts - detector looks cleaner now! </li>
     <li> ADDED ADC cutoffs for Tia</li>
+    <li> FIXED Removed blur on copy-from-offscreen</li>
     
   </ul>
 </div> 
