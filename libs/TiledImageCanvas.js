@@ -112,12 +112,12 @@ TiledImageCanvas.prototype.MapData = function(jrow,jcol)
 {
   // Callback called when an image finishes loading.
   
-  console.time("MapData: one image");
+  console.time("TiledImageCanvas::MapData: one image");
   //Draw in this particular item.
   var elem = this.tile_urls[jrow][jcol];
   var img = this.tile_images[jrow][jcol];
   this.ctx.drawImage( img, elem.x, elem.y);
-  console.timeEnd("MapData: one image");
+  console.timeEnd("TiledImageCanvas::MapData: one image");
   this.num_images_loaded++;
   
   if(this.num_images_loaded < this.num_images_needed) return;
