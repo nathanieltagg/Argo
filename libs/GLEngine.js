@@ -26,6 +26,9 @@ function UpdateColoredWireMap(typ)
     gRecord[typ].colored_wire_canvas = document.createElement('canvas');
     gRecord[typ].colored_wire_canvas.width = gRecord[typ].tiled_canvas.canvas.width;
     gRecord[typ].colored_wire_canvas.height = gRecord[typ].tiled_canvas.canvas.height;
+    // Does this help the aw snaps? No, no it doesn't.
+    // gGLEngine = null;
+    // gGLEngine = new GLEngine();
     gGLEngine.draw_falsecolor_from_canvas(
                        gRecord[typ].tiled_canvas.canvas,
                        gRecord[typ].colored_wire_canvas,

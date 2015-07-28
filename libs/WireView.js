@@ -469,21 +469,26 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    var min_channel = gGeo.channelOfWire(this.plane, min_wire);
    var max_channel = gGeo.channelOfWire(this.plane, max_wire);
    
-   var source_x = Math.floor(min_tdc);
-   var source_y = Math.floor(min_channel);
-   var source_w = Math.floor(max_tdc-min_tdc);
-   var source_h = Math.floor(max_channel-min_channel);
+   var source_x = Math.round(min_tdc);
+   var source_y = Math.round(min_channel);
+   var source_w = Math.round(max_tdc-min_tdc);
+   var source_h = Math.round(max_channel-min_channel);
   
    // Find position and height of destination in screen coordinates. Note we'll 
    // have to rotate these for final picture insertion.
-   var dest_x = Math.floor(this.GetX(min_wire));
-   var dest_w = Math.floor(this.GetX(max_wire) - dest_x);
-   var dest_y = Math.floor(this.GetY(min_tdc));
-   var dest_h = Math.floor(dest_y - this.GetY(max_tdc));
+   var dest_x = Math.round(this.GetX(min_wire));
+   var dest_w = Math.round(this.GetX(max_wire) - dest_x);
+   var dest_y = Math.round(this.GetY(min_tdc));
+   var dest_h = Math.round(dest_y - this.GetY(max_tdc));
   
    // Now, the above values are good, but we need to 
    // rotate our image.
    this.ctx.save();
+   
+   // No blur on copy!
+   this.ctx.webkitImageSmoothingEnabled = false;
+   this.ctx.mozImageSmoothingEnabled = false;
+   this.ctx.imageSmoothingEnabled = false; /// future
    this.ctx.translate(dest_x,dest_y);
    this.ctx.rotate(-Math.PI/2);
 
