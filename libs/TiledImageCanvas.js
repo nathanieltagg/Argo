@@ -28,7 +28,7 @@ function MakeTiledImages()
         gRecord._raw = {};
         gRecord._raw.tiled_canvas= new TiledImageCanvas( 
                                         tile_urls,
-                                        function(){gStateMachine.Trigger("TiledImageLoaded_raw");},
+                                        function(){}, //function(){gStateMachine.Trigger("TiledImageLoaded_raw");},
                                         "_raw"
                                         );
       }
@@ -43,7 +43,7 @@ function MakeTiledImages()
         gRecord._cal = {};
         gRecord._cal.tiled_canvas= new TiledImageCanvas( 
                                         tile_urls,
-                                        function(){gStateMachine.Trigger("TiledImageLoaded_cal");},
+                                        function(){}, //function(){gStateMachine.Trigger("TiledImageLoaded_cal");},
                                         "_cal"
                                         );
       }

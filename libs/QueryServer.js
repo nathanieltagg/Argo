@@ -99,7 +99,7 @@ function QueryServer( par, myurl )
     // Used for next/prev increment buttons.
     // if(querytype == 'last_query_type') querytype = gLastQueryType;
     // console.log("QueryServer("+querytype+")");
-    var opts = "_NoPreSpill_NoPostSpill_";
+    var opts = "";
 
     // look at reco only:
     // if(/fast/.test(window.location.pathname)) opts+= "_NORAW__NOCAL_";
@@ -120,6 +120,7 @@ function QueryServer( par, myurl )
       $('#loading_feedback').html("<b>Loading RawDigit or Wire data.. may be slower! Uncheck \"Show Wires\" to disable.</b></br/>");
     }
     
+    opts+= "_tilesize2048_";
 
 
     // Default: do file-and-entry read from parameters. Should check for other options first.

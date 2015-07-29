@@ -235,7 +235,7 @@ LogColor.prototype.AdcToColorDial = function( adc )
 {
   // adc can legally be -4096 to 4096.
   // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) {console.log("truncate",adc); return 0;} // truncate
+  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0; // truncate
   return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
 }
 
@@ -260,7 +260,6 @@ LogColor.prototype.interpolate = function(x) {
   var c = this.ColorDialToColor(dial);
   c.x = x;
   c.a = 255.0;
-  if(x>50 && x<60) console.log(x,dial,c);
   return c;
 };
 
