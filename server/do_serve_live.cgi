@@ -99,6 +99,7 @@ if(scalar @cacheentries == 0) {
     $result .= $_;
   }
   close READCACHE;
+  if(length($result)==0) { $result='{"error":"Empty event"}'; }
 
 } 
 
