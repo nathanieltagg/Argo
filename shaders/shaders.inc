@@ -4,11 +4,10 @@ attribute vec2 a_position;
 attribute vec2 a_texCoord;
 
 uniform vec2 u_resolution;
-uniform vec2 u_offset;
-
 varying vec2 v_texCoord;
 
 void main() {
+
    // convert the rectangle from pixels to 0.0 to 1.0
    vec2 zeroToOne = a_position / u_resolution;
 
@@ -18,14 +17,25 @@ void main() {
    // convert from 0->2 to -1->+1 (clipspace)
    vec2 clipSpace = zeroToTwo - 1.0;
 
-   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1); // Flips vertically?
 
    // pass the texCoord to the fragment shader
    // The GPU will interpolate this value between points.
-   v_texCoord = a_texCoord;
+    v_texCoord = a_texCoord;
 }
 </script>
 
+<script id="stupidfill" type="x-shader/x-fragment">
+precision mediump float;
+
+void main() {
+  gl_FragColor.r = 255.0;
+  gl_FragColor.g = 0.0;
+  gl_FragColor.b = 0.0;
+  gl_FragColor.a = 255.0;
+}
+
+</script>
 
 
 
@@ -65,11 +75,11 @@ void main() {
   // Debug: This just draws our input texture.
   // color = texture2D(maptexture,v_texCoord);
   
-
-  // Output color is RGBA color with colors encoded between 0 and 1.
-  color.r = 255.; color.g = 0.; color.b = 0.; color.a=255.;
-  if(v_texCoord.x>0.5 &&v_texCoord.y>0.5 ) { color.r = 0.; color.g = 255.; color.b = 0.; color.a=255.; }
-  if(v_texCoord.x<0.5  &&v_texCoord.y<0.5) { color.r = 0.; color.g = 0.; color.b = 255.; color.a=255.; }
+  // Debug: this draws a little four-square texture to show me where the mapping is.
+  // // Output color is RGBA color with colors encoded between 0 and 1.
+  // color.r = 255.; color.g = 0.; color.b = 0.; color.a=255.;
+  // if(v_texCoord.x>0.5 &&v_texCoord.y>0.5 ) { color.r = 0.; color.g = 255.; color.b = 0.; color.a=255.; }
+  // if(v_texCoord.x<0.5  &&v_texCoord.y<0.5) { color.r = 0.; color.g = 0.; color.b = 255.; color.a=255.; }
   
   gl_FragColor = color;
 }
