@@ -55,7 +55,9 @@ void MakeEncodedTileset(JsonObject& r,
     TimeReporter timer_tiles("time_to_make_tiles");
     // create tiles.
 
-    std::cout << "Doing tile threads. Filling space: "<< fill_empty_space << std::endl;
+    std::cout << "Doing tile threads. Filling space: "
+        << fill_empty_space 
+        << " options: " << options  << std::endl;
     boost::thread_group tile_threads;
     
     typedef std::vector<EncodedTileMaker> row_t;
