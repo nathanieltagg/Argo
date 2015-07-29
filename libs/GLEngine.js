@@ -59,7 +59,9 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
      console.log("gl." + functionName + "(" + 
         WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
   } 
-  this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
+
+  // Uncomment this line for debugging.
+  //this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
     
    // This line is required if we change canvas size
   // after creating GL context
@@ -265,7 +267,7 @@ GLMapper.prototype.build_LUT_texture = function( )
 
     
   // Creates an OpenGl texture, returns the texture ID.
-  if(this.LUT_texture)  this.gl.deleteTexture(this.LUT_texture);
+  // if(this.LUT_texture)  this.gl.deleteTexture(this.LUT_texture);
   this.LUT_texture = this.gl.createTexture();
   this.gl.activeTexture(this.gl.TEXTURE7); // Set active unit to 1
   this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);
