@@ -2,7 +2,7 @@
 
 $(function(){
   gGLMapperRaw = new GLMapper('raw');
-  //$('body').append(gGLMapperRaw.renderCanvas)
+  //$('body').append(gGLMapperRaw.canvas)
   // gGLMapperCal = new GLMapper('cal');
 
   // gStateMachine.Bind('ChangePsuedoColor',function(){
@@ -16,16 +16,34 @@ function GLMapper(typ) // "raw" or "cal"
 {
   this.typ = typ; 
   
-  // Create openGL engine.
-  this.tilesize = 2048; // Will be overwritten later.
-  this.renderCanvas = document.createElement('canvas');
-  this.renderCanvas.width = 9600;
-  this.renderCanvas.height = 8256;
-
+  // Space to hold image tiles.
+  this.tile_images = [];
+  this.loaded = false;
+  var total_width = 0;
+  var total_height = 0;
+  this.num_images_loaded = 0;
+  this.num_images_needed = 0;
   
+  
+  // Space to hold textures.
+  this.tile_textures = [];
+
+  gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
+  gStateMachine.Bind('ChangePsuedoColor',this.Render.bind(this));
+}
+
+
+
+GLMapper.prototype.SetupGLAndCanvas = function(width, height)
+{
+  // Create openGL engine.
+  this.canvas = document.createElement('canvas');
+  this.canvas.width = width;
+  this.canvas.height = height;
+
   console.time("GLEngine::create gl context");
   try {
-    this.gl = this.renderCanvas.getContext('webgl'); //,{ alpha: false, antialias: false,  depth: false });    
+    this.gl = this.canvas.getContext('webgl',{ alpha: false, antialias: false,  depth: false });
   } catch(e) 
   {
     console.error("Cannot crate WebGL context: "  + e.toString());
@@ -35,6 +53,13 @@ function GLMapper(typ) // "raw" or "cal"
   if(!this.gl) {
     console.error("Lost GL context somewhere.");
   }
+
+  // Add debugging.
+  function logGLCall(functionName, args) {   
+     console.log("gl." + functionName + "(" + 
+        WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
+  } 
+  this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
     
    // This line is required if we change canvas size
   // after creating GL context
@@ -43,10 +68,12 @@ function GLMapper(typ) // "raw" or "cal"
   // setup GLSL this.program
   var vertexShader = this.create_shader( "2d-vertex-shader");
   var LUTShader    = this.create_shader( "lutshade");
+  var stupid       = this.create_shader( "stupidfill");
 
   this.program = this.gl.createProgram();
   this.gl.attachShader(this.program,vertexShader);
   this.gl.attachShader(this.program,LUTShader);
+  // this.gl.attachShader(this.program,stupid);
   this.gl.linkProgram(this.program);
 
   // Check the link status
@@ -64,7 +91,7 @@ function GLMapper(typ) // "raw" or "cal"
   this.gl.useProgram(this.program);
 
 
-  // provide texture coordinates for the rectangle we're drawing FROM
+  //provide texture coordinates for the rectangle we're drawing FROM
   var texCoordBuffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texCoordBuffer);
   this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
@@ -74,25 +101,11 @@ function GLMapper(typ) // "raw" or "cal"
       0.0,  1.0,
       1.0,  0.0,
       1.0,  1.0]), this.gl.STATIC_DRAW);
-  var texCoordLocation = this.gl.getAttribLocation(this.program, "a_texCoord");  // Ditto a_texCoord
+
+  var texCoordLocation = this.gl.getAttribLocation(this.program, "a_texCoord");
   this.gl.enableVertexAttribArray(texCoordLocation);
   this.gl.vertexAttribPointer(texCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
-
-  // Space to hold image tiles.
-  this.tile_images = [];
-  this.loaded = false;
-  var total_width = 0;
-  var total_height = 0;
-  this.num_images_loaded = 0;
-  this.num_images_needed = 0;
   
-  
-  // Space to hold textures.
-  this.tile_textures = [];
-
-  gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
-  gStateMachine.Bind('ChangePsuedoColor',this.Render.bind(this));
-
 }
 
 GLMapper.prototype.NewRecord = function()
@@ -121,21 +134,43 @@ GLMapper.prototype.StartLoad = function()
   this.loaded = false;
   this.total_width = 0;
   this.total_height = 0;
-  this.num_images_loaded = 0;
   this.num_images_needed = 0;
 
+  // Compute size needed.
   for(var irow=0;irow<this.tile_urls.length;irow++) {
     var row_width = 0;
     var row_height = 0;
     var row = this.tile_urls[irow];
-    var imagerow = [];
-    var texturerow = [];
     for(var icol=0;icol<row.length;icol++) {
       this.num_images_needed++
       var elem = this.tile_urls[irow][icol];
+      row_height = Math.max(elem.height,row_height);
+      row_width  += elem.width;
+    }
+    this.total_height += row_height;
+    this.total_width  = Math.max(row_width,this.total_width);
+  }
+
+  // Only now can we set up the GL context. Why? Because for
+  // some stupid reason, this doesn't work:
+  // - set canvas size to w1,h1
+  // - create gl context
+  // - change canvas size w2,h2 (different from above)
+  // - gl.viewport(0,0,w2,h2)
+  // I have no idea why, but I'm pissed off about it.  July 2015
+  this.SetupGLAndCanvas(this.total_width,this.total_height);
+  
+  
+  this.num_images_loaded = 0;
+
+  for(var irow=0;irow<this.tile_urls.length;irow++) {
+    var row = this.tile_urls[irow];
+    var imagerow = [];
+    var texturerow = [];
+    for(var icol=0;icol<row.length;icol++) {
+      var elem = this.tile_urls[irow][icol];
       var image_url = elem.url;
       var img = new Image();
-      img.src = image_url;
       imagerow.push(img);
       texturerow.push(this.gl.createTexture());
       (function(){  // Make a closure to copy the values of irow and icol
@@ -144,11 +179,8 @@ GLMapper.prototype.StartLoad = function()
         console.log("setting callback for",jrow,jcol);        
         img.onload= function() { self.ImageLoaded(jrow,jcol); }
       })();
-      row_height = Math.max(elem.height,row_height);
-      row_width  += elem.width;
+      img.src = image_url; // Set SRC after setting callback, in case of race condition      
     }
-    this.total_height += row_height;
-    this.total_width  = Math.max(row_width,this.total_width);
     this.tile_images.push(imagerow);
     this.tile_textures.push(texturerow);
   }
@@ -254,57 +286,66 @@ GLMapper.prototype.Render = function()
   // copy the output canvas to the gRecord so others can get at it.
   var utyp = '_' + this.typ;
   if(!gRecord[utyp]) gRecord[utyp] = {};
-  if(!gRecord[utyp].colored_wire_canvas) gRecord[utyp].colored_wire_canvas = this.renderCanvas;  
-
-  this.renderCanvas.width  = this.total_width;
-  this.renderCanvas.height = this.total_height;
-  this.gl.viewport(0,0,this.total_width,this.total_height);
-  console.warn("set viewport ", 0,0,this.total_width,this.total_height);
-  
-
-  var gl = this.gl; // for convenience
-
-  // look up where the vertex data needs to go.
-  var positionLocation = gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
+  if(!gRecord[utyp].colored_wire_canvas) gRecord[utyp].colored_wire_canvas = this.canvas;
 
   console.time('Build LUT');  
-  var mapTextureLocation = gl.getUniformLocation(this.program, "maptexture");
+  var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
   this.build_LUT_texture();
-  gl.uniform1i(mapTextureLocation, 7);
-  gl.bindTexture(gl.TEXTURE_2D, this.LUT_texture);
+  this.gl.uniform1i(mapTextureLocation, 7);
+  this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);
   console.timeEnd('Build LUT');
 
-  // lookup uniforms
+  var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
   
-  var inputTextureLocation = gl.getUniformLocation(this.program, "inputtexture");      
-  gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
+  var inputTextureLocation = this.gl.getUniformLocation(this.program, "inputtexture");      
+  this.gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
   
-  var resolutionLocation = gl.getUniformLocation(this.program, "u_resolution");
-  // var offsetLocation     = gl.getUniformLocation(this.program, "u_offset");
-  gl.uniform2f(resolutionLocation, this.total_width, this.total_height);
-  // gl.uniform2f(resolutionLocation, elem.width, elem.height);
-  // gl.uniform2f(offsetLocation,     elem.x, elem.y);
+  var resolutionLocation = this.gl.getUniformLocation(this.program, "u_resolution");
+  this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
+  console.log("resolution", this.canvas.width,this.canvas.height);
+
+  // var tex = this.tile_textures[0][0];
+  // this.gl.activeTexture(this.gl.TEXTURE1);
+  // this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
+  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+  var buffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);  // This is current buffer
+  this.gl.enableVertexAttribArray(positionLocation); // Use the current buffer for position location array
+  this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0); // It's an array of floats.
+
+  // var x,y,w,h;
+  // x = 500.;
+  // y = 800.;
+  // w = 500.;
+  // h = 200.;
+  // console.log("Drawing",x,y,w,h);
+  // this.SetRect(x,y,w,h);
+  //
+  // // Draw the rectangle.
+  // this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+  
   // loop textures.
   for(var irow=0;irow<this.tile_textures.length;irow++) {
     for(var icol=0;icol<this.tile_textures[irow].length;icol++) {
+  // for(var irow=0;irow<1;irow++) {
+  //   for(var icol=0;icol<1;icol++) {
+  //
       var elem = this.tile_urls[irow][icol];
-      if(irow!=0) continue;
-      if(icol!=0) continue;
-      console.log("rendering ",irow,icol,elem.width,elem.height);
+      console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
       var tex = this.tile_textures[irow][icol];
-      // this.gl.viewport(elem.x, elem.y, elem.width, elem.height);
-      
-      
-      
-      gl.activeTexture(gl.TEXTURE1);        
-      gl.bindTexture(gl.TEXTURE_2D, tex);
+
+      this.gl.activeTexture(this.gl.TEXTURE1);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-      this.RenderToRect(0,0,this.renderCanvas.width,this.renderCanvas.height);
-      
+      this.SetRect(elem.x,elem.y,elem.width,elem.height);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
   }
   
@@ -315,21 +356,14 @@ GLMapper.prototype.Render = function()
 }
 
 
-GLMapper.prototype.RenderToRect = function( x, y, width, height ) 
+GLMapper.prototype.SetRect = function( x, y, w, h ) 
 {
-  var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
-
-  // Create a buffer for the position of the rectangle corners we're drawing INTO.
-  var buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-  this.gl.enableVertexAttribArray(positionLocation);
-  this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-
   // Set a rectangle the same size as the image.
+  console.warn("SetRect",x,y,w,h);
   var x1 = x;
-  var x2 = x + width;
+  var x2 = x + w;
   var y1 = y;
-  var y2 = y + height;
+  var y2 = y + h;
   this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
      x1, y1,
      x2, y1,
@@ -338,12 +372,6 @@ GLMapper.prototype.RenderToRect = function( x, y, width, height )
      x2, y1,
      x2, y2]), this.gl.STATIC_DRAW);
 
-  // Draw the rectangle.
-  this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-
-  // Clean up
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
-  this.gl.deleteBuffer(buffer);
 }
 
 

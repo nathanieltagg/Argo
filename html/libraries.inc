@@ -35,6 +35,7 @@
 <script type="text/javascript" src="js/GIFEncoder.js"></script>
 <script type="text/javascript" src="js/b64.js"></script>
 
+<script type="text/javascript" src="js/webgl-debug.js"></script>
 
 
 <!-- firebug lite, for debugging on random browswers. -->
