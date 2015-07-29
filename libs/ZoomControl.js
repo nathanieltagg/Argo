@@ -46,6 +46,8 @@ function ZoomRegion() {
 
   this.changeTimeRange = function(low,high)
   {
+    if(low === undefined) low = 0;
+    if(high === undefined) high = 9600;
     this.tdc=[low,high];
     if($('#ctl-lock-aspect-ratio').is(":checked")) {
       
@@ -57,6 +59,8 @@ function ZoomRegion() {
         var center = (this.plane[ip][0]+this.plane[ip][1])/2;
         this.plane[ip][0] = center - newWireWidth/2;
         this.plane[ip][1] = center + newWireWidth/2;
+        if(isNaN(this.plane[ip][0])) debugger;
+        if(isNaN(this.plane[ip][1])) debugger;
       }
 
     }    
@@ -78,6 +82,8 @@ function ZoomRegion() {
     console.log(this.plane[0][0],this.plane[0][1]);
     // Jump to a new set of coordinates.
     var oldCenter = this.getCenter();
+    if(isNaN(oldCenter[0]) || isNaN(oldCenter[1]) ) {debugger;}
+    
     var halfWidth = (wireHigh - wireLow)/2;
     var newWire = (wireHigh+wireLow)/2;  
     var dcenter = this.getDWire(plane,newWire-oldCenter[plane]);
