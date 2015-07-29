@@ -20,7 +20,8 @@ class EncodedTileMaker
 public:
   EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
     const std::string& outDir,
-    const std::string& outUrl )
+    const std::string& outUrl,
+    bool fill_empty_space )
     : m_wireMap(wireMap)
     , m_wireStart(wireStart)
     , m_wireEnd(wireEnd)
@@ -28,6 +29,7 @@ public:
     , m_tdcEnd(tdcEnd)
     , m_outDir(outDir)
     , m_outUrl(outUrl)
+    , m_fill_empty_space(fill_empty_space)
   {}
   
   void process() // Nice and wrapped up, ready to be called in a thread.
@@ -51,17 +53,24 @@ public:
           encodeddata[k*3+1] = iadc&0xFF;
           encodeddata[k*3+2] = 0;
         }
-        m_png.AddRow(encodeddata);
       } else {
         // Do not have wire info.
-        for(int k=0;k<ntdc;k++) {
-          // Save bitpacked data as image map.
-          encodeddata[k*3]   = 0;
-          encodeddata[k*3+1] = 0;
-          encodeddata[k*3+2] = 0;
+        if(m_fill_empty_space) {
+          for(int k=0;k<ntdc;k++) {          
+           encodeddata[k*3] = 128; //
+           encodeddata[k*3+1] = 0; // Zero-adc wire. Not the same as blank.
+           encodeddata[k*3+2] = 0; //
+          }  
+        } else {
+          for(int k=0;k<ntdc;k++) {
+            // Save bitpacked data as image map.
+            encodeddata[k*3]   = 0;  //
+            encodeddata[k*3+1] = 0;  // Blank! 
+            encodeddata[k*3+2] = 0;  //
+          }
         }
-        m_png.AddRow(encodeddata);
       }
+      m_png.AddRow(encodeddata);      
     }
     m_png.Finish();
     m_filename = m_png.writeToUniqueFile(m_outDir);
@@ -87,6 +96,7 @@ public:
   std::string m_outDir;
   std::string m_outUrl;
   std::string m_filename;
+  bool m_fill_empty_space;
   
 };
 
@@ -96,7 +106,8 @@ void MakeEncodedTileset(JsonObject& output,
                         size_t ntdc,
                         const std::string& path,
                         const std::string& url,
-                        const std::string& options="");
+                        const std::string& options="",
+                        bool fill_empty_space=false);
 
 
 #endif /* end of include guard: ENCODEDTILEMAKER_H_FE65EB56 */
