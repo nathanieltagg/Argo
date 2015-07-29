@@ -805,7 +805,9 @@ void RecordComposer::composeCal()
                             nwire,
                             ntdc,
                             sfFileStoragePath,
-                            sfUrlToFileStorage );
+                            sfUrlToFileStorage,
+                            fOptions,
+                            true );
     
 
     reco_list.add(stripdots(name),r);
@@ -890,8 +892,10 @@ void RecordComposer::composeRaw()
                             nwire,
                             ntdc,
                             sfFileStoragePath,
-                            sfUrlToFileStorage );
-    
+                            sfUrlToFileStorage,
+                            fOptions,
+                            true );
+                            
     
     reco_list.add(stripdots(name),r);
     timer.addto(fStats);
