@@ -4,6 +4,7 @@ attribute vec2 a_position;
 attribute vec2 a_texCoord;
 
 uniform vec2 u_resolution;
+uniform vec2 u_offset;
 
 varying vec2 v_texCoord;
 
@@ -26,41 +27,19 @@ void main() {
 </script>
 
 
-<script id="sepia" type="x-shader/x-fragment">
-precision mediump float;
-
-uniform sampler2D texture;
-
-varying vec2 v_texCoord;
-
-void main() {
-  vec4 color = texture2D(texture, v_texCoord);
-  //float adc = (color.r*256 + color.g - 128)*256; // 256 to translate from 0-1 space to ADC space.
-  //float tanscale = (atan(adc/50.)/3.1415928*256.) + 127;
-  float r = color.r;
-  float g = color.g;
-  float b = color.b;
-
-  color.r = min(1.0, (r * (1.0 - (0.607 * 0.998))) + (g * (0.769 * 0.998)) + (b * (0.189 * 0.998)));
-  color.g = min(1.0, (r * 0.349 * 0.998) + (g * (1.0 - (0.314 * 0.998))) + (b * 0.168 * 0.998));
-  color.b = min(1.0, (r * 0.272 * 0.998) + (g * 0.99834 * 0.998) + (b * (1.0 - (0.869 * 0.998))));
-  gl_FragColor = color;
-}
-
-</script>
 
 
 <script id="lutshade" type="x-shader/x-fragment">
 precision mediump float;
 
-uniform sampler2D texture;
+uniform sampler2D inputtexture;
 uniform sampler2D maptexture;
 
 varying vec2 v_texCoord;
 
 void main() {
   // inc is now the RGBA color of the input pixel, with each color encoded as a float from 0 to 1.
-  vec4 inc = texture2D(texture, v_texCoord);
+  vec4 inc = texture2D(inputtexture, v_texCoord);
   
   // 1d lookup.
   // float adc = 256.*(inc.r*255. + inc.g - 128.);  // True ADC value; typical -4096 to 4096.
@@ -88,22 +67,11 @@ void main() {
   
 
   // Output color is RGBA color with colors encoded between 0 and 1.
+  color.r = 255.; color.g = 0.; color.b = 0.; color.a=255.;
+  if(v_texCoord.x>0.5 &&v_texCoord.y>0.5 ) { color.r = 0.; color.g = 255.; color.b = 0.; color.a=255.; }
+  if(v_texCoord.x<0.5  &&v_texCoord.y<0.5) { color.r = 0.; color.g = 0.; color.b = 255.; color.a=255.; }
+  
   gl_FragColor = color;
 }
 
-</script>
-
-<!-- fragment shader -->
-<script id="2d-fragment-shader" type="x-shader/x-fragment">
-precision mediump float;
-
-// our texture
-uniform sampler2D u_image;
-
-// the texCoords passed in from the vertex shader.
-varying vec2 v_texCoord;
-
-void main() {
-   gl_FragColor = texture2D(u_image, v_texCoord);
-}
 </script>

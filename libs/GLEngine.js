@@ -2,7 +2,8 @@
 
 $(function(){
   gGLMapperRaw = new GLMapper('raw');
-  gGLMapperCal = new GLMapper('cal');
+  //$('body').append(gGLMapperRaw.renderCanvas)
+  // gGLMapperCal = new GLMapper('cal');
 
   // gStateMachine.Bind('ChangePsuedoColor',function(){
   //   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val() || "raw";
@@ -18,13 +19,13 @@ function GLMapper(typ) // "raw" or "cal"
   // Create openGL engine.
   this.tilesize = 2048; // Will be overwritten later.
   this.renderCanvas = document.createElement('canvas');
-  this.renderCanvas.width = this.tilesize;
-  this.renderCanvas.height = this.tilesize;
+  this.renderCanvas.width = 9600;
+  this.renderCanvas.height = 8256;
 
   
   console.time("GLEngine::create gl context");
   try {
-    this.gl = this.renderCanvas.getContext('webgl',{ alpha: false, antialias: false,  depth: false });    
+    this.gl = this.renderCanvas.getContext('webgl'); //,{ alpha: false, antialias: false,  depth: false });    
   } catch(e) 
   {
     console.error("Cannot crate WebGL context: "  + e.toString());
@@ -117,6 +118,7 @@ GLMapper.prototype.StartLoad = function()
   console.time("TiledImageCanvas.begin_loading");
   var self = this;
   
+  this.loaded = false;
   this.total_width = 0;
   this.total_height = 0;
   this.num_images_loaded = 0;
@@ -154,6 +156,7 @@ GLMapper.prototype.StartLoad = function()
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 {
+  console.log("GLMapper::ImageLoaded",jrow,jcol);
   console.time("GLMapper::ImageLoaded: one image");
   //Draw in this particular item.
   var elem = this.tile_urls[jrow][jcol];
@@ -175,6 +178,9 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 
   console.timeEnd("GLMapper::ImageLoaded: one image");
   this.num_images_loaded++;
+
+  // Next line ensures that Render() only called once; many images can register complete before they fire this event.
+  if(this.num_images_loaded < this.num_images_needed) return;
     
   // See if we have them all...
   var loaded = true;
@@ -182,13 +188,15 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
     for(var icol=0;icol<this.tile_images[irow].length;icol++) {
       var elem = this.tile_urls[irow][icol];
       var img = this.tile_images[irow][icol];
+      var tex = this.tile_textures[irow][icol];
+      if(!tex) loaded = false;
       if( !(img.complete) ) loaded = false;
     }
   }
   this.loaded = loaded;
-  if(!loaded) return;
+  if(!this.loaded) return;
 
-  console.log("TiledImageCanvas loaded",this.name);
+  console.log("GLMapper finished loading, going on to render ",this.typ,this.num_images_loaded);
   this.Render();
 }
 
@@ -239,6 +247,7 @@ GLMapper.prototype.build_LUT_texture = function( )
 
 GLMapper.prototype.Render = function()
 {
+  if(!this.loaded) return;
   console.log('GLMapper::Render');
   console.time('GLMapper::Render');
 
@@ -249,7 +258,9 @@ GLMapper.prototype.Render = function()
 
   this.renderCanvas.width  = this.total_width;
   this.renderCanvas.height = this.total_height;
-
+  this.gl.viewport(0,0,this.total_width,this.total_height);
+  console.warn("set viewport ", 0,0,this.total_width,this.total_height);
+  
 
   var gl = this.gl; // for convenience
 
@@ -264,30 +275,35 @@ GLMapper.prototype.Render = function()
   console.timeEnd('Build LUT');
 
   // lookup uniforms
-  var resolutionLocation = gl.getUniformLocation(this.program, "u_resolution");
   
-  var inputTextureLocation = gl.getUniformLocation(this.program, "texture");      
+  var inputTextureLocation = gl.getUniformLocation(this.program, "inputtexture");      
   gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
   
   var resolutionLocation = gl.getUniformLocation(this.program, "u_resolution");
-  
+  // var offsetLocation     = gl.getUniformLocation(this.program, "u_offset");
+  gl.uniform2f(resolutionLocation, this.total_width, this.total_height);
+  // gl.uniform2f(resolutionLocation, elem.width, elem.height);
+  // gl.uniform2f(offsetLocation,     elem.x, elem.y);
   // loop textures.
   for(var irow=0;irow<this.tile_textures.length;irow++) {
     for(var icol=0;icol<this.tile_textures[irow].length;icol++) {
       var elem = this.tile_urls[irow][icol];
+      if(irow!=0) continue;
+      if(icol!=0) continue;
+      console.log("rendering ",irow,icol,elem.width,elem.height);
       var tex = this.tile_textures[irow][icol];
-      var x = elem.x;
-      var y = elem.y;
-      var w = elem.width;
-      var h = elem.height;
-      gl.uniform2f(resolutionLocation, elem.width, elem.height);  
+      // this.gl.viewport(elem.x, elem.y, elem.width, elem.height);
       
-      this.gl.viewport(elem.x, elem.y, elem.width, elem.height);
+      
+      
       gl.activeTexture(gl.TEXTURE1);        
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.uniform2f(resolutionLocation, elem.width, elem.height);
-      this.RenderToRect(0,0,elem.width,elem.height,positionLocation);
-      
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+      this.RenderToRect(0,0,this.renderCanvas.width,this.renderCanvas.height);
       
     }
   }
@@ -299,15 +315,17 @@ GLMapper.prototype.Render = function()
 }
 
 
-GLMapper.prototype.RenderToRect = function( x, y, width, height, positionLocation ) 
+GLMapper.prototype.RenderToRect = function( x, y, width, height ) 
 {
+  var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
+
   // Create a buffer for the position of the rectangle corners we're drawing INTO.
   var buffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
   this.gl.enableVertexAttribArray(positionLocation);
   this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
   // Set a rectangle the same size as the image.
-  // setRectangle(gl, 0, 0, image.width, image.height);
   var x1 = x;
   var x2 = x + width;
   var y1 = y;
@@ -440,11 +458,7 @@ function GLEngine( tilesize )
   if(!this.gl) {
     console.error("Lost GL context somewhere.");
   }
-    
-   // This line is required if we change canvas size
-  // after creating GL context
-  // this.gl.viewport(0,0,outcanvas.width,outcanvas.height);
-  
+      
   // setup GLSL this.program
   var vertexShader = this.create_shader( "2d-vertex-shader");
   var LUTShader    = this.create_shader( "lutshade");
