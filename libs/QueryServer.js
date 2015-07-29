@@ -30,9 +30,24 @@ var gFinishedDrawTime;
 
 var gEventsLoadedThisSession = 0;
 
+// Get optimal tilesize.
+// Create openGL engine.
+var kMaxTileSize = 3048;
+var testGLcanvas = document.createElement('canvas');
+var testGL = testGLcanvas.getContext('webgl');
+if(testGL) kMaxTileSize = testGL.getParameter(testGL.MAX_TEXTURE_SIZE);
+testGL = null;
+testGLcanvas = null;
+  
 
-$(function(){
-});
+// Add debugging.
+function logGLCall(functionName, args) {   
+   console.log("gl." + functionName + "(" + 
+      WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
+} 
+this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
+  
+
 
 
 function ChangeEvent( )
@@ -120,7 +135,9 @@ function QueryServer( par, myurl )
       $('#loading_feedback').html("<b>Loading RawDigit or Wire data.. may be slower! Uncheck \"Show Wires\" to disable.</b></br/>");
     }
     
-    opts+= "_tilesize2048_";
+    var tilesize = 2400;
+    if(kMaxTileSize < tilesize) tilesize = kMaxTileSize;
+    opts+= "_tilesize" + tilesize + "_";
 
 
     // Default: do file-and-entry read from parameters. Should check for other options first.
