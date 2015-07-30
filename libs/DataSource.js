@@ -16,7 +16,19 @@ function DataSource()
     $.bbq.pushState({
       filename: $('#inFilename').val(),
       entry: $('#inFeEntry').val(),
-      selection: $('#inFeSelection').val()
+      //selection: $('#inFeSelection').val()
+    },2);
+  }
+
+
+  function PushRawRunHash()
+  {
+    $.bbq.pushState({
+      what: 'raw',
+      run:   $('#inRawRun').val(),
+      subrun:$('#inRawSubrun').val(),
+      entry: $('#inRunEntry').val(),
+      //selection: $('#inFeSelection').val()
     },2);
   }
   
@@ -37,6 +49,13 @@ function DataSource()
   $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
   $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
   $('#go_fe').button().click(function(){PushFEHash(); return false;});
+
+  $('#inRawRun')    .keydown(function(e){if (e.keyCode == 13) { PushRawRunHash(); }});
+  $('#inRawSubrun') .keydown(function(e){if (e.keyCode == 13) { PushRawRunHash(); }});
+  $('#inRunEntry')  .keydown(function(e){if (e.keyCode == 13) { PushRawRunHash(); }});
+  $('#go_rawrun').button().click(function(){PushRawRunHash(); return false;});
+
+
 
   var self=this;
   $('#inLocalFile').change(function(){
