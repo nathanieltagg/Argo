@@ -45,6 +45,28 @@ if(defined param('filename')){
     $pathglob=uri_unescape(param('filename'));
 } 
 
+#raw:
+
+if(param('what') eq 'raw') {
+  my $run = param('run')||0;
+  my $subrun = param('subrun') || 0;
+  
+  # full 8-digits of run number
+  my $longrun = sprintf("%08d",$run);
+  my $longsubrun = sprintf("%05d",$subrun);
+  
+  my $r1 = substr $longrun, 0, 2;
+  my $r2 = substr $longrun, 2, 2;
+  my $r3 = substr $longrun, 4, 2;
+  my $r4 = substr $longrun, 6, 2;
+  my $fnal_path = "/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00"
+                    .$ver."/" .$r1."/" .$r2."/" .$r3."/" .$r4;
+  
+  $longrun = sprintf("%07d",$run); #filename has only 7
+  $pathglob = $fnal_path . "/*-$longrun-$longsubrun.ubdaq";
+  push @paths_to_check,"/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00";
+}
+
 my $print_pathglob = $pathglob;
 $print_pathglob =~ s/ /\n<br\/>\n/g;
 print "serve_event.cgi looking in pathglob: $print_pathglob\n<br/>\n";
