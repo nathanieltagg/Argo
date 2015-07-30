@@ -271,8 +271,8 @@ WireView.prototype.TrimHits = function()
   for(var i = 0;i<this.myHits.length;i++) {
     var h= this.myHits[i];
     var c = h[field];
-    if(c<gHitCut.min) {console.warn("trimming low",h); continue;}
-    if(c>gHitCut.max) {console.warn("trimming hi ",h); continue;}
+    if(c<gHitCut.min) { continue;}
+    if(c>gHitCut.max) { continue;}
     
     var vishit = {hit:h,
       u:h.wire,  // horizontal coord
@@ -563,6 +563,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     
     y = this.GetY(h.v1);
     dy = this.GetY(h.v2) - y;    
+    if(dx<1.5) dx = 1.5;  //exaggerate
+    if(dy<1.5) dy = 1.5; 
     c = gHitColorScaler.GetColor(h.c);
 
     if(h.hit.saveselection)      c="10,10,10";
