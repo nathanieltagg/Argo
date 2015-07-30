@@ -264,12 +264,7 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
     assert(waveform[i]<4095);
     pf(waveform[i]);
   }
-  
-  if(wirenum>50 && wirenum<100) { 
-    for(int i=0;i<nsamp;i++) waveform[i]=999;    
-  }
-  
-  
+    
   for(auto peak: pf) {
     JsonObject hit;
     hit.add("wire",planewire);
