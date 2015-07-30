@@ -3,6 +3,7 @@
   <div class="portlet-content" id='data-source-tabs'>  
 	<ul>
     <li><a href="#input-fe">LArSoft File OR Raw ubdaq File</a></li>
+    <li><a href="#input-rawrun">Raw Run by Run Number</a></li>
     <!-- <li><a href="#input-larlight">LarLight File</a></li> -->
     <li><a href="#input-json">JSON Upload</a></li>
 	</ul>
@@ -16,6 +17,21 @@
       <span style='display:none;'><label>Cut:  </label><input style="width:200px" class="inSelection ui-state-default" type="text" id="inFeSelection" name="inFeSelection" value="1"/></span>
       &nbsp;&nbsp;&nbsp; <label>Entry:  </label><input class="inEntry ui-state-default" type="text" size="5" id="inFeEntry" name="inFeEntry" value="0"/>
       <input class="ui-state-default ui-corner-all" type="button" id="go_fe" value="Go!" /> <br/>
+     </form> 
+     
+     <button class='next-event ui-state-default ui-corner-all styled-button'>(N)ext Event</button>
+     <button class='prev-event ui-state-default ui-corner-all styled-button'>(P)rev Event</button>
+     
+</div>
+
+<div id="input-rawrun">
+    <form id="fileform-rawrun" > 
+        <label class='tbfill'>Run:</label>
+          <span><input type="text" class="ui-state-default tbfill inRun"  id="inRawRun" name="inRawRun" value=""/></span>
+        <label class='tbfill'>Subrun:</label>
+          <span><input type="text" class="ui-state-default tbfill inSubrun"  id="inRawSubrun" name="inRawSubrun" value=""/></span>
+        <label class='tbfill'>Entry:</label><input class="inEntry ui-state-default" type="text" size="5" id="inRunEntry" name="inRunEntry" value="0"/>
+      <input class="ui-state-default ui-corner-all" type="button" id="go_rawrun" value="Go!" /> <br/>
      </form> 
      
      <button class='next-event ui-state-default ui-corner-all styled-button'>(N)ext Event</button>
