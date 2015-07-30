@@ -130,13 +130,12 @@ GLMapper.prototype.StartLoad = function()
   this.tile_images = [];
   this.tile_textures = [];
   
-  console.time("TiledImageCanvas.begin_loading");
+  console.time("GLMapper.StartLoad");
   var self = this;
   
   this.loaded = false;
   this.total_width = 0;
   this.total_height = 0;
-  this.num_images_needed = 0;
 
   // Compute size needed.
   for(var irow=0;irow<this.tile_urls.length;irow++) {
@@ -144,7 +143,6 @@ GLMapper.prototype.StartLoad = function()
     var row_height = 0;
     var row = this.tile_urls[irow];
     for(var icol=0;icol<row.length;icol++) {
-      this.num_images_needed++
       var elem = this.tile_urls[irow][icol];
       row_height = Math.max(elem.height,row_height);
       row_width  += elem.width;
@@ -162,17 +160,20 @@ GLMapper.prototype.StartLoad = function()
   // I have no idea why, but I'm pissed off about it.  July 2015
   this.SetupGLAndCanvas(this.total_width,this.total_height);
   
-  
+  this.num_images_needed = 0;  
   this.num_images_loaded = 0;
-
+  
   for(var irow=0;irow<this.tile_urls.length;irow++) {
     var row = this.tile_urls[irow];
     var imagerow = [];
     var texturerow = [];
     for(var icol=0;icol<row.length;icol++) {
+      this.num_images_needed++
+      
       var elem = this.tile_urls[irow][icol];
       var image_url = elem.url;
       var img = new Image();
+      
       imagerow.push(img);
       texturerow.push(this.gl.createTexture());
       (function(){  // Make a closure to copy the values of irow and icol
@@ -186,6 +187,7 @@ GLMapper.prototype.StartLoad = function()
     this.tile_images.push(imagerow);
     this.tile_textures.push(texturerow);
   }
+  
 }
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
@@ -229,6 +231,7 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   }
   this.loaded = loaded;
   if(!this.loaded) return;
+  console.timeEnd("GLMapper.StartLoad");
 
   console.log("GLMapper finished loading, going on to render ",this.typ,this.num_images_loaded);
   this.Render();
