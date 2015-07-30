@@ -516,6 +516,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   //      );
   //
   // } else {
+    this.ctx.globalAlpha = 1.0;
+    
     this.ctx.drawImage(
        canvas      // Source image.
       ,source_x
