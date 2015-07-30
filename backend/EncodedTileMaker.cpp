@@ -42,6 +42,58 @@ const std::vector<double> warpbins({
   ,4096
 });
 
+void MakeLowres(JsonObject& r,
+              std::shared_ptr<wiremap_t> wireMap, 
+              size_t nwire,
+              size_t nsamp,
+              const std::string& path,
+              const std::string& url,
+              const std::string& options,
+              bool fill_empty_space)
+{
+  int factor_x =10;
+  int factor_y =10;
+  std::shared_ptr<wiremap_t> wireMap_out(new wiremap_t);
+  
+  // for each output 'wire'
+  //   look up the 0..factor_y wires that are input.
+  //   for each output tick
+  //     for each input wire
+  //       for each input wire tick 0..factor_x
+  //          get biggest;
+  //      push onto output wire
+  //  push output wire
+  //  encode.
+
+  int nwire_out = nwire/factor_y;
+  int nsamp_out = nsamp/factor_x;
+
+  // for each output 'wire'
+  for(int iwire_out = 0; iwire_out<nwire_out; iwire_out++) {
+    waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp_out));
+    wireMap_out->insert(wiremap_t::value_type(iwire_out, waveform_ptr));
+    waveform_t& waveform = *waveform_ptr;
+    for(int i=0;i<nsamp_out;i++) waveform[i] = -0x8000; // Initialize
+    
+    for(int iwire_in = iwire_out*factor_y; (iwire_in < (iwire_out+1)*factor_y) && iwire_in<nwire; iwire_in++) {
+      wiremap_t::iterator it = wireMap->find(iwire_in);
+      waveform_t& waveform_in = *(it->second.get());
+      
+      for(int i=0;i<nsamp;i++) {
+        if(waveform_in[i] > waveform[i/factor_x]) waveform[i/factor_x] = waveform_in[i];
+      }  
+    }  
+  }
+  EncodedTileMaker tm(wireMap_out, 0, nwire_out, 0, nsamp_out, path, url, fill_empty_space);
+  tm.process();
+  JsonArray jtiles;
+  JsonArray jrow;
+  jrow.add(tm.json());
+  jtiles.add(jrow);      
+  
+  r.add("wireimg_encoded_tiles_lowres",jtiles);  
+}
+
 void MakeEncodedTileset(JsonObject& r,
                         std::shared_ptr<wiremap_t> wireMap, 
                         size_t nwire,
@@ -193,6 +245,14 @@ void MakeEncodedTileset(JsonObject& r,
 
     timer_stats.addto(r);
     
+  }
+  
+  {
+    TimeReporter lowres_stats("time_to_make_lowres");
+    MakeLowres( r,
+                   wireMap, 
+                   nwire,
+                   ntdc, path, url, options, fill_empty_space );
   }
   
 }
