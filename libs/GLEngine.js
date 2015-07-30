@@ -42,24 +42,28 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
   this.canvas.height = height;
 
   console.time("GLEngine::create gl context");
-  try {
-    this.gl = this.canvas.getContext('webgl',{ alpha: false, antialias: false,  depth: false });
-  } catch(e) 
-  {
+   try {
+    this.gl = this.canvas.getContext('webgl',{ alpha: false, antialias: false,  depth: false })
+              || this.canvas.getContext('webgl')
+              || this.canvas.getContext('experimental-webgl');
+  } catch(e)  {
     console.error("Cannot crate WebGL context: "  + e.toString());
     return;
-  }
+  };
+
   console.timeEnd("GLEngine::create gl context");
   if(!this.gl) {
     console.error("Lost GL context somewhere.");
+    window.alert("WebGL not enabled?  If using Safari, you can turn it on in Preferences / Security");
+    return;
   }
 
   // Add debugging.
-  function logGLCall(functionName, args) {   
-     console.log("gl." + functionName + "(" + 
-        WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
-  } 
-
+  // function logGLCall(functionName, args) {
+  //    console.log("gl." + functionName + "(" +
+  //       WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");
+  // }
+  //
   // Uncomment this line for debugging.
   //this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
     
@@ -112,6 +116,7 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
 
 GLMapper.prototype.NewRecord = function()
 {
+  console.log("GLMapper",this.typ," NewRecord()");
   if(!gRecord) return;
   
   
