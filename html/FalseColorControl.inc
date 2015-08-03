@@ -23,6 +23,8 @@
       <li><a href="#falsecolor-Grayscale">Gray</a></li>
       <li><a href="#falsecolor-LOCS">LOCS</a></li>
       <li><a href="#falsecolor-Brightness">Bright</a></li>
+      <li><a href="#falsecolor-Blackbody">BB</a></li>
+      
   	</ul>
     
     <div id="falsecolor-Rainbow" class='falsecolor-tab'>
@@ -123,6 +125,32 @@
       <div class='psuedoColorRow'> Cutoff: &nbsp;
         <input id='falsecolor-locs-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='5'/>&nbsp; to &nbsp;
         <input id='falsecolor-locs-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='5'/></span>&nbsp; ADC &nbsp;
+      </div>
+    </div>
+    
+    
+    
+    
+    <div id="falsecolor-Blackbody" class='falsecolor-tab'>
+      Simulated blackbody spectrum 1000K to 40000K<br/>
+      <div class='psuedoColorRow' > <span class='pslabel'>Shift</span>
+                <div class='psslide psuedoDialOffsetSlider'></div>
+                <input id='falsecolor-blackbody-dialoffset' class='psval saveable psuedoDialOffset' type="number" value='0.25' width='3'/></div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
+                <div class='psslide psuedoAdcScaleSlider'></div> 
+                <input id='falsecolor-blackbody-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='20' width='3'/> </div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
+                <div class='psslide psuedoDialScaleSlider'></div>
+                <input id='falsecolor-blackbody-dialscale' class='psval saveable psuedoDialScale'  type="text"  value='0.4' width='3'/> </div>
+      <!-- <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
+                <div class='psslide psuedoSaturationSlider'></div>
+                <input id='falsecolor-locs-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div> -->
+
+      <div class='psuedoColorRow'> Cutoff: &nbsp;
+        <input id='falsecolor-blackbody-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='5'/>&nbsp; to &nbsp;
+        <input id='falsecolor-blackbody-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='5'/></span>&nbsp; ADC &nbsp;
       </div>
     </div>
 
