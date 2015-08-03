@@ -31,12 +31,11 @@ $(function(){
     gWireViews.push(o);
     // console.log("Creating WireView ",o);
   });  
+  $('.bigwireview-select').buttonset();
 });
 
 
-/// Utility function: ClosestMatch
-/// Find a DOM element matching the selector that has the closest common ancestor
-/// to the given element.
+
 
 
 
@@ -400,6 +399,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   this.DrawScale();
   
+  if(this.showWatermark)
+     this.DrawWatermark();
+
   this.ctx.restore();
 
   // this.ClearOverlays();
@@ -408,7 +410,15 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 };
 
 
-
+WireView.prototype.DrawWatermark = function()
+{
+  var img = $('img#watermark_logo').get(0);
+  if(img.complete) {
+    var aspect_ratio = img.height/img.width;
+    this.ctx.drawImage(img,50,10,100,100*aspect_ratio);
+  }
+  
+}
 
 WireView.prototype.DrawScale = function()
 {
