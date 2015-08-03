@@ -294,7 +294,7 @@ function StartEvent()
     // Get some basic info.  
     if(gRecord.source.file)  gFile   = gRecord.source.file;
     if(gRecord.source.entry) gEntry  = gRecord.source.entry;
-    // Fill the title bar.
+// Fill the title bar.
     var file_short = gFile.replace(/^.*\/|\.[^.]*$/g, '');
     window.document.title = "Argo: event "+gEntry + " in "+file_short;
 
@@ -313,10 +313,11 @@ function StartEvent()
   // Populate data from header, when that's available.
 
   // Update the input forms with up-to-date data.
-  $(".inEntry").each(function(i){
-    $(this).val(gEntry);
-    });
+  $(".inEntry").val(gEntry);
   $('#inFilename').val(gFile);
+  
+  if(gRecord.source.run)   $(".inRun").val(gRecord.source.run);
+  if(gRecord.source.subrun)$(".inSubrun").val(gRecord.source.subrun);
   
   
   // Do initial data indexing and bookmarking.
