@@ -4,7 +4,200 @@
 //
 
 
+// For the GL engine, it must satisfy interpolate(x), which gives an rgba color
+// for any value of ADC x (between -4096 and 4096)
+
+// For the control scheme, it uses the values below which get manipulated by FalseColorScheme.js
+// The ColorDial is a metaphor: colors should change smoothly from -1 to 1 across the
+// 'dial'.  This is the perceptual map (possibly circular) which gets changed into 
+// color. The ADC scale is NOT linear with perceptual map, but goes through a 
+// tangent curve to map nonlinearly, so that very large and very small ADC values
+// are de-exaggerated.
+
+function PseudoColor()
+{
+  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
+  this.dialScale = 1;
+  this.dialOffset = 0;
+  this.saturation = 0.9;
+  this.cutoffLow = 0;
+  this.cutoffHigh = 0;
+} 
+
+
+// Utility function.
+PseudoColor.prototype.HSVtoRGB = function(h, s, v) 
+{
+      var r, g, b, i, f, p, q, t;
+      if (h && s === undefined && v === undefined) {
+          s = h.s, v = h.v, h = h.h;
+      }
+      i = Math.floor(h * 6);
+      f = h * 6 - i;
+      p = v * (1 - s);
+      q = v * (1 - f * s);
+      t = v * (1 - (1 - f) * s);
+      switch (i % 6) {
+          case 0: r = v, g = t, b = p; break;
+          case 1: r = q, g = v, b = p; break;
+          case 2: r = p, g = v, b = t; break;
+          case 3: r = p, g = q, b = v; break;
+          case 4: r = t, g = p, b = v; break;
+          case 5: r = v, g = p, b = q; break;
+      }
+      return {
+        r: (r * 255),
+        g: (g * 255),
+        b: (b * 255)
+      };
+};
+
+
+PseudoColor.prototype.ColorDialToAdc = function( colorDial )
+{
+  // colorDial is a number -1 to 1, where 0 is the mid point (0adc)
+  // colors change evenly from 0-1 on colordial.
+  // adc can legally be -4096 to 4096.
+  var adc = Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
+  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
+  return adc;
+}
+
+PseudoColor.prototype.AdcToColorDial = function( adc, no_truncate)
+{
+  // adc can legally be -4096 to 4096.
+  // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
+  if(adc > this.cutoffLow && adc < this.cutoffHigh) { 
+    if(no_truncate) {} else return 0; // truncate
+  }
+  return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
+}
+
+
+PseudoColor.prototype.ColorDialToColor = function( colorDial )
+{
+  var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + 1.0)%1.0;
+  return this.HSVtoRGB(hue,this.saturation,1.0);  
+}
+
+PseudoColor.prototype.ColorDialToCtxColor = function( colorDial )
+{
+  var c = this.ColorDialToColor(colorDial);
+  return "rgb("+
+                        parseInt(c.r)+","+
+                        parseInt(c.g)+","+
+                        parseInt(c.b)+")";
+}
+
+PseudoColor.prototype.interpolate = function(x) {
+  var dial = this.AdcToColorDial(x);
+  var c = this.ColorDialToColor(dial);
+  c.x = x;
+  c.a = 255.0;
+  return c;
+};
+
+
+///////////////////////////////////////////
+// Rainbow. A hue-rotation color scheme.
+///////////////////////////////////////////
+
+PsuedoRainbow.prototype = new PseudoColor();
+function PsuedoRainbow( )
+{
+//   this.adcScale = 200;
+  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
+  this.dialScale = 1;
+  this.dialOffset = 0;
+  this.hueOffset= 0.2;
+  this.saturation = 0.9;
+  this.cutoffLow = 0;
+  this.cutoffHigh = 0;
+}
+
+PsuedoRainbow.prototype.ColorDialToColor = function( colorDial )
+{
+  var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
+  return this.HSVtoRGB(hue,this.saturation,1.0);  
+}
+
+///////////////////////////////////////////
+// Grayscale
+///////////////////////////////////////////
+
+PsuedoGrayscale.prototype = new PseudoColor();
+function PsuedoGrayscale( )
+{
+  PseudoColor.call(this);
+}
+PsuedoGrayscale.prototype.ColorDialToColor = function( colorDial )
+{
+  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  
+  return { 
+    r: norm*255,
+    g: norm*255,
+    b: norm*255
+  }
+}
+
+///////////////////////////////////////////
+// Linearized Optimal Color Scale. 
+// Levkowitz and Herman, IEEE Computer Graphics and Applications, 1992
+// 10.1109/MCG.2007.323435 
+// http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=135886
+///////////////////////////////////////////
+
+
+PsuedoLOCS.prototype = new PseudoColor();
+function PsuedoLOCS( )
+{
+  PseudoColor.call(this);
+  this.locs_scale =
+  [[0,0,0],[0,0,0],[0,0,0],[1,0,0],[2,0,0],[2,0,0],[3,0,0],[3,0,0],[4,0,0],[5,0,0],[5,0,0],[6,0,0],[7,0,0],[7,0,0],[8,0,0],[9,0,0],[9,0,0],[10,0,0],[11,0,0],[12,0,0],[13,0,0],[14,0,0],[15,0,0],[16,0,0],[17,0,0],[18,0,0],[19,0,0],[20,0,0],[21,0,0],[22,0,0],[23,0,0],[25,0,0],[26,0,0],[27,0,0],[28,0,0],[30,0,0],[31,0,0],[33,0,0],[34,0,0],[35,0,0],[37,0,0],[39,0,0],[40,0,0],[43,0,0],[45,0,0],[46,0,0],[49,0,0],[51,0,0],[53,0,0],[54,0,0],[56,0,0],[58,0,0],[60,0,0],[62,0,0],[64,0,0],[67,0,0],[69,0,0],[71,0,0],[74,0,0],[76,0,0],[80,0,0],[81,0,0],[84,0,0],[86,0,0],[89,0,0],[92,0,0],[94,0,0],[97,0,0],[100,0,0],[103,0,0],[106,0,0],[109,0,0],[112,0,0],[115,0,0],[117,0,0],[122,0,0],[126,0,0],[128,0,0],[131,0,0],[135,0,0],[135,0,0],[135,1,0],[135,2,0],[135,3,0],[135,4,0],[135,6,0],[135,6,0],[135,8,0],[135,9,0],[135,10,0],[135,11,0],[135,13,0],[135,13,0],[135,15,0],[135,17,0],[135,17,0],[135,19,0],[135,21,0],[135,22,0],[135,23,0],[135,25,0],[135,26,0],[135,27,0],[135,29,0],[135,31,0],[135,32,0],[135,33,0],[135,35,0],[135,36,0],[135,38,0],[135,40,0],[135,42,0],[135,44,0],[135,46,0],[135,47,0],[135,49,0],[135,51,0],[135,52,0],[135,54,0],[135,56,0],[135,57,0],[135,59,0],[135,62,0],[135,63,0],[135,65,0],[135,67,0],[135,69,0],[135,72,0],[135,73,0],[135,76,0],[135,78,0],[135,80,0],[135,82,0],[135,84,0],[135,87,0],[135,88,0],[135,90,0],[135,93,0],[135,95,0],[135,98,0],[135,101,0],[135,103,0],[135,106,0],[135,107,0],[135,110,0],[135,113,0],[135,115,0],[135,118,0],[135,121,0],[135,124,0],[135,127,0],[135,129,0],[135,133,0],[135,135,0],[135,138,0],[135,141,0],[135,144,0],[135,148,0],[135,150,0],[135,155,0],[135,157,0],[135,160,0],[135,163,0],[135,166,0],[135,170,0],[135,174,0],[135,177,0],[135,180,0],[135,184,0],[135,188,0],[135,192,0],[135,195,0],[135,200,0],[135,203,0],[135,205,0],[135,210,0],[135,214,0],[135,218,0],[135,222,0],[135,226,0],[135,231,0],[135,236,0],[135,239,0],[135,244,0],[135,249,0],[135,254,0],[135,255,1],[135,255,5],[135,255,10],[135,255,15],[135,255,20],[135,255,23],[135,255,28],[135,255,33],[135,255,38],[135,255,43],[135,255,45],[135,255,49],[135,255,54],[135,255,59],[135,255,65],[135,255,70],[135,255,74],[135,255,80],[135,255,84],[135,255,90],[135,255,95],[135,255,98],[135,255,104],[135,255,110],[135,255,116],[135,255,120],[135,255,125],[135,255,131],[135,255,137],[135,255,144],[135,255,149],[135,255,154],[135,255,158],[135,255,165],[135,255,172],[135,255,179],[135,255,186],[135,255,191],[135,255,198],[135,255,203],[135,255,211],[135,255,216],[135,255,224],[135,255,232],[135,255,240],[135,255,248],[135,255,254],[135,255,255],[140,255,255],[146,255,255],[153,255,255],[156,255,255],[161,255,255],[168,255,255],[172,255,255],[177,255,255],[182,255,255],[189,255,255],[192,255,255],[199,255,255],[204,255,255],[210,255,255],[215,255,255],[220,255,255],[225,255,255],[232,255,255],[236,255,255],[240,255,255],[248,255,255],[255,255,255]];
+}
+
+PsuedoLOCS.prototype.ColorDialToColor = function( colorDial )
+{
+  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  var entry = Math.floor(norm*255);
+  
+  return { 
+    r: this.locs_scale[entry][0],
+    g: this.locs_scale[entry][1],
+    b: this.locs_scale[entry][2]
+  }
+}
+
+///////////////////////////////////////////
+// Brightness
+// Single color through 'Brightness' value of HSV
+///////////////////////////////////////////
+
+
+PsuedoBrightness.prototype = new PseudoColor();
+function PsuedoBrightness( )
+{
+  PseudoColor.call(this);
+}
+
+PsuedoBrightness.prototype.ColorDialToColor = function( colorDial )
+{
+  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  return this.HSVtoRGB(this.saturation, // actually hue
+                        0.9, // stay fully saturated
+                        Math.sqrt(norm));
+}
+
+
 /*
+//
+// Code for using a control point scheme for mapping.
+// Works, but control points are awkward compared to
+// an algorithmic version. 
+//
+// Changed code since using this, so renaming would be required.
+//
 function PseudoColor( control_points ) 
 {
   if(control_points === undefined) return;
@@ -163,127 +356,3 @@ function PsTest2( hue )
 }
 
 */
-
-// A Pseudo Color _must_ satisfy:
-// interpolate(x) - for x as an ADC value from -4096 to 4096, give color as rgba object
-// But other things in FalseColor are good too.
-
-function PseudoColor()
-{
-  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
-  this.dialScale = 1;
-  this.dialOffset = 0;
-  this.hueOffset= 0.2;
-  this.saturation = 0.9;
-} 
-
-
-
-PseudoColor.prototype.HSVtoRGB = function(h, s, v) 
-{
-      var r, g, b, i, f, p, q, t;
-      if (h && s === undefined && v === undefined) {
-          s = h.s, v = h.v, h = h.h;
-      }
-      i = Math.floor(h * 6);
-      f = h * 6 - i;
-      p = v * (1 - s);
-      q = v * (1 - f * s);
-      t = v * (1 - (1 - f) * s);
-      switch (i % 6) {
-          case 0: r = v, g = t, b = p; break;
-          case 1: r = q, g = v, b = p; break;
-          case 2: r = p, g = v, b = t; break;
-          case 3: r = p, g = q, b = v; break;
-          case 4: r = t, g = p, b = v; break;
-          case 5: r = v, g = p, b = q; break;
-      }
-      return {
-        r: (r * 255),
-        g: (g * 255),
-        b: (b * 255)
-      };
-};
-
-// LogColor: a Hue-rotation scheme. 
-// Subclass.
-LogColor.prototype = new PseudoColor();
-function LogColor( )
-{
-//   this.adcScale = 200;
-  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
-  this.dialScale = 1;
-  this.dialOffset = 0;
-  this.hueOffset= 0.2;
-  this.saturation = 0.9;
-  this.cutoffLow = 0;
-  this.cutoffHigh = 0;
-}
-
-
-LogColor.prototype.ColorDialToAdc = function( colorDial )
-{
-  // colorDial is a number -1 to 1, where 0 is the mid point (0adc)
-  // colors change evenly from 0-1 on colordial.
-  // adc can legally be -4096 to 4096.
-  var adc = Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
-  return adc;
-}
-
-LogColor.prototype.AdcToColorDial = function( adc )
-{
-  // adc can legally be -4096 to 4096.
-  // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0; // truncate
-  return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
-}
-
-
-LogColor.prototype.ColorDialToColor = function( colorDial )
-{
-  var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
-  return this.HSVtoRGB(hue,this.saturation,1.0);  
-}
-
-LogColor.prototype.ColorDialToCtxColor = function( colorDial )
-{
-  var c = this.ColorDialToColor(colorDial);
-  return "rgb("+
-                        parseInt(c.r)+","+
-                        parseInt(c.g)+","+
-                        parseInt(c.b)+")";
-}
-
-LogColor.prototype.interpolate = function(x) {
-  var dial = this.AdcToColorDial(x);
-  var c = this.ColorDialToColor(dial);
-  c.x = x;
-  c.a = 255.0;
-  return c;
-};
-
-
-
-// LogColor: Very sharp transition at the threshold from one color to another;
-// Subclass.
-ThresholdColor.prototype = new LogColor();
-function ThresholdColor( )
-{
-  LogColor.call(this);
-  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
-  this.dialScale = 2;
-  this.dialOffset = 0;
-  this.hueOffset= 0.2;
-  this.saturation = 0.9;
-}
-
- 
-ThresholdColor.prototype.ColorDialToColor = function( colorDial )
-{
-  var d = 0;
-  if(colorDial>0.5) d = 1;
-  if(colorDial<-0.5) d = -1;
-  var hue = (((d+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
-  return this.HSVtoRGB(hue,this.saturation,1.0);
-}
