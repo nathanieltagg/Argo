@@ -73,14 +73,15 @@ void MakeLowres(JsonObject& r,
     waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp_out));
     wireMap_out->insert(wiremap_t::value_type(iwire_out, waveform_ptr));
     waveform_t& waveform = *waveform_ptr;
-    for(int i=0;i<nsamp_out;i++) waveform[i] = -0x8000; // Initialize
+    for(int i=0;i<nsamp_out;i++) waveform[i] = -4000; // Initialize
     
     for(int iwire_in = iwire_out*factor_y; (iwire_in < (iwire_out+1)*factor_y) && iwire_in<nwire; iwire_in++) {
       wiremap_t::iterator it = wireMap->find(iwire_in);
-      waveform_t& waveform_in = *(it->second.get());
-      
-      for(int i=0;i<nsamp;i++) {
-        if(waveform_in[i] > waveform[i/factor_x]) waveform[i/factor_x] = waveform_in[i];
+      if(it != wireMap->end()) {
+        waveform_t& waveform_in = *(it->second.get());
+        for(int i=0;i<nsamp;i++) {
+          if(waveform_in[i] > waveform[i/factor_x]) waveform[i/factor_x] = waveform_in[i];
+        }
       }  
     }  
   }

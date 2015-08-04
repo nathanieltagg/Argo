@@ -295,6 +295,7 @@ TriDView.prototype.CreateMC = function()
   for(var i=0;i<particles.length;i++)
   {
     var p= particles[i];
+    if(!p) continue;
     var t0 = p.trajectory[0].t;
     // if(t>1.6e6 || t<-1000) continue; // Ignore out-of-time particles
     var dx_from_t0 = 0;

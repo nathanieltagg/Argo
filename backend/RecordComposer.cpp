@@ -1140,16 +1140,16 @@ void RecordComposer::composeMC()
     JsonElement::sfDecimals=5;
     JsonArray gparticle_arr;
   
-    vector<pair< string,string> > key_leaf_pairs;
-    key_leaf_pairs.push_back(make_pair<string,string>("fdaughters"                 , name+"obj.fdaughters"               ));
-    key_leaf_pairs.push_back(make_pair<string,string>("fmass"                      , name+"obj.fmass"                    ));
-    key_leaf_pairs.push_back(make_pair<string,string>("fmother"                    , name+"obj.fmother"                  ));
-    key_leaf_pairs.push_back(make_pair<string,string>("fpdgCode"                   , name+"obj.fpdgCode"                 ));
-    key_leaf_pairs.push_back(make_pair<string,string>("fprocess"                   , name+"obj.fprocess"                 ));
-    key_leaf_pairs.push_back(make_pair<string,string>("frescatter"                 , name+"obj.frescatter"               ));
-    key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , name+"obj.fstatus"                  ));
-    key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , name+"obj.ftrackId"                 ));
-    key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , name+"obj.fWeight"                  ));
+    // vector<pair< string,string> > key_leaf_pairs;
+    // // key_leaf_pairs.push_back(make_pair<string,string>("fdaughters"                 , name+"obj.fdaughters"               ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("fmass"                      , name+"obj.fmass"                    ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("fmother"                    , name+"obj.fmother"                  ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("fpdgCode"                   , name+"obj.fpdgCode"                 ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("fprocess"                   , name+"obj.fprocess"                 ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("frescatter"                 , name+"obj.frescatter"               ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , name+"obj.fstatus"                  ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , name+"obj.ftrackId"                 ));
+    // key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , name+"obj.fWeight"                  ));
     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fE"                   , name+"obj.fGvtx.fE"                 ));
     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fX"                , name+"obj.fGvtx.fP.fX"              ));
     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fY"                , name+"obj.fGvtx.fP.fY"              ));
@@ -1158,70 +1158,103 @@ void RecordComposer::composeMC()
     // key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fY"           , name+"obj.fpolarization.fY"         ));
     // key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fZ"           , name+"obj.fpolarization.fZ"         ));
 
-    // Quick hack to make it finish in finite time. FIXME
-    int max_particles_to_process = 500;
-    std::vector<JsonObject> v_particles = ftr.makeVector(key_leaf_pairs, max_particles_to_process);
-
-    std::cout << "Making particle list " << name << " " << v_particles.size() << std::endl;
-    TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
       
-    for(size_t i=0;i<v_particles.size();i++) {
-      if(l.ok()){        
-        // Add  the trajectory points.
-        const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
-        traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector> > >(i);
 
-        // Find which points are really required.
-        // Start at the beginning and trace along the mom'm vector until you find a point outside of tolerance. Add that point
-        // and use it as the seed for later ones.
-        int n = traj->size();
-        if(n<1) continue;
-        std::vector<unsigned char> usePt(n,0);
-        usePt[0] = 1;
-        const TLorentzVector* x0 = &((*traj)[0].first);
-        const TLorentzVector* p  = &((*traj)[0].second);
-        int n_need = 1;
-        for(int j=1;j<n;j++) {
-          int off = pointOffLine(*x0,*p,(*traj)[j].first,0.3);
-          // cout << j << " " << delta << endl;
-          if(off) { // 0.1 mm tolerance
-            usePt[j] = 1; n_need++;
-            x0 = &((*traj)[j].first);
-            p  = &((*traj)[j].second); 
-          }
-        }
-        // add the last one no matter what.
-        if(usePt[n-1]==0) { usePt[n-1]=1; n_need++; }
+    TLeaf* lp_fmass      = fTree->GetLeaf( (name+"obj.fmass"     ).c_str());
+    TLeaf* lp_fmother    = fTree->GetLeaf( (name+"obj.fmother"   ).c_str());
+    TLeaf* lp_fpdgCode   = fTree->GetLeaf( (name+"obj.fpdgCode"  ).c_str());
+    TLeaf* lp_fprocess   = fTree->GetLeaf( (name+"obj.fprocess"  ).c_str());
+    TLeaf* lp_frescatter = fTree->GetLeaf( (name+"obj.frescatter").c_str());
+    TLeaf* lp_fstatus    = fTree->GetLeaf( (name+"obj.fstatus"   ).c_str());
+    TLeaf* lp_ftrackId   = fTree->GetLeaf( (name+"obj.ftrackId"  ).c_str());
+    TLeaf* lp_fWeight    = fTree->GetLeaf( (name+"obj.fWeight"   ).c_str());
+    TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
+    if(!lf) return;
+    int nparticles = lf->GetLen();
+    TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
+    if(!l.ok()) continue;
+  
+    std::cout << "Making particle list " << name << " " << nparticles << std::endl;  
+    
+    std::vector<int> v_countDaughters(nparticles,0);
+    for(int i=0;i<nparticles;i++) {
+      int mom =  ftr.getInt(lp_fmother ,i  );
+      if(mom<0) continue;
+      if(mom>= v_countDaughters.size()) continue;
+      v_countDaughters[mom]++;
+    }
+    
+    JsonArray j_particles;
+    int nkeep = 0;
+    for(int i=0;i<nparticles;i++) {
+      const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
+      traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector> > >(i);
+      int n = traj->size();
+      if(n<1) continue;
 
-        // std::cout << "MC track " << i << " found trajectory points " << n_need << " / " << n << endl;
+      // Find total trajectory length.
+      TLorentzVector xfirst = ((*traj)[0].first);
+      TLorentzVector xlast = ((*traj)[n-1].first);
+      TVector3 dx = xlast.Vect()-xfirst.Vect();
+      if( (dx.Mag() < 0.1) && (v_countDaughters[i] <1) ) { 
+        // What a useless particle!  No daughters, no track length. Skip it.
+        j_particles.add(JsonElement(0)); // add a null object
+        continue;
+      }
 
+      JsonObject jparticle;
+      jparticle.add("fmass"     , ftr.getInt(lp_fmass     ,i));
+      jparticle.add("fmother"   , ftr.getInt(lp_fmother   ,i));
+      jparticle.add("fpdgCode"  , ftr.getInt(lp_fpdgCode  ,i));
+      jparticle.add("fprocess"  , ftr.getInt(lp_fprocess  ,i));
+      jparticle.add("frescatter", ftr.getInt(lp_frescatter,i));
+      jparticle.add("fstatus"   , ftr.getInt(lp_fstatus   ,i));
+      jparticle.add("ftrackId"  , ftr.getInt(lp_ftrackId  ,i));
+      jparticle.add("fWeight"   , ftr.getVal(lp_fWeight   ,i));
 
-        JsonArray jtraj;
-        for(size_t j=0;j<traj->size();j++){
-          if(usePt[j]==0) continue;
+      // Trajectory
+      JsonArray jtraj;
+      TLorentzVector x_last  = ((*traj)[0].first);
+      TLorentzVector p_last  = ((*traj)[0].second);
+      int n_need = 1;
+      for(int j=0;j<n;j++) {
+        TLorentzVector x   = ((*traj)[j].first);
+        TLorentzVector p   = ((*traj)[j].second);
+        
+        if(  j==0  // keep first point
+          || j==n-1  // keep last point
+          || pointOffLine(x_last,p_last,x,0.15)) // keep any point not on projected line within a 0.15 cm tolerance
+        {
+          // Keep this point.
           JsonObject trajpoint;
+          
           const TLorentzVector& pos = (*traj)[j].first;
           const TLorentzVector& mom = (*traj)[j].second;
           // trajpoint.add("acc",ptAcc[j]);
-          trajpoint.add("x",JsonFixed(pos.X(),1));
-          trajpoint.add("y",JsonFixed(pos.Y(),1));
-          trajpoint.add("z",JsonFixed(pos.Z(),1));
-          trajpoint.add("t",JsonFixed(pos.T(),1));
-          trajpoint.add("px",JsonFixed(mom.X(),4));
-          trajpoint.add("py",JsonFixed(mom.Y(),4));
-          trajpoint.add("pz",JsonFixed(mom.Z(),4));
-          trajpoint.add("E" ,JsonFixed(mom.T(),6));
-          jtraj.add(trajpoint);
+          trajpoint.add("x",JsonFixed(x.X(),1));
+          trajpoint.add("y",JsonFixed(x.Y(),1));
+          trajpoint.add("z",JsonFixed(x.Z(),1));
+          trajpoint.add("t",JsonFixed(x.T(),1));
+          trajpoint.add("px",JsonFixed(p.X(),4));
+          trajpoint.add("py",JsonFixed(p.Y(),4));
+          trajpoint.add("pz",JsonFixed(p.Z(),4));
+          trajpoint.add("E" ,JsonFixed(p.T(),6));
+          jtraj.add(trajpoint); 
+          x_last = x;
+          p_last = p;
         }
-        v_particles[i].add("trajectory",jtraj);
       }
+      jparticle.add("trajectory",jtraj);
+      
+      nkeep++;
+      j_particles.add(jparticle);
     }
-    JsonArray j_particles(v_particles);
-  
-    JsonElement::sfDecimals=2;
 
     particle_list.add(stripdots(name),j_particles);
     timer.addto(fStats);
+    
+    std::cout << "Made particle list " << name << " " << nkeep << std::endl;  
+    
   }
   mc.add("particles",particle_list);
   
