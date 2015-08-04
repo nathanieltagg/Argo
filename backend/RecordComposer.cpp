@@ -1195,47 +1195,6 @@ void RecordComposer::composeMC()
 
         // std::cout << "MC track " << i << " found trajectory points " << n_need << " / " << n << endl;
 
-        /*
-        // Order the trajectory points by how far they diverge from a line from start to finish.
-        // Add the first two points as being crucial.
-        int n = traj->size();
-        std::vector<double> ptAcc(n,-1);
-        ptAcc[0] = ptAcc[traj->size()-1] = 1e99;
-        // Now recursively go through unused points. Each time, find the point furthest off the existing line,
-        // and add it, labelling it's accuracy as the degree to which it corrects the implicit line you would
-        // have used if you didn't know it.
-        bool done = false;
-        while(!done) {
-          int worst=-1;
-          double worstacc = -1;
-          int lowbracket = 0;
-          int highbracket = traj->size()-1;
-          for(int k=0;k<n;k++) {
-            // consider point k.
-            if(ptAcc[k]>-1) {
-              lowbracket = k;
-              continue; // done this one.
-            }
-            // ok, we're considering point k. Find the high bracket.
-            for(int m=k+1;k<n;m++) {
-              if(ptAcc[m]>-1) {
-                highbracket = m;
-                break; 
-              }              
-            }
-            // Find accuracy improvement from point k.
-            double acc = distanceOffLine( (*traj)[k].first.Vect(), (*traj)[lowbracket].first.Vect(), (*traj)[highbracket].first.Vect() );
-            if(acc > worstacc) { worst = k; worstacc = acc;}
-            // cout << "Considering point " << k << " between " << lowbracket << " and " << highbracket << " has accuracy " << acc 
-            //               << " worst is " << worst << endl;
-          }
-          cout << "Worst is " << worst << " with acc " << worstacc << " out of " << n << endl;
-          if(worst == -1) done = true;
-          else            ptAcc[worst] = worstacc;
-          if(worstacc < 0.1) done = true;
-        }
-        */
-
 
         JsonArray jtraj;
         for(size_t j=0;j<traj->size();j++){
