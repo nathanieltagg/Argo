@@ -142,6 +142,31 @@ function FalseColorControl( element  )
     stop:  function(ev,ui) { $('input.psuedoCutoffHigh',p).val(ui.value).trigger('change'); self.FinishRangeChange();}
   })});
   
+  $('div.psuedoCutoffHighSlider').each(function(){
+    var p = $(this).parent();
+    $(this).slider({
+    value: $('input.psuedoCutoffHigh',p).val(),
+    min: 0,
+    max: 1,
+    step: 0.01,
+    slide: function(ev,ui) { $('input.psuedoCutoffHigh',p).val(ui.value).trigger('change'); return true;},
+    stop:  function(ev,ui) { $('input.psuedoCutoffHigh',p).val(ui.value).trigger('change'); self.FinishRangeChange();}
+  })});
+  
+  $('input.colorpicker',this.top_element).each(function(){
+    // Index?
+    var index = parseInt($(this).attr('data-index'));
+    $(this).spectrum({
+      move: function(color) {
+        gWirePseudoColor.color_table[index] = color.toRgb(); 
+        self.Draw(); self.FinishRangeChange();
+      }
+    });
+    $(this).change(function(){
+      $(this).spectrum("set",$(this).val());
+    })
+    
+  });
   
   function forceTab(id) {
     var index = $('a[href="#'+id+'"]',self.top_element).parent().index();
@@ -170,7 +195,10 @@ FalseColorControl.prototype.NewRecord = function()
   gWirePseudoColor.saturation = parseFloat($('input.psuedoSaturation',this.currentTabDiv).val() );
   gWirePseudoColor.cutoffLow  = parseFloat($('input.psuedoCutoffLow',this.currentTabDiv).val());
   gWirePseudoColor.cutoffHigh = parseFloat($('input.psuedoCutoffHigh',this.currentTabDiv).val());
-  
+  $('input.psuedo-color',this.currentTabDiv).each(function(){
+    var index = parseInt($(this).attr('data-index'));
+    gWirePseudoColor.color_table[index] = $(this).spectrum("get").toRgb();        
+  });
   this.Draw();
   // gGLEngine.build_LUT_canvas(this.cs,-4066,4096,$('.checkCanvas').get(0));
 };
@@ -191,7 +219,8 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   else if(id == 'falsecolor-LOCS')        gWirePseudoColor = new PsuedoLOCS; 
   else if(id == 'falsecolor-Brightness')  gWirePseudoColor = new PsuedoBrightness; 
   else if(id == 'falsecolor-Blackbody')  gWirePseudoColor = new PsuedoBlackbody; 
-
+  else if(id == 'falsecolor-Interp2')    gWirePseudoColor = new PsuedoInterpolator(2); 
+  
   this.NewRecord();
   gStateMachine.Trigger('ChangePsuedoColor');
 }
