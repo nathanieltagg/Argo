@@ -32,7 +32,7 @@ endif
 #override, since setup is poor.
 #uboonedaq  = $(HOME)/development/uboonedaq/projects
 
-CPPFLAGS := -g -I.. -Wno-deprecated-declarations -O3
+CPPFLAGS := -g -I.. -Wno-deprecated-declarations 
 #CPP := g++44 -std=c++0x
 CPP := g++ -std=c++1y -O3
 LD := $(CPP)
