@@ -27,6 +27,9 @@
 <script type="text/javascript" src="js/jit.js"></script>
 <script type="text/javascript" src="js/circle-progress.js"></script>
 
+<script type="text/javascript" src="js/spectrum.js"></script> <!-- colorpicker -->
+<link rel='stylesheet' href='css/spectrum.css' />
+
 
 
 <!-- for creating animated gifs. -->
