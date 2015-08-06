@@ -93,13 +93,20 @@ if(scalar @cacheentries == 0) {
       }
   }
 
-  open(READCACHE,$event."/event.json") || print "Can't open $event for reading </br>\n";
+  my $jsonfile = $event."/event.json";
   $result = "";
-  while(<READCACHE>) {
-    $result .= $_;
+  print "Opening $jsonfile.\n";
+  if(open(READCACHE,$jsonfile)){
+    while(<READCACHE>) {
+      $result .= $_;
+    }
+    close READCACHE;
+    if(length($result)==0) { $result='{"error":"Empty event"}'; }    
+  } else {
+    print "Can't open $event for reading: $! </br>\n";
+    $result='{"error":"Cannot open file $jsonfile"}';
   }
-  close READCACHE;
-  if(length($result)==0) { $result='{"error":"Empty event"}'; }
+  
 
 } 
 

@@ -316,9 +316,10 @@ function StartEvent()
   $(".inEntry").val(gEntry);
   $('#inFilename').val(gFile);
   
-  if(gRecord.source.run)   $(".inRun").val(gRecord.source.run);
-  if(gRecord.source.subrun)$(".inSubrun").val(gRecord.source.subrun);
-  
+  if(gRecord.source) {
+    if(gRecord.source.run)   $(".inRun").val(gRecord.source.run);
+    if(gRecord.source.subrun)$(".inSubrun").val(gRecord.source.subrun);
+  }
   
   // Do initial data indexing and bookmarking.
   DoInitialBookmarking();
