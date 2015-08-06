@@ -186,6 +186,8 @@
 
 
 </div> <!-- A-FalseColorControl -->
+ <div class="wireimg-encoded-progressbar" style="position: relative; text-align:center;">
+   <div class="wireimg-encoded-progressbar-text" style="position: absolute; color:black; width:100%"></div></div>
 </div> <!-- portlet-content -->
 </div> <!-- portlet -->
 

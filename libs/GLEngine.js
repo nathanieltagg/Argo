@@ -25,7 +25,8 @@ Image.prototype.load = function(url){
         xmlHTTP.onprogress = function(e) {
           thisImg.completedTotal = e.total;
           thisImg.completedLoaded = e.loaded;
-          thisImg.completedFrac = (e.loaded / e.total);
+          thisImg.completedFrac = e.loaded / e.total;
+          console.log(thisImg.completedFrac);
           if(thisImg.onprogress) thisImg.onprogress(e);
         };
         xmlHTTP.onloadstart = function() {
@@ -197,6 +198,9 @@ GLMapper.prototype.StartLoad = function()
   
   this.num_images_needed = 0;  
   this.num_images_loaded = 0;
+  $('.wireimg-encoded-progressbar-text').text("Loading wire data...");  
+  $("div.wireimg-encoded-progressbar").progressbar();
+  $("div.wireimg-encoded-progressbar").progressbar("option",{value:false});
   
   for(var irow=0;irow<this.tile_urls.length;irow++) {
     var row = this.tile_urls[irow];
@@ -217,7 +221,6 @@ GLMapper.prototype.StartLoad = function()
         console.log("setting callback for",jrow,jcol);        
         img.onload= function() { self.ImageLoaded(jrow,jcol); }
         img.onprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
-        img.onloadprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
         
       })();
       img.load(image_url);
@@ -231,22 +234,29 @@ GLMapper.prototype.StartLoad = function()
 
 GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
 {
-  if(e) console.log("ImageProgress",jrow,jcol,e.loaded,e.total,e);
+  // Add up total progress.
+  // if(e) console.log("ImageProgress",jrow,jcol,e.loaded,e.total,e);
   var numerator = 0;
   var denominator = 0;
   for(var irow=0;irow<this.tile_images.length;irow++) {
     for(var icol=0;icol<this.tile_images[irow].length;icol++) {
       var elem = this.tile_urls[irow][icol];
       var img = this.tile_images[irow][icol];
-      var frac = img.completedFrac;
+      var done = img.completedLoaded;
       var bytes = img.completedTotal;
       if(bytes < 10) bytes = 3128138;
       denominator += bytes;
-      if(img.complete) frac = 1.0;
-      numerator += bytes*frac;      
+      // if(img.complete) done = bytes;
+      numerator += done;      
+      // console.log("  img",irow,icol,img.completedFrac,numerator,denominator);
     }
   }
-  console.log("Image progress:",numerator,denominator,numerator/denominator*100);
+  
+  var percent = numerator/denominator*100;
+  console.log("Image progress:",numerator,denominator,percent);
+  $('.wireimg-encoded-progressbar-text').text("Loading wire data... "+parseInt(percent)+"%");
+  $("div.wireimg-encoded-progressbar").progressbar("option",{value:percent});
+  
 }
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
@@ -294,6 +304,10 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   console.timeEnd("GLMapper.StartLoad");
 
   console.log("GLMapper finished loading, going on to render ",this.typ,this.num_images_loaded);
+  // $("div.wireimg-encoded-progressbar").progressbar("destroy");
+  $('.wireimg-encoded-progressbar-text').text("Done!");
+  
+
   this.Render();
 }
 
