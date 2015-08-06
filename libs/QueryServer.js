@@ -54,7 +54,7 @@ $(function(){
       thickness: 8,
       size: $('#main-circleprogress').width(),
       fill: {
-          gradient: ["green"]
+          gradient: ["white","red"]
       }
   });
 })
