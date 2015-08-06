@@ -187,6 +187,8 @@ GLMapper.prototype.StartLoad = function()
         console.log("setting callback for",jrow,jcol);        
         img.onload= function() { self.ImageLoaded(jrow,jcol); }
         img.onprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
+        img.onloadprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
+        
       })();
       img.src = image_url; // Set SRC after setting callback, in case of race condition      
     }
