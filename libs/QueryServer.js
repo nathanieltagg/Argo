@@ -48,6 +48,16 @@ function logGLCall(functionName, args) {
 this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
   
 
+$(function(){
+  $('#main-circleprogress').circleProgress({
+      value: 0,
+      thickness: 8,
+      size: $('#main-circleprogress').width(),
+      fill: {
+          gradient: ["green"]
+      }
+  });
+})
 
 
 function ChangeEvent( )
@@ -164,6 +174,10 @@ function QueryServer( par, myurl )
     
     $('#status').attr('class', 'status-transition');
     $("#status").text("Querying server for event data...");
+    $('#main-circleprogress').circleProgress('value', 0);
+    $('#main-circleprogress strong').text('Building');
+    
+    
     console.log("requesting "+myurl+"?"+param);
     $("#debuglinks").html(
       "Link to json data: <a href=\""+myurl+"?"+param+"\">"+myurl+"?"+param+"</a>"
@@ -193,7 +207,12 @@ function QueryServer( par, myurl )
             error:    QueryError,
             success:  QuerySuccess,
             xhrFields: {
-              onprogress : function(evt){ console.warn('progress',evt, evt.loaded,evt.total); }
+              onprogress : function(evt){
+                console.log("progress",parseInt(evt.loaded/evt.total*100)+'%');
+                 $('#main-circleprogress').circleProgress('value', evt.loaded/evt.total);
+                 $('#main-circleprogress strong').text(parseInt(evt.loaded/evt.total*100)+'%');
+                 
+               }
               
             }
             // xhr: function(){
