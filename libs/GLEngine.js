@@ -23,16 +23,22 @@ Image.prototype.load = function(url){
             thisImg.src = window.URL.createObjectURL(blob);
         };
         xmlHTTP.onprogress = function(e) {
-          parseInt(thisImg.completedFrac = (e.loaded / e.total));
+          thisImg.completedTotal = e.total;
+          thisImg.completedLoaded = e.loaded;
+          thisImg.completedFrac = (e.loaded / e.total);
           if(thisImg.onprogress) thisImg.onprogress(e);
         };
         xmlHTTP.onloadstart = function() {
-            thisImg.completedPercentage = 0;
+          thisImg.completedFrac = 0;
+          thisImg.completedTotal = 1;
+          thisImg.completedLoaded = 0;
         };
         xmlHTTP.send();
     };
     
 Image.prototype.completedFrac = 0;
+Image.prototype.completedTotal = 1;
+Image.prototype.completedLoaded = 0;
 // Image.prototype.onprogress = function(e) { console.log("default onprogress",e); };
 
 
@@ -225,13 +231,29 @@ GLMapper.prototype.StartLoad = function()
 
 GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
 {
-  console.log("ImageProgress",e.loaded,e.total,e);
+  if(e) console.log("ImageProgress",jrow,jcol,e.loaded,e.total,e);
+  var numerator = 0;
+  var denominator = 0;
+  for(var irow=0;irow<this.tile_images.length;irow++) {
+    for(var icol=0;icol<this.tile_images[irow].length;icol++) {
+      var elem = this.tile_urls[irow][icol];
+      var img = this.tile_images[irow][icol];
+      var frac = img.completedFrac;
+      var bytes = img.completedTotal;
+      if(bytes < 10) bytes = 3128138;
+      denominator += bytes;
+      if(img.complete) frac = 1.0;
+      numerator += bytes*frac;      
+    }
+  }
+  console.log("Image progress:",numerator,denominator,numerator/denominator*100);
 }
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 {
   console.log("GLMapper::ImageLoaded",jrow,jcol);
   console.time("GLMapper::ImageLoaded: one image");
+  this.ImageProgress(jrow,jcol);
   //Draw in this particular item.
   var elem = this.tile_urls[jrow][jcol];
   var img = this.tile_images[jrow][jcol];
