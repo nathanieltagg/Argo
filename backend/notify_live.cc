@@ -113,7 +113,8 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
       if(event->len > 0) {
         std::string name = event->name;
         if(name.rfind(suffix) != std::string::npos) {    
-            report(name);
+          std::string pathname = dir + name;
+          report(pathname);
         }
       }
       
