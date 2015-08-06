@@ -253,7 +253,7 @@ GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
   }
   
   var percent = numerator/denominator*100;
-  console.log("Image progress:",numerator,denominator,percent);
+  // console.log("Image progress:",numerator,denominator,percent);
   $('.wireimg-encoded-progressbar-text').text("Loading wire data... "+parseInt(percent)+"%");
   $("div.wireimg-encoded-progressbar").progressbar("option",{value:percent});
   
