@@ -12,6 +12,30 @@ $(function(){
   // });
 });
 
+
+Image.prototype.load = function(url){
+        var thisImg = this;
+        var xmlHTTP = new XMLHttpRequest();
+        xmlHTTP.open('GET', url,true);
+        xmlHTTP.responseType = 'arraybuffer';
+        xmlHTTP.onload = function(e) {
+            var blob = new Blob([this.response]);
+            thisImg.src = window.URL.createObjectURL(blob);
+        };
+        xmlHTTP.onprogress = function(e) {
+          parseInt(thisImg.completedFrac = (e.loaded / e.total));
+          if(thisImg.onprogress) thisImg.onprogress(e);
+        };
+        xmlHTTP.onloadstart = function() {
+            thisImg.completedPercentage = 0;
+        };
+        xmlHTTP.send();
+    };
+    
+Image.prototype.completedFrac = 0;
+// Image.prototype.onprogress = function(e) { console.log("default onprogress",e); };
+
+
 function GLMapper(typ) // "raw" or "cal"
 {
   this.typ = typ; 
@@ -187,8 +211,11 @@ GLMapper.prototype.StartLoad = function()
         console.log("setting callback for",jrow,jcol);        
         img.onload= function() { self.ImageLoaded(jrow,jcol); }
         img.onprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
+        img.onloadprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
+        
       })();
-      img.src = image_url; // Set SRC after setting callback, in case of race condition      
+      img.load(image_url);
+      // img.src = image_url; // Set SRC after setting callback, in case of race condition
     }
     this.tile_images.push(imagerow);
     this.tile_textures.push(texturerow);
