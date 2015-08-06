@@ -26,7 +26,6 @@ Image.prototype.load = function(url){
           thisImg.completedTotal = e.total;
           thisImg.completedLoaded = e.loaded;
           thisImg.completedFrac = e.loaded / e.total;
-          console.log(thisImg.completedFrac);
           if(thisImg.onprogress) thisImg.onprogress(e);
         };
         xmlHTTP.onloadstart = function() {
