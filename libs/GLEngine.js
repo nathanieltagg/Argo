@@ -186,6 +186,7 @@ GLMapper.prototype.StartLoad = function()
         var jcol = icol;
         console.log("setting callback for",jrow,jcol);        
         img.onload= function() { self.ImageLoaded(jrow,jcol); }
+        img.onprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
       })();
       img.src = image_url; // Set SRC after setting callback, in case of race condition      
     }
@@ -193,6 +194,11 @@ GLMapper.prototype.StartLoad = function()
     this.tile_textures.push(texturerow);
   }
   
+}
+
+GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
+{
+  console.log("ImageProgress",e.loaded,e.total,e);
 }
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)

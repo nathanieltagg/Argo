@@ -232,8 +232,10 @@ int main(int argc, char **argv)
     JsonObject mdj = KvpToJson(md);
 
     JsonObject result;
-    result.add("dispatcher_header",mdj);
-    heartbeatInfo.add("dispatcher_header",mdj);
+    JsonObject source;
+    source.add("dispatcher",mdj);
+    result.add("source",source);
+    heartbeatInfo.add("dispatcher",mdj);
     logInfo << "Got reply: payload: " << data->payload_size() << " bytes, metadata: "
       << " requestId="<< md.get("requestId")
       << " requestHeaderOnly="<< md.get("requestHeaderOnly")
@@ -254,7 +256,7 @@ int main(int argc, char **argv)
       logInfo << "Error: no record!"; 
       SaveHeartbeat(heartbeatInfo, "Dispatcher has no data.");
       continue;
-    }
+    }    
     
     RawRecordComposer composer(result,record,oOptions);
     try {

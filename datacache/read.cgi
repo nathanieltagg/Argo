@@ -34,7 +34,7 @@ if(-r $filename) {
   while(read(FH,$buff,20240)) { print $buff; }
   close(FH);
   close(STDOUT);
-  unlink $filename;       
+  #unlink $filename;       
   print STDERR "Deleted $filename\n";
 } else {
   print $query->header({type=>$type,-status=>401});
