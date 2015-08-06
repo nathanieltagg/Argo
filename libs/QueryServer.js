@@ -54,7 +54,8 @@ $(function(){
       thickness: 8,
       size: $('#main-circleprogress').width(),
       fill: {
-          gradient: ["white","red"]
+          gradient: ["white","white","red"]
+        , gradientAngle: Math.PI / 2 
       }
   });
 })
@@ -209,8 +210,8 @@ function QueryServer( par, myurl )
             xhrFields: {
               onprogress : function(evt){
                 console.log("progress",parseInt(evt.loaded/evt.total*100)+'%');
-                 $('#main-circleprogress').circleProgress('value', evt.loaded/evt.total);
-                 $('#main-circleprogress strong').text(parseInt(evt.loaded/evt.total*100)+'%');
+                 $('#main-circleprogress').circleProgress('value', 100*evt.loaded/evt.total);
+                 $('#main-circleprogress strong').html("network<br/>"+parseInt(evt.loaded/evt.total*100)+'%');
                  
                }
               
