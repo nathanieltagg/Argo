@@ -367,7 +367,6 @@ GLMapper.prototype.Render = function()
   
   var resolutionLocation = this.gl.getUniformLocation(this.program, "u_resolution");
   this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
-  console.log("resolution", this.canvas.width,this.canvas.height);
 
   // var tex = this.tile_textures[0][0];
   // this.gl.activeTexture(this.gl.TEXTURE1);
@@ -400,7 +399,7 @@ GLMapper.prototype.Render = function()
   //   for(var icol=0;icol<1;icol++) {
   //
       var elem = this.tile_urls[irow][icol];
-      console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
+      // console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
       var tex = this.tile_textures[irow][icol];
 
       this.gl.activeTexture(this.gl.TEXTURE1);
@@ -424,7 +423,7 @@ GLMapper.prototype.Render = function()
 GLMapper.prototype.SetRect = function( x, y, w, h ) 
 {
   // Set a rectangle the same size as the image.
-  console.warn("SetRect",x,y,w,h);
+  //   console.warn("SetRect",x,y,w,h);
   var x1 = x;
   var x2 = x + w;
   var y1 = y;
