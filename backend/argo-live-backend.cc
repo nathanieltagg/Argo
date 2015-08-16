@@ -142,14 +142,14 @@ int main(int argc, char **argv)
   std::cout << config.pretty_print();
   
   // Plexus.
-  std::string  plexSource     = config.getString("plexusInterface","postgresql");
-  std::string  plexConnection = config.getString("plexusConnection","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
+  std::string  plexSource     = config.getString("plexusInterface","sqlite");
+  std::string  plexConnection = config.getString("plexusConnection","../config/current_plexus.db");
 
   gPlexus.build(plexSource,plexConnection);
   if(!gPlexus.is_ok()) {
     std::cout << " Can't load plex from " << plexSource << " " << plexConnection << std::endl;
     plexSource     = config.getString("plexusInterface_fallback","postgresql");
-    plexConnection = config.getString("plexusConnection_fallback","host=localhost port=5432");
+    plexConnection = config.getString("plexusConnection_fallback","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
     gPlexus.build(plexSource,plexConnection);
   }
   if(!gPlexus.is_ok()) {
