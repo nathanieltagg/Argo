@@ -26,7 +26,6 @@ Image.prototype.load = function(url){
           thisImg.completedTotal = e.total;
           thisImg.completedLoaded = e.loaded;
           thisImg.completedFrac = e.loaded / e.total;
-          console.log(thisImg.completedFrac);
           if(thisImg.onprogress) thisImg.onprogress(e);
         };
         xmlHTTP.onloadstart = function() {
@@ -253,7 +252,7 @@ GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
   }
   
   var percent = numerator/denominator*100;
-  console.log("Image progress:",numerator,denominator,percent);
+  // console.log("Image progress:",numerator,denominator,percent);
   $('.wireimg-encoded-progressbar-text').text("Loading wire data... "+parseInt(percent)+"%");
   $("div.wireimg-encoded-progressbar").progressbar("option",{value:percent});
   

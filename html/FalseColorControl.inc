@@ -1,8 +1,8 @@
 <style>
-.psuedoColorRow{ display:flex; display:-webkit-flex;}
-.psuedoColorRow .pslabel{ flex-basis: 40px}
-.psuedoColorRow .psslide{ display:inline-block; flex-grow: 1; }
-.psuedoColorRow .psval  { font-size: 0.7em;  flex-basis:25px; flex-grow:0; }
+.psuedoColorRow{ display:-webkit-flex; display:flex; }
+.psuedoColorRow .pslabel{ -webkit-flex-basis: 40px; flex-basis: 40px;}
+.psuedoColorRow .psslide{ display:inline-block; -webkit-flex-grow: 1; flex-grow: 1; }
+.psuedoColorRow .psval  { font-size: 0.7em; -webkit-flex-basis:25px;flex-basis:25px; -webkit-flex-grow:0; flex-grow:0; }
 </style>
 <div class="portlet" id="falsecolorcontrol-port"> 
   <div class="portlet-header">Wire False Color</div>
