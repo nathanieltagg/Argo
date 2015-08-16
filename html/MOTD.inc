@@ -11,11 +11,8 @@
   Recent updates: <br/>
   <ul> 
     
-    <li> FIXED false-color display artifacts - detector looks cleaner now! </li>
-    <li> ADDED ADC cutoffs for Tia</li>
-    <li> FIXED Removed blur on copy-from-offscreen</li>
-    <li> IMPROVE Build-textures-on-the-go. 25% speedup in first wire render, even faster on changing color scale.</li>
     <li> ADDED Progress bars </li>
+    <li> CHANGED New channel mapping </li>
     
   </ul>
 </div> 
