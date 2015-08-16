@@ -129,9 +129,9 @@ int main(int argc, char **argv)
 
 
     // Plexus.
-    gPlexus.build( "sqlite", "../config/plexus3.db" );
+    gPlexus.build( "sqlite", "../config/current_plexus.db" );
     if(!gPlexus.is_ok()) {
-      cout << "Can't configure plexus from sqlite." << endl;
+      cout << "Can't configure plexus from sqlite: ../config/current_plexus.db" << endl;
       gPlexus.build("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
     }
     if(!gPlexus.is_ok()) {
