@@ -6,7 +6,7 @@ dispatcherPort=2013;
 
 # Connection to plexus
 plexusInterface=sqlite;
-plexusConnection=/uboonenew/online_database/plexus4.db;
+plexusConnection=/uboonenew/online_database/current-plexus.db;
 plexusInterface_fallback=postgresql;
 plexusConnection_fallback= host=localhost port=5432;
 
