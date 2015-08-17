@@ -71,9 +71,13 @@ function HitHistogram( element  )
   
   this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
   this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
+  this.ctl_cut_max      =  GetBestControl(this.element,".hit-cut-max");
+  this.ctl_cut_min      =  GetBestControl(this.element,".hit-cut-min");
   
   $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
   $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
+  $(this.ctl_cut_max     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
+  $(this.ctl_cut_min     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); });
@@ -114,8 +118,8 @@ HitHistogram.prototype.BuildHistogram = function()
   
   var field = $(this.ctl_hit_field).val();
   switch(field) {
-    case "q":  this.hist = new Histogram(20,0,2000);  break;
-    case "t":  this.hist = new Histogram(32,0,3200);  break;
+    case "q":  this.hist = new Histogram(100,0,1000);  break;
+    case "t":  this.hist = new Histogram(32,0,9600);  break;
     case "σt": this.hist = new Histogram(50,0,2);  break;
     case "σt": this.hist = new Histogram(50,0,50);  break;
     case "view": this.hist = new Histogram(3,0,3);  break;
@@ -125,6 +129,9 @@ HitHistogram.prototype.BuildHistogram = function()
     default: 
      this.hist = new Histogram(5,0,5);  
   }
+  
+  var default_min = this.hist.min;
+  var default_max = this.hist.max;
   
   for(var i=0;i<hits.length;i++) {
     var w = hits[i][field];
@@ -137,10 +144,13 @@ HitHistogram.prototype.BuildHistogram = function()
   
   this.SetHist(this.hist,gHitColorScaler);
   this.ResetToHist(this.hist);
+  this.min_u = default_min;
+  this.max_u = default_max;
 
   gHitColorScaler.min = this.min_u;
   gHitColorScaler.max = this.max_u;    
-  gHitCut = gHitColorScaler;
+  // gHitCut.min = this.min_u;
+  // gHitCut.max = this.max_u;
   this.Draw();
   // gStateMachine.Trigger("hitChange");
 };
@@ -200,8 +210,11 @@ HitHistogram.prototype.FinishRangeChange = function()
 {
   // console.warn("HitHistogram::FinishRangeChange");
   gHitCut.field = $(this.ctl_hit_field).val();
-  gHitCut.min = this.min_u;
-  gHitCut.max = this.max_u;
+  if($(this.ctl_cut_max).is(":checked"))   gHitCut.max = this.max_u;
+  else gHitCut.max = 1e99;
+
+  if($(this.ctl_cut_min).is(":checked"))   gHitCut.min = this.min_u;
+  else gHitCut.min = -1e99;
 
   gStateMachine.Trigger('hitChange');
 };

@@ -12,6 +12,8 @@
       <option value="plane"                    >Plane</option>
       <option value="m"                        >Multiplicity</option>
     </select>
+    <label><input type='checkbox' class='saveable hit-cut-max' /> Cut high</label>
+    <label><input type='checkbox' class='saveable hit-cut-min' checked="checked" /> Cut low</label>
   </div>
 </div>
 
