@@ -143,7 +143,7 @@ int main(int argc, char **argv)
   
   // Plexus.
   std::string  plexSource     = config.getString("plexusInterface","sqlite");
-  std::string  plexConnection = config.getString("plexusConnection","../config/current_plexus.db");
+  std::string  plexConnection = config.getString("plexusConnection","../db/current-plexus.db");
 
   gPlexus.build(plexSource,plexConnection);
   if(!gPlexus.is_ok()) {
