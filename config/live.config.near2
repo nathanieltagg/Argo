@@ -12,16 +12,17 @@ plexusConnection_fallback= host=localhost port=5432;
 
 
 # options used for building event.
-options=_tilesize2048_;
-#options=_SUPERSPEED_; #uncomment this line to do every 4th wire.
+#Regular running:
+options=_tilesize2048_; # regular running
+period=5; # min time between event builds. could be slower.
+
+# This is what needs changing for laser:
+#options=_NOCAL_NORAW__SUPERSPEED_; # laser running
+#period=0.01; # min time between event builds. could be slower.
 
 # Cache file location.
 cacheDir=../live_event_cache;
 cacheUrl=live_event_cache;
-
-# Minimum time between calls for more data to dispatcher.
-# Could be slower if the processor bogs down
-period=5;
 
 # Maximum number of events to keep in the cache before deleting.
 maxFiles=20;
