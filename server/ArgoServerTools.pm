@@ -24,7 +24,7 @@ our $exec_arguments = "";
 our $allow_live_restart = 1;
 our $log_path = '../logs';
 
-do("../config/server_config.pl"); #|| die; # load file if present.
+do("../config/server_config.pl"); # # load file if present.
 
 
 our $msglog;

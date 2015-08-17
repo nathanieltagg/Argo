@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody end_tbody *div/;
 use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
-  use POSIX qw(strftime);
+use POSIX qw(strftime);
 use POSIX ();
 
 $exec_name = 'argo-live-backend';
@@ -40,7 +40,11 @@ if(-r $pidfile) {
         close PIDFILE;
         print "PID file exists - had pid $pid ".br;
         print "Trying to kill pid $pid".br;
-        kill &POSIX::SIGHUP, $pid;
+        $cmd="kill -s SIGKILL -v $exec_name";
+        print "<pre>";
+        system($cmd);
+        print "</pre>";
+        # kill &POSIX::SIGHUP, $pid;
         print "done".br;
         print "Deleting PID file.".br;
         unlink $pidfile;
@@ -52,6 +56,11 @@ if(-r $pidfile) {
         print "</pre>";
 }
 
+$cmd="ps  aux | grep $exec_name";
+print "Running $cmd".br;
+print "<pre>";
+system($cmd);
+print "</pre>";
 
 
 
