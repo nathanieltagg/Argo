@@ -82,7 +82,7 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   );
 
   // Configure for encoding speed:
-  png_set_compression_level(png_ptr, 1);
+  png_set_compression_level(png_ptr, 3); // 1 = very fast, poor compression
   
   // Try a simple filtering
   // filters = PNG_FILTER_NONE | PNG_FILTER_SUB
