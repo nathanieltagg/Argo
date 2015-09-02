@@ -66,7 +66,7 @@ function ChangeEvent( noreload )
   var par = $.deparam.fragment(true);
   console.log("ChangeEvent",par);
   
-  if(par.reload) {  window.location.reload(); };// Force a reload! 
+  if(par.reload) {  window.location.reload(); return; };// Force a reload! 
   
   // Clear all selection targets.
   $("input").blur();
