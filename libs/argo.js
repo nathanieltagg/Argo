@@ -516,15 +516,17 @@ $(function(){
   $('#status').attr('class', 'status-ok');  
   $("#status").text("Ready.");
 
-  
-  
+
+  // Remove the override code, if present, to stop infinite reloads.
+  var par = $.deparam.fragment(true);
+  if(par.reload) { delete par.reload; window.location.hash = '#' + $.param(par); }
+    
   // Initialize hashchange function.
   $(window).hashchange( ChangeEvent );
-  
-  
+    
   // Do intial trigger on page load.
-  console.log("Doing intitial hashchange trigger");
-  $(window).hashchange();
+  console.log("Doing intitial hashchange trigger");  
+  ChangeEvent();
 
 });
 

@@ -61,10 +61,13 @@ $(function(){
 })
 
 
-function ChangeEvent( )
+function ChangeEvent( noreload )
 {
   var par = $.deparam.fragment(true);
   console.log("ChangeEvent",par);
+  
+  if(par.reload) {  window.location.reload(); };// Force a reload! 
+  
   // Clear all selection targets.
   $("input").blur();
 
@@ -76,11 +79,12 @@ function ChangeEvent( )
             message:    $('#MOTD')
         });
   
+  
   if     ( par.localFile ) ReadLocalFile(par);
   else if( par.serverfile) QueryServer(par,par.serverfile);
   else if( par.filename  ) QueryServer(par,  "server/serve_event.cgi");
   else if( par.what      ) QueryServer(par,  "server/serve_event.cgi");
-  else if( gPageName == 'live' || par.live ) gLiveControl.refresh_live();
+  else if( gPageName == 'live' || par.live ) QueryServer(par,"server/serve_live.cgi");
   else QueryServer(par,"server/default_event.json");
 }
 
