@@ -90,25 +90,35 @@ function LiveControl( element )
       if($('#ctl-live-keep-up').is(":checked")) {      
         if(event.data != self.recent_cache_file) {
           self.time_last_refresh = Date.now();
-          var par = { request_cache: event.data };
-          QueryServer(par,"server/serve_live.cgi");        
+          var par = { live:1, request_cache: event.data };
+          window.location.hash = '#' + $.param(par);
+          //QueryServer(par,"server/serve_live.cgi");        
         }
       }
   };
   
   $('#recentEvents').on('click','span',this.RecentClicked.bind(this));
+  
+  // Start the clock
+  this.time_last_refresh = Date.now();
+  if($('#ctl-refresh-auto').is(":checked")) {
+    this.clockInterval = setInterval(do_clock,1000);    
+  }
+  
 }
 
 LiveControl.prototype.Refresh = function() 
 {
   console.warn("LivecControl::Refresh()",this);
-  var par = {live: 1};
+  var par = {live: 1, reload: 1};
   if(this.recent_cache_file) { 
     par.latest_cache = this.latest_cache_file; 
     par.recent_cache = this.recent_cache_file; 
   }
   this.time_last_refresh = Date.now();
-  QueryServer(par,"server/serve_live.cgi");
+  window.location.hash = '#' + $.param(par);
+  
+  // QueryServer(par,"server/serve_live.cgi");
 }
 
 LiveControl.prototype.refresh_live = function( force ) {
@@ -117,9 +127,6 @@ LiveControl.prototype.refresh_live = function( force ) {
   // if(this.refreshTimeout) clearTimeout(this.refreshTimeout);
 
   if($('#ctl-refresh-auto').is(":checked")) {
-    // restart timer.
-    // var delay = parseFloat($('#ctl-refresh-period').val())*1000;
-    //this.refreshTimeout = setTimeout(this.refresh_live.bind(this),delay);
     this.clockInterval = setInterval(do_clock,1000);    
   } else {
     if(this.clockInterval) {
@@ -180,8 +187,9 @@ LiveControl.prototype.RecentClicked = function(ev)
   var eventstr = $(ev.target).data('event');
 
   this.time_last_refresh = Date.now();
-  var par = { request_cache: eventstr };
-  QueryServer(par,"server/serve_live.cgi");
+  var par = { live:1, request_cache: eventstr };
+  window.location.hash = '#' + $.param(par);
+  // QueryServer(par,"server/serve_live.cgi");
 
   console.log(eventstr);
 }

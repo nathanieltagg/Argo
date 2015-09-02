@@ -273,6 +273,10 @@ TriDView.prototype.CreateSpacepoints = function()
 {  
   if(!$("#ctl-SpacepointLists").val()) return;
   var spacepoints = gRecord.spacepoints[$("#ctl-SpacepointLists").val()];
+  
+  // testing:
+  // var spacepoints = Reco3dSpacepoints(gRecord.hits.DAQ);
+
   for(var i=0;i<spacepoints.length;i++) {
     var sp = spacepoints[i];
     var hovobj = {obj:sp, type:"spacepoint", collection: spacepoints};    
