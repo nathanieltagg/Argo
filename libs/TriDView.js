@@ -710,6 +710,9 @@ TriDView.prototype.DrawFinish = function()
       SetOverlayPosition(offset.x + pt[0], offset.y + pt[1]);  
     }
   }
+  if($('#ctl-show-watermark').is(":checked"))
+     this.DrawWatermark();
+  
 };
 
 TriDView.prototype.HoverObject = function(thing)
@@ -729,4 +732,15 @@ TriDView.prototype.ClickObject = function(thing)
   else ClearSelection();
   //this.Draw();
 };
+
+
+TriDView.prototype.DrawWatermark = function()
+{
+  var img = $('img#watermark_logo').get(0);
+  if(img.complete) {
+    var aspect_ratio = img.height/img.width;
+    this.ctx.drawImage(img,5,5,100,100*aspect_ratio);
+  }
+  
+}
 
