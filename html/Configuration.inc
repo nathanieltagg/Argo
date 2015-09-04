@@ -3,14 +3,7 @@
       <div class="portlet-content">
         <!-- <form id="controls" action=""> -->
 
-        <select  id="ctl-hit-color-scale" class="saveable">
-			<option value="RedBluePalette" selected="selected">Red-Blue Palette</option>
-			<option value="BrownPurplePalette">Brown-Purple Palette</option>
-			<option value="GrayscalePalette">Grayscale</option>
-			<option value="CurtPalette">Curt's Color Palette</option>
-			<option value="PhilipColorPalette"  >Philip's Color Palette</option>
-			
-		</select><br/>
+
         <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
         <div id="mag-sliders">
           <div>
@@ -28,6 +21,7 @@
         <div><input type="checkbox" id="ctl-show-labels" name="ctl-show-labels" checked="checked" class="saveable"/><label for="ctl-show-labels">Draw Axis Labels</label></div>
         <div><input type="checkbox" id="ctl-show-tick-labels" name="ctl-show-tick-labels" checked="checked" class="saveable"/><label for="ctl-show-tick-labels">Draw Tick Values</label></div>
         <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio"             class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
+        <div><input type="checkbox" id="ctl-show-watermark" name="ctl-show-watermark"             class="saveable"/><label for="ctl-show-watermark">Show Watermark Logo</label></div>
 
         <div class="per-event-controls">
         <div><input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" class="saveable show-wireimg"  checked="checked"/><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>

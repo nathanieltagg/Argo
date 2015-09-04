@@ -15,6 +15,10 @@
       <label for="bigwireview-select-2">Plane 2</label>
 
     </span>
+    
+    <span class="align-left"> <button id='ctl-publication-settings' class='publication-settings'>Publication Settings</button></span>
+      
+    
 </div> <!-- portlet-content -->
 
 </div>  <!-- portlet -->

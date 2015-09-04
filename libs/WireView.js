@@ -147,6 +147,7 @@ function WireView( element, options )
   $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
+
   
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
@@ -399,7 +400,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   this.DrawScale();
   
-  if(this.showWatermark)
+  if($('#ctl-show-watermark').is(":checked"))
      this.DrawWatermark();
 
   this.ctx.restore();
