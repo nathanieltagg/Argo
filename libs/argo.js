@@ -531,16 +531,34 @@ $(function(){
 });
 
 
+
+
+// Publication settings
+// One-push-o button to set for publication.
+//
+$(function(){
+  $(".publication-settings").button().click( function() {
+    // Set some things:
+    $('#ctl-show-watermark').prop('checked',true);
+    $('#ctl-show-labels').prop('checked',true);
+    $('#ctl-show-tick-labels').prop('checked',false);
+    
+  })
+})
+
+
+
+
+
 // Time trial: what if instead of
 // hit = { q: 1, plane: 0, ... }
 // I instead did
 // hit = [1,0,...] 
 // 
 // Results: 4200 Hits
-// Size reduction is a factor of 3 (300 kB -> 100 kB)
+// Size reduction is a factor of 3 (300 kB -> 100 kB) (((WAS THIS BEFORE OR AFTER HTTP COMPRESSION???)))
 // Time to parse regular hits is ~6ms
 // Time to parse array and turn it into regular hits is 6ms + 8ms = 14 ms. 
-
 // So, not crazy, IF the data volume reduction is sufficient to increase speed.
 
 var gHitArrayHeader = [];
@@ -583,7 +601,6 @@ function convertHitsToArray()
 }
 
 var gRebuildHits =[];
-
 function convertArrayToHits()
 {
   console.time("convertArrayToHits()");
