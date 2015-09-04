@@ -220,6 +220,7 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   else if(id == 'falsecolor-Brightness')  gWirePseudoColor = new PsuedoBrightness; 
   else if(id == 'falsecolor-Blackbody')  gWirePseudoColor = new PsuedoBlackbody; 
   else if(id == 'falsecolor-Interp2')    gWirePseudoColor = new PsuedoInterpolator(2); 
+  else if(id == 'falsecolor-Interp3')    gWirePseudoColor = new PsuedoInterpolator(3); 
   
   this.NewRecord();
   gStateMachine.Trigger('ChangePsuedoColor');

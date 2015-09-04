@@ -25,6 +25,7 @@
       <li><a href="#falsecolor-Brightness">Bright</a></li>
       <li><a href="#falsecolor-Blackbody">BB</a></li>
       <li><a href="#falsecolor-Interp2">Intp2</a></li>
+      <li><a href="#falsecolor-Interp3">Intp3</a></li>
       
   	</ul>
     
@@ -184,6 +185,37 @@
       </div>
     </div>
 
+
+    <div id="falsecolor-Interp3" class='falsecolor-tab'>
+      3-color control point interpolation in RGB space<br/>
+      <div class='psuedoColorRow' > <span class='pslabel'>Color 0</span>
+                <input  type="text" data-index='0' id='falsecolor-interp2-color0'  class='saveable psuedo-color colorpicker' value='#FFFFFF'/>
+              </div>
+      <div class='psuedoColorRow' > <span class='pslabel'>Color 1</span>
+                <input  type="text" data-index='1' id='falsecolor-interp2-color1'  class='saveable psuedo-color colorpicker' value='#00FF00'/>
+              </div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Color 2</span>
+                <input  type="text" data-index='2' id='falsecolor-interp2-color2'  class='saveable psuedo-color colorpicker' value='#0000FF'/>
+              </div>
+              
+      <div class='psuedoColorRow' > <span class='pslabel'>Shift</span>
+                <div class='psslide psuedoDialOffsetSlider'></div>
+                <input id='falsecolor-interp2-dialoffset' class='psval saveable psuedoDialOffset' type="number" value='-0.5' width='3'/></div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
+                <div class='psslide psuedoAdcScaleSlider'></div> 
+                <input id='falsecolor-interp2-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='20' width='3'/> </div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
+                <div class='psslide psuedoDialScaleSlider'></div>
+                <input id='falsecolor-interp2-dialscale' class='psval saveable psuedoDialScale'  type="text"  value='0.25' width='3'/> </div>
+
+      <div class='psuedoColorRow'> Cutoff: &nbsp;
+        <input id='falsecolor-interp2-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='5'/>&nbsp; to &nbsp;
+        <input id='falsecolor-interp2-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='5'/></span>&nbsp; ADC &nbsp;
+      </div>
+    </div>
 
 </div> <!-- A-FalseColorControl -->
  <div class="wireimg-encoded-progressbar" style="position: relative; text-align:center;">

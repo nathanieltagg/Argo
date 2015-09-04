@@ -230,8 +230,18 @@ function PsuedoInterpolator( n )
   PseudoColor.call(this);
   this.color_table = [
     {r:255,g:255,b:255},
-    {r:255,g:0,b:0}
+    {r:255,g:0,b:0},
+    {r:0,g:0,b:255},
+    {r:0,g:0,b:0},
+    {r:255,g:0,b:0},
+    {r:0,g:0,b:255},
+    {r:0,g:0,b:0},
+    {r:255,g:0,b:0},
+    {r:0,g:0,b:255},
+    {r:0,g:0,b:0}
   ];
+  this.color_table = this.color_table.slice(0,n);
+  
   while(n>this.color_table.length) color_table.push( {r:0,g:255,b:0} );
 
 }
