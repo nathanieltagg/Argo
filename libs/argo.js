@@ -531,6 +531,11 @@ $(function(){
 });
 
 
+// Tooltips.
+// see https://jqueryui.com/tooltip/
+$(function() {
+  $( document ).tooltip();
+});
 
 
 // Publication settings
