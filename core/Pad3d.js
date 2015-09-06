@@ -231,7 +231,8 @@ function Pad3d( element, options )
       step:0.05,
       value: 1.0,
       slide: function(ev,ui){
-        console.log("slide",ui.value);
+        // This is the same effect as doing a Dolly Zoom in cinema.
+        // https://en.wikipedia.org/wiki/Dolly_zoom
         self.projection_scale = ui.value;
         self.Draw();
       }

@@ -172,7 +172,7 @@ TriDView.prototype.CreateFrame = function()
   this.AddLine(dx, dy, 0 ,  dx, dy, dz,  3, curColor);
 
   // MRI slice
-  if(gMRI){
+  if(gMRI && gMRI.has_been_adjusted){
     var mri_t = gMRI.t[0];
     var mri_x = gGeo.getXofTDC(0,mri_t);
     this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
