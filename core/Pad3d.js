@@ -253,12 +253,14 @@ Pad3d.prototype.ResetView = function()
   switch(this.view_mode)
   {
     case "XZ":
+      this.camera_distance = 230000;
       this.theta = Math.PI/2;
-      this.phi = -Math.PI/2;
+      this.phi = Math.PI/2;
       console.log("ResetView XZ.");
       break;
 
     case "YZ":
+      this.camera_distance = 230000;      
       this.theta = 0;
       this.phi = -Math.PI/2;
       console.log("ResetView YZ.");
