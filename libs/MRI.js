@@ -49,7 +49,7 @@ function MRI( element, options )
   this.fMouseStart  = {}; this.fMouseLast = {};
   this.fMousedWires = [];
   this.mouseable =[];
-  
+  this.has_been_adjusted = false;
   // $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   // $(this.element).bind('mousedown',function(ev) { return self.DoMouse(ev); });
   // $(window      ).bind('mouseup',function(ev) { return self.DoMouse(ev); });
@@ -157,6 +157,7 @@ function MRI( element, options )
   $(".ui-slider-handle",this.slider_grip).css("width","5em");
   
   this.ChangeT();
+  this.has_been_adjusted = false;
 }
 
 MRI.prototype.ZoomChange = function()
@@ -217,7 +218,9 @@ MRI.prototype.NewRecord = function()
   var d = this.t[1]-this.t[0];
   this.t[0] = this.hits[imid].tc;
   this.t[1] = this.t[0]+d;
-  this.ChangeT();
+  this.ChangeT();  
+  this.has_been_adjusted = false;
+  
 };
 
 MRI.prototype.ChangeTends = function(values)
@@ -272,7 +275,7 @@ MRI.prototype.ChangeT = function( )
   
   this.Draw();
   gStateMachine.Trigger("changeMRIslice");
-  
+  this.has_been_adjusted = true;
 };
 
 MRI.prototype.DrawTracks = function()
