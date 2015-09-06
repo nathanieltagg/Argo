@@ -64,6 +64,7 @@ function Pad3d( element, options )
   this.autorotate_speed = 0.005; // rad/incrment
   this.mouse_mode = "rotate";
   
+  this.projection_scale = 1.0;
   this.view_mode = "3D"; // Can also be XZ, YZ, or XY (all orthographic)
   
   // Merge in the options.
@@ -137,6 +138,19 @@ function Pad3d( element, options )
   
   var parent = $(this.element).parent();
 
+
+  $(".trid-zoom-slider"  ,parent)
+  .slider({
+    animate: "fast",
+    min:self.camera_distance_min,
+    max:self.camera_distance_max,
+    value: self.camera_distance,
+    slide: function(ev,ui){
+      console.log("slide",ui.value);
+      self.camera_distance = ui.value;
+      self.Draw();
+    }
+  });
   $(".trid-zoom-in"   ,parent)
     .button({icons: {primary: 'ui-icon-zoomin'},text: false})            
     .mousehold(function(ev){self.scrollMe(ev,-1);});
@@ -209,7 +223,19 @@ function Pad3d( element, options )
     .button({icons: {primary: 'ui-icon-note'},text: false})          
     .click(function(ev){self.CreateAnimation();});
 
-
+  $(".trid-projection-scale"     ,parent)
+    .slider({
+      animate: "fast",
+      min:0.2,
+      max:1.8,
+      step:0.05,
+      value: 1.0,
+      slide: function(ev,ui){
+        console.log("slide",ui.value);
+        self.projection_scale = ui.value;
+        self.Draw();
+      }
+    });
    this.Draw();
 }
 
@@ -274,6 +300,7 @@ Pad3d.prototype.ResetView = function()
       break;
   }
   
+  $(".trid-zoom-slider"     ,$(this.element).parent()).slider("value",self.camera_distance);
   
 };
 
@@ -495,8 +522,10 @@ Pad3d.prototype.DrawLines = function()
   trans = this.Translate(trans,-this.look_at[0],-this.look_at[1],-this.look_at[2]);
   trans = this.RotateY(trans,this.phi);
   trans = this.RotateX(trans,this.theta);
-  trans = this.Translate(trans,0,0,this.camera_distance);
+  trans = this.Translate(trans,0,0,this.camera_distance * this.projection_scale); // Projection scale is usually 1.0. This moves everything away from the camera.
   var i;
+  
+  var pd = this.proj_dist * this.projection_scale;
   
   for(i=0;i<this.objects.length;i++)
   {
@@ -525,17 +554,17 @@ Pad3d.prototype.DrawLines = function()
     line.draw = true;
     
     // Find projection onto screen.
-    line.au =  a.e(1)/a.e(3)*this.proj_dist;
-    line.av =  a.e(2)/a.e(3)*this.proj_dist;
-    line.bu =  b.e(1)/b.e(3)*this.proj_dist;
-    line.bv =  b.e(2)/b.e(3)*this.proj_dist;
+    line.au =  a.e(1)/a.e(3)*pd;
+    line.av =  a.e(2)/a.e(3)*pd;
+    line.bu =  b.e(1)/b.e(3)*pd;
+    line.bv =  b.e(2)/b.e(3)*pd;
 
     if(line.bz<this.clip_z) {
       // We need to clip the line.
       var lambda = (this.clip_z - line.az)/(line.bz-line.az);
       var c = a.add( b.subtract(a).multiply(lambda)  );
-      line.bu =  c.e(1)/c.e(3)*this.proj_dist;
-      line.bv =  c.e(2)/c.e(3)*this.proj_dist;
+      line.bu =  c.e(1)/c.e(3)*pd;
+      line.bv =  c.e(2)/c.e(3)*pd;
       
     }
 
@@ -555,7 +584,7 @@ Pad3d.prototype.DrawLines = function()
       if(obj.type=='l') {
         // Line
         // adjust line thickness for relative z.      
-        var linewidth = obj.linewidth/obj.meanz*this.proj_dist;
+        var linewidth = obj.linewidth/obj.meanz*pd;
         var x1 = cu-obj.au;
         var x2 = cu-obj.bu;
         var y1 = cv-obj.av;
@@ -598,7 +627,7 @@ Pad3d.prototype.DrawLines = function()
         // Point
         this.ctx.save();
         this.ctx.translate(cu-obj.au, cv-obj.av);
-        this.ctx.scale(this.proj_dist/obj.meanz,this.proj_dist/obj.meanz);
+        this.ctx.scale(pd/obj.meanz,pd/obj.meanz);
         this.ctx.beginPath();
         this.ctx.arc(0,0,obj.size,0,Math.PI*2,true);
         if(this.should_highlight(obj)) this.ctx.fillStyle = obj.fillhighlight;
@@ -724,6 +753,8 @@ Pad3d.prototype.findObjectUnderMouse = function(event)
   var u = this.width/2 -x;  // Translate and flip inverse to screen coords
   var v = this.height/2-y;
 
+  var pd = this.proj_dist * this.projection_scale;
+
   var selected = null;
   for(var i=0;i<this.objects.length;i++)
   {
@@ -735,7 +766,7 @@ Pad3d.prototype.findObjectUnderMouse = function(event)
         //                                 u,v,obj.au,obj.av,obj.bu,obj.bv,
         //                                 GeoUtils.line_to_point(u,v,obj.au,obj.av,obj.bu,obj.bv));
         if( GeoUtils.line_is_close_to_point(u,v,obj.au,obj.av,obj.bu,obj.bv,
-          this.mouse_highlight_range*this.proj_dist/obj.meanz) )
+          this.mouse_highlight_range*pd/obj.meanz) )
           selected = obj.source; 
         }
       }
@@ -743,7 +774,7 @@ Pad3d.prototype.findObjectUnderMouse = function(event)
         var du = u - obj.au;
         var dv = v - obj.av;
         var d = Math.sqrt(du*du+dv*dv);
-        if( d < this.mouse_highlight_range*this.proj_dist/obj.meanz ) selected = obj.source;
+        if( d < this.mouse_highlight_range*pd/obj.meanz ) selected = obj.source;
       }
   }
   return selected;
@@ -793,6 +824,7 @@ Pad3d.prototype.scrollMe = function(ev,delta)
     // Orthographic view.
     this.camera_distance += zoom*1000;
   }
+  $(".trid-zoom-slider"     ,$(this.element).parent()).slider("value",self.camera_distance);
   
   this.Draw();
   return false; // Capture the mouse event.
