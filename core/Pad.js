@@ -646,10 +646,6 @@ Pad.prototype.PrintHQ = function()
   // Restore defaults.
   this.canvas = saveCanvas;
   this.ctx    = saveCtx;  
-  
-  
-  // nuke buffer.
-  // document.removeChild(canvas); // Doesn't work. Is this thing a memory leak? I don't think so - I htink the canvas vanishes when it goes out of scope.
 };
 
 
