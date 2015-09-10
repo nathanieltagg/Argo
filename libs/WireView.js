@@ -147,6 +147,7 @@ function WireView( element, options )
   $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
+  $('#ctl-show-watermark'). change(function(ev) { return self.Draw(false); });
 
   
   // Flip planes control (for big wireview

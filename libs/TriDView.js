@@ -78,6 +78,8 @@ function TriDView( element, options ){
   $(this.ctl_show_mc     )   .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Rebuild(); });
+  $('#ctl-show-watermark'). change(function(ev) { return self.Draw(); });
+
 
   $('#ctl-TrackLists') .change(function(ev) { return self.Rebuild(); });
   $('#ctl-SpacepointLists').change(function(ev) { return self.Rebuild(); });
