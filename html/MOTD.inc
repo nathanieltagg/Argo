@@ -8,9 +8,9 @@
   <p>Querying server for event data...</p>
   <div id="loading_feedback"></div>
   <p><em>Message of the day:</em></p>
-  Recent updates: <br/>
+  Recent updates:<br/>
   <ul> 
-    
+    <li> ADDED "Link to current zoom" </li>
     <li> ADDED Progress bars </li>
     <li> CHANGED New channel mapping </li>
     
