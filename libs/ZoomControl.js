@@ -251,6 +251,28 @@ ZoomControl.prototype.FullZoom = function()
 
 ZoomControl.prototype.NewRecord = function()
 {
+  // First, see if something has been specified on in the URL hash
+  var par = $.deparam.fragment();
+  if(par.t1) {
+    var t1 = parseFloat(par.t1) || 0;
+    var t2 = parseFloat(par.t2) || 9600;    
+    gZoomRegion.changeTimeRange(t1,t2)
+
+    var wires= parseFloat(par.wires) || 150;
+    var h = par.wires/2;
+    
+    var plane0 = parseFloat(par.plane0) || gGeo.numWires(0)/2;
+    var plane1 = parseFloat(par.plane1) || gGeo.numWires(1)/2;
+    var plane2 = parseFloat(par.plane2) || gGeo.numWires(2)/2;
+    gZoomRegion.plane[0]=[plane0-h,plane0+h];
+    gZoomRegion.plane[1]=[plane1-h,plane1+h];
+    gZoomRegion.plane[2]=[plane2-h,plane2+h];
+      
+    gStateMachine.Trigger("zoomChange");
+    return;
+  }
+
+  // Do the default.
   if(gRecord.raw.DAQ)
     this.FullZoom(); // A better default for the control room
   else 
@@ -453,6 +475,29 @@ ZoomControl.prototype.Draw = function()
            "<span style='color: green'>"+Math.round(this.fMousedWires[1])+'</span> ' +
            "<span style='color: blue' >"+Math.round(this.fMousedWires[2])+'</span> ';
   }
+  txt += "<br/>";
+
+  var split1 = window.location.href.split('#');
+  var hash = split1[1] || "";
+  var split2 = split1[0].split('?');
+  var par = split2[1] || "";
+  var path = window.location.pathname;  
+
+  // Sanitize the hash to prevent someone from putting a script in there.
+  // hash = hash.replace(/(<([^>]+)>)/ig,"");
+  // hash = hash.replace(/\"\'/ig,"");
+  
+
+  var phash = $.deparam.fragment();
+  phash.t1 = gZoomRegion.tdc[0].toFixed(0);
+  phash.t2 = gZoomRegion.tdc[1].toFixed(0);
+  phash.wires = (gZoomRegion.plane[2][1]-gZoomRegion.plane[2][0]).toFixed(0);
+  phash.plane0 = (0.5*(gZoomRegion.plane[0][0]+gZoomRegion.plane[0][1])).toFixed(0);
+  phash.plane1 = (0.5*(gZoomRegion.plane[1][0]+gZoomRegion.plane[1][1])).toFixed(0);
+  phash.plane2 = (0.5*(gZoomRegion.plane[2][0]+gZoomRegion.plane[2][1])).toFixed(0);
+  
+  var lnk = window.location.protocol + "//" + window.location.hostname + path + par + "#" + $.param(phash);
+  $('a.linkzoom').attr('href',lnk);
   $('span.ZoomControl-Info').html(txt);
   
 };
