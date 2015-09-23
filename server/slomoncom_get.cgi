@@ -31,8 +31,8 @@ my ($avg,$rms,$count) = $dbh->selectrow_array("select avg(float_val), stddev(flo
 
   
 if($count==0) {
-  print "{'error': 'No results', 'count':0, 'channel_name':'$channel_name', 'channel_id':$channel_id}";
+  print "{\"error\": \"No results\", \"count\":0, \"channel_name\":\"$channel_name\", \"channel_id\":$channel_id}";
 } else {
-  print "{'avg':$avg, 'rms':$rms 'count':$count, 'channel_name':'$channel_name', 'channel_id':$channel_id}";
+  print "{\"avg\":$avg, \"rms\":$rms, \"count\":$count, \"channel_name\":\"$channel_name\", \"channel_id\":$channel_id}";
 }
 
