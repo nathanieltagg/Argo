@@ -296,7 +296,7 @@ MRI.prototype.DrawTracks = function()
       // Fixme: bezier
       var x = this.GetX(points[j].z);
       var y = this.GetY(points[j].y);
-      var t = gGeo.getTDCofX(2,points[j].x) - gGeo.fXTicksOffsets[0][0][2].offset;
+      var t = gGeo.getTDCofX(2,points[j].x - gGeo.wirePlaneX[2]);
       if(t>=this.t[0] && t <= this.t[1])
         pts.push([x,y]);
     }

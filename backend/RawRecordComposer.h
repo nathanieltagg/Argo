@@ -21,7 +21,6 @@ public:
   void composePMTs();
   void composeLaser();
 
-
   void getPmtFromCrateCardChan(int icrate, int icard,int ichan, int& outPmt, int& outGain,  std::string& outSpecial);
   JsonObject& fOutput; // Top-level output object
   std::string fOptions;
@@ -41,6 +40,7 @@ public:
   // State things:
   int fmintdc;
   int fmaxtdc;
+  double event_time;
   
   JsonObject fStats; // Processing metadata
   

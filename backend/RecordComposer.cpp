@@ -42,6 +42,8 @@
 #include "RootToJson.h"
 #include "crc32checksum.h"
 #include "WirePalette.h"
+#include "GetSloMonDB.h"
+
 #include <stdlib.h>
 
 #include "boost/thread/thread.hpp"
@@ -123,6 +125,24 @@ void RecordComposer::composeHeaderData()
   header.add("timeHigh",thigh);
   header.add("isRealData",ftr.jsonF("EventAuxiliary.isRealData_"));
   header.add("experimentType",ftr.jsonF("EventAuxiliary.experimentType_"));
+  
+
+  header.add("seconds",thigh);
+  header.add("daqTime",thigh*1000);
+  
+  event_time = thigh*1000; // ms
+
+  double swizzler_time = ftr.getF("raw::DAQHeader_daq__Swizzler.obj.fTime");
+  if(swizzler_time>0) {
+    // It's stored as a time_t.  Shift right 32 bits = divide by this crazy number. Then multiply by 1000 to get ms.
+    event_time = swizzler_time/4.294967296e+09*1000.;    
+  }
+  header.add("eventTime",event_time); // in ms.
+  
+  header.add("swizzlertime",event_time);
+  
+
+  
   
   // Add my own things. 
   // FIXME: this should come from the event data, not be hardcoded, but this will have to do for the moment.
@@ -1320,6 +1340,13 @@ void RecordComposer::compose()
   //
   composeHeaderData();
 
+  // Start DB lookups.  
+  GetSlowMonDB slm(event_time/1000.);
+  boost::thread slomon_thread(slm);
+  slm();
+  
+ 
+
   // Wire data.
   // Start first so background image conversion tasks can be started as we build the rest.
   if(doCal) composeCal();
@@ -1344,6 +1371,11 @@ void RecordComposer::compose()
   composeMC();
   
   RecordComposer::composeAssociations();
+    
+  
+  // Database lookup.
+  slomon_thread.join();
+  fOutput.add("hv",slm.val);  
     
   fOutput.add("stats",fStats);
   

@@ -45,6 +45,7 @@
 
 #include "boost/thread/thread.hpp"
 #include "waveform_tools.h"
+#include "GetSloMonDB.h"
 
 using namespace std;
 using namespace gov::fnal::uboone::datatypes;
@@ -103,10 +104,25 @@ void RawRecordComposer::compose()
     fCurrentEventDirname = fCacheStoragePath;
     fCurrentEventUrl     = fCacheStorageUrl;
   }
+  
+
+
+  
   composeHeader();
+
+  // Start DB lookups.  
+  GetSlowMonDB slm(event_time/1000.);
+  boost::thread slomon_thread(slm);
+  slm();
+  
   composeTPC();
   composePMTs();
   composeLaser();
+  
+  // Database lookup.
+  slomon_thread.join();
+  
+  fOutput.add("hv",slm.val);  
   fOutput.add("stats",fStats);
   
 
@@ -115,7 +131,7 @@ void RawRecordComposer::compose()
 
  
   
-void getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& header)
+double getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& header)
 {
   // check the event header.
   // uint32_t sec = record->getGlobalHeader().getSeconds();
@@ -167,8 +183,8 @@ void getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> recor
   header.add("microSeconds",usec);
   header.add("nanoSeconds",nsec);
   double daqtime = sec*1000 + nsec*1e-9;
-  
-  header.add("daqTime",daqtime);
+  return daqtime;
+  header.add("event_time",daqtime); // in ms.
 
 }
 
@@ -207,7 +223,7 @@ void RawRecordComposer::composeHeader()
   JsonObject header;
 
   // GET THE TIME
-  getTime(fRecord,header);
+  event_time = getTime(fRecord,header);
 
   header.add("run"           ,fRecord->getGlobalHeader().getRunNumber()    );
   header.add("subrun"        ,fRecord->getGlobalHeader().getSubrunNumber() );
@@ -221,6 +237,7 @@ void RawRecordComposer::composeHeader()
   // header.add("nanoSeconds",fRecord->getGlobalHeader().getNanoSeconds());
   header.add("recordOrigin", fRecord->getGlobalHeader().getRecordOrigin());
   
+  header.add("isRealData",1);
   
   // trigger data.
   JsonObject trig;

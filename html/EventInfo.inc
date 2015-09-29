@@ -22,6 +22,7 @@
         <tr><td class="key">Optical Pulses</td> <td class="val event-oppulse-names">none</td></tr>
         <tr><td class="key">Optical Hits</td>   <td class="val event-ophit-names">none</td></tr>
         <tr><td class="key">Optical Flashes</td>  <td class="val event-opflash-names">none</td></tr>
+        <tr><td class="key">Drift HV       </td>  <td class="val event-hv">Unknown</td></tr>
       </tbody></table>
       <div class="event-laser-info"></div>      
     </div>
