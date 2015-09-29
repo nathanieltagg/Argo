@@ -107,13 +107,7 @@ DataSource.prototype.NewRecord = function()
    //                  // +"&slice="+gCurrentSlice
    //                  ;    
    // Doing it this way is less efficient, but it prevents XSS attacks in the hash part of the URL
-  // $('#link-to-this-event').html(
-  //    '<a class="linkslow" href="#">Link to this event</a><br/>'+
-  //    '<a class="linkfast" href="#">Fast link to this event</a><br/>'
-  // );
-  // $('#link-to-this-event a.linkslow').attr('href',gUrlToThisEvent);
-  // $('#link-to-this-event a.linkfast').attr('href',fasturl);
-
+ 
   $('a.linktothis').attr('href',gUrlToThisEvent);
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Argo Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
 };

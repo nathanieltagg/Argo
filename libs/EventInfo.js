@@ -57,12 +57,12 @@ EventInfo.prototype.NewRecord = function()
     $(".event-datatype").text(gRecord.header.isRealData?"Real":"MC"); 
   }
 
-  var t = gRecord.header.seconds*1000 + gRecord.header.nanoSeconds*1e-6;
-  var date = new Date(t);
+  // var t = gRecord.header.seconds*1000 + gRecord.header.nanoSeconds*1e-6;
+  var date = new Date(gRecord.header.eventTime);
   $(".event-date").text(date.toLocaleDateString());
   $(".event-time").text(date.toLocaleTimeString());
 
-  $(".event-age").html(CreateTimeAgoElement(t));
+  $(".event-age").html(CreateTimeAgoElement(gRecord.header.eventTime));
   
   if(gRecord.source) {
     if("file" in gRecord.source)  $(".event-file").text(gRecord.source.file);
@@ -124,6 +124,14 @@ EventInfo.prototype.NewRecord = function()
   t="";
   for(i in gRecord.opflashes) { t += gRecord.opflashes[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
   $(".event-opflash-names").html(t.length?t:"Not present");
+  
+  var hv = "unknown";
+  if(gRecord.hv && gRecord.hv.avg) {
+    var val = gRecord.hv.avg/1000;
+    var err = gRecord.hv.rms/1000;
+    hv = val + "&pm;" + err + " kV";
+  }
+  $(".event-hv").html(hv);
   
 };
 
