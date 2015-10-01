@@ -104,8 +104,8 @@ void RawRecordComposer::compose()
     fCurrentEventUrl     = fCacheStorageUrl;
   }
   composeHeader();
-  composeTPC();
-  composePMTs();
+  try{ composeTPC(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
+  try{ composePMTs(); } catch(...) { std::cerr << "Caught exception in composePMTs();" << std::endl; }
   composeLaser();
   fOutput.add("stats",fStats);
   

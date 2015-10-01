@@ -21,6 +21,8 @@
 #include "dispatcher/ConvertDispatcherToEventRecord.h"
 #include "datatypes/raw_data_access.h"
 #include "online_monitor/Plexus.h"
+#include "datatypes/uboone_data_utils.h"
+
 
 
 #include <signal.h>
@@ -105,6 +107,10 @@ int main(int argc, char **argv)
   signal (SIGTERM, TerminationHandler);
 
   // Startup:
+  gov::fnal::uboone::datatypes::peek_at_next_event<ub_TPC_CardData_v6>(false);
+  gov::fnal::uboone::datatypes::peek_at_next_event<ub_PMT_CardData_v6>(false);
+  gov::fnal::uboone::datatypes::handle_missing_words<ub_TPC_CardData_v6>(true);
+  gov::fnal::uboone::datatypes::handle_missing_words<ub_PMT_CardData_v6>(true);
   
   // write a PID file.
   std::string progname = argv[0];
@@ -248,8 +254,8 @@ int main(int argc, char **argv)
     }
     catch(...) {
        logInfo << "Error: could not unpack event record";
-       SaveHeartbeat(heartbeatInfo, "Problem unpacking data from dispatcher.");
-       continue;
+       SaveHeartbeat(heartbeatInfo, "Problems unpacking data from dispatcher.");
+       //continue;
     }
      
     if(!record) {
