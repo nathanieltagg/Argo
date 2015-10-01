@@ -29,6 +29,7 @@
   <div style="width: 33%; margin-left: 33.35%"            >
     <div class="pad A-WireHistogram" style="width:100%; height:100px" data-options='{"plane": 1}'></div>
   </div>
+        <div><input type="checkbox" name="ctl-lock-aspect-ratio" class="ctl-lock-aspect-ratio saveable"/><label style='color: black;' for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
 
 </div> <!-- portlet-content -->
 </div>  <!-- portlet -->

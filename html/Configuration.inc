@@ -3,8 +3,8 @@
       <div class="portlet-content">
         <!-- <form id="controls" action=""> -->
 
-        <div><label>HV:<input type="text" id="ctl-high-voltage" value="128.0" size='5'/>kv</label> </div>
-        <div><input type="checkbox" id="ctl-lock-aspect-ratio" name="ctl-lock-aspect-ratio"             class="saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
+        
+        <div><label>HV:</label><input type="text" id="ctl-high-voltage" value="128.0" size='5'/><label>kv</label> </div>
 
         <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
         <div id="mag-sliders">

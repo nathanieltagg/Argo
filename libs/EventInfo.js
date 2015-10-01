@@ -129,7 +129,7 @@ EventInfo.prototype.NewRecord = function()
   if(gRecord.hv && gRecord.hv.avg) {
     var val = gRecord.hv.avg/1000;
     var err = gRecord.hv.rms/1000;
-    hv = val + "&pm;" + err + " kV";
+    hv = val.toFixed(2) + "&pm;" + err.toFixed(2) + " kV";
   }
   $(".event-hv").html(hv);
   

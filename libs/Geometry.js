@@ -111,8 +111,6 @@ function Geometry()
       87      // lAr temperature, Kelvin
   ); // sets this.drift_cm_per_tick
 
-  // (0.3 cm/wire) / (0.081 cm/tdc)
-  this.fTdcWirePitch = 0.3/ 0.0818566; // tdc per wire.
 
   // X distance from origin of wire planes 0,1,2.
   this.wirePlaneX = [0,0.270,0.521];
@@ -300,12 +298,6 @@ Geometry.prototype.yzToWire = function(plane,y,z)
   return wire;
 };
 
-// Create an object to hold state info.
-Geometry.prototype.efield = function() 
-{
-  // this.hv is HV in kV.  Return field in kV/cm.
-  return this.hv /256.04; 
-}
 
 Geometry.prototype.SetHV = function(hv, temperature) 
 {
@@ -374,6 +366,10 @@ Geometry.prototype.SetHV = function(hv, temperature)
     
     // Convert to standard units: cm per tick
     this.drift_cm_per_tick = vd/2.0;  // 2.0 Mhz per tick
+    
+    // (0.3 cm/wire) / (0.081 cm/tdc)
+    this.fTdcWirePitch = 0.3/ this.drift_cm_per_tick; // tdc per wire.
+    
 };
 
 

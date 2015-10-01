@@ -21,7 +21,7 @@ function ZoomRegion() {
 
   this.tdc = [0,3200];
 
-  this.wireview_aspect_ratio = 1.0;
+  this.wireview_aspect_ratio = 2;
                  
   this.copy = function() {
     return $.extend(true,{},this);
@@ -49,7 +49,7 @@ function ZoomRegion() {
     if(low === undefined) low = 0;
     if(high === undefined) high = 9600;
     this.tdc=[low,high];
-    if($('#ctl-lock-aspect-ratio').is(":checked")) {
+    if($('.ctl-lock-aspect-ratio:checked').length>0) {
       
       var newWireWidth = (high-low) / (gGeo.fTdcWirePitch * this.wireview_aspect_ratio);    
       console.log("adjusting for aspect ratio ",newWireWidth);
@@ -94,7 +94,7 @@ function ZoomRegion() {
       if(isNaN(this.plane[ip][0]) || isNaN(this.plane[ip][1]) ) {debugger;}
     }
     
-    if($('#ctl-lock-aspect-ratio').is(":checked")) {    
+    if($('.ctl-lock-aspect-ratio:checked').length>0) {
       var newTDCHalfWidth = halfWidth * gGeo.fTdcWirePitch * this.wireview_aspect_ratio;    
       var centerTdc = (this.tdc[0] + this.tdc[1])/2;
       this.tdc[0] = centerTdc - newTDCHalfWidth;
