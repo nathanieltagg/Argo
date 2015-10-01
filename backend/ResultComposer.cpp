@@ -23,6 +23,8 @@
 #include <TTime.h>
 #include "JsonElement.h"
 #include "online_monitor/DaqFile.h"
+#include "datatypes/uboone_data_utils.h"
+
 
 
 using namespace std; 
@@ -219,6 +221,11 @@ void ResultComposer::compose_from_raw(
   // if(dst && oRefresh) { dst->Close(); delete dst; dst = NULL; }
   // if(!dst) dst = new TFile(inDstFile,"READ");
   
+  gov::fnal::uboone::datatypes::peek_at_next_event<ub_TPC_CardData_v6>(false);
+  gov::fnal::uboone::datatypes::peek_at_next_event<ub_PMT_CardData_v6>(false);
+  gov::fnal::uboone::datatypes::handle_missing_words<ub_TPC_CardData_v6>(true);
+  gov::fnal::uboone::datatypes::handle_missing_words<ub_PMT_CardData_v6>(true);
+  
   DaqFile daqfile(inFile);
   
   if(! daqfile.Good() ) {
@@ -244,13 +251,13 @@ void ResultComposer::compose_from_raw(
   try {
     record = daqfile.GetEvent(inStart);
   } catch ( std::exception& e ) {
-    result.add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile + " " + e.what());
-    return;
+    //result.add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile + " " + e.what());
+    //return;
   }
   
   if(!record) {
     result.add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile);
-    return;
+    //return;
   }
       
   JsonObject source;
