@@ -146,6 +146,9 @@ else
          BLIBS += -lsqlite3
 endif
 
+#libcurl
+BLIBS += -lcurl
+
 
 #Dependency rule
 tmp/%.d : %.cpp

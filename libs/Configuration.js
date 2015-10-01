@@ -27,21 +27,24 @@ $(function(){
  
 
 
-  $('#ctl-lock-aspect-ratio').change(function() {
-    // Force the zoom system to acknowledge the change, by 
-    // making a null zoom.
-    if($(this).is(":checked")) {
-      gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
-      gStateMachine.Trigger("zoomChange");
-    }
+
+  
+  $('#ctl-high-voltage').change(function(){
+    var hv = parseFloat($('#ctl-high-voltage').val()) || 128.0;
+    gGeo.SetHV(hv);
+    gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
+    gStateMachine.Trigger("zoomChange");    
   });
+  
 
 
   /// Important: callback to load wire data if user re-checks the box.
   $('#ctl-show-wireimg').change(CheckWireDataReload);
   
   // prevent controls from capturing the keyboard events.  Remove focus if gathereed.
-  $('#config-port input').on("focus",function(ev){this.blur();});
+  $('#config-port input:checkbox').on("focus",function(ev){this.blur();});
+  $('#config-port input:text').on("change",function(ev){this.blur();});
+  
   $('#config-port select').on("focus",function(ev){this.blur();});
   $('#config-port button').on("focus",function(ev){this.blur();});
 

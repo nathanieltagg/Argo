@@ -149,6 +149,13 @@ function DoInitialBookmarking()
     }
     
   }
+  
+  if(gRecord.hv && gRecord.hv.avg) {
+    $('#ctl-high-voltage').val(gRecord.hv.avg/1000.);
+  }
+  var hv = parseFloat($('#ctl-high-voltage').val()) || 128.0;
+  gGeo.SetHV(hv);
+  
   RestoreControlSettings("save",$('div.per-event-controls'));
 
 }

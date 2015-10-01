@@ -332,8 +332,6 @@ function StartEvent()
   gEventsLoadedThisSession +=1;
 
   
-  
-  
   // Populate data from header, when that's available.
 
   // Update the input forms with up-to-date data.
@@ -362,9 +360,9 @@ function StartEvent()
   console.log("   //...\\\\    '||''| .|''|, .|''|, ");
   console.log("  //     \\\\    ||    ||  || ||  || ");
   console.log(".//       \\\\. .||.   `|..|| `|..|' ");
-  console.log("                         ||        ");
-  console.log("                      `..|'        ");
-  console.log("Cool, you know how to open the console. You should definately work on Argo with us. --Nathaniel");
+  console.log("                         ||          ");
+  console.log("                      `..|'          ");
+  console.log("Cool, you know how to open the console. You should definitely work on Argo with us. --Nathaniel");
 }
 
 function DoPerformanceStats()

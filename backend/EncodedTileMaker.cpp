@@ -3,7 +3,7 @@
 #include "TimeReporter.h"
 #include "TH1D.h"
 #include "boost/thread/thread.hpp"
-
+#include "wireOfChannel.h"
 
 
 // given an input wiremap,
@@ -258,21 +258,6 @@ void MakeEncodedTileset(JsonObject& r,
   
 }
 
-void wireOfChannel(int channel, int& plane, int& wire)
-{
-  if(channel < 2399) {
-    plane = 0; wire= channel; return;
-  }
-  else if(channel <4798) {
-    plane = 1; 
-    wire = channel - 2399;
-    return;
-  }
-  else{
-    plane = 2;
-    wire= channel-4798;
-    return;
-  }
-}
+
 
 
