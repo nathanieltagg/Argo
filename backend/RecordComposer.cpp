@@ -43,6 +43,8 @@
 #include "crc32checksum.h"
 #include "WirePalette.h"
 #include "GetSloMonDB.h"
+#include "wireOfChannel.h"
+#include "waveform_tools.h"
 
 #include <stdlib.h>
 
@@ -138,7 +140,6 @@ void RecordComposer::composeHeaderData()
     event_time = swizzler_time/4.294967296e+09*1000.;    
   }
   header.add("eventTime",event_time); // in ms.
-  
   header.add("swizzlertime",event_time);
   
 
@@ -881,7 +882,6 @@ void RecordComposer::composeRaw()
       short pedestal = ftr.getInt(l_pedestal,i);
       int wire = i; // default
       if(l_channel) wire = ftr.getInt(l_channel,i);
-      if(wire)
       if(pedestal<0) pedestal = 0; // Didn't read correctly.
       jpedestals.add(pedestal);
       
@@ -890,13 +890,29 @@ void RecordComposer::composeRaw()
       // Waveform storage.
       std::pair<wiremap_t::iterator,bool> inserted;
       waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( (*ptr) )); // make a copy
-      // std::cout << "Setting pedestal. " << pedestal << " " << (*waveform_ptr)[0] << std::endl;
-      // pedestal = (*waveform_ptr)[0];
-      if(pedestal>0) {
-        for(int iii=0;iii<waveform_ptr->size();iii++){
-          (*waveform_ptr)[iii] -= pedestal;
-        }
+      
+      // int planewire,plane;
+      // wireOfChannel(wire,plane,planewire);
+      waveform_t& waveform = *waveform_ptr;
+      size_t nsamp = waveform.size();
+  
+      // // Find the pedestal manually.
+      waveform_tools::pedestal_computer pedcomp;
+      for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+      int ped = pedcomp.ped();
+      double rms = pedcomp.rms(); // auto-adjusted rms.
+
+      for(size_t i =0; i< nsamp; i++) {
+        waveform[i] -= ped;
       }
+  
+      // // std::cout << "Setting pedestal. " << pedestal << " " << (*waveform_ptr)[0] << std::endl;
+      // // pedestal = (*waveform_ptr)[0];
+      // if(pedestal>0) {
+      //   for(int iii=0;iii<waveform_ptr->size();iii++){
+      //     (*waveform_ptr)[iii] -= pedestal;
+      //   }
+      // }
       
       inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
       ntdc = max(ntdc,ptr->size());
@@ -1375,7 +1391,8 @@ void RecordComposer::compose()
   
   // Database lookup.
   slomon_thread.join();
-  fOutput.add("hv",slm.val);  
+  JsonElement hv; hv.setStr(slm.val);
+  fOutput.add("hv",hv);  
     
   fOutput.add("stats",fStats);
   

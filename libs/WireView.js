@@ -125,6 +125,8 @@ function WireView( element, options )
   this.ctl_show_reco =  GetBestControl(this.element,".show-reco");
   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
   this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
+  this.ctl_lock_aspect_ratio    =  GetLocalControl(this.element,".ctl-lock-aspect-ratio");
+  
 
   $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
@@ -148,6 +150,17 @@ function WireView( element, options )
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(false); });
+  $(this.ctl_lock_aspect_ratio). change(function(ev) { 
+      // Force the zoom system to acknowledge the change, by making a null zoom.
+      // MOre trickery
+      if($(this).is(":checked")) {
+        gZoomRegion.wireview_aspect_ratio = (self.span_y)/(self.span_x);
+        console.log("Setting new aspect ratio",gZoomRegion.wireview_aspect_ratio,"pixels");
+        gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
+        gStateMachine.Trigger("zoomChange");
+      }
+      $('.ctl-lock-aspect-ratio').not(this).attr("checked",false);
+  });
 
   
   // Flip planes control (for big wireview
@@ -424,24 +437,30 @@ WireView.prototype.DrawWatermark = function()
 
 WireView.prototype.DrawScale = function()
 {
+  // Horizontal:
+  
+  var pix_span = 50;
   var uspan = (this.max_u-this.min_u);
+  var u2 = this.max_u - uspan*0.05; // Right hand side.
+  var x2 = this.GetX(u2);
+  var x1 = x2-pix_span;
+  var u1 = this.GetU(x1);
+  
   // Hardcoded wire pitch.
-  var metric_w = (uspan*0.25) * 0.3; // 20% of pad wide, find in mm.
-  var ticks = this.GetGoodTicks(0,metric_w,2,false);
-  var lasttick = ticks[ticks.length-1];
+  var metric_w = (u2-u1) * 0.3; // 20% of pad wide, find in mm.
+  var lasttick = this.GetGoodTicks(0,metric_w,2,false).slice(-1).pop();  // trick to find a nice round number of cm. Retrives last entry in a list of good tick marks
   var w = lasttick/0.3; // Length of marker line in wires
   
-  var u2 = this.max_u - uspan*0.05;
-  var u1 = u2-w;
+  u1 = u2-w;
   var x1 = this.GetX(u1);
-  var x2 = this.GetX(u2);
   var v  = (this.max_v-this.min_v)*0.95 + this.min_v;
   var y  = this.GetY(v);
   
+  console.warn("horizontal scale:",x2-x1);
   this.ctx.save();
   this.ctx.strokeStyle = "black";
   this.ctx.fillStyle = "black";
-  this.ctx.moveTo(x1,y); 
+  this.ctx.moveTo(x1,y);
   this.ctx.lineTo(x2,y);
   this.ctx.moveTo(x1,y-2);
   this.ctx.lineTo(x1,y+2);
@@ -456,6 +475,72 @@ WireView.prototype.DrawScale = function()
   this.ctx.textBaseline = "top";
   this.ctx.fillText(txt,(x1+x2)*0.5, y);
   this.ctx.restore();
+  
+  // Vertical:
+  // Translate width in wires to width in TDC.
+  var d_tdc = w*0.3/gGeo.drift_cm_per_tick;
+  var x = x2;
+  var y1 = y;
+  var y2 = this.GetY(v-d_tdc);
+  console.warn("vertical scale:",y2-y1);
+  
+  this.ctx.save();
+  this.ctx.strokeStyle = "black";
+  this.ctx.fillStyle = "black";
+  this.ctx.moveTo(x,y1);
+  this.ctx.lineTo(x,y2);
+  this.ctx.moveTo(x-2,y1);
+  this.ctx.lineTo(x+2,y1);
+  this.ctx.moveTo(x-2,y2);
+  this.ctx.lineTo(x+2,y2);
+  this.ctx.stroke();
+  // this.ctx.font="8px";
+  // this.ctx.textAlign= "center";
+  // this.ctx.textBaseline = "top";
+  // this.ctx.translate(x,(y1+y2)*0.5);
+  // this.ctx.rotate(Math.PI/2.);
+  // this.ctx.fillText(txt,0,0);
+  this.ctx.restore();
+
+  
+  // Vertical:
+  // This version does the same as horizontal. No use.
+  //
+  // var vspan = (this.max_v-this.min_v);
+  // // Hardcoded wire pitch.
+  // var metric_h = (vspan*0.25) * gGeo.drift_cm_per_tick; // 20% of pad wide, find in mm.
+  // var ticks = this.GetGoodTicks(0,metric_h,2,false);
+  // var lasttick = ticks[ticks.length-1];
+  // var h = lasttick/gGeo.drift_cm_per_tick; // Length of marker line in tdc
+  //
+  // var v2 = this.max_v - vspan*0.05;
+  // var v1 = v2-h;
+  // var y1 = this.GetY(v2);
+  // var y2 = this.GetY(v1);
+  // var u  = this.max_u - (this.max_u-this.min_u)*0.05;
+  // var x  = this.GetX(u);
+  //
+  // this.ctx.save();
+  // this.ctx.strokeStyle = "black";
+  // this.ctx.fillStyle = "black";
+  // this.ctx.moveTo(x,y1);
+  // this.ctx.lineTo(x,y2);
+  // this.ctx.moveTo(x-2,y1);
+  // this.ctx.lineTo(x+2,y1);
+  // this.ctx.moveTo(x-2,y2);
+  // this.ctx.lineTo(x+2,y2);
+  // this.ctx.stroke();
+  // this.ctx.font="8px";
+  // var txt = lasttick + " cm";
+  // if(lasttick<=0.9) { txt = lasttick*10 + " mm";}
+  // if(lasttick>=100) { txt = lasttick/100 + " m";}
+  // this.ctx.textAlign= "center";
+  // this.ctx.textBaseline = "top";
+  // this.ctx.translate(x,(y1+y2)*0.5);
+  // this.ctx.rotate(Math.PI/2.);
+  // this.ctx.fillText(txt,0,0);
+  // this.ctx.restore();
+  
 };
 
 

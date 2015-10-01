@@ -122,7 +122,8 @@ void RawRecordComposer::compose()
   // Database lookup.
   slomon_thread.join();
   
-  fOutput.add("hv",slm.val);  
+  JsonElement hv; hv.setStr(slm.val);
+  fOutput.add("hv",hv);  
   fOutput.add("stats",fStats);
   
 
@@ -182,10 +183,10 @@ double getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> rec
   header.add("seconds",sec);
   header.add("microSeconds",usec);
   header.add("nanoSeconds",nsec);
-  double daqtime = sec*1000 + nsec*1e-9;
-  return daqtime;
-  header.add("event_time",daqtime); // in ms.
+  double daqtime = (sec + nsec*1e-9) * 1000; // in ms
+  header.add("eventTime",daqtime); // in ms.
 
+  return daqtime;
 }
 
   
