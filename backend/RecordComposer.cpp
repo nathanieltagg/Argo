@@ -42,6 +42,10 @@
 #include "RootToJson.h"
 #include "crc32checksum.h"
 #include "WirePalette.h"
+#include "GetSloMonDB.h"
+#include "wireOfChannel.h"
+#include "waveform_tools.h"
+
 #include <stdlib.h>
 
 #include "boost/thread/thread.hpp"
@@ -123,6 +127,23 @@ void RecordComposer::composeHeaderData()
   header.add("timeHigh",thigh);
   header.add("isRealData",ftr.jsonF("EventAuxiliary.isRealData_"));
   header.add("experimentType",ftr.jsonF("EventAuxiliary.experimentType_"));
+  
+
+  header.add("seconds",thigh);
+  header.add("daqTime",thigh*1000);
+  
+  event_time = thigh*1000; // ms
+
+  double swizzler_time = ftr.getF("raw::DAQHeader_daq__Swizzler.obj.fTime");
+  if(swizzler_time>0) {
+    // It's stored as a time_t.  Shift right 32 bits = divide by this crazy number. Then multiply by 1000 to get ms.
+    event_time = swizzler_time/4.294967296e+09*1000.;    
+  }
+  header.add("eventTime",event_time); // in ms.
+  header.add("swizzlertime",event_time);
+  
+
+  
   
   // Add my own things. 
   // FIXME: this should come from the event data, not be hardcoded, but this will have to do for the moment.
@@ -861,7 +882,6 @@ void RecordComposer::composeRaw()
       short pedestal = ftr.getInt(l_pedestal,i);
       int wire = i; // default
       if(l_channel) wire = ftr.getInt(l_channel,i);
-      if(wire)
       if(pedestal<0) pedestal = 0; // Didn't read correctly.
       jpedestals.add(pedestal);
       
@@ -870,13 +890,29 @@ void RecordComposer::composeRaw()
       // Waveform storage.
       std::pair<wiremap_t::iterator,bool> inserted;
       waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( (*ptr) )); // make a copy
-      // std::cout << "Setting pedestal. " << pedestal << " " << (*waveform_ptr)[0] << std::endl;
-      // pedestal = (*waveform_ptr)[0];
-      if(pedestal>0) {
-        for(int iii=0;iii<waveform_ptr->size();iii++){
-          (*waveform_ptr)[iii] -= pedestal;
-        }
+      
+      // int planewire,plane;
+      // wireOfChannel(wire,plane,planewire);
+      waveform_t& waveform = *waveform_ptr;
+      size_t nsamp = waveform.size();
+  
+      // // Find the pedestal manually.
+      waveform_tools::pedestal_computer pedcomp;
+      for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+      int ped = pedcomp.ped();
+      double rms = pedcomp.rms(); // auto-adjusted rms.
+
+      for(size_t i =0; i< nsamp; i++) {
+        waveform[i] -= ped;
       }
+  
+      // // std::cout << "Setting pedestal. " << pedestal << " " << (*waveform_ptr)[0] << std::endl;
+      // // pedestal = (*waveform_ptr)[0];
+      // if(pedestal>0) {
+      //   for(int iii=0;iii<waveform_ptr->size();iii++){
+      //     (*waveform_ptr)[iii] -= pedestal;
+      //   }
+      // }
       
       inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
       ntdc = max(ntdc,ptr->size());
@@ -1320,6 +1356,13 @@ void RecordComposer::compose()
   //
   composeHeaderData();
 
+  // Start DB lookups.  
+  GetSlowMonDB slm(event_time/1000.);
+  boost::thread slomon_thread(slm);
+  slm();
+  
+ 
+
   // Wire data.
   // Start first so background image conversion tasks can be started as we build the rest.
   if(doCal) composeCal();
@@ -1344,6 +1387,12 @@ void RecordComposer::compose()
   composeMC();
   
   RecordComposer::composeAssociations();
+    
+  
+  // Database lookup.
+  slomon_thread.join();
+  JsonElement hv; hv.setStr(slm.val);
+  fOutput.add("hv",hv);  
     
   fOutput.add("stats",fStats);
   

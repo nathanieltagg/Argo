@@ -17,6 +17,7 @@
     </span>
     
     <span class="align-left"> <button id='ctl-publication-settings' class='publication-settings'>Publication Settings</button></span>
+      <div>&nbsp;&nbsp;<input type="checkbox" name="ctl-lock-aspect-ratio" class="ctl-lock-aspect-ratio saveable"/><label for="ctl-lock-aspect-ratio">Lock TDC/Wire aspect ratio</label></div>
       
     
 </div> <!-- portlet-content -->

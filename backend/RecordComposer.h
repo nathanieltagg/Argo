@@ -84,6 +84,7 @@ public:
   TreeReader ftr;
   static std::string sfFileStoragePath;
   static std::string sfUrlToFileStorage;
+  double event_time;
   
 };
 

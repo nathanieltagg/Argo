@@ -23,16 +23,16 @@ my $date = param('t');
 
 my $tolerance = "60 s"; #seconds
 
-my ($avg,$rms,$count) = $dbh->selectrow_array("select avg(float_val), stddev(float_val), count(float_val) from sample "
+my ($avg,$rms,$count,$interpdate) = $dbh->selectrow_array("select avg(float_val), stddev(float_val), count(float_val), cast(? as timestamp with time zone) from sample "
     ."where channel_id = ? "
-    ."and smpl_time > cast(? as timestamp) - cast(? as interval) "
-    ."and smpl_time < cast(? as timestamp) + cast(? as interval);",
-  undef, $channel_id, $date, $tolerance, $date, $tolerance );
+    ."and smpl_time > cast(? as timestamp with time zone) - cast(? as interval) "
+    ."and smpl_time < cast(? as timestamp with time zone) + cast(? as interval);",
+  undef, $date, $channel_id, $date, $tolerance, $date, $tolerance );
 
   
 if($count==0) {
-  print "{\"error\": \"No results\", \"count\":0, \"channel_name\":\"$channel_name\", \"channel_id\":$channel_id}";
+  print "{\"error\": \"No results\", \"date\":\"$interpdate\", \"count\":0, \"channel_name\":\"$channel_name\", \"channel_id\":$channel_id}";
 } else {
-  print "{\"avg\":$avg, \"rms\":$rms, \"count\":$count, \"channel_name\":\"$channel_name\", \"channel_id\":$channel_id}";
+  print "{\"date\":\"$interpdate\", \"avg\":$avg, \"rms\":$rms, \"count\":$count, \"channel_name\":\"$channel_name\", \"channel_id\":$channel_id}";
 }
 
