@@ -2,6 +2,25 @@
 #include <iostream>
 #include <curl/curl.h>
 
+GetSlowMonDB::GetSlowMonDB(const std::string& inTime,// ="now"
+                           const std::string& inChannel//="uB_TPCDrift_HV01_1_0/voltage"
+                          )
+    : val("{\"error\":\"Can't connect to DB\"}")
+    , time(inTime)
+    , channel(inChannel)
+{};
+
+GetSlowMonDB::GetSlowMonDB(double inTime, // seconds since epoch
+                            const std::string& inChannel //="uB_TPCDrift_HV01_1_0/voltage"
+                              )
+  : val("{\"error\":\"Can't connect to DB\"}")
+  , channel(inChannel)
+{
+  std::time_t t = inTime;
+  char buf[100];
+  strftime(buf,sizeof(buf),"%F %T", std::gmtime(&t));
+  time = buf;
+};
 
 
 
