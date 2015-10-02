@@ -218,6 +218,48 @@ PsuedoBlackbody.prototype.ColorDialToColor = function( colorDial )
 }
 
 
+///////////////////////////////////////////
+// ROOT rainbow
+///////////////////////////////////////////
+
+PsuedoRootRainbow.prototype = new PseudoColor();
+function PsuedoRootRainbow( )
+{
+  
+  // const int NRGBs = 5;
+  //       double stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+  //       double red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+  //       double green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+  //       double blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
+ 
+  PseudoColor.call(this);
+  this.color_table = [
+    [0.00*255, 0.00*255, 0.51*255], // stop 0.00        
+    [0.00*255, 0.81*255, 1.00*255], // stop 0.34    
+    [0.87*255, 1.00*255, 0.12*255], // stop 0.61
+    [0.51*255, 0.00*255, 0.00*255], // stop 1.00   
+  ];
+  this.stops = [0.00,0.34,0.61,1.00];
+}
+
+PsuedoRootRainbow.prototype.ColorDialToColor = function( colorDial )
+{
+  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+
+  var j = 0;
+  while(this.stops[j]<norm) j++;
+  var i = j-1;
+  
+  var dx = (norm - this.stops[i])/(this.stops[j]-this.stops[i]);
+  
+  return { 
+    r: this.color_table[i][0] + dx*(this.color_table[j][0] - this.color_table[i][0]),
+    g: this.color_table[i][1] + dx*(this.color_table[j][1] - this.color_table[i][1]),
+    b: this.color_table[i][2] + dx*(this.color_table[j][2] - this.color_table[i][2])
+  }
+}
+
+
 
 ///////////////////////////////////////////
 // Interpolator
