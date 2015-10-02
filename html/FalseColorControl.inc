@@ -24,8 +24,9 @@
       <li><a href="#falsecolor-LOCS">LOCS</a></li>
       <li><a href="#falsecolor-Brightness">Bright</a></li>
       <li><a href="#falsecolor-Blackbody">BB</a></li>
+      <li><a href="#falsecolor-RootRainbow">Root</a></li>
       <li><a href="#falsecolor-Interp2">Intp2</a></li>
-      <li><a href="#falsecolor-Interp3">Intp3</a></li>
+      <!-- <li><a href="#falsecolor-Interp3">Intp3</a></li> -->
       <li><a href="#falsecolor-Interp4">Intp4</a></li>
       
   	</ul>
@@ -158,6 +159,29 @@
     </div>
 
 
+    <div id="falsecolor-RootRainbow" class='falsecolor-tab'>
+      ROOT Rainbow<br/>
+      <div class='psuedoColorRow' > <span class='pslabel'>Shift</span>
+                <div class='psslide psuedoDialOffsetSlider'></div>
+                <input id='falsecolor-rootrainbow-dialoffset' class='psval saveable psuedoDialOffset' type="number" value='0.25' width='3'/></div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
+                <div class='psslide psuedoAdcScaleSlider'></div> 
+                <input id='falsecolor-rootrainbow-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='20' width='3'/> </div>
+
+      <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
+                <div class='psslide psuedoDialScaleSlider'></div>
+                <input id='falsecolor-rootrainbow-dialscale' class='psval saveable psuedoDialScale'  type="text"  value='0.4' width='3'/> </div>
+      <!-- <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
+                <div class='psslide psuedoSaturationSlider'></div>
+                <input id='falsecolor-locs-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div> -->
+
+      <div class='psuedoColorRow'> Cutoff: &nbsp;
+        <input id='falsecolor-rootrainbow-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='5'/>&nbsp; to &nbsp;
+        <input id='falsecolor-rootrainbow-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='5'/></span>&nbsp; ADC &nbsp;
+      </div>
+    </div>
+
 
     <div id="falsecolor-Interp2" class='falsecolor-tab'>
       Two-color control point interpolation in RGB space<br/>
@@ -186,7 +210,7 @@
       </div>
     </div>
 
-
+<!--
     <div id="falsecolor-Interp3" class='falsecolor-tab'>
       3-color control point interpolation in RGB space<br/>
       <div class='psuedoColorRow' > <span class='pslabel'>Color 0</span>
@@ -199,13 +223,13 @@
       <div class='psuedoColorRow' > <span class='pslabel'>Color 2</span>
                 <input  type="text" data-index='2' id='falsecolor-interp2-color2'  class='saveable psuedo-color colorpicker' value='#0000FF'/>
               </div>
-              
+
       <div class='psuedoColorRow' > <span class='pslabel'>Shift</span>
                 <div class='psslide psuedoDialOffsetSlider'></div>
                 <input id='falsecolor-interp2-dialoffset' class='psval saveable psuedoDialOffset' type="number" value='-0.5' width='3'/></div>
 
-      <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
-                <div class='psslide psuedoAdcScaleSlider'></div> 
+      <div class='psuedoColorRow' > <span class='pslabel'>Warp</span>
+                <div class='psslide psuedoAdcScaleSlider'></div>
                 <input id='falsecolor-interp2-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='20' width='3'/> </div>
 
       <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
@@ -216,7 +240,7 @@
         <input id='falsecolor-interp2-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='5'/>&nbsp; to &nbsp;
         <input id='falsecolor-interp2-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='5'/></span>&nbsp; ADC &nbsp;
       </div>
-    </div>
+    </div> -->
 
     <div id="falsecolor-Interp4" class='falsecolor-tab'>
       4-color control point interpolation in RGB space<br/>
