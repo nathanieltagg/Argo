@@ -278,8 +278,8 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
     assert(waveform[i]>=0);
     assert(waveform[i]<4096);
     waveform[i] -= ped;
-    assert(waveform[i]>-4095);
-    assert(waveform[i]<4095);
+    assert(waveform[i]>-4096);
+    assert(waveform[i]<4096);
     pf(waveform[i]);
   }
     
