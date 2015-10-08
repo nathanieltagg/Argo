@@ -308,7 +308,7 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   
 
   // Hack to see if this improves the control-room computer: instead of immediately rendering, instead include a 1s timeout.
-  setTimeout(this.Render.bind(this),1000);
+  setTimeout(this.Render.bind(this),500);
 }
 
 GLMapper.prototype.build_LUT_texture = function( ) 
