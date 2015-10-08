@@ -304,10 +304,11 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 
   console.log("GLMapper finished loading, going on to render ",this.typ,this.num_images_loaded);
   // $("div.wireimg-encoded-progressbar").progressbar("destroy");
-  $('.wireimg-encoded-progressbar-text').text("Done!");
+  $('.wireimg-encoded-progressbar-text').text("Loaded!");
   
 
-  this.Render();
+  // Hack to see if this improves the control-room computer: instead of immediately rendering, instead include a 1s timeout.
+  setTimeout(this.Render.bind(this),1000);
 }
 
 GLMapper.prototype.build_LUT_texture = function( ) 
@@ -429,7 +430,9 @@ GLMapper.prototype.Render = function()
   console.timeEnd('GLMapper::Render');
   console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
   console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
-  gStateMachine.Trigger('colorWireMapsChanged');
+  $('.wireimg-encoded-progressbar-text').text("Rendered!");
+
+  gStateMachine.Trigger('colorWireMapsChanged');  
 }
 
 
