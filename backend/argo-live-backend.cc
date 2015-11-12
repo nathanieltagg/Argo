@@ -23,7 +23,7 @@
 #include "online_monitor/Plexus.h"
 #include "datatypes/uboone_data_utils.h"
 
-
+#include "TTimeStamp.h"
 
 #include <signal.h>
 #include <glob.h>
@@ -151,17 +151,15 @@ int main(int argc, char **argv)
   std::string  plexSource     = config.getString("plexusInterface","sqlite");
   std::string  plexConnection = config.getString("plexusConnection","../db/current-plexus.db");
 
-  gPlexus.build(plexSource,plexConnection);
-  if(!gPlexus.is_ok()) {
-    std::cout << " Can't load plex from " << plexSource << " " << plexConnection << std::endl;
-    plexSource     = config.getString("plexusInterface_fallback","postgresql");
-    plexConnection = config.getString("plexusConnection_fallback","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
-    gPlexus.build(plexSource,plexConnection);
-  }
-  if(!gPlexus.is_ok()) {
-    logWarn << "Reverting to hard-coded connections mapping, since no DB is working.";
-    gPlexus.buildHardcoded();
-  }
+  gPlexus.assignSources(
+      config.getString("plexusTpcSource","sqlite ../db/current-plexus.db"),
+      config.getString("plexusPmtSource","sqlite ../db/current-plexus.db"),
+      config.getString("plexusTpcSource_fallback",""),
+      config.getString("plexusPmtSource_fallback","")
+    );
+  
+  gPlexus.rebuild((double)TTimeStamp());
+  
   
   // Connect to dispatcher.
   // FIXME: Make configurable.

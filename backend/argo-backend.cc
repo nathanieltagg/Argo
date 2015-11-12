@@ -129,17 +129,12 @@ int main(int argc, char **argv)
 
 
     // Plexus.
-    gPlexus.build( "sqlite", "../db/current-plexus.db" );
-    if(!gPlexus.is_ok()) {
-      cout << "Can't configure plexus from sqlite: ../db/current-plexus.db" << endl;
-      gPlexus.build("postgresql","host=fnalpgsdev.fnal.gov port=5436 dbname=uboonedaq_dev user=uboonedaq_web password=argon!uBooNE");
-    }
-    if(!gPlexus.is_ok()) {
-      cout << "Can't configure plexus from postgres." << endl;
-      gPlexus.buildHardcoded();
-      cout << "Built plexus hardcoded; no other sources.\n";
-    }
-
+    gPlexus.assignSources(
+      "sqlite ../db/current-plexus.db",
+      "sqlite ../db/current-plexus.db"
+    );  
+    gPlexus.rebuild((double)TTimeStamp(),0);
+    
     ss = new MySocketServer(tcpPortNumber);
     if(ss->Setup()) exit(1);  // Quit if socket won't bind.
 

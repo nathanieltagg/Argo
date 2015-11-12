@@ -52,7 +52,7 @@ endif
 SOURCES = $(notdir $(wildcard *.cpp)) \
           $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) \
           DaqFile.cpp \
-          Plexus.cpp Plexus_hardcode_tpc.cpp \
+          Plexus.cpp  \
           Client.cpp \
           DispatcherMessage.cpp \
           KvpSet.cpp \
