@@ -225,6 +225,7 @@ void RawRecordComposer::composeHeader()
 
   // GET THE TIME
   event_time = getTime(fRecord,header);
+  if(event_time>0) gPlexus.rebuild(event_time);
 
   header.add("run"           ,fRecord->getGlobalHeader().getRunNumber()    );
   header.add("subrun"        ,fRecord->getGlobalHeader().getSubrunNumber() );
