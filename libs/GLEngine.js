@@ -1,18 +1,12 @@
 
 
+// Create the mapper objects.
 $(function(){
   gGLMapperRawLowres = new GLMapper('raw_lowres');
+  gGLMapperCalLowres = new GLMapper('cal_lowres');
 
   gGLMapperRaw = new GLMapper('raw');
-
-  //$('body').append(gGLMapperRaw.canvas)
   gGLMapperCal = new GLMapper('cal');
-
-  // gStateMachine.Bind('ChangePsuedoColor',function(){
-  //   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val() || "raw";
-  //   var objnm = '_' + this.show_image;
-  //   UpdateColoredWireMap(objnm);
-  // });
 });
 
 //
