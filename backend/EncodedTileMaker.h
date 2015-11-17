@@ -109,6 +109,15 @@ void MakeEncodedTileset(JsonObject& output,
                         const std::string& options="",
                         bool fill_empty_space=false);
 
+void MakeLowres(JsonObject& r,
+            std::shared_ptr<wiremap_t> wireMap, 
+            size_t nwire,
+            size_t nsamp,
+            const std::string& path,
+            const std::string& url,
+            const std::string& options,
+            bool fill_emty_space);
+                        
 
 #endif /* end of include guard: ENCODEDTILEMAKER_H_FE65EB56 */
 

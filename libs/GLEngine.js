@@ -1,7 +1,10 @@
 
 
 $(function(){
+  gGLMapperRawLowres = new GLMapper('raw_lowres');
+
   gGLMapperRaw = new GLMapper('raw');
+
   //$('body').append(gGLMapperRaw.canvas)
   gGLMapperCal = new GLMapper('cal');
 
@@ -12,7 +15,9 @@ $(function(){
   // });
 });
 
-
+//
+// Add a function to the built-in Image object
+// that peforms a load, but reports progress as it goes.
 Image.prototype.load = function(url){
         var thisImg = this;
         var xmlHTTP = new XMLHttpRequest();
@@ -34,8 +39,7 @@ Image.prototype.load = function(url){
           thisImg.completedLoaded = 0;
         };
         xmlHTTP.send();
-    };
-    
+    };    
 Image.prototype.completedFrac = 0;
 Image.prototype.completedTotal = 1;
 Image.prototype.completedLoaded = 0;
@@ -154,6 +158,8 @@ GLMapper.prototype.NewRecord = function()
     // Create a tiled image to hold this raw data.
     if(gRecord[this.typ][product]) {
       this.tile_urls= gRecord[this.typ][product].wireimg_encoded_tiles;
+      this.scale_x  = gRecord[this.typ][product].wireimg_scale_x || 1;
+      this.scale_y  = gRecord[this.typ][product].wireimg_scale_y || 1;
       if(this.tile_urls) this.StartLoad();
     }    
   }
@@ -165,7 +171,7 @@ GLMapper.prototype.StartLoad = function()
   this.tile_images = [];
   this.tile_textures = [];
   
-  console.time("GLMapper.StartLoad");
+  console.time("GLMapper.StartLoad",this.typ);
   var self = this;
   
   this.loaded = false;
@@ -185,7 +191,7 @@ GLMapper.prototype.StartLoad = function()
     this.total_height += row_height;
     this.total_width  = Math.max(row_width,this.total_width);
   }
-
+  
   // Only now can we set up the GL context. Why? Because for
   // some stupid reason, this doesn't work:
   // - set canvas size to w1,h1
@@ -260,7 +266,7 @@ GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 {
-  console.log("GLMapper::ImageLoaded",jrow,jcol);
+  console.log("GLMapper::ImageLoaded",this.typ,jrow,jcol);
   console.time("GLMapper::ImageLoaded: one image");
   this.ImageProgress(jrow,jcol);
   //Draw in this particular item.
@@ -366,6 +372,8 @@ GLMapper.prototype.Render = function()
   var utyp = '_' + this.typ;
   if(!gRecord[utyp]) gRecord[utyp] = {};
   if(!gRecord[utyp].colored_wire_canvas) gRecord[utyp].colored_wire_canvas = this.canvas;
+  gRecord[utyp].scale_x = this.scale_x;
+  gRecord[utyp].scale_y = this.scale_y;
 
   console.time('Build LUT');  
   var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
