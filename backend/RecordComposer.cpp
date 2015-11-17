@@ -743,6 +743,7 @@ void RecordComposer::composeCal()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
   JsonObject reco_list;
+  JsonObject reco_list2;
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
@@ -833,8 +834,19 @@ void RecordComposer::composeCal()
     reco_list.add(stripdots(name),r);
     
  
+    {
+      JsonObject r2;
+      TimeReporter lowres_stats("time_to_make_lowres");
+      MakeLowres( r2,
+                     wireMap, 
+                     nwire,
+                     ntdc, sfFileStoragePath, sfUrlToFileStorage, fOptions, false );
+      reco_list2.add(stripdots(name),r2);
+    }
+    
   }
   fOutput.add("cal",reco_list);
+  fOutput.add("cal_lowres",reco_list2);
 }
 
 void RecordComposer::composeRawAvailability()
@@ -854,6 +866,7 @@ void RecordComposer::composeRaw()
 {
   vector<string> leafnames = findLeafOfType("vector<raw::RawDigit>");
   JsonObject reco_list;
+  JsonObject reco_list2;
   
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
@@ -932,10 +945,22 @@ void RecordComposer::composeRaw()
                             true );
     
     reco_list.add(stripdots(name),r);
+    
+    {
+      JsonObject r2;
+      TimeReporter lowres_stats("time_to_make_lowres");
+      MakeLowres( r2,
+                     wireMap, 
+                     nwire,
+                     ntdc, sfFileStoragePath, sfUrlToFileStorage, fOptions, false );
+      reco_list2.add(stripdots(name),r2);
+    }
+    
     timer.addto(fStats);
     
   }
   fOutput.add("raw",reco_list);
+  fOutput.add("raw_lowres",reco_list2);
 }
 
 
