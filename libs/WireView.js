@@ -551,25 +551,38 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 
   // look for offscreen canvas.
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
+  var canvas = null;
   var objnm = '_' + this.show_image;
-  if(!gRecord[objnm]) return; // No such data.
-  if(!gRecord[objnm].colored_wire_canvas) return; // No such data.
-  var canvas = gRecord[objnm].colored_wire_canvas;
+  if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
+      canvas = gRecord[objnm].colored_wire_canvas;
+  }
+    
+  if(!canvas /* || fast */) {
+    objnm = '_' + this.show_image + "_lowres";
+    if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
+        canvas = gRecord[objnm].colored_wire_canvas; 
+    }
+  }
+  if(!canvas) return;
+  var scale_x = gRecord[objnm].scale_x || 1;
+  var scale_y = gRecord[objnm].scale_y || 1;
 
   // FIXME: thumbnails for faster panning.
   
   if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
    var min_tdc     = Math.max(0,this.min_v);
-   var max_tdc     = Math.min(canvas.width,this.max_v); 
+   var max_tdc     = Math.min(canvas.width*scale_x,this.max_v); 
    var min_wire    = Math.max(this.min_u,0);
    var max_wire    = Math.min(this.max_u,gGeo.numWires(this.plane));
    var min_channel = gGeo.channelOfWire(this.plane, min_wire);
    var max_channel = gGeo.channelOfWire(this.plane, max_wire);
    
-   var source_x = Math.round(min_tdc);
-   var source_y = Math.round(min_channel);
-   var source_w = Math.round(max_tdc-min_tdc);
-   var source_h = Math.round(max_channel-min_channel);
+   var source_x = Math.round(min_tdc/scale_x);
+   var source_y = Math.round(min_channel/scale_y);
+   var source_w = Math.round((max_tdc-min_tdc)/scale_x);
+   var source_h = Math.round((max_channel-min_channel)/scale_y);
+  
+   console.log("Copy source coords:",source_x,source_y,source_w,source_h);
   
    // Find position and height of destination in screen coordinates. Note we'll 
    // have to rotate these for final picture insertion.

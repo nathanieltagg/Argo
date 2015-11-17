@@ -440,6 +440,19 @@ void RawRecordComposer::composeTPC()
 
     reco_list.add("DAQ",r);
     fOutput.add("raw",reco_list);
+    
+    {
+      JsonObject r2;
+      TimeReporter lowres_stats("time_to_make_lowres");
+      MakeLowres( r2,
+                     wireMap, 
+                     nwire,
+                     ntdc, fCurrentEventDirname, fCurrentEventUrl, fOptions, false );
+      JsonObject reco_list2;
+      reco_list2.add("DAQ",r2);
+      fOutput.add("raw_lowres",reco_list2);
+    }
+    
   }
   
     

@@ -70,10 +70,10 @@ void MakeLowres(JsonObject& r,
 
   // for each output 'wire'
   for(int iwire_out = 0; iwire_out<nwire_out; iwire_out++) {
-    waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp_out));
+    waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp_out,-4000));
     wireMap_out->insert(wiremap_t::value_type(iwire_out, waveform_ptr));
     waveform_t& waveform = *waveform_ptr;
-    for(int i=0;i<nsamp_out;i++) waveform[i] = -4000; // Initialize
+    // for(int i=0;i<nsamp_out;i++) waveform[i] = -4000; // Initialize
     
     for(int iwire_in = iwire_out*factor_y; (iwire_in < (iwire_out+1)*factor_y) && iwire_in<nwire; iwire_in++) {
       wiremap_t::iterator it = wireMap->find(iwire_in);
@@ -91,8 +91,9 @@ void MakeLowres(JsonObject& r,
   JsonArray jrow;
   jrow.add(tm.json());
   jtiles.add(jrow);      
-  
-  r.add("wireimg_encoded_tiles_lowres",jtiles);  
+  r.add("wireimg_scale_x",factor_x);
+  r.add("wireimg_scale_y",factor_y);
+  r.add("wireimg_encoded_tiles",jtiles);  
 }
 
 void MakeEncodedTileset(JsonObject& r,
@@ -248,13 +249,6 @@ void MakeEncodedTileset(JsonObject& r,
     
   }
   
-  {
-    TimeReporter lowres_stats("time_to_make_lowres");
-    MakeLowres( r,
-                   wireMap, 
-                   nwire,
-                   ntdc, path, url, options, fill_empty_space );
-  }
   
 }
 
