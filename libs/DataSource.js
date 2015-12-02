@@ -13,11 +13,14 @@ function DataSource()
 
   function PushFEHash()
   {
-    $.bbq.pushState({
-      filename: $('#inFilename').val(),
-      entry: $('#inFeEntry').val(),
-      //selection: $('#inFeSelection').val()
-    },2);
+    var newstate={
+      filename:   $('#inFilename').val(),
+      entry:      0
+    };
+    if($('#inEntryOrEvent').val()=="Entry") newstate.entry = $('#inFeEntry').val();
+    else newstate.selection="EventAuxiliary.id_.event_=="+$('#inFeEntry').val();
+    
+    $.bbq.pushState( newstate, 2 );
   }
 
 

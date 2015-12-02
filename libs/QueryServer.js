@@ -161,20 +161,6 @@ function QueryServer( par, myurl )
     if(data.filename) data.filename = encodeURIComponent(par.filename);
     if(!data.options) data.options = opts;
         
-    
-    // if(querytype === "fe") {
-    //   var file = $('#inFilename').val();
-    //   var entry = $('#inFeEntry').val();
-    //   var selection = encodeURIComponent($('#inFeSelection').val());
-    //   data = { filename: file, 
-    //               selection: selection,
-    //               entry: entry,
-    //               options: opts };
-    // } else {
-    //   $('#status').attr('class', 'status-error');
-    //   $("#status").text("Unknown request type "+ querytype);
-    //   return;      
-    // }
     var param = $.param(data);
     
     $('#status').attr('class', 'status-transition');
@@ -335,7 +321,8 @@ function StartEvent()
   // Populate data from header, when that's available.
 
   // Update the input forms with up-to-date data.
-  $(".inEntry").val(gEntry);
+  $("#inFeEntry").val(gEntry);
+  if($('#inEntryOrEvent').val()=="Event" && gRecord.header.event) $("#inFeEntry").val(gRecord.header.event);
   $('#inFilename').val(gFile);
   
   if(gRecord.source) {
