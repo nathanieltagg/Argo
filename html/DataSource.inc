@@ -15,8 +15,13 @@
       <label class='tbfill'>Filename:</label>
       <span><input type="text" class="ui-state-default tbfill"  id="inFilename" name="inFilename" value="standard_reco_uboone.root"/></span>
       <span style='display:none;'><label>Cut:  </label><input style="width:200px" class="inSelection ui-state-default" type="text" id="inFeSelection" name="inFeSelection" value="1"/></span>
-      &nbsp;&nbsp;&nbsp; <label>Entry:  </label><input class="inEntry ui-state-default" type="text" size="5" id="inFeEntry" name="inFeEntry" value="0"/>
-      <input class="ui-state-default ui-corner-all" type="button" id="go_fe" value="Go!" /> <br/>
+      &nbsp;&nbsp;&nbsp;
+      <select id="inEntryOrEvent">
+        <option value="Entry">Entry</option>
+        <option value="Event">Event</option>
+      </select>
+       <input class="ui-state-default" type="text" size="5" id="inFeEntry" name="inFeEntry" value="0"/>
+       <input class="ui-state-default ui-corner-all" type="button" id="go_fe" value="Go!" /> <br/>
      </form> 
      
      <button class='next-event ui-state-default ui-corner-all styled-button'>(N)ext Event</button>
