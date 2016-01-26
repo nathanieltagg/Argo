@@ -324,6 +324,18 @@ $(function() {
                    });
 });
 
+
+
+////////////////////////////////////////
+// Auto-Save
+////////////////////////////////////////
+$(function(){
+  $('.auto-save-on-change').on("click change",function(ev) {
+    val = $(this).val();
+    if($(this).is(":checkbox")) val = $(this).is(":checked");
+    $.cookie("save:"+this.id,val);    
+  });
+})
   
 
 ////////////////////////////////////////
