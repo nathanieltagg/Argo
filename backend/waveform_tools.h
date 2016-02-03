@@ -80,6 +80,7 @@ struct peak_finder : public std::vector< peak >
   
   void operator()(double x) 
   { 
+    // Call this once per sample in the waveform
     double _x = x*_sign;
     if(_x > _thresh) {
       // we're in a peak
@@ -105,6 +106,18 @@ struct peak_finder : public std::vector< peak >
     }
     _count++;
   };
+  
+  void finish()
+  {
+    // Call this after you've scanned the waveform
+    if(_on) {  // finish current peak.
+    _on = false;
+    _cur.tstop = _count;
+    if(_cur.tstop-_cur.tstart >= _minsamp)
+      push_back(_cur);
+    }          
+  }
+  
   
   double _thresh; // Threshold for accepting a peak
   double _sign; // Threshold for accepting a peak
