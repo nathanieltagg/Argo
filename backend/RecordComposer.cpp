@@ -36,7 +36,7 @@
 #include "TimeReporter.h"
 #include "TreeReader.h"
 #include "TreeElementLooter.h"
-#include "ColorMap.h"
+// #include "ColorMap.h"
 #include "MakePng.h"
 #include "EncodedTileMaker.h"
 #include "RootToJson.h"
@@ -879,7 +879,7 @@ void RecordComposer::composeRaw()
     int ndig = lf->GetLen();
     
     JsonObject r;
-    ColorMap colormap;
+    // ColorMap colormap;
   
     TreeElementLooter l(fTree,name+"obj.fADC");
     TLeaf* l_pedestal = fTree->GetLeaf(string(name+"obj.fPedestal").c_str());
