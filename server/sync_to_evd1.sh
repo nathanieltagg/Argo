@@ -15,5 +15,5 @@ ssh tagg@ubooneevd1.fnal.gov "/localdata/argo_live_event_cache/delete_old.sh"
 
 # contents of the delete_old.sh script:
 # !/bin/bash
-# rm -rf `find /localdata/argo_live_event_cache -maxdepth 1 -type d -name "cache_*" -mtime +1`
+# rm -rf `ls -d cache_* | sort -n | head -n -2`
 #
