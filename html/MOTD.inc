@@ -10,11 +10,6 @@
   <p><em>Message of the day:</em></p>
   Recent updates:<br/>
   <ul> 
-    <li> MAJOR FIX - Aspect Ratio Lock now correct! </li>
-    <li> MAJOR Feature - Pulls HV from slomon database! </li>
-    <li> ADDED "Link to current zoom" </li>
-    <li> ADDED Progress bars </li>
-    <li> CHANGED New channel mapping </li>
-    
+    <li> Major upgrade: Default smooth out wires based on RMS. Samples less than 3 sigma are zeroed. Use the 'CutRMS slider' to adjust. </li>    
   </ul>
 </div> 
