@@ -8,7 +8,15 @@
 #include <map>
 #include <memory>
 
-typedef std::vector<int16_t> waveform_t;
+// typedef std::vector<int16_t> waveform_t;
+struct waveform_t : public std::vector<int16_t>
+{
+  waveform_t(size_t n=0, int16_t def=0) : std::vector<int16_t>(n,def)  {_pedwidth=0;}
+  waveform_t(const waveform_t& other) : std::vector<int16_t>(other)  {_pedwidth=other._pedwidth;}
+  waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0;}
+  int16_t _pedwidth;
+};
+
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;
 typedef std::map<int, waveform_ptr_t > wiremap_t;
 
@@ -45,13 +53,14 @@ public:
       if(it != m_wireMap->end()) {
         // We have a good wire recorded.0
         waveform_t& waveform = *(it->second.get());
+        uint8_t encoded_ped = abs(waveform._pedwidth) & 0xFF;
         
         for(int k=0;k<ntdc;k++) {
           int iadc = waveform[k+m_tdcStart] + 0x8000;
           // iadc = (k+m_tdcStart - 4800)/2 + 0x8000; // Testing only :generates a linear slope map
-          encodeddata[k*3]   = 0xFF&(iadc>>8);
-          encodeddata[k*3+1] = iadc&0xFF;
-          encodeddata[k*3+2] = 0;
+          encodeddata[k*3]   = 0xFF&(iadc>>8);  // high 8 bits (really 5)
+          encodeddata[k*3+1] = iadc&0xFF;       // low 8 bits
+          encodeddata[k*3+2] = encoded_ped;
         }
       } else {
         // Do not have wire info.

@@ -277,6 +277,9 @@
       </div>
     </div>
 
+    <div class='psuedoColorRow' > <span class='pslabel'>CutRMS</span>
+                <div class='psslide psuedoPedWidthCutoffSlider'></div>
+                <input id='pedwidth-cutoff' class='psval saveable psuedoPedWidthCutoff'  type="text" value='3.0' width='2' style='width:20px'/> RMS</div>
 
 </div> <!-- A-FalseColorControl -->
  <div class="wireimg-encoded-progressbar" style="position: relative; text-align:center;">

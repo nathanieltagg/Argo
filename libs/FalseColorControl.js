@@ -9,6 +9,8 @@
 
 // Globals:
 gWirePseudoColor = new PsuedoRainbow();
+gWireColorPedestalWidthCut = 3; // Value used by GLEngine to determine "smoothing": 
+                                // If this value is 1, all ADC values less than 1 sigma of the RMS for that wire will be smoothed away.
 
 
 // Automatic runtime configuration.
@@ -74,6 +76,8 @@ function FalseColorControl( element  )
   $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw();});
   $('input.psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
   $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
+
+  $('input.psuedoPedWidthCutoff').change(function(){gWireColorPedestalWidthCut = parseFloat($(this).val());  this.blur(); self.Draw(); });;
 
 
   $('div.psuedoDialOffsetSlider').each(function(){
@@ -153,6 +157,19 @@ function FalseColorControl( element  )
     stop:  function(ev,ui) { $('input.psuedoCutoffHigh',p).val(ui.value).trigger('change'); self.FinishRangeChange();}
   })});
   
+  
+  $('div.psuedoPedWidthCutoffSlider').each(function(){
+    var p = $(this).parent();
+    $(this).slider({
+    value: $('input.psuedoPedWidthCutoff',p).val(),
+    min: 0,
+    max: 6,
+    step: 0.2,
+    slide: function(ev,ui) { $('input.psuedoPedWidthCutoff',p).val(ui.value).trigger('change'); return true;},
+    stop:  function(ev,ui) { $('input.psuedoPedWidthCutoff',p).val(ui.value).trigger('change'); self.FinishRangeChange();}
+  })});
+  
+  
   $('input.colorpicker',this.top_element).each(function(){
     // Index?
     var index = parseInt($(this).attr('data-index'));
@@ -199,6 +216,9 @@ FalseColorControl.prototype.NewRecord = function()
     var index = parseInt($(this).attr('data-index'));
     gWirePseudoColor.color_table[index] = $(this).spectrum("get").toRgb();        
   });
+  
+  gWireColorPedestalWidthCut  = parseFloat($('input.psuedoPedWidthCutoff',this.top_element).val());
+  
   this.Draw();
   // gGLEngine.build_LUT_canvas(this.cs,-4066,4096,$('.checkCanvas').get(0));
 };
@@ -220,9 +240,9 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   else if(id == 'falsecolor-Brightness')  gWirePseudoColor = new PsuedoBrightness; 
   else if(id == 'falsecolor-Blackbody')   gWirePseudoColor = new PsuedoBlackbody; 
   else if(id == 'falsecolor-RootRainbow') gWirePseudoColor = new PsuedoRootRainbow; 
-  else if(id == 'falsecolor-Interp2')    gWirePseudoColor = new PsuedoInterpolator(2); 
-  else if(id == 'falsecolor-Interp3')    gWirePseudoColor = new PsuedoInterpolator(3); 
-  else if(id == 'falsecolor-Interp4')    gWirePseudoColor = new PsuedoInterpolator(4); 
+  else if(id == 'falsecolor-Interp2')     gWirePseudoColor = new PsuedoInterpolator(2); 
+  else if(id == 'falsecolor-Interp3')     gWirePseudoColor = new PsuedoInterpolator(3); 
+  else if(id == 'falsecolor-Interp4')     gWirePseudoColor = new PsuedoInterpolator(4); 
   
   this.NewRecord();
   gStateMachine.Trigger('ChangePsuedoColor');

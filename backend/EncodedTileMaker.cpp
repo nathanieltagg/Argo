@@ -79,6 +79,7 @@ void MakeLowres(JsonObject& r,
       wiremap_t::iterator it = wireMap->find(iwire_in);
       if(it != wireMap->end()) {
         waveform_t& waveform_in = *(it->second.get());
+        waveform._pedwidth = waveform_in._pedwidth;
         for(int i=0;i<nsamp;i++) {
           if(waveform_in[i] > waveform[i/factor_x]) waveform[i/factor_x] = waveform_in[i];
         }
