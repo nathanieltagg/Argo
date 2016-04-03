@@ -384,6 +384,10 @@ GLMapper.prototype.Render = function()
   var resolutionLocation = this.gl.getUniformLocation(this.program, "u_resolution");
   this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
 
+  var pedestal_width_cut_location = this.gl.getUniformLocation(this.program, "pedestal_width_cut");
+  this.gl.uniform1f(pedestal_width_cut_location, gWireColorPedestalWidthCut);
+
+
   // var tex = this.tile_textures[0][0];
   // this.gl.activeTexture(this.gl.TEXTURE1);
   // this.gl.bindTexture(this.gl.TEXTURE_2D, tex);

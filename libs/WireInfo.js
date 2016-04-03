@@ -72,12 +72,21 @@ function getEncodedPngVal(imgdata, x)
   var i = Math.floor(x);
   var r = imgdata.data[i*4];
   var g = imgdata.data[i*4+1];
-  var b = imgdata.data[i*4+2];
+  // var b = imgdata.data[i*4+2];
   return (r*256 + g ) - 0x8000;
 }
 
+function getEncodedPngPedwidth(imgdata, x)
+{
+  var i = Math.floor(x);
+  // var r = imgdata.data[i*4];
+  // var g = imgdata.data[i*4+1];
+  var b = imgdata.data[i*4+2];
+  return b/4.0;
+}
 
-WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc)
+
+WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc, outpedwidth)
 {
   if(isNaN(channel)) return;
   if(isNaN(tdc)) return;
@@ -99,6 +108,7 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
   for(var i=0;i<x2-x1;i++) {
     histogram.SetBinContent(i,getEncodedPngVal(imgdata,i));
   }
+  return getEncodedPngPedwidth(imgdata,1);
   
 };
 
@@ -124,7 +134,6 @@ WireInfo.prototype.Draw = function()
   h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
   h += "TDC: " +tdc + '<br/>';
   if(gRecord && gRecord.raw && gCurName.raw && gRecord.raw[gCurName.raw] && gRecord.raw[gCurName.raw].pedestals)
-
     h+="Pedestal:" + gRecord.raw[gCurName.raw].pedestals[chan] + '<br/>';
 
 
@@ -165,15 +174,19 @@ WireInfo.prototype.Draw = function()
   this.graph.max_v = -1e9;
   this.graph.min_v =  1e9;
 
-  
+  var mainPedwidth = 0;
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     var c = i+chan;
     wire = plane+i;    
     if(c<0) continue;
     if(wire>maxwire) continue;
-    this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
+    var pedwidth = this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc,pedwidth);
+    if(i==0) mainPedwidth = pedwidth;
   }
-  
+  if(mainPedwidth) {
+    $(this.txt_element).append("Pedestal RMS: "+mainPedwidth + "<br/>");
+  }
+
   var dotcolor = {
     GetColor: function(t,f) { var c=gWirePseudoColor.ColorDialToColor(gWirePseudoColor.AdcToColorDial(f)); 
       return parseInt(c.r)+','+parseInt(c.g)+','+parseInt(c.b); }

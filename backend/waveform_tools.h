@@ -157,7 +157,7 @@ struct pedestal_computer
       sumsq += x*x*w;
     }    
     double xrms = sqrt(fabs((sumsq - sum*sum/n)/(n-1.)));
-    if(xrms> halfwidth*0.45) return rms(halfwidth*2);
+    if(xrms> halfwidth*0.3) return rms(halfwidth*2);
     return xrms;
   }
   double ped() { return _ped; }

@@ -268,9 +268,10 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   waveform_tools::pedestal_computer pedcomp;
   for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
   int ped = pedcomp.ped();
-  double rms = pedcomp.rms(); // auto-adjusted rms.
+  double rms = pedcomp.rms(100); // auto-adjusted rms.
 
   double thresh = ceil(4.0*rms);
+  waveform._pedwidth = thresh;
   double sign = -1;
   if(plane==2) sign = 1;
 
