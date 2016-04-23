@@ -11,6 +11,29 @@
 
 gEventInfo = null;
 
+// Constants
+var kTriggerNames = ["PMT 0 (Beam)"
+                    ,"PMT 1 (Cosmic)"
+                    ,"PMT 2"
+                    ,"PMT 3"
+                    ,"PMT 4"
+                    ,"PMT 5"
+                    ,"PMT 6"
+                    ,"PMT 7"
+                    ,"PC"
+                    ,"External"
+                    ,"Active"
+                    ,"Gate2"
+                    ,"Gate1"
+                    ,"Veto"
+                    ,"Calib"
+                    ,"" //Phase0"
+                    ,"" //Phase1"
+                    ,"GateFake"
+                    ,"BeamFake"
+                    ,"MuCS (Spare1)"];
+
+
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
@@ -55,6 +78,26 @@ EventInfo.prototype.NewRecord = function()
     $(".event-subrun").text(gRecord.header.subrun);
     $(".event-event").text(gRecord.header.event);
     $(".event-datatype").text(gRecord.header.isRealData?"Real":"MC"); 
+    
+    if(gRecord.header.trigger) {
+      var trig = gRecord.header.trigger;
+      if(trig.triggerword) {
+        $(".event-triggerword").text('0x'+trig.triggerword.toString(16));
+        var trignames  = [];
+        for(var i = 0;i<kTriggerNames.length;i++) {
+          var bit = 1 << i;
+          console.warn(i,bit,trig.triggerword,(trig.triggerword & bit)!=0,kTriggerNames[i]);
+          if(((trig.triggerword & bit) !=0) && kTriggerNames[i].length )trignames.push(kTriggerNames[i]);
+        }
+        $(".event-triggernames").text(trignames.join(", "));
+      }
+      if(trig.sw_triggers) {
+        $(".event-swtriggernames").text(trig.sw_triggers.join(","));
+      }
+    }
+    $(".event-daqversion").text(gRecord.header.DAQVersionLabel + gRecord.header.DAQVersionQualifiers); 
+    
+    
   }
 
   // var t = gRecord.header.seconds*1000 + gRecord.header.nanoSeconds*1e-6;

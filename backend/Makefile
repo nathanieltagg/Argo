@@ -201,8 +201,16 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
+libargo-backend.so: $(OBJ)  Makefile
+	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^)  -o $@ $(LIBS) $(BLIBS)	
+
+
+testbin: $(OBJ) tmp/argo-backend.o Makefile
+	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
+
+
 notify-live.cgi:  tmp/notify_live.o
-	$(CPP) $(filter %.o,$^) -o $@
+	$(CPP) $(filter %.o,$^) -o $@  
   
 
 

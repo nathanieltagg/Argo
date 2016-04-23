@@ -12,6 +12,10 @@
                                                 <span class="val event-age"></span></td></tr>
 
         <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
+        <tr><td class="key">Trigger</td>  <td><span class="val event-triggerword"></span><br>
+                                              <span class="val event-triggernames"></span><br>
+                                              <span class="val event-swtriggernames"></span></td></tr>
+
         <tr><td class="key">Raw Wires</td>  <td class="val event-raw-wire-names"></td></tr>
         <tr><td class="key">Cal Wires</td>  <td class="val event-cal-wire-names">Not present</td></tr>
         <tr><td class="key">Hits</td>       <td class="val event-hit-names">none</td></tr>
@@ -23,6 +27,7 @@
         <tr><td class="key">Optical Hits</td>   <td class="val event-ophit-names">none</td></tr>
         <tr><td class="key">Optical Flashes</td>  <td class="val event-opflash-names">none</td></tr>
         <tr><td class="key">Drift HV       </td>  <td class="val event-hv">Unknown</td></tr>
+        <tr><td class="key">DAQ Version    </td>  <td class="val event-daqversion">Unknown</td></tr>
       </tbody></table>
       <div class="event-laser-info"></div>      
     </div>
