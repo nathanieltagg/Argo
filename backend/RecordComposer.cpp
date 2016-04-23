@@ -141,15 +141,43 @@ void RecordComposer::composeHeaderData()
   }
   header.add("eventTime",event_time); // in ms.
   header.add("swizzlertime",event_time);
-  
 
+  JsonObject trigger;
+  {
+    vector<string> leafnames = findLeafOfType("vector<raw::Trigger>");
+    for(string name: leafnames) {
+      std::cout << "Looking at raw trigger object " << (name+"obj_").c_str() << endl;   
+      
+      TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
+      if(!l) continue;
+      int n = l->GetLen();
+      cout << "trigs: " << n << std::endl;
+      for(int i=0;i<n;i++) {
+        cout << "triggerword " << ftr.getJson(name+"obj.fTriggerBits",i) << endl;
+        trigger.add("triggerword",ftr.getJson(name+"obj.fTriggerBits",i));
+      }
+    }
+  }
   
-  
-  // Add my own things. 
-  // FIXME: this should come from the event data, not be hardcoded, but this will have to do for the moment.
-  header.add("TDCStart",0);
-  header.add("TDCEnd",9600);
-  
+  {
+    vector<string> leafnames = findLeafOfType("raw::ubdaqSoftwareTriggerData");
+    for(string name: leafnames) {
+      std::cout << "Looking at ubdaqSoftwareTriggerData object " << (name+"obj_").c_str() << endl;   
+      
+      TLeaf* l = fTree->GetLeaf((name+"obj.passAlgo_").c_str());
+      
+      if(!l) continue;
+      int n = l->GetLen();
+      JsonArray sw_triggers;
+      for(int i=0;i<n;i++) {
+        TTreeFormula ttf("ttf",(name+"obj.passAlgo.first").c_str(),fTree);
+        if(ftr.getInt(name+"obj.passAlgo.second",i)) 
+          sw_triggers.add(ttf.EvalStringInstance(i));
+      }
+      trigger.add("sw_triggers",sw_triggers);
+    }
+  }
+  header.add("trigger",trigger);
   fOutput.add("header",header);
 }
 

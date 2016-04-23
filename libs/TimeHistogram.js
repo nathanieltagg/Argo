@@ -70,7 +70,7 @@ TimeHistogram.prototype.NewRecord = function()
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.bound_u_min = this.hist.min;
     this.bound_u_max = this.hist.max;
-    gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
+    gZoomRegion.changeTimeRange(0,9600);
      
   } 
   else if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {
@@ -85,7 +85,7 @@ TimeHistogram.prototype.NewRecord = function()
     this.ResetToHist(this.hist);
     this.bound_u_min = this.hist.min;
     this.bound_u_max = this.hist.max;
-    gZoomRegion.changeTimeRange(gRecord.header.TDCStart, gRecord.header.TDCEnd);
+    gZoomRegion.changeTimeRange(0,9600);
   } else {
     this.hist = new Histogram(32,0,9600);
     this.SetHist(this.hist,cs);
@@ -98,7 +98,6 @@ TimeHistogram.prototype.FinishRangeChange = function()
 {
   // Select our time window so it's compatible with the 
   // TDC bounds
-  console.log("TimeHistogram::FinishRangeChange",this.min_u,this.max_u,gRecord.header.TDCStart,gRecord.header.TDCEnd );
   gZoomRegion.changeTimeRange(
               this.min_u, 
               this.max_u

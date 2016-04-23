@@ -209,11 +209,18 @@ bool getTriggerData(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord
   if(trigger_channels.size()<1) return true;;
   auto const& trigger_data = trigger_channels.begin()->header();
   
-  trig.add("triggerword",(trigger_data.trig_data_1 & 0x7FFF));
+  trig.add("triggerword",( (trigger_data.trig_data_1) + ((uint32_t)(trigger_data.trig_data_2) << 16) ) );
   trig.add("frame",trigger_header.getFrame());
   trig.add("sample_2MHz",trigger_header.get2MHzSampleNumber());
   trig.add("sample_16MHz",((trigger_header.get2MHzSampleNumber())<<3) + trigger_header.get16MHzRemainderNumber());
+  JsonArray sw_triggers;
 
+
+  std::vector<ub_FEMBeamTriggerOutput> const& sw_trigger_list = record->getSWTriggerOutputVector();
+  for(auto const& swtrig: sw_trigger_list) {
+    if(swtrig.pass) sw_triggers.add(swtrig.algo_instance_name);
+  }
+  trig.add("sw_triggers",sw_triggers);
   return true;
 }
 
@@ -240,6 +247,8 @@ void RawRecordComposer::composeHeader()
   header.add("recordOrigin", fRecord->getGlobalHeader().getRecordOrigin());
   
   header.add("isRealData",1);
+  header.add("DAQVersionLabel",fRecord->getGlobalHeader().getDAQVersionLabel());
+  header.add("DAQVersionQualifiers",fRecord->getGlobalHeader().getDAQVersionQualifiers());
   
   // trigger data.
   JsonObject trig;
