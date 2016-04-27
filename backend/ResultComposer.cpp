@@ -33,11 +33,16 @@ UInt_t ResultComposer::events_served = 0;
 
 TTime  gTimeStart;
 
-ResultComposer::ResultComposer()
+ResultComposer::ResultComposer(const ResultComposer::config_t& config)
   : rootfile(0)
   , tree(0)
+  , m_config()
 {
-  
+  m_config["CacheStoragePath"]     = "../datacache";
+  m_config["CacheStorageUrl"]      = "datacache";
+  m_config["CreateSubdirCache"] = "false";
+  for(const auto& it: config) { m_config[it.first] = it.second; } // override with given config.
+    
 }
 
 
@@ -195,6 +200,9 @@ void ResultComposer::compose_from_art(
   //
   // Here's where all the joy happens.
   RecordComposer composer(result,tree,jentry,inOptions);
+  composer.fCacheStoragePath     = m_config["CacheStoragePath"];
+  composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
+  composer.fCreateSubdirCache = false;
   composer.compose();
 
   long ElapsedServerTime = ((long)(gSystem->Now()) - eventTimeStart);
@@ -279,8 +287,8 @@ void ResultComposer::compose_from_raw(
   // Here's where all the joy happens.
   RawRecordComposer composer(result,record,inOptions);
   // Set it so it doesn't generate subdirectories like it does in live
-  composer.fCacheStoragePath     = "../datacache";
-  composer.fCacheStorageUrl      = "datacache";
+  composer.fCacheStoragePath     = m_config["CacheStoragePath"];
+  composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
   composer.fCreateSubdirCache = false;
   composer.compose();
 

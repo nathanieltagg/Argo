@@ -5,6 +5,8 @@
 #include <TObject.h>
 #include <TTime.h>
 #include "JsonElement.h"
+#include <map>
+#include <string>
 
 extern TTime  gTimeStart;
 
@@ -14,7 +16,8 @@ class TFile;
 class ResultComposer
 {
   public:
-   ResultComposer();
+   typedef std::map<std::string,std::string> config_t ;
+   ResultComposer(const config_t& config = config_t());
 
    std::shared_ptr<std::string> compose(  const char* inOptions,
                                           const char* inRootFile,
@@ -27,7 +30,7 @@ class ResultComposer
   
 
    ~ResultComposer();
-
+   
    static UInt_t events_served;
 
  private:
@@ -46,9 +49,11 @@ class ResultComposer
                                          );  
    
    void addMonitorData();
+
    TFile* rootfile;
    TTree* tree;
    JsonObject result;
+   std::map<std::string,std::string> m_config;
    
 };
 

@@ -60,7 +60,6 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   : fOutput(output)
   , fRecord(record)
   , fOptions(options)
-  , fCreateSubdirCache (true)
   , fmintdc(0)
   , fmaxtdc(0)
 {
@@ -69,7 +68,7 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
   fCacheStorageUrl      = "live_event_cache";
   fWorkingSuffix = "working";
   fFinalSuffix   = "event";
-
+  fCreateSubdirCache = true;
 };
   
 RawRecordComposer::~RawRecordComposer()

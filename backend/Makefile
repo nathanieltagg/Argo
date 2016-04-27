@@ -3,7 +3,7 @@ UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
 
-buildtargets = argo-backend argo-live-backend notify-live.cgi
+buildtargets = libargo-backend.so argo-backend argo-live-backend notify-live.cgi
 .PHONY: bin
 bin: $(buildtargets)
 
@@ -179,14 +179,14 @@ tmp/%.o : %.cc
 
 
 #Rootcint rule:
-RHEADERS = JsonElement.h FormulaLooter.h ArtlikeObjects.h
+RHEADERS = 
 Cint.cpp : $(RHEADERS) LinkDef.h
 	@echo "Running rootcint... " $(RHEADERS) LinkDef.h
 	#export LD_LIBRARY_FLAGS+=${ROOTSYS}/lib
 	rootcint -v3 -f $@ -c -g -I./ -pthread -m64 $(RHEADERS) LinkDef.h
 	
-#tmp/Cint.o : Cint.cpp
-#	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -c $< -o $@ 
+tmp/Cint.o : Cint.cpp
+	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -c $< -o $@
 
 
 
@@ -201,9 +201,8 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
-libargo-backend.so: $(OBJ)  Makefile
-	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^)  -o $@ $(LIBS) $(BLIBS)	
-
+libargo-backend.so: $(OBJ) tmp/Cint.o Makefile
+	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) $(BLIBS) -Wl,-rpath,@executable_path/../Frameworks/Root.framework/lib
 
 testbin: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
