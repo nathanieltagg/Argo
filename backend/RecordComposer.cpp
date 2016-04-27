@@ -58,8 +58,6 @@ WirePalette gWirePalette; // Create at program start as a singleton.
 
 using namespace std;
 
-std::string RecordComposer::sfFileStoragePath = "../datacache";
-std::string RecordComposer::sfUrlToFileStorage = "datacache";
 
 
 
@@ -68,6 +66,11 @@ std::string RecordComposer::sfUrlToFileStorage = "datacache";
 RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
   : fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree)
 {
+  fCacheStoragePath     = "../live_event_cache";
+  fCacheStorageUrl      = "live_event_cache";
+  fWorkingSuffix = "working";
+  fFinalSuffix   = "event";
+  fCreateSubdirCache = true;  
 }
   
 RecordComposer::~RecordComposer()
@@ -854,8 +857,8 @@ void RecordComposer::composeCal()
                             wireMap, 
                             nwire,
                             ntdc,
-                            sfFileStoragePath,
-                            sfUrlToFileStorage,
+                            fCacheStoragePath,
+                            fCacheStorageUrl,
                             fOptions,
                             true );    
 
@@ -868,7 +871,7 @@ void RecordComposer::composeCal()
       MakeLowres( r2,
                      wireMap, 
                      nwire,
-                     ntdc, sfFileStoragePath, sfUrlToFileStorage, fOptions, false );
+                     ntdc, fCacheStoragePath, fCacheStorageUrl, fOptions, false );
       reco_list2.add(stripdots(name),r2);
     }
     
@@ -967,8 +970,8 @@ void RecordComposer::composeRaw()
                             wireMap, 
                             nwire,
                             ntdc,
-                            sfFileStoragePath,
-                            sfUrlToFileStorage,
+                            fCacheStoragePath,
+                            fCacheStorageUrl,
                             fOptions,
                             true );
     
@@ -980,7 +983,7 @@ void RecordComposer::composeRaw()
       MakeLowres( r2,
                      wireMap, 
                      nwire,
-                     ntdc, sfFileStoragePath, sfUrlToFileStorage, fOptions, false );
+                     ntdc, fCacheStoragePath, fCacheStorageUrl, fOptions, false );
       reco_list2.add(stripdots(name),r2);
     }
     
@@ -1354,6 +1357,9 @@ void RecordComposer::composeMC()
 
 void RecordComposer::compose()
 {
+  fCurrentEventDirname = fCacheStoragePath;
+  fCurrentEventUrl     = fCacheStorageUrl;
+  
   fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
 
   // parse some options.

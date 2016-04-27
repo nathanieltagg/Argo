@@ -204,7 +204,11 @@ int main(int argc, char **argv)
             
             long t1 = gSystem->Now();
             // Now do your stuff.
-            ResultComposer rc;           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
+            ResultComposer::config_t rc_cfg;
+            rc_cfg["CacheStoragePath"] = "../datacache";
+            rc_cfg["CacheStorageUrl"]  = "datacache";
+            
+            ResultComposer rc(rc_cfg);           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
             std::shared_ptr<std::string> payload = rc.compose(options,filename,selection,entrystart,entryend);
             payload->append("\n");
             long t2 = gSystem->Now();

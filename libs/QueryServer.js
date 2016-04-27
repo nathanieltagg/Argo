@@ -61,7 +61,7 @@ $(function(){
 })
 
 
-function ChangeEvent( noreload )
+function ChangeEvent(  )
 {
   var par = $.deparam.fragment(true);
   console.log("ChangeEvent",par);

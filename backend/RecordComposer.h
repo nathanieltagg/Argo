@@ -82,8 +82,16 @@ public:
   Long64_t fEntry;
   std::string fOptions;
   TreeReader ftr;
-  static std::string sfFileStoragePath;
-  static std::string sfUrlToFileStorage;
+  
+  bool fCreateSubdirCache;  
+  std::string fCacheStoragePath;
+  std::string fCacheStorageUrl;
+  std::string fWorkingSuffix;
+  std::string fFinalSuffix;
+  
+  std::string fCurrentEventDirname;
+  std::string fCurrentEventUrl;
+
   double event_time;
   
 };
