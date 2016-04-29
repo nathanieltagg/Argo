@@ -172,6 +172,9 @@ sub kill_running_server
       } else {
         print "Looks like it's dead, Jim.\n";
       }
+  } else {
+    print "Killing everything with name ${exec_name}";
+    `killall $exec_name`;
   }
   
 }
