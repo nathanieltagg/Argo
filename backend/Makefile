@@ -3,7 +3,7 @@ UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
 
-buildtargets = libargo-backend.so argo-backend argo-live-backend notify-live.cgi
+buildtargets = libargo-backend.dylib argo-backend argo-live-backend notify-live.cgi
 .PHONY: bin
 bin: $(buildtargets)
 
@@ -93,7 +93,7 @@ BLIBS += -lboost_serialization -lboost_system -lboost_thread
 # LIBS += -lboost_serialization -lboost_system -lboost_thread
 
 ifeq ($(UNAME),Darwin)
-  LIBS += -Wl,-rpath,@executable_path/boost/lib 
+  # LIBS += -Wl,-rpath,boost/lib
   CPPFLAGS +=  -ftemplate-depth=512
 endif
 
@@ -108,7 +108,7 @@ ifeq ($(origin ROOTSYS), undefined)
 endif
 
 ifeq ($(UNAME),Darwin)
-	LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
+	# LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
 endif
 
 PATH+=:${ROOTSYS}/bin
@@ -201,8 +201,8 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
-libargo-backend.so: $(OBJ) tmp/Cint.o Makefile
-	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) $(BLIBS) -Wl,-rpath,@executable_path/../Frameworks/Root.framework/lib
+libargo-backend.dylib: $(OBJ) tmp/Cint.o Makefile
+	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
 
 testbin: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
