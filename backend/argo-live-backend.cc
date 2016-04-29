@@ -120,6 +120,7 @@ int main(int argc, char **argv)
       ofstream pidfile(pidfilename.c_str());
       pidfile << getpid();
       pidfile.close();
+      std::cout << "Writing PID file " << pidfilename << " " <<getpid() << std::endl;
   }
   
   // Load configuration from config file.

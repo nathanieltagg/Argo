@@ -7,6 +7,7 @@
 #include <string.h>
 #include <math.h>
 #include <vector>
+#include <sys/stat.h>
 
 
 std::string getLastFile(const std::string& dir, const std::string& suffix );
@@ -232,11 +233,15 @@ void report(const std::string& filename)
     return;
   }
   if(filename == gLastFile) return;  // Don't over-report.
+  std::string jsonfile = filename+"/event.json";
+  struct stat jsonstat;
+  if(0 == stat(jsonfile.c_str(),&jsonstat)) {
+    std::cout << "id: " << gId++ << "\n";
+    std::cout << "data: " <<  filename << "\n\n";
+    std::cout.flush();
+    gLastFile = filename;    
+  }
   
-  std::cout << "id: " << gId++ << "\n";
-  std::cout << "data: " <<  filename << "\n\n";
-  std::cout.flush();
-  gLastFile = filename;
 }
 
 
