@@ -107,7 +107,7 @@ if(scalar @cacheentries == 0) {
     if(length($result)==0) { $result='{"error":"Empty event"}'; }    
   } else {
     print "Can't open $event for reading: $! </br>\n";
-    $result='{"error":"Cannot open file $jsonfile"}';
+    $result="{\"error\":\"Cannot open file $jsonfile\"}";
   }
   
 
