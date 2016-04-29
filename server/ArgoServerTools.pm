@@ -100,7 +100,7 @@ sub serve
 
  binmode $oldout;
  
- print $oldout $head;
+ # print $oldout $head;
  print $oldout $zipped;
  close $oldout;
  close $olderr;

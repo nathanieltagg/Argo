@@ -45,7 +45,8 @@ ifeq ($(UNAME),Darwin)
   LD = clang++ -std=c++1y
   LDFLAGS = -bind_at_load -g
 else 
-  LDFLAGS += -lgomp
+  CPPFLAGS += -fPIC
+  LDFLAGS += -lgomp -fPIC
 endif
 
 
@@ -186,7 +187,7 @@ Cint.cpp : $(RHEADERS) LinkDef.h
 	rootcint -v3 -f $@ -c -g -I./ -pthread -m64 $(RHEADERS) LinkDef.h
 	
 tmp/Cint.o : Cint.cpp
-	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -c $< -o $@
+	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -fPIC -c $< -o $@
 
 
 
