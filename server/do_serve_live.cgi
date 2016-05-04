@@ -11,15 +11,20 @@ use ArgoServerTools qw(setup myerror);
 #configuration
 # $updater_exec = 'argo-live-backend';
 $cache_dir = '../live_event_cache';
-$heartbeat_timeout = 40; #seconds
+$heartbeat_timeout = 60; #seconds
 $heartbeat_file = "$cache_dir/heartbeat.json";
 
 ArgoServerTools::setup();
+
+
+print SERVLOG $ArgoServerTools::msglog;
 
 $ArgoServerTools::exec_name = "argo-live-backend";
 $ArgoServerTools::exec_arguments = "../config/live.config";
 
 do("../config/serve_live_config.pl"); # # load file if present.
+
+
 
 
 # First, check the server heartbeat.
@@ -107,7 +112,7 @@ if(scalar @cacheentries == 0) {
     if(length($result)==0) { $result='{"error":"Empty event"}'; }    
   } else {
     print "Can't open $event for reading: $! </br>\n";
-    $result='{"error":"Cannot open file $jsonfile"}';
+    $result="{\"error\":\"Cannot open file $jsonfile\"}";
   }
   
 
@@ -130,7 +135,6 @@ if($ArgoServerTools::allow_live_restart>0 && $need_to_restart>0) {
     close HEARTBEAT;    
   }
   
-
   # First, kill any running process in case it's log-jammed.
   print "Killing old server.<br>\n";
   ArgoServerTools::kill_running_server();
@@ -141,4 +145,6 @@ if($ArgoServerTools::allow_live_restart>0 && $need_to_restart>0) {
 }
 
 ArgoServerTools::serve($result);
-
+open(SERVLOG,">>../logs/serve_live.log");
+print SERVLOG `date`;
+print SERVLOG $ArgoServerTools::msglog;
