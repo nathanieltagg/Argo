@@ -12,3 +12,5 @@ Cint.*
 setup.sh
 makeenv
 *.log
+*.pcm
+*.dylib
