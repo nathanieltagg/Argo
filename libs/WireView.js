@@ -941,11 +941,11 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     for(j=1;j<pts.length;j++) this.ctx.lineTo(pts[j][0],pts[j][1]);
     this.ctx.stroke();
     this.ctx.fillStyle=this.ctx.strokeStyle;
-    for(j=1;j<pts.length;j++) {
-      this.ctx.beginPath();
-      this.ctx.arc(pts[j][0],pts[j][1],1.5,0,2*Math.PI,false);
-      this.ctx.stroke();
-    }
+    //for(j=1;j<pts.length;j++) {
+      //this.ctx.beginPath();
+      //this.ctx.arc(pts[j][0],pts[j][1],1.5,0,2*Math.PI,false);
+      //this.ctx.stroke();
+    //}
 
     // for mouseovering
     for(j=1;j<pts.length;j++) 
