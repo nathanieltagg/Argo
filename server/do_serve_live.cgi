@@ -61,7 +61,7 @@ print "Looking at cache....\n";
 $event = undef;
 
 # look at the available cached files.
-@cacheentries = glob("$cache_dir/*.event");
+@cacheentries = glob("$cache_dir/*.event/event.json");
 # Sort by filename
 @cacheentries = reverse sort @cacheentries;
 for $f (@cacheentries) {
@@ -101,10 +101,10 @@ if(scalar @cacheentries == 0) {
       }
   }
 
-  my $jsonfile = $event."/event.json";
+  # my $jsonfile = $event."/event.json";
   $result = "";
-  print "Opening $jsonfile.\n";
-  if(open(READCACHE,$jsonfile)){
+  print "Opening $event.\n";
+  if(open(READCACHE,$event)){
     while(<READCACHE>) {
       $result .= $_;
     }
@@ -112,7 +112,7 @@ if(scalar @cacheentries == 0) {
     if(length($result)==0) { $result='{"error":"Empty event"}'; }    
   } else {
     print "Can't open $event for reading: $! </br>\n";
-    $result="{\"error\":\"Cannot open file $jsonfile\"}";
+    $result="{\"error\":\"Cannot open file $event\"}";
   }
   
 
