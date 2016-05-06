@@ -13,9 +13,11 @@
 #include <TROOT.h>
 #include <TH1F.h>
 #include <TH1D.h>
+#include <TTimeStamp.h>
 #include <TLorentzVector.h>
 #include "TBranchElement.h"
 #include "TStreamerInfo.h"
+
 
 #include "TVirtualCollectionProxy.h"
 
@@ -110,7 +112,7 @@ void RawRecordComposer::compose()
   composeHeader();
 
   // Start DB lookups.  
-  GetSlowMonDB slm(event_time/1000.);
+  GetSlowMonDB slm(event_time);
   boost::thread slomon_thread(slm);
   slm();
   
@@ -134,55 +136,23 @@ void RawRecordComposer::compose()
 double getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& header)
 {
   // check the event header.
-  // uint32_t sec = record->getGlobalHeader().getSeconds();
-  // uint32_t usec= record->getGlobalHeader().getMicroSeconds();
-  // uint32_t nsec= record->getGlobalHeader().getNanoSeconds();
-  uint32_t sec = 0;
-  uint32_t usec= 0;
+  const TTimeStamp kValidTime(2014,1,1,0,0,0,true); 
+
+  uint32_t sec = record->LocalHostTime().seb_time_sec;
+  uint32_t usec= record->LocalHostTime().seb_time_usec;
   uint32_t nsec= 0;
-  
-  // Fixme: look at GPS 
-  
-  if(sec < 1350000000) {
-    // Get the time from a trigger crate.
-    const ub_EventRecord::trig_map_t map = record->getTRIGSEBMap();
-    if(map.size()>0) {
-      auto const& cratedata = map.begin()->second;
-      auto const& ch = cratedata.crateHeader();
-      sec = ch->local_host_time.seb_time_sec;
-      usec = ch->local_host_time.seb_time_usec;      
-      nsec = ch->local_host_time.seb_time_usec*1000;
-    }
+
+  ub_GPS_Time const& gps = record->GPSEVTTime();
+  if(gps.second  > (double)kValidTime) {
+     sec = gps.second ;
+     usec= gps.micro;
+     nsec= gps.nano;   
   }
-  
-  if(sec < 1350000000) {
-    // Get the time from PMT crate.
-    const ub_EventRecord::pmt_map_t map = record->getPMTSEBMap();
-    if(map.size()>0) {
-      auto const& cratedata = map.begin()->second;
-      auto const& ch = cratedata.crateHeader();
-      sec = ch->local_host_time.seb_time_sec;
-      usec = ch->local_host_time.seb_time_usec;      
-      nsec = ch->local_host_time.seb_time_usec*1000;
-    }
-  }
-  
-  if(sec < 1350000000) {
-    // Get the time from PMT crate.
-    const ub_EventRecord::tpc_map_t map = record->getTPCSEBMap();
-    for(auto it:map) {
-      auto const& cratedata = it.second;
-      auto const& ch = cratedata.crateHeader();
-      sec = ch->local_host_time.seb_time_sec;
-      usec = ch->local_host_time.seb_time_usec;      
-      nsec = ch->local_host_time.seb_time_usec*1000;      
-    }
-  }
-  
+
   header.add("seconds",sec);
   header.add("microSeconds",usec);
   header.add("nanoSeconds",nsec);
-  double daqtime = (sec + nsec*1e-9) * 1000; // in ms
+  double daqtime = (sec + usec*1e-6 + nsec*1e-9) * 1000; // in ms
   header.add("eventTime",daqtime); // in ms.
 
   return daqtime;
@@ -230,7 +200,7 @@ void RawRecordComposer::composeHeader()
   JsonObject header;
 
   // GET THE TIME
-  event_time = getTime(fRecord,header);
+  event_time = getTime(fRecord,header)/1000.;
   if(event_time>0) gPlexus.rebuild(event_time);
 
   header.add("run"           ,fRecord->getGlobalHeader().getRunNumber()    );
@@ -263,7 +233,7 @@ boost::mutex sChanMutex;
   
 
 void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t::card_channel_type& channel_data, 
-                    int plane, int planewire, int wirenum, 
+                    const Plexus::Plek& plek,
                     JsonArray& outhits) 
 {
   // Copy the channel data to my own signed vector array
@@ -272,6 +242,11 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   channel_data.decompress(waveform);
   size_t nsamp = waveform.size();
   
+  int wirenum = plek.wirenum();
+  int plane = plek.plane();
+  int planewire = plek.planewire();
+  waveform._servicecard = plek._servicecard_id;
+  
   // // Find the pedestal manually.
   waveform_tools::pedestal_computer pedcomp;
   for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
@@ -279,7 +254,7 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   double rms = pedcomp.rms(100); // auto-adjusted rms.
 
   double thresh = ceil(4.0*rms);
-  waveform._pedwidth = thresh;
+  waveform._pedwidth = std::min(rms*2.0,15.0); 
   double sign = -1;
   if(plane==2) sign = 1;
 
@@ -369,8 +344,6 @@ void RawRecordComposer::composeTPC()
           // Find the wire number of this channel.
           const Plexus::Plek& p = gPlexus.get(crate,card,channel);
           int wire = p.wirenum();
-          int plane = p.plane();
-          int planewire = p.planewire();
           
           if(superspeed && (wire%4)!=0) continue;
           // std::cout << "found wire " << wire << std::endl;
@@ -390,13 +363,13 @@ void RawRecordComposer::composeTPC()
           
           // unpack_channel(waveform_ptr,channel_data,plane,planewire,wire,hits);
           unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
-                                                  plane, planewire, wire, boost::ref(hits)));
+                                                  boost::cref(p), boost::ref(hits)));
         } // loop channels
+        unpack_threads.join_all();
 
         jCard.add("num_channels",num_card_channels);
         jCards.add(jCard);        
       } // loop cards
-      unpack_threads.join_all();
     
       JsonObject jCrate;
       jCrate.add("cards",jCards);

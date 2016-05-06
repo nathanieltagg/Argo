@@ -76,17 +76,17 @@ function getEncodedPngVal(imgdata, x)
   return (r*256 + g ) - 0x8000;
 }
 
-function getEncodedPngPedwidth(imgdata, x)
+function getEncodedExtraData(imgdata)
 {
-  var i = Math.floor(x);
-  // var r = imgdata.data[i*4];
-  // var g = imgdata.data[i*4+1];
-  var b = imgdata.data[i*4+2];
-  return b/4.0;
+  var b = imgdata.data[1*4+2]; // First pixel blue channel
+  return {
+    rms: (b & 15)/2.0,
+    servicecard: b >> 4
+  }
 }
 
 
-WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc, outpedwidth)
+WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc)
 {
   if(isNaN(channel)) return;
   if(isNaN(tdc)) return;
@@ -108,7 +108,7 @@ WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx
   for(var i=0;i<x2-x1;i++) {
     histogram.SetBinContent(i,getEncodedPngVal(imgdata,i));
   }
-  return getEncodedPngPedwidth(imgdata,1);
+  return getEncodedExtraData(imgdata);
   
 };
 
@@ -174,17 +174,18 @@ WireInfo.prototype.Draw = function()
   this.graph.max_v = -1e9;
   this.graph.min_v =  1e9;
 
-  var mainPedwidth = 0;
+  var mainextradata = null;
   for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
     var c = i+chan;
     wire = plane+i;    
     if(c<0) continue;
     if(wire>maxwire) continue;
-    var pedwidth = this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc,pedwidth);
-    if(i==0) mainPedwidth = pedwidth;
+    var extradata = this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
+    if(i==0) mainextradata = extradata;
   }
-  if(mainPedwidth) {
-    $(this.txt_element).append("Pedestal RMS: "+mainPedwidth + "<br/>");
+  if(mainextradata) {
+    $(this.txt_element).append("Pedestal RMS:   "+mainextradata.rms + "<br/>");
+    $(this.txt_element).append("Servicecard ID: "+mainextradata.servicecard + "<br/>");
   }
 
   var dotcolor = {

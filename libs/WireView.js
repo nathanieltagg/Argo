@@ -456,7 +456,7 @@ WireView.prototype.DrawScale = function()
   var v  = (this.max_v-this.min_v)*0.95 + this.min_v;
   var y  = this.GetY(v);
   
-  console.warn("horizontal scale:",x2-x1);
+  // console.warn("horizontal scale:",x2-x1);
   this.ctx.save();
   this.ctx.strokeStyle = "black";
   this.ctx.fillStyle = "black";
@@ -482,7 +482,7 @@ WireView.prototype.DrawScale = function()
   var x = x2;
   var y1 = y;
   var y2 = this.GetY(v-d_tdc);
-  console.warn("vertical scale:",y2-y1);
+  // console.warn("vertical scale:",y2-y1);
   
   this.ctx.save();
   this.ctx.strokeStyle = "black";
@@ -582,7 +582,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    var source_w = Math.round((max_tdc-min_tdc)/scale_x);
    var source_h = Math.round((max_channel-min_channel)/scale_y);
   
-   console.log("Copy source coords:",source_x,source_y,source_w,source_h);
+   // console.log("Copy source coords:",source_x,source_y,source_w,source_h);
   
    // Find position and height of destination in screen coordinates. Note we'll 
    // have to rotate these for final picture insertion.

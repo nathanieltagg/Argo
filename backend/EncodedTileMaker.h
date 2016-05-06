@@ -11,10 +11,11 @@
 // typedef std::vector<int16_t> waveform_t;
 struct waveform_t : public std::vector<int16_t>
 {
-  waveform_t(size_t n=0, int16_t def=0) : std::vector<int16_t>(n,def)  {_pedwidth=0;}
-  waveform_t(const waveform_t& other) : std::vector<int16_t>(other)  {_pedwidth=other._pedwidth;}
-  waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0;}
-  int16_t _pedwidth;
+  waveform_t(size_t n=0, int8_t def=0) : std::vector<int16_t>(n,def)  {_pedwidth=0; _servicecard=0;}
+  waveform_t(const waveform_t& other) : std::vector<int16_t>(other)  {_pedwidth=other._pedwidth; _servicecard = other._servicecard; }
+  waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0; _servicecard=0;}
+  int8_t  _pedwidth;
+  uint8_t  _servicecard;
 };
 
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;
@@ -40,52 +41,7 @@ public:
     , m_fill_empty_space(fill_empty_space)
   {}
   
-  void process() // Nice and wrapped up, ready to be called in a thread.
-  {
-    int ntdc = (m_tdcEnd-m_tdcStart);
-    MakePng m_png(ntdc,(m_wireEnd-m_wireStart),MakePng::rgb);
-    std::vector<unsigned char> encodeddata(ntdc*3);    // Three bytes per entry.
-
-    for(int wire=m_wireStart;wire<m_wireEnd;wire++) 
-    {
-      // waveform_t& waveform = blank;
-      wiremap_t::iterator it = m_wireMap->find(wire);
-      if(it != m_wireMap->end()) {
-        // We have a good wire recorded.0
-        waveform_t& waveform = *(it->second.get());
-        uint8_t encoded_ped = abs(waveform._pedwidth) & 0xFF;
-        
-        for(int k=0;k<ntdc;k++) {
-          int iadc = waveform[k+m_tdcStart] + 0x8000;
-          // iadc = (k+m_tdcStart - 4800)/2 + 0x8000; // Testing only :generates a linear slope map
-          encodeddata[k*3]   = 0xFF&(iadc>>8);  // high 8 bits (really 5)
-          encodeddata[k*3+1] = iadc&0xFF;       // low 8 bits
-          encodeddata[k*3+2] = encoded_ped;
-        }
-      } else {
-        // Do not have wire info.
-        if(m_fill_empty_space) {
-          for(int k=0;k<ntdc;k++) {          
-           encodeddata[k*3] = 128; //
-           encodeddata[k*3+1] = 0; // Zero-adc wire. Not the same as blank.
-           encodeddata[k*3+2] = 0; //
-          }  
-        } else {
-          for(int k=0;k<ntdc;k++) {
-            // Save bitpacked data as image map.
-            encodeddata[k*3]   = 0;  //
-            encodeddata[k*3+1] = 0;  // Blank! 
-            encodeddata[k*3+2] = 0;  //
-          }
-        }
-      }
-      m_png.AddRow(encodeddata);      
-    }
-    m_png.Finish();
-    m_filename = m_png.writeToUniqueFile(m_outDir);
-    std::cout << "Tile written to " << m_filename << std::endl;
-    // Done!
-  }
+  void process();
   
   JsonObject json() {
     JsonObject j;
