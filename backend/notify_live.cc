@@ -237,7 +237,7 @@ void report(const std::string& filename)
   struct stat jsonstat;
   if(0 == stat(jsonfile.c_str(),&jsonstat)) {
     std::cout << "id: " << gId++ << "\n";
-    std::cout << "data: " <<  filename << "\n\n";
+    std::cout << "data: " <<  jsonfile << "\n\n";
     std::cout.flush();
     gLastFile = filename;    
   }
