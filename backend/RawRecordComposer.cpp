@@ -49,6 +49,8 @@
 #include "waveform_tools.h"
 #include "GetSloMonDB.h"
 
+#include "CoherentNoiseFilter.h"
+
 using namespace std;
 using namespace gov::fnal::uboone::datatypes;
 using gov::fnal::uboone::online::Plexus;
@@ -302,7 +304,8 @@ void RawRecordComposer::composeTPC()
   JsonObject jTPC;
   JsonArray jCrates;
 
-  std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
+  std::shared_ptr<wiremap_t> wireMap(new wiremap_t(8256));
+  std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(8256));
   int ntdc = 0;
   TimeReporter timer("TPC");    
   
@@ -351,15 +354,13 @@ void RawRecordComposer::composeTPC()
           size_t nsamp = channel_data.data().size();
 
           // Waveform storage.
-          std::pair<wiremap_t::iterator,bool> inserted;
           waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(nsamp));
-          inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
-          if(!inserted.second) {
+          if(wire>=wireMap->size()) wireMap->resize(wire+1);
+          if((*wireMap)[wire])  {
             cerr << "Two channels with wire number " << wire << " seem to have the same crate/card/channel map." << endl;
             continue;
           }
-          // waveform_t& waveform = *(inserted.first->second.get());
-          
+          (*wireMap)[wire] = waveform_ptr;          
           
           // unpack_channel(waveform_ptr,channel_data,plane,planewire,wire,hits);
           unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
@@ -397,23 +398,26 @@ void RawRecordComposer::composeTPC()
   } else {
     for(auto it: *wireMap) {
       wires_read++;
-      int nsamp = it.second->size();
+      int nsamp = it->size();
       if(ntdc<nsamp) ntdc = nsamp;
     }
     // Ensure uniform length. Can happen due to 0x503f issue.
     for(auto it: *wireMap) {
-      it.second->resize(ntdc,0);
+      it->resize(ntdc,0);
     }
     
     // Now we should have a semi-complete map.
     fmintdc = 0;
     fmaxtdc = ntdc;
-    int nwire = 1 + wireMap->rbegin()->first;
+    int nwire = wireMap->size();
+    
+    CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
   
     if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
     cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
     MakeEncodedTileset(     r,
                             wireMap, 
+                            noiseMap,
                             nwire,
                             ntdc,
                             fCurrentEventDirname,
@@ -427,7 +431,8 @@ void RawRecordComposer::composeTPC()
       JsonObject r2;
       TimeReporter lowres_stats("time_to_make_lowres");
       MakeLowres( r2,
-                     wireMap, 
+                     wireMap,
+                     noiseMap,
                      nwire,
                      ntdc, fCurrentEventDirname, fCurrentEventUrl, fOptions, false );
       JsonObject reco_list2;
