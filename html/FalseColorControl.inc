@@ -3,6 +3,9 @@
 .psuedoColorRow .pslabel{ -webkit-flex-basis: 40px; flex-basis: 40px;}
 .psuedoColorRow .psslide{ display:inline-block; -webkit-flex-grow: 1; flex-grow: 1; }
 .psuedoColorRow .psval  { font-size: 0.7em; -webkit-flex-basis:25px;flex-basis:25px; -webkit-flex-grow:0; flex-grow:0; }
+.psuedoCutoffLow { width: 15px;}
+.psuedoCutoffHigh {width: 15px;}
+  
 </style>
 <div class="portlet" id="falsecolorcontrol-port"> 
   <div class="portlet-header">Wire False Color</div>
@@ -51,9 +54,9 @@
                 <div class='psslide psuedoSaturationSlider'></div>
                 <input id='falsecolor-rainbow-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div>
 
-      <div class='psuedoColorRow'> Cutoff: &nbsp;
-        <input id='falsecolor-rainbow-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='5'/>&nbsp; to &nbsp;
-        <input id='falsecolor-rainbow-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='5'/></span>&nbsp; ADC &nbsp;
+      <div class='psuedoColorRow'> Cutoff &nbsp;
+        <input id='falsecolor-rainbow-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='3'/>&nbsp; to &nbsp;
+        <input id='falsecolor-rainbow-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='3'/></span>&nbsp; ADC &nbsp;
       </div>
 
     </div>
@@ -277,9 +280,11 @@
       </div>
     </div>
 
-    <div class='psuedoColorRow' > <span class='pslabel'>CutRMS</span>
+    <!-- <div class='psuedoColorRow' > <span class='pslabel'>CutRMS</span>
                 <div class='psslide psuedoPedWidthCutoffSlider'></div>
-                <input id='pedwidth-cutoff' class='psval saveable psuedoPedWidthCutoff'  type="text" value='3.0' width='2' style='width:20px'/> RMS</div>
+                <input id='pedwidth-cutoff' class='psval saveable psuedoPedWidthCutoff'  type="text" value='3.0' width='2' style='width:20px'/> RMS</div> -->
+    <div class='psuedoColorRow' > <input type="checkbox" id="ctl-coherent-noise-filter" name="ctl-coherent-noise-filter" class="saveable ctl-coherent-noise-filter"  checked="checked"/><label for="ctl-coherent-noise-filter"><b>(f)</b> Coherent Noise Filter</label></div>
+
 
 </div> <!-- A-FalseColorControl -->
  <div class="wireimg-encoded-progressbar" style="position: relative; text-align:center;">

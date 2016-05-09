@@ -101,8 +101,9 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
   
   // setup GLSL this.program
   var vertexShader = this.create_shader( "2d-vertex-shader");
-  var LUTShader    = this.create_shader( "lutshade");
-  var stupid       = this.create_shader( "stupidfill");
+  // var LUTShader    = this.create_shader( "lutshade");
+  var LUTShader    = this.create_shader( "lutshade-with-noise-removal");
+  // var LUTShader       = this.create_shader( "lutshade-with-rms-cut");
 
   this.program = this.gl.createProgram();
   this.gl.attachShader(this.program,vertexShader);
@@ -324,8 +325,8 @@ GLMapper.prototype.build_LUT_texture = function( )
   var canvas = document.createElement("canvas");
   canvas.width  = 256;
   canvas.height = 256;
-  var start_x = -0x1000;
-  var stop_x =   0x1000
+  var start_x = -0x1000-0x80;
+  var stop_x =   0x1000-0x80;
   var pixels = 0x2000; // Total pixels possible from -4096 to 4096
   var ctx = canvas.getContext('2d');
   ctx.fillStyle = 'black';
@@ -387,6 +388,10 @@ GLMapper.prototype.Render = function()
   var pedestal_width_cut_location = this.gl.getUniformLocation(this.program, "pedestal_width_cut");
   this.gl.uniform1f(pedestal_width_cut_location, gWireColorPedestalWidthCut);
 
+  var filter = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
+  console.warn("coherent noise filter:",filter);
+  var do_noise_reject_location = this.gl.getUniformLocation(this.program, "do_noise_reject");
+  this.gl.uniform1i(do_noise_reject_location, filter); // 1 = on 0 = off
 
   // var tex = this.tile_textures[0][0];
   // this.gl.activeTexture(this.gl.TEXTURE1);
@@ -421,6 +426,9 @@ GLMapper.prototype.Render = function()
       var elem = this.tile_urls[irow][icol];
       // console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
       var tex = this.tile_textures[irow][icol];
+
+      this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width") , 1.0/elem.width);
+      this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_height"), 1.0/elem.height);
 
       this.gl.activeTexture(this.gl.TEXTURE1);
       this.gl.bindTexture(this.gl.TEXTURE_2D, tex);

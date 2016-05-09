@@ -659,6 +659,13 @@ Pad.prototype.MagnifierDraw = function(arg)
   if($(this.element).is(":hidden")) return;
   // console.warn("Draw",this.plane);
   // console.trace();
+  
+  // pop all saves. I want the top.
+  this.ctx.restore();
+  this.ctx.restore();
+  this.ctx.restore();
+  this.ctx.restore();
+  this.ctx.restore();
 
   this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
   this.magnifying = false;

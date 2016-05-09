@@ -593,12 +593,12 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   
    // Now, the above values are good, but we need to 
    // rotate our image.
-   this.ctx.save();
-   
    // No blur on copy!
    this.ctx.webkitImageSmoothingEnabled = false;
    this.ctx.mozImageSmoothingEnabled = false;
    this.ctx.imageSmoothingEnabled = false; /// future
+   this.ctx.save();
+   
    this.ctx.translate(dest_x,dest_y);
    this.ctx.rotate(-Math.PI/2);
 
@@ -628,6 +628,18 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // } else {
     this.ctx.globalAlpha = 1.0;
     
+    console.debug(canvas      // Source image.
+      ,source_x
+      ,source_y
+      ,source_w
+      ,source_h
+      ,rot_dest_x
+      ,rot_dest_y
+      ,rot_dest_w
+      ,rot_dest_h);
+    this.ctx.fillStyle = "rgba(100,100,100,0.5)";
+    this.ctx.fillRect(rot_dest_x,rot_dest_y,rot_dest_w,rot_dest_h)
+
     this.ctx.drawImage(
        canvas      // Source image.
       ,source_x

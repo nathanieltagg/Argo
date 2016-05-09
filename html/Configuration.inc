@@ -55,8 +55,8 @@
         <div><b>(shift-S)</b> <select id="ctl-ShowerLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
 
 
-        <div><label><input type="checkbox" id="ctl-show-pfparticles"  name="show-pfparticles"  class="saveable show-pfparticles"  checked="checked"/><b>(f)</b> Show PFParticles </label></input></div>
-        <div><b>(shift-F)</b> <select id="ctl-PFParticleLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
+        <div><label><input type="checkbox" id="ctl-show-pfparticles"  name="show-pfparticles"  class="saveable show-pfparticles"  checked="checked"/>Show PFParticles </label></input></div>
+        <div><select id="ctl-PFParticleLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
             
         <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      checked="checked"/><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>
         <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-show-mc-neutrals"      name="show-mc-neutrals"      class="saveable show-mc-neutrals"  /><label for="ctl-show-mc">      <b>(M)</b> Show neutral particles </label></div>

@@ -9,6 +9,7 @@
 
 // Globals:
 gWirePseudoColor = new PsuedoRainbow();
+gWireCoherentNoiseFilter = true;
 gWireColorPedestalWidthCut = 3; // Value used by GLEngine to determine "smoothing": 
                                 // If this value is 1, all ADC values less than 1 sigma of the RMS for that wire will be smoothed away.
 
@@ -78,6 +79,7 @@ function FalseColorControl( element  )
   $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
 
   $('input.psuedoPedWidthCutoff').change(function(){gWireColorPedestalWidthCut = parseFloat($(this).val());  this.blur(); self.Draw(); });;
+  $('input.ctl-coherent-noise-filter').change(function(){ gStateMachine.Trigger('ChangePsuedoColor'); });;
 
 
   $('div.psuedoDialOffsetSlider').each(function(){

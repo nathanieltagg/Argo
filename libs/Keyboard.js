@@ -111,12 +111,12 @@ $(function() {
         return false;
 
       case 102: // 'f' 
-        $('#ctl-show-pfparticles').click();
+        $('#ctl-coherent-noise-filter').click();
         return false;
 
-      case 70: // 'F' 
-        $('#ctl-PFParticleLists').cycle_dropdown().trigger("change");
-        return false;
+      // case 70: // 'F'
+      //   $('#ctl-PFParticleLists').cycle_dropdown().trigger("change");
+      //   return false;
         
       case 111: // 'o' 
         $('#ctl-track-shift-window').click();

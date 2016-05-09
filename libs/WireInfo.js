@@ -41,14 +41,6 @@ function WireInfo( element  )
   this.graph_element = $(".WireInfo-graph",this.element)[0];
 
   this.graph = new HistCanvas( this.graph_element, {xlabel:"TDC", ylabel:"ADC", margin_left: 40} );
-  this.graphdata = new Histogram(100,0,100);
-  this.graph_data = [];
-  for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
-    this.graph_data[i] = new Histogram(100,0,100); 
-  }
-
-  this.graph.SetHist(this.graphdata,new ColorScaleIndexed(0));
-  this.graph.ResetDefaultRange();
   this.graph.Draw();
 
   var self=this;
@@ -59,6 +51,7 @@ function WireInfo( element  )
   
   gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
   gStateMachine.Bind("hoverChange", this.Draw.bind(this));
+  gStateMachine.Bind("ChangePsuedoColor", this.Draw.bind(this));
 }
 
 WireInfo.prototype.NewRecord = function()
@@ -73,42 +66,57 @@ function getEncodedPngVal(imgdata, x)
   var r = imgdata.data[i*4];
   var g = imgdata.data[i*4+1];
   // var b = imgdata.data[i*4+2];
-  return (r*256 + g ) - 0x8000;
+  return (r*256 + g) - 0x8080;
+}
+
+
+function getEncodedPngValNoise(imgdata, x)
+{
+  var i = Math.floor(x);
+  var b = imgdata.data[i*4+2];
+  return b - 0x80;
 }
 
 function getEncodedExtraData(imgdata)
 {
-  var b = imgdata.data[1*4+2]; // First pixel blue channel
-  return {
-    rms: (b & 15)/2.0,
-    servicecard: b >> 4
-  }
+  // var b = imgdata.data[1*4+2]; // First pixel blue channel
+  // return {
+  //   rms: (b & 15)/2.0,
+  //   servicecard: b >> 4 // Actually just the lower 4 bits
+  // }
+  return {};
 }
 
 
-WireInfo.prototype.LoadHistogramWithWireData = function( histogram, offScreenCtx, channel, tdc)
+WireInfo.prototype.GetWireDataHistograms = function( offScreenCtx, channel, tdc, n)
 {
+  console.log("GetWireDataHistogram",channel,tdc,n);
   if(isNaN(channel)) return;
   if(isNaN(tdc)) return;
   var y = channel;
   var x = tdc;
   var width = offScreenCtx.canvas.width;
-  var x1 = Math.round(tdc - histogram.n/2);
+  var x1 = Math.round(tdc - n/2);
   if(x1<0) x1 = 0;
-  var x2 = x1 + histogram.n;
-  if(x2>width) {x2 = width; x1 = width - histogram.n;}
+  if(x2>width) {x1 = width - n;}
+  var x2 = x1 + n;
+
+  var retval = getEncodedExtraData(imgdata);
+  retval.raw=          new Histogram(n,x1,x2);
+  retval.noise=        new Histogram(n,x1,x2); 
+  retval.noiseremoved= new Histogram(n,x1,x2);
 
   // Pull a single horizontal line from the png.
   var imgdata = offScreenCtx.getImageData(x1,y,x2-x1,1);
-  histogram.Clear();
-  histogram.min = x1;
-  histogram.max = x2;
-  histogram.min_content=1e9;
-  histogram.max_content=-1e9;
   for(var i=0;i<x2-x1;i++) {
-    histogram.SetBinContent(i,getEncodedPngVal(imgdata,i));
+    var d = getEncodedPngVal(imgdata,i);
+    var s = getEncodedPngValNoise(imgdata,i);
+    
+    retval.raw.SetBinContent(i,d);
+    retval.noise.SetBinContent(i,s);
+    retval.noiseremoved.SetBinContent(i,d-s);
   }
-  return getEncodedExtraData(imgdata);
+  return retval;
   
 };
 
@@ -173,34 +181,32 @@ WireInfo.prototype.Draw = function()
   var maxwire = gGeo.numWires(plane);
   this.graph.max_v = -1e9;
   this.graph.min_v =  1e9;
-
-  var mainextradata = null;
-  for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
-    var c = i+chan;
-    wire = plane+i;    
-    if(c<0) continue;
-    if(wire>maxwire) continue;
-    var extradata = this.LoadHistogramWithWireData(this.graph_data[i],offscreenCtx,c,tdc);
-    if(i==0) mainextradata = extradata;
-  }
-  if(mainextradata) {
-    $(this.txt_element).append("Pedestal RMS:   "+mainextradata.rms + "<br/>");
-    $(this.txt_element).append("Servicecard ID: "+mainextradata.servicecard + "<br/>");
-  }
-
+  
+  this.graph_data = this.GetWireDataHistograms(offscreenCtx,chan,tdc,100)
+  
   var dotcolor = {
     GetColor: function(t,f) { var c=gWirePseudoColor.ColorDialToColor(gWirePseudoColor.AdcToColorDial(f)); 
       return parseInt(c.r)+','+parseInt(c.g)+','+parseInt(c.b); }
   };
   
-  
-  this.graph.SetHist(this.graph_data[0],dotcolor,{doDots: true, doGraph:true, doFill:false, lineWidth: 2});
-  
-  for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
-    if(i==0) continue;
-    this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(1),
-      {doDots: false, doGraph:true, doFill:false, lineWidth:0.5, xoffset:-10*i, yoffset:i*30});
+  // this.graph.SetHist(this.graph_data.noiseremoved,dotcolor,{doDots: true, doGraph:true, doFill:false, lineWidth: 2});
+  // this.graph.AddHist(this.graph_data.noise,new new ColorScaleIndexed(2),{doDots: false, doGraph:true, doFill:true, lineWidth: 4});
+  // this.graph.AddHist(this.graph_data.raw,new ColorScaleRGB(1),{doDots: false, doGraph:true, doFill:false, lineWidth: 4});
+
+  if($('#ctl-coherent-noise-filter').is(":checked") && show_image != 'cal') {
+    this.graph.ylabel="Noise-filtered ADC";    
+    this.graph.SetHist(this.graph_data.noiseremoved,  dotcolor,          {doDots: true, doGraph:true, doFill:false, lineWidth: 2, strokeStyle:"black"});    
+  } else {
+    this.graph.SetHist(this.graph_data.raw         ,  dotcolor,          {doDots: true, doGraph:true, doFill:false, lineWidth: 2, strokeStyle:"black"});
   }
+  this.graph.AddHist(this.graph_data.noise,   new ColorScaleIndexed(2),{doDots: false, doGraph:true, doFill:false, lineWidth: 4, strokeStyle:"blue"});
+
+  
+  // for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
+  //   if(i==0) continue;
+  //   this.graph.AddHist(this.graph_data[i],new ColorScaleIndexed(1),
+  //     {doDots: false, doGraph:true, doFill:false, lineWidth:0.5, xoffset:-10*i, yoffset:i*30});
+  // }
 
   //insist that the graph be at least 40 ADC counts tall
   var dv = this.graph.max_v - this.graph.min_v;
@@ -215,6 +221,8 @@ WireInfo.prototype.Draw = function()
 
   /// ------ Manual Draw
   this.graph.Draw();
+  
+    
   // this.graph.Clear();
   // this.graph.DrawFrame();
   //

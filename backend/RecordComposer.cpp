@@ -809,6 +809,7 @@ void RecordComposer::composeCal()
   
     JsonObject r; 
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
+    std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
     
     std::vector<float> wireArr(ntdc); // Storage.
     wireArr.reserve(ntdc);
@@ -841,20 +842,22 @@ void RecordComposer::composeCal()
       }
       
       // Waveform storage.
-      std::pair<wiremap_t::iterator,bool> inserted;
-      inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
+      if(wireMap->size() <= wire) wireMap->resize(wire+1);
+      (*wireMap)[wire] = waveform_ptr;
     }
+    noiseMap->resize(wireMap->size());
     if(simpleLooter) delete simpleLooter;
     if(roiLooter)    delete roiLooter;
 
     
     // Now we should have a semi-complete map.
-    int nwire = 1 + wireMap->rbegin()->first;
+    int nwire = wireMap->size();
     std::cout << "maxwire:" << nwire << " nwire:" << wireMap->size() << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     
     MakeEncodedTileset(     r,
                             wireMap, 
+                            noiseMap,
                             nwire,
                             ntdc,
                             fCacheStoragePath,
@@ -870,6 +873,7 @@ void RecordComposer::composeCal()
       TimeReporter lowres_stats("time_to_make_lowres");
       MakeLowres( r2,
                      wireMap, 
+                     noiseMap,
                      nwire,
                      ntdc, fCacheStoragePath, fCacheStorageUrl, fOptions, false );
       reco_list2.add(stripdots(name),r2);
@@ -918,6 +922,8 @@ void RecordComposer::composeRaw()
     
     JsonArray jpedestals;
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
+    std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
+    
     size_t ntdc = 0;
     
     std::vector<short> waveform;
@@ -932,7 +938,6 @@ void RecordComposer::composeRaw()
       const std::vector<short> *ptr = l.get<std::vector<short> >(i);
     
       // Waveform storage.
-      std::pair<wiremap_t::iterator,bool> inserted;
       waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( (*ptr) )); // make a copy
       
       // int planewire,plane;
@@ -958,16 +963,20 @@ void RecordComposer::composeRaw()
       //   }
       // }
       
-      inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
+      if(wireMap->size() <= wire) wireMap->resize(wire+1);
+      (*wireMap)[wire] = waveform_ptr;
       ntdc = max(ntdc,ptr->size());
     }
+    noiseMap->resize(wireMap->size());
+    
     
     // Now we should have a semi-complete map.
-    int nwire = 1 + wireMap->rbegin()->first;
+    int nwire = wireMap->size();
     std::cout << "nwire:" << nwire << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     MakeEncodedTileset(     r,
-                            wireMap, 
+                            wireMap,
+                            noiseMap, 
                             nwire,
                             ntdc,
                             fCacheStoragePath,
@@ -981,7 +990,8 @@ void RecordComposer::composeRaw()
       JsonObject r2;
       TimeReporter lowres_stats("time_to_make_lowres");
       MakeLowres( r2,
-                     wireMap, 
+                     wireMap,
+                     noiseMap, 
                      nwire,
                      ntdc, fCacheStoragePath, fCacheStorageUrl, fOptions, false );
       reco_list2.add(stripdots(name),r2);

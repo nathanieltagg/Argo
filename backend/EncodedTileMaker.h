@@ -19,7 +19,7 @@ struct waveform_t : public std::vector<int16_t>
 };
 
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;
-typedef std::map<int, waveform_ptr_t > wiremap_t;
+typedef std::vector<waveform_ptr_t > wiremap_t;
 
 void        wireOfChannel(int channel, int& plane, int& wire);
 
@@ -27,11 +27,12 @@ void        wireOfChannel(int channel, int& plane, int& wire);
 class EncodedTileMaker
 {
 public:
-  EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
+  EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, std::shared_ptr<wiremap_t> noiseWireMap, int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
     const std::string& outDir,
     const std::string& outUrl,
     bool fill_empty_space )
-    : m_wireMap(wireMap)
+    : m_wireMap(wireMap) 
+    , m_noiseWireMap(noiseWireMap)
     , m_wireStart(wireStart)
     , m_wireEnd(wireEnd)
     , m_tdcStart(tdcStart)
@@ -54,6 +55,7 @@ public:
   }
 
   std::shared_ptr<wiremap_t> m_wireMap;
+  std::shared_ptr<wiremap_t> m_noiseWireMap;
   int m_wireStart;
   int m_wireEnd;
   int m_tdcStart;
@@ -67,6 +69,7 @@ public:
 
 void MakeEncodedTileset(JsonObject& output,
                         std::shared_ptr<wiremap_t> wireMap, 
+                        std::shared_ptr<wiremap_t> noiseWireMap,                         
                         size_t nwires,
                         size_t ntdc,
                         const std::string& path,
@@ -76,6 +79,7 @@ void MakeEncodedTileset(JsonObject& output,
 
 void MakeLowres(JsonObject& r,
             std::shared_ptr<wiremap_t> wireMap, 
+            std::shared_ptr<wiremap_t> noiseWireMap,                                     
             size_t nwire,
             size_t nsamp,
             const std::string& path,
