@@ -50,6 +50,7 @@
 #include "GetSloMonDB.h"
 
 #include "CoherentNoiseFilter.h"
+#include "DeadChannelMap.h"
 
 using namespace std;
 using namespace gov::fnal::uboone::datatypes;
@@ -248,6 +249,7 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   int plane = plek.plane();
   int planewire = plek.planewire();
   waveform._servicecard = plek._servicecard_id;
+  waveform._status = gDeadChannelMap->status(wirenum);
   
   // // Find the pedestal manually.
   waveform_tools::pedestal_computer pedcomp;

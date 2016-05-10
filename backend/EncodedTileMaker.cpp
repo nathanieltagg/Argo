@@ -53,7 +53,9 @@ void MakeLowres(JsonObject& r,
     for(int iwire_in = iwire_out*factor_y; (iwire_in < (iwire_out+1)*factor_y) && iwire_in<nwire; iwire_in++) {
       waveform_ptr_t      waveform_in_ptr=      (*wireMap)[iwire_in];
       waveform_ptr_t noiseWaveform_in_ptr= (*noiseWireMap)[iwire_in];
-      if(waveform_in_ptr) {
+      
+      // If the wire exists, and is not a bad channel...
+      if(waveform_in_ptr && (waveform_in_ptr->_status<0 || waveform_in_ptr->_status>3)) {
         // if(!noiseWaveform_in_ptr) std::cout << " No noise waveform on " << iwire_in << std::endl;
         waveform._pedwidth = waveform_in_ptr->_pedwidth;
         for(int i=0;i<nsamp;i++) {
@@ -252,7 +254,7 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
       // We have a good wire recorded.0
       waveform_t& waveform = *(waveform_ptr);
       uint8_t encoded_ped = abs(waveform._pedwidth) & 0xF;
-      uint16_t blue_channel = encoded_ped + ( ((waveform._servicecard)&0xF) << 4 );
+      // uint16_t blue_channel = encoded_ped + ( ((waveform._servicecard)&0xF) << 4 );
       
       waveform_t& noisewaveform = dummy;      
       if(noise_ptr) noisewaveform = *(noise_ptr);
@@ -265,7 +267,8 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
         encodeddata[k*3+1] = iadc&0xFF;       // low 8 bits
         int inoise = noisewaveform[k+m_tdcStart] + 0x80;
         if(inoise <0) inoise = 0;
-        if(inoise > 0xff) inoise = 0xff;
+        if(inoise > 0xfe) inoise = 0xfe;
+        if(waveform._status >=0 && waveform._status<4) inoise=0xff;
         encodeddata[k*3+2] = inoise&0xff;
       }
     } else {
