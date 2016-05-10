@@ -79,7 +79,9 @@ function FalseColorControl( element  )
   $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
 
   $('input.psuedoPedWidthCutoff').change(function(){gWireColorPedestalWidthCut = parseFloat($(this).val());  this.blur(); self.Draw(); });;
-  $('input.ctl-coherent-noise-filter').change(function(){ gStateMachine.Trigger('ChangePsuedoColor'); });;
+
+  $('input.ctl-coherent-noise-filter').change(function(){ gStateMachine.Trigger('ChangePsuedoColor'); });
+  $('input.ctl-bad-wire-filter').change(function(){ gStateMachine.Trigger('ChangePsuedoColor'); });
 
 
   $('div.psuedoDialOffsetSlider').each(function(){
@@ -192,7 +194,7 @@ function FalseColorControl( element  )
     $(self.top_element).tabs('option', 'active', index);
   }
   // Set up initial tab.
-  forceTab("falsecolor-Rainbow");
+  forceTab("falsecolor-LOCS");
   
   // Set up initial tab, if changed by the save/restore routines.
   $('#falsecolor-scheme').change(function(){

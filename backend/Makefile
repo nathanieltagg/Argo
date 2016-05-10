@@ -70,6 +70,7 @@ tmp/ColorMap.o      tmp/RootToJson.o        tmp/cencode.o \
 tmp/FormString.o    tmp/SocketServer.o      tmp/WirePalette.o \
 tmp/FormulaLooter.o tmp/Timer.o 	    tmp/crc32checksum.o\
 tmp/JsonElement.o   tmp/RecordComposer.o    tmp/TreeElementLooter.o \
+tmp/DeadChannelMap.o \
 tmp/Cint.o 
 
 #Where to look for source files

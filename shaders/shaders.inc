@@ -166,6 +166,7 @@ uniform float pedestal_width_cut;
 uniform float pixel_width;
 uniform float pixel_height;
 uniform int   do_noise_reject;
+uniform int   do_bad_channel_flag;
 varying vec2 v_texCoord;
 
 void main() {
@@ -174,23 +175,29 @@ void main() {
   
   
   // // This DOES work and should give the correct ADC value in integers
-  int g = int(inc.g*256.0);
-  int r = int(inc.r*256.0);
-  int b = int(inc.b*256.0);
+  int g = int(inc.g*255.0);
+  int r = int(inc.r*255.0);
+  int b = int(inc.b*255.0);
   
-  if(do_noise_reject>0) {
+  // Subtract the noise which is stored in the blue channel.
+  if(do_noise_reject>0 && b<0xff) {
     g = g - b + 128;
     if(g<0)   { r-=1; g+=256;}
     if(g>255) { r+=1; g-=256;}
-
   }
+  if(b==0xff && do_bad_channel_flag==0) { g=0x80; r=0x80; } // dead channel - zero it out.
+  
+  vec2 lookup_coords = vec2( (float(g)+0.5)/256.0 , (float(r)+0.5)/256.0 );
+  gl_FragColor = texture2D(maptexture, lookup_coords);
+  
+
+  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; } // dead channel - black out.
+  
   // July 27
   // Add a 0.5 pixel offset, to be sure that the nearest pixel we map to in the maptexture is the correct one!
   // vec2 lookup_coords = vec2( (floor(inc.g*256.0)+0.5)/256.0 , (floor(inc.r*256.0)+0.5)/256.0 );
 
-  vec2 lookup_coords = vec2( (float(g)+0.5)/256.0 , (float(r)+0.5)/256.0 );
     
-  gl_FragColor = texture2D(maptexture, lookup_coords);
 }
 
 </script>

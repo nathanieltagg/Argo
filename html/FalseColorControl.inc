@@ -19,7 +19,7 @@
  <!-- <button class="falseColorMinus1">-1</button>
  <button class="falseColorPlus1">+1</button> -->
       <div class="hist-element" style="height: 120px"></div>
-      <input type="hidden" id="falsecolor-scheme" value="falsecolor-Rainbow" class='saveable'/>
+      <input type="hidden" id="falsecolor-scheme" value="falsecolor-LOCS" class='saveable'/>
 
   	<ul>
       <li><a href="#falsecolor-Rainbow">Rainbow</a></li>
@@ -95,11 +95,11 @@
 
       <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
                 <div class='psslide psuedoAdcScaleSlider'></div> 
-                <input id='falsecolor-grayscale-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='20' width='3'/> </div>
+                <input id='falsecolor-grayscale-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='36.5' width='3'/> </div>
 
       <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
                 <div class='psslide psuedoDialScaleSlider'></div>
-                <input id='falsecolor-grayscale-dialscale' class='psval saveable psuedoDialScale'  type="text"  value='0.5' width='3'/> </div>
+                <input id='falsecolor-grayscale-dialscale' class='psval saveable psuedoDialScale'  type="text"  value='-0.5' width='3'/> </div>
       <!-- <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
                 <div class='psslide psuedoSaturationSlider'></div>
                 <input id='falsecolor-locs-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div> -->
@@ -284,6 +284,11 @@
                 <div class='psslide psuedoPedWidthCutoffSlider'></div>
                 <input id='pedwidth-cutoff' class='psval saveable psuedoPedWidthCutoff'  type="text" value='3.0' width='2' style='width:20px'/> RMS</div> -->
     <div class='psuedoColorRow' > <input type="checkbox" id="ctl-coherent-noise-filter" name="ctl-coherent-noise-filter" class="saveable ctl-coherent-noise-filter"  checked="checked"/><label for="ctl-coherent-noise-filter"><b>(f)</b> Coherent Noise Filter</label></div>
+    <div class='psuedoColorRow' > Bad Channels: 
+      <label><input type='radio' class='ctl-bad-wire-filter' id='ctl-bad-wire-filter0' name='radio-bad-wire-filter' value='0' checked="checked"/>Zero </label>
+      <label><input type='radio' class='ctl-bad-wire-filter' id='ctl-bad-wire-filter1' name='radio-bad-wire-filter' value='1'/>Show</label>
+      <label><input type='radio' class='ctl-bad-wire-filter' id='ctl-bad-wire-filter2' name='radio-bad-wire-filter' value='2'/>Black</label>
+ </div>
 
 
 </div> <!-- A-FalseColorControl -->

@@ -13,6 +13,7 @@ void OneWireCoherentNoiseFilter( std::shared_ptr< std::vector<waveform_ptr_t> > 
 
   // Compose the median waveform.
   size_t n = input_wires.size();
+  if(n==0) return;
   std::vector<int16_t> values(n);
   waveform_t& noise = *noise_ptr;
   
@@ -39,7 +40,7 @@ void CoherentNoiseFilter(
   
   noiseWireMap->resize(nwires);
   
-  // This algorithm builds noise in 48-wire chunks
+  // This algorithm builds noise in 48-wire chunks:
   int iwire_start = 0;
   int iwire_end = 0;
   while(iwire_end<(int)nwires) {
@@ -53,20 +54,53 @@ void CoherentNoiseFilter(
               && (*wireMap)[iwire_end]->_servicecard == servicecard) // The service card matches
                 iwire_end++; // advance
     
-    std::cout << "Noise grouping: " << iwire_end-iwire_start << ":" << iwire_start << " to " << iwire_end << std::endl;
     // Make a noisewire waveform to store.
-    waveform_ptr_t noise_ptr(new waveform_t(ntdc));
+    waveform_ptr_t noise_ptr(new waveform_t(ntdc,0));
     // build a list for input, add this noisewire to output.
     std::shared_ptr< std::vector<waveform_ptr_t> > input_wires(new std::vector<waveform_ptr_t>());
     for(int iwire = iwire_start; iwire<iwire_end; iwire++) {
-      input_wires->push_back((*wireMap)[iwire]);
+      waveform_ptr_t wf = (*wireMap)[iwire];
+      // Only use it for noise computation if the wire status is OK - not a bad channel.
+      int status = wf->_status;
+      if(status<0 || status>=4)
+        input_wires->push_back(wf);
       (*noiseWireMap)[iwire] = noise_ptr;
     }
+    std::cout << "Noise grouping: " << input_wires->size() << ":" << iwire_start << " to " << iwire_end << std::endl;
+    
     threads.create_thread(boost::bind(OneWireCoherentNoiseFilter,input_wires,noise_ptr,ntdc));
     // OneWireCoherentNoiseFilter(iwire,servicecard,wireMap,noise_ptr,nwires,ntdc);
   }
   threads.join_all();
   
+
+  // This algorithm builds noise across all channels of a servicecard, regardless of plane.
+  /*
+  std::map<int, int> servicecards;
+  for(int iwire=0;iwire<(int)nwires;iwire++) {    
+    int sc = (*wireMap)[iwire]->_servicecard;
+    servicecards[sc]=1;
+  }
+  
+  // Iterate servicecards.
+  for(auto& it: servicecards) {
+    int sc = it.first;
+    // Make a noisewire waveform to store.
+    waveform_ptr_t noise_ptr(new waveform_t(ntdc));
+    // build a list for input, add this noisewire to output.
+    std::shared_ptr< std::vector<waveform_ptr_t> > input_wires(new std::vector<waveform_ptr_t>());
+    
+    for(int iwire=0;iwire<(int)nwires;iwire++) {
+      if(sc == (*wireMap)[iwire]->_servicecard) {
+        input_wires->push_back((*wireMap)[iwire]);
+        (*noiseWireMap)[iwire] = noise_ptr;        
+      }        
+    }
+    threads.create_thread(boost::bind(OneWireCoherentNoiseFilter,input_wires,noise_ptr,ntdc));    
+  }
+  threads.join_all();
+  */
+
   
   // This algorithm builds a 48-channel average around the current wire.  //
   // for(int iwire = 0;iwire<nwires;iwire++) {

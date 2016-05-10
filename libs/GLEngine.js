@@ -392,7 +392,12 @@ GLMapper.prototype.Render = function()
   console.warn("coherent noise filter:",filter);
   var do_noise_reject_location = this.gl.getUniformLocation(this.program, "do_noise_reject");
   this.gl.uniform1i(do_noise_reject_location, filter); // 1 = on 0 = off
-
+  
+  var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
+  console.warn("bad channel flag",bad_channel_flag);
+  var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
+  this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
+  
   // var tex = this.tile_textures[0][0];
   // this.gl.activeTexture(this.gl.TEXTURE1);
   // this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
