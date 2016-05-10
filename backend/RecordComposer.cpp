@@ -50,6 +50,8 @@
 
 #include "boost/thread/thread.hpp"
 
+#include "DeadChannelMap.h"
+#include "CoherentNoiseFilter.h"
 
 
 
@@ -962,16 +964,19 @@ void RecordComposer::composeRaw()
       //     (*waveform_ptr)[iii] -= pedestal;
       //   }
       // }
+      waveform._status = gDeadChannelMap->status(wire);
+      
       
       if(wireMap->size() <= wire) wireMap->resize(wire+1);
       (*wireMap)[wire] = waveform_ptr;
       ntdc = max(ntdc,ptr->size());
     }
     noiseMap->resize(wireMap->size());
+    int nwire = wireMap->size();
     
+    CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
     
     // Now we should have a semi-complete map.
-    int nwire = wireMap->size();
     std::cout << "nwire:" << nwire << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     MakeEncodedTileset(     r,
