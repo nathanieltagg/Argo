@@ -10,7 +10,8 @@
   <p><em>Message of the day:</em></p>
   Recent updates:<br/>
   <ul> 
-    <li> Minor feature: Add trigger bits, HW and SW trigger descriptions. </li>    
-    <li> Major upgrade: Default smooth out wires based on RMS. Samples less than 3 sigma are zeroed. Use the 'CutRMS slider' to adjust. </li>    
+    <li> Major feature: Add coherent noise removal </li>    
+    <li> Major feature: Add dead channel removal </li>    
+    <li> Minor change: lighter skin </li>    
   </ul>
 </div> 
