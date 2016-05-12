@@ -178,6 +178,11 @@ MRI.prototype.ZoomChange = function()
                                      
   this.buttress_min_v = crossing1.y;
   this.buttress_max_v = crossing2.y;
+  
+  this.buttress_max_u = Math.min(this.buttress_max_u, 1100);
+  this.buttress_min_u = Math.max(this.buttress_min_u,-10);
+  this.buttress_max_v = Math.min(this.buttress_max_v, 150);
+  this.buttress_min_v = Math.max(this.buttress_min_v, -150);
 
   // if(this.buttress_min_v < -120 ) this.buttress_min_v = -120;
   // if(this.buttress_max_v >  120 ) this.buttress_max_v =  120;
