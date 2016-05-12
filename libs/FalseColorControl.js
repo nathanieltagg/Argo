@@ -71,17 +71,17 @@ function FalseColorControl( element  )
 
   $('.falseColorPlus1' ).click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
   $('.falseColorMinus1').click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(-1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
-  $('input.psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val());  this.blur(); self.Draw();});
-  $('input.psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val());  this.blur(); self.Draw();});
-  $('input.psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val());  this.blur(); self.Draw();});
-  $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw();});
+  $('input.psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
   $('input.psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
   $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
 
-  $('input.psuedoPedWidthCutoff').change(function(){gWireColorPedestalWidthCut = parseFloat($(this).val());  this.blur(); self.Draw(); });;
+  $('input.psuedoPedWidthCutoff').change(function(){gWireColorPedestalWidthCut = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});;
 
-  $('input.ctl-coherent-noise-filter').change(function(){ gStateMachine.Trigger('ChangePsuedoColor'); });
-  $('input.ctl-bad-wire-filter').change(function(){ gStateMachine.Trigger('ChangePsuedoColor'); });
+  $('input.ctl-coherent-noise-filter').change(function(){   self.TriggerViewChange(); });
+  $('input.ctl-bad-wire-filter').change(function(){   self.TriggerViewChange(); });
 
 
   $('div.psuedoDialOffsetSlider').each(function(){
@@ -205,6 +205,19 @@ function FalseColorControl( element  )
   
 }
 
+FalseColorControl.prototype.ControlAdjusted = function()
+{
+  // Comment this code out if you dont' want views changing on every adjustment of a control.
+  gStateMachine.Trigger('ChangePsuedoColor');  // Set all LUT to dirty
+  gStateMachine.Trigger('colorWireMapsChanged'); // Redraw all views.
+}
+
+FalseColorControl.prototype.TriggerViewChange = function()
+{
+  gStateMachine.Trigger('ChangePsuedoColor');  // Set all LUT to dirty
+  gStateMachine.Trigger('colorWireMapsChanged'); // Redraw all views.
+}
+
 FalseColorControl.prototype.NewRecord = function()
 {
   // Read saved values into the color.
@@ -249,7 +262,9 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   else if(id == 'falsecolor-Interp4')     gWirePseudoColor = new PsuedoInterpolator(4); 
   
   this.NewRecord();
-  gStateMachine.Trigger('ChangePsuedoColor');
+  this.TriggerViewChange();
+  // gStateMachine.Trigger('ChangePsuedoColor');
+  
 }
 
 
@@ -343,8 +358,9 @@ FalseColorControl.prototype.FinishRangeChange = function()
   
   this.final_offset = this.temporary_offset + this.final_offset;
   this.temporary_offset = 0;
+  this.TriggerViewChange();
   
-  gStateMachine.Trigger('ChangePsuedoColor');
+  // gStateMachine.Trigger('ChangePsuedoColor');
 };
 
 FalseColorControl.prototype.DoMouse = function( ev )

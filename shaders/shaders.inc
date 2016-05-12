@@ -162,9 +162,6 @@ precision mediump float;
 
 uniform sampler2D inputtexture;
 uniform sampler2D maptexture;
-uniform float pedestal_width_cut;
-uniform float pixel_width;
-uniform float pixel_height;
 uniform int   do_noise_reject;
 uniform int   do_bad_channel_flag;
 varying vec2 v_texCoord;
@@ -191,7 +188,7 @@ void main() {
   gl_FragColor = texture2D(maptexture, lookup_coords);
   
 
-  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; } // dead channel - black out.
+  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=0.;} // dead channel - black out.
   
   // July 27
   // Add a 0.5 pixel offset, to be sure that the nearest pixel we map to in the maptexture is the correct one!

@@ -667,39 +667,42 @@ Pad.prototype.MagnifierDraw = function(arg)
   this.ctx.restore();
   this.ctx.restore();
 
+  this.mag_scale = 1;
+  this.magnify_pass = 1;
   this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
-  this.magnifying = false;
   if((this.fMouseInContentArea) && ($('#ctl-magnifying-glass').is(':checked')) )
   {
     if(this.fMousePos.x < this.origin_x) return;
     if(this.fMousePos.y > this.origin_y) return;
     
     this.magnifying = true;
+    this.magnify_pass = 2;
+    
     // Cleverness:
-    var mag_radius = parseFloat($('#ctl-magnifier-size').val());
-    var mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
+    this.mag_radius = parseFloat($('#ctl-magnifier-size').val());
+    this.mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
     
 
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "black";
     
     this.ctx.beginPath();
-    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, mag_radius+1, 0,1.9999*Math.PI,false);
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, this.mag_radius+1, 0,1.9999*Math.PI,false);
     this.ctx.stroke();
 
     this.ctx.save();
     this.ctx.beginPath();
-    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, mag_radius, 0,Math.PI*2,true);
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, this.mag_radius, 0,Math.PI*2,true);
     this.ctx.clip();
 
-    this.ctx.translate((1-mag_scale)*this.fMousePos.x,(1-mag_scale)*this.fMousePos.y);
-    this.ctx.scale(mag_scale,mag_scale);
+    this.ctx.translate((1-this.mag_scale)*this.fMousePos.x,(1-this.mag_scale)*this.fMousePos.y);
+    this.ctx.scale(this.mag_scale,this.mag_scale);
 
     // Find new draw limits in u/v coords:
-    var umin = this.GetU(this.fMousePos.x-mag_radius);
-    var umax = this.GetU(this.fMousePos.x+mag_radius);
-    var vmax = this.GetV(this.fMousePos.y-mag_radius);
-    var vmin = this.GetV(this.fMousePos.y+mag_radius);
+    var umin = this.GetU(this.fMousePos.x-this.mag_radius);
+    var umax = this.GetU(this.fMousePos.x+this.mag_radius);
+    var vmax = this.GetV(this.fMousePos.y-this.mag_radius);
+    var vmin = this.GetV(this.fMousePos.y+this.mag_radius);
 
     this.DrawOne(umin,umax,vmin,vmax,arg);
     this.ctx.restore();

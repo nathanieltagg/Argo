@@ -233,42 +233,6 @@ WireView.prototype.NewRecord_hits = function()
   this.TrimHits();
 };
 
-// WireView.prototype.NewRecord_image = function()
-// {
-//   this.loaded_wireimg = false;
-//   this.loaded_thumbnail = false;
-//
-//   this.show_image =  $(this.ctl_wireimg_type).filter(":checked").val();
-//
-//   if(!gRecord[this.show_image]) return;
-//   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
-//
-//   // Store the image in the Record.
-//   if(!("_wireimage" in gRecord) ) gRecord._wireimage = {};
-//
-//   // Build offscreen image(s)
-//   if(!(this.show_image in gRecord._wireimage)) {
-//     gRecord._wireimage[this.show_image] = {};
-//     gRecord._wireimage[this.show_image].image   = new Image();
-//     gRecord._wireimage[this.show_image].thumb = new Image();
-//
-//     var wiredesc = gRecord[this.show_image][gCurName[this.show_image]];
-//     // e.g. gRecord.raw."recob::rawwire"
-//     gRecord._wireimage[this.show_image].image.src = wiredesc.wireimg_url;
-//     gRecord._wireimage[this.show_image].thumb.src = wiredesc.wireimg_url_thumb;
-//   }
-//
-//   var self = this;
-//   gRecord._wireimage[this.show_image].image.onload = function() {
-//       console.log(self.element,"got wireimg");
-//       gRecord._wireimage[self.show_image].image_loaded = true;
-//       gStateMachine.Trigger("wireImageLoaded");
-//   };
-//   gRecord._wireimage[this.show_image].thumb.onload = function() {
-//       console.log("got wireimg thumb");
-//       gRecord._wireimage[self.show_image].thumb_loaded = true;
-//   };
-// };
 
 WireView.prototype.NewRecord_mc = function()
 {
@@ -547,33 +511,43 @@ WireView.prototype.DrawScale = function()
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
-    console.time("DrawImage");
+  console.time("DrawImage");
 
   // look for offscreen canvas.
-  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
-  var canvas = null;
-  var objnm = '_' + this.show_image;
-  if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
-      canvas = gRecord[objnm].colored_wire_canvas;
-  }
-    
-  if(!canvas /* || fast */) {
-    objnm = '_' + this.show_image + "_lowres";
-    if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
-        canvas = gRecord[objnm].colored_wire_canvas; 
-    }
-  }
-  if(!canvas) return;
-  var scale_x = gRecord[objnm].scale_x || 1;
-  var scale_y = gRecord[objnm].scale_y || 1;
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  // 'cal' or 'raw'
+  // var canvas = null;
+  // var objnm = '_' + this.show_image;
+  // if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
+  //     canvas = gRecord[objnm].colored_wire_canvas;
+  // }
+  //
+  // if(!canvas /* || fast */) {
+  //   objnm = '_' + this.show_image + "_lowres";
+  //   if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
+  //       canvas = gRecord[objnm].colored_wire_canvas;
+  //   }
+  // }
+  // if(!canvas) return;
+  // var scale_x = gRecord[objnm].scale_x || 1;
+  // var scale_y = gRecord[objnm].scale_y || 1;
 
-  // FIXME: thumbnails for faster panning.
+  console.log("doing mapper render, magnify=",this.magnify_pass);
+   // Figure out which GLMapper to query.
+  var mapper = gGLMappers[this.show_image];
+  // if(!mapper || !mapper.loaded) {
+  //   mapper = gGLMappers[this.show_image+'_lowres'];
+  // }
+  if(!mapper || !mapper.loaded) return;
+  var scale_x = mapper.scale_x || 1;
+  var scale_y = mapper.scale_y || 1;
+
+
   
-  if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
-   var min_tdc     = Math.max(0,this.min_v);
-   var max_tdc     = Math.min(canvas.width*scale_x,this.max_v); 
-   var min_wire    = Math.max(this.min_u,0);
-   var max_wire    = Math.min(this.max_u,gGeo.numWires(this.plane));
+  if(max_u<min_u) max_u = min_u; // Trap weird error
+   var min_tdc     = Math.max(0,min_v);
+   var max_tdc     = Math.min(mapper.total_width*scale_x,max_v);   // ++ Fix; get from something else
+   var min_wire    = Math.max(min_u,0);
+   var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
    var min_channel = gGeo.channelOfWire(this.plane, min_wire);
    var max_channel = gGeo.channelOfWire(this.plane, max_wire);
    
@@ -582,8 +556,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    var source_w = Math.round((max_tdc-min_tdc)/scale_x);
    var source_h = Math.round((max_channel-min_channel)/scale_y);
   
-   // console.log("Copy source coords:",source_x,source_y,source_w,source_h);
-  
+   console.log("Copy source coords:",source_x,source_y,source_w,source_h);
    // Find position and height of destination in screen coordinates. Note we'll 
    // have to rotate these for final picture insertion.
    var dest_x = Math.round(this.GetX(min_wire));
@@ -591,6 +564,21 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    var dest_y = Math.round(this.GetY(min_tdc));
    var dest_h = Math.round(dest_y - this.GetY(max_tdc));
   
+   var pixels_tdc = this.mag_scale*dest_w; // out of order!  h for source is different than h for dest.
+   var pixels_wir = this.mag_scale*dest_h;
+   
+    var result = mapper.RequestRendering(
+      source_x,
+      source_y,
+      source_w,
+      source_h,
+      pixels_wir, 
+      pixels_tdc
+    );
+   
+  
+  
+   
    // Now, the above values are good, but we need to 
    // rotate our image.
    // No blur on copy!
@@ -607,50 +595,38 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
    var rot_dest_w = dest_h;
    var rot_dest_h = dest_w;
   
-   // console.log("drawImg source",source_x,source_y,source_w,source_h);
-   // console.log("drawImg dest", dest_x,   dest_y,  dest_w, dest_h);
-   // console.log("drawImg rot ", rot_dest_x,   rot_dest_y,  rot_dest_w, rot_dest_h);
-  
-  // if(do_thumbnail) {
-  //   // Draw from the thumbnail, which is resolution-reduced by a factor of 5.
-  //   this.ctx.drawImage(
-  //      gRecord._wireimage[this.show_image].thumb      // Source image.
-  //     ,source_x/5
-  //     ,source_y/5
-  //     ,source_w/5
-  //     ,source_h/5
-  //     ,rot_dest_x
-  //     ,rot_dest_y
-  //     ,rot_dest_w
-  //     ,rot_dest_h
-  //      );
-  //
-  // } else {
+
     this.ctx.globalAlpha = 1.0;
     
-    console.debug(canvas      // Source image.
-      ,source_x
-      ,source_y
-      ,source_w
-      ,source_h
-      ,rot_dest_x
-      ,rot_dest_y
-      ,rot_dest_w
-      ,rot_dest_h);
     this.ctx.fillStyle = "rgba(100,100,100,0.5)";
     this.ctx.fillRect(rot_dest_x,rot_dest_y,rot_dest_w,rot_dest_h)
 
     this.ctx.drawImage(
-       canvas      // Source image.
-      ,source_x
-      ,source_y
-      ,source_w
-      ,source_h
+       result      // Source image.
+      ,0
+      ,0
+      ,pixels_wir
+      ,pixels_tdc
       ,rot_dest_x
       ,rot_dest_y
       ,rot_dest_w
       ,rot_dest_h
     );
+    
+    
+
+    //
+    // this.ctx.drawImage(
+    //    canvas      // Source image.
+    //   ,source_x
+    //   ,source_y
+    //   ,source_w
+    //   ,source_h
+    //   ,rot_dest_x
+    //   ,rot_dest_y
+    //   ,rot_dest_w
+    //   ,rot_dest_h
+    // );
     
   // }
   this.ctx.restore();   
