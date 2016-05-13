@@ -534,9 +534,9 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   console.log("doing mapper render, magnify=",this.magnify_pass);
    // Figure out which GLMapper to query.
   var mapper = gGLMappers[this.show_image];
-  // if(!mapper || !mapper.loaded) {
-  //   mapper = gGLMappers[this.show_image+'_lowres'];
-  // }
+  if(!mapper || !mapper.loaded) {
+    mapper = gGLMappers[this.show_image+'_lowres'];
+  }
   if(!mapper || !mapper.loaded) return;
   var scale_x = mapper.scale_x || 1;
   var scale_y = mapper.scale_y || 1;
