@@ -539,9 +539,12 @@ GLMapper.prototype.RequestRendering = function(
 
   if(this.canvas.width < dest_w || this.canvas.height < dest_h) {
     // FIXME
-    console.warn("Need to rebuild the rendering context.");
-    this.canvas.width = Math.max(dest_w,this.canvas.width);
-    this.canvas.hieght = Math.max(dest_h,this.canvas.height);
+    console.warn("Need to rebuild the rendering context from ",this.canvas.width,this.canvas.height);
+    this.canvas.width  = Math.max(dest_w,this.canvas.width);
+    this.canvas.height = Math.max(dest_h,this.canvas.height);
+    // $(this.canvas).css("width",this.canvas.width);
+    // $(this.canvas).css("height",this.canvas.height);
+    console.warn("                                        to ",this.canvas.width,this.canvas.height);    
     this.gl.viewport(0,0,this.canvas.width,this.canvas.height);
   }
   // copy the output canvas to the gRecord so others can get at it.
@@ -556,6 +559,21 @@ GLMapper.prototype.RequestRendering = function(
     console.timeEnd('Build LUT');
     this.need_lut_rebuild=false;
   }
+  //provide texture coordinates for the rectangle we're drawing FROM
+  var texCoordBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texCoordBuffer);
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+      0.0,  0.0,
+      1.0,  0.0,
+      0.0,  1.0,
+      0.0,  1.0,
+      1.0,  0.0,
+      1.0,  1.0]), this.gl.STATIC_DRAW);
+
+  var texCoordLocation = this.gl.getAttribLocation(this.program, "a_texCoord");
+  this.gl.enableVertexAttribArray(texCoordLocation);
+  this.gl.vertexAttribPointer(texCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+
 
   var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
   
@@ -566,12 +584,10 @@ GLMapper.prototype.RequestRendering = function(
   this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
 
   var filter = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
-  console.warn("coherent noise filter:",filter);
   var do_noise_reject_location = this.gl.getUniformLocation(this.program, "do_noise_reject");
   this.gl.uniform1i(do_noise_reject_location, filter); // 1 = on 0 = off
   
   var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
-  console.warn("bad channel flag",bad_channel_flag);
   var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
   this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
   
@@ -582,9 +598,6 @@ GLMapper.prototype.RequestRendering = function(
 
   var stretch_x = dest_w/w;
   var stretch_y = dest_h/h;
-  console.log("dest:",dest_w,dest_h);
-  console.log("src: ",w,h);
-  console.log("stretch:",stretch_x,stretch_y);
   // loop textures.
   for(var irow=0;irow<this.tile_textures.length;irow++) {
     for(var icol=0;icol<this.tile_textures[irow].length;icol++) {
