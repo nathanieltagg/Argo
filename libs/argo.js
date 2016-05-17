@@ -132,7 +132,7 @@ function resizePortlet(portlet,oldheight,newheight)
 $(function(){
   
   // style portlets and add icons.
-  var headers = $(".portlet").addClass("ui-widget ui-widget-content ui-helper-clearfix ui-corner-all")
+  var headers = $(".portlet").addClass("ui-widget ui-widget-content ui-corner-all")
                 .find(".portlet-header");
   headers.addClass("ui-widget-header ui-corner-all");
   

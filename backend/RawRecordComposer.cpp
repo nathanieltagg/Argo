@@ -162,15 +162,15 @@ double getTime(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> rec
 }
 
   
-bool getTriggerData(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, JsonObject& trig)
+bool RawRecordComposer::composeHeaderTrigger(JsonObject& trig)
 {
   
    // get trigger card data.
-  const ub_EventRecord::trig_map_t trigmap = record->getTRIGSEBMap();
+  const ub_EventRecord::trig_map_t trigmap = fRecord->getTRIGSEBMap();
   if(trigmap.size()==0) {
     return false;
   }
-  auto const& trigger = record->getTRIGSEBMap().begin()->second;
+  auto const& trigger = fRecord->getTRIGSEBMap().begin()->second;
   auto const& ch = trigger.crateHeader();
   auto const& trigger_cards = trigger.getCards();
   trig.add("trigger_cards",trigger_cards.size());
@@ -182,13 +182,20 @@ bool getTriggerData(std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord
   auto const& trigger_data = trigger_channels.begin()->header();
   
   trig.add("triggerword",( (trigger_data.trig_data_1) + ((uint32_t)(trigger_data.trig_data_2) << 16) ) );
-  trig.add("frame",trigger_header.getFrame());
-  trig.add("sample_2MHz",trigger_header.get2MHzSampleNumber());
-  trig.add("sample_16MHz",((trigger_header.get2MHzSampleNumber())<<3) + trigger_header.get16MHzRemainderNumber());
+
+  m_trig_frame      = trigger_header.getFrame();
+  m_trig_time_2MHz  = trigger_header.get2MHzSampleNumber();
+  m_trig_time_16MHz = (m_trig_time_2MHz<<3) + trigger_header.get16MHzRemainderNumber();
+  m_trig_time_64MHz = (m_trig_time_16MHz<<2) + trigger_data.getPhase();
+
+  trig.add("frame",m_trig_frame);
+  trig.add("sample_2MHz",m_trig_time_2MHz);
+  trig.add("sample_16MHz",m_trig_time_16MHz);
+  trig.add("sample_64MHz",m_trig_time_64MHz);
   JsonArray sw_triggers;
 
 
-  std::vector<ub_FEMBeamTriggerOutput> const& sw_trigger_list = record->getSWTriggerOutputVector();
+  std::vector<ub_FEMBeamTriggerOutput> const& sw_trigger_list = fRecord->getSWTriggerOutputVector();
   for(auto const& swtrig: sw_trigger_list) {
     if(swtrig.pass) sw_triggers.add(swtrig.algo_instance_name);
   }
@@ -224,7 +231,7 @@ void RawRecordComposer::composeHeader()
   
   // trigger data.
   JsonObject trig;
-  getTriggerData(fRecord,trig);
+  composeHeaderTrigger(trig);
   header.add("trigger",trig);
   
   
@@ -255,7 +262,8 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   waveform_tools::pedestal_computer pedcomp;
   for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
   int ped = pedcomp.ped();
-  double rms = pedcomp.rms(100); // auto-adjusted rms.
+  pedcomp.finish(100); // auto-adjusted rms.
+  double rms = pedcomp.pedsig();
 
   double thresh = ceil(4.0*rms);
   waveform._pedwidth = std::min(rms*2.0,15.0); 
@@ -272,20 +280,22 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
     pf(waveform[i]);
   }
     
-  for(auto peak: pf) {
-    JsonObject hit;
-    hit.add("wire",planewire);
-    hit.add("plane",plane);
-    hit.add("q",peak.integral);
-    hit.add("wirenum",wirenum);
-    hit.add("t",peak.tpeak);
-    hit.add("t1",peak.tstart);
-    hit.add("t2",peak.tstop);
-    {
-      // Scope a lock.
-      boost::mutex::scoped_lock lock(sChanMutex);
-      std::string str = hit.str();
-      outhits.add(hit);
+  if(waveform._status <0 || waveform._status>=4) { // It's a good channel, or unlisted in channel map
+    for(auto peak: pf) {
+      JsonObject hit;
+      hit.add("wire",planewire);
+      hit.add("plane",plane);
+      hit.add("q",peak.integral);
+      // hit.add("wirenum",wirenum);
+      hit.add("t",peak.tpeak);
+      hit.add("t1",peak.tstart);
+      hit.add("t2",peak.tstop);
+      {
+        // Scope a lock.
+        boost::mutex::scoped_lock lock(sChanMutex);
+        std::string str = hit.str();
+        outhits.add(hit);
+      }
     }
   }
   
@@ -516,7 +526,8 @@ void RawRecordComposer::composePMTs()
   uint32_t  pmt_readout_frame = 0xFFFFFFFF;
   uint32_t  pmt_readout_sample = 0xFFFFFFFF;
 
-  JsonArray ophits;
+  
+  std::map<std::string,JsonArray> ophits_lists;
 
   JsonArray jCrates;
   
@@ -550,11 +561,14 @@ void RawRecordComposer::composePMTs()
       for( const pmt_crate_data_t::card_t::card_channel_type& channel_data : channels) {
   
         int channel = channel_data.getChannelNumber();
-        int pmt;
-        int gain;
-        std::string special;
-        getPmtFromCrateCardChan(crate, card, channel, pmt, gain, special);
         
+        const Plexus::Plek& plek = gPlexus.get(crate,card,channel);
+        // std::cout << plek.to_string() << std::endl;
+        int pmt = plek.pmt();
+        char gain = plek.gain();
+        // if(gain!='H') continue;  // Ignore lowgain.
+        if(pmt<0) continue;
+
         int nwindows = 0;
         // Loop windows.
         const std::vector<ub_PMT_WindowData_v6>& windows = channel_data.getWindows();
@@ -563,11 +577,27 @@ void RawRecordComposer::composePMTs()
           const ub_PMT_WindowHeader_v6& window_header = window_data.header();
 
           int disc = window_header.getDiscriminantor();
-          // if((disc&0x3)>0)      nwindows_disc++;
-          // if((disc&0x4) == 0x4) nwindows_beam++;
+          uint32_t sample = window_header.getSample();
+          
+          // Where will these hits go?
+          std::string collection = "DAQ_";
+        
+          if(plek._stream=="Beam" && disc != BEAM_GATE) continue; // Don't use.
+          if(plek._stream=="Cosmic" && disc != COSMIC)  continue;  // Don't use.
+          if(pmt<0){            
+            collection += "special";
+            if     (disc == COSMIC)    collection.append("_cosmic");
+            else if(disc == BEAM_GATE) collection.append("_beam");                
+          }else {
+            if(plek.gain()=='H') collection += "HighGain";
+            if(plek.gain()=='L') collection += "LowGain";
+            if     (disc == COSMIC  && plek._stream=="Cosmic") collection.append("_Cosmic");
+            else if(disc == BEAM_GATE && plek._stream=="Beam") collection.append("_Beam");
+            else continue;            
+          }          
+          JsonArray &ophits = ophits_lists[collection];
 
           uint32_t frame = resolveFrame(pmt_event_frame,window_header.getFrame(),0x7);
-          uint32_t sample = window_header.getSample();
           if( (pmt_readout_frame==0xFFFFFFFF) && ((disc&0x4)==4) ) {
             // Set the readout start time here.
             pmt_readout_frame_mod8  = window_header.getFrame();
@@ -577,49 +607,59 @@ void RawRecordComposer::composePMTs()
           int nsamp = window_data.data().size();
           int peaksamp = 0;
           int peakval = 0;
-          ub_RawData::const_iterator it = window_data.data().begin();
-          int ped = (*it)&0xfff;
-          double sumw  = 0;
-          double sumwx = 0;
-          double sumwxx = 0;
-          for(int j=0;j<nsamp;j++) {
-            double val = (*it&0xfff) - ped;
-            it++;
-            sumw += val;
-            sumwx += val*j;
-            sumwxx += val*j*j;
-            if(val>peakval) {peakval = val; peaksamp = j;}
+          const ub_RawData& raw = window_data.data();          
+          ub_RawData::const_iterator it;
+          int ped = (*(raw.begin()))&0xfff;
+          
+          double pulseThreshold = 5;
+          waveform_tools::peak_finder peakFinder(pulseThreshold); // last is # of samples required over threshold.
+
+          for(it=raw.begin(); it!=raw.end(); it++) {
+            double v = ((*it)&0xfff);
+            float q = v - ped;
+            peakFinder(q); // Process looking for peaks.
           }
-          if(sumw==0) sumw = 1e-9;
-          double meanTime = sumwx/sumw;
-          double widthTime = sqrt(fabs(sumwxx/sumw - meanTime*meanTime));
-          double peakTime = ( ((frame-pmt_readout_frame)*102400.) + (peaksamp+sample-pmt_readout_sample) ) / 64e6; // 64 mhz ticks
+          peakFinder.finish();
+
+          for(const auto& peak: peakFinder) {
+            uint32_t peak_sample = window_header.getSample() + peak.tpeak;
+            double time_rel_trig = ( (((double)frame-(double)m_trig_frame)*102400.) + ((double)peak_sample-(double)m_trig_time_64MHz) ) / 64e6 * 1e9; // 64 mhz ticks, in ns
+            JsonObject jobj;
+            double pe = peak.height/2;       // Crude calibration: 2 ADC/pe low gain
+            if(gain=='H') pe = peak.height/20; // 20 ADC/pe high gain
+            jobj.add("ccc",(crate*1000 + card)*1000+channel);  
+            jobj.add("stream",plek._stream);  
+            
+            jobj.add("opDetChan"     ,pmt);
+            jobj.add("opDetGain"     ,std::string(1,gain));          
+            jobj.add("disc"          ,disc);
+            jobj.add("peakTime"      ,time_rel_trig); // nanoseconds
+            jobj.add("tpeak",peak.tpeak);
+
+            jobj.add("frame",frame);
+            jobj.add("sample",sample);
+            jobj.add("pe"            ,pe);
+            jobj.add("peakAdc"            ,peak.height);
+            jobj.add("peakIntegral"       ,peak.integral);
+            
+            jobj.add("peak_sample",peak_sample);
+            jobj.add("pmt_readout_frame",pmt_readout_frame);
+            jobj.add("pmt_readout_sample",pmt_readout_sample);
+            jobj.add("trig_frame",m_trig_frame);
+            jobj.add("trig_time",m_trig_time_64MHz);
           
-        
-          double pe = sumw/2;       // Crude calibration: 2 ADC/pe low gain
-          if(gain==2) pe = sumw/20; // 20 ADC/pe high gain
+            jobj.add("sample", sample);
+            jobj.add("frame",frame);
+            
+            ophits.add(jobj);
           
-          JsonObject jobj;
-          jobj.add("ccc"     ,(crate*1000 + card)*1000+channel);      
-          jobj.add("opDetChan"     ,pmt);
-          jobj.add("opDetGain"     ,gain);          
-          if(special.length()>0) 
-            jobj.add("opDetSpecial"  ,special);          
-          jobj.add("disc",disc);
-          jobj.add("peakTime"      ,peakTime*1e9); // nanoseconds
-          jobj.add("pe"            ,pe);
-          jobj.add("sample", sample);
-          jobj.add("frame",frame);
-          ophits.add(jobj);
-                    
+          }
         }
-        
         JsonObject jChannel;
         jChannel.add("channel",channel);
         jChannel.add("nwindows",nwindows);
         jChannel.add("pmt",pmt);
         jChannel.add("gain",gain);
-        if(special.length()) jChannel.add("special",special);
         jChannels.add(jChannel);
   
       } // loop channels
@@ -643,7 +683,9 @@ void RawRecordComposer::composePMTs()
     
   } // Loop PMT crates
   JsonObject reco_list;
-  reco_list.add("DAQ",ophits);
+  for(auto& list: ophits_lists) {
+    reco_list.add(list.first,list.second);
+  }
   fOutput.add("ophits",reco_list);
   
   JsonObject jPMT;

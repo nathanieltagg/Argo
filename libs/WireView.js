@@ -273,7 +273,8 @@ WireView.prototype.DrawFast = function()
   this.Draw(true);
 };
 
-WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
+
+WireView.prototype.MagnifierDraw = function(fast)
 {
   // Reset bounds if appropriate
   if(this.zooming) {
@@ -289,10 +290,14 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   }
   
   this.Clear();
+  Pad.prototype.MagnifierDraw.call(this,fast);
+}
+
+WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
+{
+  this.Clear();
   
   this.DrawFrame();
-  
-
   // Set clipping region for all further calls, just to make things simpler.
   this.ctx.save();
   this.ctx.beginPath();
@@ -306,7 +311,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.mouseable = [];
   if(gRecord) {
     if ($(this.ctl_show_wireimg).is(":checked")) {
-      this.DrawImage(min_u,max_u, min_v, max_v, fast);
+      this.DrawImage(min_u, max_u, min_v, max_v, fast);
     }
 
     if ($(this.ctl_show_clus).is(":checked")) {
@@ -513,25 +518,12 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   var do_thumbnail = (fast);
   console.time("DrawImage");
 
+  // console.warn("DrawImage",min_u,max_u,min_v,max_v,fast);
+  // console.warn("DrawImage",this.min_u,this.max_u,this.min_v,this.max_v,fast);
   // look for offscreen canvas.
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  // 'cal' or 'raw'
-  // var canvas = null;
-  // var objnm = '_' + this.show_image;
-  // if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
-  //     canvas = gRecord[objnm].colored_wire_canvas;
-  // }
-  //
-  // if(!canvas /* || fast */) {
-  //   objnm = '_' + this.show_image + "_lowres";
-  //   if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
-  //       canvas = gRecord[objnm].colored_wire_canvas;
-  //   }
-  // }
-  // if(!canvas) return;
-  // var scale_x = gRecord[objnm].scale_x || 1;
-  // var scale_y = gRecord[objnm].scale_y || 1;
 
-  console.log("doing mapper render, magnify=",this.magnify_pass);
+  console.log("doing mapper render, this.mag_scale=",this.mag_scale);
    // Figure out which GLMapper to query.
   var mapper = gGLMappers[this.show_image];
   if(!mapper || !mapper.loaded) {
@@ -544,91 +536,86 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 
   
   if(max_u<min_u) max_u = min_u; // Trap weird error
-   var min_tdc     = Math.max(0,min_v);
-   var max_tdc     = Math.min(mapper.total_width*scale_x,max_v);   // ++ Fix; get from something else
-   var min_wire    = Math.max(min_u,0);
-   var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
-   var min_channel = gGeo.channelOfWire(this.plane, min_wire);
-   var max_channel = gGeo.channelOfWire(this.plane, max_wire);
-   
-   var source_x = Math.round(min_tdc/scale_x);
-   var source_y = Math.round(min_channel/scale_y);
-   var source_w = Math.round((max_tdc-min_tdc)/scale_x);
-   var source_h = Math.round((max_channel-min_channel)/scale_y);
+  var min_tdc     = Math.max(0,min_v);
+  var max_tdc     = Math.min(mapper.total_width*scale_x,max_v);   // ++ Fix; get from something else
+  var min_wire    = Math.max(min_u,0);
+  var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
+  var min_channel = gGeo.channelOfWire(this.plane, min_wire);
+  var max_channel = gGeo.channelOfWire(this.plane, max_wire);
   
-   console.log("Copy source coords:",source_x,source_y,source_w,source_h);
-   // Find position and height of destination in screen coordinates. Note we'll 
-   // have to rotate these for final picture insertion.
-   var dest_x = Math.round(this.GetX(min_wire));
-   var dest_w = Math.round(this.GetX(max_wire) - dest_x);
-   var dest_y = Math.round(this.GetY(min_tdc));
-   var dest_h = Math.round(dest_y - this.GetY(max_tdc));
-  
-   var pixels_tdc = this.mag_scale*dest_w; // out of order!  h for source is different than h for dest.
-   var pixels_wir = this.mag_scale*dest_h;
-   
-    var result = mapper.RequestRendering(
-      source_x,
-      source_y,
-      source_w,
-      source_h,
-      pixels_wir, 
-      pixels_tdc
-    );
-   
+  // These are pixel coordinates in the 'giant map' of all wires, all tdcs.
+  // Source w and h are true number of tdc spanned and true number of wires spanned respectively
+  var source_x = Math.round(min_tdc/scale_x);
+  var source_y = Math.round(min_channel/scale_y);
+  var source_w = Math.round((max_tdc-min_tdc)/scale_x);
+  var source_h = Math.round((max_channel-min_channel)/scale_y);
   
   
-   
-   // Now, the above values are good, but we need to 
-   // rotate our image.
-   // No blur on copy!
-   this.ctx.webkitImageSmoothingEnabled = false;
-   this.ctx.mozImageSmoothingEnabled = false;
-   this.ctx.imageSmoothingEnabled = false; /// future
-   this.ctx.save();
-   
-   this.ctx.translate(dest_x,dest_y);
-   this.ctx.rotate(-Math.PI/2);
+  // console.warn("Copy source coords:",source_x,source_y,source_w,source_h);
+  // Find position and height of destination in screen coordinates. Note we'll 
+  // have to rotate these for final picture insertion.
+  var dest_x = Math.round(this.GetX(min_wire));
+  var dest_w = Math.round(this.GetX(max_wire) - dest_x);
+  var dest_y = Math.round(this.GetY(min_tdc));
+  var dest_h = Math.round(dest_y - this.GetY(max_tdc));
+  
+  // The number of pixels we want is likely smaller than the true span in the giant map space.
+  // When using magnifying glass, we want moar pixels
+  var pixels_tdc = this.mag_scale*dest_w; // out of order!  h for source is different than h for dest.
+  var pixels_wir = this.mag_scale*dest_h;
 
-   var rot_dest_x = 0;
-   var rot_dest_y = 0;
-   var rot_dest_w = dest_h;
-   var rot_dest_h = dest_w;
+  // Ok, this is the other case, where the number of pixels we want is bigger than then giant map space.
+  // If we're zoomed in so that one wire/tdc, do this:
+  // We dont' need more than 1 pixel per wire, 1 pixel per tdc.
+  if(pixels_tdc>source_w) pixels_tdc = source_w;
+  if(pixels_wir>source_h) pixels_wir = source_h;
+
+  // WebGL engine, would you kindly give us a canvas with this snapshot?
+  var result = mapper.RequestRendering(
+     source_x,
+     source_y,
+     source_w,
+     source_h,
+     pixels_wir, 
+     pixels_tdc
+  );
+  
+  // Now, the above values are good, but we need to 
+  // rotate our image.
+  // No blur on copy!
+  this.ctx.webkitImageSmoothingEnabled = false;
+  this.ctx.mozImageSmoothingEnabled = false;
+  this.ctx.imageSmoothingEnabled = false; /// future
+  this.ctx.save();
+  
+  this.ctx.translate(dest_x,dest_y);
+  this.ctx.rotate(-Math.PI/2);
+
+  var rot_dest_x = 0;
+  var rot_dest_y = 0;
+  var rot_dest_w = dest_h;
+  var rot_dest_h = dest_w;
   
 
-    this.ctx.globalAlpha = 1.0;
-    
-    this.ctx.fillStyle = "rgba(100,100,100,0.5)";
-    this.ctx.fillRect(rot_dest_x,rot_dest_y,rot_dest_w,rot_dest_h)
+  this.ctx.globalAlpha = 1.0;
+   
+  this.ctx.fillStyle = "rgba(100,100,100,0.5)";
+  this.ctx.fillRect(rot_dest_x,rot_dest_y,rot_dest_w,rot_dest_h)
 
-    this.ctx.drawImage(
-       result      // Source image.
-      ,0
-      ,0
-      ,pixels_wir
-      ,pixels_tdc
-      ,rot_dest_x
-      ,rot_dest_y
-      ,rot_dest_w
-      ,rot_dest_h
-    );
-    
-    
-
-    //
-    // this.ctx.drawImage(
-    //    canvas      // Source image.
-    //   ,source_x
-    //   ,source_y
-    //   ,source_w
-    //   ,source_h
-    //   ,rot_dest_x
-    //   ,rot_dest_y
-    //   ,rot_dest_w
-    //   ,rot_dest_h
-    // );
-    
-  // }
+  // Copy everything we asked for, rotated, into our destination box. This is where the up-scaling happens.
+  this.ctx.drawImage(
+     result      // Source image.
+    ,0
+    ,0
+    ,pixels_wir
+    ,pixels_tdc
+    ,rot_dest_x
+    ,rot_dest_y
+    ,rot_dest_w
+    ,rot_dest_h
+  );
+   
+   
   this.ctx.restore();   
   console.timeEnd('DrawImage');
 };

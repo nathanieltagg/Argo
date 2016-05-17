@@ -95,7 +95,7 @@ BLIBS += -lboost_serialization -lboost_system -lboost_thread
 # LIBS += -lboost_serialization -lboost_system -lboost_thread
 
 ifeq ($(UNAME),Darwin)
-  # LIBS += -Wl,-rpath,boost/lib
+  LDFLAGS += -Wl,-rpath,boost/lib/ 
   CPPFLAGS +=  -ftemplate-depth=512
 endif
 
@@ -222,6 +222,13 @@ myroot: $(backend_obj) tmp/myroot-main.o tmp/Cint.o Makefile
 testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
+
+
+install-boost: Makefile
+	#Thing for Mac OSX; change the internal name of the boost libraries.
+	install_name_tool -id @rpath/libboost_serialization.dylib ${BOOST_LIB}/libboost_serialization.dylib
+	install_name_tool -id @rpath/libboost_system.dylib ${BOOST_LIB}/libboost_system.dylib
+	install_name_tool -id @rpath/libboost_thread.dylib ${BOOST_LIB}/libboost_thread.dylib
 
 depend: $(DEPS)
 

@@ -950,8 +950,9 @@ void RecordComposer::composeRaw()
       // // Find the pedestal manually.
       waveform_tools::pedestal_computer pedcomp;
       for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+      pedcomp.finish(20);
       int ped = pedcomp.ped();
-      double rms = pedcomp.rms(); // auto-adjusted rms.
+      double rms = pedcomp.pedsig(); // auto-adjusted rms.
 
       for(size_t i =0; i< nsamp; i++) {
         waveform[i] -= ped;

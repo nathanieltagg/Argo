@@ -16,7 +16,7 @@ struct waveform_t : public std::vector<int16_t>
   waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0; _servicecard=0; _status=4;}
   int8_t  _pedwidth;
   uint8_t  _servicecard;
-  uint8_t  _status;
+  int8_t  _status;
 };
 
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;
@@ -41,6 +41,7 @@ public:
     , m_outDir(outDir)
     , m_outUrl(outUrl)
     , m_fill_empty_space(fill_empty_space)
+    
   {}
   
   void process();
@@ -65,6 +66,7 @@ public:
   std::string m_outUrl;
   std::string m_filename;
   bool m_fill_empty_space;
+  static int s_compression;
   
 };
 
