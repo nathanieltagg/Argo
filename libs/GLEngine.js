@@ -67,6 +67,8 @@ function GLMapper(typ) // "raw" or "cal"
   gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
   // gStateMachine.Bind('ChangePsuedoColor',this.Render.bind(this));
   gStateMachine.Bind('ChangePsuedoColor',function(){self.need_lut_rebuild = true;});
+
+  this.SetupGLAndCanvas(10,10);
 }
 
 
@@ -196,14 +198,6 @@ GLMapper.prototype.StartLoad = function()
     this.total_width  = Math.max(row_width,this.total_width);
   }
   
-  // Only now can we set up the GL context. Why? Because for
-  // some stupid reason, this doesn't work:
-  // - set canvas size to w1,h1
-  // - create gl context
-  // - change canvas size w2,h2 (different from above)
-  // - gl.viewport(0,0,w2,h2)
-  // I have no idea why, but I'm pissed off about it.  July 2015
-  this.SetupGLAndCanvas(1400,1400);
   
   this.num_images_needed = 0;  
   this.num_images_loaded = 0;
@@ -320,6 +314,9 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   // Hack to see if this improves the control-room computer: instead of immediately rendering, instead include a 1s timeout.
   // setTimeout(this.Render.bind(this),500);
   gStateMachine.Trigger('colorWireMapsChanged');  
+
+  console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
+  console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
   
 }
 
@@ -368,97 +365,7 @@ GLMapper.prototype.build_LUT_texture = function( )
   this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, canvas);
 }
 
-GLMapper.prototype.Render = function()
-{
-  if(!this.loaded) return;
-  console.log('GLMapper::Render');
-  console.time('GLMapper::Render');
 
-  // copy the output canvas to the gRecord so others can get at it.
-  var utyp = '_' + this.typ;
-  if(!gRecord[utyp]) gRecord[utyp] = {};
-  if(!gRecord[utyp].colored_wire_canvas) gRecord[utyp].colored_wire_canvas = this.canvas;
-  gRecord[utyp].scale_x = this.scale_x;
-  gRecord[utyp].scale_y = this.scale_y;
-
-  console.time('Build LUT');  
-  var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
-  this.build_LUT_texture();
-  this.gl.uniform1i(mapTextureLocation, 7);
-  this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);
-  console.timeEnd('Build LUT');
-
-  var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
-  
-  var inputTextureLocation = this.gl.getUniformLocation(this.program, "inputtexture");      
-  this.gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
-  
-  var resolutionLocation = this.gl.getUniformLocation(this.program, "u_resolution");
-  this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
-
-  var filter = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
-  console.warn("coherent noise filter:",filter);
-  var do_noise_reject_location = this.gl.getUniformLocation(this.program, "do_noise_reject");
-  this.gl.uniform1i(do_noise_reject_location, filter); // 1 = on 0 = off
-  
-  var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
-  console.warn("bad channel flag",bad_channel_flag);
-  var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
-  this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
-  
-  // var tex = this.tile_textures[0][0];
-  // this.gl.activeTexture(this.gl.TEXTURE1);
-  // this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-  var buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);  // This is current buffer
-  this.gl.enableVertexAttribArray(positionLocation); // Use the current buffer for position location array
-  this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0); // It's an array of floats.
-
-  // var x,y,w,h;
-  // x = 500.;
-  // y = 800.;
-  // w = 500.;
-  // h = 200.;
-  // console.log("Drawing",x,y,w,h);
-  // this.SetRect(x,y,w,h);
-  //
-  // // Draw the rectangle.
-  // this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  
-  
-  // loop textures.
-  for(var irow=0;irow<this.tile_textures.length;irow++) {
-    for(var icol=0;icol<this.tile_textures[irow].length;icol++) {
-  // for(var irow=0;irow<1;irow++) {
-  //   for(var icol=0;icol<1;icol++) {
-  //
-      var elem = this.tile_urls[irow][icol];
-      // console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
-      var tex = this.tile_textures[irow][icol];
-
-      this.gl.activeTexture(this.gl.TEXTURE1);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.SetRect(elem.x,elem.y,elem.width,elem.height);
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    }
-  }
-  
-  console.timeEnd('GLMapper::Render');
-  console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
-  console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
-  $('.wireimg-encoded-progressbar-text').text("Rendered!");
-
-  gStateMachine.Trigger('colorWireMapsChanged');  
-}
 
 
 GLMapper.prototype.SetRect = function( x, y, w, h ) 

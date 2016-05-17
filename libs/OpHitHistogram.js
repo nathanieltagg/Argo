@@ -68,6 +68,9 @@ function OpHitHistogram( element  )
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
+  
+  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  
 }
 
 
@@ -79,13 +82,13 @@ OpHitHistogram.prototype.NewRecord = function()
   var tmin = 1e99;
   var tmax = -1e99;
   var i, width, nbins, p;
-  if(gOphitsListName && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length>0) {
+  var listname = $('#ctl-OpHitLists').val()
+  if(gRecord && gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits"; 
 
     this.xlabel = gOpMode.variableName;
     this.ylabel = gOpMode.hitWeightName;
-    var ophits = gRecord.ophits[gOphitsListName];
-    if(!ophits) return; // Zero-length.
+    var ophits = gRecord.ophits[listname];
     if(ophits.length===0) return;
     // First run through to get limits.
     var  oh;
@@ -184,8 +187,9 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
       // new histogram 
       this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
       
-      if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length) {
-        var ophits = gRecord.ophits[gOphitsListName];
+      var listname = $('#ctl-OpHitLists').val()      
+      if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[listname] && gRecord.ophits[listname].length) {
+        var ophits = gRecord.ophits[listname];
         console.log("one pmt hist", ophits.length,gHoverState.obj);
         
         for(i=0;i<ophits.length;i++) {

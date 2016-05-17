@@ -66,7 +66,7 @@ void CoherentNoiseFilter(
         input_wires->push_back(wf);
       (*noiseWireMap)[iwire] = noise_ptr;
     }
-    std::cout << "Noise grouping: " << input_wires->size() << ":" << iwire_start << " to " << iwire_end << std::endl;
+    // std::cout << "Noise grouping: " << input_wires->size() << ":" << iwire_start << " to " << iwire_end << std::endl;
     
     threads.create_thread(boost::bind(OneWireCoherentNoiseFilter,input_wires,noise_ptr,ntdc));
     // OneWireCoherentNoiseFilter(iwire,servicecard,wireMap,noise_ptr,nwires,ntdc);

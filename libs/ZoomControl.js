@@ -174,67 +174,135 @@ function ZoomControl( element, options )
 
 ZoomControl.prototype.AutoZoom = function()
 {
-  var source = null;
-  
-  var sacrifice = 0.1;
-  var wire_pad = 20;
-
+  if(!gRecord) return;
+  if(!gRecord.hits) return;
   var hitsListName = $("#ctl-HitLists").val();
-  if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) source = gRecord.hit_hists[hitsListName];
-  else if(gCurName.cal) source = gRecord.cal[gCurName.cal];
-  else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
-  // else return;
+  var hits = gRecord.hits[hitsListName];
+  if(!hits) return;
   
-  console.warn("Zoom Control Source:",source);
+  // Grid it.
+  var width_wire = 1000;
+  var width_tdc = 1000;
   
-  if(source){
-    if(source.timeHist){      
-      var timeHist = HistogramFrom(source.timeHist);
-      var time_bounds = timeHist.GetROI(0.03);
-      gZoomRegion.tdc[0] = time_bounds[0]-20;
-      gZoomRegion.tdc[1] = time_bounds[1]+20;  
-      console.log("AutoZoom: Time: ",gZoomRegion.tdc[0], gZoomRegion.tdc[1]);
-    } else {
-      gZoomRegion.tdc[0] = 0;
-      gZoomRegion.tdc[1] = 3200;
-    }
+  var nbox_x = Math.ceil(3500/width_wire)+2;
+  var nbox_y = Math.ceil(9600/width_tdc)+2;
   
-  
-    if(source.planeHists) {
-      var plane0Hist = HistogramFrom(source.planeHists[0]);
-      var plane0_bounds = plane0Hist.GetROI(sacrifice);
-      console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
-
-      delete source.planeHists[1]._owner;
-      var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
-      var plane1_bounds = plane1Hist.GetROI(sacrifice);
-      console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
-
-      delete source.planeHists[2]._owner;
-      var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
-      var plane2_bounds = plane2Hist.GetROI(sacrifice);
-      console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
-    
-
-      gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
-      gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
-      gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
-      if(!isNaN(plane2Hist.GetMean()))
-        gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
-      if(!isNaN(plane0Hist.GetMean()))
-        gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
-      if(!isNaN(plane1Hist.GetMean()))
-        gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
+  var most = -1e9;
+  var most_xbox = -1;
+  var most_ybox = -1;
+  var most_xoff = -1;
+  var most_yoff = -1;
+  for(var offset_x = 0;offset_x<1; offset_x +=0.2) {
+    for(var offset_y = 0;offset_y<1; offset_y +=0.2) {
       
-      gZoomRegion.setLimits(2,plane2_bounds[0]-wire_pad,plane2_bounds[1]+wire_pad);
-    }
-  } else { // No source available. Maybe try hits?
-    this.FullZoom();
-    return;
-   }
-  
-  console.log("zoomChange?");
+      var gridboxes = new Array(nbox_x*nbox_y).fill(0);
+      for(var ihit=0;ihit<hits.length;ihit++) {
+        var hit = hits[ihit];
+        if(hit.plane==2) {
+          var ix = Math.floor(hit.wire/width_wire - offset_x);
+          var iy = Math.floor(hit.t/width_tdc - offset_y);
+          if(ix>=nbox_x) console.warn("autozoom wtf?");
+          gridboxes[ix+iy*nbox_x] += 1;
+        }
+      }
+      // console.log(gridboxes);
+      for(var iy=0;iy<nbox_y; iy++) {
+        for(var ix=0;ix<nbox_x;ix++) {
+          var n = gridboxes[ix+nbox_x*iy];
+          console.log(ix,iy,ix+nbox_x*iy,n);
+          if(n>most) {
+            most = n;
+            most_xbox = ix;
+            most_ybox = iy;
+            most_xoff = offset_x;
+            most_yoff = offset_y;
+          }
+        }
+      }
+    }    
+  }
+  console.log("Most hits in box:",most_xbox,most_ybox,most_xoff,most_yoff,"n:",most);
+  var tdc_lo = (most_ybox+most_yoff)*width_tdc;
+  var tdc_hi = (most_ybox+most_yoff+1)*width_tdc;
+
+  var wire_lo = (most_xbox+most_xoff)*width_wire;
+  var wire_hi = (most_xbox+most_xoff+1)*width_wire;
+  console.log("Zoom to box:",wire_lo,wire_hi,tdc_lo,tdc_hi);
+  // gZoomRegion.tdc[0] = tdc_lo;
+  // gZoomRegion.tdc[1] = tdc_hi;
+
+  // This is totally confusing: this code fails totally, even though doing each operation independently is fine,
+  // or doing it with manual controls.
+  // :-(
+      
+  console.log("Zoom to wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
+  gZoomRegion.changeTimeRange(tdc_lo,tdc_hi);
+  gZoomRegion.setLimits(2,wire_lo,wire_hi);
+  // console.warn("AutoZoom wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
   gStateMachine.Trigger("zoomChange");
+  
+  // This algorithm worked OK for single-event files.
+  // var source = null;
+  //
+  // var sacrifice = 0.1;
+  // var wire_pad = 20;
+  //
+  // var hitsListName = $("#ctl-HitLists").val();
+  // if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) source = gRecord.hit_hists[hitsListName];
+  // else if(gCurName.cal) source = gRecord.cal[gCurName.cal];
+  // else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
+  // // else return;
+  //
+  // console.warn("Zoom Control Source:",source);
+  //
+  // if(source){
+  //   if(source.timeHist){
+  //     var timeHist = HistogramFrom(source.timeHist);
+  //     var time_bounds = timeHist.GetROI(0.03);
+  //     gZoomRegion.tdc[0] = time_bounds[0]-20;
+  //     gZoomRegion.tdc[1] = time_bounds[1]+20;
+  //     console.log("AutoZoom: Time: ",gZoomRegion.tdc[0], gZoomRegion.tdc[1]);
+  //   } else {
+  //     gZoomRegion.tdc[0] = 0;
+  //     gZoomRegion.tdc[1] = 3200;
+  //   }
+  //
+  //
+  //   if(source.planeHists) {
+  //     var plane0Hist = HistogramFrom(source.planeHists[0]);
+  //     var plane0_bounds = plane0Hist.GetROI(sacrifice);
+  //     console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
+  //
+  //     delete source.planeHists[1]._owner;
+  //     var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
+  //     var plane1_bounds = plane1Hist.GetROI(sacrifice);
+  //     console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
+  //
+  //     delete source.planeHists[2]._owner;
+  //     var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
+  //     var plane2_bounds = plane2Hist.GetROI(sacrifice);
+  //     console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
+  //
+  //
+  //     gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
+  //     gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
+  //     gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
+  //     if(!isNaN(plane2Hist.GetMean()))
+  //       gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
+  //     if(!isNaN(plane0Hist.GetMean()))
+  //       gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
+  //     if(!isNaN(plane1Hist.GetMean()))
+  //       gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
+  //
+  //     gZoomRegion.setLimits(2,plane2_bounds[0]-wire_pad,plane2_bounds[1]+wire_pad);
+  //   }
+  // } else { // No source available. Maybe try hits?
+  //   this.FullZoom();
+  //   return;
+  //  }
+  //
+  // console.log("zoomChange?");
+  // gStateMachine.Trigger("zoomChange");
 };
 
 ZoomControl.prototype.FullZoom = function()
@@ -245,6 +313,8 @@ ZoomControl.prototype.FullZoom = function()
   gZoomRegion.plane[0]=[gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h];
   gZoomRegion.plane[1]=[gGeo.numWires(1)/2-h,gGeo.numWires(1)/2+h];
   gZoomRegion.plane[2]=[0,gGeo.numWires(2)];
+  
+  console.warn("FullZoom");
   
   gStateMachine.Trigger("zoomChange");
 };

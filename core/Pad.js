@@ -138,8 +138,9 @@ function Pad( element, options )
     label_font : "16px sans-serif",
     fMagnifierOn: false,
     fMousePos : {x:-1e99,y:-1e99,u:-1e99,v:-1e99},
-    fMouseInContentArea : false
-    
+    fMouseInContentArea : false,
+    mag_scale: 1,
+    magnify_pass: 1
   };
   // override defaults with options.
   $.extend(true,defaults,options);
@@ -661,14 +662,14 @@ Pad.prototype.MagnifierDraw = function(arg)
   // console.trace();
   
   // pop all saves. I want the top.
-  this.ctx.restore();
-  this.ctx.restore();
-  this.ctx.restore();
-  this.ctx.restore();
-  this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
 
-  this.mag_scale = 1;
-  this.magnify_pass = 1;
+  this.mag_scale = 1.0;
+  this.magnifying = false;
   this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
   if((this.fMouseInContentArea) && ($('#ctl-magnifying-glass').is(':checked')) )
   {
@@ -676,7 +677,6 @@ Pad.prototype.MagnifierDraw = function(arg)
     if(this.fMousePos.y > this.origin_y) return;
     
     this.magnifying = true;
-    this.magnify_pass = 2;
     
     // Cleverness:
     this.mag_radius = parseFloat($('#ctl-magnifier-size').val());
@@ -707,6 +707,8 @@ Pad.prototype.MagnifierDraw = function(arg)
     this.DrawOne(umin,umax,vmin,vmax,arg);
     this.ctx.restore();
   } 
+  this.mag_scale = 1.0;
+  
 };
 
 Pad.prototype.DoMouse = function(ev)
