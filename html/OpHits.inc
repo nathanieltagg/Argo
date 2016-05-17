@@ -3,6 +3,8 @@
       <div class="portlet-content">
         <div class="A-OpHitHistogram" style="height: 120px"></div>
         <div class="A-OpHitMap" style="height: 120px"></div>
+        <div class="A-OpHit2dMap" style="height: 250px"></div>
+        
       </div> <!-- portlet-content -->
     </div> <!-- portlet -->
 

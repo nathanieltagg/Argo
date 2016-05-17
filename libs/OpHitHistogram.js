@@ -11,16 +11,28 @@
 var gOpHitHistogram = null;
 
 var gOpColorScaler = new ColorScaler("CurtColorPalette");
+// var gOpMode = {
+//   hitVariable      : "peakTime",
+//   hitVariableScale : 1,
+//   flashVariable      : "time",
+//   flashVariableScale : 1,
+//   variableName  : "Time (µs)",
+//   cut           : {min: 0, max: 2000},
+//   hitWeight        : "pe",
+//   flashWeight        : "pe",
+//   weightName    : "Photoelectrons",
+//
+// };
 var gOpMode = {
-  hitVariable      : "peakTime",
+  hitVariable      : "pe",
   hitVariableScale : 1,
   flashVariable      : "time",
   flashVariableScale : 1,
-  variableName  : "Time (µs)",
+  variableName  : "PE",
   cut           : {min: 0, max: 2000},
-  hitWeight        : "pe",
-  flashWeight        : "pe",
-  weightName    : "Photoelectrons",
+  hitWeight        : 1,
+  flashWeight   : "pe",
+  hitWeightName    : "Hits",
   
 };
 
@@ -43,8 +55,8 @@ function OpHitHistogram( element  )
 {
   this.element = element;
   var settings = {
-    xlabel: "Time (µs)",
-    ylabel: "Photoelectrons",
+    xlabel: "PE",
+    ylabel: "Hits",
     tick_pixels_y: 20,
     margin_left: 60,
     log_y: false,

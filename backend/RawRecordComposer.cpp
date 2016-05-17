@@ -117,7 +117,7 @@ void RawRecordComposer::compose()
   // Start DB lookups.  
   GetSlowMonDB slm(event_time);
   boost::thread slomon_thread(slm);
-  slm();
+  // slm();
   
   try{ composeTPC(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
   try{ composePMTs(); } catch(...) { std::cerr << "Caught exception in composePMTs();" << std::endl; }
@@ -126,7 +126,8 @@ void RawRecordComposer::compose()
   // Database lookup.
   slomon_thread.join();
   
-  JsonElement hv; hv.setStr(slm.val);
+  JsonElement hv; 
+  hv.setStr(slm.val);
   fOutput.add("hv",hv);  
   fOutput.add("stats",fStats);
   
@@ -634,7 +635,6 @@ void RawRecordComposer::composePMTs()
             jobj.add("opDetGain"     ,std::string(1,gain));          
             jobj.add("disc"          ,disc);
             jobj.add("peakTime"      ,time_rel_trig); // nanoseconds
-            jobj.add("tpeak",peak.tpeak);
 
             jobj.add("frame",frame);
             jobj.add("sample",sample);
@@ -642,11 +642,12 @@ void RawRecordComposer::composePMTs()
             jobj.add("peakAdc"            ,peak.height);
             jobj.add("peakIntegral"       ,peak.integral);
             
-            jobj.add("peak_sample",peak_sample);
-            jobj.add("pmt_readout_frame",pmt_readout_frame);
-            jobj.add("pmt_readout_sample",pmt_readout_sample);
-            jobj.add("trig_frame",m_trig_frame);
-            jobj.add("trig_time",m_trig_time_64MHz);
+            // jobj.add("tpeak",peak.tpeak);            
+            // jobj.add("peak_sample",peak_sample);
+            // jobj.add("pmt_readout_frame",pmt_readout_frame);
+            // jobj.add("pmt_readout_sample",pmt_readout_sample);
+            // jobj.add("trig_frame",m_trig_frame);
+            // jobj.add("trig_time",m_trig_time_64MHz);
           
             jobj.add("sample", sample);
             jobj.add("frame",frame);
