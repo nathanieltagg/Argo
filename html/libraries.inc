@@ -106,6 +106,7 @@
 <script type="text/javascript" src="libs/TriDView.js"></script> 
 <script type="text/javascript" src="libs/OpHitHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 
+<script type="text/javascript" src="libs/OpHit2dMap.js"></script> 
 <script type="text/javascript" src="libs/OpFlashHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpFlashMap.js"></script> 
 <script type="text/javascript" src="libs/MRI.js"></script> 
