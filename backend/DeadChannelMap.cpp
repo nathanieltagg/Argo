@@ -5,20 +5,20 @@
 
 DeadChannelMap* gDeadChannelMap = new DeadChannelMap();
 
-DeadChannelMap::DeadChannelMap(const std::string& filename) 
+DeadChannelMap::DeadChannelMap() 
   : _ok(false)
 {
-  Rebuild(filename);
 }
 
 
-void DeadChannelMap::Rebuild(const std::string& filename) 
+bool DeadChannelMap::Rebuild(const std::string& filename) 
 {
   _ok = false;
   _map.clear();
   std::ifstream in(filename.c_str());
   if(!in.good()) {
     std::cout << "Could not open " << filename << " for reading" <<std::endl;
+    return _ok;
   }
   // First four lines are header: validity, validity, names, types.
   char dummy[256];
@@ -34,4 +34,5 @@ void DeadChannelMap::Rebuild(const std::string& filename)
   }
   _ok = true;
   std::cout << "Dead channel map loaded from " << filename << " with " << _map.size() << " channels" << std::endl;
+  return _ok;
 }
