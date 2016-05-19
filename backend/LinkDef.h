@@ -6,10 +6,5 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ operators vector<vector<unsigned int>>;
-#pragma link C++ operators vector<vector<unsigned int>>::iterator;
-#pragma link C++ operators vector<vector<unsigned int>>::const_iterator;
-#pragma link C++ operators vector<vector<unsigned int>>::reverse_iterator;
-
-
+#pragma link C++ operators vector< vector<unsigned int> >++;
 #endif

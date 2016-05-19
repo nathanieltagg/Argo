@@ -6,8 +6,8 @@
 
 class DeadChannelMap {
 public:
-  DeadChannelMap(const std::string& filename = "../db/dead_channels.txt");
-  void Rebuild(const std::string& filename = "../db/dead_channels.txt");
+  DeadChannelMap();
+  bool Rebuild(const std::string& filename = "../db/dead_channels.txt");
 
   // 0: Disconnected
   // 1: Dead
