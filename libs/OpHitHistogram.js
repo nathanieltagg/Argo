@@ -26,14 +26,14 @@ var gOpColorScaler = new ColorScaler("CurtColorPalette");
 var gOpMode = {
   hitVariable      : "pe",
   hitVariableScale : 1,
-  flashVariable      : "time",
-  flashVariableScale : 1,
   variableName  : "PE",
   cut           : {min: 0, max: 2000},
   hitWeight        : 1,
-  flashWeight   : "pe",
   hitWeightName    : "Hits",
   
+  flashVariable      : "time",
+  flashVariableScale : 1,
+  flashWeight   : "pe",
 };
 
 

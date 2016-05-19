@@ -113,8 +113,8 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
   // setup GLSL this.program
   var vertexShader = this.create_shader( "2d-vertex-shader");
   // var LUTShader    = this.create_shader( "lutshade");
-  var LUTShader    = this.create_shader( "lutshade-with-noise-removal");
-  // var LUTShader       = this.create_shader( "lutshade-with-rms-cut");
+  // var LUTShader    = this.create_shader( "lutshade-with-noise-removal");
+  var LUTShader       = this.create_shader( "lutshade-with-noise-removal-and-smear" );
 
   this.program = this.gl.createProgram();
   this.gl.attachShader(this.program,vertexShader);
@@ -497,6 +497,17 @@ GLMapper.prototype.RequestRendering = function(
   var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
   var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
   this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
+  
+  // Controls for doing a nearest-neighbor pixel smear.
+  var do_smear = 0;
+  var do_smear_location = this.gl.getUniformLocation(this.program, "do_smear");
+  this.gl.uniform1i(do_smear_location, do_smear); // 1 = on 0 = off
+
+  this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_x"), 0.5/this.total_width);
+  this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_y"), 0.5/this.total_height);
+
+  
+
   
   var buffer = this.gl.createBuffer();
   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);  // This is current buffer

@@ -77,19 +77,28 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
     
     <div><span style="width: 5%;">Status:</span><span style="display:inline-block; width: 50%;" id="status">Script loading...</span></div>
 
+  <div style="float:right" id="event-id-info">
+    Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
+    <br/>
+    <span class="val event-date">unknown</span>
+    <span class="val event-time">unknown</span>
+    (<span class="val event-age">unknown</span>)
+  </div>
 
     <!--#include virtual="html/DataSource.inc" -->
   </div> <!-- content-top -->
 
   <div style="clear:both;"></div>
   <div id="content-right" class="dock">   
+    <!--#include virtual="html/ZoomControl.inc" -->
+    
     <!--#include virtual="html/FalseColorControl.inc" -->
+    <!--#include virtual="html/WireInfo.inc" -->
     <!--#include virtual="html/HitHistogram.inc" -->
     <!--#include virtual="html/SaveSelection.inc" -->
+    <!--#include virtual="html/Configuration.inc" -->
     
     <!--#include virtual="html/EventInfo.inc" -->
-    <!--#include virtual="html/Configuration.inc" -->
-    <!--#include virtual="html/WireInfo.inc" -->
     <!--#include virtual="html/dEdXTool.inc" -->
     <!--#include virtual="html/MCInfo.inc" -->
     <!--#include virtual="html/HoverInfo.inc" -->
@@ -100,18 +109,16 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
   <div id="content-main">
   <div id="content-wide" class="dock">
     
-    <!--#include virtual="html/TimeHistogram.inc" -->
     <!--#include virtual="html/WireView.inc" -->
-    <!--#include virtual="html/WireViewBig.inc" -->
-    <!--#include virtual="html/ZoomControl.inc" -->
+    <!-- include virtual="html/WireViewBig.inc" -->
+    <!--include virtual="html/TimeHistogram.inc" -->
     
     
 
   </div> <!-- content-wide -->
   <div id="content-left" class="dock">
-    <!--#include virtual="html/MRI.inc" -->    
     <!--#include virtual="html/OpHits.inc" -->
-    <!--#include virtual="html/OpFlashes.inc" -->
+    <!--#include virtual="html/MRI.inc" -->    
    <!--#include virtual="html/MCDigraph.inc" -->
    <!--#include virtual="html/PFDigraph.inc" -->
     
@@ -119,6 +126,7 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
 
   <div id="content-middle" class="dock">
 
+    <!--#include virtual="html/OpFlashes.inc" -->
     <!--#include virtual="html/TridView.inc" -->
     <!--(#)include virtual="html/WireViewBig.inc" -->
     <!--include virtual="html/ArgoDreamyScan.inc" -->
