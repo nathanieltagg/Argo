@@ -43,12 +43,11 @@ function OpHit2dMap( element  )
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('opScaleChange',this,"Draw");
+  gStateMachine.BindObj('hoverChange',this,"HoverChange");
   
   this.ophits = [];
   this.drawn_flashes = [];
 
-  $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
-  $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
   $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
   
   this.SetMagnify(true);
@@ -68,16 +67,27 @@ OpHit2dMap.prototype.NewRecord = function()
     function(a,b){ return b.peakTime - a.peakTime;  }
   );
   
-  var t1 = this.ophits[this.ophits.length-1].peakTime*1e-3;
-  var t2 = this.ophits[0].peakTime*1e-3;
-  if(t2<24) t2=24;
-  var dt = (t2-t1);
+  if(this.ophits.length>0) {
+    var t1 = this.ophits[this.ophits.length-1].peakTime*1e-3;
+    var t2 = this.ophits[0].peakTime*1e-3;
+    if(t2<24) t2=24;
+    var dt = (t2-t1);
   
   
-  this.min_v = t1 - dt*0.1
-  this.max_v = t2;
+    this.min_v = t1 - dt*0.1
+    this.max_v = t2;    
+  }
   this.Draw();
 };
+
+OpHit2dMap.prototype.HoverChange = function()
+{
+  if(  (gHoverState.type == "opdet") ||
+       (gHoverState.type == "opflash")||
+       (gLastHoverState.type == "opdet") ||
+       (gLastHoverState.type == "opflash") ) this.Draw();
+};
+
 
 OpHit2dMap.prototype.DrawOne = function()
 {
@@ -102,9 +112,12 @@ OpHit2dMap.prototype.DrawOne = function()
     y1 = this.GetY(oh.peakTime * 1e-3);
     c = gOpColorScaler.GetColor(w);
 
-    this.ctx.fillStyle= "rgba(" + c + ",0.5)";;
-    this.ctx.fillRect(x1,y1,x2-x1,4);
-    
+    this.ctx.fillStyle= "rgba(" + c + ",0.5)";
+    if(gHoverState.obj == gGeo.opDets.opticalDetectors[oh.opDetChan]) {
+      this.ctx.fillStyle= "rgba(" + c + ",1)";
+      
+    }
+    this.ctx.fillRect(x1,y1-2,x2-x1,4);
   }
   
   
@@ -112,42 +125,20 @@ OpHit2dMap.prototype.DrawOne = function()
 
 OpHit2dMap.prototype.DoMouse = function(ev)
 {
-  // var offset = getAbsolutePosition(this.element);
- //  this.fMouseX = ev.pageX - offset.x;
- //  this.fMouseY = ev.pageY - offset.y;
- //  this.fMouseU = this.GetU(this.fMouseX);
- //  this.fMouseV = this.GetV(this.fMouseY);
- //
- //  var r2 = this.pmtRadius* this.pmtRadius;
- //
- //  if(! this.fMouseInContentArea) return true; // keep bubbling, this isnt' for us.
- //
- //  var dets = gGeo.opDets.opticalDetectors;
- //  var hoverdet = null;
- //  var i, det, dx,dy,d2, dr2;
- //  for(i=0;i<dets.length;i++){
- //    det = dets[i];
- //    dx = (det.z - this.fMouseU);
- //    dy = (det.y - this.fMouseV);
- //    d2 = dx*dx + dy*dy;
- //    if(d2<r2) hoverdet = det;
- //  }
- //  if(hoverdet){
- //     ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
- //  } else {
- //    var hoverflash = null;
- //    for(i=0;i<this.drawn_flashes.length;i++) {
- //      var df = this.drawn_flashes[i];
- //      dx = (df.x - this.fMouseX)/df.wx;
- //      dy = (df.y - this.fMouseY)/df.wy;
- //      dr2 = dx*dx + dy*dy;
- //      if(dr2<1) hoverflash = df.flash;
- //    }
- //    if(hoverflash) {
- //      ChangeHover({obj: hoverflash, type: "opflash", collection: gRecord.opflashes});
- //    } else {
- //      ClearHover();
- //    }
- //  }
- //  this.Draw();
+    if(! this.fMouseInContentArea) return true; // keep bubbling, this isnt' for us.
+    
+    var hoverdet = null;
+    var opdet = Math.floor( this.fMousePos.u);
+    if(opdet>=0 && opdet<this.max_u &&  this.fMousePos.v >= this.min_v) {
+      var hoverdet = gGeo.opDets.opticalDetectors[opdet];
+    }
+    if(hoverdet) {
+      ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
+    } else {
+      ClearHover();      
+    }
+
+    return false;
+
+
 };

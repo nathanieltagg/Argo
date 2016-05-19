@@ -34,7 +34,7 @@
           <div style="clear:both;"></div>
           </div>
         
-        <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"    checked="checked"/><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>
+        <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"    /><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>
           <div><b>(shift-H)</b> <select id="ctl-HitLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
           
         <div><input type="checkbox" id="ctl-show-clus"    name="show-clus"    class="saveable show-clus"                 /><label for="ctl-show-clus">    <b>(c)</b> Show Clusters </label></div>
@@ -60,6 +60,8 @@
        
         <div><label>OpHits</label></div>
         <div><b>(shift-O)</b>  <select id="ctl-OpHitLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
+        <div><label>OpFlash</label></div>
+        <div>                  <select id="ctl-OpFlashLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
 
             
         <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      checked="checked"/><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>

@@ -124,11 +124,9 @@ function DoInitialBookmarking()
     $('#ctl-OpHitLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
 
-  if(gRecord.opflashes) {
-    for(i in gRecord.opflashes) { 
-      gOpflashesListName = i;
-      if(gRecord.opflashes[i].length > 0) break; // Select the first list that has nonzero entries.
-    }
+  $('#ctl-OpFlashLists').empty();
+  for(i in gRecord.opflashes) { 
+    $('#ctl-OpFlashLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
   }
 
   if(gRecord.mc) {

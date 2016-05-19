@@ -91,7 +91,7 @@ OpHitMap.prototype.NewRecord = function()
   }
   
   this.ophits.sort(
-    function(a,b){ return b.peakTime - a.peakTime;  }
+    function(a,b){ return a.pe - b.pe;  }
   );
   
   this.Draw();

@@ -43,6 +43,7 @@ function OpFlashMap( element  )
 
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
+  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
 
 }
 
@@ -50,14 +51,15 @@ function OpFlashMap( element  )
 
 OpFlashMap.prototype.NewRecord = function()
 {
-  this.OpFlashs = [];
-  if(gOpflashesListName && gRecord.opflashes[gOpflashesListName] && gRecord.opflashes[gOpflashesListName].length>0) {
-    this.opflashes = gRecord.opflashes[gOpflashesListName].slice(0); // Copy
+  var listname = $('#ctl-OpFlashLists').val();
+  
+  if(gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
+    this.opflashes = gRecord.opflashes[listname].slice(0)
   }
-    // Sort hits by time, earliest last. 
-   
+  
+  // Sort to draw the good ones on top
   this.opflashes.sort(
-    function(a,b){ return b.time - a.time;  }
+    function(a,b){ return a.totPe - b.totPe;  }
   );
   
   this.Draw();
@@ -91,17 +93,15 @@ OpFlashMap.prototype.Draw = function()
       y = this.GetY(flash.yCenter);
       wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
       wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
-      var t = flash[gOpMode.flashVariable]*gOpMode.flashVariableScale;
-      if(t<gOpMode.cut.min) continue;
-      if(t>gOpMode.cut.max) continue;
+      var t = flash.totPe;
+      // if(t<gOpMode.cut.min) continue;
+      // if(t>gOpMode.cut.max) continue;
 
       w0 = flash.wireWidths[0];
       w1 = flash.wireWidths[1];
       w2 = flash.wireWidths[2];
-
-      
-      
-      c = gOpColorScaler.GetColor(t);
+            
+      c = gOpFlashColorScaler.GetColor(t);
       if(gHoverState.obj == flash) c = "0,0,0";
       this.ctx.save();
       this.ctx.beginPath();
@@ -131,10 +131,9 @@ OpFlashMap.prototype.Draw = function()
           wx: wx,
           wy: wy}
       );
-      c = gOpColorScaler.GetColor(t);
-      if(gHoverState.obj == flash) c = "0,0,0";
-      var grad = this.ctx.createRadialGradient(0,0,0, 0,0,1);
-      grad.addColorStop(0,   'rgba('+c+',1)'); // red
+ 
+       var grad = this.ctx.createRadialGradient(0,0,0, 0,0,1);
+      grad.addColorStop(0,   'rgba('+c+',1)'); // full color
       grad.addColorStop(1,   'rgba('+c+',0)'); // Transparent
       this.ctx.save();
       this.ctx.translate(x,y);

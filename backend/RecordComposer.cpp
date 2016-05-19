@@ -615,9 +615,17 @@ void  RecordComposer::composeOpFlashes()
       jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
       jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
       jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
+      jflash.add("inBeamFrame",ftr.getJson(name+"obj.fInBeamFrame",i));
       
       // auto-construct arrays; lots o' syntactic sugar here.
       if(tel_fPEperOpDet.ok())  jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
+      const vector<double>* pe_arr = tel_fPEperOpDet .get<vector<double> >(i);
+      double totpe = 0;
+      for(double pe: *pe_arr) totpe+= pe;
+      jflash.add("totPe",totpe);
+      
+      
+      
       if(tel_fWireCenter.ok())  jflash.add("wireCenter",     JsonArray(*(tel_fWireCenter .get<vector<double> >(i))));
       if(tel_fWireWidths.ok())  jflash.add("wireWidths",     JsonArray(*(tel_fWireWidths .get<vector<double> >(i))));
 
@@ -725,7 +733,7 @@ void  RecordComposer::composeOpHits()
       JsonObject jobj;
       
       jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"            ,i));
-      jobj.add("peakTime"      ,ftr.getJson(name+"obj.fPeakTime"             ,i));
+      jobj.add("peakTime"      ,1e3*ftr.getF(name+"obj.fPeakTime"             ,i));
       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
       jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));

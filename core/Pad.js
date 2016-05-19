@@ -169,7 +169,8 @@ function Pad( element, options )
       // Build the drawing context.
       var ctx = c.getContext('2d');
       if(initCanvas) ctx = initCanvas(c).getContext('2d');
-      if(!ctx) console.log("Problem getting context!");
+      if(!ctx) console.error("Problem getting context!");
+      if(typeof ctx == 'undefined') console.error("Problem getting context!");
       this.ctxs[i] = ctx;      
     } else {
       this[layername] = this.layers[i] = $('canvas.'+layername,this.element).get(0);

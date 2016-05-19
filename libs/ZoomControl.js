@@ -175,10 +175,10 @@ function ZoomControl( element, options )
 ZoomControl.prototype.AutoZoom = function()
 {
   if(!gRecord) return;
-  if(!gRecord.hits) return;
+  if(!gRecord.hits) return this.FullZoom();
   var hitsListName = $("#ctl-HitLists").val();
   var hits = gRecord.hits[hitsListName];
-  if(!hits) return;
+  if(!hits) return this.FullZoom();
   
   // Grid it.
   var width_wire = 1000;
@@ -236,10 +236,12 @@ ZoomControl.prototype.AutoZoom = function()
   // :-(
       
   console.log("Zoom to wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
-  gZoomRegion.changeTimeRange(tdc_lo,tdc_hi);
   gZoomRegion.setLimits(2,wire_lo,wire_hi);
+  gZoomRegion.changeTimeRange(tdc_lo,tdc_hi);
   // console.warn("AutoZoom wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
   gStateMachine.Trigger("zoomChange");
+  
+  
   
   // This algorithm worked OK for single-event files.
   // var source = null;
@@ -307,13 +309,14 @@ ZoomControl.prototype.AutoZoom = function()
 
 ZoomControl.prototype.FullZoom = function()
 {
-  gZoomRegion.changeTimeRange(0,9600);
   
   var h = gGeo.numWires(2)/2;
+  gZoomRegion.changeTimeRange(0,9600);
   gZoomRegion.plane[0]=[gGeo.numWires(0)/2-h,gGeo.numWires(0)/2+h];
   gZoomRegion.plane[1]=[gGeo.numWires(1)/2-h,gGeo.numWires(1)/2+h];
   gZoomRegion.plane[2]=[0,gGeo.numWires(2)];
-  
+  // This line looks useless, but it's not: it forces a recomputation of if aspect ratio is checked.
+  gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
   console.warn("FullZoom");
   
   gStateMachine.Trigger("zoomChange");
@@ -342,11 +345,7 @@ ZoomControl.prototype.NewRecord = function()
     return;
   }
 
-  // Do the default.
-  if(gRecord.raw.DAQ)
-    this.FullZoom(); // A better default for the control room
-  else 
-    this.AutoZoom();
+  this.AutoZoom();
 };
 
 

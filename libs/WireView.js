@@ -398,8 +398,12 @@ WireView.prototype.DrawWatermark = function()
 {
   var img = $('img#watermark_logo').get(0);
   if(img.complete) {
+    this.ctx.save();
     var aspect_ratio = img.height/img.width;
-    this.ctx.drawImage(img,50,10,100,100*aspect_ratio);
+    this.ctx.shadowColor = "white"; 
+    this.ctx.shadowBlur = 10; 
+    this.ctx.drawImage(img,50,10,150,100*aspect_ratio);
+    this.ctx.restore();
   }
   
 }
@@ -426,25 +430,42 @@ WireView.prototype.DrawScale = function()
   var y  = this.GetY(v);
   
   // console.warn("horizontal scale:",x2-x1);
+    
   this.ctx.save();
-  this.ctx.strokeStyle = "black";
-  this.ctx.fillStyle = "black";
+  this.ctx.beginPath();  
+  this.ctx.strokeStyle = "white";
+  this.ctx.fillStyle = "white";
+  this.ctx.lineWidth = 3;
   this.ctx.moveTo(x1,y);
   this.ctx.lineTo(x2,y);
-  this.ctx.moveTo(x1,y-2);
-  this.ctx.lineTo(x1,y+2);
-  this.ctx.moveTo(x2,y-2);
-  this.ctx.lineTo(x2,y+2);
   this.ctx.stroke();
-  this.ctx.font="8px";
+  this.ctx.beginPath();  
+  this.ctx.strokeStyle = "black";
+  this.ctx.fillStyle = "black";
+  this.ctx.lineWidth = 1;
+  this.ctx.moveTo(x1,y-3);
+  this.ctx.lineTo(x2,y-3);
+  this.ctx.stroke();
+  
+  // this.ctx.moveTo(x1,y-2); // little cross beam at end
+ //  this.ctx.lineTo(x1,y+2);
+ //  this.ctx.moveTo(x2,y-2); // little cross beam at end
+ //  this.ctx.lineTo(x2,y+2);
+  this.ctx.font="15px sans-serif";
+  this.ctx.shadowColor = "black";
+  this.ctx.shadowBlur = 20; 
   var txt = lasttick + " cm";
   if(lasttick<=0.9) { txt = lasttick*10 + " mm";}
   if(lasttick>=100) { txt = lasttick/100 + " m";}
   this.ctx.textAlign= "center";
   this.ctx.textBaseline = "top";
-  this.ctx.fillText(txt,(x1+x2)*0.5, y);
-  this.ctx.restore();
-  
+  this.ctx.lineWidth = 1;
+  this.ctx.fillStyle = "white";
+  this.ctx.fillText(txt,(x2+x1)*0.5 , y);
+  // this.ctx.strokeStyle = "black";
+  // this.ctx.strokeText(txt,x2-3, y);
+
+
   // Vertical:
   // Translate width in wires to width in TDC.
   var d_tdc = w*0.3/gGeo.drift_cm_per_tick;
@@ -452,63 +473,24 @@ WireView.prototype.DrawScale = function()
   var y1 = y;
   var y2 = this.GetY(v-d_tdc);
   // console.warn("vertical scale:",y2-y1);
-  
-  this.ctx.save();
-  this.ctx.strokeStyle = "black";
-  this.ctx.fillStyle = "black";
-  this.ctx.moveTo(x,y1);
-  this.ctx.lineTo(x,y2);
-  this.ctx.moveTo(x-2,y1);
-  this.ctx.lineTo(x+2,y1);
-  this.ctx.moveTo(x-2,y2);
-  this.ctx.lineTo(x+2,y2);
-  this.ctx.stroke();
-  // this.ctx.font="8px";
-  // this.ctx.textAlign= "center";
-  // this.ctx.textBaseline = "top";
-  // this.ctx.translate(x,(y1+y2)*0.5);
-  // this.ctx.rotate(Math.PI/2.);
-  // this.ctx.fillText(txt,0,0);
-  this.ctx.restore();
 
-  
-  // Vertical:
-  // This version does the same as horizontal. No use.
+  // this.ctx.beginPath();
   //
-  // var vspan = (this.max_v-this.min_v);
-  // // Hardcoded wire pitch.
-  // var metric_h = (vspan*0.25) * gGeo.drift_cm_per_tick; // 20% of pad wide, find in mm.
-  // var ticks = this.GetGoodTicks(0,metric_h,2,false);
-  // var lasttick = ticks[ticks.length-1];
-  // var h = lasttick/gGeo.drift_cm_per_tick; // Length of marker line in tdc
-  //
-  // var v2 = this.max_v - vspan*0.05;
-  // var v1 = v2-h;
-  // var y1 = this.GetY(v2);
-  // var y2 = this.GetY(v1);
-  // var u  = this.max_u - (this.max_u-this.min_u)*0.05;
-  // var x  = this.GetX(u);
-  //
-  // this.ctx.save();
-  // this.ctx.strokeStyle = "black";
-  // this.ctx.fillStyle = "black";
+  // this.ctx.strokeStyle = "white";
+  // this.ctx.fillStyle = "white";
+  // this.ctx.lineWidth = 3;
   // this.ctx.moveTo(x,y1);
   // this.ctx.lineTo(x,y2);
-  // this.ctx.moveTo(x-2,y1);
-  // this.ctx.lineTo(x+2,y1);
-  // this.ctx.moveTo(x-2,y2);
-  // this.ctx.lineTo(x+2,y2);
   // this.ctx.stroke();
-  // this.ctx.font="8px";
-  // var txt = lasttick + " cm";
-  // if(lasttick<=0.9) { txt = lasttick*10 + " mm";}
-  // if(lasttick>=100) { txt = lasttick/100 + " m";}
-  // this.ctx.textAlign= "center";
-  // this.ctx.textBaseline = "top";
-  // this.ctx.translate(x,(y1+y2)*0.5);
-  // this.ctx.rotate(Math.PI/2.);
-  // this.ctx.fillText(txt,0,0);
-  // this.ctx.restore();
+  // this.ctx.beginPath();
+  // this.ctx.strokeStyle = "black";
+  // this.ctx.fillStyle = "black";
+  // this.ctx.lineWidth = 1;
+  // this.ctx.moveTo(x+3,y1-3);
+  // this.ctx.lineTo(x+3,y2-3);
+  // this.ctx.stroke();
+  
+  this.ctx.restore();  
   
 };
 
@@ -528,6 +510,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   var mapper = gGLMappers[this.show_image];
   if(!mapper || !mapper.loaded) {
     mapper = gGLMappers[this.show_image+'_lowres'];
+    console.log("Getting lowres mapper");
   }
   if(!mapper || !mapper.loaded) return;
   var scale_x = mapper.scale_x || 1;
@@ -545,39 +528,47 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   
   // These are pixel coordinates in the 'giant map' of all wires, all tdcs.
   // Source w and h are true number of tdc spanned and true number of wires spanned respectively
-  var source_x = Math.round(min_tdc/scale_x);
-  var source_y = Math.round(min_channel/scale_y);
-  var source_w = Math.round((max_tdc-min_tdc)/scale_x);
-  var source_h = Math.round((max_channel-min_channel)/scale_y);
+  // Scaling is if the mapper is lowres.
+  var source_x = (min_tdc/scale_x);
+  var source_y = (min_channel/scale_y);
+  var source_w = ((max_tdc-min_tdc)/scale_x);
+  var source_h = ((max_channel-min_channel)/scale_y);
   
   
   // console.warn("Copy source coords:",source_x,source_y,source_w,source_h);
   // Find position and height of destination in screen coordinates. Note we'll 
   // have to rotate these for final picture insertion.
-  var dest_x = Math.round(this.GetX(min_wire));
-  var dest_w = Math.round(this.GetX(max_wire) - dest_x);
-  var dest_y = Math.round(this.GetY(min_tdc));
-  var dest_h = Math.round(dest_y - this.GetY(max_tdc));
+  var dest_x = (this.GetX(min_wire));
+  var dest_w = (this.GetX(max_wire) - dest_x);
+  var dest_y = (this.GetY(min_tdc));
+  var dest_h = (dest_y - this.GetY(max_tdc));
   
   // The number of pixels we want is likely smaller than the true span in the giant map space.
   // When using magnifying glass, we want moar pixels
-  var pixels_tdc = this.mag_scale*dest_w; // out of order!  h for source is different than h for dest.
-  var pixels_wir = this.mag_scale*dest_h;
+  var pixels_tdc = this.mag_scale*dest_h; // out of order!  h for source is different than h for dest.
+  var pixels_wir = this.mag_scale*dest_w;
 
   // Ok, this is the other case, where the number of pixels we want is bigger than then giant map space.
   // If we're zoomed in so that one wire/tdc, do this:
   // We dont' need more than 1 pixel per wire, 1 pixel per tdc.
-  if(pixels_tdc>source_w) pixels_tdc = source_w;
-  if(pixels_wir>source_h) pixels_wir = source_h;
+  // if(pixels_tdc>source_w) pixels_tdc = source_w;
+  // if(pixels_wir>source_h) pixels_wir = source_h;
 
   // WebGL engine, would you kindly give us a canvas with this snapshot?
+  console.log("RequestRender", source_x,
+     source_y,
+     source_w,
+     source_h,
+     pixels_wir, 
+  pixels_tdc);
+  
   var result = mapper.RequestRendering(
      source_x,
      source_y,
      source_w,
      source_h,
-     pixels_wir, 
-     pixels_tdc
+     pixels_tdc, 
+     pixels_wir
   );
   
   // Now, the above values are good, but we need to 
@@ -607,8 +598,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
      result      // Source image.
     ,0
     ,0
-    ,pixels_wir
     ,pixels_tdc
+    ,pixels_wir
     ,rot_dest_x
     ,rot_dest_y
     ,rot_dest_w
@@ -1643,10 +1634,7 @@ WireView.prototype.DoMouse = function(ev)
     // Update quick.
     if(this.fDragging){
       gStateMachine.Trigger("zoomChangeFast");
-      // this.dirty = false;  // Draw gets issued by the trigger.
     }
-    // this.dirty = false;  // Draw gets issued by the trigger.
-    // this.dirty=true; // Do a slow draw in this view.
   } 
     
 };
