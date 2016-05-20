@@ -3,7 +3,7 @@ UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
 
-buildtargets = libargo-backend.dylib argo-backend argo-live-backend notify-live.cgi
+buildtargets = libargo-backend.dylib argo-backend argo-live-backend argo-run-one notify-live.cgi
 .PHONY: bin
 bin: $(buildtargets)
 
@@ -91,7 +91,7 @@ CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 BOOST_INC ?= boost/include # Usually defined for us, use local symlink ./boost if not
 BOOST_LIB ?= boost/lib
 
-BLIBS += -lboost_serialization -lboost_system -lboost_thread
+BLIBS += -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
 # LIBS += -lboost_serialization -lboost_system -lboost_thread
 
 ifeq ($(UNAME),Darwin)
@@ -203,6 +203,17 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
+argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
+	$(CPP) $(LDFLAGS) \
+	-Wl,-rpath,@loader_path/deps/root/lib \
+	-Wl,-rpath,@loader_path/deps/boost/lib \
+	-Wl,-rpath,@loader_path/../../deps/root/lib\
+	-Wl,-rpath,@loader_path/../../deps/root/lib\
+	-Wl,-rpath,@loader_path/../../deps/root/lib\
+	-Wl,-rpath,@loader_path/root/lib\
+	-Wl,-rpath,@loader_path/boost/lib\
+	 $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+
 libargo-backend.dylib: $(OBJ) tmp/Cint.o Makefile
 	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
 
@@ -229,6 +240,7 @@ install-boost: Makefile
 	install_name_tool -id @rpath/libboost_serialization.dylib ${BOOST_LIB}/libboost_serialization.dylib
 	install_name_tool -id @rpath/libboost_system.dylib ${BOOST_LIB}/libboost_system.dylib
 	install_name_tool -id @rpath/libboost_thread.dylib ${BOOST_LIB}/libboost_thread.dylib
+	install_name_tool -id @rpath/libboost_program_options.dylib ${BOOST_LIB}/libboost_program_options.dylib
 
 depend: $(DEPS)
 

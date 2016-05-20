@@ -1521,39 +1521,32 @@ void RecordComposer::composeAssociations()
   // Note that we have to have a LinkDef.h for this to work, which includes the line
   // #pragma link C++ class vector<vector<unsigned int> >+;
 
-  // vector< vector< unsigned int > > *branchidlists = 0;
-  // metaData->SetBranchAddress("BranchIDLists",&branchidlists);
-  // metaData->GetEntry(0);
-  // if(branchidlists==0) {
-  //   std::cout << "Grr! Can't get branchidlists!" << std::endl;
-  //   assns.add("error","Can't get branchidlists from metadata tree.");
-  //   fOutput.add("associations",assns);
-  //   return;
-  // }
-
-  // This works via ttree formulae.  
-  vector< vector< unsigned int > > *branchidlists = new vector< vector< unsigned int > >;
-
-  TTreeFormula ff("ff","BranchIDLists",metaData);
-  // std::cout << ff.GetNdata() << std::endl;
-  int bid_n = ff.GetNdata();
-  int bid_got = 0;
-  for(int i=0;i<bid_n;i++) {
-    vector< unsigned int > row;
-    TTreeFormula fi("fi",Form("BranchIDLists[%i]",i),metaData);
-    // std::cout << i << "\t" << fi.GetNdata() << std::endl;
-    int ni = fi.GetNdata();
-    for(int j=0;j<ni;j++) {
-      // std::cout << "\t" << fi.EvalInstance(j);
-      row.push_back(fi.EvalInstance(j));
-      bid_got++;
+  vector< vector< unsigned int > > *branchidlists = 0;
+  metaData->SetBranchAddress("BranchIDLists",&branchidlists);
+  metaData->GetEntry(0);
+  if(branchidlists==0) {
+    std::cout << "Grr! Can't get branchidlists. Falling back to TTreeFormula." << std::endl;
+    branchidlists = new vector< vector< unsigned int > >;
+    TTreeFormula ff("ff","BranchIDLists",metaData);
+    // std::cout << ff.GetNdata() << std::endl;
+    int bid_n = ff.GetNdata();
+    int bid_got = 0;
+    for(int i=0;i<bid_n;i++) {
+      vector< unsigned int > row;
+      TTreeFormula fi("fi",Form("BranchIDLists[%i]",i),metaData);
+      // std::cout << i << "\t" << fi.GetNdata() << std::endl;
+      int ni = fi.GetNdata();
+      for(int j=0;j<ni;j++) {
+        // std::cout << "\t" << fi.EvalInstance(j);
+        row.push_back(fi.EvalInstance(j));
+        bid_got++;
+      }
+      branchidlists->push_back(row);
+      // std::cout << "\n";
+      // std::cout << "got" << bid_got << "\n";
+      if(bid_got >= bid_n) break;
     }
-    branchidlists->push_back(row);
-    // std::cout << "\n";
-    // std::cout << "got" << bid_got << "\n";
-    if(bid_got >= bid_n) break;
   }
-
 
   //std::cout << " branchidlists size: " << (*branchidlists).size() << std::endl;
 

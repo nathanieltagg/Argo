@@ -118,7 +118,6 @@
 <script type="text/javascript" src="libs/FalseColorControl.js"></script> 
 <script type="text/javascript" src="libs/GLEngine.js"></script> 
 <script type="text/javascript" src="libs/LiveControl.js"></script> 
-<script type="text/javascript" src="libs/EField.js"></script> 
 <!-- <script type="text/javascript" src="libs/RecoArgo.js"></script>  -->
 
 <!-- My classes for talking to the back-end and other displays-->

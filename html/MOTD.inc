@@ -12,6 +12,9 @@
   <ul> 
     <li> Major feature: Add coherent noise removal </li>    
     <li> Major feature: Add dead channel removal </li>    
-    <li> Minor change: lighter skin </li>    
+    <li> Minor change: re-skin </li>    
+    <li> Change default layout, remove histograms </li>    
+    <li> Update PMT views for more event information </li>    
+    <li> Autozoom on raw data </li>    
   </ul>
 </div> 
