@@ -123,6 +123,9 @@ $(function() {
         return false;
         
 
+      case 79: // 'O'
+        $('#ctl-OpHitLists').cycle_dropdown().trigger("change");
+        return false;
         
       case 109: // 'm'
         $('#ctl-show-mc').click();

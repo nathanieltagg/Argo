@@ -180,38 +180,44 @@ void MakeEncodedTileset(JsonObject& r,
   // make stats.
   {
     TimeReporter timer_stats("time_to_make_histograms");
-    TH1D timeProfile("timeProfile","timeProfile",ntdc,0,ntdc);
+    TH1D timeProfile("timeProfile","timeProfile",ntdc/25,0,ntdc);
     std::vector<TH1*> planeProfile;
     std::vector<Double_t> timeProfileData(ntdc+2,0);
-    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456,0,3456));
+    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",2398/24,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",2398/24,0,2398));
+    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",3456/24,0,3456));
     // TH1D hPedAdc("hPedAdc","hPedAdc",8192,-4096,4096);
     // std::vector<size_t> hPedAdc(8192,0);
     // waveform_t blank(ntdc,0);
     for(int wire=0;wire<nwire;wire++) 
     {
       waveform_ptr_t wireptr = (*wireMap)[wire];
+      waveform_ptr_t noiseptr = (*noiseWireMap)[wire];
+      
       if(wireptr) {
         waveform_t& waveform = *(wireptr);
         double wiresum = 0;
             
         for(int k=0;k<ntdc;k++) {        
           short raw = waveform[k];
+          if(noiseptr) raw -= (*noiseptr)[k];
+          
           // assert(raw+4096>=0);
           // assert(raw+4096<8192);
           // hPedAdc->Fill(raw);
           // hPedAdc[raw+4096]++;
           double val = abs(raw);
           wiresum += val;
-          timeProfileData[k+1] += val;
+          timeProfileData[k] += val;
         }
         int plane, planewire;
         wireOfChannel(wire,plane,planewire);
         planeProfile[plane]->Fill(planewire,wiresum);
       }
     }
-    timeProfile.SetContent(&timeProfileData[0]);
+    // timeProfile.SetContent(&timeProfileData[0]);
+    // timeProfile.Rebin(10);
+    for(int i=0;i<ntdc;i++) { timeProfile.Fill(i,timeProfileData[i]); }
   
     r.add("timeHist",TH1ToHistogram(&timeProfile));
     JsonArray jPlaneHists;
@@ -233,11 +239,21 @@ void MakeEncodedTileset(JsonObject& r,
 }
 
 
+// Notes: running full-speed on local:
+// Compression 5 -> 10851 ms full pipeline.
+// Compression 3 ->  9988 ms full pipeline.
+// Running throttled to 30 MB/s (wifi)
+// Compression 7 -> 28545
+// Compression 5 -> 26262 25947 ms
+// Compression 3 -> 27017 26998 ms
+// Compression 1 -> 29908 ms
+
+int EncodedTileMaker::s_compression = 5;
 
 void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a thread.
 {
   int ntdc = (m_tdcEnd-m_tdcStart);
-  MakePng m_png(ntdc,(m_wireEnd-m_wireStart),MakePng::rgb);
+  MakePng m_png(ntdc,(m_wireEnd-m_wireStart),MakePng::rgb,s_compression);
   std::vector<unsigned char> encodeddata(ntdc*3);    // Three bytes per entry.
 
   waveform_t dummy(9600,0);

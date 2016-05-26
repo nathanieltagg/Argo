@@ -7,6 +7,13 @@ $(function(){
 
   gGLMapperRaw = new GLMapper('raw');
   gGLMapperCal = new GLMapper('cal');
+  
+  gGLMappers = {
+    'raw': gGLMapperRaw,
+    'cal': gGLMapperCal,
+    'raw_lowres': gGLMapperRawLowres,
+    'cal_lowres': gGLMapperCalLowres,
+  }
 });
 
 //
@@ -47,17 +54,21 @@ function GLMapper(typ) // "raw" or "cal"
   // Space to hold image tiles.
   this.tile_images = [];
   this.loaded = false;
-  var total_width = 0;
-  var total_height = 0;
+  this.total_width = 0;
+  this.total_height = 0;
   this.num_images_loaded = 0;
   this.num_images_needed = 0;
-  
+  this.need_lut_rebuild = true;
   
   // Space to hold textures.
   this.tile_textures = [];
 
+  var self = this;
   gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
-  gStateMachine.Bind('ChangePsuedoColor',this.Render.bind(this));
+  // gStateMachine.Bind('ChangePsuedoColor',this.Render.bind(this));
+  gStateMachine.Bind('ChangePsuedoColor',function(){self.need_lut_rebuild = true;});
+
+  this.SetupGLAndCanvas(10,10);
 }
 
 
@@ -102,8 +113,8 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
   // setup GLSL this.program
   var vertexShader = this.create_shader( "2d-vertex-shader");
   // var LUTShader    = this.create_shader( "lutshade");
-  var LUTShader    = this.create_shader( "lutshade-with-noise-removal");
-  // var LUTShader       = this.create_shader( "lutshade-with-rms-cut");
+  // var LUTShader    = this.create_shader( "lutshade-with-noise-removal");
+  var LUTShader       = this.create_shader( "lutshade-with-noise-removal-and-smear" );
 
   this.program = this.gl.createProgram();
   this.gl.attachShader(this.program,vertexShader);
@@ -187,14 +198,6 @@ GLMapper.prototype.StartLoad = function()
     this.total_width  = Math.max(row_width,this.total_width);
   }
   
-  // Only now can we set up the GL context. Why? Because for
-  // some stupid reason, this doesn't work:
-  // - set canvas size to w1,h1
-  // - create gl context
-  // - change canvas size w2,h2 (different from above)
-  // - gl.viewport(0,0,w2,h2)
-  // I have no idea why, but I'm pissed off about it.  July 2015
-  this.SetupGLAndCanvas(this.total_width,this.total_height);
   
   this.num_images_needed = 0;  
   this.num_images_loaded = 0;
@@ -309,7 +312,12 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   
 
   // Hack to see if this improves the control-room computer: instead of immediately rendering, instead include a 1s timeout.
-  setTimeout(this.Render.bind(this),500);
+  // setTimeout(this.Render.bind(this),500);
+  gStateMachine.Trigger('colorWireMapsChanged');  
+
+  console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
+  console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
+  
 }
 
 GLMapper.prototype.build_LUT_texture = function( ) 
@@ -357,102 +365,7 @@ GLMapper.prototype.build_LUT_texture = function( )
   this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, canvas);
 }
 
-GLMapper.prototype.Render = function()
-{
-  if(!this.loaded) return;
-  console.log('GLMapper::Render');
-  console.time('GLMapper::Render');
 
-  // copy the output canvas to the gRecord so others can get at it.
-  var utyp = '_' + this.typ;
-  if(!gRecord[utyp]) gRecord[utyp] = {};
-  if(!gRecord[utyp].colored_wire_canvas) gRecord[utyp].colored_wire_canvas = this.canvas;
-  gRecord[utyp].scale_x = this.scale_x;
-  gRecord[utyp].scale_y = this.scale_y;
-
-  console.time('Build LUT');  
-  var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
-  this.build_LUT_texture();
-  this.gl.uniform1i(mapTextureLocation, 7);
-  this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);
-  console.timeEnd('Build LUT');
-
-  var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
-  
-  var inputTextureLocation = this.gl.getUniformLocation(this.program, "inputtexture");      
-  this.gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
-  
-  var resolutionLocation = this.gl.getUniformLocation(this.program, "u_resolution");
-  this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
-
-  var pedestal_width_cut_location = this.gl.getUniformLocation(this.program, "pedestal_width_cut");
-  this.gl.uniform1f(pedestal_width_cut_location, gWireColorPedestalWidthCut);
-
-  var filter = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
-  console.warn("coherent noise filter:",filter);
-  var do_noise_reject_location = this.gl.getUniformLocation(this.program, "do_noise_reject");
-  this.gl.uniform1i(do_noise_reject_location, filter); // 1 = on 0 = off
-  
-  var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
-  console.warn("bad channel flag",bad_channel_flag);
-  var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
-  this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
-  
-  // var tex = this.tile_textures[0][0];
-  // this.gl.activeTexture(this.gl.TEXTURE1);
-  // this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-  // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-  var buffer = this.gl.createBuffer();
-  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);  // This is current buffer
-  this.gl.enableVertexAttribArray(positionLocation); // Use the current buffer for position location array
-  this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0); // It's an array of floats.
-
-  // var x,y,w,h;
-  // x = 500.;
-  // y = 800.;
-  // w = 500.;
-  // h = 200.;
-  // console.log("Drawing",x,y,w,h);
-  // this.SetRect(x,y,w,h);
-  //
-  // // Draw the rectangle.
-  // this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  
-  // loop textures.
-  for(var irow=0;irow<this.tile_textures.length;irow++) {
-    for(var icol=0;icol<this.tile_textures[irow].length;icol++) {
-  // for(var irow=0;irow<1;irow++) {
-  //   for(var icol=0;icol<1;icol++) {
-  //
-      var elem = this.tile_urls[irow][icol];
-      // console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
-      var tex = this.tile_textures[irow][icol];
-
-      this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width") , 1.0/elem.width);
-      this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_height"), 1.0/elem.height);
-
-      this.gl.activeTexture(this.gl.TEXTURE1);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.SetRect(elem.x,elem.y,elem.width,elem.height);
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    }
-  }
-  
-  console.timeEnd('GLMapper::Render');
-  console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
-  console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
-  $('.wireimg-encoded-progressbar-text').text("Rendered!");
-
-  gStateMachine.Trigger('colorWireMapsChanged');  
-}
 
 
 GLMapper.prototype.SetRect = function( x, y, w, h ) 
@@ -516,4 +429,115 @@ GLMapper.prototype.create_shader = function( scriptId  )
    return shader;
 } 
 
+
+GLMapper.prototype.RequestRendering = function(
+      x,
+      y,
+      w,
+      h,
+      dest_w,
+      dest_h
+      )
+{
+  // Do a limited rendering request.
+  if(!this.loaded) return;
+  console.log('GLMapper::RequestRendering');
+  console.time('GLMapper::RequestRendering');
+
+  if(this.canvas.width < dest_w || this.canvas.height < dest_h) {
+    // FIXME
+    console.warn("Need to rebuild the rendering context from ",this.canvas.width,this.canvas.height);
+    this.canvas.width  = Math.max(dest_w,this.canvas.width);
+    this.canvas.height = Math.max(dest_h,this.canvas.height);
+    // $(this.canvas).css("width",this.canvas.width);
+    // $(this.canvas).css("height",this.canvas.height);
+    console.warn("                                        to ",this.canvas.width,this.canvas.height);    
+    this.gl.viewport(0,0,this.canvas.width,this.canvas.height);
+  }
+  // copy the output canvas to the gRecord so others can get at it.
+
+  // Assume no rebuilding of texture is required - this should be done on some other call
+  if(this.need_lut_rebuild) {
+    console.time('Build LUT');
+    var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
+    this.build_LUT_texture();
+    this.gl.uniform1i(mapTextureLocation, 7);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);
+    console.timeEnd('Build LUT');
+    this.need_lut_rebuild=false;
+  }
+  //provide texture coordinates for the rectangle we're drawing FROM
+  var texCoordBuffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texCoordBuffer);
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+      0.0,  0.0,
+      1.0,  0.0,
+      0.0,  1.0,
+      0.0,  1.0,
+      1.0,  0.0,
+      1.0,  1.0]), this.gl.STATIC_DRAW);
+
+  var texCoordLocation = this.gl.getAttribLocation(this.program, "a_texCoord");
+  this.gl.enableVertexAttribArray(texCoordLocation);
+  this.gl.vertexAttribPointer(texCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+
+  var positionLocation = this.gl.getAttribLocation(this.program, "a_position");  // Get a pointer to the a_position input given to the vertex shader fragment in the this.program.
+  
+  var inputTextureLocation = this.gl.getUniformLocation(this.program, "inputtexture");      
+  this.gl.uniform1i(inputTextureLocation, 1); // use TEXTURE1 as your input!
+  
+  var resolutionLocation = this.gl.getUniformLocation(this.program, "u_resolution");
+  this.gl.uniform2f(resolutionLocation, this.canvas.width,this.canvas.height);
+
+  var filter = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
+  var do_noise_reject_location = this.gl.getUniformLocation(this.program, "do_noise_reject");
+  this.gl.uniform1i(do_noise_reject_location, filter); // 1 = on 0 = off
+  
+  var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
+  var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
+  this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
+  
+  // Controls for doing a nearest-neighbor pixel smear.
+  var do_smear = 0;
+  var do_smear_location = this.gl.getUniformLocation(this.program, "do_smear");
+  this.gl.uniform1i(do_smear_location, do_smear); // 1 = on 0 = off
+
+  this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_x"), 0.5/this.total_width);
+  this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_y"), 0.5/this.total_height);
+
+  
+
+  
+  var buffer = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);  // This is current buffer
+  this.gl.enableVertexAttribArray(positionLocation); // Use the current buffer for position location array
+  this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0); // It's an array of floats.
+
+  var stretch_x = dest_w/w;
+  var stretch_y = dest_h/h;
+  // loop textures.
+  for(var irow=0;irow<this.tile_textures.length;irow++) {
+    for(var icol=0;icol<this.tile_textures[irow].length;icol++) {
+      // FIXME: skip elements that are certainly off-screen.
+      
+      var elem = this.tile_urls[irow][icol];
+      // console.log("rendering ",irow,icol,elem.x,elem.y,elem.width,elem.height);
+      var tex = this.tile_textures[irow][icol];
+
+      this.gl.activeTexture(this.gl.TEXTURE1);
+      this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+      
+      this.SetRect((elem.x-x)*stretch_x,(elem.y-y)*stretch_y,elem.width*stretch_x,elem.height*stretch_y);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    }
+  }
+  console.timeEnd('GLMapper::RequestRendering');   
+  return this.canvas;
+  
+}
 

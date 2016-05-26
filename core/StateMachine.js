@@ -26,9 +26,10 @@ function StateMachine()
   this.eventExecuting = false;
   
   this.stats = {};
+  var self = this;
+  $(document).on("statemachine:trigger", function(ev,arg){self.DoTrigger(arg);} );
 }
 
-gStateMachine = new StateMachine();
 
 //
 // ChangeState() : Use this to change the machine's state.
@@ -89,6 +90,15 @@ StateMachine.prototype.SimplifyQueue = function(  )
 
 StateMachine.prototype.Trigger = function( trigType )
 {
+  console.log('StateMachine::Trigger',trigType);
+  // Queue a callback.
+  $( document ).trigger( "statemachine:trigger", [ trigType ] );
+
+  
+}
+
+StateMachine.prototype.DoTrigger = function( trigType )
+{
   // New logic:
   // We don't want trigger cascades:
   // Rebuild
@@ -101,6 +111,7 @@ StateMachine.prototype.Trigger = function( trigType )
   //
   // Instead, let's create a queue of events we want to have happen.
   //
+  console.log('StateMachine::DoTrigger',trigType);
   this.eventQueue.push(trigType);
 
   if(this.eventExecuting) {
@@ -158,3 +169,4 @@ StateMachine.prototype.Trigger = function( trigType )
   return 0;
 };
 
+gStateMachine = new StateMachine();

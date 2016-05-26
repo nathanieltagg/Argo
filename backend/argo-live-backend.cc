@@ -22,6 +22,7 @@
 #include "datatypes/raw_data_access.h"
 #include "online_monitor/Plexus.h"
 #include "datatypes/uboone_data_utils.h"
+#include "DeadChannelMap.h"
 
 #include "TTimeStamp.h"
 
@@ -160,6 +161,7 @@ int main(int argc, char **argv)
     );
   
   gPlexus.rebuild((double)TTimeStamp());
+  gDeadChannelMap->Rebuild();
   
   
   // Connect to dispatcher.

@@ -39,15 +39,24 @@ body {
         font-size: 10pt;
 }
 
+
+#event-id-info {
+  margin-left: 30px;
+  float: right;
+  font-size: 1.5em;
+}
+
 div.important-links a
 {
   white-space: nowrap;
   margin: 2px;
   padding:4px;
-  border: blue solid 1px;
-  border-radius: 6px;
+  border: 1px solid #aaaaaa;
+  border-radius: 5px;
   display:inline-block;
+  color: #555555;
 }
+
 
 #BigWireView
 {
@@ -99,13 +108,13 @@ span.ZoomControl-Info
 }
 
 #content-top {
-	width: 800px;
+	width: 1200px;
 	margin: auto;
 }
 
 #content-right {
 	float: right;
-	width: 230px;
+	width: 300px;
 	margin: 0 0 0 0;
         
 }
@@ -510,7 +519,7 @@ div.A-WireHistogram {
 }
 
 div.A-ZoomControl {
- height: 180px;
+ height: 100px;
 }
 
 div.A-TimeHistogram {

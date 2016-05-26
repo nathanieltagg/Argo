@@ -138,8 +138,9 @@ function Pad( element, options )
     label_font : "16px sans-serif",
     fMagnifierOn: false,
     fMousePos : {x:-1e99,y:-1e99,u:-1e99,v:-1e99},
-    fMouseInContentArea : false
-    
+    fMouseInContentArea : false,
+    mag_scale: 1,
+    magnify_pass: 1
   };
   // override defaults with options.
   $.extend(true,defaults,options);
@@ -168,7 +169,8 @@ function Pad( element, options )
       // Build the drawing context.
       var ctx = c.getContext('2d');
       if(initCanvas) ctx = initCanvas(c).getContext('2d');
-      if(!ctx) console.log("Problem getting context!");
+      if(!ctx) console.error("Problem getting context!");
+      if(typeof ctx == 'undefined') console.error("Problem getting context!");
       this.ctxs[i] = ctx;      
     } else {
       this[layername] = this.layers[i] = $('canvas.'+layername,this.element).get(0);
@@ -661,49 +663,53 @@ Pad.prototype.MagnifierDraw = function(arg)
   // console.trace();
   
   // pop all saves. I want the top.
-  this.ctx.restore();
-  this.ctx.restore();
-  this.ctx.restore();
-  this.ctx.restore();
-  this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
+  // this.ctx.restore();
 
-  this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
+  this.mag_scale = 1.0;
   this.magnifying = false;
+  this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
   if((this.fMouseInContentArea) && ($('#ctl-magnifying-glass').is(':checked')) )
   {
     if(this.fMousePos.x < this.origin_x) return;
     if(this.fMousePos.y > this.origin_y) return;
     
     this.magnifying = true;
+    
     // Cleverness:
-    var mag_radius = parseFloat($('#ctl-magnifier-size').val());
-    var mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
+    this.mag_radius = parseFloat($('#ctl-magnifier-size').val());
+    this.mag_scale  = parseFloat($('#ctl-magnifier-mag').val());
     
 
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "black";
     
     this.ctx.beginPath();
-    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, mag_radius+1, 0,1.9999*Math.PI,false);
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, this.mag_radius+1, 0,1.9999*Math.PI,false);
     this.ctx.stroke();
 
     this.ctx.save();
     this.ctx.beginPath();
-    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, mag_radius, 0,Math.PI*2,true);
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, this.mag_radius, 0,Math.PI*2,true);
     this.ctx.clip();
 
-    this.ctx.translate((1-mag_scale)*this.fMousePos.x,(1-mag_scale)*this.fMousePos.y);
-    this.ctx.scale(mag_scale,mag_scale);
+    this.ctx.translate((1-this.mag_scale)*this.fMousePos.x,(1-this.mag_scale)*this.fMousePos.y);
+    this.ctx.scale(this.mag_scale,this.mag_scale);
 
     // Find new draw limits in u/v coords:
-    var umin = this.GetU(this.fMousePos.x-mag_radius);
-    var umax = this.GetU(this.fMousePos.x+mag_radius);
-    var vmax = this.GetV(this.fMousePos.y-mag_radius);
-    var vmin = this.GetV(this.fMousePos.y+mag_radius);
+    var umin = this.GetU(this.fMousePos.x-this.mag_radius);
+    var umax = this.GetU(this.fMousePos.x+this.mag_radius);
+    var vmax = this.GetV(this.fMousePos.y-this.mag_radius);
+    var vmin = this.GetV(this.fMousePos.y+this.mag_radius);
 
     this.DrawOne(umin,umax,vmin,vmax,arg);
     this.ctx.restore();
   } 
+  this.mag_scale = 1.0;
+  
 };
 
 Pad.prototype.DoMouse = function(ev)

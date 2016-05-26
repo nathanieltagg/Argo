@@ -233,42 +233,6 @@ WireView.prototype.NewRecord_hits = function()
   this.TrimHits();
 };
 
-// WireView.prototype.NewRecord_image = function()
-// {
-//   this.loaded_wireimg = false;
-//   this.loaded_thumbnail = false;
-//
-//   this.show_image =  $(this.ctl_wireimg_type).filter(":checked").val();
-//
-//   if(!gRecord[this.show_image]) return;
-//   if(!gRecord[this.show_image][gCurName[this.show_image]]) return;
-//
-//   // Store the image in the Record.
-//   if(!("_wireimage" in gRecord) ) gRecord._wireimage = {};
-//
-//   // Build offscreen image(s)
-//   if(!(this.show_image in gRecord._wireimage)) {
-//     gRecord._wireimage[this.show_image] = {};
-//     gRecord._wireimage[this.show_image].image   = new Image();
-//     gRecord._wireimage[this.show_image].thumb = new Image();
-//
-//     var wiredesc = gRecord[this.show_image][gCurName[this.show_image]];
-//     // e.g. gRecord.raw."recob::rawwire"
-//     gRecord._wireimage[this.show_image].image.src = wiredesc.wireimg_url;
-//     gRecord._wireimage[this.show_image].thumb.src = wiredesc.wireimg_url_thumb;
-//   }
-//
-//   var self = this;
-//   gRecord._wireimage[this.show_image].image.onload = function() {
-//       console.log(self.element,"got wireimg");
-//       gRecord._wireimage[self.show_image].image_loaded = true;
-//       gStateMachine.Trigger("wireImageLoaded");
-//   };
-//   gRecord._wireimage[this.show_image].thumb.onload = function() {
-//       console.log("got wireimg thumb");
-//       gRecord._wireimage[self.show_image].thumb_loaded = true;
-//   };
-// };
 
 WireView.prototype.NewRecord_mc = function()
 {
@@ -309,7 +273,8 @@ WireView.prototype.DrawFast = function()
   this.Draw(true);
 };
 
-WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
+
+WireView.prototype.MagnifierDraw = function(fast)
 {
   // Reset bounds if appropriate
   if(this.zooming) {
@@ -325,10 +290,14 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   }
   
   this.Clear();
+  Pad.prototype.MagnifierDraw.call(this,fast);
+}
+
+WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
+{
+  this.Clear();
   
   this.DrawFrame();
-  
-
   // Set clipping region for all further calls, just to make things simpler.
   this.ctx.save();
   this.ctx.beginPath();
@@ -342,7 +311,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.mouseable = [];
   if(gRecord) {
     if ($(this.ctl_show_wireimg).is(":checked")) {
-      this.DrawImage(min_u,max_u, min_v, max_v, fast);
+      this.DrawImage(min_u, max_u, min_v, max_v, fast);
     }
 
     if ($(this.ctl_show_clus).is(":checked")) {
@@ -429,8 +398,12 @@ WireView.prototype.DrawWatermark = function()
 {
   var img = $('img#watermark_logo').get(0);
   if(img.complete) {
+    this.ctx.save();
     var aspect_ratio = img.height/img.width;
-    this.ctx.drawImage(img,50,10,100,100*aspect_ratio);
+    this.ctx.shadowColor = "white"; 
+    this.ctx.shadowBlur = 10; 
+    this.ctx.drawImage(img,50,10,150,100*aspect_ratio);
+    this.ctx.restore();
   }
   
 }
@@ -457,25 +430,42 @@ WireView.prototype.DrawScale = function()
   var y  = this.GetY(v);
   
   // console.warn("horizontal scale:",x2-x1);
+    
   this.ctx.save();
-  this.ctx.strokeStyle = "black";
-  this.ctx.fillStyle = "black";
+  this.ctx.beginPath();  
+  this.ctx.strokeStyle = "white";
+  this.ctx.fillStyle = "white";
+  this.ctx.lineWidth = 3;
   this.ctx.moveTo(x1,y);
   this.ctx.lineTo(x2,y);
-  this.ctx.moveTo(x1,y-2);
-  this.ctx.lineTo(x1,y+2);
-  this.ctx.moveTo(x2,y-2);
-  this.ctx.lineTo(x2,y+2);
   this.ctx.stroke();
-  this.ctx.font="8px";
+  this.ctx.beginPath();  
+  this.ctx.strokeStyle = "black";
+  this.ctx.fillStyle = "black";
+  this.ctx.lineWidth = 1;
+  this.ctx.moveTo(x1,y-3);
+  this.ctx.lineTo(x2,y-3);
+  this.ctx.stroke();
+  
+  // this.ctx.moveTo(x1,y-2); // little cross beam at end
+ //  this.ctx.lineTo(x1,y+2);
+ //  this.ctx.moveTo(x2,y-2); // little cross beam at end
+ //  this.ctx.lineTo(x2,y+2);
+  this.ctx.font="15px sans-serif";
+  this.ctx.shadowColor = "black";
+  this.ctx.shadowBlur = 20; 
   var txt = lasttick + " cm";
   if(lasttick<=0.9) { txt = lasttick*10 + " mm";}
   if(lasttick>=100) { txt = lasttick/100 + " m";}
   this.ctx.textAlign= "center";
   this.ctx.textBaseline = "top";
-  this.ctx.fillText(txt,(x1+x2)*0.5, y);
-  this.ctx.restore();
-  
+  this.ctx.lineWidth = 1;
+  this.ctx.fillStyle = "white";
+  this.ctx.fillText(txt,(x2+x1)*0.5 , y);
+  // this.ctx.strokeStyle = "black";
+  // this.ctx.strokeText(txt,x2-3, y);
+
+
   // Vertical:
   // Translate width in wires to width in TDC.
   var d_tdc = w*0.3/gGeo.drift_cm_per_tick;
@@ -483,63 +473,24 @@ WireView.prototype.DrawScale = function()
   var y1 = y;
   var y2 = this.GetY(v-d_tdc);
   // console.warn("vertical scale:",y2-y1);
-  
-  this.ctx.save();
-  this.ctx.strokeStyle = "black";
-  this.ctx.fillStyle = "black";
-  this.ctx.moveTo(x,y1);
-  this.ctx.lineTo(x,y2);
-  this.ctx.moveTo(x-2,y1);
-  this.ctx.lineTo(x+2,y1);
-  this.ctx.moveTo(x-2,y2);
-  this.ctx.lineTo(x+2,y2);
-  this.ctx.stroke();
-  // this.ctx.font="8px";
-  // this.ctx.textAlign= "center";
-  // this.ctx.textBaseline = "top";
-  // this.ctx.translate(x,(y1+y2)*0.5);
-  // this.ctx.rotate(Math.PI/2.);
-  // this.ctx.fillText(txt,0,0);
-  this.ctx.restore();
 
-  
-  // Vertical:
-  // This version does the same as horizontal. No use.
+  // this.ctx.beginPath();
   //
-  // var vspan = (this.max_v-this.min_v);
-  // // Hardcoded wire pitch.
-  // var metric_h = (vspan*0.25) * gGeo.drift_cm_per_tick; // 20% of pad wide, find in mm.
-  // var ticks = this.GetGoodTicks(0,metric_h,2,false);
-  // var lasttick = ticks[ticks.length-1];
-  // var h = lasttick/gGeo.drift_cm_per_tick; // Length of marker line in tdc
-  //
-  // var v2 = this.max_v - vspan*0.05;
-  // var v1 = v2-h;
-  // var y1 = this.GetY(v2);
-  // var y2 = this.GetY(v1);
-  // var u  = this.max_u - (this.max_u-this.min_u)*0.05;
-  // var x  = this.GetX(u);
-  //
-  // this.ctx.save();
-  // this.ctx.strokeStyle = "black";
-  // this.ctx.fillStyle = "black";
+  // this.ctx.strokeStyle = "white";
+  // this.ctx.fillStyle = "white";
+  // this.ctx.lineWidth = 3;
   // this.ctx.moveTo(x,y1);
   // this.ctx.lineTo(x,y2);
-  // this.ctx.moveTo(x-2,y1);
-  // this.ctx.lineTo(x+2,y1);
-  // this.ctx.moveTo(x-2,y2);
-  // this.ctx.lineTo(x+2,y2);
   // this.ctx.stroke();
-  // this.ctx.font="8px";
-  // var txt = lasttick + " cm";
-  // if(lasttick<=0.9) { txt = lasttick*10 + " mm";}
-  // if(lasttick>=100) { txt = lasttick/100 + " m";}
-  // this.ctx.textAlign= "center";
-  // this.ctx.textBaseline = "top";
-  // this.ctx.translate(x,(y1+y2)*0.5);
-  // this.ctx.rotate(Math.PI/2.);
-  // this.ctx.fillText(txt,0,0);
-  // this.ctx.restore();
+  // this.ctx.beginPath();
+  // this.ctx.strokeStyle = "black";
+  // this.ctx.fillStyle = "black";
+  // this.ctx.lineWidth = 1;
+  // this.ctx.moveTo(x+3,y1-3);
+  // this.ctx.lineTo(x+3,y2-3);
+  // this.ctx.stroke();
+  
+  this.ctx.restore();  
   
 };
 
@@ -547,112 +498,115 @@ WireView.prototype.DrawScale = function()
 WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
-    console.time("DrawImage");
+  console.time("DrawImage");
 
+  // console.warn("DrawImage",min_u,max_u,min_v,max_v,fast);
+  // console.warn("DrawImage",this.min_u,this.max_u,this.min_v,this.max_v,fast);
   // look for offscreen canvas.
-  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();
-  var canvas = null;
-  var objnm = '_' + this.show_image;
-  if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
-      canvas = gRecord[objnm].colored_wire_canvas;
+  this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  // 'cal' or 'raw'
+
+  console.log("doing mapper render, this.mag_scale=",this.mag_scale);
+   // Figure out which GLMapper to query.
+  var mapper = gGLMappers[this.show_image];
+  if(!mapper || !mapper.loaded) {
+    mapper = gGLMappers[this.show_image+'_lowres'];
+    console.log("Getting lowres mapper");
   }
-    
-  if(!canvas /* || fast */) {
-    objnm = '_' + this.show_image + "_lowres";
-    if(gRecord[objnm] && gRecord[objnm].colored_wire_canvas) {
-        canvas = gRecord[objnm].colored_wire_canvas; 
-    }
-  }
-  if(!canvas) return;
-  var scale_x = gRecord[objnm].scale_x || 1;
-  var scale_y = gRecord[objnm].scale_y || 1;
+  if(!mapper || !mapper.loaded) return;
+  var scale_x = mapper.scale_x || 1;
+  var scale_y = mapper.scale_y || 1;
 
-  // FIXME: thumbnails for faster panning.
+
   
-  if(this.max_u<this.min_u) this.max_u = this.min_u; // Trap weird error
-   var min_tdc     = Math.max(0,this.min_v);
-   var max_tdc     = Math.min(canvas.width*scale_x,this.max_v); 
-   var min_wire    = Math.max(this.min_u,0);
-   var max_wire    = Math.min(this.max_u,gGeo.numWires(this.plane));
-   var min_channel = gGeo.channelOfWire(this.plane, min_wire);
-   var max_channel = gGeo.channelOfWire(this.plane, max_wire);
+  if(max_u<min_u) max_u = min_u; // Trap weird error
+  var min_tdc     = Math.max(0,min_v);
+  var max_tdc     = Math.min(mapper.total_width*scale_x,max_v);   // ++ Fix; get from something else
+  var min_wire    = Math.max(min_u,0);
+  var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
+  var min_channel = gGeo.channelOfWire(this.plane, min_wire);
+  var max_channel = gGeo.channelOfWire(this.plane, max_wire);
+  
+  // These are pixel coordinates in the 'giant map' of all wires, all tdcs.
+  // Source w and h are true number of tdc spanned and true number of wires spanned respectively
+  // Scaling is if the mapper is lowres.
+  var source_x = (min_tdc/scale_x);
+  var source_y = (min_channel/scale_y);
+  var source_w = ((max_tdc-min_tdc)/scale_x);
+  var source_h = ((max_channel-min_channel)/scale_y);
+  
+  
+  // console.warn("Copy source coords:",source_x,source_y,source_w,source_h);
+  // Find position and height of destination in screen coordinates. Note we'll 
+  // have to rotate these for final picture insertion.
+  var dest_x = (this.GetX(min_wire));
+  var dest_w = (this.GetX(max_wire) - dest_x);
+  var dest_y = (this.GetY(min_tdc));
+  var dest_h = (dest_y - this.GetY(max_tdc));
+  
+  // The number of pixels we want is likely smaller than the true span in the giant map space.
+  // When using magnifying glass, we want moar pixels
+  var pixels_tdc = this.mag_scale*dest_h; // out of order!  h for source is different than h for dest.
+  var pixels_wir = this.mag_scale*dest_w;
+
+  // Ok, this is the other case, where the number of pixels we want is bigger than then giant map space.
+  // If we're zoomed in so that one wire/tdc, do this:
+  // We dont' need more than 1 pixel per wire, 1 pixel per tdc.
+  // if(pixels_tdc>source_w) pixels_tdc = source_w;
+  // if(pixels_wir>source_h) pixels_wir = source_h;
+
+  // WebGL engine, would you kindly give us a canvas with this snapshot?
+  console.log("RequestRender", source_x,
+     source_y,
+     source_w,
+     source_h,
+     pixels_wir, 
+  pixels_tdc);
+  
+  var result = mapper.RequestRendering(
+     source_x,
+     source_y,
+     source_w,
+     source_h,
+     pixels_tdc, 
+     pixels_wir
+  );
+  
+  // Now, the above values are good, but we need to 
+  // rotate our image.
+  // No blur on copy!
+  this.ctx.webkitImageSmoothingEnabled = false;
+  this.ctx.mozImageSmoothingEnabled = false;
+  this.ctx.imageSmoothingEnabled = false; /// future
+  this.ctx.save();
+  
+  this.ctx.translate(dest_x,dest_y);
+  this.ctx.rotate(-Math.PI/2);
+
+  var rot_dest_x = 0;
+  var rot_dest_y = 0;
+  var rot_dest_w = dest_h;
+  var rot_dest_h = dest_w;
+  
+
+  this.ctx.globalAlpha = 1.0;
    
-   var source_x = Math.round(min_tdc/scale_x);
-   var source_y = Math.round(min_channel/scale_y);
-   var source_w = Math.round((max_tdc-min_tdc)/scale_x);
-   var source_h = Math.round((max_channel-min_channel)/scale_y);
-  
-   // console.log("Copy source coords:",source_x,source_y,source_w,source_h);
-  
-   // Find position and height of destination in screen coordinates. Note we'll 
-   // have to rotate these for final picture insertion.
-   var dest_x = Math.round(this.GetX(min_wire));
-   var dest_w = Math.round(this.GetX(max_wire) - dest_x);
-   var dest_y = Math.round(this.GetY(min_tdc));
-   var dest_h = Math.round(dest_y - this.GetY(max_tdc));
-  
-   // Now, the above values are good, but we need to 
-   // rotate our image.
-   // No blur on copy!
-   this.ctx.webkitImageSmoothingEnabled = false;
-   this.ctx.mozImageSmoothingEnabled = false;
-   this.ctx.imageSmoothingEnabled = false; /// future
-   this.ctx.save();
+  this.ctx.fillStyle = "rgba(100,100,100,0.5)";
+  this.ctx.fillRect(rot_dest_x,rot_dest_y,rot_dest_w,rot_dest_h)
+
+  // Copy everything we asked for, rotated, into our destination box. This is where the up-scaling happens.
+  this.ctx.drawImage(
+     result      // Source image.
+    ,0
+    ,0
+    ,pixels_tdc
+    ,pixels_wir
+    ,rot_dest_x
+    ,rot_dest_y
+    ,rot_dest_w
+    ,rot_dest_h
+  );
    
-   this.ctx.translate(dest_x,dest_y);
-   this.ctx.rotate(-Math.PI/2);
-
-   var rot_dest_x = 0;
-   var rot_dest_y = 0;
-   var rot_dest_w = dest_h;
-   var rot_dest_h = dest_w;
-  
-   // console.log("drawImg source",source_x,source_y,source_w,source_h);
-   // console.log("drawImg dest", dest_x,   dest_y,  dest_w, dest_h);
-   // console.log("drawImg rot ", rot_dest_x,   rot_dest_y,  rot_dest_w, rot_dest_h);
-  
-  // if(do_thumbnail) {
-  //   // Draw from the thumbnail, which is resolution-reduced by a factor of 5.
-  //   this.ctx.drawImage(
-  //      gRecord._wireimage[this.show_image].thumb      // Source image.
-  //     ,source_x/5
-  //     ,source_y/5
-  //     ,source_w/5
-  //     ,source_h/5
-  //     ,rot_dest_x
-  //     ,rot_dest_y
-  //     ,rot_dest_w
-  //     ,rot_dest_h
-  //      );
-  //
-  // } else {
-    this.ctx.globalAlpha = 1.0;
-    
-    console.debug(canvas      // Source image.
-      ,source_x
-      ,source_y
-      ,source_w
-      ,source_h
-      ,rot_dest_x
-      ,rot_dest_y
-      ,rot_dest_w
-      ,rot_dest_h);
-    this.ctx.fillStyle = "rgba(100,100,100,0.5)";
-    this.ctx.fillRect(rot_dest_x,rot_dest_y,rot_dest_w,rot_dest_h)
-
-    this.ctx.drawImage(
-       canvas      // Source image.
-      ,source_x
-      ,source_y
-      ,source_w
-      ,source_h
-      ,rot_dest_x
-      ,rot_dest_y
-      ,rot_dest_w
-      ,rot_dest_h
-    );
-    
-  // }
+   
   this.ctx.restore();   
   console.timeEnd('DrawImage');
 };
@@ -1680,10 +1634,7 @@ WireView.prototype.DoMouse = function(ev)
     // Update quick.
     if(this.fDragging){
       gStateMachine.Trigger("zoomChangeFast");
-      // this.dirty = false;  // Draw gets issued by the trigger.
     }
-    // this.dirty = false;  // Draw gets issued by the trigger.
-    // this.dirty=true; // Do a slow draw in this view.
   } 
     
 };

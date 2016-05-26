@@ -268,7 +268,18 @@ function ComposeTrackInfo(s)
   return h;
 }
 
-
+function ComposeWireInfo(s)
+{
+  var h = "<h3>Wire</h3>";
+  h += "<table class='.hoverinfo'>";
+  var a = "<tr><td class='hoverinfo-key'>";
+  var b = "</td><td class='hoverinfo-val'>";
+  var c = "</td></tr>";  
+  h+= a + "Channel" + b + Math.floor(s.channel) + c;
+  h+= a + "TDC" + b + Math.floor(s.sample) + c;
+  h += "</table>";
+  return h;
+}
 
 // Hover Info box, which appears as a regular Portlet.
 var gHoverInfo = null;
@@ -310,6 +321,7 @@ HoverInfo.prototype.Draw = function ()
   switch(state.type) {
     case "mcparticle": h+=ComposeMCParticleInfo(state); break;
     case "track": h+=ComposeTrackInfo(state); break;
+    case "wire": h+=ComposeWireInfo(state); break;
     
     default:
       h += "<table class='.hoverinfo'>";

@@ -615,9 +615,17 @@ void  RecordComposer::composeOpFlashes()
       jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
       jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
       jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
+      jflash.add("inBeamFrame",ftr.getJson(name+"obj.fInBeamFrame",i));
       
       // auto-construct arrays; lots o' syntactic sugar here.
       if(tel_fPEperOpDet.ok())  jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
+      const vector<double>* pe_arr = tel_fPEperOpDet .get<vector<double> >(i);
+      double totpe = 0;
+      for(double pe: *pe_arr) totpe+= pe;
+      jflash.add("totPe",totpe);
+      
+      
+      
       if(tel_fWireCenter.ok())  jflash.add("wireCenter",     JsonArray(*(tel_fWireCenter .get<vector<double> >(i))));
       if(tel_fWireWidths.ok())  jflash.add("wireWidths",     JsonArray(*(tel_fWireWidths .get<vector<double> >(i))));
 
@@ -725,7 +733,7 @@ void  RecordComposer::composeOpHits()
       JsonObject jobj;
       
       jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"            ,i));
-      jobj.add("peakTime"      ,ftr.getJson(name+"obj.fPeakTime"             ,i));
+      jobj.add("peakTime"      ,1e3*ftr.getF(name+"obj.fPeakTime"             ,i));
       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
       jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));
@@ -950,8 +958,9 @@ void RecordComposer::composeRaw()
       // // Find the pedestal manually.
       waveform_tools::pedestal_computer pedcomp;
       for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+      pedcomp.finish(20);
       int ped = pedcomp.ped();
-      double rms = pedcomp.rms(); // auto-adjusted rms.
+      double rms = pedcomp.pedsig(); // auto-adjusted rms.
 
       for(size_t i =0; i< nsamp; i++) {
         waveform[i] -= ped;
@@ -1003,6 +1012,7 @@ void RecordComposer::composeRaw()
     }
     
     timer.addto(fStats);
+    break; // only 1 raw list.
     
   }
   fOutput.add("raw",reco_list);
@@ -1505,22 +1515,39 @@ void RecordComposer::composeAssociations()
   }
 
   metaData->GetEntry(0);
-  
   // TreeElementLooter l(metaData,"BranchIDLists");
   // const std::vector< std::vector<unsigned int> > *branchidlists = l.get<std::vector< std::vector<unsigned int> > >(0);
   
   // Note that we have to have a LinkDef.h for this to work, which includes the line
   // #pragma link C++ class vector<vector<unsigned int> >+;
 
-  vector< vector< uint32_t > > *branchidlists = 0;
+  vector< vector< unsigned int > > *branchidlists = 0;
   metaData->SetBranchAddress("BranchIDLists",&branchidlists);
   metaData->GetEntry(0);
   if(branchidlists==0) {
-    std::cout << "Grr! Can't get branchidlists!";
-    assns.add("error","Can't get branchidlists from metadata tree.");
-    fOutput.add("associations",assns);
-    return;
+    std::cout << "Grr! Can't get branchidlists. Falling back to TTreeFormula." << std::endl;
+    branchidlists = new vector< vector< unsigned int > >;
+    TTreeFormula ff("ff","BranchIDLists",metaData);
+    // std::cout << ff.GetNdata() << std::endl;
+    int bid_n = ff.GetNdata();
+    int bid_got = 0;
+    for(int i=0;i<bid_n;i++) {
+      vector< unsigned int > row;
+      TTreeFormula fi("fi",Form("BranchIDLists[%i]",i),metaData);
+      // std::cout << i << "\t" << fi.GetNdata() << std::endl;
+      int ni = fi.GetNdata();
+      for(int j=0;j<ni;j++) {
+        // std::cout << "\t" << fi.EvalInstance(j);
+        row.push_back(fi.EvalInstance(j));
+        bid_got++;
+      }
+      branchidlists->push_back(row);
+      // std::cout << "\n";
+      // std::cout << "got" << bid_got << "\n";
+      if(bid_got >= bid_n) break;
+    }
   }
+
   //std::cout << " branchidlists size: " << (*branchidlists).size() << std::endl;
 
   // Now actually get a list of associations.

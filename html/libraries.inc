@@ -106,8 +106,10 @@
 <script type="text/javascript" src="libs/TriDView.js"></script> 
 <script type="text/javascript" src="libs/OpHitHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpHitMap.js"></script> 
+<script type="text/javascript" src="libs/OpHit2dMap.js"></script> 
 <script type="text/javascript" src="libs/OpFlashHistogram.js"></script> 
 <script type="text/javascript" src="libs/OpFlashMap.js"></script> 
+<script type="text/javascript" src="libs/OpFlash2dMap.js"></script> 
 <script type="text/javascript" src="libs/MRI.js"></script> 
 <script type="text/javascript" src="libs/dEdXTool.js"></script> 
 <script type="text/javascript" src="libs/ArgoDreamyScan.js"></script> 
@@ -116,7 +118,7 @@
 <script type="text/javascript" src="libs/FalseColorControl.js"></script> 
 <script type="text/javascript" src="libs/GLEngine.js"></script> 
 <script type="text/javascript" src="libs/LiveControl.js"></script> 
-<script type="text/javascript" src="libs/RecoArgo.js"></script> 
+<!-- <script type="text/javascript" src="libs/RecoArgo.js"></script>  -->
 
 <!-- My classes for talking to the back-end and other displays-->
 <script type="text/javascript" src="libs/QueryServer.js"></script> 

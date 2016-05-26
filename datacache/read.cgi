@@ -23,7 +23,7 @@ $filename=~s/\//___/g;
 print STDERR "Serving $filename\n";
 #escape all slashes so user can't muck up my filesystem.
 if(-r $filename) {
-  my $length = (stat($filename)) [10];
+  my $length = (stat($filename)) [7];
   my $type = 'image/png';
   print $query->header({type=>$type,
                      expires=>'+1m',

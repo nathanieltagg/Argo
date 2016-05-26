@@ -10,6 +10,7 @@
 // Globals:
 var gOpFlashHistogram = null;
 
+var gOpFlashColorScaler = new ColorScaler("CurtColorPalette");
 
 
 
@@ -51,6 +52,7 @@ function OpFlashHistogram( element  )
 
   this.input = "ophits"; 
 
+  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
@@ -63,20 +65,17 @@ OpFlashHistogram.prototype.NewRecord = function()
   var tmin = 1e99;
   var tmax = -1e99;
   var flash;
-  if(gOpflashesListName && gRecord.opflashes[gOpflashesListName] && gRecord.opflashes[gOpflashesListName].length>0) {
-    var flashes = gRecord.opflashes[gOpflashesListName];
-    console.warn("flashes",flashes);
+  var listname = $('#ctl-OpFlashLists').val();
+  
+  if(gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
+    var flashes = gRecord.opflashes[listname];
 
-    this.xlabel = gOpMode.variableName;
-    this.ylabel = gOpMode.flashWeightName;
+    this.xlabel = "PE";
+    this.ylabel = "Flashes";
     for(var i=0;i<flashes.length;i++) {
       flash = flashes[i];
-      var totpe = 0;
-      for(var j=0;j<flash.pePerOpDet.length;j++) totpe+= flash.pePerOpDet[j];
-      flash.pe = totpe;
-      var t = flash[gOpMode.flashVariable]*gOpMode.flashVariableScale;
-      if(t>tmax) tmax = t;
-      if(t<tmin) tmin = t;
+      if(flash.totPe>tmax) tmax = flash.totPe;
+      if(flash.totPe<tmin) tmin = flash.totPe;
     }
     var width = tmax-tmin;
     tmin -= width*0.05;
@@ -88,21 +87,16 @@ OpFlashHistogram.prototype.NewRecord = function()
     this.hist = new Histogram(nbins,tmin,tmax);
     for(i=0;i<flashes.length;i++) {
       flash = flashes[i];
-      if(gOpMode.flashWeight != 1)
-        this.hist.Fill(flash[gOpMode.flashVariable]*gOpMode.flashVariableScale,flash[gOpMode.flashWeight]);
-      else  
-        this.hist.Fill(flash[gOpMode.flashVariable]*gOpMode.flashVariableScale);
+      this.hist.Fill(flash.totPe);
     }    
 
-  
-  
-    this.SetHist(this.hist,gOpColorScaler);
+    this.SetHist(this.hist,gOpFlashColorScaler);
     this.ResetToHist(this.hist);
 
-    gOpColorScaler.min = tmin;
-    gOpColorScaler.max = tmax;  
-    gOpMode.cut.min = tmin;
-    gOpMode.cut.max = tmax;
+    gOpFlashColorScaler.min = tmin;
+    gOpFlashColorScaler.max = tmax;  
+    // gOpMode.cut.min = tmin;
+    // gOpMode.cut.max = tmax;
   
   } 
   this.Draw();
@@ -122,60 +116,19 @@ OpFlashHistogram.prototype.HoverChange = function()
 OpFlashHistogram.prototype.ResetAndDraw = function( )
 {
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
-  this.min_u = gOpMode.cut.min;
-  this.max_u = gOpMode.cut.max;
-  /*
-  
-  if(this.hist) {
-    if(gHoverState.type == "opdet") {
-      this.SetHist(this.hist,this.blandColorScale);
-      // new histogram 
-      this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
-      
-      if(this.input == "ophits") {
-        var ophits = gRecord.ophits[gOphitsListName];
-        for(var i=0;i<ophits.length;i++) {
-          var oh = ophits[i];
-          if(oh.opDetChan == gHoverState.obj.chan) {
-            if(gOpMode.flashWeight != 1)
-              this.highlight_hist.Fill(oh[gOpMode.flashVariable]*gOpMode.flashVariableScale,oh[gOpMode.flashWeight]);
-            else  
-              this.highlight_hist.Fill(oh[gOpMode.flashVariable]*gOpMode.flashVariableScale);          
-          }
-        }
-      } else { // pulses
-        
-        var oppulses = gRecord.oppulses[gOpPulsesListName];      
-        for(var i=0;i<oppulses.length;i++) {
-          var p = oppulses[i];
-          if(p.opDetChan == gHoverState.obj.chan) {
-            for(var s = 0; s<p.waveform.length; s++) {
-              var adc = p.waveform[s];
-              if(adc>0) this.highlight_hist.Fill ( p.tdc + s, adc );
-            }
-          }
-        }    
-        
-      
-      }
-      
-      this.AddHist(this.highlight_hist,gOpColorScaler);        
-      
-    } else {
-      this.SetHist(this.hist,gOpColorScaler);
-    }
-  }
-    */
+  // this.min_u = gOpMode.cut.min;
+  // this.max_u = gOpMode.cut.max;
+
   this.Draw()
 };
 
 OpFlashHistogram.prototype.Draw = function()
 {
-  this.min_u = gOpMode.cut.min;
-  this.max_u = gOpMode.cut.max;
+  // this.min_u = gOpMode.cut.min;
+  // this.max_u = gOpMode.cut.max;
   if(this.log_y) {
     this.min_v = 0.2;
-    if(this.max_v<10) this.max_v = 10.1;
+    if(this.max_v<1) this.max_v = 1.1;
   }
   HistCanvas.prototype.Draw.call(this);  
 }
@@ -183,10 +136,8 @@ OpFlashHistogram.prototype.Draw = function()
 
 OpFlashHistogram.prototype.ChangeRange = function( minu,maxu )
 {
-  gOpColorScaler.min = minu;
-  gOpColorScaler.max = maxu;  
-  gOpMode.cut.min = minu;
-  gOpMode.cut.max = maxu;
+  gOpFlashColorScaler.min = minu;
+  gOpFlashColorScaler.max = maxu;  
   
   HistCanvas.prototype.ChangeRange.call(this,minu,maxu);
 };
@@ -194,8 +145,8 @@ OpFlashHistogram.prototype.ChangeRange = function( minu,maxu )
 OpFlashHistogram.prototype.FinishRangeChange = function()
 {
   // console.debug("PhHistCanvas::FinishRangeChange");
-  gOpMode.cut.min = this.min_u;
-  gOpMode.cut.max = this.max_u;
+  // gOpMode.cut.min = this.min_u;
+  // gOpMode.cut.max = this.max_u;
 
   gStateMachine.Trigger('opScaleChange');
 };

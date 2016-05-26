@@ -19,6 +19,7 @@ public:
   } Color_Mode_t;
 
   MakePng(int width, int height, Color_Mode_t colormode, // colors: either 1 or 3 colors for grayscale or bitmap.
+      int compression = 3,  // 1 is fast and not very good. larger numbers are slower but compress more.
       const std::vector<unsigned char>& palette=std::vector<unsigned char>(),
       const std::vector<unsigned char>& palette_transparency=std::vector<unsigned char>() );
   void AddRow(const std::vector<unsigned char>& data); // normalized

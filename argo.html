@@ -39,6 +39,14 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
 
 <body>
 <div id='everything'>
+
+
+
+
+  <div id="content">
+  <div id="content-top">
+
+
     <div class="important-links" style="text-align:center;">
       <a href="http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/uboone/data/uboonepro/">MCC4 data</a> 
       <a href="http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/pnfs/uboone/scratch/uboonepro/v02_05_01/reco3D">MCC5 data</a> 
@@ -50,14 +58,11 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
       <a href="http://ubdaq-prod-near2.fnal.gov/Argo/live">Live data (FNAL only)</a>
       <br/>
     </div>
-
-  <div id="header" >
-      <div style="text-align:center;">
-      <!-- <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span> -->
-        <img src="images/new-argo-logo.png" alt="Argo - the Microboone Web Event Display" style="height:200px;">
+    <div style="float:left;">
+      <div style="font-family:Arial,Verdana; font-size: 16pt; text-align:center;">Argo 2.0</div>
+      <img src="images/argo_logo_2.0.png" alt="Argo - the Microboone Web Event Display" style="height:200px;"><br/>
     </div>
-    <div class="header-links" style="text-align:center;">
-
+    <div style="display: block; overflow:hidden; text-align:center;">
             <a href='help'>Help and Hints</a>
       
             <a class="align-left" id="Print" href='#'>Print</a>
@@ -70,28 +75,30 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
             </span>
     </div>
     
-    <table style="clear: both; width: 100%; border: 0"><tr>
-    <td style="width: 5%;">Status:</td><td><div id="status">Script loading...</div></td>
-    </tr></table>
-  </div> <!-- header -->
+    <div><span style="width: 5%;">Status:</span><span style="display:inline-block; width: 50%;" id="status">Script loading...</span></div>
 
-  <div id="expando-target" style="z-index:998;"></div>
+  <div style="float:right" id="event-id-info">
+    Event: <span class='event-run'></span>|<span class='event-subrun'></span>|<span class='event-event'></span>   
+    <br/>
+    <span class="val event-date">unknown</span>
+    <span class="val event-time">unknown</span>
+    (<span class="val event-age">unknown</span>)
+  </div>
 
-  <div id="content">
-  <div id="content-top">
-    <!-- INPUT -->
     <!--#include virtual="html/DataSource.inc" -->
   </div> <!-- content-top -->
 
   <div style="clear:both;"></div>
   <div id="content-right" class="dock">   
+    <!--#include virtual="html/ZoomControl.inc" -->
+    
     <!--#include virtual="html/FalseColorControl.inc" -->
+    <!--#include virtual="html/WireInfo.inc" -->
     <!--#include virtual="html/HitHistogram.inc" -->
     <!--#include virtual="html/SaveSelection.inc" -->
+    <!--#include virtual="html/Configuration.inc" -->
     
     <!--#include virtual="html/EventInfo.inc" -->
-    <!--#include virtual="html/Configuration.inc" -->
-    <!--#include virtual="html/WireInfo.inc" -->
     <!--#include virtual="html/dEdXTool.inc" -->
     <!--#include virtual="html/MCInfo.inc" -->
     <!--#include virtual="html/HoverInfo.inc" -->
@@ -102,25 +109,24 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
   <div id="content-main">
   <div id="content-wide" class="dock">
     
-    <!--#include virtual="html/TimeHistogram.inc" -->
     <!--#include virtual="html/WireView.inc" -->
-    <!--#include virtual="html/WireViewBig.inc" -->
-    <!--#include virtual="html/ZoomControl.inc" -->
+    <!-- include virtual="html/WireViewBig.inc" -->
+    <!--include virtual="html/TimeHistogram.inc" -->
     
     
 
   </div> <!-- content-wide -->
   <div id="content-left" class="dock">
-    <!--#include virtual="html/MRI.inc" -->    
-    <!--#include virtual="html/MCDigraph.inc" -->
-    <!--#include virtual="html/PFDigraph.inc" -->
     <!--#include virtual="html/OpHits.inc" -->
-    <!--#include virtual="html/OpFlashes.inc" -->
+    <!--#include virtual="html/MRI.inc" -->    
+   <!--#include virtual="html/MCDigraph.inc" -->
+   <!--#include virtual="html/PFDigraph.inc" -->
     
   </div> <!-- content-left -->
 
   <div id="content-middle" class="dock">
 
+    <!--#include virtual="html/OpFlashes.inc" -->
     <!--#include virtual="html/TridView.inc" -->
     <!--(#)include virtual="html/WireViewBig.inc" -->
     <!--include virtual="html/ArgoDreamyScan.inc" -->

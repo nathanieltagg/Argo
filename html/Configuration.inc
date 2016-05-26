@@ -4,7 +4,7 @@
         <!-- <form id="controls" action=""> -->
 
         
-        <div><label>HV:</label><input type="text" id="ctl-high-voltage" value="128.0" size='5'/><label>kv</label> </div>
+        <div><label>HV:</label><input type="text" id="ctl-high-voltage" value="70.0" size='5'/><label>kv</label> </div>
 
         <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
         <div id="mag-sliders">
@@ -34,7 +34,7 @@
           <div style="clear:both;"></div>
           </div>
         
-        <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"    checked="checked"/><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>
+        <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"    class="saveable show-hits"    /><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label></div>
           <div><b>(shift-H)</b> <select id="ctl-HitLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
           
         <div><input type="checkbox" id="ctl-show-clus"    name="show-clus"    class="saveable show-clus"                 /><label for="ctl-show-clus">    <b>(c)</b> Show Clusters </label></div>
@@ -54,9 +54,15 @@
         <div><input type="checkbox" id="ctl-show-showers"  name="show-showers"  class="saveable show-showers"  checked="checked"/><label for="ctl-show-showers">  <b>(s)</b> Show Showers </label></div>
         <div><b>(shift-S)</b> <select id="ctl-ShowerLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
 
-
         <div><label><input type="checkbox" id="ctl-show-pfparticles"  name="show-pfparticles"  class="saveable show-pfparticles"  checked="checked"/>Show PFParticles </label></input></div>
         <div><select id="ctl-PFParticleLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
+
+       
+        <div><label>OpHits</label></div>
+        <div><b>(shift-O)</b>  <select id="ctl-OpHitLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
+        <div><label>OpFlash</label></div>
+        <div>                  <select id="ctl-OpFlashLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
+
             
         <div><input type="checkbox" id="ctl-show-mc"      name="show-mc"      class="saveable show-mc"      checked="checked"/><label for="ctl-show-mc">      <b>(m)</b> Show MC </label></div>
         <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-show-mc-neutrals"      name="show-mc-neutrals"      class="saveable show-mc-neutrals"  /><label for="ctl-show-mc">      <b>(M)</b> Show neutral particles </label></div>

@@ -17,6 +17,7 @@ public:
 
   void compose();
   void composeHeader();
+  bool composeHeaderTrigger(JsonObject& trig);
   void composeTPC();
   void composePMTs();
   void composeLaser();
@@ -41,6 +42,11 @@ public:
   int fmintdc;
   int fmaxtdc;
   double event_time;
+  uint32_t m_trig_frame      ;
+  uint32_t m_trig_time_2MHz  ;
+  uint32_t m_trig_time_16MHz ;
+  uint32_t m_trig_time_64MHz ;
+  
   
   JsonObject fStats; // Processing metadata
   
