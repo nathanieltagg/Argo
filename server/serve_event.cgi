@@ -98,6 +98,14 @@ if($absolute_filename =~ /^\/pnfs\//) {
   print "Checking status.\n</br>";
   my($vol,$dir,$file) = File::Spec->splitpath($absolute_filename);
   # See email from Kirby, May 25 2016
+  #  If you want to use a file...
+  #    lar -c my.lar /pnfs/uboone/data/uboone/yaddayaddayadda.root
+  #  You can check dcache status with:
+  #   $> cat /pnfs/uboone/data/uboone/'.(get)(yaddayaddayadda.root)(locality)'
+  # ONLINE_AND_NEARLINE
+  # means that it is on disk (ONLINE) and on tape (NEARLINE)
+  # if it's only "NEARLINE" that means it's on tape.
+
   $dcache_status_file = File::Spec->catpath($vol,$dir, ".(get)($file)(locality)");
   print "Checking $dcache_status_file\n</br>";
   if(open( $dcache_handle, "<" , $dcache_status_file)){
