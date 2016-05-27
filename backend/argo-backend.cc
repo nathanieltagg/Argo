@@ -24,6 +24,7 @@
 
 #include "dispatcher/KvpSet.h"
 #include "online_monitor/Plexus.h"
+#include "DeadChannelMap.h"
 
 #include <signal.h>
 #include <algorithm>
@@ -134,6 +135,7 @@ int main(int argc, char **argv)
       "sqlite ../db/current-plexus.db"
     );  
     gPlexus.rebuild((double)TTimeStamp(),0);
+    gDeadChannelMap->Rebuild();
     
     ss = new MySocketServer(tcpPortNumber);
     if(ss->Setup()) exit(1);  // Quit if socket won't bind.

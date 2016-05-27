@@ -80,7 +80,6 @@ struct peak_finder : public std::vector< peak >
   
   void operator()(double x) 
   { 
-    // Call this once per sample in the waveform
     double _x = x*_sign;
     if(_x > _thresh) {
       // we're in a peak
@@ -97,27 +96,20 @@ struct peak_finder : public std::vector< peak >
         if(_x > _cur.height) _cur.height = _x;
       }
     } else {
-      if(_on) {  // finish current peak.
-        _on = false;
-        _cur.tstop = _count;
-        if(_cur.tstop-_cur.tstart >= _minsamp)
-          push_back(_cur);
-      }
+      finish(); // save current peak if any
     }
     _count++;
   };
   
-  void finish()
-  {
-    // Call this after you've scanned the waveform
+  void finish() {
+    // Call this when you're done looping.
     if(_on) {  // finish current peak.
-    _on = false;
-    _cur.tstop = _count;
-    if(_cur.tstop-_cur.tstart >= _minsamp)
-      push_back(_cur);
-    }          
+      _on = false;
+      _cur.tstop = _count;
+      if(_cur.tstop-_cur.tstart >= _minsamp)
+        push_back(_cur);
+    }
   }
-  
   
   double _thresh; // Threshold for accepting a peak
   double _sign; // Threshold for accepting a peak
@@ -135,13 +127,13 @@ struct peak_finder : public std::vector< peak >
 ///
 struct pedestal_computer
 {
-  pedestal_computer() : _hist(0x1000,0), _ped_count(0) {};
+  pedestal_computer() : _hist(0x1000,0), _ped_count(0), _ped(0), _pedsig(1e9), _pederr(1e9), _pedsigerr(1e9) {};
   void fill(uint16_t x) { 
      uint16_t xx = x&0xFFF;// Sanitize.
      uint16_t c = ++_hist[xx]; if(c>_ped_count) {_ped_count = c; _ped=xx; } 
    };
-  
-  double rms(int halfwidth = 10) {
+   void finish(int halfwidth = 10) // Pass estimated max width of pedestal here.
+   {
     int low = _ped - halfwidth;
     int high = _ped + halfwidth;
     int lowbin = std::max(0,low);
@@ -156,14 +148,26 @@ struct pedestal_computer
       sum += x*w;
       sumsq += x*x*w;
     }    
-    double xrms = sqrt(fabs((sumsq - sum*sum/n)/(n-1.)));
-    if(xrms> halfwidth*0.3) return rms(halfwidth*2);
-    return xrms;
+    if(n<1) return;
+    double  var = fabs((sumsq - sum*sum/n)/(n-1.));
+    double xrms = sqrt(var);
+    if(xrms> halfwidth*0.45) finish(halfwidth*2); // Run this alg again.
+    _pedsig = xrms;
+    _pederr = xrms/sqrt(n); 
+    _pedsigerr = var*var*2/(n-1);
   }
+  
   double ped() { return _ped; }
-  size_t _ped;
-  uint16_t _ped_count;
+  double pedsig() { return _pedsig; }
+  double pederr() { return _pederr; }
+  double pedsigerr() { return _pedsigerr; }
+
   std::vector<uint16_t> _hist;
+  uint16_t _ped_count;
+  size_t _ped;
+  double _pedsig;
+  double _pederr;
+  double _pedsigerr;
 };
 
 
@@ -191,6 +195,6 @@ struct pedestal_computer
 //   double _x2;     // second last value.
 // };
 
-};
+}
 
 #endif /* end of include guard: WAVEFORM_TOOLS_H_0A37EAD2 */

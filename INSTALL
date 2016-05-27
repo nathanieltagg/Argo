@@ -57,3 +57,16 @@ $ sudo su
   $ cpan
         CPAN> install CGI
         CPAN> install JSON::XS    
+
+
+Summer 2016:
+Yeah, let this lapse.
+Need to install BOOST somewhere.  Link it to the current directory so that backend/boost/lib has the libraries.
+In the backend/ directory, run
+	make install-boost
+to get the linking right.
+
+Do a kinit.
+mkdir ~/ubdaq
+cd ~/ubdaq
+git clone p-uboonedaq@cdcvs.fnal.gov/cvs/projects/uboonedaq-datatypes

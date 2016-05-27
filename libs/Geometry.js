@@ -105,7 +105,7 @@ function Geometry()
   this.opDets = new OpDetGeo();
 
   this.temperature = 87; // Kelvin
-  this.hv = 128.02; // kVolts total
+  this.hv = 70; // kVolts total
   this.SetHV(
       128.02, // kVolts total,
       87      // lAr temperature, Kelvin
@@ -309,8 +309,8 @@ Geometry.prototype.SetHV = function(hv, temperature)
     // from : W. Walkowiak, NIM A 449 (2000) 288-294
     // Efield should have units of kV/cm
     // Temperature should have units of Kelvin
-    this.hv = hv || 128.02;
-    this.temperature = temperature || 87.0
+    this.hv = hv || 70.0;
+    this.temperature = temperature || 87.302; // Kelvin
     
     this.efield = this.hv /256.04; // 
     var efield = this.efield;    

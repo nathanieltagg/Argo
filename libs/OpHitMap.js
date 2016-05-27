@@ -43,6 +43,7 @@ function OpHitMap( element  )
 
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
+  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
 
 }
 
@@ -51,9 +52,10 @@ function OpHitMap( element  )
 OpHitMap.prototype.NewRecord = function()
 {
   this.ophits = [];
-  if(gOphitsListName && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length>0) {
+  var listname = $('#ctl-OpHitLists').val();
+  if(gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits";
-    this.ophits = gRecord.ophits[gOphitsListName].slice(0); // Copy
+    this.ophits = gRecord.ophits[listname].slice(0); // Copy
 
     // Sort hits by time, earliest last. 
   } else {
@@ -89,7 +91,7 @@ OpHitMap.prototype.NewRecord = function()
   }
   
   this.ophits.sort(
-    function(a,b){ return b.peakTime - a.peakTime;  }
+    function(a,b){ return a.pe - b.pe;  }
   );
   
   this.Draw();

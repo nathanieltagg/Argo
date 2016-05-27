@@ -4,6 +4,7 @@
     <div class="A-WireInfo">
       <div class="WireInfo-text"></div>
       <div class="WireInfo-graph" style="height:200px"></div>
+      (Blue line is coherent noise.)
     </div>
   </div>
 </div>  <!-- portlet -->

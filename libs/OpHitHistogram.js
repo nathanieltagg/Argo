@@ -11,17 +11,29 @@
 var gOpHitHistogram = null;
 
 var gOpColorScaler = new ColorScaler("CurtColorPalette");
+// var gOpMode = {
+//   hitVariable      : "peakTime",
+//   hitVariableScale : 1,
+//   flashVariable      : "time",
+//   flashVariableScale : 1,
+//   variableName  : "Time (µs)",
+//   cut           : {min: 0, max: 2000},
+//   hitWeight        : "pe",
+//   flashWeight        : "pe",
+//   weightName    : "Photoelectrons",
+//
+// };
 var gOpMode = {
-  hitVariable      : "peakTime",
+  hitVariable      : "pe",
   hitVariableScale : 1,
+  variableName  : "PE",
+  cut           : {min: 0, max: 2000},
+  hitWeight        : 1,
+  hitWeightName    : "Hits",
+  
   flashVariable      : "time",
   flashVariableScale : 1,
-  variableName  : "Time (µs)",
-  cut           : {min: 0, max: 2000},
-  hitWeight        : "pe",
-  flashWeight        : "pe",
-  weightName    : "Photoelectrons",
-  
+  flashWeight   : "pe",
 };
 
 
@@ -43,8 +55,8 @@ function OpHitHistogram( element  )
 {
   this.element = element;
   var settings = {
-    xlabel: "Time (µs)",
-    ylabel: "Photoelectrons",
+    xlabel: "PE",
+    ylabel: "Hits",
     tick_pixels_y: 20,
     margin_left: 60,
     log_y: false,
@@ -68,6 +80,9 @@ function OpHitHistogram( element  )
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
+  
+  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  
 }
 
 
@@ -79,13 +94,13 @@ OpHitHistogram.prototype.NewRecord = function()
   var tmin = 1e99;
   var tmax = -1e99;
   var i, width, nbins, p;
-  if(gOphitsListName && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length>0) {
+  var listname = $('#ctl-OpHitLists').val()
+  if(gRecord && gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits"; 
 
     this.xlabel = gOpMode.variableName;
     this.ylabel = gOpMode.hitWeightName;
-    var ophits = gRecord.ophits[gOphitsListName];
-    if(!ophits) return; // Zero-length.
+    var ophits = gRecord.ophits[listname];
     if(ophits.length===0) return;
     // First run through to get limits.
     var  oh;
@@ -184,8 +199,9 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
       // new histogram 
       this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
       
-      if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[gOphitsListName] && gRecord.ophits[gOphitsListName].length) {
-        var ophits = gRecord.ophits[gOphitsListName];
+      var listname = $('#ctl-OpHitLists').val()      
+      if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[listname] && gRecord.ophits[listname].length) {
+        var ophits = gRecord.ophits[listname];
         console.log("one pmt hist", ophits.length,gHoverState.obj);
         
         for(i=0;i<ophits.length;i++) {

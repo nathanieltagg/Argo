@@ -368,8 +368,9 @@ HistCanvas.prototype.DrawHist = function( iHist )
    }
    
    if(o.doDots) {
-     var r = Math.min(6,this.span_x/hist.n/2);
-     r = Math.max(r,2);
+     var r = this.span_x/hist.n/2;
+     r = Math.min(r,6); // max 6 pixels
+     r = Math.max(r,2); // minimum 6 pixels
      
      this.ctx.save();
      this.ctx.globalCompositeOperation=o.composite;     

@@ -11,15 +11,16 @@
 // typedef std::vector<int16_t> waveform_t;
 struct waveform_t : public std::vector<int16_t>
 {
-  waveform_t(size_t n=0, int8_t def=0) : std::vector<int16_t>(n,def)  {_pedwidth=0; _servicecard=0;}
-  waveform_t(const waveform_t& other) : std::vector<int16_t>(other)  {_pedwidth=other._pedwidth; _servicecard = other._servicecard; }
-  waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0; _servicecard=0;}
+  waveform_t(size_t n=0, int8_t def=0) : std::vector<int16_t>(n,def)  {_pedwidth=0; _servicecard=0; _status=4;}
+  waveform_t(const waveform_t& other) : std::vector<int16_t>(other)  {_pedwidth=other._pedwidth; _servicecard = other._servicecard;  _status = other._status;}
+  waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0; _servicecard=0; _status=4;}
   int8_t  _pedwidth;
   uint8_t  _servicecard;
+  int8_t  _status;
 };
 
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;
-typedef std::map<int, waveform_ptr_t > wiremap_t;
+typedef std::vector<waveform_ptr_t > wiremap_t;
 
 void        wireOfChannel(int channel, int& plane, int& wire);
 
@@ -27,11 +28,12 @@ void        wireOfChannel(int channel, int& plane, int& wire);
 class EncodedTileMaker
 {
 public:
-  EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
+  EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, std::shared_ptr<wiremap_t> noiseWireMap, int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
     const std::string& outDir,
     const std::string& outUrl,
     bool fill_empty_space )
-    : m_wireMap(wireMap)
+    : m_wireMap(wireMap) 
+    , m_noiseWireMap(noiseWireMap)
     , m_wireStart(wireStart)
     , m_wireEnd(wireEnd)
     , m_tdcStart(tdcStart)
@@ -39,6 +41,7 @@ public:
     , m_outDir(outDir)
     , m_outUrl(outUrl)
     , m_fill_empty_space(fill_empty_space)
+    
   {}
   
   void process();
@@ -54,6 +57,7 @@ public:
   }
 
   std::shared_ptr<wiremap_t> m_wireMap;
+  std::shared_ptr<wiremap_t> m_noiseWireMap;
   int m_wireStart;
   int m_wireEnd;
   int m_tdcStart;
@@ -62,11 +66,13 @@ public:
   std::string m_outUrl;
   std::string m_filename;
   bool m_fill_empty_space;
+  static int s_compression;
   
 };
 
 void MakeEncodedTileset(JsonObject& output,
                         std::shared_ptr<wiremap_t> wireMap, 
+                        std::shared_ptr<wiremap_t> noiseWireMap,                         
                         size_t nwires,
                         size_t ntdc,
                         const std::string& path,
@@ -76,6 +82,7 @@ void MakeEncodedTileset(JsonObject& output,
 
 void MakeLowres(JsonObject& r,
             std::shared_ptr<wiremap_t> wireMap, 
+            std::shared_ptr<wiremap_t> noiseWireMap,                                     
             size_t nwire,
             size_t nsamp,
             const std::string& path,

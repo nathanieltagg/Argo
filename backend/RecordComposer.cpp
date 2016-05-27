@@ -50,6 +50,8 @@
 
 #include "boost/thread/thread.hpp"
 
+#include "DeadChannelMap.h"
+#include "CoherentNoiseFilter.h"
 
 
 
@@ -613,9 +615,17 @@ void  RecordComposer::composeOpFlashes()
       jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
       jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
       jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
+      jflash.add("inBeamFrame",ftr.getJson(name+"obj.fInBeamFrame",i));
       
       // auto-construct arrays; lots o' syntactic sugar here.
       if(tel_fPEperOpDet.ok())  jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
+      const vector<double>* pe_arr = tel_fPEperOpDet .get<vector<double> >(i);
+      double totpe = 0;
+      for(double pe: *pe_arr) totpe+= pe;
+      jflash.add("totPe",totpe);
+      
+      
+      
       if(tel_fWireCenter.ok())  jflash.add("wireCenter",     JsonArray(*(tel_fWireCenter .get<vector<double> >(i))));
       if(tel_fWireWidths.ok())  jflash.add("wireWidths",     JsonArray(*(tel_fWireWidths .get<vector<double> >(i))));
 
@@ -723,7 +733,7 @@ void  RecordComposer::composeOpHits()
       JsonObject jobj;
       
       jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"            ,i));
-      jobj.add("peakTime"      ,ftr.getJson(name+"obj.fPeakTime"             ,i));
+      jobj.add("peakTime"      ,1e3*ftr.getF(name+"obj.fPeakTime"             ,i));
       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
       jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));
@@ -809,6 +819,7 @@ void RecordComposer::composeCal()
   
     JsonObject r; 
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
+    std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
     
     std::vector<float> wireArr(ntdc); // Storage.
     wireArr.reserve(ntdc);
@@ -841,20 +852,22 @@ void RecordComposer::composeCal()
       }
       
       // Waveform storage.
-      std::pair<wiremap_t::iterator,bool> inserted;
-      inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
+      if(wireMap->size() <= wire) wireMap->resize(wire+1);
+      (*wireMap)[wire] = waveform_ptr;
     }
+    noiseMap->resize(wireMap->size());
     if(simpleLooter) delete simpleLooter;
     if(roiLooter)    delete roiLooter;
 
     
     // Now we should have a semi-complete map.
-    int nwire = 1 + wireMap->rbegin()->first;
+    int nwire = wireMap->size();
     std::cout << "maxwire:" << nwire << " nwire:" << wireMap->size() << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     
     MakeEncodedTileset(     r,
                             wireMap, 
+                            noiseMap,
                             nwire,
                             ntdc,
                             fCacheStoragePath,
@@ -870,6 +883,7 @@ void RecordComposer::composeCal()
       TimeReporter lowres_stats("time_to_make_lowres");
       MakeLowres( r2,
                      wireMap, 
+                     noiseMap,
                      nwire,
                      ntdc, fCacheStoragePath, fCacheStorageUrl, fOptions, false );
       reco_list2.add(stripdots(name),r2);
@@ -918,6 +932,8 @@ void RecordComposer::composeRaw()
     
     JsonArray jpedestals;
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
+    std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
+    
     size_t ntdc = 0;
     
     std::vector<short> waveform;
@@ -932,7 +948,6 @@ void RecordComposer::composeRaw()
       const std::vector<short> *ptr = l.get<std::vector<short> >(i);
     
       // Waveform storage.
-      std::pair<wiremap_t::iterator,bool> inserted;
       waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( (*ptr) )); // make a copy
       
       // int planewire,plane;
@@ -943,8 +958,9 @@ void RecordComposer::composeRaw()
       // // Find the pedestal manually.
       waveform_tools::pedestal_computer pedcomp;
       for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+      pedcomp.finish(20);
       int ped = pedcomp.ped();
-      double rms = pedcomp.rms(); // auto-adjusted rms.
+      double rms = pedcomp.pedsig(); // auto-adjusted rms.
 
       for(size_t i =0; i< nsamp; i++) {
         waveform[i] -= ped;
@@ -957,17 +973,24 @@ void RecordComposer::composeRaw()
       //     (*waveform_ptr)[iii] -= pedestal;
       //   }
       // }
+      waveform._status = gDeadChannelMap->status(wire);
       
-      inserted = wireMap->insert(wiremap_t::value_type(wire, waveform_ptr));
+      
+      if(wireMap->size() <= wire) wireMap->resize(wire+1);
+      (*wireMap)[wire] = waveform_ptr;
       ntdc = max(ntdc,ptr->size());
     }
+    noiseMap->resize(wireMap->size());
+    int nwire = wireMap->size();
+    
+    CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
     
     // Now we should have a semi-complete map.
-    int nwire = 1 + wireMap->rbegin()->first;
     std::cout << "nwire:" << nwire << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     MakeEncodedTileset(     r,
-                            wireMap, 
+                            wireMap,
+                            noiseMap, 
                             nwire,
                             ntdc,
                             fCacheStoragePath,
@@ -981,13 +1004,15 @@ void RecordComposer::composeRaw()
       JsonObject r2;
       TimeReporter lowres_stats("time_to_make_lowres");
       MakeLowres( r2,
-                     wireMap, 
+                     wireMap,
+                     noiseMap, 
                      nwire,
                      ntdc, fCacheStoragePath, fCacheStorageUrl, fOptions, false );
       reco_list2.add(stripdots(name),r2);
     }
     
     timer.addto(fStats);
+    break; // only 1 raw list.
     
   }
   fOutput.add("raw",reco_list);
@@ -1490,22 +1515,39 @@ void RecordComposer::composeAssociations()
   }
 
   metaData->GetEntry(0);
-  
   // TreeElementLooter l(metaData,"BranchIDLists");
   // const std::vector< std::vector<unsigned int> > *branchidlists = l.get<std::vector< std::vector<unsigned int> > >(0);
   
   // Note that we have to have a LinkDef.h for this to work, which includes the line
   // #pragma link C++ class vector<vector<unsigned int> >+;
 
-  vector< vector< uint32_t > > *branchidlists = 0;
+  vector< vector< unsigned int > > *branchidlists = 0;
   metaData->SetBranchAddress("BranchIDLists",&branchidlists);
   metaData->GetEntry(0);
   if(branchidlists==0) {
-    std::cout << "Grr! Can't get branchidlists!";
-    assns.add("error","Can't get branchidlists from metadata tree.");
-    fOutput.add("associations",assns);
-    return;
+    std::cout << "Grr! Can't get branchidlists. Falling back to TTreeFormula." << std::endl;
+    branchidlists = new vector< vector< unsigned int > >;
+    TTreeFormula ff("ff","BranchIDLists",metaData);
+    // std::cout << ff.GetNdata() << std::endl;
+    int bid_n = ff.GetNdata();
+    int bid_got = 0;
+    for(int i=0;i<bid_n;i++) {
+      vector< unsigned int > row;
+      TTreeFormula fi("fi",Form("BranchIDLists[%i]",i),metaData);
+      // std::cout << i << "\t" << fi.GetNdata() << std::endl;
+      int ni = fi.GetNdata();
+      for(int j=0;j<ni;j++) {
+        // std::cout << "\t" << fi.EvalInstance(j);
+        row.push_back(fi.EvalInstance(j));
+        bid_got++;
+      }
+      branchidlists->push_back(row);
+      // std::cout << "\n";
+      // std::cout << "got" << bid_got << "\n";
+      if(bid_got >= bid_n) break;
+    }
   }
+
   //std::cout << " branchidlists size: " << (*branchidlists).size() << std::endl;
 
   // Now actually get a list of associations.
