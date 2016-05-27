@@ -199,7 +199,7 @@ WireInfo.prototype.Draw = function()
   } else {
     this.graph.SetHist(this.graph_data.raw         ,  dotcolor,          {doDots: true, doGraph:true, doFill:false, lineWidth: 2, strokeStyle:"black"});
   }
-  this.graph.AddHist(this.graph_data.noise,   new ColorScaleIndexed(2),{doDots: false, doGraph:true, doFill:false, lineWidth: 4, strokeStyle:"blue"});
+  this.graph.AddHist(this.graph_data.noise,   new ColorScaleIndexed(2),{doDots: false, doGraph:true, doFill:false, lineWidth: 1, strokeStyle:"blue"});
 
   
   // for(var i = -(this.show_nwires_below); i<= this.show_nwires_above; i++) {
