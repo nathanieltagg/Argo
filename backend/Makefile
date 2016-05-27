@@ -22,11 +22,11 @@ else
   uboonedaq_datatypes_inc = $(UBOONEDAQ_DATATYPES_DIR)/include
 endif
 
-ifeq ($(origin UBOONEDAQ_DIR), undefined)
+#ifeq ($(origin UBOONEDAQ_DIR), undefined)
   uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
-else
-  uboonedaq           = $(UBOONEDAQ_DIR)/source
-endif
+#else
+#  uboonedaq           = $(UBOONEDAQ_DIR)/source
+#endif
 
 
 #override, since setup is poor.
