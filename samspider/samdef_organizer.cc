@@ -42,6 +42,7 @@ int main(int argc, const char** argv)
 	const int kchars = 0; // Set to zero for independent strings
 	 // set to 1 for two-character indpendent strings
 
+	int nresults = 0;
 	std::ifstream in("defs_sorted.txt");
 	char linebuff[1000];
 	char lastbuff[1000];
@@ -81,7 +82,7 @@ int main(int argc, const char** argv)
 			last_is_incomplete = false;
 		} else if(nm<=lenprefix+kchars){ // there was a previous candidate, but it matches only to prefix.
 			// std::cout << "-New match, output and reset" << std::endl;
-			printCandidate(lastbuff,last_is_complete, last_is_incomplete);
+			printCandidate(lastbuff,last_is_complete, last_is_incomplete); nresults++;
 			strcpy(lastbuff,linebuff);
 			nLast = strlen(linebuff);
 			last_is_complete = true;
@@ -97,7 +98,11 @@ int main(int argc, const char** argv)
 	}
 	if(nLast > 0){ // empty last one.
 			printCandidate(lastbuff,last_is_complete, last_is_incomplete);
+			nresults++;
 	}
-	// std::cout << "-----" << std::endl;
+
+	if(nresults==0) {
+		std::cout << "No matches found for definitions starting with " << prefix << std::endl;
+	}
 
 }
