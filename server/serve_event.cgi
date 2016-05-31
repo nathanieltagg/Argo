@@ -54,17 +54,17 @@ if(param('what') eq 'raw') {
   # full 8-digits of run number
   my $longrun = sprintf("%08d",$run);
   my $longsubrun = sprintf("%05d",$subrun);
-  
+  my $ver = param('ver') || 'v6_00_00';
+
   my $r1 = substr $longrun, 0, 2;
   my $r2 = substr $longrun, 2, 2;
   my $r3 = substr $longrun, 4, 2;
   my $r4 = substr $longrun, 6, 2;
-  my $fnal_path = "/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00"
+  my $fnal_path = "/pnfs/uboone/data/uboone/raw/online/assembler/"
                     .$ver."/" .$r1."/" .$r2."/" .$r3."/" .$r4;
   
   $longrun = sprintf("%07d",$run); #filename has only 7
   $pathglob = $fnal_path . "/*-$longrun-$longsubrun.ubdaq";
-  push @paths_to_check,"/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00";
 }
 
 my $print_pathglob = $pathglob;
@@ -80,9 +80,48 @@ if((@files)==0) {
     myerror("Couldn't find file for this event specification.");
 }
 
-
 $filename = $files[0];
 $absolute_filename = File::Spec->rel2abs($filename);
+print "File is $absolute_filename\n<br>";
+
+if(!( -e $absolute_filename )) {
+    myerror("File does not exist: $absolute_filename");
+}
+
+if(!( -r $absolute_filename )) {
+    myerror("File is not readable: $absolute_filename");
+}
+
+if($absolute_filename =~ /^\/pnfs\//) {
+
+  # Mounted in pnfs space. Check to make sure file is extant.
+  print "Checking status.\n</br>";
+  my($vol,$dir,$file) = File::Spec->splitpath($absolute_filename);
+  # See email from Kirby, May 25 2016
+  #  If you want to use a file...
+  #    lar -c my.lar /pnfs/uboone/data/uboone/yaddayaddayadda.root
+  #  You can check dcache status with:
+  #   $> cat /pnfs/uboone/data/uboone/'.(get)(yaddayaddayadda.root)(locality)'
+  # ONLINE_AND_NEARLINE
+  # means that it is on disk (ONLINE) and on tape (NEARLINE)
+  # if it's only "NEARLINE" that means it's on tape.
+
+  $dcache_status_file = File::Spec->catpath($vol,$dir, ".(get)($file)(locality)");
+  print "Checking $dcache_status_file\n</br>";
+  if(open( $dcache_handle, "<" , $dcache_status_file)){
+    $status = <$dcache_handle>;
+    if(defined($status)) {
+      print "PNFS file status = $status\n</br>";
+      if($status =~ /ONLINE/) {
+        print "File is online.\n</br>";
+      } else {
+        system("head -c 1 $absolute_filename &");
+        #FIXME: do something the javascript hand handle.
+        myerror("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in 30 seconds or so.");
+      }
+    }
+  }
+}
 
 my $resp = ArgoServerTools::request($absolute_filename,$selection,$entrystart,$entryend,param('options'));
 
