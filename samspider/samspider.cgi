@@ -71,7 +71,7 @@ if(param("file")) {
 	        print "-- File is staged and ready to read." .br;
 	        print a({-href=>"../argo.html#filename=$absolute_filename&entry=0"},"Click here to see in Argo.");
 	      } else{
-	      	if(def("stage")) {
+	      	if(param("stage")) {
 		        system("head -c 1 $absolute_filename &");
 		        print "-- File is on tape, now being staged to disk. Please wait." .br;
 		        print "<script type='text/javascript'>setTimeout(function(){window.location.reload(true);},30000);</script>";	      		
@@ -154,8 +154,9 @@ if(param("file")) {
 	my $n = 0;
 	while($line = <$fh>) {	
 			$n++;	
+			my $lineno = $n + $nskip;
 			chomp $line;
-			print ($n+$nskip) . " " . a({-href=>"?file=$line"},$line) . br;
+			print $lineno . " " . a({-href=>"?file=$line"},$line) . br;
 	}
 	$nextskip = $nskip + $nbatch;
 	close($fh);

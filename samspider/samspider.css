@@ -21,9 +21,22 @@ div.samweb_definitions a {
 	display:block;
 }
 
+div.interesting_defs_wrapper {
+	border-top: 2px solid black;
+	display:flex;
+	flex-wrap:wrap;
+	align-items: flex-start;
+}
+
 div.interesting_defs {
 	display: inline-block;
-	min-width: 250px;
-	border: 2px solid blue;
-	margin: 5px;
+	min-width: 280px;
+	/*min-height: 400px;*/
+	border: 1px solid gray;
+	margin: 3px;
+}
+
+div.interesting_defs h3 {
+	padding: 0px 0px 2px 0px;
+	margin: 0px;
 }
