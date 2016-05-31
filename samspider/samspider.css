@@ -1,0 +1,29 @@
+
+div.samweb_metadata {
+	font-family: monospace;
+
+}
+
+div.samweb_files {
+	border: 2px solid black;
+	min-height:100px;
+	display:inline-block;
+}
+div.samweb_definitions {
+	border: 2px solid black;
+	min-height:100px;
+	min-width: 500px;
+	display: inline-block;
+}
+
+
+div.samweb_definitions a {
+	display:block;
+}
+
+div.interesting_defs {
+	display: inline-block;
+	min-width: 250px;
+	border: 2px solid blue;
+	margin: 5px;
+}
