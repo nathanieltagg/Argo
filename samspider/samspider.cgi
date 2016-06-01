@@ -40,9 +40,14 @@ print h1("SamSpider");
 if(param("file")) {
 	$samfile = param("file");
 
+	print comment("$samweb locate-file $samfile");
 	open(my $fh, "$samweb locate-file $samfile |") or die "Can't open samweb. Contact Nathaniel";
-	$samloc = <$fh>;
-	$dirname = ($samloc =~ /(\/.*)\(/)[0];
+	while(	$samloc = <$fh> ) {
+		if($samlock =! /^enstore/) {
+			$dirname = ($samloc =~ /(\/.*)\(/)[0];			
+		}
+	}
+
 	$absolute_filename = $dirname . "/" . $samfile;
 	print "File location is" . br;
 	print pre($absolute_filename);
@@ -82,6 +87,8 @@ if(param("file")) {
 	      }
 	    }
 	  }
+	} else {
+		print a({-href=>"../argo.html#filename=$absolute_filename&entry=0"},"Click here to see in Argo.");
 	}
 
 	if(param("show_metadata")) {	
@@ -142,8 +149,8 @@ if(param("file")) {
 	$query .= " with limit $nbatch";
 
 	print "<pre>Query: $query</pre>" . br;
-	open($fh, "$samweb list-files \"$query\" |") or die "Can't open samweb. Contact Nathaniel";
-
+	# print comment("$samweb list-files \"$query\" ");
+	open($fh_files, "$samweb list-files \"$query\" |") or die "Can't open samweb. Contact Nathaniel";
 
 	if(param("skip")) {
 		$prevskip = $nskip-$nbatch;
@@ -152,8 +159,9 @@ if(param("file")) {
 	}
 	print start_div({-class=>"samweb_files"});
 	my $n = 0;
-	while($line = <$fh>) {	
+	while($line = <$fh_files>) {	
 			$n++;	
+			# print comment($line);
 			my $lineno = $n + $nskip;
 			chomp $line;
 			print $lineno . " " . a({-href=>"?file=$line"},$line) . br;
