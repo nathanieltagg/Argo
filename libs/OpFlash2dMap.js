@@ -35,7 +35,7 @@ function OpFlash2dMap( element  )
     margin_top    : 5,
     margin_right  : 5,
     margin_left   : 50,
-    xlabel : "PMT Number",
+    xlabel : "Reconstructed Z Position (cm)",
     ylabel : "Time (us)",
   };
   Pad.call(this, element, settings); // Give settings to Pad contructor.
