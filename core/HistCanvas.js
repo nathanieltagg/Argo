@@ -41,6 +41,7 @@ function HistCanvas( element, options )
   	adjuct_display: false,
   	adjunct_height: 0,
 		adunct_label: null,
+    rotate_90: false,
     default_options : {
       doFill: true,
       doLine: false,
@@ -52,7 +53,7 @@ function HistCanvas( element, options )
       error_stroke: "#EEEEEE",
       error_lineWidth: '2',
       alpha: 1.0
-    }
+    },
   };
   $.extend(true,settings,options); // Change defaults
   
@@ -100,6 +101,24 @@ function HistCanvas( element, options )
   
 }
 
+HistCanvas.prototype.Resize = function()
+{
+  Pad.prototype.Resize.call(this);
+  if(this.rotate_90) {
+    var width    = this.canvas.height;
+    this.width   = this.canvas.height;
+    var height   = this.canvas.width;
+    this.height  = this.canvas.width;
+    this.origin_x = this.margin_left;
+    this.origin_y = height - this.margin_bottom;
+  
+    this.span_x = width-this.margin_right -this.origin_x;
+    this.span_y = this.origin_y-this.margin_top;
+  }  
+  // console.warn("Resizing, rotate_90 = ", this.rotate_90, this.);
+  
+}
+
 HistCanvas.prototype.ResetDefaultRange = function()
 {
   this.ResetToHist(this.fHists[0]);
@@ -109,6 +128,13 @@ HistCanvas.prototype.ResetDefaultRange = function()
 HistCanvas.prototype.Draw = function()
 {
   // console.log("HistCanvas::Draw",this);
+  this.ctx.save();
+  if(this.rotate_90){
+       this.ctx.translate(0,this.width);
+       this.ctx.rotate(-Math.PI/2);
+       
+  }
+
   this.Clear();
   this.DrawFrame();
   this.DrawRegions();
@@ -127,6 +153,7 @@ HistCanvas.prototype.Draw = function()
   this.ctx.restore();
   if(this.adjunct_display) this.DrawAdjunct();
   this.DrawMarker();
+  this.ctx.restore();
 };
 
 HistCanvas.prototype.DrawRegions = function()

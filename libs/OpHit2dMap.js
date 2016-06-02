@@ -139,6 +139,103 @@ OpHit2dMap.prototype.DoMouse = function(ev)
     }
 
     return false;
+};
 
+//
+// Code for the Arachne Event Display
+// Author: Nathaniel Tagg ntagg@otterbein.edu
+// 
+// Licence: this code is free for non-commertial use. Note other licences may apply to 3rd-party code.
+// Any use of this code must include attribution to Nathaniel Tagg at Otterbein University, but otherwise 
+// you're free to modify and use it as you like.
+//
+
+// Globals:
+var gOpHit2dMapProjection = null;
+
+
+// Automatic runtime configuration.
+// I should probably abstract this another level for a desktop-like build...
+$(function(){
+  $('div.A-OpHit2dMapProjection').each(function(){
+   gOpHit2dMapProjection = new OpHit2dMapProjection(this);
+  });  
+});
+
+
+// Subclass of HistCanvas.
+OpHit2dMapProjection.prototype = new HistCanvas();
+
+function OpHit2dMapProjection( element  )
+{
+  this.element = element;
+  var settings = {
+    xlabel: "",
+    ylabel: "",
+    tick_pixels_y: 40,
+    margin_left: 60,
+    log_y:false,
+    min_u: 0,
+    max_u: 24,
+    margin_left: 40,
+    margin_bottom: 20,
+    rotate_90: true
+  };
+  HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
+  
+
+  this.hist = new Histogram(50,0,24);
+  
+  gStateMachine.BindObj('recordChange',this,"NewRecord");
+  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
+  
+  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
+}
+
+
+
+OpHit2dMapProjection.prototype.NewRecord = function()
+{
+  
+  this.ophits = [];
+  var listname = $('#ctl-OpHitLists').val();
+  if(gRecord.ophits && gRecord.ophits[listname]) {
+    this.input = "ophits";
+    this.ophits = gRecord.ophits[listname].slice(0); // Copy
+  }
+  this.ophits.sort(
+    function(a,b){ return b.peakTime - a.peakTime;  }
+  );
+  
+  if(this.ophits.length>0) {
+    var t1 = this.ophits[this.ophits.length-1].peakTime*1e-3;
+    var t2 = this.ophits[0].peakTime*1e-3;
+    if(t2<24) t2=24;
+    var dt = (t2-t1);
+  
+  
+    this.min_u = t1 - dt*0.1
+    this.max_u = t2;    
+    this.hist = new Histogram(50,this.min_u,this.max_u);
+    for(var i=0;i<this.ophits.length;i++) {
+      var hit = this.ophits[i];
+      this.hist.Fill(hit.peakTime*1e-3,hit.pe);
+    }
+    this.cs = new ColorScaleRGB(0,0,0);
+    this.SetHist(this.hist,this.cs);
+    this.ResetToHist(this.hist);
+  }
+  
+  this.Draw();
 
 };
+
+OpHit2dMapProjection.prototype.ResetAndDraw = function( )
+{
+  this.log_y = $(this.ctl_histo_logscale).is(":checked");
+  this.Draw()
+};
+
+
+

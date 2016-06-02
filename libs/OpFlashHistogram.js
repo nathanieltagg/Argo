@@ -89,8 +89,8 @@ OpFlashHistogram.prototype.NewRecord = function()
       flash = flashes[i];
       this.hist.Fill(flash.totPe);
     }    
-
-    this.SetHist(this.hist,gOpFlashColorScaler);
+    this.cs = new ColorScaleRGB(220,220,220);
+    this.SetHist(this.hist,this.cs);
     this.ResetToHist(this.hist);
 
     gOpFlashColorScaler.min = tmin;
