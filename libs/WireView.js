@@ -162,6 +162,7 @@ function WireView( element, options )
       $('.ctl-lock-aspect-ratio').not(this).attr("checked",false);
   });
 
+  $('#ctl-downscale-wireimg').change(function(ev) { return self.Draw(false); });
   
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
@@ -516,11 +517,17 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   var scale_x = mapper.scale_x || 1;
   var scale_y = mapper.scale_y || 1;
 
-
+  var rescale_tdc = 1.0;
+  if($('#ctl-downscale-wireimg').is(":checked")) {
+    rescale_tdc = 1.0/parseFloat( $('#ctl-downscale-wireimg-value').val() );
+    console.warn("Rescaling ",rescale_tdc);
+  }
+  
+  
   
   if(max_u<min_u) max_u = min_u; // Trap weird error
-  var min_tdc     = Math.max(0,min_v);
-  var max_tdc     = Math.min(mapper.total_width*scale_x,max_v);   // ++ Fix; get from something else
+  var min_tdc     = Math.max(0,min_v * rescale_tdc);
+  var max_tdc     = Math.min(mapper.total_width*scale_x, max_v * rescale_tdc);  
   var min_wire    = Math.max(min_u,0);
   var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
   var min_channel = gGeo.channelOfWire(this.plane, min_wire);
@@ -540,8 +547,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // have to rotate these for final picture insertion.
   var dest_x = (this.GetX(min_wire));
   var dest_w = (this.GetX(max_wire) - dest_x);
-  var dest_y = (this.GetY(min_tdc));
-  var dest_h = (dest_y - this.GetY(max_tdc));
+  var dest_y = (this.GetY(min_tdc/rescale_tdc));
+  var dest_h = (dest_y - this.GetY(max_tdc/rescale_tdc));
   
   // The number of pixels we want is likely smaller than the true span in the giant map space.
   // When using magnifying glass, we want moar pixels
