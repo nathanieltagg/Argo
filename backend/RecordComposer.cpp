@@ -1534,16 +1534,17 @@ void RecordComposer::composeAssociations()
     for(int i=0;i<bid_n;i++) {
       vector< unsigned int > row;
       TTreeFormula fi("fi",Form("BranchIDLists[%i]",i),metaData);
-      // std::cout << i << "\t" << fi.GetNdata() << std::endl;
+      std::cout << i << "\t" << fi.GetNdata() << std::endl;
       int ni = fi.GetNdata();
       for(int j=0;j<ni;j++) {
-        // std::cout << "\t" << fi.EvalInstance(j);
-        row.push_back(fi.EvalInstance(j));
+        unsigned int val = (unsigned int)(fi.EvalInstance(j));
+        std::cout << "\t" << val;
+        row.push_back(val);
         bid_got++;
       }
       branchidlists->push_back(row);
-      // std::cout << "\n";
-      // std::cout << "got" << bid_got << "\n";
+      std::cout << "\n";
+      std::cout << "got" << bid_got << "\n";
       if(bid_got >= bid_n) break;
     }
   }
@@ -1588,27 +1589,49 @@ void RecordComposer::composeAssociations()
     size_t b_processId = f_b_processId.EvalInstance(0);
     size_t b_productId = f_b_productId.EvalInstance(0);
     
+
     // Now we can get the branches for these guys.
     // What a complex mess!
     TBranch* a_branch = 0;
     TBranch* b_branch = 0;
     
-    if(branchidlists->size() > (a_processId-1)) {
-      if( (*branchidlists)[a_processId-1].size() > (a_productId-1) ) {
-        uint32_t a_branchid = (*branchidlists)[a_processId-1][a_productId-1];
+    std::cout << "Try to find branchidlists for a_processId=" << a_processId
+              << " a_productId=" << a_productId
+              << " b_processId=" << b_processId
+              << " b_productId=" << b_productId << std::endl;
+
+    // a_processId--;
+    a_productId--;
+    // b_processId--;
+    b_productId--;
+
+    if(branchidlists->size() > (a_processId)) {
+      if( (*branchidlists)[a_processId].size() > (a_productId) ) {
+        uint32_t a_branchid = (*branchidlists)[a_processId][a_productId];
         a_branch = branchmap[ a_branchid ];
+      } else {
+              cout<< "  Can't find A branch productId" << endl;
       }
-    }
-    if(branchidlists->size() > (b_processId-1)) {
-      if( (*branchidlists)[b_processId-1].size() > (b_productId-1) ) {
-        uint32_t b_branchid = (*branchidlists)[b_processId-1][b_productId-1];
-        b_branch = branchmap[ b_branchid ];
-      }
+    } else {
+      cout<< "  Can't find A branch processId" << endl;
     }
 
-    if(!a_branch) { cout<< "  Can't find A branch!" << endl;  continue;}
-    if(!b_branch) { cout<< "  Can't find B branch!" << endl;  continue;}
+    if(branchidlists->size() > (b_processId)) {
+      if( (*branchidlists)[b_processId].size() > (b_productId) ) {
+        uint32_t b_branchid = (*branchidlists)[b_processId][b_productId];
+        b_branch = branchmap[ b_branchid ];
+      } else {
+              cout<< "  Can't find B branch productId" << endl;
+      }
+    } else {
+      cout<< "  Can't find B branch processId" << endl;
+    }
+
+    if(!a_branch) { cout<< "  Can't find A branch!" << endl; continue; }
+    if(!b_branch) { cout<< "  Can't find B branch!" << endl; continue; }
+
     
+
     std::string a_name = stripdots(a_branch->GetName());
     std::string b_name = stripdots(b_branch->GetName());
     
