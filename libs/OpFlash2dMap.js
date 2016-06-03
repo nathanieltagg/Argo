@@ -53,7 +53,7 @@ function OpFlash2dMap( element  )
   this.opflashes = [];
   this.drawn_flashes = [];
 
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
   this.SetMagnify(true);
   
   this.hist = null;
@@ -178,7 +178,7 @@ function OpFlash2dMapProjection( element  )
   
 
   this.hist = new Histogram(50,0,24);
-  
+  var self= this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
   

@@ -107,13 +107,13 @@ OpHit2dMap.prototype.DrawOne = function()
     //   console.warn("Couldn't find optical detector geometry for hit",oh);
     //   continue;
     // }
-    x1 = this.GetX(oh.opDetChan);
-    x2 = this.GetX(oh.opDetChan+1);
+    x1 = this.GetX(oh.opDetChan%100);
+    x2 = this.GetX((oh.opDetChan%100)+1);
     y1 = this.GetY(oh.peakTime * 1e-3);
     c = gOpColorScaler.GetColor(w);
 
     this.ctx.fillStyle= "rgba(" + c + ",0.5)";
-    if(gHoverState.obj == gGeo.opDets.opticalDetectors[oh.opDetChan]) {
+    if(gHoverState.obj == gGeo.opDets.opticalDetectors[oh.opDetChan%100]) {
       this.ctx.fillStyle= "rgba(" + c + ",1)";
       
     }
@@ -183,7 +183,7 @@ function OpHit2dMapProjection( element  )
   };
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
-
+  var self = this;
   this.hist = new Histogram(50,0,24);
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");

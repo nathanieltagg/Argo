@@ -72,7 +72,7 @@ function OpDetGeo ()
 }
 
 OpDetGeo.prototype.OpDetByChannel = function(chan)
-{ return this.opDetByChan[chan]; };
+{ return this.opDetByChan[chan%100]; };
 
 
 OpDetGeo.prototype.pathYZ = function(ctx, type)

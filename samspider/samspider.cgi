@@ -43,7 +43,7 @@ if(param("file")) {
 	print comment("$samweb locate-file $samfile");
 	open(my $fh, "$samweb locate-file $samfile |") or die "Can't open samweb. Contact Nathaniel";
 	while(	$samloc = <$fh> ) {
-		if($samlock =! /^enstore/) {
+		if($samloc =~ /^enstore/) {
 			$dirname = ($samloc =~ /(\/.*)\(/)[0];			
 		}
 	}
