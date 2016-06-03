@@ -90,6 +90,7 @@ $(function(){
 ///
 
 // portlet resizing:
+// This is defunct if you use flexbox.
 function resizePortlet(portlet,oldheight,newheight)
 {
   console.log("resizePortlet",portlet,oldheight,newheight);
@@ -100,8 +101,9 @@ function resizePortlet(portlet,oldheight,newheight)
     var parents = $(this).parents();
     for(var ip=0;ip<parents.length;ip++) {
       if(parents[ip]==portlet) return true;
+      if($(parents[ip]).hasClass("nonsqueezeable")) return false;
       var float = $(parents[ip]).css("float");
-      if(float && float !=="none") return false;
+      if(float && float == "right") return false;
     }
   });
 
@@ -117,14 +119,14 @@ function resizePortlet(portlet,oldheight,newheight)
   var total_squeezable_height =0;
   for(var i=0;i<squeezable_heights.length;i++) total_squeezable_height+=squeezable_heights[i];
   var new_total = total_squeezable_height + pixels_needed;
-  if(new_total<0) return;
+  if(new_total<=0) return;
   var ratio = new_total/total_squeezable_height;
   console.log("h1",h1,"h2",h2,"total_squeezable",total_squeezable_height,"newtotal",new_total,"ratio",ratio);
   // Apply to all pads, not just the primaries.
-  $(".squeezable,.pad",portlet).each(function(){
+  $(squeezables).each(function(){
     var h = $(this).height(); $(this).height(h*ratio);
   });
-    
+
   console.log("resize",portlet);
   $(portlet).trigger("resize")
 }
@@ -307,10 +309,11 @@ $(function(){
   // - Does not constrain horizontal
   // - Does not scale inner objects.
   $(".portlet").resizable({
-    containment: 'parent',
+    // containment: 'parent',
     handles: "s,se",
-    
-    stop: function(event,ui) { resizePortlet(ui.element[0], ui.originalSize.height, ui.size.height); }
+    // Allow only vertical resizing:
+    start: function(event,ui) { $(ui.element).resizable("option","minWidth",ui.originalSize.width).resizable("option","maxWidth",ui.originalSize.width); },
+    stop:  function(event,ui) { resizePortlet(ui.element[0], ui.originalSize.height, ui.size.height); }
   });
 
   // Issue custom commands to resize inner content.
