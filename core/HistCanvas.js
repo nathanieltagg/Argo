@@ -103,12 +103,14 @@ function HistCanvas( element, options )
 
 HistCanvas.prototype.Resize = function()
 {
+  console.log("HistCanvas::Resize",this);
+  
   Pad.prototype.Resize.call(this);
   if(this.rotate_90) {
-    var width    = this.canvas.height;
-    this.width   = this.canvas.height;
-    var height   = this.canvas.width;
-    this.height  = this.canvas.width;
+    var width    = this.canvas.height/  this.padPixelScaling;
+    this.width   = this.canvas.height/  this.padPixelScaling;
+    var height   = this.canvas.width/  this.padPixelScaling;
+    this.height  = this.canvas.width/  this.padPixelScaling;
     this.origin_x = this.margin_left;
     this.origin_y = height - this.margin_bottom;
   
@@ -127,7 +129,7 @@ HistCanvas.prototype.ResetDefaultRange = function()
 
 HistCanvas.prototype.Draw = function()
 {
-  // console.log("HistCanvas::Draw",this);
+  console.log("HistCanvas::Draw",this);
   this.ctx.save();
   if(this.rotate_90){
        this.ctx.translate(0,this.width);

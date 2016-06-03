@@ -226,7 +226,7 @@ OpHit2dMapProjection.prototype.NewRecord = function()
     this.SetHist(this.hist,this.cs);
     this.ResetToHist(this.hist);
   }
-  
+  this.Resize();
   this.Draw();
 
 };
