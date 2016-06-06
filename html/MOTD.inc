@@ -17,5 +17,6 @@
     <li> Change default layout, remove histograms </li>    
     <li> Update PMT views for more event information </li>    
     <li> Autozoom on raw data </li>    
+    <li> Update Optical maps: zooming, mouseover, vertical projection </li>    
   </ul>
 </div> 
