@@ -10,6 +10,7 @@
 // Globals:
 var gOpHit2dMap = null;
 
+
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
@@ -37,13 +38,19 @@ function OpHit2dMap( element  )
     margin_left   : 50,
     xlabel : "PMT Number",
     ylabel : "Time (us)",
+    mouse_scale_max_u  : true,
+    mouse_scale_min_u  : true,
+    mouse_scale_max_v  : true,
+    mouse_scale_min_v  : true,
+    mouse_pan_u        : true,
+    mouse_pan_v        : true,
   };
   Pad.call(this, element, settings); // Give settings to Pad contructor.
     
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('opScaleChange',this,"Draw");
   gStateMachine.BindObj('hoverChange',this,"HoverChange");
+  gStateMachine.Bind('opScaleChange',function(){self.min_v = gOpTimeLimits.min; self.max_v = gOpTimeLimits.max; self.Draw(); });
   
   this.ophits = [];
   this.drawn_flashes = [];
@@ -125,6 +132,8 @@ OpHit2dMap.prototype.DrawOne = function()
 
 OpHit2dMap.prototype.DoMouse = function(ev)
 {
+    this.DoMousePanAndScale(ev);
+
     if(! this.fMouseInContentArea) return true; // keep bubbling, this isnt' for us.
     
     var hoverdet = null;
@@ -140,6 +149,21 @@ OpHit2dMap.prototype.DoMouse = function(ev)
 
     return false;
 };
+
+OpHit2dMap.prototype.MouseChangedUV = function( new_limits, finished ) 
+{
+  // Override this function to do things when the limits change.
+  // example newlimits = { min_v: 90, max_v: 45  } means u coordinates haven't changed, but min and max have
+  // 'finished' is true if user has finished dragging the mouse and the mouseup has fired; otherwise she's in the middle of a drag operation.
+  $.extend(this,new_limits);
+  if(finished) {
+    gOpTimeLimits.min = this.min_v;
+    gOpTimeLimits.max = this.max_v;
+    gStateMachine.Trigger("opScaleChange");    
+  }
+  this.Draw();
+}
+
 
 //
 // Code for the Arachne Event Display
@@ -187,7 +211,8 @@ function OpHit2dMapProjection( element  )
   this.hist = new Histogram(50,0,24);
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpTimeLimits.min,gOpTimeLimits.max); });
+  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
@@ -238,4 +263,18 @@ OpHit2dMapProjection.prototype.ResetAndDraw = function( )
 };
 
 
+OpHit2dMapProjection.prototype.ChangeRange = function( minu,maxu )
+{
+  gOpTimeLimits.min = minu;
+  gOpTimeLimits.max = maxu;
+   
+  HistCanvas.prototype.ChangeRange.call(this,minu,maxu);
+};
 
+OpHit2dMapProjection.prototype.FinishRangeChange = function()
+{
+  gOpTimeLimits.min = this.min_u;
+  gOpTimeLimits.max = this.max_u;
+
+  gStateMachine.Trigger('opScaleChange');
+};

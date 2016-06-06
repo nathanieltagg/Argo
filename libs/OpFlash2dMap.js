@@ -10,7 +10,7 @@
 // Globals:
 var gOpFlash2dMap = null;
 
-var gOpFlashTimeLimits = {min:0, max:0};
+var gOpTimeLimits = {min:0, max:0};
 
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
@@ -57,7 +57,7 @@ function OpFlash2dMap( element  )
     
   var self=this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.Bind('opScaleChange',function(){self.min_v = gOpFlashTimeLimits.min; self.max_v = gOpFlashTimeLimits.max; self.Draw(); });
+  gStateMachine.Bind('opScaleChange',function(){self.min_v = gOpTimeLimits.min; self.max_v = gOpTimeLimits.max; self.Draw(); });
   
   this.opflashes = [];
   this.drawn_flashes = [];
@@ -101,8 +101,8 @@ OpFlash2dMap.prototype.NewRecord = function()
 
     this.min_v = t0-0.1*dt;
     this.max_v = t1;
-    gOpFlashTimeLimits.min = this.min_v;
-    gOpFlashTimeLimits.max = this.max_v;    
+    gOpTimeLimits.min = this.min_v;
+    gOpTimeLimits.max = this.max_v;    
   }
   this.Draw();
  };
@@ -166,106 +166,7 @@ OpFlash2dMap.prototype.DrawOne = function()
 OpFlash2dMap.prototype.DoMouse = function(ev)
 {
   
-  //
-  //
-  // // First, deal with mouse-ups that are probably outside my region.
-  // if(ev.type === 'mouseenter') return; // dont need to deal with this.
-  // if(ev.type === 'mouseout') return;   // dont need to deal with this.
-  //
-  // if(ev.type === 'mouseup') {
-  //   if( this.fDragging) {
-  //     this.fDragging = false;
-  //     // Update thorough
-  //     gOpFlashTimeLimits.min = this.min_v;
-  //     gOpFlashTimeLimits.max = this.max_v;
-  //     gStateMachine.Trigger("opScaleChange");
-  //     this.dirty = false;
-  //     // Draw gets issued by the trigger.
-  //   }
-  //   return;
-  // }
-  //
-  // ev.originalEvent.preventDefault();
-  //
-  // // Which area is mouse start in?
-  // var mouse_area;
-  // if(this.fMousePos.y > this.origin_y ) {
-  //   if(this.fMousePos.x> (this.origin_x + this.span_x/2)) mouse_area = "xscale-right";
-  //   else                                                 mouse_area = "xscale-left";
-  // } else if(this.fMousePos.x < this.origin_x) {
-  //   if(this.fMousePos.y < (this.origin_y - this.span_y/2)) mouse_area = "yscale-up";
-  //   else                                                   mouse_area = "yscale-down";
-  // } else {
-  //   mouse_area = "body";
-  // }
-  // // Change cursor.
-  // switch(mouse_area) {
-  //   case "body":         this.canvas.style.cursor = "move";      break;
-  //   case "xscale-right": this.canvas.style.cursor = "e-resize";  break;
-  //   case "xscale-left":  this.canvas.style.cursor = "w-resize";  break;
-  //   case "yscale-up":    this.canvas.style.cursor = "n-resize"; break;
-  //   case "yscale-down":  this.canvas.style.cursor = "s-resize"; break;
-  // }
-  //
-  // var relx, rely;
-  // if(this.fDragging) {
-  //     // Update new zoom position or extent...
-  //   if(this.fMouseStart.area == "body"){
-  //     var dx = this.fMousePos.x - this.fMouseLast.x;
-  //     var du = dx * (this.max_u-this.min_u)/(this.span_x);
-  //
-  //     // Set limits.
-  //     this.min_u -= du;
-  //     this.max_u -= du;
-  //
-  //     var dy = this.fMousePos.y - this.fMouseLast.y;
-  //     var dv = dy * (this.max_v-this.min_v)/(this.span_y);
-  //
-  //     this.min_v += dv;
-  //     this.max_v += dv;
-  //
-  //     this.fMouseLast = {};
-  //     $.extend(this.fMouseLast,this.fMousePos); // copy.
-  //
-  //   } else if(this.fMouseStart.area == "xscale-right") {
-  //     relx = this.fMousePos.x - this.origin_x;
-  //     if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
-  //     // Want the T I started at to move to the current posistion by scaling.
-  //     var new_max_u = this.span_x * (this.fMouseStart.u-this.min_u)/relx + this.min_u;
-  //     this.max_u = new_max_u;
-  //
-  //   } else if(this.fMouseStart.area == "xscale-left") {
-  //     relx = this.origin_x + this.span_x - this.fMousePos.x;
-  //     if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
-  //     var new_min_u = this.max_u - this.span_x * (this.max_u - this.fMouseStart.u)/relx;
-  //     this.min_u = new_min_u;
-  //
-  //   } else if(this.fMouseStart.area == "yscale-up") {
-  //     rely =  this.origin_y - this.fMousePos.y;
-  //     if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
-  //     var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
-  //     this.max_v = new_max_v;
-  //
-  //   }else if(this.fMouseStart.area == "yscale-down") {
-  //     rely =  this.fMousePos.y - (this.origin_y - this.span_y);
-  //     if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
-  //     var new_min_v = this.max_v - this.span_y * (this.max_v-this.fMouseStart.v)/rely;
-  //     this.min_v = new_min_v;
-  //   }
-  //   this.dirty = true;
-  // }
-  //
-  // if(ev.type === 'mousedown' && this.fMouseInContentArea) {
-  //   // Check to see if object is draggable, instead of the view.
-  //   this.fMouseStart= $.extend({},this.fMousePos); // copy.
-  //   this.fMouseLast = $.extend({},this.fMousePos); // copy.
-  //   this.fMouseStart.area = mouse_area;
-  //
-  //   this.fDragging = true;
-  // }
-  //
-  //
-  //
+  
   this.DoMousePanAndScale(ev);
 
   if(this.fMouseInContentArea) {
@@ -295,8 +196,8 @@ OpFlash2dMap.prototype.MouseChangedUV = function( new_limits, finished )
   // 'finished' is true if user has finished dragging the mouse and the mouseup has fired; otherwise she's in the middle of a drag operation.
   $.extend(this,new_limits);
   if(finished) {
-    gOpFlashTimeLimits.min = this.min_v;
-    gOpFlashTimeLimits.max = this.max_v;
+    gOpTimeLimits.min = this.min_v;
+    gOpTimeLimits.max = this.max_v;
     gStateMachine.Trigger("opScaleChange");    
   }
   this.Draw();
@@ -350,7 +251,7 @@ function OpFlash2dMapProjection( element  )
   this.hist = new Histogram(50,0,24);
   var self= this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpFlashTimeLimits.min,gOpFlashTimeLimits.max); });
+  gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpTimeLimits.min,gOpTimeLimits.max); });
   $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
 }
 
@@ -398,16 +299,16 @@ OpFlash2dMapProjection.prototype.ResetAndDraw = function( )
 
 OpFlash2dMapProjection.prototype.ChangeRange = function( minu,maxu )
 {
-  gOpFlashTimeLimits.min = minu;
-  gOpFlashTimeLimits.max = maxu;
+  gOpTimeLimits.min = minu;
+  gOpTimeLimits.max = maxu;
    
   HistCanvas.prototype.ChangeRange.call(this,minu,maxu);
 };
 
 OpFlash2dMapProjection.prototype.FinishRangeChange = function()
 {
-  gOpFlashTimeLimits.min = this.min_u;
-  gOpFlashTimeLimits.max = this.max_u;
+  gOpTimeLimits.min = this.min_u;
+  gOpTimeLimits.max = this.max_u;
 
   gStateMachine.Trigger('opScaleChange');
 };
