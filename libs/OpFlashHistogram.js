@@ -11,7 +11,7 @@
 var gOpFlashHistogram = null;
 
 var gOpFlashColorScaler = new ColorScaler("CurtColorPalette");
-
+var gOpFlashCut = {min:-1e9, max:1e9};
 
 
 // Automatic runtime configuration.
@@ -41,7 +41,7 @@ function OpFlashHistogram( element  )
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
 
-  this.hist = new Histogram(10,0,5000);
+  this.hist = new Histogram(10,0,100);
   
   this.blandColorScale = new ColorScaleRGB(220,220,220);
   
@@ -56,13 +56,16 @@ function OpFlashHistogram( element  )
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
+  
+  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
+  
 }
 
 
 
 OpFlashHistogram.prototype.NewRecord = function()
 {
-  var tmin = 1e99;
+  var tmin = 0;
   var tmax = -1e99;
   var flash;
   var listname = $('#ctl-OpFlashLists').val();
@@ -78,25 +81,23 @@ OpFlashHistogram.prototype.NewRecord = function()
       if(flash.totPe<tmin) tmin = flash.totPe;
     }
     var width = tmax-tmin;
-    tmin -= width*0.05;
+    // tmin -= width*0.05;
     tmax += width*0.05;
-    var nbins = Math.floor((tmax-tmin),500);
-    // console.error(nbins,tmin,tmax);
-    while(nbins>800) nbins = Math.floor(nbins/2);
+    var nbins = Math.floor(Math.min((tmax-tmin),100));
    
     this.hist = new Histogram(nbins,tmin,tmax);
     for(i=0;i<flashes.length;i++) {
       flash = flashes[i];
       this.hist.Fill(flash.totPe);
     }    
-    this.cs = new ColorScaleRGB(220,220,220);
-    this.SetHist(this.hist,this.cs);
+    // this.cs = new ColorScaleRGB(220,220,220);
+    this.SetHist(this.hist,gOpFlashColorScaler);
     this.ResetToHist(this.hist);
 
     gOpFlashColorScaler.min = tmin;
     gOpFlashColorScaler.max = tmax;  
-    // gOpMode.cut.min = tmin;
-    // gOpMode.cut.max = tmax;
+    gOpFlashCut.min = tmin;
+    gOpFlashCut.max = tmax;
   
   } 
   this.Draw();
@@ -116,16 +117,16 @@ OpFlashHistogram.prototype.HoverChange = function()
 OpFlashHistogram.prototype.ResetAndDraw = function( )
 {
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
-  // this.min_u = gOpMode.cut.min;
-  // this.max_u = gOpMode.cut.max;
+  // this.min_u = gOpFlashCut.min;
+  // this.max_u = gOpFlashCut.max;
 
   this.Draw()
 };
 
 OpFlashHistogram.prototype.Draw = function()
 {
-  // this.min_u = gOpMode.cut.min;
-  // this.max_u = gOpMode.cut.max;
+  // this.min_u = gOpFlashCut.min;
+  // this.max_u = gOpFlashCut.max;
   if(this.log_y) {
     this.min_v = 0.2;
     if(this.max_v<1) this.max_v = 1.1;
@@ -145,8 +146,8 @@ OpFlashHistogram.prototype.ChangeRange = function( minu,maxu )
 OpFlashHistogram.prototype.FinishRangeChange = function()
 {
   // console.debug("PhHistCanvas::FinishRangeChange");
-  // gOpMode.cut.min = this.min_u;
-  // gOpMode.cut.max = this.max_u;
+  gOpFlashCut.min = this.min_u;
+  gOpFlashCut.max = this.max_u;
 
   gStateMachine.Trigger('opScaleChange');
 };

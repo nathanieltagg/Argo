@@ -70,11 +70,18 @@ function WireView( element, options )
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
   // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
+
+  if(this.zooming) {
+    this.mouse_scale_max_u = true;
+    this.mouse_scale_min_u = true;
+    this.mouse_scale_max_v = true;
+    this.mouse_scale_min_v = true;
+    this.mouse_pan_u       = true;
+    this.mouse_pan_v       = true;
+  }
   
   var self = this;
   this.SetMagnify(true);
-  this.fMouseStart  = {}; this.fMouseLast = {};
-  this.fDragging = false;
   this.fShiftSelecting = false;
   this.fShiftRect = {};
   this.hasContent = false;
@@ -1477,11 +1484,7 @@ WireView.prototype.DoMouse = function(ev)
   /// Called by ::Pad for any mouse event that might be relevant,
   /// including mousemove, mousedown, click in the element
   /// and mousee move, up outside.
-  
-  // First, deal with mouse-ups that are probably outside my region.
-  if(ev.type === 'mouseenter') return; // dont need to deal with this.
-  if(ev.type === 'mouseout') return;   // dont need to deal with this.
-
+  if(this.zooming && !ev.shiftKey ) this.DoMousePanAndScale(ev);
   if(ev.type === 'mouseup') {
     if( this.fObjectDragging ) {
       this.fObjectDragging = false;
@@ -1497,101 +1500,29 @@ WireView.prototype.DoMouse = function(ev)
         var h = this.visHits[i];
         if((h.u >= this.fShiftRect.u1) && (h.u < this.fShiftRect.u2) && (h.v >= this.fShiftRect.v1) && (h.v < this.fShiftRect.v2)) {
           gSaveSelection.AddHit(h.hit);
-        }     
-      } 
-    }
-    if( this.fDragging) {
-      this.fDragging = false;
-      // Update thorough
-      gStateMachine.Trigger("zoomChange"); 
-      this.dirty = false;
-      // Draw gets issued by the trigger.
+        }
+      }
     }
     return;
   }
-  
+
   ev.originalEvent.preventDefault();
-  
-  // Which area is mouse start in?
-  var mouse_area;
-  if(this.fMousePos.y > this.origin_y ) {
-    if(this.fMousePos.x> (this.origin_x + this.span_x/2)) mouse_area = "xscale-right";
-    else                                                 mouse_area = "xscale-left";
-  } else if(this.fMousePos.x < this.origin_x) {
-    if(this.fMousePos.y < (this.origin_y - this.span_y/2)) mouse_area = "yscale-up";
-    else                                                   mouse_area = "yscale-down";
-  } else {
-    mouse_area = "body";
-  }
-  if(this.zooming) {
-    // Change cursor.
-    switch(mouse_area) {
-      case "body":         this.canvas.style.cursor = "move";      break;
-      case "xscale-right": this.canvas.style.cursor = "e-resize";  break;
-      case "xscale-left":  this.canvas.style.cursor = "w-resize";  break;
-      case "yscale-up":    this.canvas.style.cursor = "n-resize"; break;
-      case "yscale-down":  this.canvas.style.cursor = "s-resize"; break;
-    }
-  }
-  
-  var relx, rely;
-  
-  if(this.fDragging) {
-      // Update new zoom position or extent...
-    if(this.fMouseStart.area == "body"){
-      var dx = this.fMousePos.x - this.fMouseLast.x;
-      var du = dx * (this.max_u-this.min_u)/(this.span_x);
-      
-      gZoomRegion.setLimits(this.plane,this.min_u - du, this.max_u - du);
-      
-      var dy = this.fMousePos.y - this.fMouseLast.y;
-      var dv = dy * (this.max_v-this.min_v)/(this.span_y);
-      gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] + dv, gZoomRegion.tdc[1] + dv);
-      
-      this.fMouseLast = {};
-      $.extend(this.fMouseLast,this.fMousePos); // copy.
-      
-    } else if(this.fMouseStart.area == "xscale-right") {
-      relx = this.fMousePos.x - this.origin_x;
-      if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
-      // Want the T I started at to move to the current posistion by scaling.
-      var new_max_u = this.span_x * (this.fMouseStart.u-this.min_u)/relx + this.min_u;
-      gZoomRegion.setLimits(this.plane,this.min_u, new_max_u);
-      
-    } else if(this.fMouseStart.area == "xscale-left") {
-      relx = this.origin_x + this.span_x - this.fMousePos.x;
-      if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
-      var new_min_u = this.max_u - this.span_x * (this.max_u - this.fMouseStart.u)/relx;
-      gZoomRegion.setLimits(this.plane,new_min_u, this.max_u);
-      
-    } else if(this.fMouseStart.area == "yscale-up") {
-      rely =  this.origin_y - this.fMousePos.y;
-      if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
-      var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
-      gZoomRegion.changeTimeRange(gZoomRegion.tdc[0] , new_max_v);
-    
-    }else if(this.fMouseStart.area == "yscale-down") {
-      rely =  this.fMousePos.y - (this.origin_y - this.span_y);
-      if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
-      var new_min_v = this.max_v - this.span_y * (this.max_v-this.fMouseStart.v)/rely;
-      gZoomRegion.changeTimeRange(new_min_v, gZoomRegion.tdc[1]);
-    }
-  } else if(this.fObjectDragging) {
-    
+  if(this.fObjectDragging) {
+
     // Only user track is current thing.
     if(gHoverState.type=="UserTrack") {
       var newWire = this.fMousePos.u;
       var newTdc  = this.fMousePos.v;
       gHoverState.obj.set_view(this.plane,newWire,newTdc);
-      
+
     }
-    
+
   } else if(this.fShiftSelecting) {
       this.fShiftRect.x1 = Math.min(this.fMouseStart.x, this.fMousePos.x);
       this.fShiftRect.x2 = Math.max(this.fMouseStart.x, this.fMousePos.x);
       this.fShiftRect.y1 = Math.min(this.fMouseStart.y, this.fMousePos.y);
       this.fShiftRect.y2 = Math.max(this.fMouseStart.y, this.fMousePos.y);
-      
+
   } else {
     // Regular mouse move.
     if(this.fMouseInContentArea) {
@@ -1609,42 +1540,56 @@ WireView.prototype.DoMouse = function(ev)
             }
           }
         } else {
-          ChangeSelection(match);          
-        }      
+          ChangeSelection(match);
+        }
       } else { // not a click, but a mousemove.
         // mousemove.
-        // add hover coordinates.        
+        // add hover coordinates.
         match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u);
         match.sample  = this.fMousePos.v;
         if(!match.obj) match.obj = match.channel + "|" + match.sample;
         ChangeHover(match); // match might be null.
       }
     }
-                  
   }
 
-    
   if(ev.type === 'mousedown' && this.fMouseInContentArea) {
-    // Check to see if object is draggable, instead of the view.
-    $.extend(this.fMouseStart,this.fMousePos); // copy.
-    $.extend(this.fMouseLast ,this.fMousePos); // copy.
-    this.fMouseStart.area = mouse_area;
-
-    if (ev.shiftKey) {
+     if (ev.shiftKey) {
       this.fShiftSelecting=true;
     } else if(gHoverState.type=="UserTrack") {
       this.fObjectDragging = true;
-    } else if(this.zooming){
-      this.fDragging = true;
     }
-  } else if(ev.type === 'mousemove' ) {
-    // Update quick.
-    if(this.fDragging){
-      gStateMachine.Trigger("zoomChangeFast");
-    }
-  } 
-    
+  }  
 };
+
+WireView.prototype.MouseChangedUV = function( new_limits, finished ) 
+{
+  // Override this function to do things when the limits change.
+  // example newlimits = { min_v: 90, max_v: 45  } means u coordinates haven't changed, but min and max have
+  // 'finished' is true if user has finished dragging the mouse and the mouseup has fired; otherwise she's in the middle of a drag operation.
+
+  if('min_v' in new_limits || 'max_v' in new_limits){
+    var minv = this.min_v;
+    var maxv = this.max_v;
+    if('min_v' in new_limits) minv = new_limits.min_v;
+    if('max_v' in new_limits) maxv = new_limits.max_v;
+    gZoomRegion.changeTimeRange(minv,maxv);
+  }
+  if('min_u' in new_limits || 'max_u' in new_limits) {
+    var minu = this.min_u;
+    var maxu = this.max_u;
+    if('min_u' in new_limits) minu = new_limits.min_u;
+    if('max_u' in new_limits) maxu = new_limits.max_u;
+    gZoomRegion.setLimits(this.plane,minu,maxu);
+  }
+  if(finished) {
+    gStateMachine.Trigger("zoomChange");
+  } else {
+    gStateMachine.Trigger("zoomChangeFast");
+    // this.Draw();
+  }
+}
+
 
 WireView.prototype.FindMouseableMatch = function() 
 {

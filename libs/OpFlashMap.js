@@ -87,15 +87,22 @@ OpFlashMap.prototype.Draw = function()
   var w0,w1,w2;
   // Draw Flashes.
   this.drawn_flashes = [];
+  
+  // Ensure that hovered flash is drawn last.
+  var flashes = this.opflashes.slice();
   for(i=0;i<this.opflashes.length;i++){
-      var flash = this.opflashes[i];
+    if(gHoverState.obj == this.opflashes[i]) flashes.push(this.opflashes[i]);
+  }
+    
+  for(i=0;i<flashes.length;i++){
+      var flash = flashes[i];
       x = this.GetX(flash.zCenter);
       y = this.GetY(flash.yCenter);
       wx = Math.abs(this.GetX(flash.zCenter + flash.zWidth) - x);
       wy = Math.abs(this.GetY(flash.yCenter + flash.yWidth) - y);
       var t = flash.totPe;
-      // if(t<gOpMode.cut.min) continue;
-      // if(t>gOpMode.cut.max) continue;
+      if(t<gOpFlashCut.min) continue;
+      if(t>gOpFlashCut.max) continue;
 
       w0 = flash.wireWidths[0];
       w1 = flash.wireWidths[1];

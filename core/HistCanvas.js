@@ -41,7 +41,9 @@ function HistCanvas( element, options )
   	adjuct_display: false,
   	adjunct_height: 0,
 		adunct_label: null,
-    rotate_90: false,
+    mouse_scale_max_u  : true,
+    mouse_pan_u        : true,
+    
     default_options : {
       doFill: true,
       doLine: false,
@@ -104,19 +106,7 @@ function HistCanvas( element, options )
 HistCanvas.prototype.Resize = function()
 {
   console.log("HistCanvas::Resize",this);
-  
   Pad.prototype.Resize.call(this);
-  if(this.rotate_90) {
-    var width    = this.canvas.height/  this.padPixelScaling;
-    this.width   = this.canvas.height/  this.padPixelScaling;
-    var height   = this.canvas.width/  this.padPixelScaling;
-    this.height  = this.canvas.width/  this.padPixelScaling;
-    this.origin_x = this.margin_left;
-    this.origin_y = height - this.margin_bottom;
-  
-    this.span_x = width-this.margin_right -this.origin_x;
-    this.span_y = this.origin_y-this.margin_top;
-  }  
   // console.warn("Resizing, rotate_90 = ", this.rotate_90, this.);
   
 }
@@ -131,11 +121,7 @@ HistCanvas.prototype.Draw = function()
 {
   console.log("HistCanvas::Draw",this);
   this.ctx.save();
-  if(this.rotate_90){
-       this.ctx.translate(0,this.width);
-       this.ctx.rotate(-Math.PI/2);
-       
-  }
+
 
   this.Clear();
   this.DrawFrame();
@@ -522,164 +508,99 @@ HistCanvas.prototype.DoMouseOverContent = function( u, v )
 
 HistCanvas.prototype.DoMouse = function( ev )
 {
-  var x = ev.pageX;
-  var y = ev.pageY;
-  var offset = getAbsolutePosition(this.canvas);
-  var relx = x - offset.x;
-  var rely = y - offset.y;    
-
-  if(ev.type === 'mousedown') {
-    //logclear();
-    //console.log("begin drag");
-    // Find the position of the drag start - is this in the horizontal scale or the body?
-    this.fDragStartX = x;
-    this.fDragStartT = (relx - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
-    this.fDragStartF = this.GetF(rely);
-    if(rely < this.origin_y && relx > this.origin_x) {
-      this.fIsBeingDragged = true;
-      this.fDragMode = "shiftX";
-      // console.log("body drag")      
-    } else if(rely < (this.origin_y - 5) && relx < this.origin_x ) {
-      // Drag on vertical axis.
-      this.fIsBeingDragged = true;
-      this.fDragMode = "scaleY";
-      // console.log("scale Y: start = ",this.fDragStartF,this.fDragStartY);
-    } else if(relx > this.origin_x + 5 ) {
-      // Note that this is capped at 5 pixels from the origin, for saftey. 
-      this.fIsBeingDragged = true;
-      this.fDragMode = "scaleX";
-      // console.log("scale",this.fDragStartT);
-    } 
-  } else {
-    // Either mousemove or mouseup.
-    if(this.fIsBeingDragged !== true) {
-      if(relx>this.origin_x && rely<this.origin_y
-        && relx<this.width && rely> 0) this.DoMouseOverContent(this.GetU(relx),this.GetV(rely));
-      else  this.DoMouseOverContent(null,null);
-    }
-    if(this.fDragMode === "shiftX") {
-      // find current magnitude of the shift.
-      var deltaX = x - this.fDragStartX;
-      var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x);
-      this.fDragStartX = x;
-      this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
-    }
-    else if(this.fDragMode === "scaleY") {
-      // Want to set the scale so that the new mouse position is at fDragStartF in display units.
-      var z = this.origin_y - rely; // pixels above the origin of the mouse location.
-      if(z<5) z=5;
-      if(this.log_y) {        
-        this.max_v = Math.exp(  (this.span_y)*(Math.log(this.fDragStartF) - Math.log(this.min_v))/z + Math.log(this.min_v)  );        
-      } else {        
-        this.max_v = (this.span_y)*(this.fDragStartF - this.min_v)/z + this.min_v;
-      }
-      this.Draw();
+  this.DoMousePanAndScale(ev);
   
-    }
-    else if(this.fDragMode === "scaleX") {
-      // Find the new scale factor.
-      relx = x - offset.x - this.origin_x;
-      if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
-      // Want the T I started at to move to the current posistion by scaling.
-      var maxu = this.span_x * (this.fDragStartT-this.min_u)/relx + this.min_u;
-      // console.log('scaleX',this,relx,this.fDragStartT,this.max_u,maxu,this.bound_u_min,this.bound_u_max);
-      this.ChangeRange(this.min_u,maxu);
-      // console.log('finish scale',this.min_u,this.max_u);
-      
-    }
-  }
   
-  if(ev.type === 'mouseup' && this.fIsBeingDragged ) {
-    // Mouseup - finish what you're doing.
-    
-    this.fIsBeingDragged = false;
-    this.fDragMode = "none";
-    this.fDragStart = 0; // X coordinate.    
-
-    // FIXME: emit event indicating possibly changed selection.
-    this.FinishRangeChange();
-  }  
-  return false; // Handled.
 }; 
 
-HistCanvas.prototype.DoTouch = function( ev )
+HistCanvas.prototype.MouseChangedUV = function( new_limits, finished ) 
 {
-  var tt = new Date().getTime();
-  console.log(ev.type + " " + (tt-this.touchtime));
-  this.touchtime = tt;
-  if(ev.type === 'touchend' && this.fIsBeingDragged) {
-    // Mouseup - finish what you're doing.
-    
-    this.fIsBeingDragged = false;
-    this.fDragMode = "none";
-    this.fDragStart = 0; // X coordinate.    
+  var minu = this.min_u;
+  var maxu = this.max_u;
+  if('min_u' in new_limits) minu = new_limits.min_u;
+  if('max_u' in new_limits) maxu = new_limits.max_u;
+  this.ChangeRange(minu,maxu);
+  if(finished) this.FinishRangeChange();
+}
 
-    // FIXME: emit event indicating possibly changed selection.
-    this.FinishRangeChange();
-    return true;
-  }  
-  // ev.originalEvent.preventDefault();
-  
-  // Find touches. Limit to two fingers.
-  var touch = [];
-  var offset = getAbsolutePosition(this.canvas);
-  for(var i=0;i<ev.originalEvent.touches.length;i++) {
-    touch.push(
-      {
-        x: ev.originalEvent.touches[i].pageX- offset.x,
-        y: ev.originalEvent.touches[i].pageY- offset.y
-        // ,t: (ev.originalEvent.touches[i].pageX- offset.x - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u     
-      }
-    );
-  }
-  console.log("touches: "+touch.length);
-  if(ev.type === 'touchstart') {
-    this.fIsBeingDragged = true;
-    this.lastTouch = touch;    
-    return false;
-  } else if(ev.type === 'touchmove')  {
-    console.log('doing touchmove');
-    if(this.fIsBeingDragged !== true) return true; // Not a handled event.
-    ev.originalEvent.preventDefault();
-      
-    console.log("lasttouch: "+this.lastTouch.length);
-    // Find best movement.
-    if(this.lastTouch.length>1 && touch.length>1){
-      console.log("doing 2-touch");
-      var x1 = touch[0].x;
-      var x2 = touch[1].x;
-      var t1 = (this.lastTouch[0].x - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
-      var t2 = (this.lastTouch[1].x - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
-
-      // moving and scaling. Want to move original t0,t1 u-values to new x0,x1 pixel locations.
-      var del = (x2 - this.origin_x) / (x1 - this.origin_x);
-      console.log('del'+ del);
-      var newmin = (t2-t1*del)/(1.0 - del);
-      console.log('newmin'+ newmin);
-      var newmax = this.span_x * (t1 -newmin)/(x1 - this.origin_x) + newmin;
-      console.log('newmax'+ newmax);
-      this.ChangeRange(newmin,newmax);
-    } else { 
-      console.log("doing 1-touch");
-      // Anything else, find smallest shift.
-      var deltaX = 99999;
-      for(var i=0;i<this.lastTouch.length;i++) {
-        for(var j=0;j<touch.length;j++) {
-          dx = touch[j].x - this.lastTouch[i].x;
-          if(Math.abs(dx) < Math.abs(deltaX)) deltaX = dx;
-        }
-      }
-      if(deltaX < 99999){
-        var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x)
-        console.log("delta t:"+deltaT);
-        this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
-      }
-    }
-  }
-
-  this.lastTouch = touch;
-  return true;
-
-};
+// HistCanvas.prototype.DoTouch = function( ev )
+// {
+//   var tt = new Date().getTime();
+//   console.log(ev.type + " " + (tt-this.touchtime));
+//   this.touchtime = tt;
+//   if(ev.type === 'touchend' && this.fIsBeingDragged) {
+//     // Mouseup - finish what you're doing.
+//
+//     this.fIsBeingDragged = false;
+//     this.fDragMode = "none";
+//     this.fDragStart = 0; // X coordinate.
+//
+//     // FIXME: emit event indicating possibly changed selection.
+//     this.FinishRangeChange();
+//     return true;
+//   }
+//   // ev.originalEvent.preventDefault();
+//
+//   // Find touches. Limit to two fingers.
+//   var touch = [];
+//   var offset = getAbsolutePosition(this.canvas);
+//   for(var i=0;i<ev.originalEvent.touches.length;i++) {
+//     touch.push(
+//       {
+//         x: ev.originalEvent.touches[i].pageX- offset.x,
+//         y: ev.originalEvent.touches[i].pageY- offset.y
+//         // ,t: (ev.originalEvent.touches[i].pageX- offset.x - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u
+//       }
+//     );
+//   }
+//   console.log("touches: "+touch.length);
+//   if(ev.type === 'touchstart') {
+//     this.fIsBeingDragged = true;
+//     this.lastTouch = touch;
+//     return false;
+//   } else if(ev.type === 'touchmove')  {
+//     console.log('doing touchmove');
+//     if(this.fIsBeingDragged !== true) return true; // Not a handled event.
+//     ev.originalEvent.preventDefault();
+//
+//     console.log("lasttouch: "+this.lastTouch.length);
+//     // Find best movement.
+//     if(this.lastTouch.length>1 && touch.length>1){
+//       console.log("doing 2-touch");
+//       var x1 = touch[0].x;
+//       var x2 = touch[1].x;
+//       var t1 = (this.lastTouch[0].x - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
+//       var t2 = (this.lastTouch[1].x - this.origin_x)*(this.max_u-this.min_u)/this.span_x + this.min_u;
+//
+//       // moving and scaling. Want to move original t0,t1 u-values to new x0,x1 pixel locations.
+//       var del = (x2 - this.origin_x) / (x1 - this.origin_x);
+//       console.log('del'+ del);
+//       var newmin = (t2-t1*del)/(1.0 - del);
+//       console.log('newmin'+ newmin);
+//       var newmax = this.span_x * (t1 -newmin)/(x1 - this.origin_x) + newmin;
+//       console.log('newmax'+ newmax);
+//       this.ChangeRange(newmin,newmax);
+//     } else {
+//       console.log("doing 1-touch");
+//       // Anything else, find smallest shift.
+//       var deltaX = 99999;
+//       for(var i=0;i<this.lastTouch.length;i++) {
+//         for(var j=0;j<touch.length;j++) {
+//           dx = touch[j].x - this.lastTouch[i].x;
+//           if(Math.abs(dx) < Math.abs(deltaX)) deltaX = dx;
+//         }
+//       }
+//       if(deltaX < 99999){
+//         var deltaT = deltaX * (this.max_u-this.min_u)/(this.span_x)
+//         console.log("delta t:"+deltaT);
+//         this.ChangeRange(this.min_u-deltaT, this.max_u-deltaT);
+//       }
+//     }
+//   }
+//
+//   this.lastTouch = touch;
+//   return true;
+//
+// };
 
 

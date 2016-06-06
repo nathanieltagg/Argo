@@ -114,9 +114,9 @@ $(function() {
         $('#ctl-coherent-noise-filter').click();
         return false;
 
-      // case 70: // 'F'
-      //   $('#ctl-PFParticleLists').cycle_dropdown().trigger("change");
-      //   return false;
+      case 70: // 'F'
+        $('#ctl-OpFlashLists').cycle_dropdown().trigger("change");
+        return false;
         
       case 111: // 'o' 
         $('#ctl-track-shift-window').click();

@@ -138,9 +138,19 @@ function Pad( element, options )
     label_font : "16px sans-serif",
     fMagnifierOn: false,
     fMousePos : {x:-1e99,y:-1e99,u:-1e99,v:-1e99},
+    fMouseStart: {},
+    fMouseLast: {},
     fMouseInContentArea : false,
     mag_scale: 1,
-    magnify_pass: 1
+    magnify_pass: 1,
+    rotate_90: false,
+    // control the DoMousePanAndScale() function;
+    mouse_scale_max_u  : false,
+    mouse_scale_min_u  : false,
+    mouse_scale_max_v  : false,
+    mouse_scale_min_v  : false,
+    mouse_pan_u        : false,
+    mouse_pan_v        : false,
   };
   // override defaults with options.
   $.extend(true,defaults,options);
@@ -282,6 +292,11 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
     x: ev.pageX - offset.x,
     y: ev.pageY - offset.y,
   };
+  if(this.rotate_90) {
+    this.fMousePos.x = (this.span_x)-(ev.pageY-offset.y);
+    this.fMousePos.y = ev.pageX-offset.x;
+  }    
+  
   this.fMousePos.u = this.GetU(this.fMousePos.x);
   this.fMousePos.v = this.GetV(this.fMousePos.y);
 
@@ -302,6 +317,7 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
 Pad.prototype.Resize = function()
 {
   // Set this object and canvas properties.
+  
   var width = this.width;
   var height = this.height;
   if( !$(this.element).is(":hidden") ) {
@@ -320,20 +336,28 @@ Pad.prototype.Resize = function()
 
   console.log("Resize",$(this.element),width,height);
   for(var i=0;i<this.nlayers;i++) {
+  
     this.layers[i].width = width;
     this.layers[i].height = height;
     this.layers[i].setAttribute('width', width *  this.padPixelScaling);
     this.layers[i].setAttribute('height', height *  this.padPixelScaling);
     $(this.layers[i]).css('width', width );
     $(this.layers[i]).css('height', height );
+    this.ctxs[i].setTransform(1, 0, 0, 1, 0, 0);  // Reset all transforms
     this.ctxs[i].scale(this.padPixelScaling,this.padPixelScaling);
-    // if(i>0) {
-    //   $(this.layers[i]).css('left',-width/2);
-    //   $(this.layers[i]).css('top',-height/2);
-    // }
+    if(this.rotate_90){
+         this.ctx.translate(0,this.height);
+         this.ctx.rotate(-Math.PI/2);       
+    }
   }
-  // this.canvas.width = width * window.devicePixelRatio;
-  // this.canvas.height = height * window.devicePixelRatio;
+  if(this.rotate_90) {
+    width    = this.canvas.height/  this.padPixelScaling;
+    this.width   = this.canvas.height/  this.padPixelScaling;
+    height   = this.canvas.width/  this.padPixelScaling;
+    this.height  = this.canvas.width/  this.padPixelScaling;    
+  }  
+
+
     
   this.origin_x = this.margin_left;
   this.origin_y = height - this.margin_bottom;
@@ -722,6 +746,127 @@ Pad.prototype.DoMouseWheel = function(ev,dist)
   // Override me to read the mouse position.
   return true;
 };
+
+
+Pad.prototype.DoMousePanAndScale = function(ev)
+{
+  // First, deal with mouse-ups that are probably outside my region.
+  if(ev.type === 'mouseenter') return; // dont need to deal with this.
+  if(ev.type === 'mouseout') return;   // dont need to deal with this.
+
+  // This is a mouse-up
+  if(ev.type === 'mouseup') {
+    if( this.fDragging) {
+      this.fDragging = false;
+      // Update thorough
+      this.MouseChangedUV({},true);
+      this.dirty = false;
+      // Draw gets issued by the trigger.
+    }
+    return;
+  }
+  ev.originalEvent.preventDefault();
+  
+  // Which area is mouse start in?
+  var mouse_area;
+  if(this.fMousePos.y > this.origin_y ) {
+    if(this.mouse_scale_min_u) mouse_area = "xscale_left";
+    if(this.mouse_scale_max_u) mouse_area = "xscale-right";
+    if(this.mouse_scale_max_u && this.mouse_scale_min_u && this.fMousePos.x< (this.origin_x + this.span_x/2)) mouse_area = "xscale-left";  
+  } else if(this.fMousePos.x < this.origin_x) {
+    if(this.mouse_scale_min_v) mouse_area = "yscale_down";
+    if(this.mouse_scale_max_v) mouse_area = "yscale-up";
+    if(this.mouse_scale_max_v && this.mouse_scale_min_u && this.fMousePos.y > (this.origin_y - this.span_y/2)) mouse_area = "yscale-down";  
+  } else {
+    if(this.mouse_pan_u || this.mouse_pan_v)
+      mouse_area = "body-pan";
+  }
+  // Change cursor.
+  switch(mouse_area) {
+    case "body-pan":     this.canvas.style.cursor = "move"; break;
+    case "xscale-right": this.canvas.style.cursor = "e-resize";  break;
+    case "xscale-left":  this.canvas.style.cursor = "w-resize";  break;
+    case "yscale-up":    this.canvas.style.cursor = "n-resize"; break;
+    case "yscale-down":  this.canvas.style.cursor = "s-resize"; break;
+  }
+  
+  
+  var relx, rely;  
+  var new_limits = {};
+  if(this.fDragging) {
+      // Update new zoom position or extent...
+    if(this.fMouseStart.area == "body-pan"){
+      var dx = this.fMousePos.x - this.fMouseLast.x;
+      var du = dx * (this.max_u-this.min_u)/(this.span_x);
+
+      var dy = this.fMousePos.y - this.fMouseLast.y;
+      var dv = -dy * (this.max_v-this.min_v)/(this.span_y);
+      
+      this.fMouseLast = $.extend({},this.fMousePos); // copy.
+      
+      if(this.mouse_pan_u) { new_limits.min_u = this.min_u -du; 
+                             new_limits.max_u = this.max_u -du; 
+                             };
+      if(this.mouse_pan_v) { new_limits.min_v = this.min_v -dv; 
+                             new_limits.max_v = this.max_v -dv; 
+                            };
+      return this.MouseChangedUV( new_limits, false );
+      
+    } else if(this.fMouseStart.area == "xscale-right") {
+      relx = this.fMousePos.x - this.origin_x;
+      if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
+      // Want the T I started at to move to the current posistion by scaling.
+      var new_max_u = this.span_x * (this.fMouseStart.u-this.min_u)/relx + this.min_u;
+      new_limits.max_u = new_max_u;
+      return this.MouseChangedUV( new_limits, false );
+            
+    } else if(this.fMouseStart.area == "xscale-left") {
+      relx = this.origin_x + this.span_x - this.fMousePos.x;
+      if(relx <= 5) relx = 5; // Cap at 5 pixels from origin, to keep it sane.
+      var new_min_u = this.max_u - this.span_x * (this.max_u - this.fMouseStart.u)/relx;
+      new_limits.min_u = new_min_u;
+      return this.MouseChangedUV( new_limits, false );
+      
+    } else if(this.fMouseStart.area == "yscale-up") {
+      rely =  this.origin_y - this.fMousePos.y;
+      if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
+      var new_max_v = this.span_y * (this.fMouseStart.v-this.min_v)/rely + this.min_v;
+      new_limits.max_v = new_max_v;
+      return this.MouseChangedUV( new_limits, false );
+    
+    }else if(this.fMouseStart.area == "yscale-down") {
+      rely =  this.fMousePos.y - (this.origin_y - this.span_y);
+      if(rely <= 5) rely = 5; // Cap at 5 pixels from origin, to keep it sane.
+      var new_min_v = this.max_v - this.span_y * (this.max_v-this.fMouseStart.v)/rely;
+      new_limits.min_v = new_min_v;
+      return this.MouseChangedUV( new_limits, false );      
+    }
+  }
+    
+  if(ev.type === 'mousedown' && this.fMouseInContentArea) {
+    // Check to see if object is draggable, instead of the view.
+    this.fMouseStart= $.extend({},this.fMousePos); // copy.
+    this.fMouseLast = $.extend({},this.fMousePos); // copy.
+    this.fMouseStart.area = mouse_area;
+
+    this.fDragging = true;
+  }
+  
+
+
+  
+}
+
+Pad.prototype.MouseChangedUV = function( new_limits, finished ) 
+{
+  // Override this function to do things when the limits change.
+  // example newlimits = { min_v: 90, max_v: 45  } means u coordinates haven't changed, but min and max have
+  // 'finished' is true if user has finished dragging the mouse and the mouseup has fired; otherwise she's in the middle of a drag operation.
+  $.extend(this,new_limits);
+  this.Draw();
+}
+
+
 
 // utility to do text wrapping.
 function getLines(ctx,phrase,maxPxLength,textStyle) {

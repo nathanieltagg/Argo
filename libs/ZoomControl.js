@@ -209,7 +209,6 @@ ZoomControl.prototype.AutoZoom = function()
       for(var iy=0;iy<nbox_y; iy++) {
         for(var ix=0;ix<nbox_x;ix++) {
           var n = gridboxes[ix+nbox_x*iy];
-          console.log(ix,iy,ix+nbox_x*iy,n);
           if(n>most) {
             most = n;
             most_xbox = ix;
