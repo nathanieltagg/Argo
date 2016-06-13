@@ -1584,10 +1584,27 @@ void RecordComposer::composeAssociations()
     if(f_b_productId.GetNdata() ==0) continue;
     
     // At this point, we'll assume that no association is heterogeneous.
+    
     size_t a_processId = f_a_processId.EvalInstance(0);
     size_t a_productId = f_a_productId.EvalInstance(0);
     size_t b_processId = f_b_processId.EvalInstance(0);
     size_t b_productId = f_b_productId.EvalInstance(0);
+    
+
+    // Test homogeneity:
+    // bool homo = true;
+    // for(int i=0;i<na;i++) {
+    //   if( a_processId != f_a_processId.EvalInstance(i) ) homo = false;
+    //   if( a_productId != f_a_productId.EvalInstance(i) ) homo = false;
+    //   if( b_processId != f_b_processId.EvalInstance(i) ) homo = false;
+    //   if( b_productId != f_b_productId.EvalInstance(i) ) homo = false;
+    // }
+    // if(!homo) {
+    //   std::cout << "NON-HOMOGENEIOUS ASSOCIATIONS!" << std::endl;
+    // } else {
+    //   std::cout << "ALL HOMOGENEIOUS ASSOCIATIONS!" << std::endl;
+    //
+    // }
     
 
     // Now we can get the branches for these guys.
@@ -1600,6 +1617,7 @@ void RecordComposer::composeAssociations()
               << " b_processId=" << b_processId
               << " b_productId=" << b_productId << std::endl;
 
+    // the following is new as of summer 2016.  Don't know why I need to start doing this, but it seems to give the right result...?0
     // a_processId--;
     a_productId--;
     // b_processId--;

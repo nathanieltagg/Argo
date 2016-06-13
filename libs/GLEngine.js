@@ -457,7 +457,7 @@ GLMapper.prototype.RequestRendering = function(
   // Assume no rebuilding of texture is required - this should be done on some other call
   if(this.need_lut_rebuild) {
     console.time('Build LUT');
-    var mapTextureLocation = this.gl.getUniformLocation(this.program, "map-texture");
+    var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
     this.build_LUT_texture();
     this.gl.uniform1i(mapTextureLocation, 7);
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);
