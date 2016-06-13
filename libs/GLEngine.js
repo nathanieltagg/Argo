@@ -156,7 +156,7 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
 
 GLMapper.prototype.NewRecord = function()
 {
-  console.log("GLMapper",this.typ," NewRecord()");
+  // console.log("GLMapper",this.typ," NewRecord()");
   if(!gRecord) return;
   
   
@@ -221,7 +221,7 @@ GLMapper.prototype.StartLoad = function()
       (function(){  // Make a closure to copy the values of irow and icol
         var jrow = irow;
         var jcol = icol;
-        console.log("setting callback for",jrow,jcol);        
+        // console.log("setting callback for",jrow,jcol);
         img.onload= function() { self.ImageLoaded(jrow,jcol); }
         img.onprogress= function(e) { self.ImageProgress(jrow,jcol,e); }
         
@@ -264,7 +264,7 @@ GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 {
-  console.log("GLMapper::ImageLoaded",this.typ,jrow,jcol);
+  // console.log("GLMapper::ImageLoaded",this.typ,jrow,jcol);
   console.time("GLMapper::ImageLoaded: one image");
   this.ImageProgress(jrow,jcol);
   //Draw in this particular item.
@@ -441,17 +441,15 @@ GLMapper.prototype.RequestRendering = function(
 {
   // Do a limited rendering request.
   if(!this.loaded) return;
-  console.log('GLMapper::RequestRendering');
+  // console.log('GLMapper::RequestRendering');
   console.time('GLMapper::RequestRendering');
 
   if(this.canvas.width < dest_w || this.canvas.height < dest_h) {
     // FIXME
-    console.warn("Need to rebuild the rendering context from ",this.canvas.width,this.canvas.height);
+    // console.warn("Need to rebuild the rendering context from ",this.canvas.width,this.canvas.height);
     this.canvas.width  = Math.max(dest_w,this.canvas.width);
     this.canvas.height = Math.max(dest_h,this.canvas.height);
-    // $(this.canvas).css("width",this.canvas.width);
-    // $(this.canvas).css("height",this.canvas.height);
-    console.warn("                                        to ",this.canvas.width,this.canvas.height);    
+    // console.warn("                                        to ",this.canvas.width,this.canvas.height);
     this.gl.viewport(0,0,this.canvas.width,this.canvas.height);
   }
   // copy the output canvas to the gRecord so others can get at it.
@@ -459,7 +457,7 @@ GLMapper.prototype.RequestRendering = function(
   // Assume no rebuilding of texture is required - this should be done on some other call
   if(this.need_lut_rebuild) {
     console.time('Build LUT');
-    var mapTextureLocation = this.gl.getUniformLocation(this.program, "maptexture");
+    var mapTextureLocation = this.gl.getUniformLocation(this.program, "map-texture");
     this.build_LUT_texture();
     this.gl.uniform1i(mapTextureLocation, 7);
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.LUT_texture);

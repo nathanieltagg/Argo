@@ -4,6 +4,10 @@
         <div id="debuglinks"></div>
         <div id="debuginfo"></div>
         <div id="stateMachineStats"></div>
+        
+        <div class="collapsible-title" data-revealed="false">Console Time Stats</div> 
+        <div class="A-TimeLogger collabsible"></div>
+        
         <div class="collapsible-title" data-revealed="false">Debugging log:</div> 
         <div class="collabsible"  id="debuglog"></div>
 

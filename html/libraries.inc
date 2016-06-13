@@ -80,6 +80,7 @@
 <script type="text/javascript" src="core/GeometryUtils.js"></script> 
 <script type="text/javascript" src="core/DreamyScan.js"></script> 
 <script type="text/javascript" src="core/TimeAgo.js"></script> 
+<script type="text/javascript" src="core/TimeLogger.js"></script> 
 
 
 

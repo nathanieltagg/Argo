@@ -37,7 +37,8 @@ $(function(){
 
 
 
-
+var gA=1;
+var gB=0;
 
 function WireView( element, options )
 {
@@ -513,7 +514,6 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // look for offscreen canvas.
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  // 'cal' or 'raw'
 
-  console.log("doing mapper render, this.mag_scale=",this.mag_scale);
    // Figure out which GLMapper to query.
   var mapper = gGLMappers[this.show_image];
   if(!mapper || !mapper.loaded) {
@@ -569,12 +569,12 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // if(pixels_wir>source_h) pixels_wir = source_h;
 
   // WebGL engine, would you kindly give us a canvas with this snapshot?
-  console.log("RequestRender", source_x,
-     source_y,
-     source_w,
-     source_h,
-     pixels_wir, 
-  pixels_tdc);
+  // console.log("RequestRender", source_x,
+  //    source_y,
+  //    source_w,
+  //    source_h,
+  //    pixels_wir,
+  // pixels_tdc);
   
   var result = mapper.RequestRendering(
      source_x,
@@ -651,8 +651,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     x = this.GetX(u);
     dx = this.GetX(u+1) - x;
     
-    y = this.GetY(h.v1);
-    dy = this.GetY(h.v2) - y;    
+    y = this.GetY(h.v1*gA+gB);
+    dy = this.GetY(h.v2*gA+gB) - y;    
     if(dx<1.5) dx = 1.5;  //exaggerate
     if(dy<1.5) dy = 1.5; 
     c = gHitColorScaler.GetColor(h.c);

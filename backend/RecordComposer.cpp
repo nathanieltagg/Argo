@@ -1528,7 +1528,7 @@ void RecordComposer::composeAssociations()
     std::cout << "Grr! Can't get branchidlists. Falling back to TTreeFormula." << std::endl;
     branchidlists = new vector< vector< unsigned int > >;
     TTreeFormula ff("ff","BranchIDLists",metaData);
-    // std::cout << ff.GetNdata() << std::endl;
+    std::cout << ff.GetNdata() << std::endl;
     int bid_n = ff.GetNdata();
     int bid_got = 0;
     for(int i=0;i<bid_n;i++) {
