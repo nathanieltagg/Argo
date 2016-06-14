@@ -6,8 +6,8 @@
         
         <div><label>HV:</label><input type="text" id="ctl-high-voltage" value="70.0" size='5'/><label>kv</label> </div>
 
-        <div><input type="checkbox" id="ctl-downscale-wireimg"  class="saveable" name="ctl-downscale-wireimg"  /><label for="ctl-downscale-wireimg"  >Scale down wire image</label>
-        <label>Factor</label><input type="text" id="ctl-downscale-wireimg-value" value="0.7194633784491838" size='5'/></div>
+        <div><input type="checkbox" id="ctl-shift-hits"  class="saveable" name="ctl-shift-hits"  /><label for="ctl-shift-hits"  >Shift Hits</label>
+        <label>Ticks</label><input type="text" id="ctl-shift-hits-value" value="2400" size='5'/></div>
 
         <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
         <div id="mag-sliders">

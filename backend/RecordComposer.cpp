@@ -1441,10 +1441,10 @@ void RecordComposer::compose()
   composeHeaderData();
 
   // Start DB lookups.  
-  GetSlowMonDB slm(event_time/1000.);
-  boost::thread slomon_thread(slm);
-  slm();
-  
+  // GetSlowMonDB slm(event_time/1000.);
+  // boost::thread slomon_thread(slm);
+  // slm();
+  // 
  
 
   // Wire data.
@@ -1474,9 +1474,9 @@ void RecordComposer::compose()
     
   
   // Database lookup.
-  slomon_thread.join();
-  JsonElement hv; hv.setStr(slm.val);
-  fOutput.add("hv",hv);  
+  // slomon_thread.join();
+  // JsonElement hv; hv.setStr(slm.val);
+  // fOutput.add("hv",hv);
     
   fOutput.add("stats",fStats);
   
@@ -1522,7 +1522,7 @@ void RecordComposer::composeAssociations()
   // #pragma link C++ class vector<vector<unsigned int> >+;
 
   vector< vector< unsigned int > > *branchidlists = 0;
-  metaData->SetBranchAddress("BranchIDLists",&branchidlists);
+  // metaData->SetBranchAddress("BranchIDLists",&branchidlists);
   metaData->GetEntry(0);
   if(branchidlists==0) {
     std::cout << "Grr! Can't get branchidlists. Falling back to TTreeFormula." << std::endl;

@@ -85,7 +85,7 @@ Histogram.prototype.TwoSideExpandFill = function(x,val)
   if (bin<0) {
     // console.log("expandlow");
     // Instead of underflowing, figure out how many bins we need at the beginning to accomodate this.
-    nadd = -bin;
+    nadd = -bin + 1;
   } else if (bin >= this.n) {
     // Instead of overflowing, expand the histogram.    
     // console.log("expandhigh");

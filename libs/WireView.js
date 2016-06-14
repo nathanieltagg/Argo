@@ -37,9 +37,6 @@ $(function(){
 
 
 
-var gA=1;
-var gB=0;
-
 function WireView( element, options )
 {
   if(!element) {
@@ -170,7 +167,8 @@ function WireView( element, options )
       $('.ctl-lock-aspect-ratio').not(this).attr("checked",false);
   });
 
-  $('#ctl-downscale-wireimg').change(function(ev) { return self.Draw(false); });
+  $('#ctl-shift-hits')      .change(this.TrimHits.bind(this));
+  $('#ctl-shift-hits-value').change(this.TrimHits.bind(this));
   
   // Flip planes control (for big wireview
   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
@@ -251,7 +249,11 @@ WireView.prototype.NewRecord_mc = function()
 WireView.prototype.TrimHits = function()
 {
   // Called when a cut is changed; go through data and trim visible hit list.
-  
+
+  var   offset_hit_time = 0;
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );
+
+   
   // For now, no cuts, but I am going to add wrapper objects to hold extracted data.
   this.visHits = [];
   var field = $(this.ctl_hit_field).val();
@@ -263,9 +265,9 @@ WireView.prototype.TrimHits = function()
     
     var vishit = {hit:h,
       u:h.wire,  // horizontal coord
-      v:h.t,     // vertical coord
-      v1:h.t1,
-      v2:h.t2,
+      v:h.t + offset_hit_time,     // vertical coord
+      v1:h.t1 + offset_hit_time,
+      v2:h.t2 + offset_hit_time,
       c: c    // Color coord
     };
     this.visHits.push(vishit);
@@ -523,18 +525,11 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   if(!mapper || !mapper.loaded) return;
   var scale_x = mapper.scale_x || 1;
   var scale_y = mapper.scale_y || 1;
-
-  var rescale_tdc = 1.0;
-  if($('#ctl-downscale-wireimg').is(":checked")) {
-    rescale_tdc = 1.0/parseFloat( $('#ctl-downscale-wireimg-value').val() );
-    console.warn("Rescaling ",rescale_tdc);
-  }
-  
   
   
   if(max_u<min_u) max_u = min_u; // Trap weird error
-  var min_tdc     = Math.max(0,min_v * rescale_tdc);
-  var max_tdc     = Math.min(mapper.total_width*scale_x, max_v * rescale_tdc);  
+  var min_tdc     = Math.max(0,min_v);
+  var max_tdc     = Math.min(mapper.total_width*scale_x, max_v);  
   var min_wire    = Math.max(min_u,0);
   var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
   var min_channel = gGeo.channelOfWire(this.plane, min_wire);
@@ -554,8 +549,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // have to rotate these for final picture insertion.
   var dest_x = (this.GetX(min_wire));
   var dest_w = (this.GetX(max_wire) - dest_x);
-  var dest_y = (this.GetY(min_tdc/rescale_tdc));
-  var dest_h = (dest_y - this.GetY(max_tdc/rescale_tdc));
+  var dest_y = (this.GetY(min_tdc));
+  var dest_h = (dest_y - this.GetY(max_tdc));
   
   // The number of pixels we want is likely smaller than the true span in the giant map space.
   // When using magnifying glass, we want moar pixels
@@ -640,6 +635,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var hoverVisHit = null;
   var h,u,v,x,dx,y,dy,c;
   
+   
   for(var i=0;i<this.visHits.length;i++) {
     h = this.visHits[i];
     u = h.u;
@@ -651,8 +647,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     x = this.GetX(u);
     dx = this.GetX(u+1) - x;
     
-    y = this.GetY(h.v1*gA+gB);
-    dy = this.GetY(h.v2*gA+gB) - y;    
+    y = this.GetY(h.v1 );
+    dy = this.GetY(h.v2) - y;    
     if(dx<1.5) dx = 1.5;  //exaggerate
     if(dy<1.5) dy = 1.5; 
     c = gHitColorScaler.GetColor(h.c);
@@ -698,7 +694,6 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 {
-  // console.log("DrawClusters");
   if(!gRecord.clusters) return;
   var clustername = $("#ctl-ClusterLists").val();
   var clusters = gRecord.clusters[clustername];
@@ -724,28 +719,13 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   // if(gHitsListName) hits = gRecord.hits[gHitsListName];
 
   this.clusterHulls = [];
-
+  var   offset_hit_time = 0;
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );
   
   clusterLoop:
   for(var i = 0; i<clusters.length;i++) {
     var clus = clusters[i];
     clus._index = i;
-    // FIXME: in principle this should work, but it appears the view numbers are actually
-    // plane numbers in the early 2013 MC.  So, instead, we'll break out later....
-    // if(gGeo.planeOfView(clus.view) != this.plane) continue;
-
-    // console.log(clus.view,"=clus.view",clus.plane,"=clus.plane",this.plane,"=this.plane");
-    // console.log(clus.hits[0],clus.hits[1]);
-    // console.log(hits[clus.hits[0]].plane,"=first hit plane");
-    // console.log(hits[clus.hits[1]].plane,"=first hit plane");
-    // if(clus.plane != this.plane) continue;
-
-    // var x1 = this.GetX(clus.startPos.wire);
-    // var x2 = this.GetX(clus.endPos  .wire);
-    // var y1 = this.GetY(clus.startPos.tdc );
-    // var y2 = this.GetY(clus.endPos  .tdc );
-    // var cs = new ColorScaleIndexed(clus.ID);
-    // this.ctx.fillStyle = "rgba(" + cs.GetColor() + ",0.5)";
 
     chits = hitassn[i]; // Look up in the association table
     var points = [];
@@ -753,11 +733,12 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       var hid = chits[ihit];
       var h = hits[hid];
       if(h.plane == this.plane) {
-        points.push( [ this.GetX(h.wire), this.GetY(h.t) ] );        
+        points.push( [ this.GetX(h.wire), this.GetY(h.t + offset_hit_time ) ] );        
       } else {
         continue clusterLoop;  // Give up on this cluster; go to the next one.
       }
     }
+    console.log("cluster",i,"with",points.length);
     var hull = GeoUtils.convexHull(points);
     var poly = [];
     for(var ihull=0;ihull<hull.length;ihull++) {

@@ -135,7 +135,7 @@ HitHistogram.prototype.BuildHistogram = function()
   
   for(var i=0;i<hits.length;i++) {
     var w = hits[i][field];
-    this.hist.ExpandFill(w);
+    this.hist.TwoSideExpandFill(w);
   }
   this.bound_u_min = this.hist.min;
   this.bound_u_max = this.hist.max;

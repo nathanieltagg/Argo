@@ -51,8 +51,8 @@ bool cmdOptionExists(char** begin, char** end, const std::string& option)
 
 using namespace std;
 
-VoidFuncPtr_t initfuncs[] = { 0 };
-TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
+// VoidFuncPtr_t initfuncs[] = { 0 };
+// TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
 void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg);
 void TerminationHandler(int signal);
 
@@ -197,6 +197,11 @@ int main(int argc, char **argv)
               // dup2(fileno(stdout), fileno(stderr));
               // freopen(logfilename.c_str(),"w",stderr);
             }
+            
+            VoidFuncPtr_t initfuncs[] = { 0 };
+            TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
+            cout << "Fork started." << endl;
+            cout << "Environment: " << getenv("ROOTSYS") << endl;
             
             cout << "Request Parameters:" << endl;
             cout << "    Filename: --" << filename << "--" << endl;
