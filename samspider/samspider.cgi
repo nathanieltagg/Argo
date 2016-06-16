@@ -2,7 +2,7 @@
 
 # use CGI::Session;
 use CGI::Pretty qw(:standard *div *table);
-use CGI::Carp;
+use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
 use File::Spec;
 
 my $cgi = $CGI::Q;
@@ -39,18 +39,27 @@ print h1("SamSpider");
 
 if(param("file")) {
 	$samfile = param("file");
-
-	print comment("$samweb locate-file $samfile");
-	open(my $fh, "$samweb locate-file $samfile |") or die "Can't open samweb. Contact Nathaniel";
+  $absolute_filename = "";
+  $dirname = "";
+  my $cmd = "$samweb locate-file $samfile";
+	print comment($cmd);
+	open(my $fh, "$cmd |") or die "Can't open samweb. Contact Nathaniel";
+  $n = 0;
 	while(	$samloc = <$fh> ) {
+    print "location: " . $samloc . br;
+    $n++;
 		if($samloc =~ /^enstore/) {
 			$dirname = ($samloc =~ /(\/.*)\(/)[0];			
 		}
-	}
 
-	$absolute_filename = $dirname . "/" . $samfile;
-	print "File location is" . br;
-	print pre($absolute_filename);
+	}
+  if($n==0) { print p("<b>Couldn't find any file location for this file.  SAM doesn't know where it is, if it exists.</b>")};
+  
+  if(length($dirname)>0) {
+  	$absolute_filename = $dirname . "/" . $samfile;
+  	print "File location is" . br;
+  	print pre($absolute_filename);
+  }
 
 	$status = "NEARLINE";
 
@@ -81,14 +90,16 @@ if(param("file")) {
 		        print "-- File is on tape, now being staged to disk. Please wait." .br;
 		        print "<script type='text/javascript'>setTimeout(function(){window.location.reload(true);},30000);</script>";	      		
 	      	} else {
-				print p("-- This file is NOT on the disk cache, it's on tape only.");
+            print p("-- This file is NOT on the disk cache, it's on tape only.");
 	      		print a({-href=>"?file=$samfile&stage=1"},"Click here to stage this file to disk.");
 	      	}
 	      }
 	    }
 	  }
 	} else {
-		print a({-href=>"../argo.html#filename=$absolute_filename&entry=0"},"Click here to see in Argo.");
+    if(length($absolute_filename)>0) {
+    		print a({-href=>"../argo.html#filename=$absolute_filename&entry=0"},"Click here to see in Argo.");
+    }
 	}
 
 	if(param("show_metadata")) {	
