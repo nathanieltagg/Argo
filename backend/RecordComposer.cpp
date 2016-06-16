@@ -1527,22 +1527,31 @@ void RecordComposer::composeAssociations()
   if(branchidlists==0) {
     std::cout << "Grr! Can't get branchidlists. Falling back to TTreeFormula." << std::endl;
     branchidlists = new vector< vector< unsigned int > >;
+    vector< vector< unsigned int > >& bidl = *branchidlists;
     TTreeFormula ff("ff","BranchIDLists",metaData);
     std::cout << ff.GetNdata() << std::endl;
     int bid_n = ff.GetNdata();
+    if(bid_n ==0) bid_n = 1000;
     int bid_got = 0;
     for(int i=0;i<bid_n;i++) {
       vector< unsigned int > row;
       TTreeFormula fi("fi",Form("BranchIDLists[%i]",i),metaData);
       std::cout << i << "\t" << fi.GetNdata() << std::endl;
       int ni = fi.GetNdata();
+      if(ni >0) {
+        std::cout << "Process ID " << i << endl;
+      }
       for(int j=0;j<ni;j++) {
         unsigned int val = (unsigned int)(fi.EvalInstance(j));
-        std::cout << "\t" << val;
+        std::cout << "  Product ID " << j << " " << val << std::endl;;
         row.push_back(val);
         bid_got++;
       }
-      branchidlists->push_back(row);
+      std::cout << "resizing to " << i+1 << std::endl;
+      std::cout << "old size " << bidl.size() << std::endl;
+      bidl.push_back(row);
+      std::cout << "New size " << bidl.size() << std::endl;
+      std::cout << "Assigning" << std::endl;
       std::cout << "\n";
       std::cout << "got" << bid_got << "\n";
       if(bid_got >= bid_n) break;
@@ -1618,9 +1627,9 @@ void RecordComposer::composeAssociations()
               << " b_productId=" << b_productId << std::endl;
 
     // the following is new as of summer 2016.  Don't know why I need to start doing this, but it seems to give the right result...?0
-    // a_processId--;
+     // a_processId--;
     a_productId--;
-    // b_processId--;
+     // b_processId--;
     b_productId--;
 
     if(branchidlists->size() > (a_processId)) {
