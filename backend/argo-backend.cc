@@ -189,11 +189,13 @@ int main(int argc, char **argv)
             long long unsigned int mypid = getpid();
             // pid=0 either means no forking, or we're the child process
             std::string logfilename = "argo_backend_" + std::to_string(mypid) + ".log";
+            std::string errfilename = "argo_backend_" + std::to_string(mypid) + ".err";
+            
             if(forking_) {
               std::cout << "Serving by child process: " << mypid << "  filename " << logfilename << std::endl;
               
               freopen(logfilename.c_str(),"w",stdout);
-              freopen(logfilename.c_str(),"a",stderr);
+              freopen(errfilename.c_str(),"a",stderr);
               // dup2(fileno(stdout), fileno(stderr));
               // freopen(logfilename.c_str(),"w",stderr);
             }

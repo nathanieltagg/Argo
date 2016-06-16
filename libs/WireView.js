@@ -647,8 +647,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     x = this.GetX(u);
     dx = this.GetX(u+1) - x;
     
-    y = this.GetY(h.v1 );
-    dy = this.GetY(h.v2) - y;    
+    y = this.GetY(h.v2 );
+    dy = this.GetY(h.v1) - y;    
     if(dx<1.5) dx = 1.5;  //exaggerate
     if(dy<1.5) dy = 1.5; 
     c = gHitColorScaler.GetColor(h.c);
@@ -676,6 +676,9 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     
       y = this.GetY(h.v2);
       dy = this.GetY(h.v1) - y;    
+      if(dx<1.5) dx = 1.5;  //exaggerate
+      if(dy<1.5) dy = 1.5; 
+      
       c = gHitColorScaler.GetColor(h.c);
       console.log("color",gHitColorScaler,c);
       this.ctx.fillStyle = "black";
@@ -738,7 +741,6 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
         continue clusterLoop;  // Give up on this cluster; go to the next one.
       }
     }
-    console.log("cluster",i,"with",points.length);
     var hull = GeoUtils.convexHull(points);
     var poly = [];
     for(var ihull=0;ihull<hull.length;ihull++) {
