@@ -24,6 +24,8 @@ public:
 
   void compose();
   
+  void composeHeader();
+  void composeHits();
   
 
   JsonObject& fOutput; // Top-level output object
@@ -45,6 +47,8 @@ public:
   double event_time;
   
   boost::mutex fOutputMutex;
+  
+
   
 };
 

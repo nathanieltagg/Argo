@@ -74,14 +74,19 @@ std::shared_ptr<std::string> ResultComposer::compose(
   const std::string daqSuffix(".ubdaq");
   if( path.length() >= daqSuffix.length() ) {
     is_daqfile = (0 == path.compare( path.length() - daqSuffix.length(), daqSuffix.length(), daqSuffix));
-  } else {
-    TFile* rootfile = new TFile(inFile,"READ");
-    if(! rootfile->IsZombie()) {
-      if(rootfile->Get("Events") != NULL)               is_artfile = true;
-      if(rootfile->Get("analysistree/anatree") != NULL) is_anafile = true;
-      if(rootfile->Get("larlite_id_tree") != NULL)      is_larlite = true;
-    } 
-    delete rootfile;
+  }
+  if(!is_daqfile) {
+    rootfile = new TFile(inFile,"READ");
+    if(! (rootfile->IsZombie())) {
+      std::cout << "Can open file. " << inFile << std::endl;
+      
+      if(rootfile->Get("Events") )               is_artfile = true;
+      if(rootfile->Get("analysistree/anatree") ) is_anafile = true;
+      if(rootfile->Get("larlite_id_tree") )      is_larlite = true;
+    } else {
+      std::cout << "Can't open file! " << inFile << std::endl;
+    }
+    // delete rootfile;
   }
   if(is_daqfile)      compose_from_raw(inOptions,inFile,inSelection,inStart,inEnd);
   else if(is_artfile) compose_from_art(inOptions,inFile,inSelection,inStart,inEnd);
@@ -89,6 +94,8 @@ std::shared_ptr<std::string> ResultComposer::compose(
   else if(is_larlite) compose_from_larlite(inOptions,inFile,inSelection,inStart,inEnd);
   else {
     result.add("error",string("Unrecognized or unreadable file"));
+    std::cout << "Unrecognized or unreadable file "<< inFile << std::endl;
+    
   }
   
   // Add profiling.
@@ -115,6 +122,7 @@ void ResultComposer::compose_from_art(
   // TFile* dst = (TFile*)gROOT->GetListOfFiles()->FindObject(inDstFile);
   // if(dst && oRefresh) { dst->Close(); delete dst; dst = NULL; }
   // if(!dst) dst = new TFile(inDstFile,"READ");
+  std::cout << "Composing from ART file" << std::endl;
 
   rootfile = new TFile(inRootFile,"READ");
   if(rootfile->IsZombie()) {
@@ -230,6 +238,7 @@ void ResultComposer::compose_from_raw(
          Long64_t inStart,
          Long64_t inEnd )
 {
+  std::cout << "Composing from raw UBDAQ file" << std::endl;
   
   long eventTimeStart = gSystem->Now();
   
@@ -323,10 +332,12 @@ void ResultComposer::compose_from_ana(
          Long64_t inStart,
          Long64_t inEnd )
 {
+  std::cout << "Composing from AnalysisTree  file" << std::endl;
+  
   
   // This is how to check options:
   // if( std::string::npos != options.find("+REFRESH")) oRefresh = true;
-
+   
   // Open the tree.
   TTree* tree = (TTree*) rootfile->Get("analysistree/anatree");
 
