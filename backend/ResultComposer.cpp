@@ -8,8 +8,10 @@
 //
 
 #include "ResultComposer.h"
-#include "RecordComposer.h"
+#include "ArtRecordComposer.h"
 #include "RawRecordComposer.h"
+#include "AnaRecordComposer.h"
+#include "LarliteRecordComposer.h"
 #include <TTree.h>
 #include <TFile.h>
 #include <TROOT.h>
@@ -65,13 +67,29 @@ std::shared_ptr<std::string> ResultComposer::compose(
   std::string path(inFile);
 
   bool is_daqfile = false;
+  bool is_artfile = false;
+  bool is_anafile = false;
+  bool is_larlite = false;
 
   const std::string daqSuffix(".ubdaq");
   if( path.length() >= daqSuffix.length() ) {
     is_daqfile = (0 == path.compare( path.length() - daqSuffix.length(), daqSuffix.length(), daqSuffix));
+  } else {
+    TFile* rootfile = new TFile(inFile,"READ");
+    if(! rootfile->IsZombie()) {
+      if(rootfile->Get("Events") != NULL)               is_artfile = true;
+      if(rootfile->Get("analysistree/anatree") != NULL) is_anafile = true;
+      if(rootfile->Get("larlite_id_tree") != NULL)      is_larlite = true;
+    } 
+    delete rootfile;
   }
-  if(is_daqfile) compose_from_raw(inOptions,inFile,inSelection,inStart,inEnd);
-  else           compose_from_art(inOptions,inFile,inSelection,inStart,inEnd);
+  if(is_daqfile)      compose_from_raw(inOptions,inFile,inSelection,inStart,inEnd);
+  else if(is_artfile) compose_from_art(inOptions,inFile,inSelection,inStart,inEnd);
+  else if(is_anafile) compose_from_ana(inOptions,inFile,inSelection,inStart,inEnd);
+  else if(is_larlite) compose_from_larlite(inOptions,inFile,inSelection,inStart,inEnd);
+  else {
+    result.add("error",string("Unrecognized or unreadable file"));
+  }
   
   // Add profiling.
   long ElapsedServerTime = ((long)(gSystem->Now()) - eventTimeStart);
@@ -90,9 +108,6 @@ void ResultComposer::compose_from_art(
          Long64_t inStart,
          Long64_t inEnd )
 {
-  
-  long eventTimeStart = gSystem->Now();
-
   // This is how to check options:
   // if( std::string::npos != options.find("+REFRESH")) oRefresh = true;
 
@@ -199,15 +214,12 @@ void ResultComposer::compose_from_art(
   // Get it.
   //
   // Here's where all the joy happens.
-  RecordComposer composer(result,tree,jentry,inOptions);
+  ArtRecordComposer composer(result,tree,jentry,inOptions);
   composer.fCacheStoragePath     = m_config["CacheStoragePath"];
   composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
   composer.fCreateSubdirCache = false;
   composer.compose();
 
-  long ElapsedServerTime = ((long)(gSystem->Now()) - eventTimeStart);
-  result.add("ElapsedServerTime",ElapsedServerTime);
-  std::cout << "ElapsedServerTime: " << ElapsedServerTime << std::endl;
 }
 
 
@@ -303,6 +315,117 @@ void ResultComposer::compose_from_raw(
   return;
 }
 
+
+void ResultComposer::compose_from_ana(
+         const char* inOptions,
+         const char* inRootFile,
+         const char* inSelection,
+         Long64_t inStart,
+         Long64_t inEnd )
+{
+  
+  // This is how to check options:
+  // if( std::string::npos != options.find("+REFRESH")) oRefresh = true;
+
+  // Open the tree.
+  TTree* tree = (TTree*) rootfile->Get("analysistree/anatree");
+
+  // OK, find the entry in question.
+  Long64_t nentries = tree->GetEntriesFast();
+  if(nentries<1){
+    result.add("error",string("No entries in tree in file ") + inRootFile);
+    return;
+  }
+
+  // Scan through entries, looking for specified selection.
+  TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
+  if (!select) {
+      result.add("error","Could not create TTreeFormula.");
+      return;
+  }
+  if (!select->GetNdim()) {
+    delete select;
+    result.add("error","Problem with your selection function..");
+    return;
+  }
+
+  Long64_t jentry;
+  bool match = false;
+  if( inStart >=0 ) {
+    // Forward search, situation normal
+    Long64_t stop = nentries;
+    if(inEnd>0 && inEnd<stop) stop = inEnd;
+    for (jentry=inStart; jentry<stop; jentry++) {
+      // cerr << "GetEntry(" << jentry << ")" << endl;
+      //tree->GetEntry(jentry);
+      tree->LoadTree(jentry);
+      // Does the selection match any part of the tree?
+      int nsel = select->GetNdata();
+      for(int i=0;i<nsel;i++) {
+        if(select->EvalInstance(i) != 0){
+          match = true; break;
+        }
+      }
+      if(match) break;
+    }
+  } else {
+    // inStart<0 : backward search
+    Long64_t start = nentries+inStart;
+    if(start>=nentries) start = nentries-1;
+    if(start<0) start = 0;
+    Long64_t stop = 0;
+    if(inEnd>0 && inEnd<=start) stop = inEnd;
+    for (jentry=start; jentry>=stop; jentry--) {
+      cerr << "GetEntry(" << jentry << ")" << endl;
+      //tree->GetEntry(jentry);
+      tree->LoadTree(jentry);
+      // Does the selection match any part of the tree?
+      int nsel = select->GetNdata();
+      for(int i=0;i<nsel;i++) {
+        if(select->EvalInstance(i) != 0){
+          match = true; break;
+        }
+      }
+      if(match) break;
+    }
+
+  }
+  delete select;
+  if(!match) {
+    result.add("error","Selection matched no events in file.");
+    return;
+  }
+
+  JsonObject source;
+  source.add("file",inRootFile);
+  source.add("selection",inSelection);
+  source.add("start",inStart);
+  source.add("end",inEnd);
+  source.add("entry",jentry);
+  source.add("options",inOptions);
+  source.add("numEntriesInFile",nentries);
+  result.add("source",source);
+
+  addMonitorData();
+  //
+  // Get it.
+  //
+  // Here's where all the joy happens.
+  AnaRecordComposer composer(result,tree,jentry,inOptions);
+  composer.fCacheStoragePath     = m_config["CacheStoragePath"];
+  composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
+  composer.fCreateSubdirCache = false;
+  composer.compose();
+}
+
+void ResultComposer::compose_from_larlite(
+         const char* inOptions,
+         const char* inRootFile,
+         const char* inSelection,
+         Long64_t inStart,
+         Long64_t inEnd )
+{
+}
 
 
 void ResultComposer::addMonitorData()

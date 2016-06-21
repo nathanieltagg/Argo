@@ -31,7 +31,7 @@
 #include <TTreeFormula.h>
 
 
-#include "RecordComposer.h"
+#include "ArtRecordComposer.h"
 #include "JsonElement.h"
 #include "TimeReporter.h"
 #include "TreeReader.h"
@@ -41,7 +41,6 @@
 #include "EncodedTileMaker.h"
 #include "RootToJson.h"
 #include "crc32checksum.h"
-#include "WirePalette.h"
 #include "GetSloMonDB.h"
 #include "wireOfChannel.h"
 #include "waveform_tools.h"
@@ -49,14 +48,14 @@
 #include <stdlib.h>
 
 #include "boost/thread/thread.hpp"
+#include "boost/thread/mutex.hpp"
+#include "boost/thread/shared_mutex.hpp"
 
 #include "DeadChannelMap.h"
 #include "CoherentNoiseFilter.h"
 
 
 
-
-WirePalette gWirePalette; // Create at program start as a singleton.
 
 using namespace std;
 
@@ -65,7 +64,7 @@ using namespace std;
 
 
 
-RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
+ArtRecordComposer::ArtRecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options)
   : fOutput(output), fTree(tree), fEntry(jentry), fOptions(options), ftr(tree)
 {
   fCacheStoragePath     = "../live_event_cache";
@@ -75,13 +74,13 @@ RecordComposer::RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry,
   fCreateSubdirCache = true;  
 }
   
-RecordComposer::~RecordComposer()
+ArtRecordComposer::~ArtRecordComposer()
 {
 }
 
 
  
-std::string RecordComposer::stripdots(const std::string& s)
+std::string ArtRecordComposer::stripdots(const std::string& s)
 {
   std::string out = s;
   size_t pos;
@@ -89,36 +88,9 @@ std::string RecordComposer::stripdots(const std::string& s)
   return out;
 }
 
-void RecordComposer::hsvToRgb(unsigned char* out, float h, float s, float v){
-    float r, g, b;
-
-    int i = floor(h * 6);
-    float f = h * 6 - i;
-    float p = v * (1 - s);            // 0
-    float q = v * (1 - f * s);        // 1-f
-    float t = v * (1 - (1 - f) * s);  // f
-
-    switch(i % 6){
-        case 0: r = v, g = t, b = p; break;
-        case 1: r = q, g = v, b = p; break;
-        case 2: r = p, g = v, b = t; break;
-        case 3: r = p, g = q, b = v; break;
-        case 4: r = t, g = p, b = v; break;
-        case 5: r = v, g = p, b = q; break;
-    }
-    
-    // cout << (int)(r*255) << "\t"
-    //     << (int)(g*255) << "\t"
-    //     << (int)(b*255) << "\n";
-    // return rgbToHsv(int(r*255),int(g*255),int(b*255));
-    // return [r * 255, g * 255, b * 255];
-    *(out   ) = (unsigned int)(r*255);
-    *(out+1 ) = (unsigned int)(g*255);
-    *(out+2 ) = (unsigned int)(b*255);
-}
 
 
-void RecordComposer::composeHeaderData() 
+void ArtRecordComposer::composeHeaderData() 
 {
   // Header data. Alas, this is the stuff that's nearly impossible to get!  
   JsonObject header;
@@ -183,13 +155,17 @@ void RecordComposer::composeHeaderData()
     }
   }
   header.add("trigger",trigger);
-  fOutput.add("header",header);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("header",header);
+  }
 }
 
-void RecordComposer::composeHits() 
+void ArtRecordComposer::composeHits() 
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Hit>>");
   if(leafnames.size()==0) {
+    boost::mutex::scoped_lock lck(fOutputMutex);
     fOutput.add("hit_warning","No hit branch found in file.");
     return;
   } 
@@ -286,12 +262,16 @@ void RecordComposer::composeHits()
     hist_list.add(stripdots(name),hists);
     timer.addto(fStats);
   }
-  fOutput.add("hits",reco_list);
-  fOutput.add("hit_hists",hist_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+  
+    fOutput.add("hits",reco_list);
+    fOutput.add("hit_hists",hist_list);
+  }
 }
 
 // Utility function for composeCluster
-JsonObject RecordComposer::GetClusterWireAndTDC(TreeElementLooter& l, int row) {
+JsonObject ArtRecordComposer::GetClusterWireAndTDC(TreeElementLooter& l, int row) {
   JsonObject o;
   if(!l.ok()) return o;
   const vector<double>* v = l.get<vector<double> >(row);
@@ -301,10 +281,11 @@ JsonObject RecordComposer::GetClusterWireAndTDC(TreeElementLooter& l, int row) {
   return o;
 }
 
-void RecordComposer::composeClusters()
+void ArtRecordComposer::composeClusters()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Cluster>>");
   if(leafnames.size()==0) {
+    boost::mutex::scoped_lock lck(fOutputMutex);
     fOutput.add("cluster_warning","No cluster branch found in file.");
     return;
   } 
@@ -345,10 +326,14 @@ void RecordComposer::composeClusters()
     reco_list.add(stripdots(name),jClusters);
     timer.addto(fStats);
   } 
-  fOutput.add("clusters",reco_list);
+  
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("clusters",reco_list);
+  }
 }
 
-void  RecordComposer::composeVertex2d()
+void  ArtRecordComposer::composeVertex2d()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::EndPoint2D>>");
   JsonObject reco_list;
@@ -381,10 +366,14 @@ void  RecordComposer::composeVertex2d()
     reco_list.add(stripdots(name),jlist);
     timer.addto(fStats);
   } 
-  fOutput.add("endpoint2d",reco_list);  
+  
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("endpoint2d",reco_list);  
+  }
 }
   
-void  RecordComposer::composeSpacepoints()
+void  ArtRecordComposer::composeSpacepoints()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::SpacePoint> >");  
   JsonObject reco_list;
@@ -421,10 +410,13 @@ void  RecordComposer::composeSpacepoints()
     reco_list.add(stripdots(name),jSpacepoints);
     timer.addto(fStats);
   }  
-  fOutput.add("spacepoints",reco_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("spacepoints",reco_list);
+  }
 }
   
-void  RecordComposer::composeTracks()
+void  ArtRecordComposer::composeTracks()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Track>");
 
@@ -479,11 +471,16 @@ void  RecordComposer::composeTracks()
     reco_list.add(stripdots(name),jTracks);
     timer.addto(fStats);
   }  
-  fOutput.add("tracks",reco_list);
+  
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("tracks",reco_list);
+    
+  }
 
 }
 
-void  RecordComposer::composeShowers()
+void  ArtRecordComposer::composeShowers()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Shower>");
 
@@ -534,12 +531,15 @@ void  RecordComposer::composeShowers()
     reco_list.add(stripdots(name),jShowers);
     timer.addto(fStats);
   }  
-  fOutput.add("showers",reco_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("showers",reco_list);    
+  }
 
 }
 
 
-void RecordComposer::composePFParticles()
+void ArtRecordComposer::composePFParticles()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::PFParticle>");
 
@@ -571,12 +571,14 @@ void RecordComposer::composePFParticles()
     reco_list.add(stripdots(name),jPFParticles);
     timer.addto(fStats);
   }  
-  fOutput.add("pfparticles",reco_list);
-  
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("pfparticles",reco_list);
+  }
 }
     
 // Optical
-void  RecordComposer::composeOpFlashes()
+void  ArtRecordComposer::composeOpFlashes()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::OpFlash>");
   JsonObject reco_list;
@@ -634,10 +636,13 @@ void  RecordComposer::composeOpFlashes()
     reco_list.add(stripdots(name),jOpFlashes);
     timer.addto(fStats);
   }   
-  fOutput.add("opflashes",reco_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("opflashes",reco_list);
+  }
 }
 
-void  RecordComposer::composeOpPulses()
+void  ArtRecordComposer::composeOpPulses()
 {
   vector<string> leafnames = findLeafOfType("vector<raw::OpDetPulse>");  
   JsonObject reco_list;
@@ -710,11 +715,14 @@ void  RecordComposer::composeOpPulses()
     reco_list.add(stripdots(name),joppulses);
     timer.addto(fStats);
   }
-  fOutput.add("oppulses",reco_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("oppulses",reco_list);
+  }
   
 }
   
-void  RecordComposer::composeOpHits()
+void  ArtRecordComposer::composeOpHits()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::OpHit>");  
   JsonObject reco_list;
@@ -733,7 +741,7 @@ void  RecordComposer::composeOpHits()
       JsonObject jobj;
       
       jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"            ,i));
-      jobj.add("peakTime"      ,1e3*ftr.getF(name+"obj.fPeakTime"             ,i));
+      jobj.add("peakTime"      ,1e3*ftr.getVal(name+"obj.fPeakTime"             ,i));
       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
       jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));
@@ -745,12 +753,14 @@ void  RecordComposer::composeOpHits()
     reco_list.add(stripdots(name),jophits);
     timer.addto(fStats);
   }
-  fOutput.add("ophits",reco_list);
-  
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("ophits",reco_list);
+  }  
 }
 
 
-// void RecordComposer::wireOfChannel(int channel, int& plane, int& wire)
+// void ArtRecordComposer::wireOfChannel(int channel, int& plane, int& wire)
 // {
 //   if(channel < 2399) {
 //     plane = 0; wire= channel; return;
@@ -768,7 +778,7 @@ void  RecordComposer::composeOpHits()
 // }
 
 
-void RecordComposer::composeCalAvailability()
+void ArtRecordComposer::composeCalAvailability()
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
   JsonObject reco_list;
@@ -777,10 +787,13 @@ void RecordComposer::composeCalAvailability()
     std::string name = leafnames[iname];
     reco_list.add(stripdots(name),JsonElement());
   }
-  fOutput.add("cal",reco_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("cal",reco_list);
+  }
 }
 
-void RecordComposer::composeCal() 
+void ArtRecordComposer::composeCal() 
 {
   vector<string> leafnames = findLeafOfType("vector<recob::Wire>");
   JsonObject reco_list;
@@ -798,8 +811,10 @@ void RecordComposer::composeCal()
     TLeaf* lchannel= fTree->GetLeaf((name+"obj.fRawDigit.key_").c_str());
     TLeaf* lsignal = fTree->GetLeaf((name+"obj.fSignal").c_str());
     TLeaf* lroi    = fTree->GetLeaf((name+"obj.fSignalROI").c_str());
+    TLeaf* lroi2    = fTree->GetLeaf((name+"obj.fSignalROI.nominal_size").c_str());
     TreeElementLooter* simpleLooter =0;
     TreeElementLooter* roiLooter =0;
+    TreeElementLooter* roiLooter2ranges =0;
     size_t ntdc;
     if(lsignal) {
       simpleLooter = new TreeElementLooter(fTree,name+"obj.fSignal");
@@ -810,6 +825,10 @@ void RecordComposer::composeCal()
       roiLooter    = new TreeElementLooter(fTree,name+"obj.fSignalROI");
       if(!roiLooter->ok()) {delete roiLooter; continue;};
       ntdc = ftr.getInt(name+"obj.fMaxSamples");
+// }  else if( lroi2 ){
+//       roiLooter2ranges    = new TreeElementLooter(fTree,name+"obj.fSignalROI.ranges");
+//       if(!roiLooter2ranges->ok()) {delete roiLooter2size; continue;};
+//       ntdc = ftr.getInt(lroi2,0);
     } else {
       std::cout << "! Can't figure out what the hell this is!" << std::endl;
       continue;
@@ -835,7 +854,7 @@ void RecordComposer::composeCal()
         for(size_t i = 0; i< ntdc; i++) (*waveform_ptr)[i] = (*ptr)[i]; // Convert from float to int.
       }
       // The hard way: Bruce's new ROIs.
-      else if(roiLooter) {
+      else if(roiLooter2ranges) {
         std::fill(waveform_ptr->begin(), waveform_ptr->end(), 0);
         const vector<pair<unsigned int,vector<float> > >*ptr = roiLooter->get<vector<pair<unsigned int,vector<float> > > >(i);
         for(size_t iroi=0;iroi<ptr->size();iroi++) {
@@ -846,6 +865,16 @@ void RecordComposer::composeCal()
           }
         }
       }
+      // // The hard way: lar::sparse_vector
+      // No, too hard.
+      // ranges is a type of lar::sparse_vector<float>
+      // which contains nominal_size (easy)
+      // and range_list_t ranges
+      // range_list_t is a std::vector<datarange_t>
+      // datarange_t inherits from  range_t<size_type> but also contains a vector_t values.
+      // That's arleady too complicated to parse as an STL object.
+      // where 
+     //  }
       else {
         // WHAT???
         std::fill(waveform_ptr->begin(), waveform_ptr->end(), 0);
@@ -890,11 +919,15 @@ void RecordComposer::composeCal()
     }
     
   }
-  fOutput.add("cal",reco_list);
-  fOutput.add("cal_lowres",reco_list2);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    
+    fOutput.add("cal",reco_list);
+    fOutput.add("cal_lowres",reco_list2);
+  }
 }
 
-void RecordComposer::composeRawAvailability()
+void ArtRecordComposer::composeRawAvailability()
 {
   vector<string> leafnames = findLeafOfType("vector<raw::RawDigit>");
   JsonObject reco_list;
@@ -903,11 +936,14 @@ void RecordComposer::composeRawAvailability()
     std::string name = leafnames[iname];
     reco_list.add(stripdots(name),JsonElement());
   }
-  fOutput.add("raw",reco_list);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("raw",reco_list);
+  }
 }
 
 
-void RecordComposer::composeRaw()
+void ArtRecordComposer::composeRaw()
 {
   vector<string> leafnames = findLeafOfType("vector<raw::RawDigit>");
   JsonObject reco_list;
@@ -1015,12 +1051,15 @@ void RecordComposer::composeRaw()
     break; // only 1 raw list.
     
   }
-  fOutput.add("raw",reco_list);
-  fOutput.add("raw_lowres",reco_list2);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("raw",reco_list);
+    fOutput.add("raw_lowres",reco_list2);    
+  }
 }
 
 
-int RecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
+int ArtRecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
 {
   // Starting at x0 and moving along a vector p, how far off the line is point x?
   TVector3 dx(x.X()-x0.X()
@@ -1061,7 +1100,7 @@ int RecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector&
 //   double d2 = qp2-lam*lam*v2;
 //   return sqrt(d2);
 // }
-void RecordComposer::composeAuxDets()
+void ArtRecordComposer::composeAuxDets()
 {
   // On hold. No way I can figure out how to decode a std::set<AuxDetIDE>.
   
@@ -1106,7 +1145,7 @@ void RecordComposer::composeAuxDets()
   // }
 }
 
-void RecordComposer::composeMC()
+void ArtRecordComposer::composeMC()
 {
 
   vector<string> leafnames = findLeafOfType("vector<simb::GTruth>");
@@ -1375,12 +1414,14 @@ void RecordComposer::composeMC()
   }
   mc.add("particles",particle_list);
   
-  fOutput.add("mc",mc);
-  
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("mc",mc);
+  }
 }
 
 
-void RecordComposer::compose()
+void ArtRecordComposer::compose()
 {
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
@@ -1446,33 +1487,57 @@ void RecordComposer::compose()
   // slm();
   // 
  
-
   // Wire data.
   // Start first so background image conversion tasks can be started as we build the rest.
-  if(doCal) composeCal();
-  if(doRaw) composeRaw();
 
+
+
+
+  boost::thread_group threads;
+
+
+  if(doCal)   threads.create_thread(boost::bind(&ArtRecordComposer::composeCal,this));
+  if(doRaw)   threads.create_thread(boost::bind(&ArtRecordComposer::composeRaw,this));
+
+  // composeHits();
+  // composeClusters();
+  // composeVertex2d();
+//   composeSpacepoints();
+//   composeTracks();
+//   composeShowers();
+//   composePFParticles();
+//
+//
+//   composeOpPulses();
+//   composeOpFlashes();
+//   composeOpHits();
+//   composeAuxDets();
+//
+//   composeMC();
+//   composeAssociations();
+//
+  // No, threading doesn't work. Apparently TTreeFormulas are not thread safe, since they are constructed
+  //
   //reco
-  composeHits();
-  composeClusters();
-  composeVertex2d();
-  composeSpacepoints();
-  composeTracks();
-  composeShowers();
-  composePFParticles();
-  
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeHits,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeClusters,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeVertex2d,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeSpacepoints,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeTracks,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeShowers,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composePFParticles,this));
+
   // Optical
-  composeOpPulses();
-  composeOpFlashes();
-  composeOpHits();
-  
-  composeAuxDets();
-  
-  composeMC();
-  
-  RecordComposer::composeAssociations();
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeOpPulses,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeOpFlashes,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeOpHits,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeAuxDets,this));
+
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeMC,this));
+  threads.create_thread(boost::bind(&ArtRecordComposer::composeAssociations,this));
+
     
-  
+  threads.join_all();
   // Database lookup.
   // slomon_thread.join();
   // JsonElement hv; hv.setStr(slm.val);
@@ -1483,7 +1548,7 @@ void RecordComposer::compose()
   
 }
 
-void RecordComposer::composeAssociations()
+void ArtRecordComposer::composeAssociations()
 {
   TimeReporter timer("Associations");
   
@@ -1508,6 +1573,7 @@ void RecordComposer::composeAssociations()
   TFile* file = fTree->GetCurrentFile();
   TTree* metaData = dynamic_cast<TTree*>(file->Get("MetaData"));
   if(!metaData) {
+    boost::mutex::scoped_lock lck(fOutputMutex);
     std::cout << "Grr! Can't find metadata tree!";
     assns.add("error","Can't find metadata tree.");
     fOutput.add("associations",assns);
@@ -1707,15 +1773,19 @@ void RecordComposer::composeAssociations()
     assns.add(assn_list_itr->first, assn_list_itr->second);
   }
   cout << "Association total size: " << assns.str().length() << std::endl;
-  fOutput.add("associations",assns);
-  fStats.add("Associations",timer.t.Count());
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("associations",assns);
+    fStats.add("Associations",timer.t.Count());
+    
+  }
 }
 
 
 // Utility functions.
 
 
-vector<string>  RecordComposer::findLeafOfType(std::string pattern)
+vector<string>  ArtRecordComposer::findLeafOfType(std::string pattern)
 {
   /// Look in the tree. Try to find a leafelement that matches 'pattern'.
   /// Return the full name of that leaf.

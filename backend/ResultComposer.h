@@ -47,6 +47,20 @@ class ResultComposer
                                          Long64_t entrystart=0,
                                          Long64_t entryend=1000000000                       
                                          );  
+
+   void compose_from_ana(  const char* inOptions,
+                                         const char* inRootFile,
+                                         const char* inSelection,
+                                         Long64_t entrystart=0,
+                                         Long64_t entryend=1000000000                       
+                                         );  
+   
+   void compose_from_larlite(  const char* inOptions,
+                                         const char* inRootFile,
+                                         const char* inSelection,
+                                         Long64_t entrystart=0,
+                                         Long64_t entryend=1000000000                       
+                                         );  
    
    void addMonitorData();
 

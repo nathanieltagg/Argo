@@ -35,11 +35,9 @@
 #include "RawRecordComposer.h"
 #include "JsonElement.h"
 #include "TimeReporter.h"
-//#include "ColorMap.h"
 #include "MakePng.h"
 #include "EncodedTileMaker.h"
 #include "RootToJson.h"
-#include "WirePalette.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 

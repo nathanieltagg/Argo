@@ -101,7 +101,9 @@ TriDView.prototype.HoverChange = function()
   // Only need a redraw if the over change affected something we care about.
   switch(gHoverState.type) {
     case "hit": 
-    case "cluster":
+      if ($(this.ctl_show_hits).is(":checked") && $(this.ctl_show_trid_hits).is(":checked") ) this.Draw(); 
+      break;
+    // case "cluster":
     case "spacepoint":
     case "track":
     case "mcparticles":
@@ -110,7 +112,9 @@ TriDView.prototype.HoverChange = function()
   }
   switch(gLastHoverState.type) {
     case "hit": 
-    case "cluster":
+      if ($(this.ctl_show_hits).is(":checked") && $(this.ctl_show_trid_hits).is(":checked") ) this.Draw(); 
+      break;
+    // case "cluster":
     case "spacepoint":
     case "track":
     case "mcparticles":

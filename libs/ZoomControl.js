@@ -59,8 +59,8 @@ function ZoomRegion() {
         var center = (this.plane[ip][0]+this.plane[ip][1])/2;
         this.plane[ip][0] = center - newWireWidth/2;
         this.plane[ip][1] = center + newWireWidth/2;
-        if(isNaN(this.plane[ip][0])) debugger;
-        if(isNaN(this.plane[ip][1])) debugger;
+        // if(isNaN(this.plane[ip][0])) debugger;
+        // if(isNaN(this.plane[ip][1])) debugger;
       }
 
     }    
@@ -331,7 +331,7 @@ ZoomControl.prototype.NewRecord = function()
     gZoomRegion.changeTimeRange(t1,t2)
 
     var wires= parseFloat(par.wires) || 150;
-    var h = par.wires/2;
+    var h = wires/2;
     
     var plane0 = parseFloat(par.plane0) || gGeo.numWires(0)/2;
     var plane1 = parseFloat(par.plane1) || gGeo.numWires(1)/2;
@@ -339,7 +339,8 @@ ZoomControl.prototype.NewRecord = function()
     gZoomRegion.plane[0]=[plane0-h,plane0+h];
     gZoomRegion.plane[1]=[plane1-h,plane1+h];
     gZoomRegion.plane[2]=[plane2-h,plane2+h];
-      
+    gZoomRegion.setLimits(2,plane2-h,plane2+h);
+    
     gStateMachine.Trigger("zoomChange");
     return;
   }

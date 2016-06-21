@@ -1,15 +1,15 @@
-#ifndef RECORDCOMPOSER_H
-#define RECORDCOMPOSER_H
+#ifndef ArtRecordComposer_H
+#define ArtRecordComposer_H
 
 
 
 #include "JsonElement.h"
 #include "TreeReader.h"
 #include "TObject.h"
-#include "WirePalette.h"
 #include <math.h>
 #include <vector>
 #include <memory>
+#include "boost/thread/mutex.hpp"
 
 class TTree;
 class TreeElementLooter;
@@ -17,10 +17,10 @@ class TLorentzVector;
 
 
 
-class RecordComposer {
+class ArtRecordComposer {
 public:
-  RecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options);
-  ~RecordComposer();
+  ArtRecordComposer(JsonObject& output, TTree* tree, Long64_t jentry, const std::string options);
+  ~ArtRecordComposer();
   void compose();
   void  composeHeaderData();
 
@@ -57,25 +57,12 @@ public:
   // Utility functions.
   std::vector<std::string> findLeafOfType(std::string pattern);
   
-  void        hsvToRgb(unsigned char* out, float h, float s, float v);
   std::string stripdots(const std::string& s);
   JsonObject  GetClusterWireAndTDC(TreeElementLooter& l, int row);
   int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
   
   
-  // Mapping from any adc value onto an 8-bit integer for crude color purposes.
-  
-  int inline static tanscale(float adc) 
-  {
-    return int(atan(adc/50.)/M_PI*256.) + 127;  
-  }
 
-  float inline static inv_tanscale(int y) 
-  {
-    return tan((y-127)*M_PI/256)*50.;
-  }
-  
-  
   JsonObject& fOutput; // Top-level output object
   JsonObject fStats; // Processing metadata
   TTree* fTree;
@@ -93,6 +80,8 @@ public:
   std::string fCurrentEventUrl;
 
   double event_time;
+  
+  boost::mutex fOutputMutex;
   
 };
 
