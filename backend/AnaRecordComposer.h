@@ -26,7 +26,8 @@ public:
   
   void composeHeader();
   void composeHits();
-  
+  void composeTracks();
+  // void composeVertices();
 
   JsonObject& fOutput; // Top-level output object
   JsonObject fStats; // Processing metadata

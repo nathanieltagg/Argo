@@ -66,7 +66,6 @@ AnaRecordComposer::~AnaRecordComposer()
 {
 }
 
-
 void AnaRecordComposer::compose()
 {
   fCurrentEventDirname = fCacheStoragePath;
@@ -88,12 +87,12 @@ void AnaRecordComposer::compose()
   fTree->GetEntry(fEntry);
   composeHeader();
   composeHits();
-  // composeTracks();
+  composeTracks();
   // composeClusters();
   // composeVertices();
   // etc.
-
 }
+
 
 void AnaRecordComposer::composeHeader()
 {
@@ -153,7 +152,7 @@ void AnaRecordComposer::composeHits()
     h.add("t",       JsonFixed(t,1)     );
     h.add("t1",      JsonFixed(t1,1)    );
     h.add("t2",      JsonFixed(t2,1)    );
-    arr.add(h);                              
+    arr.add(h);
   }
 
   reco_list.add("ana",arr);
@@ -178,3 +177,121 @@ void AnaRecordComposer::composeHits()
     fOutput.add("hit_hists",hist_list);
   }
 }
+
+
+void AnaRecordComposer::composeTracks()
+{
+	JsonObject reco_list;
+	// Get list of tracks types.
+
+	std::vector< std::string > track_types;
+    TObjArray* list = fTree->GetListOfLeaves();
+    for(int i=0;i<list->GetEntriesFast();i++) {
+      TObject* o = list->At(i);
+	  TString name = o->GetName();
+	  if(name.BeginsWith("ntracks_")) {
+		  std::string trkname = name.Data()+8;
+		  std::cout << "Found track name " << trkname << std::endl;
+		  track_types.push_back(trkname);	  	
+	  }
+    }
+	
+	for(std::string trkname: track_types) 
+	{
+		JsonArray tracks;
+		int n = ftr.getInt(std::string("ntracks_")+trkname);
+		for(int i=0;i<n; i++) {
+			JsonObject trk;
+			trk.add("id",ftr.getInt(std::string("trkId_")+trkname,i));
+			
+			// Get array sizes for trackpoints.
+			TLeaf* lxyz = fTree->GetLeaf((std::string("trkxyz_")+trkname).c_str());
+			if(!lxyz) return;
+			int r1 = 3;
+			int r2 = 2000;
+			int r3 = 3;
+			// That is, the trkxyz has dimensions [ntrack][3][2000][3]
+			// Adujust.
+			r2 = lxyz->GetLenStatic() / 9;
+			
+			JsonArray jhits;
+			for(int iplane=0;iplane<3;iplane++){
+				int nhits_in_plane = ftr.getInt(std::string("ntrkhits_")+trkname,i,iplane);
+				for(int ihit = 0;ihit < nhits_in_plane; ihit++) {
+					JsonObject jhit;
+					int index = iplane*(r2*r3) + ihit*(r3);
+					double x = ftr.getVal(lxyz,i,index+0);
+					double y = ftr.getVal(lxyz,i,index+1);
+					double z = ftr.getVal(lxyz,i,index+2);
+				    jhit.add("x",x);
+				    jhit.add("y",y);
+				    jhit.add("z",z);
+					jhits.add(jhit);
+				}
+			}
+			trk.add("points",jhits);
+			tracks.add(trk);
+		}
+		reco_list.add(trkname,tracks);
+	}
+    {
+      boost::mutex::scoped_lock lck(fOutputMutex);
+      fOutput.add("tracks",reco_list);
+    }
+}
+
+
+/*
+void AnaRecordComposer::composeClusters()
+{
+
+    JsonObject reco_list;
+
+    TLeaf* l = fTree->GetLeaf("nclusters");
+	int nclusters = 0;
+	JsonArray arr;
+	for(int i=0;i<l->GetLen();i++) nclusters += l->GetValue(i);
+	for(int q=0;q<nclusters;q++){
+		JsonObject h;
+	    double totalCharge  = ftr.getVal("" ,i);
+	    double dTdW  = ftr.getVal("" ,i);
+	    double dQdW  = ftr.getVal("" ,i);
+	    double sigmadTdW  = ftr.getVal("" ,i);
+		
+	    double startPos  = ftr.getVal("" ,i);
+	    double endPos  = ftr.getVal("" ,i);
+		
+	    int ID  = ftr.getInt("clusterId" ,i);
+	    int view  = ftr.getInt("clusterView" ,i);
+	    double sigmaStartPos  = ftr.getVal("StartAngle" ,i);
+	    double sigmaEndPos  = ftr.getVal("EndAngle" ,i);
+		
+
+	    h.add("totalCharge",totalCharge);
+	    h.add("dTdW",dTdW);
+	    h.add("dTdW",dTdW);
+	    h.add("sigmadTdW",sigmadTdW);
+	    h.add("ID",ID);
+	    h.add("view",view);
+	    h.add("startPos",startPos);
+	    h.add("endPos",endPos);
+	    h.add("sigmaStartPos",sigmaStartPos);
+	    h.add("sigmaEndPos",);
+	    arr.add(h);
+	}
+    reco_list.add("ana",arr);
+	
+    timer.addto(fStats);
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("clusters",reco_list);
+  }
+}
+*/
+
+// void AnaRecordComposer::composeVertex()
+// {
+//
+// }
+
+
