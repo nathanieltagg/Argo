@@ -215,7 +215,8 @@ void AnaRecordComposer::composeTracks()
 			r2 = lxyz->GetLenStatic() / 9;
 			
 			JsonArray jhits;
-			for(int iplane=0;iplane<3;iplane++){
+      // for(int iplane=0;iplane<3;iplane++){ // We don't need all 3 planes!
+      int iplane = 3; {
 				int nhits_in_plane = ftr.getInt(std::string("ntrkhits_")+trkname,i,iplane);
 				for(int ihit = 0;ihit < nhits_in_plane; ihit++) {
 					JsonObject jhit;
