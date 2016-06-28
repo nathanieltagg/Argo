@@ -123,7 +123,7 @@ function ReadLocalFileSuccess()
 function QueryServer( par, myurl )
 {
     gTimeStats_StartQuery = performance.now();
-    console.log("QueryServer",par);
+    console.log("QueryServer",par,myurl);
     $("input").blur();
     
     var data = {};
@@ -160,6 +160,7 @@ function QueryServer( par, myurl )
     data = $.extend({},par)
     if(data.filename) data.filename = encodeURIComponent(par.filename);
     if(!data.options) data.options = opts;
+    
         
     var param = $.param(data);
     

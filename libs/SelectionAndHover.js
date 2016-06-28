@@ -214,9 +214,21 @@ function ComposeTrackInfo(s)
   var x = start.x;
   var y = start.y;
   var z = start.z;
-  var vx = start.vx;
-  var vy = start.vy;
-  var vz = start.vz;
+  var vx, vy,vz;
+  if(start.vx) {
+    vx = start.vx;
+    vy = start.vy;
+    vz = start.vz;
+  } else {
+    p2 = trk.points[1];
+    vx = p2.x-start.x;
+    vy = p2.y-start.y;
+    vz = p2.z-start.z;
+    v = Math.sqrt(vx*vx+vy*vy+vz*vz);
+    vx = vx/v;
+    vy = vy/v;
+    vz = vz/v;
+  }
   var length = 0;
   var dQ1 = 0;
   var dQ2 = 0;
@@ -249,20 +261,21 @@ function ComposeTrackInfo(s)
   h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" +
                          "y: " +  Math.round(start.y) + " cm<br/>" +
                          "z: " +  Math.round(start.z) + " cm<br/>" + c;
+
   h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
                          "vy: " + (vy).toFixed(3) + "<br/>" +
                          "vz: " + (vz).toFixed(3) + "<br/>" + c;
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
-  h+= a + "Total &Delta;Q"  + b +
-      Math.round(dQ1) + "</br>" +
-      Math.round(dQ2) + "</br>" +
-      Math.round(dQ3) + "</br>" + c;
-
-  h+= a + "&lt;dQ&gt;"  + b + 
-      Math.round(dQ1/trk.points.length) + "</br>" +
-      Math.round(dQ2/trk.points.length) + "</br>" +
-      Math.round(dQ3/trk.points.length) + "</br>" + c;
+  // h+= a + "Total &Delta;Q"  + b +
+  //     Math.round(dQ1) + "</br>" +
+  //     Math.round(dQ2) + "</br>" +
+  //     Math.round(dQ3) + "</br>" + c;
+  //
+  // h+= a + "&lt;dQ&gt;"  + b +
+  //     Math.round(dQ1/trk.points.length) + "</br>" +
+  //     Math.round(dQ2/trk.points.length) + "</br>" +
+  //     Math.round(dQ3/trk.points.length) + "</br>" + c;
   
   h += "</table>";
   return h;

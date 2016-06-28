@@ -867,10 +867,14 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
       // Fixme: bezier
       var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
       var v = gGeo.getTDCofX(this.plane,points[j].x) + this.offset_track_ticks; // Move it off by 1 frame
+      if(u<min_u) continue;
+      if(u>max_u) continue;
+      if(v<min_v) continue;
+      if(v>max_v) continue;
       var coords = [this.GetX(u), this.GetY(v)];
       pts.push(coords);      
     }
-    
+    if(pts.length<=0) continue;
     this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
     this.ctx.lineWidth = 2;
     
