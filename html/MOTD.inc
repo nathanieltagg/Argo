@@ -11,6 +11,7 @@
   Recent updates:<br/>
   <ul> 
     <li> Major feature: can now read AnalysisTuple files, which are much faster for quick event views!</li>    
+    <li> Major feature: can now read Larlite files (hits and tracks - more features to come)</li>    
     <li> Argo 2.0 Release</li>    
     <li> Major feature: Add coherent noise removal </li>    
     <li> Major feature: Add dead channel removal </li>    
