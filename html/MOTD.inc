@@ -10,7 +10,8 @@
   <p><em>Message of the day:</em></p>
   Recent updates:<br/>
   <ul> 
-    <li> <h1>Argo 2.0 Release</h1> </li>    
+    <li> Major feature: can now read AnalysisTuple files, which are much faster for quick event views!</li>    
+    <li> Argo 2.0 Release</li>    
     <li> Major feature: Add coherent noise removal </li>    
     <li> Major feature: Add dead channel removal </li>    
     <li> Minor change: re-skin </li>    

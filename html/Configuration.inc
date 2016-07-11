@@ -4,9 +4,9 @@
         <!-- <form id="controls" action=""> -->
 
         
-        <div><label>HV:</label><input type="text" id="ctl-high-voltage" value="70.0" size='5'/><label>kv</label> </div>
+        <div><label>HV:</label><input type="text" id="ctl-high-voltage" value="67.0" size='5'/><label>kv</label> </div>
 
-        <div><input type="checkbox" id="ctl-shift-hits"  class="saveable" name="ctl-shift-hits"  /><label for="ctl-shift-hits"  >Shift Hits</label>
+        <div><input type="checkbox" id="ctl-shift-hits"  class="saveable" name="ctl-shift-hits" checked="checked" /><label for="ctl-shift-hits"  >Shift Hits</label>
         <label>Ticks</label><input type="text" id="ctl-shift-hits-value" value="2400" size='5'/></div>
 
         <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>

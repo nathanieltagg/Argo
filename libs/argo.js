@@ -588,7 +588,7 @@ $(function(){
   $(window).hashchange( ChangeEvent );
     
   // Do intial trigger on page load.
-  console.log("Doing intitial hashchange trigger");  
+  console.log("Doing initial hashchange trigger");  
   ChangeEvent();
 
 });
