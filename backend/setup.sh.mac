@@ -1,3 +1,6 @@
+xcode-select --install
 ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 echo $ABSOLUTE_PATH
 export DYLD_LIBRARY_PATH=$ABSOLUTE_PATH/boost/lib:$DYLD_LIBRARY_PATH
+source ../backend/root/bin/thisroot.sh
+source ../backend/larlite/config/setup.sh
