@@ -142,21 +142,16 @@ $(function() {
         $('#ctl-magnifying-glass').click();
         return false;
         
-      // case 98: // 'b'
-      //   $('#ctl-show-hitmap-blobs').click(); gStateMachine.Trigger('phColorChange');
-      //   return false;
-      // case 99: // 'c'
-      //   $('#ctl-show-hitmap-clusters').click(); gStateMachine.Trigger('phColorChange');
-      //   return false;
-      // case 118: // 'v'
-      //   $('#ctl-show-hitmap-vertices').click(); gStateMachine.Trigger('phColorChange');
-      //   return false;
-      // case 116: // 't'
-      //   $('#ctl-show-hitmap-tracks').click(); gStateMachine.Trigger('phColorChange');
-      //   return false;
+
        case 114: // 'r'
          $('#ctl-show-reco').click(); 
          return false;
+   
+        case 47: // '/'
+         $('#ctl-gl-edge-finder').click(); 
+         return false;
+
+
       //   return false;
       // case 109: // 'm'
       //   $('#ctl-show-hitmap-truth').click(); gStateMachine.Trigger('phColorChange');

@@ -288,7 +288,10 @@
       <label><input type='radio' class='ctl-bad-wire-filter' id='ctl-bad-wire-filter0' name='radio-bad-wire-filter' value='0' checked="checked"/>Zero </label>
       <label><input type='radio' class='ctl-bad-wire-filter' id='ctl-bad-wire-filter1' name='radio-bad-wire-filter' value='1'/>Show</label>
       <label><input type='radio' class='ctl-bad-wire-filter' id='ctl-bad-wire-filter2' name='radio-bad-wire-filter' value='2'/>Black</label>
- </div>
+    </div>
+
+   <div class='psuedoColorRow' > <input type="checkbox" id="ctl-gl-edge-finder" name="ctl-gl-edge-finder" class="saveable ctl-gl-edge-finder"/><label for="ctl-gl-edge-finder"><b>(/)</b>WebGL edge finder</label></div>
+ 
 
 
 </div> <!-- A-FalseColorControl -->

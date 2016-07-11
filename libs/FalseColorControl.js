@@ -82,7 +82,7 @@ function FalseColorControl( element  )
 
   $('input.ctl-coherent-noise-filter').change(function(){   self.TriggerViewChange(); });
   $('input.ctl-bad-wire-filter').change(function(){   self.TriggerViewChange(); });
-
+  $('input.ctl-gl-edge-finder').change(function(){   self.TriggerViewChange(); });
 
   $('div.psuedoDialOffsetSlider').each(function(){
     var p = $(this).parent();

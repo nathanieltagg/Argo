@@ -496,13 +496,14 @@ GLMapper.prototype.RequestRendering = function(
   var do_bad_channel_location = this.gl.getUniformLocation(this.program, "do_bad_channel_flag");
   this.gl.uniform1i(do_bad_channel_location, bad_channel_flag); // 1 = on 0 = off
   
+  // set edgefinder flag
+  this.gl.uniform1i(this.gl.getUniformLocation(this.program, "do_edge_finder"), $('#ctl-gl-edge-finder').is(":checked") ? 1:0 ); // 1 = on 0 = off
+ 
   // Controls for doing a nearest-neighbor pixel smear.
   var do_smear = 0;
   var do_smear_location = this.gl.getUniformLocation(this.program, "do_smear");
   this.gl.uniform1i(do_smear_location, do_smear); // 1 = on 0 = off
 
-  this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_x"), 0.5/this.total_width);
-  this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_y"), 0.5/this.total_height);
 
   
 
@@ -530,8 +531,13 @@ GLMapper.prototype.RequestRendering = function(
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
       
+      this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_x"), 1.0/elem.width);
+      this.gl.uniform1f(this.gl.getUniformLocation(this.program, "pixel_width_y"), 1.0/elem.height);
+
+
       this.SetRect((elem.x-x)*stretch_x,(elem.y-y)*stretch_y,elem.width*stretch_x,elem.height*stretch_y);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+
     }
   }
   console.timeEnd('GLMapper::RequestRendering');   

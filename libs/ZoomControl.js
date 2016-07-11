@@ -179,6 +179,8 @@ ZoomControl.prototype.AutoZoom = function()
   var hitsListName = $("#ctl-HitLists").val();
   var hits = gRecord.hits[hitsListName];
   if(!hits) return this.FullZoom();
+  var   offset_hit_time = 0;
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );
   
   // Grid it.
   var width_wire = 1000;
@@ -200,7 +202,7 @@ ZoomControl.prototype.AutoZoom = function()
         var hit = hits[ihit];
         if(hit.plane==2) {
           var ix = Math.floor(hit.wire/width_wire - offset_x);
-          var iy = Math.floor(hit.t/width_tdc - offset_y);
+          var iy = Math.floor((hit.t+offset_hit_time)/width_tdc - offset_y);
           if(ix>=nbox_x) console.warn("autozoom wtf?");
           gridboxes[ix+iy*nbox_x] += 1;
         }
@@ -235,8 +237,8 @@ ZoomControl.prototype.AutoZoom = function()
   // :-(
       
   console.log("Zoom to wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
-  gZoomRegion.setLimits(2,wire_lo,wire_hi);
   gZoomRegion.changeTimeRange(tdc_lo,tdc_hi);
+  gZoomRegion.setLimits(2,wire_lo,wire_hi);
   // console.warn("AutoZoom wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
   gStateMachine.Trigger("zoomChange");
   

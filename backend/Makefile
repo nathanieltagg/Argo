@@ -118,6 +118,14 @@ LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config 
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
 CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
 
+### LarLite
+# comment out this section if larlite not available
+# symlink larlite to current directory
+CPPFLAGS += -DLARLITE=1
+LARLITE_PATH = ./larlite
+CPPFLAGS += -I $(LARLITE_PATH)/core
+LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
+LDFLAGS += 	-Wl,-rpath,@exec_path/larlite/lib
 
 # add any other desired libs here
 # PNG

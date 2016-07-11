@@ -183,6 +183,12 @@ WireInfo.prototype.Draw = function()
   this.graph.min_v =  1e9;
   
   this.graph_data = this.GetWireDataHistograms(offscreenCtx,chan,tdc,100)
+
+  if($('#ctl-gl-edge-finder').is(":checked")) {
+    for(var i=0;i<this.graph_data.noiseremoved.n;i++) {
+      this.graph_data.noiseremoved.data[i] = this.graph_data.noiseremoved.data[i]-this.graph_data.noiseremoved.data[i+1];
+    }
+  }
   
   var dotcolor = {
     GetColor: function(t,f) { var c=gWirePseudoColor.ColorDialToColor(gWirePseudoColor.AdcToColorDial(f)); 

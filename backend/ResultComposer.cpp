@@ -11,7 +11,10 @@
 #include "ArtRecordComposer.h"
 #include "RawRecordComposer.h"
 #include "AnaRecordComposer.h"
-#include "LarliteRecordComposer.h"
+#ifdef LARLITE
+#include "LarliteRecordComposer.h"  
+#endif
+
 #include <TTree.h>
 #include <TFile.h>
 #include <TROOT.h>
@@ -436,6 +439,99 @@ void ResultComposer::compose_from_larlite(
          Long64_t inStart,
          Long64_t inEnd )
 {
+#ifdef LARLITE
+  std::cout << "Composing from Larlite file" << std::endl;
+  
+  // Open the tree.
+  TTree* tree = (TTree*) rootfile->Get("larlite_id_tree");
+
+  // OK, find the entry in question.
+  Long64_t nentries = tree->GetEntriesFast();
+  if(nentries<1){
+    result.add("error",string("No entries in tree in file ") + inRootFile);
+    return;
+  }
+
+  // Scan through entries, looking for specified selection.
+  TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
+  if (!select) {
+      result.add("error","Could not create TTreeFormula.");
+      return;
+  }
+  if (!select->GetNdim()) {
+    delete select;
+    result.add("error","Problem with your selection function..");
+    return;
+  }
+
+  Long64_t jentry;
+  bool match = false;
+  if( inStart >=0 ) {
+    // Forward search, situation normal
+    Long64_t stop = nentries;
+    if(inEnd>0 && inEnd<stop) stop = inEnd;
+    for (jentry=inStart; jentry<stop; jentry++) {
+      // cerr << "GetEntry(" << jentry << ")" << endl;
+      //tree->GetEntry(jentry);
+      tree->LoadTree(jentry);
+      // Does the selection match any part of the tree?
+      int nsel = select->GetNdata();
+      for(int i=0;i<nsel;i++) {
+        if(select->EvalInstance(i) != 0){
+          match = true; break;
+        }
+      }
+      if(match) break;
+    }
+  } else {
+    // inStart<0 : backward search
+    Long64_t start = nentries+inStart;
+    if(start>=nentries) start = nentries-1;
+    if(start<0) start = 0;
+    Long64_t stop = 0;
+    if(inEnd>0 && inEnd<=start) stop = inEnd;
+    for (jentry=start; jentry>=stop; jentry--) {
+      cerr << "GetEntry(" << jentry << ")" << endl;
+      //tree->GetEntry(jentry);
+      tree->LoadTree(jentry);
+      // Does the selection match any part of the tree?
+      int nsel = select->GetNdata();
+      for(int i=0;i<nsel;i++) {
+        if(select->EvalInstance(i) != 0){
+          match = true; break;
+        }
+      }
+      if(match) break;
+    }
+
+  }
+  delete select;
+  if(!match) {
+    result.add("error","Selection matched no events in file.");
+    return;
+  }
+
+  JsonObject source;
+  source.add("file",inRootFile);
+  source.add("selection",inSelection);
+  source.add("start",inStart);
+  source.add("end",inEnd);
+  source.add("entry",jentry);
+  source.add("options",inOptions);
+  source.add("numEntriesInFile",nentries);
+  result.add("source",source);
+
+  addMonitorData();
+  //
+  // Get it.
+  //
+  // Here's where all the joy happens.
+  LarliteRecordComposer composer(result,inRootFile,jentry,inOptions);
+  composer.fCacheStoragePath     = m_config["CacheStoragePath"];
+  composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
+  composer.fCreateSubdirCache = false;
+  composer.compose();
+#endif
 }
 
 
