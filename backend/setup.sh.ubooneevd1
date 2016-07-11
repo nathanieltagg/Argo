@@ -11,6 +11,7 @@ setup root v5_34_25a -q e7:nu:prof
 setup boost v1_57_0 -q e7:prof
 setup postgresql v9_1_14
 setup sqlite v3_08_08_02
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../backend/larlite/lib
 #export UBOONEDAQ_DATATYPES_DIR=/home/argo/ubdaq/uboonedaq-datatypes
 #export UBOONEDAQ_DATATYPES_DIR=/home/argo/ubdaq/uboonedaq
 
