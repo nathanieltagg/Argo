@@ -123,6 +123,7 @@ function WireView( element, options )
   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
   this.ctl_track_shift  =  GetBestControl(this.element,".track-shift-window");
+  this.ctl_track_shift_value  =  GetBestControl(this.element,"#ctl-track-shift-value");
   this.ctl_show_showers =  GetBestControl(this.element,".show-showers");
   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
@@ -142,6 +143,7 @@ function WireView( element, options )
   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_showers).change(function(ev) { return self.Draw(false); });
   $(this.ctl_track_shift) .change(function(ev) { return self.Draw(false); });
+  $(this.ctl_track_shift_value) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
@@ -847,7 +849,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   if(!tracklistname) return;
 
   this.offset_track_ticks = 0;
-  if($("#ctl-track-shift-window").prop("checked")) this.offset_track_ticks = 3200;
+  if(this.ctl_track_shift.prop("checked")) this.offset_track_ticks = parseInt(this.ctl_track_shift_value.val());
 
   var bezier = tracklistname.match(/bezier/)!==null;
   if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }

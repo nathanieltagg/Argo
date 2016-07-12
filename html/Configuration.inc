@@ -51,8 +51,14 @@
         <div> <select id="ctl-SpacepointLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
 
         <div><input type="checkbox" id="ctl-show-tracks"  name="show-tracks"  class="saveable show-tracks"  checked="checked"/><label for="ctl-show-tracks">  <b>(t)</b> Show Tracks </label></div>
+        
         <div><b>(shift-T)</b> <select id="ctl-TrackLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
-        <div>&nbsp;&nbsp;<input type="checkbox" id="ctl-track-shift-window"      name="track-shift-window"   checked="checked"   class="saveable track-shift-window"  /><label for="track-shift-window">      <b>(o)</b> Shift Tracks 1 Window</label></div>
+        
+        <div>&nbsp;&nbsp;
+          <input type="checkbox" id="ctl-track-shift-window"  name="track-shift-window" checked="checked" class="saveable track-shift-window"  />
+            <label for="track-shift-window"> Shift Tracks Ticks:</label>
+          <input type="text"  class="savelable track-shift-value" id="ctl-track-shift-value" value="2400" size='5'/>
+        </div>
 
         <div><input type="checkbox" id="ctl-show-showers"  name="show-showers"  class="saveable show-showers"  checked="checked"/><label for="ctl-show-showers">  <b>(s)</b> Show Showers </label></div>
         <div><b>(shift-S)</b> <select id="ctl-ShowerLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>

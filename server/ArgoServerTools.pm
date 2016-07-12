@@ -23,6 +23,8 @@ our $exec_name = 'argo-backend';
 our $exec_arguments = "";
 our $allow_live_restart = 1;
 our $log_path = '../logs';
+our $sudo_user = '';
+
 
 do("../config/server_config.pl"); # # load file if present.
 
@@ -176,7 +178,7 @@ sub start_server
       open (STDIN,  '</dev/null'); # No input
       open (STDOUT, '>', $logfile); # Output to log file
       open (STDERR, ">&STDOUT");
-
+      chmod 0666, $logfile;
       my $cur_path = cwd();
 
       print "Starting a new job...\n";
@@ -184,6 +186,11 @@ sub start_server
       my $cmd = "cd $log_path; $cur_path/../backend/$exec_name $exec_args >>$logfile 2>&1";
       if( -e "../backend/setup.sh") { $cmd = "source ../backend/setup.sh; " . $cmd; }
       else { print "Not sourcing setup file.\n"; }
+
+      if($sudo_user ne '') {
+        print "Trying sudo $sudo_user\n";
+        $cmd = "echo '' | sudo -S -u $sudo_user bash -c '$cmd'";
+      }
 
       # print "Environment...\n";
       # system("/bin/bash -c set >> $logfile");
