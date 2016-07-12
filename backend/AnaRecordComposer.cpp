@@ -216,7 +216,7 @@ void AnaRecordComposer::composeTracks()
 			
 			JsonArray jhits;
       // for(int iplane=0;iplane<3;iplane++){ // We don't need all 3 planes!
-      int iplane = 3; {
+      int iplane = 2; {
 				int nhits_in_plane = ftr.getInt(std::string("ntrkhits_")+trkname,i,iplane);
 				for(int ihit = 0;ihit < nhits_in_plane; ihit++) {
 					JsonObject jhit;
@@ -224,9 +224,9 @@ void AnaRecordComposer::composeTracks()
 					double x = ftr.getVal(lxyz,i,index+0);
 					double y = ftr.getVal(lxyz,i,index+1);
 					double z = ftr.getVal(lxyz,i,index+2);
-				    jhit.add("x",x);
-				    jhit.add("y",y);
-				    jhit.add("z",z);
+				  jhit.add("x",x);
+				  jhit.add("y",y);
+				  jhit.add("z",z);
 					jhits.add(jhit);
 				}
 			}
