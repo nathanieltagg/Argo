@@ -54,7 +54,7 @@ $(function(){
       thickness: 8,
       size: $('#main-circleprogress').width(),
       fill: {
-          gradient: ["white","white","red"]
+          gradient: ["white","orange","red"]
         , gradientAngle: Math.PI / 2 
       }
   });
