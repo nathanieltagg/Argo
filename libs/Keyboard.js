@@ -1,12 +1,57 @@
 
 /// Code for cycling options in a drop-down <select> menu.
 
+function myGrowlToggle(title,checkbox)
+{
+  
+}
+function myGrowl(title,msg)
+{
+  var msg = $('<div><h2>'+title+'</h2>'+msg+'</div>');
+  $.blockUI({ 
+      message: msg,
+      fadeIn: 50, 
+      fadeOut: 400, 
+      timeout: 600, 
+      showOverlay: false, 
+      centerY: false, 
+      centerX: false, 
+      css: { 
+          width: 'default', 
+          top: '10px', 
+          left: '', 
+          right: '10px', 
+          border: 'none', 
+          padding: '5px', 
+          backgroundColor: '#000', 
+          '-webkit-border-radius': '10px', 
+          '-moz-border-radius': '10px', 
+          opacity: .6, 
+          color: '#fff' 
+      } 
+  }); 
+}
+
 (function( $ ) {
-    $.fn.cycle_dropdown = function() { 
+    $.fn.cycle_dropdown = function(txtalert) { 
       var s = $("option:selected",this).last();
       var n = $(s).next();
       if(n.length === 0) n = $("option",this).first();
       this.val(n.val());
+      if(txtalert) {
+        myGrowl(txtalert,this.val());
+      }
+      return this;
+    }; 
+}( jQuery ));
+
+(function( $ ) {
+    $.fn.checkbox_announce = function(txtalert) { 
+      if(txtalert) {
+        var msg = txtalert + " " + (this.is(":checked")?"On":"Off");
+        console.log("checkbox_announce",this,txtalert,this.is(":checked"),msg);
+        myGrowl("",msg);
+      }
       return this;
     }; 
 }( jQuery ));
@@ -63,7 +108,7 @@ $(function() {
         DoNextEvent(); return false;
       
       case 119: // 'w'
-        $('#ctl-show-wireimg').click();
+        $('#ctl-show-wireimg').click().checkbox_announce("Show Wiredata:");
         return false;
 
       case 87: // 'W'
@@ -71,55 +116,55 @@ $(function() {
         return false;
 
       case 104: // 'h'
-        $('#ctl-show-hits').click();
+        $('#ctl-show-hits').click().checkbox_announce("Show Hits:");
         return false;
 
       case 72: // 'H'
-        $('#ctl-HitLists').cycle_dropdown().trigger("change");
+        $('#ctl-HitLists').cycle_dropdown("Hits:").trigger("change");
         return false;
 
       case 99: // 'c'
-        $('#ctl-show-clus').click();
+        $('#ctl-show-clus').click().checkbox_announce("Show Clusters:");
         return false;
 
       case 67: // 'C'
-        $('#ctl-ClusterLists').cycle_dropdown().trigger("change");
+        $('#ctl-ClusterLists').cycle_dropdown("Clusters:").trigger("change");
         return false;
 
       case 101: // 'e'
-        $('#ctl-show-endpoint2d').click();
+        $('#ctl-show-endpoint2d').click().checkbox_announce("Show Endpoint2d:");
         return false;
         
       case 69: // 'E'
-        $('#ctl-EndpointLists').cycle_dropdown().trigger("change");
+        $('#ctl-EndpointLists').cycle_dropdown("Endpoints:").trigger("change");
         return false;
         
       case 115: // 's'
-        $('#ctl-show-showers').click();
+        $('#ctl-show-showers').click().checkbox_announce("Show Showers:");
         return false;
 
       case 83: // 'S'
-        $('#ctl-ShowerLists').cycle_dropdown().trigger("change");
+        $('#ctl-ShowerLists').cycle_dropdown("Showers:").trigger("change");
         return false;
 
       case 116: // 't' 
-        $('#ctl-show-tracks').click();
+        $('#ctl-show-tracks').click().checkbox_announce("Show tracks:");
         return false;
 
       case 84: // 'T'
-        $('#ctl-TrackLists').cycle_dropdown().trigger("change");
+        $('#ctl-TrackLists').cycle_dropdown("Tracks:").trigger("change");
         return false;
 
       case 102: // 'f' 
-        $('#ctl-coherent-noise-filter').click();
+        $('#ctl-coherent-noise-filter').click().checkbox_announce("Coherent Noise Filter:");
         return false;
 
       case 70: // 'F'
-        $('#ctl-OpFlashLists').cycle_dropdown().trigger("change");
+        $('#ctl-OpFlashLists').cycle_dropdown("Opflash:").trigger("change");
         return false;
         
       case 111: // 'o' 
-        $('#ctl-track-shift-window').click();
+        $('#ctl-track-shift-window').click().checkbox_announce("Shift tracks:");
         return false;
         
 
@@ -128,27 +173,27 @@ $(function() {
         return false;
         
       case 109: // 'm'
-        $('#ctl-show-mc').click();
+        $('#ctl-show-mc').click().checkbox_announce("Monte Carlo Tracks:");
         return false;
       case 77: // 'M'
-        $('#ctl-show-mc-neutrals').click();
+        $('#ctl-show-mc-neutrals').click().checkbox_announce("MC Neutral Particles:");
         return false;
         
       case 122: // 'z'
-        $('#ctl-mc-move-tzero').click();
+        $('#ctl-mc-move-tzero').click().checkbox_announce("MC Shift t0:");;
         return false;
       
       case 103: //'g'
-        $('#ctl-magnifying-glass').click();
+        $('#ctl-magnifying-glass').click().checkbox_announce("Magnifying glass:");
         return false;
         
 
        case 114: // 'r'
-         $('#ctl-show-reco').click(); 
+         $('#ctl-show-reco').click().checkbox_announce("Reconstruction:");;
          return false;
    
         case 47: // '/'
-         $('#ctl-gl-edge-finder').click(); 
+         $('#ctl-gl-edge-finder').click().checkbox_announce("GL Edge Finder");;
          return false;
 
 
@@ -181,7 +226,7 @@ $(function() {
       // 
     case 108:
       // l: logscale
-      return $('#ctl-histo-logscale').click();
+      return $('#ctl-histo-logscale').click().checkbox_announce("Log scale: ");;
             
     case 80:
         // console.log("P:",event);
