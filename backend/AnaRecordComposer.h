@@ -27,8 +27,8 @@ public:
   void composeHeader();
   void composeHits();
   void composeTracks();
-  // void composeVertices();
-
+  void composeOpFlash();
+  
   JsonObject& fOutput; // Top-level output object
   JsonObject fStats; // Processing metadata
   TTree* fTree;
@@ -48,8 +48,6 @@ public:
   double event_time;
   
   boost::mutex fOutputMutex;
-  
-
   
 };
 

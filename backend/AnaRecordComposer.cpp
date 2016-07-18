@@ -88,6 +88,7 @@ void AnaRecordComposer::compose()
   composeHeader();
   composeHits();
   composeTracks();
+  composeOpFlash();
   // composeClusters();
   // composeVertices();
   // etc.
@@ -241,54 +242,43 @@ void AnaRecordComposer::composeTracks()
     }
 }
 
-
-/*
-void AnaRecordComposer::composeClusters()
+void AnaRecordComposer::composeOpFlash()
 {
+	JsonObject reco_list;
+	JsonArray jflashes;
+  TimeReporter timer("opflash");
+  int n = ftr.getInt("no_flashes");
+  for(int i=0;i<n; i++) {
+		JsonObject jflash;
+    jflash.add("time"       ,ftr.getJson("flash_time",i));
+    jflash.add("timeWidth"  ,ftr.getJson("flash_timewidth",i));
+    // jflash.add("absTime"    ,ftr.getJson("obj.fAbsTime",i));
+    jflash.add("yCenter"    ,ftr.getJson("flash_ycenter",i));
+    jflash.add("yWidth"     ,ftr.getJson("flash_ywidth",i));
+    jflash.add("zCenter"    ,ftr.getJson("flash_zcenter",i));
+    jflash.add("zWidth"     ,ftr.getJson("flash_zwidth",i));
+    // jflash.add("onBeamTime" ,ftr.getJson("obj.fOnBeamTime",i));
+    // jflash.add("inBeamFrame",ftr.getJson("obj.fInBeamFrame",i));
+    jflash.add("totPe",      ftr.getJson("flash_pe",i));
+    
+    JsonArray dummy;
+    dummy.add(0);    dummy.add(0);    dummy.add(0);
+    jflash.add("wireCenter",dummy);
+    jflash.add("wireWidths",dummy);
+    jflash.add("pePerOpDet",dummy);
 
-    JsonObject reco_list;
-
-    TLeaf* l = fTree->GetLeaf("nclusters");
-	int nclusters = 0;
-	JsonArray arr;
-	for(int i=0;i<l->GetLen();i++) nclusters += l->GetValue(i);
-	for(int q=0;q<nclusters;q++){
-		JsonObject h;
-	    double totalCharge  = ftr.getVal("" ,i);
-	    double dTdW  = ftr.getVal("" ,i);
-	    double dQdW  = ftr.getVal("" ,i);
-	    double sigmadTdW  = ftr.getVal("" ,i);
-		
-	    double startPos  = ftr.getVal("" ,i);
-	    double endPos  = ftr.getVal("" ,i);
-		
-	    int ID  = ftr.getInt("clusterId" ,i);
-	    int view  = ftr.getInt("clusterView" ,i);
-	    double sigmaStartPos  = ftr.getVal("StartAngle" ,i);
-	    double sigmaEndPos  = ftr.getVal("EndAngle" ,i);
-		
-
-	    h.add("totalCharge",totalCharge);
-	    h.add("dTdW",dTdW);
-	    h.add("dTdW",dTdW);
-	    h.add("sigmadTdW",sigmadTdW);
-	    h.add("ID",ID);
-	    h.add("view",view);
-	    h.add("startPos",startPos);
-	    h.add("endPos",endPos);
-	    h.add("sigmaStartPos",sigmaStartPos);
-	    h.add("sigmaEndPos",);
-	    arr.add(h);
-	}
-    reco_list.add("ana",arr);
-	
-    timer.addto(fStats);
+    jflashes.add(jflash);
+  }
+  reco_list.add("ana",jflashes);
+  timer.addto(fStats);
   {
-    boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("clusters",reco_list);
+  boost::mutex::scoped_lock lck(fOutputMutex);
+  fOutput.add("opflashes",reco_list);
   }
 }
-*/
+    
+
+
 
 // void AnaRecordComposer::composeVertex()
 // {
