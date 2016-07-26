@@ -331,6 +331,11 @@ function StartEvent()
     if(gRecord.source.subrun)$(".inSubrun").val(gRecord.source.subrun);
   }
   
+  if(gRecord.header) {
+    if(gRecord.header.run) {
+      window.document.title = "Argo "+ gRecord.header.run + "|"+gRecord.header.subrun+"|"+gRecord.header.event;
+    }
+  }
   // Do initial data indexing and bookmarking.
   DoInitialBookmarking();
   

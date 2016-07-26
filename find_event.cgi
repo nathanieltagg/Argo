@@ -23,14 +23,15 @@ my $logtext;
 open(LOG, ">", \$logtext);
 
 $title = 'SamWebSpider ';
-if(param("file")) { $title .= param('file');}
-elsif(param("def"))  { $title .= param('def');}
-elsif(param("def_starts_with"))  { $title .= param('def_starts_with');}
+# if(param("file")) { $title .= param('file');}
+# elsif(param("def"))  { $title .= param('def');}
+# elsif(param("def_starts_with"))  { $title .= param('def_starts_with');}
 
-my $event  = param('event') || 0;
+my $event  = param('event');
 my $subrun = param('subrun') || 0;
 my $run    = param('run') || 0;
-my $project  =  param('project') || "anatree_outbnb";
+my $project  =  param('project');
+my $defname= param('defname');
  
 print LOG "$run|$subrun|$event" . br;
 
@@ -38,7 +39,14 @@ print LOG "$run|$subrun|$event" . br;
 # http://samweb.fnal.gov:8480/sam/uboone/api/files/list/dimensions
 # note however that first_event and last_event are cocked up
 
-$cmd = "$samweb list-files \"run_number=$run.$subrun and ub_project.name=$project\"";
+$query = "run_number=$run.$subrun";
+if(defined $defname) {
+  $query .= " and defname:$defname";
+}
+if(defined $project) {
+  $query .= " and ub_project.name=$project";
+}
+$cmd = "$samweb list-files \"$query\"";
 print LOG $cmd . br;
 open(my $fh, "$cmd |") or die "Can't open samweb. Contact Nathaniel";
 my $file = "";
@@ -89,10 +97,12 @@ if(length($dirname)>0) {
 
 
   $selection="1";
-  if($project=~/anatree/) {
-    $selection=uri_escape("event==$event");
-  } else {
-    $selection=uri_escape("EventAuxiliary.id_.event_==$event");
+  if(defined $event) {
+    if($project=~/anatree/) {
+      $selection=uri_escape("event==$event");
+    } else {
+      $selection=uri_escape("EventAuxiliary.id_.event_==$event");
+    }
   }
   $argolink = "./#filename=$path&selection=$selection&entry=0";
 
@@ -115,7 +125,6 @@ if(length($argolink)>0) {
   exit(1);
 
 }
-
 
 
 
