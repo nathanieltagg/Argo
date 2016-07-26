@@ -348,7 +348,7 @@ ZoomControl.prototype.NewRecord = function()
   }
 
   if(gPageName=="live") this.FullZoom();
-  this.AutoZoom();
+  else this.AutoZoom();
 };
 
 
