@@ -22,7 +22,7 @@ function Preload(par, myurl)
   gPreload_Serving = null;   // Data element from server, including wrapper with possible error messages.
   gPreload_Record = null;    // This is the core data element
   gPreload_URL = null;
-  gPreload_images = null;
+  gPreload_images = {};
 
     gPreload_TimeStats_StartQuery = performance.now();
     console.log("Preload",par,myurl);
