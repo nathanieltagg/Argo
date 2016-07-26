@@ -138,11 +138,13 @@ function Preload_QuerySuccess(data,textStatus,jqxhr)
 
 function Preload_ImageLoaded(row,col)
 {
-  var done = true;
-  for(var i=0; i< gPreload_images.images.length; i++) {
-    if(!gPreload_images.images[i].complete) done = false;
+  if(gPreload_images.images) {
+    var done = true;
+    for(var i=0; i< gPreload_images.images.length; i++) {
+      if(!gPreload_images.images[i].complete) done = false;
+    }
+    if(done) Preload_Finish()    
   }
-  if(done) Preload_Finish()
 }
 
 function Preload_Finish()
