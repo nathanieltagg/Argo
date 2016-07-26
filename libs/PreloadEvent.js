@@ -143,15 +143,21 @@ function Preload_ImageLoaded(row,col)
     for(var i=0; i< gPreload_images.images.length; i++) {
       if(!gPreload_images.images[i].complete) done = false;
     }
-    if(done) Preload_Finish()    
+    if(done) Preload_Finish(); 
   }
 }
 
 function Preload_Finish()
 {
+  if(!gPreload_Record) return;
   gjqXHR   = gPreload_jqXHR;       
   gServing = gPreload_Serving;    // Data element from server, including wrapper with possible error messages.
   gRecord  = gPreload_Record;      // This is the core data element
+
+  // Disallow multiple calls.
+  gPreload_jqXHR = null;    
+  gPreload_Serving = null;   // Data element from server, including wrapper with possible error messages.
+  gPreload_Record = null;    // This is the core data element
 
   StartEvent();
   gFinishedDrawTime = (new Date()).getTime();
