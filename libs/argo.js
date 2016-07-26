@@ -205,6 +205,8 @@ $(function(){
       // console.log($(this).text(),"is not hidden");
       $(this).prepend('<span class="ui-icon ui-icon-minusthick icon-shrink"></span>');      
     }
+    $(this).prepend('<span  class="ui-icon ui-icon-blank " > </span>');
+    
   });
 
   $(".portlet-header .ui-icon-print").click(function(){    

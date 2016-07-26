@@ -63,7 +63,8 @@ function WireView( element, options )
     tick_label_font: "10px serif",
     show_image:   false, // can be false, 'raw', or 'cal'
     show_hits:    false,
-    show_mc:      true
+    show_mc:      true,
+    rgb_mode:     false
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.

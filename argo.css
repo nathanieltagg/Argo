@@ -514,6 +514,11 @@ div.A-WireView {
   height: 400px;
 }
 
+
+div.A-RgbWireView {
+  height: 400px;
+}
+
 div.A-WireHistogram {
   height: 100px;
 }

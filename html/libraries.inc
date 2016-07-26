@@ -99,6 +99,7 @@
 <script type="text/javascript" src="libs/TimeHistogram.js"></script> 
 <script type="text/javascript" src="libs/WireHistogram.js"></script> 
 <script type="text/javascript" src="libs/WireView.js"></script> 
+<script type="text/javascript" src="libs/RgbWireView.js"></script> 
 <script type="text/javascript" src="libs/WireInfo.js"></script> 
 <script type="text/javascript" src="libs/ZoomControl.js"></script> 
 <script type="text/javascript" src="libs/MCInfo.js"></script> 
