@@ -124,6 +124,7 @@
 
 <!-- My classes for talking to the back-end and other displays-->
 <script type="text/javascript" src="libs/QueryServer.js"></script> 
+<script type="text/javascript" src="libs/PreloadEvent.js"></script> 
 <script type="text/javascript" src="libs/ArgoData.js"></script> 
 
 <!-- Main scripts. Start here. -->
