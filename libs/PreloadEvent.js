@@ -17,7 +17,7 @@ gPreload_images = null;
 function Preload(par, myurl)
 {
   
-  if(gPreload_Record) PreloadFinish();
+  if(gPreload_Record) Preload_Finish();
   gPreload_jqXHR = null;    
   gPreload_Serving = null;   // Data element from server, including wrapper with possible error messages.
   gPreload_Record = null;    // This is the core data element
