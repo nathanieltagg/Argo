@@ -57,7 +57,7 @@ function Preload(par, myurl)
             success:  Preload_QuerySuccess,
             xhrFields: {
               onprogress : function(evt){
-                console.log("progress",parseInt(evt.loaded/evt.total*100)+'%');
+                console.log("Preload json progress",parseInt(evt.loaded/evt.total*100)+'%');
                }
               
             }

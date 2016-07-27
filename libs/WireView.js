@@ -64,7 +64,8 @@ function WireView( element, options )
     show_image:   false, // can be false, 'raw', or 'cal'
     show_hits:    false,
     show_mc:      true,
-    rgb_mode:     false
+    track_color: "rgba(89, 169, 28, 1)",
+    wire_shift: [0,0,0], // for RGB mode
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
@@ -868,7 +869,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     var pts = [];
     for(var j=0;j<points.length;j++) {
       // Fixme: bezier
-      var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z);
+      var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z) - this.wire_shift[this.plane];
       var v = gGeo.getTDCofX(this.plane,points[j].x) + this.offset_track_ticks; // Move it off by 1 frame
       if(u<min_u) continue;
       if(u>max_u) continue;
@@ -878,7 +879,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
       pts.push(coords);      
     }
     if(pts.length<=0) continue;
-    this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
+    this.ctx.strokeStyle = this.track_color;
     this.ctx.lineWidth = 2;
     
     // Draw underlay

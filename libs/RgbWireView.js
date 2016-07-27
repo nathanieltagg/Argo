@@ -142,3 +142,16 @@ RgbWireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       
     }
 };
+
+RgbWireView.prototype.DrawTracks = function(min_u, max_u, min_v, max_v)
+{
+  this.plane=0;
+  this.track_color = "rgb(255,0,0)";
+  WireView.prototype.DrawTracks.call(this,min_u,max_u,min_v,max_v);
+  this.plane=1;
+  this.track_color = "rgb(0,255,0)";
+  WireView.prototype.DrawTracks.call(this,min_u,max_u,min_v,max_v);
+  this.plane=2;
+  this.track_color = "rgb(0,0,255)";
+  WireView.prototype.DrawTracks.call(this,min_u,max_u,min_v,max_v);
+}
