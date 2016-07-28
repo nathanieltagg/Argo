@@ -75,7 +75,7 @@ div.A-TimeHistogram {
       <input class="ui-state-default ui-corner-all" type="button" id="go_livedata" value="Get Live Data!" style="float:left; margin:10px"/>
       <div id='refresh-clock' style='float:left; width: 25px; margin:10px; display:inline-block;'></div>
       <span><label for="ctl-refresh-auto">Auto-refresh live data:</label><input id="ctl-refresh-auto" name="ctl-refresh-auto" type="checkbox" checked="yes" class="saveable auto-save-on-change"/><br/>
-      <label for="ctl-refresh-period">Cycle event every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class=".saveable" value="60.0" />seconds</span>
+      <label for="ctl-refresh-period">Cycle event every:</label><input id="ctl-refresh-period" name="ctl-refresh-period" type="text" size="5" class="saveable" value="60.0" />seconds</span>
     </div>
 
     <div style="clear:both; border: solid 1px black; ">
@@ -90,7 +90,9 @@ div.A-TimeHistogram {
 
   <div id='live-rightbar'>
     <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"  class="saveable auto-save-on-change show-hits"  /><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label>
-    <input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" checked="checked" class="saveable auto-save-on-change show-wireimg" /><label for="ctl-show-wireimg"><b>(w)</b> Show Wire data</label></div>
+    <input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" checked="checked" class="saveable auto-save-on-change show-wireimg" /><label for="ctl-show-wireimg"><b>(w)</b> Show Wires</label>
+ <button  style='font-size: 10px;' class="ctl-restore-defaults" />Restore Defaults</button>
+ </div>
     
     <div class="portlet" id="eventinfo-port"> 
     <div class="portlet-header">Event Info</div>
