@@ -25,7 +25,6 @@ function RgbWireView( element, options )
   var settings = {
     rgb_mode:     true,
     plane:       2,
-    wire_shift: [0,0,0]
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   WireView.call(this, element, settings); // Give settings to Pad contructor.
@@ -147,6 +146,7 @@ RgbWireView.prototype.DrawTracks = function(min_u, max_u, min_v, max_v)
 {
   this.plane=0;
   this.track_color = "rgb(255,0,0)";
+  
   WireView.prototype.DrawTracks.call(this,min_u,max_u,min_v,max_v);
   this.plane=1;
   this.track_color = "rgb(0,255,0)";

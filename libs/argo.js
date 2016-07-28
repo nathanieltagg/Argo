@@ -383,7 +383,7 @@ $(function() {
 // Auto-Save
 ////////////////////////////////////////
 $(function(){
-  $('.auto-save-on-change').on("click change",function(ev) {
+  $('.saveable,.auto-save-on-change').on("click change",function(ev) {
     val = $(this).val();
     if($(this).is(":checkbox")) val = $(this).is(":checked");
     $.cookie("save:"+this.id,val);    
@@ -429,11 +429,7 @@ function SaveSettings( slot ) {
   });
 
   console.log("cookies saved.");
-  $.blockUI({ 
-      message: '<h1>Configuration Saved.</h1>'
-  }); 
-
-  setTimeout($.unblockUI, 800); 
+  myGrowl("Window Configuration Saved");
 }
 
 
@@ -541,30 +537,20 @@ $(function(){
 
   $('#ctl-load-config').button().click(function(){
     RestoreSettings("save");
-    $.blockUI({ 
-        message: '<h1>Configuration Loaded.</h1>'
-    }); 
-
-    setTimeout($.unblockUI, 800); 
+    myGrowl("Configuration Loaded");
 
     return true;
   });
 
   
   // Clear all cookies.
-  $("#ctl-restore-defaults").button().click(function(){
+  $(".ctl-restore-defaults,#ctl-restore-defaults").button().click(function(){
     var Cookies = $.cookie();
     for (key in Cookies) {
       console.log("removing "+ key);
       $.removeCookie(key);
     }
-    
-    $.blockUI({ 
-        message: '<h1>Configuration restored to default.</h1><p>Hit reload to move things back</p>'
-    }); 
-
-    setTimeout($.unblockUI, 800); 
-
+    myGrowl('Configuration restored to default.','(Reload to move windows to original positions')
 
     // if(gUrlToThisEvent) window.location = gUrlToThisEvent;
     // else window.location.reload();
