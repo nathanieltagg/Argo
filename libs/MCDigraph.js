@@ -109,6 +109,8 @@ MCDigraph.prototype.NewRecord = function()
         etext = Math.round(ke*1e6) + " keV";
       } 
       node.name = "<span style='float:left;'>" + particle_name + "</span><span style='float:right;'>"+etext+"</span>";
+      if(p.fprocess) node.name += " " + p.fprocess;
+    
       node.data = { particle: p };
     }
     
