@@ -8,5 +8,8 @@ setup postgresql v9_1_14
 #this sets up the current default:
 setup uboonedaq -q e7:debug
 
+pushd `dirname $0`
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./larlite/lib
+popd 
 # override with newest version, temporary jan 2016
 #setup uboonedaq v6_18_00 -q e7:debug
