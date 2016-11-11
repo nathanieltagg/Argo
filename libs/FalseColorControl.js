@@ -247,7 +247,7 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   if(!newpanel) return; // Just hid the panel; no need for action.
   var id = newpanel.id;
   console.warn("FalseColorControl::ChangeScheme",id);
-  $('#falsecolor-scheme').val(id);
+  $('#falsecolor-scheme').val(id).trigger('change');
   
   this.currentTabDiv = newpanel;
   

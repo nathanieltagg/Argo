@@ -19,7 +19,7 @@
  <!-- <button class="falseColorMinus1">-1</button>
  <button class="falseColorPlus1">+1</button> -->
       <div class="hist-element" style="height: 120px"></div>
-      <input type="hidden" id="falsecolor-scheme" value="falsecolor-LOCS" class='saveable'/>
+      <input type="hidden" id="falsecolor-scheme" value="falsecolor-LOCS" class='saveable auto-save-on-change'/>
 
   	<ul>
       <li><a href="#falsecolor-Rainbow">Rainbow</a></li>

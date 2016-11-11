@@ -385,6 +385,7 @@ $(function() {
 $(function(){
   $('.saveable,.auto-save-on-change').on("click change",function(ev) {
     val = $(this).val();
+    console.log("auto-save",this.id,val);
     if($(this).is(":checkbox")) val = $(this).is(":checked");
     $.cookie("save:"+this.id,val);    
   });

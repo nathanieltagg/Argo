@@ -381,6 +381,7 @@ Pad.prototype.GetGoodTicks = function( min, max, maxticks, logscale )
   var sigfigs = 1;
   var goodTickWidth = dumbTickWidth;
   var i,retval;
+  if(maxticks<=0) maxticks = 1;
   
   if (logscale === false)
    {
