@@ -57,7 +57,7 @@
         <div>&nbsp;&nbsp;
           <input type="checkbox" id="ctl-track-shift-window"  name="track-shift-window" checked="checked" class="saveable track-shift-window"  />
             <label for="track-shift-window"> Shift Tracks Ticks:</label>
-          <input type="text"  class="savelable track-shift-value" id="ctl-track-shift-value" value="2400" size='5'/>
+          <input type="text"  class="saveable track-shift-value" id="ctl-track-shift-value" value="2400" size='5'/>
         </div>
 
         <div><input type="checkbox" id="ctl-show-showers"  name="show-showers"  class="saveable show-showers"  checked="checked"/><label for="ctl-show-showers">  <b>(s)</b> Show Showers </label></div>

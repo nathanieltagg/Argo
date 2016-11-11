@@ -1,3 +1,7 @@
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+
 # For use on ups systems, source this.
 source /uboonenew/setup
 setup gcc v4_9_2
@@ -8,5 +12,6 @@ setup postgresql v9_1_14
 #this sets up the current default:
 setup uboonedaq -q e7:debug
 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DIR/larlite/lib
 # override with newest version, temporary jan 2016
 #setup uboonedaq v6_18_00 -q e7:debug

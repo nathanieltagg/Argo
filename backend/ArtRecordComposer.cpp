@@ -1288,6 +1288,7 @@ void ArtRecordComposer::composeMC()
 
   JsonObject particle_list;
   leafnames = findLeafOfType("vector<simb::MCParticle>");
+  
   for(size_t iname = 0; iname<leafnames.size(); iname++) {
     std::string name = leafnames[iname];
     if(fTree->GetLeaf((name+"obj_").c_str())==0) continue;
@@ -1324,6 +1325,9 @@ void ArtRecordComposer::composeMC()
     TLeaf* lp_fstatus    = fTree->GetLeaf( (name+"obj.fstatus"   ).c_str());
     TLeaf* lp_ftrackId   = fTree->GetLeaf( (name+"obj.ftrackId"  ).c_str());
     TLeaf* lp_fWeight    = fTree->GetLeaf( (name+"obj.fWeight"   ).c_str());
+
+    TreeElementLooter tel_fprocess(fTree,name+"obj.fprocess");
+    
     TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
     if(!lf) return;
     int nparticles = lf->GetLen();
@@ -1352,7 +1356,7 @@ void ArtRecordComposer::composeMC()
       TLorentzVector xfirst = ((*traj)[0].first);
       TLorentzVector xlast = ((*traj)[n-1].first);
       TVector3 dx = xlast.Vect()-xfirst.Vect();
-      if( (dx.Mag() < 0.1) && (v_countDaughters[i] <1) ) { 
+      if( (dx.Mag() < 0.3) && (v_countDaughters[i] <1) ) { 
         // What a useless particle!  No daughters, no track length. Skip it.
         j_particles.add(JsonElement(0)); // add a null object
         continue;
@@ -1362,7 +1366,9 @@ void ArtRecordComposer::composeMC()
       jparticle.add("fmass"     , ftr.getInt(lp_fmass     ,i));
       jparticle.add("fmother"   , ftr.getInt(lp_fmother   ,i));
       jparticle.add("fpdgCode"  , ftr.getInt(lp_fpdgCode  ,i));
-      jparticle.add("fprocess"  , ftr.getInt(lp_fprocess  ,i));
+      // jparticle.add("fprocess"  , ftr.getInt(lp_fprocess  ,i));
+      const std::string  *process           = tel_fprocess.get<std::string>(i);
+      if(process) jparticle.add("fprocess"  , *process);
       jparticle.add("frescatter", ftr.getInt(lp_frescatter,i));
       jparticle.add("fstatus"   , ftr.getInt(lp_fstatus   ,i));
       jparticle.add("ftrackId"  , ftr.getInt(lp_ftrackId  ,i));
