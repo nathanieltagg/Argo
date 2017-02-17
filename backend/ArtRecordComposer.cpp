@@ -426,6 +426,7 @@ void  ArtRecordComposer::composeTracks()
     std::string name = leafnames[iname];
     TimeReporter timer(name);
     std::cout << "Looking at track object " << (name+"obj_").c_str() << endl;
+    std::cout.flush();
     JsonArray jTracks;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
     if(!l) continue;
@@ -449,19 +450,25 @@ void  ArtRecordComposer::composeTracks()
       const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
       JsonArray jpoints;
       
-      for(size_t j=0;j<XYZ->size();j++) {
-        JsonObject jpoint;
-        jpoint.add("x",(*XYZ)[j].x());
-        jpoint.add("y",(*XYZ)[j].y());
-        jpoint.add("z",(*XYZ)[j].z());
-        jpoint.add("vx",(*Dir)[j].x());
-        jpoint.add("vy",(*Dir)[j].y());
-        jpoint.add("vz",(*Dir)[j].z());
-        // jpoint.add("dQdx",(*dQdx)[0][j]); // Problematic; sometimes crashes
-        // jpoint.add("dQdy",(*dQdx)[1][j]);
-        // jpoint.add("dQdz",(*dQdx)[2][j]);
-        jpoint.add("P",(*FitMomentum)[j]);
-        jpoints.add(jpoint);
+      if(XYZ) {
+        for(size_t j=0;j<XYZ->size();j++) {
+          JsonObject jpoint;
+          jpoint.add("x",(*XYZ)[j].x());
+          jpoint.add("y",(*XYZ)[j].y());
+          jpoint.add("z",(*XYZ)[j].z());
+          if(Dir) {
+            jpoint.add("vx",(*Dir)[j].x());
+            jpoint.add("vy",(*Dir)[j].y());
+            jpoint.add("vz",(*Dir)[j].z());
+          }
+          // jpoint.add("dQdx",(*dQdx)[0][j]); // Problematic; sometimes crashes
+          // jpoint.add("dQdy",(*dQdx)[1][j]);
+          // jpoint.add("dQdz",(*dQdx)[2][j]);
+          
+          if(FitMomentum)
+            jpoint.add("P",(*FitMomentum)[j]);
+          jpoints.add(jpoint);
+        }
       }
       jtrk.add("points",jpoints);
 
