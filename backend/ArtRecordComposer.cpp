@@ -479,35 +479,34 @@ void  ArtRecordComposer::composeTracks()
       
       // Somehow this is exploding the output???
       // New MCC8 or so they switched to this.
-      // This doesn't work, since TreeElementLooter can't do vector<complicatedthing>
-         /// Type for representation of position in physical 3D space.
-      //    using Coord_t = double;
-      //     using Point_t
-      //       = ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<Coord_t>>;
-      //     using Vector_t
-      //       = ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<Coord_t>>;
-      //
-      // const vector<Point_t>
-      //          *pos   = tel_fPositions  .get<vector<Point_t>  >(i);
-      // const vector<Vector_t>
-      //          *mom   = tel_fMomenta  .get<vector<Vector_t>  >(i);
-      // if(pos) {
-      //   for(size_t j=0;j<pos->size();j++) {
-      //     JsonObject jpoint;
-      //     jpoint.add("x",(*pos)[j].x());
-      //     jpoint.add("y",(*pos)[j].y());
-      //     jpoint.add("z",(*pos)[j].z());
-      //     if(mom) {
-      //       Vector_t v = (*mom)[j].Unit();
-      //       jpoint.add("vx",v.x());
-      //       jpoint.add("vy",v.y());
-      //       jpoint.add("vz",v.z());
-      //       jpoint.add("P",sqrt( (*mom)[j].Mag2() ));
-      //     }
-      //     jpoints.add(jpoint);
-      //   }
-      //
-      // }
+      /// Type for representation of position in physical 3D space.
+         using Coord_t = double;
+          using Point_t
+            = ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<Coord_t>>;
+          using Vector_t
+            = ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<Coord_t>>;
+
+      const vector<Point_t>
+               *pos   = tel_fPositions  .get<vector<Point_t>  >(i);
+      const vector<Vector_t>
+               *mom   = tel_fMomenta  .get<vector<Vector_t>  >(i);
+      if(pos) {
+        for(size_t j=0;j<pos->size();j++) {
+          JsonObject jpoint;
+          jpoint.add("x",(*pos)[j].x());
+          jpoint.add("y",(*pos)[j].y());
+          jpoint.add("z",(*pos)[j].z());
+          if(mom) {
+            Vector_t v = (*mom)[j].Unit();
+            jpoint.add("vx",v.x());
+            jpoint.add("vy",v.y());
+            jpoint.add("vz",v.z());
+            jpoint.add("P",sqrt( (*mom)[j].Mag2() ));
+          }
+          jpoints.add(jpoint);
+        }
+
+      }
 
       
       
