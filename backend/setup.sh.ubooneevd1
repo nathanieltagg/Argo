@@ -7,7 +7,7 @@ source /grid/fermiapp/products/uboone/setup_uboone.sh
 setup mrb
 setup gitflow
 setup gcc v4_9_2
-setup root v5_34_25a -q e7:nu:prof
+setup root v6_06_08 -q debug:nu:e10
 setup boost v1_57_0 -q e7:prof
 setup postgresql v9_1_14
 setup sqlite v3_08_08_02
