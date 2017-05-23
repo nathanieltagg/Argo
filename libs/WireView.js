@@ -1475,7 +1475,7 @@ WireView.prototype.DoMouse = function(ev)
   /// Called by ::Pad for any mouse event that might be relevant,
   /// including mousemove, mousedown, click in the element
   /// and mousee move, up outside.
-  if(this.zooming && !ev.shiftKey ) this.DoMousePanAndScale(ev);
+  if(this.zooming && !ev.shiftKey && gHoverState.type!=="UserTrack" ) this.DoMousePanAndScale(ev);
   if(ev.type === 'mouseup') {
     if( this.fObjectDragging ) {
       this.fObjectDragging = false;
