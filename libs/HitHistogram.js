@@ -78,6 +78,8 @@ function HitHistogram( element  )
   $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
   $(this.ctl_cut_max     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
   $(this.ctl_cut_min     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
+  $("#ctl-HitLists").change(function(ev){return self.BuildHistogram();})
+  
   
   this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); });

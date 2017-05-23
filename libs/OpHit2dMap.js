@@ -223,6 +223,8 @@ function OpHit2dMapProjection( element  )
 OpHit2dMapProjection.prototype.NewRecord = function()
 {
   
+  this.hist.Clear();
+  
   this.ophits = [];
   var listname = $('#ctl-OpHitLists').val();
   if(gRecord.ophits && gRecord.ophits[listname]) {
