@@ -168,7 +168,7 @@ WireInfo.prototype.Draw = function()
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
   
   if(!gRecord) return;
-  if(show_image == 'cal'  && gRecord._cal && gRecord._cal._tiled_canvas && gRecord._cal.tiled_canvas.loaded ) {
+  if(show_image == 'cal'  && gRecord._cal && gRecord._cal.tiled_canvas && gRecord._cal.tiled_canvas.loaded ) {
     offscreenCtx = gRecord._cal.tiled_canvas.ctx;
     this.graph.ylabel="Cal ADC";
   } else if( gRecord._raw && gRecord._raw.tiled_canvas && gRecord._raw.tiled_canvas.loaded ) {

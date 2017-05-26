@@ -56,7 +56,7 @@ void main() {
 </script>
 
 
-
+<!-- This is a dead one. -->
 <script id="lutshade-with-rms-cut" type="x-shader/x-fragment">
 precision mediump float;
 
@@ -129,34 +129,6 @@ void main() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script id="lutshade-with-noise-removal" type="x-shader/x-fragment">
 precision mediump float;
 
@@ -196,6 +168,8 @@ void main() {
    
 }
 </script>
+
+
 
 <script id="lutshade-with-noise-removal-and-smear" type="x-shader/x-fragment">
 precision mediump float;

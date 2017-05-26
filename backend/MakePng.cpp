@@ -179,7 +179,7 @@ std::string MakePng::writeToUniqueFile(const std::string& path)
   strcpy(buffer,tmplate.c_str());
   int fp = mkstemp(buffer);
   if(fp<0) {
-    std::cerr << "MakePng::Couldn't open unique temporary file: " << strerror(errno) << std::endl;
+    std::cerr << "MakePng::Couldn't open unique temporary file: " << strerror(errno) << " when writing to path " << path << std::endl;
     return "error";
   }
   ::write(fp,outdata,outdatalen);
