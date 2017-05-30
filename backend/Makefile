@@ -96,7 +96,7 @@ BLIBS += -lboost_serialization -lboost_system -lboost_thread -lboost_program_opt
 # LIBS += -lboost_serialization -lboost_system -lboost_thread
 
 ifeq ($(UNAME),Darwin)
-  LDFLAGS += -Wl,-rpath,@executable_path/boost/lib/ 
+  # LDFLAGS += -Wl,-rpath,@executable_path/boost/lib/
   CPPFLAGS +=  -ftemplate-depth=512
 endif
 
@@ -233,14 +233,14 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 
 argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
 	$(CPP) $(LDFLAGS) \
-	-Wl,-rpath,@loader_path/deps/root/lib \
-	-Wl,-rpath,@loader_path/deps/boost/lib \
-	-Wl,-rpath,@loader_path/../../deps/root/lib\
-	-Wl,-rpath,@loader_path/../../deps/root/lib\
-	-Wl,-rpath,@loader_path/../../deps/root/lib\
-	-Wl,-rpath,@loader_path/root/lib\
-	-Wl,-rpath,@loader_path/boost/lib\
 	 $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+  # -Wl,-rpath,@loader_path/deps/root/lib \
+  # -Wl,-rpath,@loader_path/deps/boost/lib \
+  # -Wl,-rpath,@loader_path/../../deps/root/lib\
+  # -Wl,-rpath,@loader_path/../../deps/root/lib\
+  # -Wl,-rpath,@loader_path/../../deps/root/lib\
+  # -Wl,-rpath,@loader_path/root/lib\
+  # -Wl,-rpath,@loader_path/boost/lib\
 
 libargo-backend.dylib: $(OBJ) tmp/Cint.o Makefile
 	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)

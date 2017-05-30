@@ -57,6 +57,7 @@
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/RecoBase/EndPoint2D.h"
+#include "lardataobj/RecoBase/SpacePoint.h"
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/OpHit.h"
 #include "lardataobj/RecoBase/OpFlash.h"
@@ -76,6 +77,7 @@
 #include "boost/thread/thread.hpp"
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/shared_mutex.hpp"
+#include "boost/core/demangle.hpp"
 
 #include "DeadChannelMap.h"
 #include "CoherentNoiseFilter.h"
@@ -160,6 +162,76 @@ std::string GalleryRecordComposer::stripdots(const std::string& s)
   return out;
 }
 
+template<typename V>
+void GalleryRecordComposer::composeObjectsVector(const std::string& output_name)
+{
+  JsonObject reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
+  TimeReporter cov_timer(output_name);
+ 
+  auto products = findByType<V>(fEvent->getTTree());  // Get a list of all products matching template
+  for(auto product: products) {
+    std::cout << "Looking at " << boost::core::demangle( typeid(V).name() ) <<" object " << product.first << std::endl;
+
+    TimeReporter timer(product.first);    // This object creates statistics on how long this reco took.
+    gallery::Handle<V> handle;            
+
+    { // Create a scope
+      boost::mutex::scoped_lock b(fGalleryLock); // Mutex thread lock exists within brace scope
+      fEvent->getByLabel(product.second,handle); // Get data from the file
+    }
+    if(!handle.isValid()) {
+      std::cerr << "No data!" << std::endl;
+      continue;
+    }
+
+    JsonArray jlist;    // List of objects (e.g. Kalman Spacepoints)
+    for(const auto& item: *handle) {
+      // item is a specific object (e.g. SpacePoint), jitem is the objected moved to JSON (one spacepoint)
+      JsonObject jitem;
+      composeObject(item,jitem);
+      jlist.add(jitem); // Add to list
+    }
+    reco_list.add(stripdots(product.first),jlist); // Add this list of spacepoints to the list of reco objects
+    //timer.addto(fStats);    // Naw, don't need that level of ganularity. Needs mutex.
+  }
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);  // Scope a lock around the global output object
+    fOutput.add(output_name,reco_list);           // Add the output.
+    cov_timer.addto(fStats);  
+  }  
+}
+  
+template<typename T>
+void GalleryRecordComposer::composeObject(const T&, JsonObject& out)
+{
+  out.add("Unimplimented",JsonElement());
+}
+
+template<>
+void GalleryRecordComposer::composeObject(const recob::SpacePoint& sp, JsonObject& jsp)
+{
+  // cout << "Composing spacepoint " << sp.ID() << std::endl;
+  jsp.add("id"    ,sp.ID()   );
+  jsp.add("chisq" ,sp.Chisq());
+  JsonArray xyz;
+  xyz.add(sp.XYZ()[0]);
+  xyz.add(sp.XYZ()[1]);
+  xyz.add(sp.XYZ()[2]);
+  
+  JsonArray errXyz;
+  errXyz.add(sp.ErrXYZ()[0]);
+  errXyz.add(sp.ErrXYZ()[1]);
+  errXyz.add(sp.ErrXYZ()[2]);
+  errXyz.add(sp.ErrXYZ()[3]);
+  errXyz.add(sp.ErrXYZ()[4]);
+  errXyz.add(sp.ErrXYZ()[5]);
+
+  jsp.add("xyz",xyz);
+  jsp.add("errXyz",errXyz);
+}
+
+
+
 
 
 void GalleryRecordComposer::composeHeaderData()
@@ -198,7 +270,7 @@ void GalleryRecordComposer::composeHeaderData()
     auto products = findByType< vector<raw::Trigger> >(fEvent->getTTree());
     for(auto product: products) {
 
-      std::cout << "Looking at " << typeid(raw::Trigger).name()  <<" object " << product.first << std::endl;
+      std::cout << "Looking at " << boost::core::demangle( typeid(raw::Trigger).name() ) <<" object " << product.first << std::endl;
       gallery::Handle< vector<raw::Trigger> > handle;
       {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
       if(!handle.isValid()) { continue;  }
@@ -246,7 +318,7 @@ void GalleryRecordComposer::composeHits()
   JsonObject reco_list;
   JsonObject hist_list;
   for(auto product: products) {
-    std::cout << "Looking at " << typeid(current_type_t).name()  <<" object " << product.first << std::endl;
+    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
     TimeReporter timer(product.first);
 
     gallery::Handle< current_type_t > handle;
@@ -307,27 +379,20 @@ void GalleryRecordComposer::composeHits()
     fOutput.add("hits",reco_list);
     fOutput.add("hit_hists",hist_list);
   }
+  std::cout << "Hits finishing" << std::endl;
 }
-//
-// // Utility function for composeCluster
-// JsonObject GalleryRecordComposer::GetClusterWireAndTDC(TreeElementLooter& l, int row) {
-//   JsonObject o;
-//   if(!l.ok()) return o;
-//   const vector<double>* v = l.get<vector<double> >(row);
-//   if(v->size()<2) return o;
-//   o.add("wire", (*v)[0]);
-//   o.add("tdc" , (*v)[1]);
-//   return o;
-// }
-//
+
+
+
 void GalleryRecordComposer::composeClusters()
 {
+ 
   typedef vector<recob::Cluster> current_type_t;
   auto products = findByType<current_type_t>(fEvent->getTTree());
 
   JsonObject reco_list;
   for(auto product: products) {
-    std::cout << "Looking at " << typeid(current_type_t).name()  <<" object " << product.first << std::endl;
+    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
     TimeReporter timer(product.first);
 
     gallery::Handle< current_type_t > handle;
@@ -366,93 +431,107 @@ void GalleryRecordComposer::composeClusters()
 
   {
     boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("clusters",reco_list);
+    fOutput.add("clusters",reco_list);    
   }
+  std::cout << "Clusters finishing" << std::endl;  
 }
-//
-// void  GalleryRecordComposer::composeVertex2d()
-// {
-//   vector<string> leafnames = findLeafOfType("vector<recob::EndPoint2D>>");
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//     std::cout << "Looking at 2d object " << (name+"obj_").c_str() << endl;
-//
-//     JsonArray jlist;
-//
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     cout << "endpoint2ds: " << n << endl;
-//
-//     for(int i=0;i<n;i++) {
-//       JsonObject jpt;
-//
-//       jpt.add("t"           ,ftr.getJson(name+"obj.fDriftTime",i));
-//       jpt.add("plane"       ,ftr.getJson(name+"obj.fWireID.Plane",i));
-//       jpt.add("wire"        ,ftr.getJson(name+"obj.fWireID.Wire",i));
-//       jpt.add("id"          ,ftr.getJson(name+"obj.fID",i));
-//       jpt.add("strength"    ,ftr.getJson(name+"obj.fStrength",i));
-//       jpt.add("view"        ,ftr.getJson(name+"obj.fView",i));
-//       jpt.add("q"           ,ftr.getJson(name+"obj.fTotalCharge",i));
-//
-//       jlist.add(jpt);
-//     }
-//     reco_list.add(stripdots(product.first),jlist);
-//     timer.addto(fStats);
-//   }
-//
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("endpoint2d",reco_list);
-//   }
-// }
-//
-// void  GalleryRecordComposer::composeSpacepoints()
-// {
-//   vector<string> leafnames = findLeafOfType("vector<recob::SpacePoint> >");
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//     std::cout << "Looking at spacepoint object " << (name+"obj_").c_str() << endl;
-//     JsonArray jSpacepoints;
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     cout << "Found " << n << " objects" << endl;
-//     TLeaf* lXYZ    = fTree->GetLeaf((name+"obj.fXYZ").c_str());
-//     TLeaf* lErrXYZ = fTree->GetLeaf((name+"obj.fErrXYZ").c_str());
-//
-//     for(int i=0;i<n;i++) {
-//       JsonObject jsp;
-//
-//       jsp.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
-//       jsp.add("chisq" ,ftr.getJson(name+"obj.fChisq"    ,i));
-//       JsonArray xyz;
-//       JsonArray errXyz;
-//       for(int j=0;j<lXYZ->GetLenStatic();j++)
-//         xyz   .add(ftr.getJson(lXYZ,i,j));
-//       for(int j=0;j<lErrXYZ->GetLenStatic();j++)
-//         errXyz.add(ftr.getJson(lErrXYZ,i,j));
-//
-//       jsp.add("xyz",xyz);
-//       jsp.add("errXyz",errXyz);
-//
-//       jSpacepoints.add(jsp);
-//     }
-//     reco_list.add(stripdots(product.first),jSpacepoints);
-//     timer.addto(fStats);
-//   }
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("spacepoints",reco_list);
-//   }
-// }
-//
+
+void  GalleryRecordComposer::composeEndpoint2d()
+{
+
+  typedef vector<recob::EndPoint2D> current_type_t;
+  auto products = findByType<current_type_t>(fEvent->getTTree());
+
+  JsonObject reco_list;
+  for(auto product: products) {
+    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
+    TimeReporter timer(product.first);
+
+    gallery::Handle< current_type_t > handle;
+    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
+    if(!handle.isValid()) {
+      std::cerr << "No data!" << std::endl;
+      continue;
+    }
+    JsonArray jlist;
+    
+    for(const recob::EndPoint2D& endpoint: *handle) {
+      JsonObject jpt;
+
+      jpt.add("id"          ,endpoint.ID()        );
+      jpt.add("t"           ,endpoint.DriftTime() );
+      jpt.add("plane"       ,endpoint.View()      );
+      jpt.add("wire"        ,endpoint.View()      );
+      jpt.add("strength"    ,endpoint.Strength()  );
+      jpt.add("q"           ,endpoint.Charge()    );
+
+      jlist.add(jpt);
+    }
+    reco_list.add(stripdots(product.first),jlist);
+    timer.addto(fStats);
+  }
+
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("endpoint2d",reco_list);    
+  }
+
+}
+
+void  GalleryRecordComposer::composeSpacepoints()
+{
+  composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints");
+  // typedef vector<recob::SpacePoint> current_type_t;
+ //  auto products = findByType<current_type_t>(fEvent->getTTree());
+ //
+ //  JsonObject reco_list;
+ //  for(auto product: products) {
+ //    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
+ //    TimeReporter timer(product.first);
+ //
+ //    gallery::Handle< current_type_t > handle;
+ //    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
+ //    if(!handle.isValid()) {
+ //      std::cerr << "No data!" << std::endl;
+ //      continue;
+ //    }
+ //    JsonArray jlist;
+ //
+ //    for(const recob::SpacePoint& sp: *handle) {
+ //      JsonObject jsp;
+ //
+ //      jsp.add("id"    ,sp.ID()   );
+ //      jsp.add("chisq" ,sp.Chisq());
+ //      JsonArray xyz;
+ //      xyz.add(sp.XYZ()[0]);
+ //      xyz.add(sp.XYZ()[1]);
+ //      xyz.add(sp.XYZ()[2]);
+ //
+ //      JsonArray errXyz;
+ //      errXyz.add(sp.ErrXYZ()[0]);
+ //      errXyz.add(sp.ErrXYZ()[1]);
+ //      errXyz.add(sp.ErrXYZ()[2]);
+ //      errXyz.add(sp.ErrXYZ()[3]);
+ //      errXyz.add(sp.ErrXYZ()[4]);
+ //      errXyz.add(sp.ErrXYZ()[5]);
+ //
+ //      jsp.add("xyz",xyz);
+ //      jsp.add("errXyz",errXyz);
+ //
+ //      jlist.add(jsp);
+ //    }
+ //    reco_list.add(stripdots(product.first),jlist);
+ //    timer.addto(fStats);
+ //  }
+ //
+ //  {
+ //    boost::mutex::scoped_lock lck(fOutputMutex);
+ //    fOutput.add("spacepoints",reco_list);
+ //  }
+  
+}
+
+
 void  GalleryRecordComposer::composeTracks()
 {
   typedef vector<recob::Track> current_type_t;
@@ -460,7 +539,7 @@ void  GalleryRecordComposer::composeTracks()
 
   JsonObject reco_list;
   for(auto product: products) {
-    std::cout << "Looking at " << typeid(current_type_t).name()  <<" object " << product.first << std::endl;
+    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
     TimeReporter timer(product.first);
 
     gallery::Handle< current_type_t > handle;
@@ -515,11 +594,77 @@ void  GalleryRecordComposer::composeTracks()
     fOutput.add("tracks",reco_list);
 
   }
+  std::cout << "Tracks finishing" << std::endl;
 
 }
-//
+
 // void  GalleryRecordComposer::composeShowers()
 // {
+//   typedef vector<recob::Shower> current_type_t;
+//   auto products = findByType<current_type_t>(fEvent->getTTree());
+//
+//   JsonObject reco_list;
+//   for(auto product: products) {
+//     std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
+//     TimeReporter timer(product.first);
+//
+//     gallery::Handle< current_type_t > handle;
+//     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
+//     if(!handle.isValid()) {
+//       std::cerr << "No data!" << std::endl;
+//       continue;
+//     }
+//     JsonArray jTracks;
+//     for(const recob::Track& track: *handle) {
+//       JsonObject jtrk;
+//
+//       jtrk.add("id"    ,track.ID());
+//       jtrk.add("chi2"    ,track.Chi2());
+//       jtrk.add("ndof"    ,track.Ndof());
+//       jtrk.add("particleId"    ,track.ParticleId());
+//       jtrk.add("theta"    ,track.Theta());
+//       jtrk.add("phi"    ,track.Phi());
+//
+//       const recob::TrackTrajectory& traj = track.Trajectory();
+//       JsonArray jpoints;
+//       size_t npoints = traj.NPoints();
+//       for(size_t i = 0; i< npoints; i++) {
+//         JsonObject jpoint;
+//         const auto& xyz = traj.LocationAtPoint(i);
+//         const auto& mom = traj.MomentumVectorAtPoint(i);
+//         double p = mom.R();
+//         recob::Trajectory::Vector_t dir;
+//         if(p>0) dir = mom/p;
+//         else    dir = mom;
+//
+//         jpoint.add("x",xyz.x());
+//         jpoint.add("y",xyz.y());
+//         jpoint.add("z",xyz.z());
+//         jpoint.add("vx",dir.x());
+//         jpoint.add("vy",dir.y());
+//         jpoint.add("vz",dir.z());
+//         jpoint.add("P",p);
+//         jpoints.add(jpoint);
+//       }
+//       jtrk.add("points",jpoints);
+//
+//       jTracks.add(jtrk);
+//     }
+//
+//     reco_list.add(stripdots(product.first),jTracks);
+//     timer.addto(fStats);
+//   }
+//
+//   {
+//     boost::mutex::scoped_lock lck(fOutputMutex);
+//     fOutput.add("tracks",reco_list);
+//
+//   }
+//   std::cout << "Tracks finishing" << std::endl;
+//
+//
+//
+//
 //   vector<string> leafnames = findLeafOfType("vector<recob::Shower>");
 //
 //   JsonObject reco_list;
@@ -679,7 +824,9 @@ void  GalleryRecordComposer::composeTracks()
 //     fOutput.add("opflashes",reco_list);
 //   }
 // }
-//
+
+
+
 // void  GalleryRecordComposer::composeOpPulses()
 // {
 //   vector<string> leafnames = findLeafOfType("vector<raw::OpDetPulse>");
@@ -842,7 +989,7 @@ void GalleryRecordComposer::composeWires()
 
   for(auto product: products) {
 
-    std::cout << "Looking at " << typeid(current_type_t).name()  <<" object " << product.first << std::endl;
+    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
     TimeReporter timer(product.first);
 
     gallery::Handle< current_type_t > handle;
@@ -939,6 +1086,8 @@ void GalleryRecordComposer::composeWires()
     fOutput.add("cal",reco_list);
     fOutput.add("cal_lowres",reco_list2);
   }
+  std::cout << "Wires finishing" << std::endl;
+  
 }
 
 void GalleryRecordComposer::composeRawAvailability()
@@ -954,6 +1103,7 @@ void GalleryRecordComposer::composeRawAvailability()
     boost::mutex::scoped_lock lck(fOutputMutex);
     fOutput.add("raw",reco_list);
   }
+  
 }
 
 
@@ -969,7 +1119,7 @@ void GalleryRecordComposer::composeRaw()
   for(auto product: products) {
   
 
-    std::cout << "Looking at " << typeid(current_type_t).name()  <<" object " << product.first << std::endl;
+    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
     TimeReporter timer(product.first);
 
     gallery::Handle< current_type_t > handle;
@@ -1062,6 +1212,8 @@ void GalleryRecordComposer::composeRaw()
     fOutput.add("raw",reco_list);
     fOutput.add("raw_lowres",reco_list2);
   }
+  std::cout << "RawDigits finishing" << std::endl;
+  
 }
 //
 //
@@ -1439,7 +1591,7 @@ void GalleryRecordComposer::composeAssociation(std::map<string, JsonObject>& ass
 
   for(auto product: findByType<assn_t>(fEvent->getTTree())) {
     gallery::Handle< assn_t > assnhandle;
-    fEvent->getByLabel(product.second,assnhandle);
+    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,assnhandle);}
     if(assnhandle->size()>0) {
       std::pair<art::Ptr<A>,art::Ptr<B>> p = *assnhandle->begin();
       // std::cout << p.first.id() << "\t" << p.first.key() << std::endl;
@@ -1562,25 +1714,23 @@ void GalleryRecordComposer::compose()
   // End first so background image conversion tasks can be Ended as we build the rest.
 
 
-
-
-  boost::thread_group threads;
   if(doCal)   composeWires();
   if(doRaw)   composeRaw();
-  // if(doCal)    threads.create_thread(boost::bind(&GalleryRecordComposer::composeWires,this));
-  // if(doRaw)   threads.create_thread(boost::bind(&GalleryRecordComposer::composeRaw,this));
-
-  //
-  //reco
   composeHits();
   composeClusters();
   composeTracks();
-  
+  composeEndpoint2d();
+  composeSpacepoints();
   composeAssociations();
+
+
+  boost::thread_group threads;
+  // if(doCal)   threads.create_thread(boost::bind(&GalleryRecordComposer::composeWires,this));
+  // if(doRaw)   threads.create_thread(boost::bind(&GalleryRecordComposer::composeRaw,this));
 
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeHits,this));
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeClusters,this));
-  // threads.create_thread(boost::bind(&GalleryRecordComposer::composeVertex2d,this));
+  // threads.create_thread(boost::bind(&GalleryRecordComposer::composeEndpoint2d,this));
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeSpacepoints,this));
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeTracks,this));
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeShowers,this));

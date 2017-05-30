@@ -21,6 +21,12 @@ class GalleryRecordComposer {
 public:
   GalleryRecordComposer(JsonObject& output, std::string filename, Long64_t jentry, const std::string options);
   ~GalleryRecordComposer();
+
+  template<typename V>
+    void composeObjectsVector(const std::string& output_name);
+  template<typename T>
+    void composeObject(const T&, JsonObject& out);
+  
   void compose();
   void  composeHeaderData();
   //
@@ -28,10 +34,10 @@ public:
   
   // // Reco
   void  composeHits();
-  void  composeClusters();
-  // void  composeVertex2d();
+  // void  composeClusters();
+  // void  composeEndpoint2d();
   // void  composeSpacepoints();
-  void  composeTracks();
+  // void  composeTracks();
   // void  composeShowers();
   // void  composePFParticles();
   //
