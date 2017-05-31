@@ -12,9 +12,11 @@
 #include "boost/thread/mutex.hpp"
 
 
+
 class TTree;
 class TLorentzVector;
 namespace gallery{ class Event; }
+struct GalleryAssociationHelper;
 
 
 class GalleryRecordComposer {
@@ -23,7 +25,7 @@ public:
   ~GalleryRecordComposer();
 
   template<typename V>
-    void composeObjectsVector(const std::string& output_name);
+    void composeObjectsVector(const std::string& output_name, JsonObject& output);
   template<typename T>
     void composeObject(const T&, JsonObject& out);
   
@@ -32,34 +34,19 @@ public:
   //
 
   
-  // // Reco
+  // Reco
   void  composeHits();
-  // void  composeClusters();
-  // void  composeEndpoint2d();
-  // void  composeSpacepoints();
-  // void  composeTracks();
-  // void  composeShowers();
-  // void  composePFParticles();
-  //
-  // // Optical
-  // void  composeOpFlashes();
-  // void  composeOpHits();
-  // void  composeOpPulses();
-  //
-  // // Wires
+  
+  // Wires
   void  composeCalAvailability();
   void  composeWires();
   void  composeRawAvailability();
   void  composeRaw();
-  //
-  // // Other
-  // void composeAuxDets();
-  //
-  //
-  // // Monte carlo
-  // void  composeMC();
-  //
-  // // Assns.
+
+  // Monte carlo
+  void  composeMC();
+
+  // Assns.
   void  composeAssociations();
   
   template<typename A, typename B>
@@ -68,7 +55,6 @@ public:
   // // Utility functions.
   // std::vector<std::string> findLeafOfType(std::string pattern);
   //
-  std::string stripdots(const std::string& s);
   // JsonObject  GetClusterWireAndTDC(TreeElementLooter& l, int row);
   // int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
   
@@ -79,6 +65,7 @@ public:
   std::string fOptions;
   
   std::unique_ptr<gallery::Event> fEvent;
+  std::unique_ptr<GalleryAssociationHelper> fAssnHelper;
   
   bool fCreateSubdirCache;  
   std::string fCacheStoragePath;
@@ -93,6 +80,7 @@ public:
   
   boost::mutex fOutputMutex;
   boost::mutex fGalleryLock;
+
   
 };
 

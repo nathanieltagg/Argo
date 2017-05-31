@@ -129,7 +129,7 @@ MCDigraph.prototype.NewRecord = function()
   var inters = gRecord.mc.gtruth[gMCTruthListName];
   if(inters && inters[0]) {
     var inter = inters[0];
-    var incE = inter.fProbeP4_fE;
+    var incE = inter.fProbeP4_fE || inter.fProbeP4.E; // Newer and older versions
     root.name = incE.toFixed(3)  + " GeV"  +
                " " + GetParticle(inter.fProbePDG) +
                " " + InteractionCode[inter.fGint] +

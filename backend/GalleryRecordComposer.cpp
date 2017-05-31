@@ -48,8 +48,9 @@
 #include "canvas/Persistency/Provenance/EventAuxiliary.h"
 #include "lardataobj/RawData/TriggerData.h"
 #include "uboone/RawData/utils/ubdaqSoftwareTriggerData.h"
-#include "lardataobj/RecoBase/Wire.h"
 #include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RawData/OpDetPulse.h"
+#include "lardataobj/RecoBase/Wire.h"
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/Cluster.h"
 #include "lardataobj/RecoBase/Track.h"
@@ -111,8 +112,8 @@ vector<std::pair<string,art::InputTag>>  findByType(TTree* fTree)
   vector<std::pair<string,art::InputTag>> retval;
   // Leaf names for std::vector<recob::Wire> get renamed
   // to the art version of "recob::Wires" by this. 
-  std::string pattern = art::TypeID(typeid(T)).friendlyClassName();
-  std::cout << "Looking for leaf of type " << pattern << "_label_instance_process." << endl;
+  std::string pattern = art::TypeID(typeid(T)).friendlyClassName() + '_';
+  std::cout << "Looking for leaf of type " << pattern << "label_instance_process." << endl;
   TObjArray* list = fTree->GetListOfBranches();
 
   // Look through every branch name.
@@ -154,7 +155,7 @@ vector<std::pair<string,art::InputTag>>  findByType(TTree* fTree)
 }
 
 
-std::string GalleryRecordComposer::stripdots(const std::string& s)
+std::string stripdots(const std::string& s)
 {
   std::string out = s;
   size_t pos;
@@ -163,7 +164,7 @@ std::string GalleryRecordComposer::stripdots(const std::string& s)
 }
 
 template<typename V>
-void GalleryRecordComposer::composeObjectsVector(const std::string& output_name)
+void GalleryRecordComposer::composeObjectsVector(const std::string& output_name, JsonObject& output)
 {
   JsonObject reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
   TimeReporter cov_timer(output_name);
@@ -196,7 +197,7 @@ void GalleryRecordComposer::composeObjectsVector(const std::string& output_name)
   }
   {
     boost::mutex::scoped_lock lck(fOutputMutex);  // Scope a lock around the global output object
-    fOutput.add(output_name,reco_list);           // Add the output.
+    output.add(output_name,reco_list);           // Add the output.
     cov_timer.addto(fStats);  
   }  
 }
@@ -207,28 +208,7 @@ void GalleryRecordComposer::composeObject(const T&, JsonObject& out)
   out.add("Unimplimented",JsonElement());
 }
 
-template<>
-void GalleryRecordComposer::composeObject(const recob::SpacePoint& sp, JsonObject& jsp)
-{
-  // cout << "Composing spacepoint " << sp.ID() << std::endl;
-  jsp.add("id"    ,sp.ID()   );
-  jsp.add("chisq" ,sp.Chisq());
-  JsonArray xyz;
-  xyz.add(sp.XYZ()[0]);
-  xyz.add(sp.XYZ()[1]);
-  xyz.add(sp.XYZ()[2]);
-  
-  JsonArray errXyz;
-  errXyz.add(sp.ErrXYZ()[0]);
-  errXyz.add(sp.ErrXYZ()[1]);
-  errXyz.add(sp.ErrXYZ()[2]);
-  errXyz.add(sp.ErrXYZ()[3]);
-  errXyz.add(sp.ErrXYZ()[4]);
-  errXyz.add(sp.ErrXYZ()[5]);
 
-  jsp.add("xyz",xyz);
-  jsp.add("errXyz",errXyz);
-}
 
 
 
@@ -342,7 +322,7 @@ void GalleryRecordComposer::composeHits()
       int plane = hit.WireID().Plane;
       double q  = hit.Integral();
       double t  = hit.PeakTime();
-      double t1 = hit.EndTick();
+      double t1 = hit.StartTick();
       double t2 = hit.EndTick();
 
       if(plane==2)timeProfile.Fill(t,q);
@@ -384,585 +364,150 @@ void GalleryRecordComposer::composeHits()
 
 
 
-void GalleryRecordComposer::composeClusters()
+
+template<>
+void GalleryRecordComposer::composeObject(const recob::SpacePoint& sp, JsonObject& jsp)
 {
- 
-  typedef vector<recob::Cluster> current_type_t;
-  auto products = findByType<current_type_t>(fEvent->getTTree());
+  // cout << "Composing spacepoint " << sp.ID() << std::endl;
+  jsp.add("id"    ,sp.ID()   );
+  jsp.add("chisq" ,sp.Chisq());
+  JsonArray xyz;
+  xyz.add(sp.XYZ()[0]);
+  xyz.add(sp.XYZ()[1]);
+  xyz.add(sp.XYZ()[2]);
 
-  JsonObject reco_list;
-  for(auto product: products) {
-    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
-    TimeReporter timer(product.first);
+  JsonArray errXyz;
+  errXyz.add(sp.ErrXYZ()[0]);
+  errXyz.add(sp.ErrXYZ()[1]);
+  errXyz.add(sp.ErrXYZ()[2]);
+  errXyz.add(sp.ErrXYZ()[3]);
+  errXyz.add(sp.ErrXYZ()[4]);
+  errXyz.add(sp.ErrXYZ()[5]);
 
-    gallery::Handle< current_type_t > handle;
-    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-    JsonArray jClusters;
-    
-    for(const recob::Cluster& cluster: *handle) {
-      JsonObject jclus;
-      jclus.add("ID"         ,cluster.ID());
-      jclus.add("view"       ,cluster.View());
-      jclus.add("totalCharge",cluster.Integral() );
-      jclus.add("Integral",cluster.Integral() );
-      jclus.add("NHits",cluster.NHits() );
-      jclus.add("EndCharge",cluster.EndCharge() );
-      jclus.add("EndAngle",cluster.EndAngle() );
-      jclus.add("EndOpeningAngle",cluster.EndOpeningAngle() );
-      jclus.add("EndCharge",cluster.EndCharge() );
-      jclus.add("EndAngle",cluster.EndAngle() );
-      jclus.add("EndOpeningAngle",cluster.EndOpeningAngle() );
-      
-
-      jclus.add("EndPos"      ,JsonObject().add("wire",cluster.EndWire()).add("tdc",cluster.EndTick()));
-      jclus.add("endPos"        ,JsonObject().add("wire",cluster.EndWire()).add("tdc",cluster.EndTick()));
-      jclus.add("sigmaEndPos" ,JsonObject().add("wire",cluster.SigmaEndWire()).add("tdc",cluster.SigmaEndTick()));
-      jclus.add("sigmaEndPos"   ,JsonObject().add("wire",cluster.SigmaEndWire()).add("tdc",cluster.SigmaEndTick()));
-
-      jClusters.add(jclus);
-    }
-    reco_list.add(stripdots(product.first),jClusters);
-    timer.addto(fStats);
-  }
-
-  {
-    boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("clusters",reco_list);    
-  }
-  std::cout << "Clusters finishing" << std::endl;  
+  jsp.add("xyz",xyz);
+  jsp.add("errXyz",errXyz);
 }
 
-void  GalleryRecordComposer::composeEndpoint2d()
+template<>
+void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject& jtrk)
 {
+  jtrk.add("id"    ,track.ID());
+  jtrk.add("chi2"    ,track.Chi2());
+  jtrk.add("ndof"    ,track.Ndof());
+  jtrk.add("particleId"    ,track.ParticleId());
+  jtrk.add("theta"    ,track.Theta());
+  jtrk.add("phi"    ,track.Phi());
 
-  typedef vector<recob::EndPoint2D> current_type_t;
-  auto products = findByType<current_type_t>(fEvent->getTTree());
+  const recob::TrackTrajectory& traj = track.Trajectory();
+  JsonArray jpoints;
+  size_t npoints = traj.NPoints();
+  for(size_t i = 0; i< npoints; i++) {
+    JsonObject jpoint;
+    const auto& xyz = traj.LocationAtPoint(i);
+    const auto& mom = traj.MomentumVectorAtPoint(i);
+    double p = mom.R();
+    recob::Trajectory::Vector_t dir;
+    if(p>0) dir = mom/p;
+    else    dir = mom;
 
-  JsonObject reco_list;
-  for(auto product: products) {
-    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
-    TimeReporter timer(product.first);
-
-    gallery::Handle< current_type_t > handle;
-    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-    JsonArray jlist;
-    
-    for(const recob::EndPoint2D& endpoint: *handle) {
-      JsonObject jpt;
-
-      jpt.add("id"          ,endpoint.ID()        );
-      jpt.add("t"           ,endpoint.DriftTime() );
-      jpt.add("plane"       ,endpoint.View()      );
-      jpt.add("wire"        ,endpoint.View()      );
-      jpt.add("strength"    ,endpoint.Strength()  );
-      jpt.add("q"           ,endpoint.Charge()    );
-
-      jlist.add(jpt);
-    }
-    reco_list.add(stripdots(product.first),jlist);
-    timer.addto(fStats);
+    jpoint.add("x",xyz.x());
+    jpoint.add("y",xyz.y());
+    jpoint.add("z",xyz.z());
+    jpoint.add("vx",dir.x());
+    jpoint.add("vy",dir.y());
+    jpoint.add("vz",dir.z());
+    jpoint.add("P",p);
+    jpoints.add(jpoint);
   }
-
-  {
-    boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("endpoint2d",reco_list);    
-  }
-
+  jtrk.add("points",jpoints);
 }
 
-void  GalleryRecordComposer::composeSpacepoints()
+template<>
+void GalleryRecordComposer::composeObject(const recob::Shower& shower, JsonObject& jshw)
 {
-  composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints");
-  // typedef vector<recob::SpacePoint> current_type_t;
- //  auto products = findByType<current_type_t>(fEvent->getTTree());
- //
- //  JsonObject reco_list;
- //  for(auto product: products) {
- //    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
- //    TimeReporter timer(product.first);
- //
- //    gallery::Handle< current_type_t > handle;
- //    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
- //    if(!handle.isValid()) {
- //      std::cerr << "No data!" << std::endl;
- //      continue;
- //    }
- //    JsonArray jlist;
- //
- //    for(const recob::SpacePoint& sp: *handle) {
- //      JsonObject jsp;
- //
- //      jsp.add("id"    ,sp.ID()   );
- //      jsp.add("chisq" ,sp.Chisq());
- //      JsonArray xyz;
- //      xyz.add(sp.XYZ()[0]);
- //      xyz.add(sp.XYZ()[1]);
- //      xyz.add(sp.XYZ()[2]);
- //
- //      JsonArray errXyz;
- //      errXyz.add(sp.ErrXYZ()[0]);
- //      errXyz.add(sp.ErrXYZ()[1]);
- //      errXyz.add(sp.ErrXYZ()[2]);
- //      errXyz.add(sp.ErrXYZ()[3]);
- //      errXyz.add(sp.ErrXYZ()[4]);
- //      errXyz.add(sp.ErrXYZ()[5]);
- //
- //      jsp.add("xyz",xyz);
- //      jsp.add("errXyz",errXyz);
- //
- //      jlist.add(jsp);
- //    }
- //    reco_list.add(stripdots(product.first),jlist);
- //    timer.addto(fStats);
- //  }
- //
- //  {
- //    boost::mutex::scoped_lock lck(fOutputMutex);
- //    fOutput.add("spacepoints",reco_list);
- //  }
-  
+
+  jshw.add("id"    ,shower.ID());
+  TVector3 const& xyz = shower.ShowerStart();
+  JsonObject jEnd;
+  jEnd.add("x", xyz.x() );
+  jEnd.add("y", xyz.y() );
+  jEnd.add("z", xyz.z() );
+  jshw.add("End",jEnd);
+
+  TVector3 const& dir = shower.Direction();
+
+  JsonObject jdir;
+  jdir.add("x", dir.x() );
+  jdir.add("y", dir.y() );
+  jdir.add("z", dir.z() );
+  jshw.add("dir",jdir);
+
+  jshw.add("bestPlane",shower.best_plane() );
+  jshw.add("Length", shower.Length() );
+
+  jshw.add("totalEnergy",JsonArray(shower.Energy())); // Implicit Conversion from vector<double> to JsonArray
+  jshw.add("dEdx",JsonArray(shower.dEdx())); // ditto
+  jshw.add("totMIPEnergy",JsonArray(shower.MIPEnergy())); // ditto
 }
 
 
-void  GalleryRecordComposer::composeTracks()
+template<>
+void GalleryRecordComposer::composeObject(const recob::PFParticle& p, JsonObject& jpf)
 {
-  typedef vector<recob::Track> current_type_t;
-  auto products = findByType<current_type_t>(fEvent->getTTree());
-
-  JsonObject reco_list;
-  for(auto product: products) {
-    std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
-    TimeReporter timer(product.first);
-
-    gallery::Handle< current_type_t > handle;
-    {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-    JsonArray jTracks;    
-    for(const recob::Track& track: *handle) {
-      JsonObject jtrk;
-
-      jtrk.add("id"    ,track.ID());
-      jtrk.add("chi2"    ,track.Chi2());
-      jtrk.add("ndof"    ,track.Ndof());
-      jtrk.add("particleId"    ,track.ParticleId());
-      jtrk.add("theta"    ,track.Theta());
-      jtrk.add("phi"    ,track.Phi());
-      
-      const recob::TrackTrajectory& traj = track.Trajectory();
-      JsonArray jpoints;
-      size_t npoints = traj.NPoints();
-      for(size_t i = 0; i< npoints; i++) {
-        JsonObject jpoint;
-        const auto& xyz = traj.LocationAtPoint(i);
-        const auto& mom = traj.MomentumVectorAtPoint(i);
-        double p = mom.R();
-        recob::Trajectory::Vector_t dir;
-        if(p>0) dir = mom/p;
-        else    dir = mom;
-
-        jpoint.add("x",xyz.x());
-        jpoint.add("y",xyz.y());
-        jpoint.add("z",xyz.z());
-        jpoint.add("vx",dir.x());
-        jpoint.add("vy",dir.y());
-        jpoint.add("vz",dir.z());
-        jpoint.add("P",p);
-        jpoints.add(jpoint);
-      }
-      jtrk.add("points",jpoints);
-
-      jTracks.add(jtrk);
-    }
-
-    reco_list.add(stripdots(product.first),jTracks);
-    timer.addto(fStats);
-  }
-
-  {
-    boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("tracks",reco_list);
-
-  }
-  std::cout << "Tracks finishing" << std::endl;
-
+  jpf.add("self"    ,p.Self()    );
+  jpf.add("pdg"     ,p.PdgCode() );
+  jpf.add("parent"  ,p.Parent()  ); 
+  jpf.add("daughters", JsonArray(p.Daughters())); // Implicit conversion vector<size_t> to JsonArray
 }
 
-// void  GalleryRecordComposer::composeShowers()
-// {
-//   typedef vector<recob::Shower> current_type_t;
-//   auto products = findByType<current_type_t>(fEvent->getTTree());
-//
-//   JsonObject reco_list;
-//   for(auto product: products) {
-//     std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
-//     TimeReporter timer(product.first);
-//
-//     gallery::Handle< current_type_t > handle;
-//     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
-//     if(!handle.isValid()) {
-//       std::cerr << "No data!" << std::endl;
-//       continue;
-//     }
-//     JsonArray jTracks;
-//     for(const recob::Track& track: *handle) {
-//       JsonObject jtrk;
-//
-//       jtrk.add("id"    ,track.ID());
-//       jtrk.add("chi2"    ,track.Chi2());
-//       jtrk.add("ndof"    ,track.Ndof());
-//       jtrk.add("particleId"    ,track.ParticleId());
-//       jtrk.add("theta"    ,track.Theta());
-//       jtrk.add("phi"    ,track.Phi());
-//
-//       const recob::TrackTrajectory& traj = track.Trajectory();
-//       JsonArray jpoints;
-//       size_t npoints = traj.NPoints();
-//       for(size_t i = 0; i< npoints; i++) {
-//         JsonObject jpoint;
-//         const auto& xyz = traj.LocationAtPoint(i);
-//         const auto& mom = traj.MomentumVectorAtPoint(i);
-//         double p = mom.R();
-//         recob::Trajectory::Vector_t dir;
-//         if(p>0) dir = mom/p;
-//         else    dir = mom;
-//
-//         jpoint.add("x",xyz.x());
-//         jpoint.add("y",xyz.y());
-//         jpoint.add("z",xyz.z());
-//         jpoint.add("vx",dir.x());
-//         jpoint.add("vy",dir.y());
-//         jpoint.add("vz",dir.z());
-//         jpoint.add("P",p);
-//         jpoints.add(jpoint);
-//       }
-//       jtrk.add("points",jpoints);
-//
-//       jTracks.add(jtrk);
-//     }
-//
-//     reco_list.add(stripdots(product.first),jTracks);
-//     timer.addto(fStats);
-//   }
-//
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("tracks",reco_list);
-//
-//   }
-//   std::cout << "Tracks finishing" << std::endl;
-//
-//
-//
-//
-//   vector<string> leafnames = findLeafOfType("vector<recob::Shower>");
-//
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-// std::cout << "Looking at " << typeid(current_type_t).name()  <<" object " << product.first << std::endl;
-//     JsonArray jShowers;
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     cout << "Found " << n << " objects" << endl;
-//
-//     TreeElementLooter tel_fTotalEnergy   (fTree,name+"obj.fTotalEnergy");
-//     TreeElementLooter tel_fdEdx          (fTree,name+"obj.fdEdx");
-//     TreeElementLooter tel_fTotalMIPEnergy(fTree,name+"obj.fTotalMIPEnergy");
-//
-//     for(int i=0;i<n;i++) {
-//       JsonObject jshw;
-//
-//       jshw.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
-//       JsonObject jEnd;
-//       jEnd.add("x", ftr.getJson(name+"obj.fXYZEnd.fX",i));
-//       jEnd.add("y", ftr.getJson(name+"obj.fXYZEnd.fY",i));
-//       jEnd.add("z", ftr.getJson(name+"obj.fXYZEnd.fZ",i));
-//       jshw.add("End",jEnd);
-//       JsonObject jdir;
-//       jdir.add("x", ftr.getJson(name+"obj.fDCosEnd.fX",i));
-//       jdir.add("y", ftr.getJson(name+"obj.fDCosEnd.fY",i));
-//       jdir.add("z", ftr.getJson(name+"obj.fDCosEnd.fZ",i));
-//       jshw.add("dir",jdir);
-//
-//       jshw.add("bestPlane",ftr.getJson(name+"obj.fBestPlane",i));
-//       jshw.add("Length",ftr.getJson(name+"obj.fLength",i));
-//
-//       const vector<double> *totEnergy   = tel_fTotalEnergy.get<vector<double>            >(i);
-//       jshw.add("totalEnergy",JsonArray(*totEnergy));
-//       const vector<double> *dEdx        = tel_fdEdx.get<vector<double>            >(i);
-//       jshw.add("dEdx",JsonArray(*dEdx));
-//       const vector<double> *totMIPEnergy= tel_fTotalMIPEnergy.get<vector<double>            >(i);
-//       jshw.add("totMIPEnergy",JsonArray(*totMIPEnergy));
-//
-//       jShowers.add(jshw);
-//     }
-//
-//     reco_list.add(stripdots(product.first),jShowers);
-//     timer.addto(fStats);
-//   }
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("showers",reco_list);
-//   }
-//
-// }
-//
-//
-// void GalleryRecordComposer::composePFParticles()
-// {
-//   vector<string> leafnames = findLeafOfType("vector<recob::PFParticle>");
-//
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//     std::cout << "Looking at PFParticles object " << (name+"obj_").c_str() << endl;
-//
-//     JsonArray jPFParticles;
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     cout << "Found " << n << " objects" << endl;
-//
-//     TreeElementLooter lootDaughters(fTree,name+"obj.fDaughters");
-//     for(int i=0;i<n;i++) {
-//       JsonObject jpf;
-//
-//       jpf.add("self"    ,ftr.getJson(name+"obj.fSelf"          ,i));
-//       jpf.add("pdg"     ,ftr.getJson(name+"obj.fPdgCode"       ,i));
-//       jpf.add("parent"  ,ftr.getJson(name+"obj.fParent"        ,i));
-//       const std::vector<unsigned long> *ptr = lootDaughters.get<std::vector<unsigned long> >(i);
-//       JsonArray daughters(*ptr);
-//       jpf.add("daughters",daughters);
-//       jPFParticles.add(jpf);
-//     }
-//     reco_list.add(stripdots(product.first),jPFParticles);
-//     timer.addto(fStats);
-//   }
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("pfparticles",reco_list);
-//   }
-// }
-//
-// // Optical
-// void  GalleryRecordComposer::composeOpFlashes()
-// {
-//   vector<string> leafnames = findLeafOfType("vector<recob::OpFlash>");
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//     std::cout << "Looking at opflash object " << (name+"obj_").c_str() << endl;
-//     JsonArray jOpFlashes;
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     cout << "flashes: " << n << endl;
-//      //       Double_t recob::OpFlashs_opflash__Reco.obj.fTime
-//      // vector<double> recob::OpFlashs_opflash__Reco.obj.fPEperOpDet
-//      // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireCenter
-//      // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireWidths
-//      //       Double_t recob::OpFlashs_opflash__Reco.obj.fYCenter
-//      //       Double_t recob::OpFlashs_opflash__Reco.obj.fYWidth
-//      //       Double_t recob::OpFlashs_opflash__Reco.obj.fZCenter
-//      //       Double_t recob::OpFlashs_opflash__Reco.obj.fZWidth
-//      //          Int_t recob::OpFlashs_opflash__Reco.obj.fOnBeamTime
-//
-//
-//     TreeElementLooter tel_fPEperOpDet(fTree,name+"obj.fPEperOpDet");
-//     TreeElementLooter tel_fWireCenter(fTree,name+"obj.fWireCenters");
-//     TreeElementLooter tel_fWireWidths(fTree,name+"obj.fWireWidths");
-//
-//     for(int i=0;i<n;i++) {
-//       JsonObject jflash;
-//       jflash.add("time"       ,ftr.getJson(name+"obj.fTime",i));
-//       jflash.add("timeWidth"  ,ftr.getJson(name+"obj.fTimeWidth",i));
-//       jflash.add("absTime"    ,ftr.getJson(name+"obj.fAbsTime",i));
-//       jflash.add("yCenter"    ,ftr.getJson(name+"obj.fYCenter",i));
-//       jflash.add("yWidth"     ,ftr.getJson(name+"obj.fYWidth",i));
-//       jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
-//       jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
-//       jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
-//       jflash.add("inBeamFrame",ftr.getJson(name+"obj.fInBeamFrame",i));
-//
-//       // auto-construct arrays; lots o' syntactic sugar here.
-//       if(tel_fPEperOpDet.ok())  jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
-//       const vector<double>* pe_arr = tel_fPEperOpDet .get<vector<double> >(i);
-//       double totpe = 0;
-//       for(double pe: *pe_arr) totpe+= pe;
-//       jflash.add("totPe",totpe);
-//
-//
-//
-//       if(tel_fWireCenter.ok())  jflash.add("wireCenter",     JsonArray(*(tel_fWireCenter .get<vector<double> >(i))));
-//       if(tel_fWireWidths.ok())  jflash.add("wireWidths",     JsonArray(*(tel_fWireWidths .get<vector<double> >(i))));
-//
-//       jOpFlashes.add(jflash);
-//     }
-//     reco_list.add(stripdots(product.first),jOpFlashes);
-//     timer.addto(fStats);
-//   }
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("opflashes",reco_list);
-//   }
-// }
+template<>
+void GalleryRecordComposer::composeObject(const recob::OpFlash& flash, JsonObject& jflash)
+{
+  jflash.add("time"       ,flash.Time()       ); 
+  jflash.add("timeWidth"  ,flash.TimeWidth()  ); 
+  jflash.add("absTime"    ,flash.AbsTime()    ); 
+  jflash.add("yCenter"    ,flash.YCenter()    ); 
+  jflash.add("yWidth"     ,flash.YWidth()     ); 
+  jflash.add("zCenter"    ,flash.ZCenter()    ); 
+  jflash.add("zWidth"     ,flash.ZWidth()     ); 
+  jflash.add("onBeamTime" ,flash.OnBeamTime() ); 
+  jflash.add("inBeamFrame",flash.InBeamFrame()); 
+
+  // Would have to pull it out one at a time. But I don't think I use this.
+  //jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
+  jflash.add("totPe",flash.TotalPE());
+
+  // auto-construct arrays; lots o' syntactic sugar here.
+  jflash.add("wireCenter",     JsonArray(flash.WireCenters()));
+  jflash.add("wireWidths",     JsonArray(flash.WireWidths() ));
+}
 
 
+template<>
+void GalleryRecordComposer::composeObject(const raw::OpDetPulse& pulse, JsonObject& jobj)
+{
+  jobj.add("opDetChan", pulse.OpChannel());
+  jobj.add("samples", pulse.Samples());
+  jobj.add("tdc", pulse.FirstSample());
+  jobj.add("frame", pulse.PMTFrame());
+  // In fact, this class is fundamentally broken: there is no const version of Waveform(), so the data is write-only! 
+  // if(pulse.Samples() < 10000) {
+    // jobj.add("waveform",JsonArray(pulse.Waveform()));
+  // }
+}
 
-// void  GalleryRecordComposer::composeOpPulses()
-// {
-//   vector<string> leafnames = findLeafOfType("vector<raw::OpDetPulse>");
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//     std::cout << "Looking at ophits object " << (name+"obj_").c_str() << endl;
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     TreeElementLooter loot(fTree,name+"obj.fWaveform");
-//     if(!loot.ok()) return;
-//
-//     JsonArray joppulses;
-//     for(int i=0;i<n;i++) {
-//
-//       int chan    = ftr.getInt(name+"obj.fOpChannel"   ,i);
-//       int samples = ftr.getInt(name+"obj.fSamples"     ,i);
-//       int frame   = ftr.getInt(name+"obj.fPMTFrame"    ,i);
-//       int tdc     = ftr.getInt(name+"obj.fFirstSample" ,i);
-//       const std::vector<short> *ptr = loot.get<std::vector<short> >(i);
-//       const std::vector<short>& wave = *ptr;
-//
-//       if(samples > 10000) {
-//         // We're dealing with badly-made MC which is just dumping it's waveform content.
-//
-//         // Scan through the wavform and fake up pulse entries when you see something good.
-//         int t = 0;
-//         int tot = wave.size();
-//         while(t<tot) {
-//           if(wave[t] == 0) {t++; continue;}
-//
-//           // End a pulse.
-//           JsonObject jobj;
-//           jobj.add("opDetChan"     ,chan    );
-//           jobj.add("frame"         ,frame   );
-//           jobj.add("tdc"           ,t       );
-//           JsonArray jwave;
-//           int nsamp = 0;
-//           while(t<tot && wave[t]!=0) {
-//             jwave.add(wave[t]); nsamp++;  t++;
-//             if((t<tot) && wave[t]==0) {jwave.add(wave[t]); nsamp++; t++;} // Add one more - insist that there be two zeroes in a row.
-//           }
-//           jobj.add("samples",nsamp);
-//           jobj.add("waveform",jwave);
-//           joppulses.add(jobj);
-//           // cout << "Created pulse channel " << chan << " with " << nsamp << " samples " << endl;
-//         }
-//
-//
-//       } else {
-//         // This appears to be genuine, so we'll reproduce it faithfully.
-//         JsonObject jobj;
-//         jobj.add("opDetChan"     ,chan    );
-//         jobj.add("samples"       ,samples );
-//         jobj.add("frame"         ,frame   );
-//         jobj.add("tdc"           ,tdc     );
-//         JsonArray waveform;
-//         for(size_t j=0;j<wave.size();j++) {
-//           waveform.add( wave[j] );
-//         }
-//         jobj.add("waveform",waveform);
-//         joppulses.add(jobj);
-//
-//       }
-//
-//     }
-//
-//     reco_list.add(stripdots(product.first),joppulses);
-//     timer.addto(fStats);
-//   }
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("oppulses",reco_list);
-//   }
-//
-// }
-//
-// void  GalleryRecordComposer::composeOpHits()
-// {
-//   vector<string> leafnames = findLeafOfType("vector<recob::OpHit>");
-//   JsonObject reco_list;
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//     std::cout << "Looking at ophits object " << (name+"obj_").c_str() << endl;
-//     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!l) continue;
-//     int n = l->GetLen();
-//     cout << "ophits: " << n << endl;
-//
-//     JsonArray jophits;
-//     for(int i=0;i<n;i++) {
-//       JsonObject jobj;
-//
-//       jobj.add("opDetChan"     ,ftr.getJson(name+"obj.fOpChannel"            ,i));
-//       jobj.add("peakTime"      ,1e3*ftr.getVal(name+"obj.fPeakTime"             ,i));
-//       jobj.add("width"         ,ftr.getJson(name+"obj.fWidth"                ,i));
-//       jobj.add("area"          ,ftr.getJson(name+"obj.fArea"                 ,i));
-//       jobj.add("amp"           ,ftr.getJson(name+"obj.fAmplitude"            ,i));
-//       jobj.add("pe"            ,ftr.getJson(name+"obj.fPE"                   ,i));
-//       jobj.add("fastToTotal"   ,ftr.getJson(name+"obj.fFastToTotal"          ,i));
-//       jophits.add(jobj);
-//     }
-//
-//     reco_list.add(stripdots(product.first),jophits);
-//     timer.addto(fStats);
-//   }
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("ophits",reco_list);
-//   }
-// }
-//
-//
-// // void GalleryRecordComposer::wireOfChannel(int channel, int& plane, int& wire)
-// // {
-// //   if(channel < 2399) {
-// //     plane = 0; wire= channel; return;
-// //   }
-// //   else if(channel <4798) {
-// //     plane = 1;
-// //     wire = channel - 2399;
-// //     return;
-// //   }
-// //   else{
-// //     plane = 2;
-// //     wire= channel-4798;
-// //     return;
-// //   }
-// // }
-//
-//
+template<>
+void GalleryRecordComposer::composeObject(const recob::OpHit& hit, JsonObject& jobj)
+{
+  jobj.add("opDetChan"     ,hit.OpChannel());
+  jobj.add("peakTime"      ,1e3*hit.PeakTime());
+  jobj.add("width"         ,hit.Width());
+  jobj.add("area"          ,hit.Area());
+  jobj.add("amp"           ,hit.Amplitude());
+  jobj.add("pe"            ,hit.PE());
+  jobj.add("fastToTotal"   ,hit.FastToTotal());
+}
+
 void GalleryRecordComposer::composeCalAvailability()
 {
   typedef vector<recob::Wire> current_type_t;
@@ -1258,334 +803,335 @@ void GalleryRecordComposer::composeRaw()
 // //   double d2 = qp2-lam*lam*v2;
 // //   return sqrt(d2);
 // // }
-// void GalleryRecordComposer::composeAuxDets()
-// {
-//   // On hold. No way I can figure out how to decode a std::set<AuxDetIDE>.
-//
-//   // vector<string> leafnames = findLeafOfType("vector<sim::AuxDetSimChannel>");
-//   // JsonObject reco_list;
-//   //
-//   // for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//   //   std::string name = leafnames[iname];
-//   //
-//   //   std::cout << "Looking at sim::AuxDetSimChannel " << (name+"obj_").c_str() << endl;
-//   //
-//   //   JsonArray jAuxDets;
-//   //   TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
-//   //   if(!l) continue;
-//   //   int n = l->GetLen();
-//   //   cout << "auxdets: " << n << endl;
-//   //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fTime
-//   //    // vector<double> recob::OpFlashs_opflash__Reco.obj.fPEperOpDet
-//   //    // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireCenter
-//   //    // vector<double> recob::OpFlashs_opflash__Reco.obj.fWireWidths
-//   //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fYCenter
-//   //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fYWidth
-//   //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fZCenter
-//   //    //       Double_t recob::OpFlashs_opflash__Reco.obj.fZWidth
-//   //    //          Int_t recob::OpFlashs_opflash__Reco.obj.fOnBeamTime
-//   //
-//   //
-//   //   TreeElementLooter tel_fPEperOpDet(fTree,name+"obj.fPEperOpDet");
-//   //   TreeElementLooter tel_fWireCenter(fTree,name+"obj.fWireCenter");
-//   //   TreeElementLooter tel_fWireWidths(fTree,name+"obj.fWireWidths");
-//   //
-//   //   for(int i=0;i<n;i++) {
-//   //     JsonObject jflash;
-//   //     jflash.add("time"       ,ftr.getJson(name+"obj.fTime",i));
-//   //     jflash.add("yCenter"    ,ftr.getJson(name+"obj.fYCenter",i));
-//   //     jflash.add("yWidth"     ,ftr.getJson(name+"obj.fYWidth",i));
-//   //     jflash.add("zCenter"    ,ftr.getJson(name+"obj.fZCenter",i));
-//   //     jflash.add("zWidth"     ,ftr.getJson(name+"obj.fZWidth",i));
-//   //     jflash.add("onBeamTime" ,ftr.getJson(name+"obj.fOnBeamTime",i));
-//   //
-//   //
-//   // }
-// }
-//
-// void GalleryRecordComposer::composeMC()
-// {
-//
-//   vector<string> leafnames = findLeafOfType("vector<simb::GTruth>");
-//   JsonObject mc;
-//
-//   JsonObject truth_list;
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//
-//     std::vector<std::pair< std::string,std::string> > list;
-//     list.push_back(std::make_pair<std::string,std::string>("fGint"                             ,  string(name+"obj.fGint"                    )));
-//     list.push_back(std::make_pair<std::string,std::string>("fGscatter"                         ,  string(name+"obj.fGscatter"                )));
-//     list.push_back(std::make_pair<std::string,std::string>("fweight"                           ,  string(name+"obj.fweight"                  )));
-//     list.push_back(std::make_pair<std::string,std::string>("fprobability"                      ,  string(name+"obj.fprobability"             )));
-//     list.push_back(std::make_pair<std::string,std::string>("fXsec"                             ,  string(name+"obj.fXsec"                    )));
-//     list.push_back(std::make_pair<std::string,std::string>("fDiffXsec"                         ,  string(name+"obj.fDiffXsec"                )));
-//     list.push_back(std::make_pair<std::string,std::string>("fNumPiPlus"                        ,  string(name+"obj.fNumPiPlus"               )));
-//     list.push_back(std::make_pair<std::string,std::string>("fNumPiMinus"                       ,  string(name+"obj.fNumPiMinus"              )));
-//     list.push_back(std::make_pair<std::string,std::string>("fNumPi0"                           ,  string(name+"obj.fNumPi0"                  )));
-//     list.push_back(std::make_pair<std::string,std::string>("fNumProton"                        ,  string(name+"obj.fNumProton"               )));
-//     list.push_back(std::make_pair<std::string,std::string>("fNumNeutron"                       ,  string(name+"obj.fNumNeutron"              )));
-//     list.push_back(std::make_pair<std::string,std::string>("fIsCharm"                          ,  string(name+"obj.fIsCharm"                 )));
-//     list.push_back(std::make_pair<std::string,std::string>("fResNum"                           ,  string(name+"obj.fResNum"                  )));
-//     list.push_back(std::make_pair<std::string,std::string>("fgQ2"                              ,  string(name+"obj.fgQ2"                     )));
-//     list.push_back(std::make_pair<std::string,std::string>("fgq2"                              ,  string(name+"obj.fgq2"                     )));
-//     list.push_back(std::make_pair<std::string,std::string>("fgW"                               ,  string(name+"obj.fgW"                      )));
-//     list.push_back(std::make_pair<std::string,std::string>("fgT"                               ,  string(name+"obj.fgT"                      )));
-//     list.push_back(std::make_pair<std::string,std::string>("fgX"                               ,  string(name+"obj.fgX"                      )));
-//     list.push_back(std::make_pair<std::string,std::string>("fgY"                               ,  string(name+"obj.fgY"                      )));
-//     list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fBits"             ,  string(name+"obj.fFShadSystP4.fP.fBits"    )));
-//     list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fX"                ,  string(name+"obj.fFShadSystP4.fP.fX"       )));
-//     list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fY"                ,  string(name+"obj.fFShadSystP4.fP.fY"       )));
-//     list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fP_fZ"                ,  string(name+"obj.fFShadSystP4.fP.fZ"       )));
-//     list.push_back(std::make_pair<std::string,std::string>("fFShadSystP4_fE"                   ,  string(name+"obj.fFShadSystP4.fE"          )));
-//     list.push_back(std::make_pair<std::string,std::string>("fIsSeaQuark"                       ,  string(name+"obj.fIsSeaQuark"              )));
-//     list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fBits"                ,  string(name+"obj.fHitNucP4.fP.fBits"       )));
-//     list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fX"                   ,  string(name+"obj.fHitNucP4.fP.fX"          )));
-//     list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fY"                   ,  string(name+"obj.fHitNucP4.fP.fY"          )));
-//     list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fP_fZ"                   ,  string(name+"obj.fHitNucP4.fP.fZ"          )));
-//     list.push_back(std::make_pair<std::string,std::string>("fHitNucP4_fE"                      ,  string(name+"obj.fHitNucP4.fE"             )));
-//     list.push_back(std::make_pair<std::string,std::string>("ftgtZ"                             ,  string(name+"obj.ftgtZ"                    )));
-//     list.push_back(std::make_pair<std::string,std::string>("ftgtA"                             ,  string(name+"obj.ftgtA"                    )));
-//     list.push_back(std::make_pair<std::string,std::string>("ftgtPDG"                           ,  string(name+"obj.ftgtPDG"                  )));
-//     list.push_back(std::make_pair<std::string,std::string>("fProbePDG"                         ,  string(name+"obj.fProbePDG"                )));
-//     list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fBits"                 ,  string(name+"obj.fProbeP4.fP.fBits"        )));
-//     list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fX"                    ,  string(name+"obj.fProbeP4.fP.fX"           )));
-//     list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fY"                    ,  string(name+"obj.fProbeP4.fP.fY"           )));
-//     list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fP_fZ"                    ,  string(name+"obj.fProbeP4.fP.fZ"           )));
-//     list.push_back(std::make_pair<std::string,std::string>("fProbeP4_fE"                       ,  string(name+"obj.fProbeP4.fE"              )));
-//     list.push_back(std::make_pair<std::string,std::string>("fVertex_fP_fX"                     ,  string(name+"obj.fVertex.fP.fX"            )));
-//     list.push_back(std::make_pair<std::string,std::string>("fVertex_fP_fY"                     ,  string(name+"obj.fVertex.fP.fY"            )));
-//     list.push_back(std::make_pair<std::string,std::string>("fVertex_fP_fZ"                     ,  string(name+"obj.fVertex.fP.fZ"            )));
-//     list.push_back(std::make_pair<std::string,std::string>("fVertex_fE"                        ,  string(name+"obj.fVertex.fE"               )));
-//     JsonArray gtruth_arr = ftr.makeArray(list);
-//
-//     truth_list.add(stripdots(product.first),gtruth_arr);
-//     timer.addto(fStats);
-//   }
-//   mc.add("gtruth",truth_list);
-//
-//
-//   leafnames = findLeafOfType("vector<simb::MCTruth>");
-//   JsonObject mctruth_list;
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     TimeReporter timer(product.first);
-//
-//     std::vector<std::pair< std::string,std::string> > list;
-//     // Not pulled; maybe I can get away without it?
-//     // vector<pair<TLorentzVector,TLorentzVector> > obj.fMCNeutrino.fNu.ftrajectory.ftrajectory
-//     // vector<pair<TLorentzVector,TLorentzVector> > obj.fMCNeutrino.fLepton.ftrajectory.ftrajectory
-//     //   set<int> obj.fMCNeutrino.fLepton.fdaughters
-//     //     set<int> obj.fMCNeutrino.fNu.fdaughters
-//
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fstatus"                 , string(name+"obj.fMCNeutrino.fNu.fstatus"                 )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_ftrackId"                , string(name+"obj.fMCNeutrino.fNu.ftrackId"                )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fpdgCode"                , string(name+"obj.fMCNeutrino.fNu.fpdgCode"                )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fmother"                 , string(name+"obj.fMCNeutrino.fNu.fmother"                 )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fprocess"                , string(name+"obj.fMCNeutrino.fNu.fprocess"                )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fmass"                   , string(name+"obj.fMCNeutrino.fNu.fmass"                   )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fpolarization_fX"        , string(name+"obj.fMCNeutrino.fNu.fpolarization.fX"        )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fpolarization_fY"        , string(name+"obj.fMCNeutrino.fNu.fpolarization.fY"        )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fpolarization_fZ"        , string(name+"obj.fMCNeutrino.fNu.fpolarization.fZ"        )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fWeight"                 , string(name+"obj.fMCNeutrino.fNu.fWeight"                 )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fGvtx_fP_fX"             , string(name+"obj.fMCNeutrino.fNu.fGvtx.fP.fX"             )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fGvtx_fP_fY"             , string(name+"obj.fMCNeutrino.fNu.fGvtx.fP.fY"             )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fGvtx_fP_fZ"             , string(name+"obj.fMCNeutrino.fNu.fGvtx.fP.fZ"             )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_fGvtx_fE"                , string(name+"obj.fMCNeutrino.fNu.fGvtx.fE"                )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fNu_frescatter"              , string(name+"obj.fMCNeutrino.fNu.frescatter"              )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fstatus"             , string(name+"obj.fMCNeutrino.fLepton.fstatus"             )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_ftrackId"            , string(name+"obj.fMCNeutrino.fLepton.ftrackId"            )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fpdgCode"            , string(name+"obj.fMCNeutrino.fLepton.fpdgCode"            )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fmother"             , string(name+"obj.fMCNeutrino.fLepton.fmother"             )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fprocess"            , string(name+"obj.fMCNeutrino.fLepton.fprocess"            )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fmass"               , string(name+"obj.fMCNeutrino.fLepton.fmass"               )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fpolarization_fX"    , string(name+"obj.fMCNeutrino.fLepton.fpolarization.fX"    )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fpolarization_fY"    , string(name+"obj.fMCNeutrino.fLepton.fpolarization.fY"    )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fpolarization_fZ"    , string(name+"obj.fMCNeutrino.fLepton.fpolarization.fZ"    )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fWeight"             , string(name+"obj.fMCNeutrino.fLepton.fWeight"             )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fGvtx_fP_fX"         , string(name+"obj.fMCNeutrino.fLepton.fGvtx.fP.fX"         )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fGvtx_fP_fY"         , string(name+"obj.fMCNeutrino.fLepton.fGvtx.fP.fY"         )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fGvtx_fP_fZ"         , string(name+"obj.fMCNeutrino.fLepton.fGvtx.fP.fZ"         )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_fGvtx_fE"            , string(name+"obj.fMCNeutrino.fLepton.fGvtx.fE"            )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fLepton_frescatter"          , string(name+"obj.fMCNeutrino.fLepton.frescatter"          )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fMode"                       , string(name+"obj.fMCNeutrino.fMode"                       )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fInteractionType"            , string(name+"obj.fMCNeutrino.fInteractionType"            )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fCCNC"                       , string(name+"obj.fMCNeutrino.fCCNC"                       )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fTarget"                     , string(name+"obj.fMCNeutrino.fTarget"                     )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fHitNuc"                     , string(name+"obj.fMCNeutrino.fHitNuc"                     )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fHitQuark"                   , string(name+"obj.fMCNeutrino.fHitQuark"                   )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fW"                          , string(name+"obj.fMCNeutrino.fW"                          )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fX"                          , string(name+"obj.fMCNeutrino.fX"                          )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fY"                          , string(name+"obj.fMCNeutrino.fY"                          )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fMCNeutrino_fQSqr"                       , string(name+"obj.fMCNeutrino.fQSqr"                       )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fOrigin"                                 , string(name+"obj.fOrigin"                                 )));
-//     list.push_back(std::make_pair<std::string,std::string>( "fNeutrinoSet"                            , string(name+"obj.fNeutrinoSet"                            )));
-//     std::vector<JsonObject> v_mctruths = ftr.makeVector(list);
-//
-//     // The fPartList object is in fact a vector<simb::MCParticle>, as is read in the next step.
-//     // However, the default splitlevel means it's stored as monolithic blocks and has no "obj." stuff.
-//     // The only way I can see to get at it is to do a ttreeformula.
-//     // However, I think the only thing in there we care about is the track number...?
-//
-//     for(size_t i=0;i<v_mctruths.size();i++) {
-//       TTreeFormula ttf("tff",string(name+"obj.fPartList["+std::to_string((long long)i)+"].ftrackId").c_str(),fTree);
-//       int npart = ttf.GetNdata();
-//       JsonArray trackids;
-//       for(int j = 0;j<npart; j++) {
-//         trackids.add((int)ttf.EvalInstance(j));
-//       }
-//       v_mctruths[i].add("trackIds",trackids);
-//     }
-//     JsonArray arr(v_mctruths);
-//     mctruth_list.add(stripdots(product.first),arr);
-//     timer.addto(fStats);
-//
-//   }
-//   mc.add("mctruth",mctruth_list);
-//
-//   JsonObject particle_list;
-//   leafnames = findLeafOfType("vector<simb::MCParticle>");
-//
-//   for(size_t iname = 0; iname<leafnames.size(); iname++) {
-//     std::string name = leafnames[iname];
-//     if(fTree->GetLeaf((name+"obj_").c_str())==0) continue;
-//     TimeReporter timer(product.first);
-//
-//     JsonElement::sfDecimals=5;
-//     JsonArray gparticle_arr;
-//
-//     // vector<pair< string,string> > key_leaf_pairs;
-//     // // key_leaf_pairs.push_back(make_pair<string,string>("fdaughters"                 , name+"obj.fdaughters"               ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fmass"                      , name+"obj.fmass"                    ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fmother"                    , name+"obj.fmother"                  ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fpdgCode"                   , name+"obj.fpdgCode"                 ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fprocess"                   , name+"obj.fprocess"                 ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("frescatter"                 , name+"obj.frescatter"               ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fstatus"                    , name+"obj.fstatus"                  ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("ftrackId"                   , name+"obj.ftrackId"                 ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fWeight"                    , name+"obj.fWeight"                  ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fE"                   , name+"obj.fGvtx.fE"                 ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fX"                , name+"obj.fGvtx.fP.fX"              ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fY"                , name+"obj.fGvtx.fP.fY"              ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fGvtx.fP.fZ"                , name+"obj.fGvtx.fP.fZ"              ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fX"           , name+"obj.fpolarization.fX"         ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fY"           , name+"obj.fpolarization.fY"         ));
-//     // key_leaf_pairs.push_back(make_pair<string,string>("fpolarization.fZ"           , name+"obj.fpolarization.fZ"         ));
-//
-//
-//
-//     TLeaf* lp_fmass      = fTree->GetLeaf( (name+"obj.fmass"     ).c_str());
-//     TLeaf* lp_fmother    = fTree->GetLeaf( (name+"obj.fmother"   ).c_str());
-//     TLeaf* lp_fpdgCode   = fTree->GetLeaf( (name+"obj.fpdgCode"  ).c_str());
-//     TLeaf* lp_fprocess   = fTree->GetLeaf( (name+"obj.fprocess"  ).c_str());
-//     TLeaf* lp_frescatter = fTree->GetLeaf( (name+"obj.frescatter").c_str());
-//     TLeaf* lp_fstatus    = fTree->GetLeaf( (name+"obj.fstatus"   ).c_str());
-//     TLeaf* lp_ftrackId   = fTree->GetLeaf( (name+"obj.ftrackId"  ).c_str());
-//     TLeaf* lp_fWeight    = fTree->GetLeaf( (name+"obj.fWeight"   ).c_str());
-//
-//     TreeElementLooter tel_fprocess(fTree,name+"obj.fprocess");
-//
-//     TLeaf* lf = fTree->GetLeaf((name+"obj_").c_str());
-//     if(!lf) return;
-//     int nparticles = lf->GetLen();
-//     TreeElementLooter l(fTree,name+"obj.ftrajectory.ftrajectory");
-//     if(!l.ok()) continue;
-//
-//     std::cout << "Making particle list " << name << " " << nparticles << std::endl;
-//
-//     std::vector<int> v_countDaughters(nparticles,0);
-//     for(int i=0;i<nparticles;i++) {
-//       int mom =  ftr.getInt(lp_fmother ,i  );
-//       if(mom<0) continue;
-//       if(mom>= v_countDaughters.size()) continue;
-//       v_countDaughters[mom]++;
-//     }
-//
-//     JsonArray j_particles;
-//     int nkeep = 0;
-//     for(int i=0;i<nparticles;i++) {
-//       const std::vector<pair<TLorentzVector,TLorentzVector> > *traj;
-//       traj = l.get<std::vector<pair<TLorentzVector,TLorentzVector> > >(i);
-//       int n = traj->size();
-//       if(n<1) continue;
-//
-//       // Find total trajectory length.
-//       TLorentzVector xfirst = ((*traj)[0].first);
-//       TLorentzVector xlast = ((*traj)[n-1].first);
-//       TVector3 dx = xlast.Vect()-xfirst.Vect();
-//       if( (dx.Mag() < 0.3) && (v_countDaughters[i] <1) ) {
-//         // What a useless particle!  No daughters, no track length. Skip it.
-//         j_particles.add(JsonElement(0)); // add a null object
-//         continue;
-//       }
-//
-//       JsonObject jparticle;
-//       jparticle.add("fmass"     , ftr.getInt(lp_fmass     ,i));
-//       jparticle.add("fmother"   , ftr.getInt(lp_fmother   ,i));
-//       jparticle.add("fpdgCode"  , ftr.getInt(lp_fpdgCode  ,i));
-//       // jparticle.add("fprocess"  , ftr.getInt(lp_fprocess  ,i));
-//       const std::string  *process           = tel_fprocess.get<std::string>(i);
-//       if(process) jparticle.add("fprocess"  , *process);
-//       jparticle.add("frescatter", ftr.getInt(lp_frescatter,i));
-//       jparticle.add("fstatus"   , ftr.getInt(lp_fstatus   ,i));
-//       jparticle.add("ftrackId"  , ftr.getInt(lp_ftrackId  ,i));
-//       jparticle.add("fWeight"   , ftr.getVal(lp_fWeight   ,i));
-//
-//       // Trajectory
-//       JsonArray jtraj;
-//       TLorentzVector x_last  = ((*traj)[0].first);
-//       TLorentzVector p_last  = ((*traj)[0].second);
-//       int n_need = 1;
-//       for(int j=0;j<n;j++) {
-//         TLorentzVector x   = ((*traj)[j].first);
-//         TLorentzVector p   = ((*traj)[j].second);
-//
-//         if(  j==0  // keep first point
-//           || j==n-1  // keep last point
-//           || pointOffLine(x_last,p_last,x,0.15)) // keep any point not on projected line within a 0.15 cm tolerance
-//         {
-//           // Keep this point.
-//           JsonObject trajpoint;
-//
-//           const TLorentzVector& pos = (*traj)[j].first;
-//           const TLorentzVector& mom = (*traj)[j].second;
-//           // trajpoint.add("acc",ptAcc[j]);
-//           trajpoint.add("x",JsonFixed(x.X(),1));
-//           trajpoint.add("y",JsonFixed(x.Y(),1));
-//           trajpoint.add("z",JsonFixed(x.Z(),1));
-//           trajpoint.add("t",JsonFixed(x.T(),1));
-//           trajpoint.add("px",JsonFixed(p.X(),4));
-//           trajpoint.add("py",JsonFixed(p.Y(),4));
-//           trajpoint.add("pz",JsonFixed(p.Z(),4));
-//           trajpoint.add("E" ,JsonFixed(p.T(),6));
-//           jtraj.add(trajpoint);
-//           x_last = x;
-//           p_last = p;
-//         }
-//       }
-//       jparticle.add("trajectory",jtraj);
-//
-//       nkeep++;
-//       j_particles.add(jparticle);
-//     }
-//
-//     particle_list.add(stripdots(product.first),j_particles);
-//     timer.addto(fStats);
-//
-//     std::cout << "Made particle list " << name << " " << nkeep << std::endl;
-//
-//   }
-//   mc.add("particles",particle_list);
-//
-//   {
-//     boost::mutex::scoped_lock lck(fOutputMutex);
-//     fOutput.add("mc",mc);
-//   }
-// }
+
+
+void GalleryRecordComposer::composeMC()
+{
+  JsonObject mc;
+  composeObjectsVector< std::vector<simb::GTruth> >("gtruth", mc );
+  composeObjectsVector< std::vector<simb::MCTruth> >("mctruth", mc );
+  composeObjectsVector< std::vector<simb::MCParticle> >("particles", mc );
+
+  {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("mc",mc);
+  }
+}
+
+
+// These need to be in order or forward-declared...
+
+JsonObject pos_to_json(const TLorentzVector& v)
+{
+  JsonObject j;
+  j.add("x",v.X());
+  j.add("y",v.Y());
+  j.add("z",v.Z());
+  j.add("t",v.T());
+  return j;
+}
+
+JsonObject mom_to_json(const TLorentzVector& v)
+{
+  JsonObject j;
+  j.add("px",v.X());
+  j.add("py",v.Y());
+  j.add("pz",v.Z());
+  j.add("E",v.E());
+  return j;
+}
+
+template<>
+void GalleryRecordComposer::composeObject(const simb::MCParticle& particle, JsonObject& jobj)
+{
+  if(particle.TrackId() == std::numeric_limits<int>::min()) return;
+  jobj.add("ftrackId"     ,particle.TrackId());
+  jobj.add("fstatus"      ,particle.StatusCode());
+  jobj.add("fpdgCode"     ,particle.PdgCode());
+  jobj.add("fmother"      ,particle.Mother());
+  jobj.add("process"      ,particle.Process());
+  jobj.add("endProcess"   ,particle.EndProcess());
+  jobj.add("fmass"        ,particle.Mass());
+  jobj.add("weight"      ,particle.Weight());
+  jobj.add("rescatter"   ,particle.Rescatter());
+
+  // Trajectory. Make a copy so we can sparsify it.
+  simb::MCTrajectory my_traj(particle.Trajectory());
+  my_traj.Sparsify();
+  // cout << "Particles before sparsification: " << particle.Trajectory().size() << " after " << my_traj.size() << std::endl;
+
+  JsonArray jtraj;
+  for(auto pt: my_traj )
+  {
+    JsonObject trajpoint;
+    trajpoint.add("x", JsonFixed(pt.first.X(),1));
+    trajpoint.add("y", JsonFixed(pt.first.Y(),1));
+    trajpoint.add("z", JsonFixed(pt.first.Z(),1));
+    trajpoint.add("t", JsonFixed(pt.first.T(),1));
+    trajpoint.add("px",JsonFixed(pt.second.X(),4));
+    trajpoint.add("py",JsonFixed(pt.second.Y(),4));
+    trajpoint.add("pz",JsonFixed(pt.second.Z(),4));
+    trajpoint.add("E" ,JsonFixed(pt.second.T(),6));
+    jtraj.add(trajpoint);
+  }
+  jobj.add("trajectory",jtraj);
+  
+}
+
+
+
+const char* lookupmode(int mode)
+{
+  switch(mode) {
+    case simb::kUnknownInteraction            : return "UnknownInteraction";
+    case simb::kQE                            : return "QE";
+    case simb::kRes                           : return "Res";
+    case simb::kDIS		                        : return "DIS		 ";
+    case simb::kCoh		                        : return "Coh		 ";
+    case simb::kCohElastic                    : return "CohElastic";
+    case simb::kElectronScattering            : return "ElectronScattering";
+    case simb::kIMDAnnihilation               : return "IMDAnnihilation";
+    case simb::kInverseBetaDecay              : return "InverseBetaDecay";
+    case simb::kGlashowResonance              : return "GlashowResonance";
+    case simb::kAMNuGamma                     : return "AMNuGamma";
+    case simb::kMEC                           : return "MEC";
+    case simb::kDiffractive                   : return "Diffractive";
+    case simb::kEM                            : return "EM";
+    case simb::kWeakMix                       : return "WeakMix";
+    case simb::kNuanceOffset                  : return "NuanceOffset";
+    case simb::kCCQE                          : return "CCQE";
+    case simb::kNCQE                          : return "NCQE";
+    case simb::kResCCNuProtonPiPlus           : return "ResCCNuProtonPiPlus";
+    case simb::kResCCNuNeutronPi0             : return "ResCCNuNeutronPi0";
+    case simb::kResCCNuNeutronPiPlus          : return "ResCCNuNeutronPiPlus";
+    case simb::kResNCNuProtonPi0              : return "ResNCNuProtonPi0";
+    case simb::kResNCNuProtonPiPlus           : return "ResNCNuProtonPiPlus";
+    case simb::kResNCNuNeutronPi0             : return "ResNCNuNeutronPi0";
+    case simb::kResNCNuNeutronPiMinus         : return "ResNCNuNeutronPiMinus";
+    case simb::kResCCNuBarNeutronPiMinus      : return "ResCCNuBarNeutronPiMinus";
+    case simb::kResCCNuBarProtonPi0           : return "ResCCNuBarProtonPi0";
+    case simb::kResCCNuBarProtonPiMinus       : return "ResCCNuBarProtonPiMinus";
+    case simb::kResNCNuBarProtonPi0           : return "ResNCNuBarProtonPi0";
+    case simb::kResNCNuBarProtonPiPlus        : return "ResNCNuBarProtonPiPlus";
+    case simb::kResNCNuBarNeutronPi0          : return "ResNCNuBarNeutronPi0";
+    case simb::kResNCNuBarNeutronPiMinus      : return "ResNCNuBarNeutronPiMinus";
+    case simb::kResCCNuDeltaPlusPiPlus        : return "ResCCNuDeltaPlusPiPlus";
+    case simb::kResCCNuDelta2PlusPiMinus      : return "ResCCNuDelta2PlusPiMinus";
+    case simb::kResCCNuBarDelta0PiMinus       : return "ResCCNuBarDelta0PiMinus";
+    case simb::kResCCNuBarDeltaMinusPiPlus    : return "ResCCNuBarDeltaMinusPiPlus";
+    case simb::kResCCNuProtonRhoPlus          : return "ResCCNuProtonRhoPlus";
+    case simb::kResCCNuNeutronRhoPlus         : return "ResCCNuNeutronRhoPlus";
+    case simb::kResCCNuBarNeutronRhoMinus     : return "ResCCNuBarNeutronRhoMinus";
+    case simb::kResCCNuBarNeutronRho0         : return "ResCCNuBarNeutronRho0";
+    case simb::kResCCNuSigmaPlusKaonPlus      : return "ResCCNuSigmaPlusKaonPlus";
+    case simb::kResCCNuSigmaPlusKaon0         : return "ResCCNuSigmaPlusKaon0";
+    case simb::kResCCNuBarSigmaMinusKaon0     : return "ResCCNuBarSigmaMinusKaon0";
+    case simb::kResCCNuBarSigma0Kaon0         : return "ResCCNuBarSigma0Kaon0";
+    case simb::kResCCNuProtonEta              : return "ResCCNuProtonEta";
+    case simb::kResCCNuBarNeutronEta          : return "ResCCNuBarNeutronEta";
+    case simb::kResCCNuKaonPlusLambda0        : return "ResCCNuKaonPlusLambda0";
+    case simb::kResCCNuBarKaon0Lambda0        : return "ResCCNuBarKaon0Lambda0";
+    case simb::kResCCNuProtonPiPlusPiMinus    : return "ResCCNuProtonPiPlusPiMinus";
+    case simb::kResCCNuProtonPi0Pi0           : return "ResCCNuProtonPi0Pi0";
+    case simb::kResCCNuBarNeutronPiPlusPiMinus: return "ResCCNuBarNeutronPiPlusPiMinus";
+    case simb::kResCCNuBarNeutronPi0Pi0       : return "ResCCNuBarNeutronPi0Pi0";
+    case simb::kResCCNuBarProtonPi0Pi0        : return "ResCCNuBarProtonPi0Pi0";
+    case simb::kCCDIS                         : return "CCDIS";
+    case simb::kNCDIS                         : return "NCDIS";
+    case simb::kUnUsed1                       : return "UnUsed1";
+    case simb::kUnUsed2                       : return "UnUsed2";
+    case simb::kCCQEHyperon                   : return "CCQEHyperon";
+    case simb::kNCCOH                         : return "NCCOH";
+    case simb::kCCCOH                         : return "CCCOH";
+    case simb::kNuElectronElastic             : return "NuElectronElastic";
+    case simb::kInverseMuDecay                : return "InverseMuDecay";
+  }; 
+  return "";
+}
+
+template<>
+void GalleryRecordComposer::composeObject(const simb::MCNeutrino& neutrino, JsonObject& jnu)
+{
+  JsonObject nu; composeObject(neutrino.Nu(),nu);  jnu.add("nu",nu);
+  JsonObject lp; composeObject(neutrino.Lepton(),lp);  jnu.add("lepton",lp);
+  switch(neutrino.CCNC()) {
+    case simb::kCC:  jnu.add("CCNC","CC");
+    case simb::kNC:  jnu.add("CCNC","NC");
+    default: jnu.add("CCNC","Unknown");
+  }
+
+  switch(neutrino.CCNC()) {
+    case simb::kCC:  jnu.add("CCNC","CC");
+    case simb::kNC:  jnu.add("CCNC","NC");
+    default: jnu.add("CCNC","Unknown");
+  }
+  jnu.add("mode",lookupmode(neutrino.Mode()));
+  jnu.add("interactiontype",lookupmode(neutrino.InteractionType()));
+  jnu.add("targetPdg",neutrino.Target());
+  jnu.add("hitNucleon",neutrino.HitNuc());
+  jnu.add("hitQuark",neutrino.HitQuark());
+  jnu.add("W",neutrino.W());
+  jnu.add("X",neutrino.X());
+  jnu.add("Y",neutrino.Y());
+  jnu.add("Q2",neutrino.QSqr());
+  if(neutrino.Nu().TrackId()>std::numeric_limits<int>::min()) {
+    jnu.add("Pt",neutrino.Pt());         // Derived; needs library to see.
+    jnu.add("Theta",neutrino.Theta());
+  }
+}
+
+
+template<>
+void GalleryRecordComposer::composeObject(const simb::GTruth& truth, JsonObject& jobj)
+{
+  jobj.add("fGint"       , truth.fGint       ); ///< interaction code
+  jobj.add("fGscatter"   , truth.fGscatter   ); ///< neutrino scattering code
+  jobj.add("fweight"     , truth.fweight     ); ///< event interaction weight (genie internal)
+  jobj.add("fprobability", truth.fprobability); ///< interaction probability
+  jobj.add("fXsec"       , truth.fXsec       ); ///< cross section of interaction
+  jobj.add("fDiffXsec"   , truth.fDiffXsec   ); ///< differential cross section of interaction
+  jobj.add("fNumPiPlus"  , truth.fNumPiPlus  ); ///< number of pi pluses in the final state
+  jobj.add("fNumPiMinus" , truth.fNumPiMinus ); ///< number of pi minuses in the final state
+  jobj.add("fNumPi0"     , truth.fNumPi0     ); ///< number of pi0 in the final state
+  jobj.add("fNumProton"  , truth.fNumProton  ); ///< number of protons in the final state
+  jobj.add("fNumNeutron" , truth.fNumNeutron ); ///< number of neutrons in the final state
+  jobj.add("fIsCharm"    , truth.fIsCharm    ); ///< did the interaction produce a charmed hadron
+  jobj.add("fResNum"     , truth.fResNum     ); ///< resonance number
+  jobj.add("fgQ2"        , truth.fgQ2        );
+  jobj.add("fgq2"        , truth.fgq2        );
+  jobj.add("fgW"         , truth.fgW         );
+  jobj.add("fgT"         , truth.fgT         );
+  jobj.add("fgX"         , truth.fgX         );
+  jobj.add("fgY"         , truth.fgY         );
+  jobj.add("fIsSeaQuark" , truth.fIsSeaQuark );
+  jobj.add("ftgtZ"       , truth.ftgtZ       );
+  jobj.add("ftgtA"       , truth.ftgtA       );
+  jobj.add("ftgtPDG"     , truth.ftgtPDG     ); ///< Target Nucleous(?) PDG
+  jobj.add("fProbePDG"   , truth.fProbePDG   );
+  jobj.add("fFShadSystP4", mom_to_json(truth.fFShadSystP4));
+  jobj.add("fHitNucP4"   , mom_to_json(truth.fHitNucP4   ));
+  jobj.add("fProbeP4"    , mom_to_json(truth.fProbeP4    ));
+  jobj.add("fVertex"     , pos_to_json(truth.fVertex     ));
+
+
+}
+
+template<>
+void GalleryRecordComposer::composeObject(const simb::MCTruth& truth, JsonObject& jobj)
+{
+  switch((int)truth.Origin()) {
+    case simb::kBeamNeutrino: jobj.add("origin","kBeamNeutrino"); break;
+    case simb::kCosmicRay: jobj.add("origin","kBeamNeutrino"); break;
+    case simb::kSuperNovaNeutrino: jobj.add("origin","kSuperNovaNeutrino"); break;
+    case simb::kSingleParticle: jobj.add("origin","kSingleParticle"); break;
+    default: jobj.add("origin","Unknown");
+  }
+
+  JsonObject jnu;
+  composeObject(truth.GetNeutrino(),jnu);
+  jobj.add("neutrino",jnu);
+    
+    
+  JsonArray jparticles;
+  for(int i=0;i<truth.NParticles();i++) {
+    JsonObject jpart;
+    composeObject(truth.GetParticle(i),jpart);
+    jparticles.add(jpart);
+  }
+  jobj.add("particles",jparticles);
+}
+
+
+
+
+struct GalleryAssociationHelper {
+  // Provides a series of maps:
+  // ProductID 1 -> ProductID 2 -> key 1 -> JsonArray(of key2)
+  // used to create json objects like this:
+  // keyname 1 object 0 maps to keyname2 objects 1,3 and 5.
+  // key1name: { key2name: { 0: [1,3,5] }}
+
+  typedef std::map<int,JsonArray> assn_3_t;
+  typedef std::map<art::ProductID,assn_3_t> assn_2_t;
+  typedef std::map<art::ProductID,assn_2_t> assn_1_t;
+
+  assn_1_t _assn_1;
+  assn_1_t::iterator _assn_1_itr;
+  assn_2_t::iterator _assn_2_itr;
+  assn_3_t::iterator _assn_3_itr;
+  
+  GalleryAssociationHelper() : _assn_1_itr(_assn_1.end()) {};
+
+  void add(art::ProductID const& id1, size_t key1, art::ProductID const& id2, size_t key2)
+  {
+    // Efficient adding to my map of maps of maps of arrays.  Optimize on the last call to this function 
+    // (stored in the _itr members) is the same as the previous call.
+    // Uses maps for efficient storage. 
+    // Assn3 COULD be done as a vector of JsonArrays, but with dynamic resizing I'm not convinced it's faster.
+    if((_assn_1_itr == _assn_1.end()) || (_assn_1_itr->first!=id1)) {
+      _assn_1_itr = _assn_1.find(id1);
+      if(_assn_1_itr == _assn_1.end()) {
+        _assn_1_itr = (_assn_1.insert(assn_1_t::value_type(id1,assn_2_t()))).first; // insert returns itr,bool
+        _assn_2_itr = _assn_1_itr->second.end(); // reset itr 2
+      }
+    }
+    // the _assn_1_itr now points correctly.
+    assn_2_t& assn_2 = _assn_1_itr->second;
+    
+    if((_assn_2_itr == assn_2.end()) || (_assn_2_itr->first!=id2)) {
+      _assn_2_itr = assn_2.find(id2);
+      if(_assn_2_itr == assn_2.end()) {
+        _assn_2_itr = (assn_2.insert(assn_2_t::value_type(id2,assn_3_t()))).first; // insert returns itr,bool
+        _assn_3_itr = _assn_2_itr->second.end(); // reset itr 3
+      }
+    }
+    
+    // _assn_2_itr is now correct.
+    assn_3_t& assn_3 = _assn_2_itr->second;
+    
+    if((_assn_3_itr == assn_3.end()) || (_assn_3_itr->first!=key1)) {
+      _assn_3_itr = assn_3.find(key1);
+      if(_assn_3_itr == assn_3.end()) {
+        _assn_3_itr = (assn_3.insert(assn_3_t::value_type(key1,JsonArray()))).first; // insert returns itr,bool
+      }
+    }
+     
+    // _assn_3_itr is now correct
+    _assn_3_itr->second.add(key2); // add to jsonarray
+    
+  } 
+  
+  void output(gallery::Event& event, JsonObject& assns) 
+  {  
+    for(auto& itr1: _assn_1) {
+      JsonObject j1;
+      const art::BranchDescription* desc1 = event.dataGetterHelper()->branchMapReader().productToBranch(itr1.first);
+      std::string name1 = stripdots(desc1->branchName());
+      std::cout << name1 << std::endl;
+      
+      for(auto& itr2: itr1.second) {
+        JsonObject j2;
+        const art::BranchDescription* desc2 = event.dataGetterHelper()->branchMapReader().productToBranch(itr2.first);
+        std::string name2 = stripdots(desc2->branchName());
+        std::cout << "\t" << name2 << std::endl;
+        
+        
+        for(auto& itr3: itr2.second) {
+          j2.add(std::to_string(itr3.first),itr3.second);
+        }
+        
+        j1.add(name2,j2);
+      }
+      
+      assns.add(name1,j1);
+    }
+    
+  }
+};
+
 
 template<typename A, typename B>
-void GalleryRecordComposer::composeAssociation(std::map<string, JsonObject>& assn_list)
+void GalleryRecordComposer::composeAssociation(std::map<string, JsonObject>& /*assn_list*/)
 {
   typedef art::Assns<A,B> assn_t;
 
@@ -1593,43 +1139,21 @@ void GalleryRecordComposer::composeAssociation(std::map<string, JsonObject>& ass
     gallery::Handle< assn_t > assnhandle;
     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,assnhandle);}
     if(assnhandle->size()>0) {
-      std::pair<art::Ptr<A>,art::Ptr<B>> p = *assnhandle->begin();
-      // std::cout << p.first.id() << "\t" << p.first.key() << std::endl;
-      const art::BranchDescription* desc_a = fEvent->dataGetterHelper()->branchMapReader().productToBranch(p.first.id());
-      const art::BranchDescription* desc_b = fEvent->dataGetterHelper()->branchMapReader().productToBranch(p.second.id());
-      std::string a_name = stripdots(desc_a->branchName());
-      std::string b_name = stripdots(desc_b->branchName());
-      // OK, so now we're ready to build the association maps.
-      std::vector< JsonArray > a_to_b;
-      std::vector< JsonArray > b_to_a;
-      for(const auto& assnpair: *assnhandle) {        
-        int a_id = assnpair.first.key();
-        int b_id = assnpair.second.key();
-        // Trap wierd values.
-        if(a_id<0 || b_id <0) continue;
-        if(a_to_b.size() <= a_id) a_to_b.resize(a_id+1);
-        a_to_b[a_id].add(b_id);
-        if(b_to_a.size() <= b_id) b_to_a.resize(b_id+1);
-        b_to_a[b_id].add(a_id);
-      }
-    
-      // Create the JSON objects, which are also arrays-of-arrays. Some arrays are empty.
-      JsonArray j_a_to_b;
-      for(size_t j=0;j<a_to_b.size();j++) { j_a_to_b.add(a_to_b[j]); }
-      JsonArray j_b_to_a;
-      for(size_t j=0;j<b_to_a.size();j++) { j_b_to_a.add(b_to_a[j]); }
-      
-      // Now push these into the maps.
-      assn_list[a_name].add(b_name,j_a_to_b);
-      assn_list[b_name].add(a_name,j_b_to_a);      
-    }    
+      // Add a->b and b->a.  Do seperately in order to keep the find()s efficient.
+      for(const auto& assnpair: *assnhandle) 
+        fAssnHelper->add( assnpair.first.id(), assnpair.first.key(), assnpair.second.id(), assnpair.second.key());
+      for(const auto& assnpair: *assnhandle) 
+        fAssnHelper->add( assnpair.second.id(), assnpair.second.key(), assnpair.first.id(), assnpair.first.key());
+    }
   }
 }
+
 
 void GalleryRecordComposer::composeAssociations()
 {
   TimeReporter timer("Associations");
     
+  fAssnHelper.reset(new GalleryAssociationHelper());
   JsonObject assns;
   std::map<std::string, JsonObject> assn_list;
 
@@ -1663,10 +1187,13 @@ void GalleryRecordComposer::composeAssociations()
   composeAssociation<simb::MCFlux,simb::MCTruth>(assn_list);
   composeAssociation<simb::MCParticle,simb::MCTruth>(assn_list);
 
+  // Read out the association objects.
+  fAssnHelper->output(*fEvent,assns);
+  
   // Add maps to output object.
-  for(auto& assn: assn_list) {
-    assns.add(assn.first, assn.second);
-  }
+  // for(auto& assn: assn_list) {
+  //   assns.add(assn.first, assn.second);
+  // }
   cout << "Association total size: " << assns.str().length() << std::endl;
   {
     boost::mutex::scoped_lock lck(fOutputMutex);
@@ -1717,12 +1244,18 @@ void GalleryRecordComposer::compose()
   if(doCal)   composeWires();
   if(doRaw)   composeRaw();
   composeHits();
-  composeClusters();
-  composeTracks();
-  composeEndpoint2d();
-  composeSpacepoints();
-  composeAssociations();
 
+  composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", fOutput );
+  composeObjectsVector< std::vector<recob::Cluster   > >("clusters"   , fOutput );
+  composeObjectsVector< std::vector<recob::Track     > >("tracks"     , fOutput );
+  composeObjectsVector< std::vector<recob::Shower    > >("showers"    , fOutput );
+  composeObjectsVector< std::vector<recob::EndPoint2D> >("endpoint2d" , fOutput );
+  composeObjectsVector< std::vector<recob::PFParticle> >("pfparticles", fOutput );
+  composeObjectsVector< std::vector<recob::OpFlash   > >("opflashes"  , fOutput );
+  composeObjectsVector< std::vector<recob::OpHit     > >("ophits"     , fOutput );
+  composeObjectsVector< std::vector<  raw::OpDetPulse> >("oppulses"   , fOutput );
+  composeMC();
+  composeAssociations();
 
   boost::thread_group threads;
   // if(doCal)   threads.create_thread(boost::bind(&GalleryRecordComposer::composeWires,this));
