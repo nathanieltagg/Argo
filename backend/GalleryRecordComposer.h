@@ -17,7 +17,7 @@ class TTree;
 class TLorentzVector;
 namespace gallery{ class Event; }
 struct GalleryAssociationHelper;
-
+namespace art{ class InputTag; }
 
 class GalleryRecordComposer {
 public:
@@ -48,15 +48,18 @@ public:
 
   // Assns.
   void  composeAssociations();
-  
+
   template<typename A, typename B>
-  void  composeAssociation(std::map<std::string, JsonObject>& assn_list);
+  void  composeAssociation();
 
   // // Utility functions.
   // std::vector<std::string> findLeafOfType(std::string pattern);
   //
   // JsonObject  GetClusterWireAndTDC(TreeElementLooter& l, int row);
   // int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
+  
+  template<typename T>
+  std::vector<std::pair<std::string,art::InputTag>>  findByType(TTree* fTree);
   
 
   JsonObject& fOutput; // Top-level output object
@@ -81,7 +84,7 @@ public:
   boost::mutex fOutputMutex;
   boost::mutex fGalleryLock;
 
-  
+  std::vector<std::string> fBranchNames;
 };
 
 

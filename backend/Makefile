@@ -41,7 +41,7 @@ LDFLAGS = -g
 
 
 ifeq ($(UNAME),Darwin)
-  # CPPFLAGS += -fPIC
+  CPPFLAGS += -fPIC -g 
   # CPP = clang++ -std=c++1y -Wno-return-type-c-linkage
   # LD = clang++ -std=c++1y
   LDFLAGS = -bind_at_load -g

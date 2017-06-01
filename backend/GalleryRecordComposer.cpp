@@ -107,14 +107,30 @@ GalleryRecordComposer::~GalleryRecordComposer()
 
 
 template<typename T>
-vector<std::pair<string,art::InputTag>>  findByType(TTree* fTree)
+vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree* fTree)
 {
+  // First, have we initialized our branch list for quick access?
+  if(fBranchNames.size()==0) {
+    TObjArray* list = fTree->GetListOfBranches();
+    for(int i=0;i<list->GetEntriesFast();i++) {
+      TObject* o = list->At(i);
+      TBranch* br = dynamic_cast<TBranch*>(o);
+      std::string found = br->GetName();
+  
+      // Does it end with '.'?
+      string::size_type p3 = found.find_last_of('.'); 
+      if(p3!=found.length()-1 || p3==0) continue;
+      
+      fBranchNames.push_back(found);
+    }
+    std::sort(fBranchNames.begin(),fBranchNames.end());
+  }
+
   vector<std::pair<string,art::InputTag>> retval;
   // Leaf names for std::vector<recob::Wire> get renamed
   // to the art version of "recob::Wires" by this. 
   std::string pattern = art::TypeID(typeid(T)).friendlyClassName() + '_';
   std::cout << "Looking for leaf of type " << pattern << "label_instance_process." << endl;
-  TObjArray* list = fTree->GetListOfBranches();
 
   // Look through every branch name.
   
@@ -125,31 +141,70 @@ vector<std::pair<string,art::InputTag>>  findByType(TTree* fTree)
   // INSTANCE is usually (always?) blank
   // Where PROCESSNAME is something like "McRecoAprStage1"
 
-  for(int i=0;i<list->GetEntriesFast();i++) {
-    TObject* o = list->At(i);
-    TBranch* br = dynamic_cast<TBranch*>(o);
-    std::string found = br->GetName();
-    
-    // Does it End with our object type?
-    if(found.find(pattern)!=0) continue;
-    
-    // Does it end with '.'?
-    string::size_type p3 = found.find_last_of('.'); 
-    if(p3!=found.length()-1 || p3==0) continue;
+  auto p1 = std::lower_bound(fBranchNames.begin(),fBranchNames.end(),pattern);
+  for(auto p=p1; p!=fBranchNames.end(); p++) {
+    const std::string& found = *p;
+    // Does it begin with our object type?
+    if(found.find(pattern)!=0) return retval; // finished
 
+    // It's a match, so tokenize and return.
     // Tokenize by underscore.
+    string::size_type p3 = found.length()-1; // skip trailing '.'.
+    
     string::size_type p2 = found.rfind("_",p3-1);
     if(p2==string::npos || p2==0) continue;
-    
+
     string::size_type p1 = found.rfind("_",p2-1);
     if(p1==string::npos || p1 ==0 ) continue;
 
     string::size_type p0 = found.rfind("_",p1-1);
     if(p0==string::npos || p0==0) continue;
-    
+
     art::InputTag tag(found.substr(p0+1,p1-p0-1),  found.substr(p1+1,p2-p1-1), found.substr(p2+1,p3-p2-1));
     retval.push_back( make_pair( found, tag ));
+    
   }
+  return retval;
+    //
+  // auto p2 = std::upper_bound(fBranchNames.begin(),fBranchNames.end(),pattern);
+  //
+  // std::cout << "Looking for " << pattern << std::endl;
+  // std::cout << "Is p1<=p2? " << ((p1<=p2)?"yes":"no") << std::endl;
+  // if(p1 != fBranchNames.begin()) {
+  //   std::cout << " Before:    " << *(p1-1) << std::endl;
+  // }
+  // for(auto p = p1; p<=p2 && p!=fBranchNames.end(); p++) {
+  //   std::cout << " Candidate: " << *p << std::endl;
+  // }
+  // if(p2!= fBranchNames.end() && (p2+1)!=fBranchNames.end()) {
+  //   std::cout << " After:     " << *(p2+1) << std::endl;
+  //
+  // }
+  // // for(int i=0;i<list->GetEntriesFast();i++) {
+  //   TObject* o = list->At(i);
+  //   TBranch* br = dynamic_cast<TBranch*>(o);
+  //   std::string found = br->GetName();
+  //
+  //   // Does it begin with our object type?
+  //   if(found.find(pattern)!=0) continue;
+  //
+  //   // Does it end with '.'?
+  //   string::size_type p3 = found.find_last_of('.');
+  //   if(p3!=found.length()-1 || p3==0) continue;
+  //
+  //   // Tokenize by underscore.
+  //   string::size_type p2 = found.rfind("_",p3-1);
+  //   if(p2==string::npos || p2==0) continue;
+  //
+  //   string::size_type p1 = found.rfind("_",p2-1);
+  //   if(p1==string::npos || p1 ==0 ) continue;
+  //
+  //   string::size_type p0 = found.rfind("_",p1-1);
+  //   if(p0==string::npos || p0==0) continue;
+  //
+  //   art::InputTag tag(found.substr(p0+1,p1-p0-1),  found.substr(p1+1,p2-p1-1), found.substr(p2+1,p3-p2-1));
+  //   retval.push_back( make_pair( found, tag ));
+  // }
   return retval;
   
 }
@@ -955,16 +1010,11 @@ void GalleryRecordComposer::composeObject(const simb::MCNeutrino& neutrino, Json
   JsonObject nu; composeObject(neutrino.Nu(),nu);  jnu.add("nu",nu);
   JsonObject lp; composeObject(neutrino.Lepton(),lp);  jnu.add("lepton",lp);
   switch(neutrino.CCNC()) {
-    case simb::kCC:  jnu.add("CCNC","CC");
-    case simb::kNC:  jnu.add("CCNC","NC");
+    case simb::kCC:  jnu.add("CCNC","CC"); break;
+    case simb::kNC:  jnu.add("CCNC","NC"); break;
     default: jnu.add("CCNC","Unknown");
   }
 
-  switch(neutrino.CCNC()) {
-    case simb::kCC:  jnu.add("CCNC","CC");
-    case simb::kNC:  jnu.add("CCNC","NC");
-    default: jnu.add("CCNC","Unknown");
-  }
   jnu.add("mode",lookupmode(neutrino.Mode()));
   jnu.add("interactiontype",lookupmode(neutrino.InteractionType()));
   jnu.add("targetPdg",neutrino.Target());
@@ -1131,7 +1181,7 @@ struct GalleryAssociationHelper {
 
 
 template<typename A, typename B>
-void GalleryRecordComposer::composeAssociation(std::map<string, JsonObject>& /*assn_list*/)
+void GalleryRecordComposer::composeAssociation()
 {
   typedef art::Assns<A,B> assn_t;
 
@@ -1149,51 +1199,106 @@ void GalleryRecordComposer::composeAssociation(std::map<string, JsonObject>& /*a
 }
 
 
+  // Some wonky stuff to help me do template combinatorics. See:https://stackoverflow.com/a/44298335/2596881
+template <class T> struct tag { };
+template <class... Ts> struct type_list { };
+
+template<typename A, typename B>
+void foo(GalleryRecordComposer& c, tag<A>, tag<B> ) {
+  c.composeAssociation<A,B>();
+}
+
+// This hack keeps me from looking at types association<a,a> which are apparemently
+// forbidden by the ART code
+template<typename A>
+void foo(GalleryRecordComposer& c, tag<A>, tag<A> ) {
+  // std::cout << "Avoiding duplicate types" << std::endl;
+}
+
+
+template <class F, class... Ts>
+void for_each(GalleryRecordComposer& c,F f, type_list<Ts...>) {
+    using swallow = int[];
+    (void)swallow{0, (void(f(c,tag<Ts>{})), 0)...};
+}
+
+template <class TL, class X>
+struct Inner {
+    template <class Y>
+    void operator()(GalleryRecordComposer& c, tag<Y> ) {
+        foo(c,tag<X>{}, tag<Y>{} );
+    }
+};
+
+template <class TL>
+struct Outer {
+    template <class X>
+    void operator()(GalleryRecordComposer& c, tag<X> ){
+        for_each(c,Inner<TL, X>{}, TL{});
+    }
+};
+
+
+
 void GalleryRecordComposer::composeAssociations()
 {
   TimeReporter timer("Associations");
     
   fAssnHelper.reset(new GalleryAssociationHelper());
   JsonObject assns;
-  std::map<std::string, JsonObject> assn_list;
 
-  // composeAssociation<anab::Calorimetry,recob::Track>(assn_list);
-  // composeAssociation<anab::CosmicTag,recob::Hit>(assn_list);
-  // composeAssociation<anab::CosmicTag,recob::PFParticle>(assn_list);
-  // composeAssociation<anab::CosmicTag,recob::Track>(assn_list);
-  // composeAssociation<anab::ParticleID,recob::Track>(assn_list);
-  // composeAssociation<anab::T0,recob::Track>(assn_list);
-  composeAssociation<raw::RawDigit,recob::Hit>(assn_list);
-  composeAssociation<raw::RawDigit,recob::Wire>(assn_list);
-  composeAssociation<recob::Cluster,recob::EndPoint2D>(assn_list);
-  composeAssociation<recob::Cluster,recob::Hit>(assn_list);
-  composeAssociation<recob::Cluster,recob::PFParticle>(assn_list);
-  composeAssociation<recob::Cluster,recob::Shower>(assn_list);
-  composeAssociation<recob::Cluster,recob::Vertex>(assn_list);
-  composeAssociation<recob::Hit,recob::Seed>(assn_list);
-  composeAssociation<recob::Hit,recob::Shower>(assn_list);
-  composeAssociation<recob::Hit,recob::SpacePoint>(assn_list);
-  composeAssociation<recob::Hit,recob::Track>(assn_list);
-  composeAssociation<recob::Hit,recob::Wire>(assn_list);
-  composeAssociation<recob::OpFlash,recob::OpHit>(assn_list);
-  composeAssociation<recob::PFParticle,recob::Seed>(assn_list);
-  composeAssociation<recob::PFParticle,recob::Shower>(assn_list);
-  composeAssociation<recob::PFParticle,recob::SpacePoint>(assn_list);
-  composeAssociation<recob::PFParticle,recob::Track>(assn_list);
-  composeAssociation<recob::PFParticle,recob::Vertex>(assn_list);
-  composeAssociation<recob::SpacePoint,recob::Track>(assn_list);
-  composeAssociation<recob::Track,recob::Vertex>(assn_list);
-  composeAssociation<simb::GTruth,simb::MCTruth>(assn_list);
-  composeAssociation<simb::MCFlux,simb::MCTruth>(assn_list);
-  composeAssociation<simb::MCParticle,simb::MCTruth>(assn_list);
+
+  using association_types = type_list<
+      simb::MCParticle,
+      simb::MCTruth,
+      simb::GTruth,
+      raw::RawDigit,
+      recob::Wire,
+      recob::Cluster,
+      recob::Shower,
+      recob::SpacePoint,
+      recob::Track,
+      recob::Shower,
+      recob::PFParticle,
+      recob::OpHit,
+      recob::OpFlash
+    >;
+  for_each(*this,Outer<association_types>{}, association_types{});
+
+
+  // composeAssociation<anab::Calorimetry,recob::Track>();
+  // composeAssociation<anab::CosmicTag,recob::Hit>();
+  // composeAssociation<anab::CosmicTag,recob::PFParticle>();
+  // composeAssociation<anab::CosmicTag,recob::Track>();
+  // composeAssociation<anab::ParticleID,recob::Track>();
+  // composeAssociation<anab::T0,recob::Track>();
+  composeAssociation<raw::RawDigit,recob::Hit>();
+  composeAssociation<raw::RawDigit,recob::Wire>();
+  composeAssociation<recob::Cluster,recob::EndPoint2D>();
+  composeAssociation<recob::Cluster,recob::Hit>();
+  composeAssociation<recob::Cluster,recob::PFParticle>();
+  composeAssociation<recob::Cluster,recob::Shower>();
+  composeAssociation<recob::Cluster,recob::Vertex>();
+  composeAssociation<recob::Hit,recob::Seed>();
+  composeAssociation<recob::Hit,recob::Shower>();
+  composeAssociation<recob::Hit,recob::SpacePoint>();
+  composeAssociation<recob::Hit,recob::Track>();
+  composeAssociation<recob::Hit,recob::Wire>();
+  composeAssociation<recob::OpFlash,recob::OpHit>();
+  composeAssociation<recob::PFParticle,recob::Seed>();
+  composeAssociation<recob::PFParticle,recob::Shower>();
+  composeAssociation<recob::PFParticle,recob::SpacePoint>();
+  composeAssociation<recob::PFParticle,recob::Track>();
+  composeAssociation<recob::PFParticle,recob::Vertex>();
+  composeAssociation<recob::SpacePoint,recob::Track>();
+  composeAssociation<recob::Track,recob::Vertex>();
+  composeAssociation<simb::GTruth,simb::MCTruth>();
+  // composeAssociation<simb::MCFlux,simb::MCTruth>();
+  composeAssociation<simb::MCParticle,simb::MCTruth>();
 
   // Read out the association objects.
   fAssnHelper->output(*fEvent,assns);
   
-  // Add maps to output object.
-  // for(auto& assn: assn_list) {
-  //   assns.add(assn.first, assn.second);
-  // }
   cout << "Association total size: " << assns.str().length() << std::endl;
   {
     boost::mutex::scoped_lock lck(fOutputMutex);

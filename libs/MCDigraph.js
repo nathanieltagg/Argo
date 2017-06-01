@@ -123,24 +123,51 @@ MCDigraph.prototype.NewRecord = function()
   }
   
   // build root node.
-  var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
+  var root = { id: 0, data: null, children:[] };
    // Modify the root object to be the interaction.
+
+  root.name = "All";
   
-  var inters = gRecord.mc.gtruth[gMCTruthListName];
-  if(inters && inters[0]) {
-    var inter = inters[0];
-    var incE = inter.fProbeP4_fE || inter.fProbeP4.E; // Newer and older versions
-    root.name = incE.toFixed(3)  + " GeV"  +
-               " " + GetParticle(inter.fProbePDG) +
-               " " + InteractionCode[inter.fGint] +
-               " " + ScatterCode[inter.fGscatter];  
-  }
-  for(var i=0;i<particles.length; i++) {
-    if(particles[i].fmother === 0){
-      // console.log("adding to root:",particles[i],particles[i].ftrackId);
-      root.children.push(buildNestedObject(particles[i]));
+  // Add MCTruth nodes to the root node.
+  for(var truthtype in gRecord.mc.mctruth) {
+    var tname = truthtype.split('_')[1]; // Get generator name
+    // create a node for each generator class
+    var typenode = { id: tname, data: gRecord.mc.mctruth[truthtype], children:[], name: tname };
+
+    for(var imctruth = 0; imctruth<gRecord.mc.mctruth[truthtype].length; imctruth++) {
+      var mctruth = gRecord.mc.mctruth[truthtype][imctruth];
+      // create a node for each generator
+      var mctruthnode = { id: tname+imctruth, data: mctruth, name: mctruth.origin, children:[]};
+      typenode.children.push(mctruthnode);
+      
+      var list = gRecord.associations[truthtype][gMCParticlesListName][imctruth];
+      for(var i=0;i<list.length; i++) {
+        if(particles[list[i]].fmother==0) {
+          mctruthnode.children.push(buildNestedObject(particles[list[i]]));          
+        }
+      }
+      
+      
     }
+    root.children.push(typenode);
   }
+  
+  // var inters = gRecord.mc.gtruth[gMCTruthListName];
+  // if(inters && inters[0]) {
+  //   var inter = inters[0];
+  //   var incE = inter.fProbeP4_fE || inter.fProbeP4.E; // Newer and older versions
+  //   root.name = incE.toFixed(3)  + " GeV"  +
+  //              " " + GetParticle(inter.fProbePDG) +
+  //              " " + InteractionCode[inter.fGint] +
+  //              " " + ScatterCode[inter.fGscatter];
+  // }
+  // for(var i=0;i<particles.length; i++) {
+  //   if(particles[i].fmother === 0){
+  //     // console.log("adding to root:",particles[i],particles[i].ftrackId);
+  //     // Find which thing they're associated with.
+  //     root.children.push(buildNestedObject(particles[i]));
+  //   }
+  // }
   
   // var root = buildNestedObject(0);
     
