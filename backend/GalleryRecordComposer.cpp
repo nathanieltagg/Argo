@@ -817,21 +817,21 @@ void GalleryRecordComposer::composeRaw()
 }
 //
 //
-// int GalleryRecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
-// {
-//   // Ending at x0 and moving along a vector p, how far off the line is point x?
-//   TVector3 dx(x.X()-x0.X()
-//              ,x.Y()-x0.Y()
-//              ,x.Z()-x0.Z());
-//   TVector3 p = pv.Vect();
-//   double dx_dot_p = dx.Dot(p);
-//   double p2 = p.Mag2();
-//   if(p2<=0) p2 = 1;
-//   double delta2 = dx.Mag2() - (dx_dot_p*dx_dot_p)/p.Mag2();
-//   if(delta2 > tol*tol) return 1;
-//   if(delta2 < 0) return 1;
-//   return 0;
-// }
+int GalleryRecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
+{
+  // Ending at x0 and moving along a vector p, how far off the line is point x?
+  TVector3 dx(x.X()-x0.X()
+             ,x.Y()-x0.Y()
+             ,x.Z()-x0.Z());
+  TVector3 p = pv.Vect();
+  double dx_dot_p = dx.Dot(p);
+  double p2 = p.Mag2();
+  if(p2<=0) p2 = 1;
+  double delta2 = dx.Mag2() - (dx_dot_p*dx_dot_p)/p.Mag2();
+  if(delta2 > tol*tol) return 1;
+  if(delta2 < 0) return 1;
+  return 0;
+}
 //
 // // double distanceOffLine(const TVector3& p, const TVector3& x1, const TVector3 &x2 )
 // // {
@@ -911,23 +911,58 @@ void GalleryRecordComposer::composeObject(const simb::MCParticle& particle, Json
   jobj.add("rescatter"   ,particle.Rescatter());
 
   // Trajectory. Make a copy so we can sparsify it.
-  simb::MCTrajectory my_traj(particle.Trajectory());
-  my_traj.Sparsify();
-  // cout << "Particles before sparsification: " << particle.Trajectory().size() << " after " << my_traj.size() << std::endl;
-
   JsonArray jtraj;
-  for(auto pt: my_traj )
-  {
-    JsonObject trajpoint;
-    trajpoint.add("x", JsonFixed(pt.first.X(),1));
-    trajpoint.add("y", JsonFixed(pt.first.Y(),1));
-    trajpoint.add("z", JsonFixed(pt.first.Z(),1));
-    trajpoint.add("t", JsonFixed(pt.first.T(),1));
-    trajpoint.add("px",JsonFixed(pt.second.X(),4));
-    trajpoint.add("py",JsonFixed(pt.second.Y(),4));
-    trajpoint.add("pz",JsonFixed(pt.second.Z(),4));
-    trajpoint.add("E" ,JsonFixed(pt.second.T(),6));
-    jtraj.add(trajpoint);
+  const simb::MCTrajectory& traj = particle.Trajectory();
+  size_t n = traj.size();
+  if(n==0) return;
+  // simb::MCTrajectory my_traj(particle.Trajectory());
+  // my_traj.Sparsify();
+  // // cout << "Particles before sparsification: " << particle.Trajectory().size() << " after " << my_traj.size() << std::endl;
+  //
+  // for(auto pt: my_traj )
+  // {
+  //   JsonObject trajpoint;
+  //   trajpoint.add("x", JsonFixed(pt.first.X(),1));
+  //   trajpoint.add("y", JsonFixed(pt.first.Y(),1));
+  //   trajpoint.add("z", JsonFixed(pt.first.Z(),1));
+  //   trajpoint.add("t", JsonFixed(pt.first.T(),1));
+  //   trajpoint.add("px",JsonFixed(pt.second.X(),4));
+  //   trajpoint.add("py",JsonFixed(pt.second.Y(),4));
+  //   trajpoint.add("pz",JsonFixed(pt.second.Z(),4));
+  //   trajpoint.add("E" ,JsonFixed(pt.second.T(),6));
+  //   jtraj.add(trajpoint);
+  // }
+  // jobj.add("trajectory",jtraj);
+
+  
+  // My version of sparsification is more aggressive than the built-in version.
+  TLorentzVector x_last  = (traj[0].first);
+  TLorentzVector p_last  = (traj[0].second);
+  size_t j  = 0;
+  for(const auto& pt: traj) {
+    TLorentzVector x   = (pt.first);
+    TLorentzVector p   = (pt.second);
+    
+    if(  j==0  // keep first point
+      || j==n-1  // keep last point
+      || pointOffLine(x_last,p_last,x,0.2)) // keep any point not on projected line within a 0.2 cm tolerance
+    {
+      // Keep this point.
+      JsonObject trajpoint;
+      
+      trajpoint.add("x",JsonFixed(x.X(),1));
+      trajpoint.add("y",JsonFixed(x.Y(),1));
+      trajpoint.add("z",JsonFixed(x.Z(),1));
+      trajpoint.add("t",JsonFixed(x.T(),1));
+      trajpoint.add("px",JsonFixed(p.X(),4));
+      trajpoint.add("py",JsonFixed(p.Y(),4));
+      trajpoint.add("pz",JsonFixed(p.Z(),4));
+      trajpoint.add("E" ,JsonFixed(p.T(),6));
+      jtraj.add(trajpoint); 
+      x_last = x;
+      p_last = p;
+      j++;
+    }
   }
   jobj.add("trajectory",jtraj);
   
@@ -1069,11 +1104,11 @@ void GalleryRecordComposer::composeObject(const simb::GTruth& truth, JsonObject&
 template<>
 void GalleryRecordComposer::composeObject(const simb::MCTruth& truth, JsonObject& jobj)
 {
-  switch((int)truth.Origin()) {
-    case simb::kBeamNeutrino: jobj.add("origin","kBeamNeutrino"); break;
-    case simb::kCosmicRay: jobj.add("origin","kBeamNeutrino"); break;
-    case simb::kSuperNovaNeutrino: jobj.add("origin","kSuperNovaNeutrino"); break;
-    case simb::kSingleParticle: jobj.add("origin","kSingleParticle"); break;
+  switch(truth.Origin()) {
+    case simb::kBeamNeutrino:       jobj.add("origin","kBeamNeutrino"); break;
+    case simb::kCosmicRay:          jobj.add("origin","kBeamNeutrino"); break;
+    case simb::kSuperNovaNeutrino:  jobj.add("origin","kSuperNovaNeutrino"); break;
+    case simb::kSingleParticle:     jobj.add("origin","kSingleParticle"); break;
     default: jobj.add("origin","Unknown");
   }
 
@@ -1148,6 +1183,7 @@ struct GalleryAssociationHelper {
      
     // _assn_3_itr is now correct
     _assn_3_itr->second.add(key2); // add to jsonarray
+    // std::cout << " " << _assn_3_itr->second.length() << std::endl;
     
   } 
   
@@ -1189,14 +1225,23 @@ void GalleryRecordComposer::composeAssociation()
     gallery::Handle< assn_t > assnhandle;
     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,assnhandle);}
     if(assnhandle->size()>0) {
-      // Add a->b and b->a.  Do seperately in order to keep the find()s efficient.
-      for(const auto& assnpair: *assnhandle) 
+      // Add a->b and b->a.  Do seperately in order to keep the cached iterators efficient.
+      for(const auto& assnpair: *assnhandle) {
+        // debugging only
+        // const art::BranchDescription* desc1 = fEvent->dataGetterHelper()->branchMapReader().productToBranch( assnpair.first.id());
+        // std::string name1 = stripdots(desc1->branchName());
+        // const art::BranchDescription* desc2 = fEvent->dataGetterHelper()->branchMapReader().productToBranch( assnpair.second.id());
+        // std::string name2 = stripdots(desc2->branchName());
+        // printf("%20s %5d  %20s %5d",name1.c_str(),assnpair.first.key(),name2.c_str(),assnpair.second.key());
         fAssnHelper->add( assnpair.first.id(), assnpair.first.key(), assnpair.second.id(), assnpair.second.key());
-      for(const auto& assnpair: *assnhandle) 
+      }
+      for(const auto& assnpair: *assnhandle)
         fAssnHelper->add( assnpair.second.id(), assnpair.second.key(), assnpair.first.id(), assnpair.first.key());
     }
   }
 }
+
+
 
 
   // Some wonky stuff to help me do template combinatorics. See:https://stackoverflow.com/a/44298335/2596881
@@ -1248,6 +1293,9 @@ void GalleryRecordComposer::composeAssociations()
   JsonObject assns;
 
 
+  // Variadic template magic!
+  // The helper code above sorts the lines below into doing all combination
+  // of data products in this list, looking for Assns<A,B> and Assns<B,A> for each pair.
   using association_types = type_list<
       simb::MCParticle,
       simb::MCTruth,
@@ -1272,29 +1320,29 @@ void GalleryRecordComposer::composeAssociations()
   // composeAssociation<anab::CosmicTag,recob::Track>();
   // composeAssociation<anab::ParticleID,recob::Track>();
   // composeAssociation<anab::T0,recob::Track>();
-  composeAssociation<raw::RawDigit,recob::Hit>();
-  composeAssociation<raw::RawDigit,recob::Wire>();
-  composeAssociation<recob::Cluster,recob::EndPoint2D>();
-  composeAssociation<recob::Cluster,recob::Hit>();
-  composeAssociation<recob::Cluster,recob::PFParticle>();
-  composeAssociation<recob::Cluster,recob::Shower>();
-  composeAssociation<recob::Cluster,recob::Vertex>();
-  composeAssociation<recob::Hit,recob::Seed>();
-  composeAssociation<recob::Hit,recob::Shower>();
-  composeAssociation<recob::Hit,recob::SpacePoint>();
-  composeAssociation<recob::Hit,recob::Track>();
-  composeAssociation<recob::Hit,recob::Wire>();
-  composeAssociation<recob::OpFlash,recob::OpHit>();
-  composeAssociation<recob::PFParticle,recob::Seed>();
-  composeAssociation<recob::PFParticle,recob::Shower>();
-  composeAssociation<recob::PFParticle,recob::SpacePoint>();
-  composeAssociation<recob::PFParticle,recob::Track>();
-  composeAssociation<recob::PFParticle,recob::Vertex>();
-  composeAssociation<recob::SpacePoint,recob::Track>();
-  composeAssociation<recob::Track,recob::Vertex>();
-  composeAssociation<simb::GTruth,simb::MCTruth>();
-  // composeAssociation<simb::MCFlux,simb::MCTruth>();
-  composeAssociation<simb::MCParticle,simb::MCTruth>();
+  // composeAssociation<raw::RawDigit,recob::Hit>();
+  // composeAssociation<raw::RawDigit,recob::Wire>();
+  // composeAssociation<recob::Cluster,recob::EndPoint2D>();
+  // composeAssociation<recob::Cluster,recob::Hit>();
+  // composeAssociation<recob::Cluster,recob::PFParticle>();
+  // composeAssociation<recob::Cluster,recob::Shower>();
+  // composeAssociation<recob::Cluster,recob::Vertex>();
+  // composeAssociation<recob::Hit,recob::Seed>();
+  // composeAssociation<recob::Hit,recob::Shower>();
+  // composeAssociation<recob::Hit,recob::SpacePoint>();
+  // composeAssociation<recob::Hit,recob::Track>();
+  // composeAssociation<recob::Hit,recob::Wire>();
+  // composeAssociation<recob::OpFlash,recob::OpHit>();
+  // composeAssociation<recob::PFParticle,recob::Seed>();
+  // composeAssociation<recob::PFParticle,recob::Shower>();
+  // composeAssociation<recob::PFParticle,recob::SpacePoint>();
+  // composeAssociation<recob::PFParticle,recob::Track>();
+  // composeAssociation<recob::PFParticle,recob::Vertex>();
+  // composeAssociation<recob::SpacePoint,recob::Track>();
+  // composeAssociation<recob::Track,recob::Vertex>();
+  // composeAssociation<simb::GTruth,simb::MCTruth>();
+  // // composeAssociation<simb::MCFlux,simb::MCTruth>();
+  // composeAssociation<simb::MCParticle,simb::MCTruth>();
 
   // Read out the association objects.
   fAssnHelper->output(*fEvent,assns);

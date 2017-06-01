@@ -52,11 +52,8 @@ public:
   template<typename A, typename B>
   void  composeAssociation();
 
-  // // Utility functions.
-  // std::vector<std::string> findLeafOfType(std::string pattern);
-  //
-  // JsonObject  GetClusterWireAndTDC(TreeElementLooter& l, int row);
-  // int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
+  // Utility functions.
+  int         pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol);
   
   template<typename T>
   std::vector<std::pair<std::string,art::InputTag>>  findByType(TTree* fTree);
