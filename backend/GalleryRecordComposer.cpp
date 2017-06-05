@@ -483,19 +483,25 @@ void GalleryRecordComposer::composeObject(const recob::Shower& shower, JsonObjec
 
   jshw.add("id"    ,shower.ID());
   TVector3 const& xyz = shower.ShowerStart();
-  JsonObject jEnd;
-  jEnd.add("x", xyz.x() );
-  jEnd.add("y", xyz.y() );
-  jEnd.add("z", xyz.z() );
-  jshw.add("End",jEnd);
+  JsonObject jstart;
+  jstart.add("x", xyz.x() );
+  jstart.add("y", xyz.y() );
+  jstart.add("z", xyz.z() );
+  jshw.add("start",jstart);
 
   TVector3 const& dir = shower.Direction();
-
   JsonObject jdir;
   jdir.add("x", dir.x() );
   jdir.add("y", dir.y() );
   jdir.add("z", dir.z() );
   jshw.add("dir",jdir);
+  
+  JsonObject jEnd;
+  jEnd.add("x", xyz.x() );
+  jEnd.add("y", xyz.y() );
+  jEnd.add("z", xyz.z() );
+  jshw.add("end",jEnd);
+
 
   jshw.add("bestPlane",shower.best_plane() );
   jshw.add("Length", shower.Length() );
