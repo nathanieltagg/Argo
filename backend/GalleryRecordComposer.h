@@ -25,7 +25,7 @@ public:
   ~GalleryRecordComposer();
 
   template<typename V>
-    void composeObjectsVector(const std::string& output_name, JsonObject& output);
+    bool composeObjectsVector(const std::string& output_name, JsonObject& output);
   template<typename T>
     void composeObject(const T&, JsonObject& out);
   
@@ -43,8 +43,6 @@ public:
   void  composeRawAvailability();
   void  composeRaw();
 
-  // Monte carlo
-  void  composeMC();
 
   // Assns.
   void  composeAssociations();

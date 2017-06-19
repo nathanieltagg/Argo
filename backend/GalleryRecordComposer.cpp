@@ -219,11 +219,12 @@ std::string stripdots(const std::string& s)
 }
 
 template<typename V>
-void GalleryRecordComposer::composeObjectsVector(const std::string& output_name, JsonObject& output)
+bool GalleryRecordComposer::composeObjectsVector(const std::string& output_name, JsonObject& output)
 {
   JsonObject reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
   TimeReporter cov_timer(output_name);
  
+  int found = 0;
   auto products = findByType<V>(fEvent->getTTree());  // Get a list of all products matching template
   for(auto product: products) {
     std::cout << "Looking at " << boost::core::demangle( typeid(V).name() ) <<" object " << product.first << std::endl;
@@ -239,7 +240,8 @@ void GalleryRecordComposer::composeObjectsVector(const std::string& output_name,
       std::cerr << "No data!" << std::endl;
       continue;
     }
-
+    found++;
+    
     JsonArray jlist;    // List of objects (e.g. Kalman Spacepoints)
     for(const auto& item: *handle) {
       // item is a specific object (e.g. SpacePoint), jitem is the objected moved to JSON (one spacepoint)
@@ -255,6 +257,7 @@ void GalleryRecordComposer::composeObjectsVector(const std::string& output_name,
     output.add(output_name,reco_list);           // Add the output.
     cov_timer.addto(fStats);  
   }  
+  return(found>0);
 }
   
 template<typename T>
@@ -349,6 +352,7 @@ void GalleryRecordComposer::composeHits()
 {
   typedef vector<recob::Hit> current_type_t;
   auto products = findByType<current_type_t>(fEvent->getTTree());
+  TimeReporter toptimer("hits");
 
   JsonObject reco_list;
   JsonObject hist_list;
@@ -406,10 +410,12 @@ void GalleryRecordComposer::composeHits()
     delete planeProfile[1];
     delete planeProfile[2];
     hist_list.add(stripdots(product.first),hists);
-    timer.addto(fStats);
+    //timer.addto(fStats);
   }
   {
     boost::mutex::scoped_lock lck(fOutputMutex);
+
+    toptimer.addto(fStats);
 
     fOutput.add("hits",reco_list);
     fOutput.add("hit_hists",hist_list);
@@ -431,16 +437,17 @@ void GalleryRecordComposer::composeObject(const recob::SpacePoint& sp, JsonObjec
   xyz.add(sp.XYZ()[1]);
   xyz.add(sp.XYZ()[2]);
 
-  JsonArray errXyz;
-  errXyz.add(sp.ErrXYZ()[0]);
-  errXyz.add(sp.ErrXYZ()[1]);
-  errXyz.add(sp.ErrXYZ()[2]);
-  errXyz.add(sp.ErrXYZ()[3]);
-  errXyz.add(sp.ErrXYZ()[4]);
-  errXyz.add(sp.ErrXYZ()[5]);
+  // Error matrix isn't used and takes up lots of space.
+  // JsonArray errXyz;
+  // errXyz.add(sp.ErrXYZ()[0]);
+  // errXyz.add(sp.ErrXYZ()[1]);
+  // errXyz.add(sp.ErrXYZ()[2]);
+  // errXyz.add(sp.ErrXYZ()[3]);
+  // errXyz.add(sp.ErrXYZ()[4]);
+  // errXyz.add(sp.ErrXYZ()[5]);
 
   jsp.add("xyz",xyz);
-  jsp.add("errXyz",errXyz);
+  // jsp.add("errXyz",errXyz);
 }
 
 template<>
@@ -461,17 +468,21 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
     const auto& xyz = traj.LocationAtPoint(i);
     const auto& mom = traj.MomentumVectorAtPoint(i);
     double p = mom.R();
-    recob::Trajectory::Vector_t dir;
-    if(p>0) dir = mom/p;
-    else    dir = mom;
 
-    jpoint.add("x",xyz.x());
-    jpoint.add("y",xyz.y());
-    jpoint.add("z",xyz.z());
-    jpoint.add("vx",dir.x());
-    jpoint.add("vy",dir.y());
-    jpoint.add("vz",dir.z());
+    jpoint.add("x",JsonFixed(xyz.x(),2));
+    jpoint.add("y",JsonFixed(xyz.y(),2));
+    jpoint.add("z",JsonFixed(xyz.z(),2));
+    if((i==0) || (i==(npoints-1))) { // save space by not including direction.  This kills BEZIER tracks!
+      recob::Trajectory::Vector_t dir;
+      if(p>0) dir = mom/p;
+      else    dir = mom;
+      jpoint.add("vx",JsonFixed(dir.x(),4));
+      jpoint.add("vy",JsonFixed(dir.y(),4));
+      jpoint.add("vz",JsonFixed(dir.z(),4));
+    }
+
     jpoint.add("P",p);
+
     jpoints.add(jpoint);
   }
   jtrk.add("points",jpoints);
@@ -866,18 +877,7 @@ int GalleryRecordComposer::pointOffLine(const TLorentzVector& x0, const TLorentz
 // // }
 
 
-void GalleryRecordComposer::composeMC()
-{
-  JsonObject mc;
-  composeObjectsVector< std::vector<simb::GTruth> >("gtruth", mc );
-  composeObjectsVector< std::vector<simb::MCTruth> >("mctruth", mc );
-  composeObjectsVector< std::vector<simb::MCParticle> >("particles", mc );
 
-  {
-    boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("mc",mc);
-  }
-}
 
 
 // These need to be in order or forward-declared...
@@ -1302,24 +1302,49 @@ void GalleryRecordComposer::composeAssociations()
   // Variadic template magic!
   // The helper code above sorts the lines below into doing all combination
   // of data products in this list, looking for Assns<A,B> and Assns<B,A> for each pair.
-  using association_types = type_list<
-      simb::MCParticle,
-      simb::MCTruth,
-      simb::GTruth,
-      raw::RawDigit,
-      recob::Wire,
-      recob::Cluster,
-      recob::Shower,
-      recob::SpacePoint,
-      recob::Track,
-      recob::Shower,
-      recob::PFParticle,
-      recob::OpHit,
-      recob::OpFlash
-    >;
-  for_each(*this,Outer<association_types>{}, association_types{});
 
+  if( std::string::npos != fOptions.find("_ALLASSNS_")) {
+    // Compose all associations, using all types I know of.
+    using association_types = type_list<
+        simb::MCParticle,
+        simb::MCTruth,
+        simb::GTruth,
+        raw::RawDigit,
+        recob::Wire,
+        recob::Hit,
+        recob::Cluster,
+        recob::Shower,
+        recob::SpacePoint,
+        recob::Track,
+        recob::Shower,
+        recob::PFParticle,
+        recob::OpHit,
+        recob::OpFlash
+      >;
+    for_each(*this,Outer<association_types>{}, association_types{});
+  } else {
+    // That association list is just too much. Why don't we only use the ones we know to be useful?
+    using association_types1 = type_list<
+        simb::MCParticle,
+        simb::MCTruth,
+        simb::GTruth
+      >;
+    for_each(*this,Outer<association_types1>{}, association_types1{});
 
+    using association_types2 = type_list<
+        recob::Cluster,
+        recob::Hit
+      >;
+    for_each(*this,Outer<association_types2>{}, association_types2{});
+
+    using association_types3 = type_list<
+        recob::PFParticle,
+        recob::Shower,
+        recob::Track        
+      >;
+    for_each(*this,Outer<association_types3>{}, association_types3{});
+  }
+  
   // composeAssociation<anab::Calorimetry,recob::Track>();
   // composeAssociation<anab::CosmicTag,recob::Hit>();
   // composeAssociation<anab::CosmicTag,recob::PFParticle>();
@@ -1365,6 +1390,7 @@ void GalleryRecordComposer::composeAssociations()
 
 void GalleryRecordComposer::compose()
 {
+  TimeReporter timer("TOTAL");
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
@@ -1413,7 +1439,16 @@ void GalleryRecordComposer::compose()
   composeObjectsVector< std::vector<recob::OpFlash   > >("opflashes"  , fOutput );
   composeObjectsVector< std::vector<recob::OpHit     > >("ophits"     , fOutput );
   composeObjectsVector< std::vector<  raw::OpDetPulse> >("oppulses"   , fOutput );
-  composeMC();
+
+  JsonObject mc;
+  bool got_mc = false;
+  got_mc |= composeObjectsVector< std::vector<simb::GTruth> >("gtruth", mc );
+  got_mc |= composeObjectsVector< std::vector<simb::MCTruth> >("mctruth", mc );
+  got_mc |= composeObjectsVector< std::vector<simb::MCParticle> >("particles", mc );
+  if(got_mc) {
+    boost::mutex::scoped_lock lck(fOutputMutex);
+    fOutput.add("mc",mc);    
+  }
   composeAssociations();
 
   boost::thread_group threads;
@@ -1442,8 +1477,8 @@ void GalleryRecordComposer::compose()
   // Database lookup.
   // slomon_thread.join();
   // JsonElement hv; hv.setStr(slm.val);
-  // fOutput.add("hv",hv);
-    
+  // fOutput.add("hv",hv);  
+  timer.addto(fStats);
   fOutput.add("stats",fStats);
   
   
