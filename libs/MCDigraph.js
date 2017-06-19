@@ -127,7 +127,7 @@ MCDigraph.prototype.NewRecord = function()
    // Modify the root object to be the interaction.
   
   var inters = gRecord.mc.gtruth[gMCTruthListName];
-  if(inters && inters[0]) {
+  if(inters && inters[0] && inters[0].fProbeP4_fE) {
     var inter = inters[0];
     var incE = inter.fProbeP4_fE;
     root.name = incE.toFixed(3)  + " GeV"  +

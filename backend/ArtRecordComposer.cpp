@@ -491,6 +491,7 @@ void  ArtRecordComposer::composeTracks()
       const vector<Vector_t>
                *mom   = tel_fMomenta  .get<vector<Vector_t>  >(i);
       if(pos) {
+        std::cout << "Found track with " << pos->size() << " elements " << std::endl;
         for(size_t j=0;j<pos->size();j++) {
           JsonObject jpoint;
           jpoint.add("x",(*pos)[j].x());
