@@ -531,4 +531,8 @@ div.A-TimeHistogram {
  height: 120px;
 }
 
+div.WireInfo-text {
+  height:55px;
+  overflow: hidden;
+}
 

@@ -84,8 +84,8 @@ const std::string JsonObject::str() const
 {
   std::string out = "{";
   out += fContent.str();
-  if(sfPrettyPrint) {out += "\n  ";};
   out += "}";
+  if(sfPrettyPrint) {out += "\n";};
   return out;
 }
 

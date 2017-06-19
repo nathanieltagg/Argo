@@ -3,6 +3,7 @@ use CGI::Pretty qw/:standard *table *tr start_Tr start_td start_ul start_tbody e
 use CGI::Carp qw/warningsToBrowser fatalsToBrowser/;
   use POSIX qw(strftime);
 use POSIX ();
+use ArgoServerTools qw(setup myerror);
 
 $exec_name = 'argo-backend';
 
@@ -17,16 +18,18 @@ print "BEFORE: -------- \n";
 system("ps aux | grep $exec_name");
 
 print "\n\n";
+#
+# # kill any existing service, if PID file exists.
+# if(-r "ntuple_server.pid") {
+#   open PIDFILE,"<$exec_name.pid";
+#   $pid = <PIDFILE>;
+#   close PIDFILE;
+#   print "PID file exists - had pid $pid \n";
+#         print "Deleting PID file.";
+#         unlink "$exec_name.pid";
+# }
 
-# kill any existing service, if PID file exists.
-if(-r "ntuple_server.pid") {
-	open PIDFILE,"<$exec_name.pid";
-	$pid = <PIDFILE>;
-	close PIDFILE;
-	print "PID file exists - had pid $pid \n";
-        print "Deleting PID file.";
-        unlink "$exec_name.pid";
-}
+
 
 
 if(defined param('all')) {
@@ -47,7 +50,8 @@ if(defined param('all')) {
     print "done \n";
     unlink "$exec_name.pid";
   } else {
-    print "No PID supplied. Use ?all or ?pid=xxxx to specify a kill target.\n\n";
+    print "No PID supplied. Attempting automatic kill. Use ?all or ?pid=xxxx to specify a kill target.\n\n";
+    ArgoServerTools::kill_running_server()
   }
 }
 

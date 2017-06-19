@@ -151,11 +151,11 @@ WireInfo.prototype.Draw = function()
     wire = gHoverState.obj.wire;
     plane = gHoverState.obj.plane;
     chan = gGeo.channelOfWire(plane,wire);
-    h += "Hit: q:" + gHoverState.obj.q + " t:" + gHoverState.obj.t + "<br/>";
-    h += "Channel: " +  chan + '<br/>';
-    h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
-    h += "TDC: " +tdc + '<br/>';
-    if(gHoverState.obj.t1) h += "StartTDC: " + gHoverState.obj.t1 + " StopTDC:" + gHoverState.obj.t2 + '<br/>';
+    h += "Hit: q:" + gHoverState.obj.q + " t:" + gHoverState.obj.t;
+    h += "  Channel: " +  chan;
+    h += "  Plane: " + plane + "  Wire: " +  wire;
+    h += "  TDC: " +tdc;
+    if(gHoverState.obj.t1) h += "  StartTDC: " + gHoverState.obj.t1 + "   StopTDC:" + gHoverState.obj.t2;
     showgraph = true;
   }
   $(this.txt_element).html(h);
@@ -168,7 +168,7 @@ WireInfo.prototype.Draw = function()
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
   
   if(!gRecord) return;
-  if(show_image == 'cal'  && gRecord._cal && gRecord._cal._tiled_canvas && gRecord._cal.tiled_canvas.loaded ) {
+  if(show_image == 'cal'  && gRecord._cal && gRecord._cal.tiled_canvas && gRecord._cal.tiled_canvas.loaded ) {
     offscreenCtx = gRecord._cal.tiled_canvas.ctx;
     this.graph.ylabel="Cal ADC";
   } else if( gRecord._raw && gRecord._raw.tiled_canvas && gRecord._raw.tiled_canvas.loaded ) {

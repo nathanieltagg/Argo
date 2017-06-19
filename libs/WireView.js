@@ -709,7 +709,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   
   // Find the hits that are associated with this cluster.
   // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
-  if(!gRecord.associations) {console.err("Can't find associations"); return; }
+  if(!gRecord.associations) {console.error("Can't find associations"); return; }
   var assns = gRecord.associations[clustername];
   var hitname = null;
   for(var name in assns) {
@@ -1475,7 +1475,7 @@ WireView.prototype.DoMouse = function(ev)
   /// Called by ::Pad for any mouse event that might be relevant,
   /// including mousemove, mousedown, click in the element
   /// and mousee move, up outside.
-  if(this.zooming && !ev.shiftKey ) this.DoMousePanAndScale(ev);
+  if(this.zooming && !ev.shiftKey && gHoverState.type!=="UserTrack" ) this.DoMousePanAndScale(ev);
   if(ev.type === 'mouseup') {
     if( this.fObjectDragging ) {
       this.fObjectDragging = false;

@@ -269,7 +269,7 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
     if(waveform_ptr) {
       // We have a good wire recorded.0
       waveform_t& waveform = *(waveform_ptr);
-      uint8_t encoded_ped = abs(waveform._pedwidth) & 0xF;
+      uint8_t encoded_ped = (uint32_t)abs(waveform._pedwidth) & 0xF;
       // uint16_t blue_channel = encoded_ped + ( ((waveform._servicecard)&0xF) << 4 );
       
       waveform_t& noisewaveform = dummy;      
@@ -281,11 +281,13 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
         // iadc = (k+m_tdcStart - 4800)/2 + 0x8000; // Testing only :generates a linear slope map
         encodeddata[k*3]   = 0xFF&(iadc>>8);  // high 8 bits (really 5)
         encodeddata[k*3+1] = iadc&0xFF;       // low 8 bits
-        int inoise = noisewaveform[k+m_tdcStart] + 0x80;
-        if(inoise <0) inoise = 0;
-        if(inoise > 0xfe) inoise = 0xfe;
-        if(waveform._status >=0 && waveform._status<4) inoise=0xff;
-        encodeddata[k*3+2] = inoise&0xff;
+        int inoise = noisewaveform[k+m_tdcStart];
+        int outnoise = inoise + 0x80;
+        if(outnoise <0) outnoise = 0;
+        if(outnoise > 0xfe) outnoise = 0xfe;
+        if(inoise == 0x7fff) outnoise = 0xff; // marker for dead ROI
+        if(waveform._status >=0 && waveform._status<4) outnoise=0xff;
+        encodeddata[k*3+2] = outnoise&0xff;
       }
     } else {
       // Do not have wire info.
@@ -300,7 +302,7 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
           // Save bitpacked data as image map.
           encodeddata[k*3]   = 0;  //
           encodeddata[k*3+1] = 0;  // Blank! 
-          encodeddata[k*3+2] = 0;  //
+          encodeddata[k*3+2] = 0xff;  // bad
         }
       }
     }

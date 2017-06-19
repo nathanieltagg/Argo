@@ -125,8 +125,8 @@ sub kill_running_server
   print "Killing any running $exec_name process.\n";
   # kill any existing service, if PID file exists.
   my $exec_pid= 0;
-  if( -r "../backend/${exec_name}.pid" ) {
-    $exec_pid = `cat ../backend/${exec_name}.pid`;
+  if( -r "${log_path}/${exec_name}.pid" ) {
+    $exec_pid = `cat ${log_path}/${exec_name}.pid`;
   }
   if( -r "$exec_name.pid" ) {
       my $exec_pid = `cat $exec_name.pid`;

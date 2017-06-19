@@ -1,6 +1,16 @@
-xcode-select --install
+# needed the first time to get clang++ setup as the apache user.
+# not needed if using ups
+# xcode-select --install
+
+
 ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 echo $ABSOLUTE_PATH
 export DYLD_LIBRARY_PATH=$ABSOLUTE_PATH/boost/lib:$DYLD_LIBRARY_PATH
-source ../backend/root/bin/thisroot.sh
+source /Users/larsoft/setup
+#setup lardataobj v1_15_02 -q e14:debug
+setup gallery v1_03_12_tagg -q e14:nu:debug
+#setup boost v1_63_0a -q e14:debug
+#setup postgresql v9_5_6
+setup uboonecode v06_34_00 -q e14:debug
+
 source ../backend/larlite/config/setup.sh

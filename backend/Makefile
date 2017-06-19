@@ -12,15 +12,15 @@ bin: $(buildtargets)
 
 pwd := $(shell pwd)
 
-ifeq ($(origin UBOONEDAQ_DATATYPES_DIR), undefined)
-  uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
-  uboonedaq_datatypes_src = $(HOME)/ubdaq/uboonedaq-datatypes/projects
-  uboonedaq_datatypes_inc = $(HOME)/ubdaq/uboonedaq-datatypes/projects
-else
-  uboonedaq           = $(UBOONEDAQ_DIR)/source
-  uboonedaq_datatypes_src = $(UBOONEDAQ_DATATYPES_DIR)/source
-  uboonedaq_datatypes_inc = $(UBOONEDAQ_DATATYPES_DIR)/include
-endif
+# ifeq ($(origin UBOONEDAQ_DATATYPES_DIR), undefined)
+#   uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
+#   uboonedaq_datatypes_src = $(HOME)/ubdaq/uboonedaq-datatypes/projects
+#   uboonedaq_datatypes_inc = $(HOME)/ubdaq/uboonedaq-datatypes/projects
+# else
+#   uboonedaq           = $(UBOONEDAQ_DIR)/source
+#   uboonedaq_datatypes_src = $(UBOONEDAQ_DATATYPES_DIR)/source
+#   uboonedaq_datatypes_inc = $(UBOONEDAQ_DATATYPES_DIR)/include
+# endif
 
 #ifeq ($(origin UBOONEDAQ_DIR), undefined)
   uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
@@ -41,8 +41,9 @@ LDFLAGS = -g
 
 
 ifeq ($(UNAME),Darwin)
-  CPP = clang++ -std=c++1y -Wno-return-type-c-linkage 
-  LD = clang++ -std=c++1y
+  CPPFLAGS += -fPIC -g 
+  # CPP = clang++ -std=c++1y -Wno-return-type-c-linkage
+  # LD = clang++ -std=c++1y
   LDFLAGS = -bind_at_load -g
 else 
   CPPFLAGS += -fPIC
@@ -51,8 +52,8 @@ endif
 
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
-          $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) \
-          DaqFile.cpp \
+          # $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) 
+SOURCES +=DaqFile.cpp \
           Plexus.cpp  \
           Client.cpp \
           DispatcherMessage.cpp \
@@ -74,13 +75,13 @@ tmp/DeadChannelMap.o \
 tmp/Cint.o 
 
 #Where to look for source files
-vpath %.cpp $(uboonedaq_datatypes_src)/datatypes
+# vpath %.cpp $(uboonedaq_datatypes_src)/datatypes
 vpath %.cpp $(uboonedaq)/dispatcher
 vpath %.cpp $(uboonedaq)/online_monitor
 #Where to look for include files
 
 CPPFLAGS += -I $(uboonedaq)
-CPPFLAGS += -I $(uboonedaq_datatypes_inc)
+# CPPFLAGS += -I $(uboonedaq_datatypes_inc)
 CPPFLAGS += -D nullptr=0
 
 
@@ -95,7 +96,7 @@ BLIBS += -lboost_serialization -lboost_system -lboost_thread -lboost_program_opt
 # LIBS += -lboost_serialization -lboost_system -lboost_thread
 
 ifeq ($(UNAME),Darwin)
-  LDFLAGS += -Wl,-rpath,@executable_path/boost/lib/ 
+  # LDFLAGS += -Wl,-rpath,@executable_path/boost/lib/
   CPPFLAGS +=  -ftemplate-depth=512
 endif
 
@@ -126,6 +127,27 @@ LARLITE_PATH = ./larlite
 CPPFLAGS += -I $(LARLITE_PATH)/core
 LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
 LDFLAGS += 	-Wl,-rpath,larlite/lib/
+
+### Products added via ups
+CPPFLAGS += -I ${GALLERY_INC}
+LIBS     += -L ${GALLERY_LIB} -l gallery 
+CPPFLAGS += -I ${CANVAS_INC}
+LIBS     += -L ${CANVAS_LIB} -l canvas
+CPPFLAGS += -I ${LARDATAOBJ_INC}
+LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
+CPPFLAGS += -I ${LARCOREOBJ_INC}
+CPPFLAGS += -I ${NUSIMDATA_INC} 
+LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
+CPPFLAGS += -I ${CETLIB_INC}          -I ${CETLIB_EXCEPT_INC}
+LIBS     += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+CPPFLAGS += -I ${FHICLCPP_INC}
+CPPFLAGS += -I ${UBOONECODE_INC}
+LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
+CPPFLAGS += -I ${UBOONEDAQ_DATATYPES_INC}
+LIBS     += -L ${UBOONEDAQ_DATATYPES_LIB} -l ubdata_types
+
+CPPFLAGS += -DGALLERY
+LIBS += -lgomp
 
 # add any other desired libs here
 # PNG
@@ -213,14 +235,14 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 
 argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
 	$(CPP) $(LDFLAGS) \
-	-Wl,-rpath,@loader_path/deps/root/lib \
-	-Wl,-rpath,@loader_path/deps/boost/lib \
-	-Wl,-rpath,@loader_path/../../deps/root/lib\
-	-Wl,-rpath,@loader_path/../../deps/root/lib\
-	-Wl,-rpath,@loader_path/../../deps/root/lib\
-	-Wl,-rpath,@loader_path/root/lib\
-	-Wl,-rpath,@loader_path/boost/lib\
 	 $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+  # -Wl,-rpath,@loader_path/deps/root/lib \
+  # -Wl,-rpath,@loader_path/deps/boost/lib \
+  # -Wl,-rpath,@loader_path/../../deps/root/lib\
+  # -Wl,-rpath,@loader_path/../../deps/root/lib\
+  # -Wl,-rpath,@loader_path/../../deps/root/lib\
+  # -Wl,-rpath,@loader_path/root/lib\
+  # -Wl,-rpath,@loader_path/boost/lib\
 
 libargo-backend.dylib: $(OBJ) tmp/Cint.o Makefile
 	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
