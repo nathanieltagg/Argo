@@ -122,11 +122,14 @@ CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/o
 ### LarLite
 ## comment out this section if larlite not available
 ## symlink larlite to current directory
-CPPFLAGS += -DLARLITE=1
-LARLITE_PATH = ./larlite
-CPPFLAGS += -I $(LARLITE_PATH)/core
-LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
-LDFLAGS += 	-Wl,-rpath,larlite/lib/
+
+ifneq ($(origin LARLITE_BASEDIR), undefined)
+	CPPFLAGS += -DLARLITE=1
+	LARLITE_PATH = ./larlite
+	CPPFLAGS += -I $(LARLITE_PATH)/core
+	LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
+	LDFLAGS +=   -Wl,-rpath,larlite/lib/
+endif
 
 ### Products added via ups
 CPPFLAGS += -I ${GALLERY_INC}
