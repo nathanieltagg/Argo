@@ -120,6 +120,7 @@ if($good==0) {
   exit(0);
 }
 
+print p("Remember that Argo can read files from LarSoft (.root), raw DAQ files (.ubdaq), but can also read LarLite and AnaTuple files.");
 print start_div({id=>"cur_path"});
 print b("Current Directory:");
 @breakdown = split('/',$cur_path);
