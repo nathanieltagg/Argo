@@ -89,6 +89,8 @@ function OpHitHistogram( element  )
 
 OpHitHistogram.prototype.NewRecord = function()
 {
+  this.hist.Clear();
+  
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
   var tmin = 1e99;
@@ -101,35 +103,35 @@ OpHitHistogram.prototype.NewRecord = function()
     this.xlabel = gOpMode.variableName;
     this.ylabel = gOpMode.hitWeightName;
     var ophits = gRecord.ophits[listname];
-    if(ophits.length===0) return;
-    // First run through to get limits.
-    var  oh;
-    tmin = 1e99;
-    tmax = -1e99;
-    for(i=0;i<ophits.length;i++) {
-      oh = ophits[i];
-      var t = oh[gOpMode.hitVariable]*gOpMode.hitVariableScale;
-      if(t>tmax) tmax = t;
-      if(t<tmin) tmin = t;
+    if(ophits.length>0) {
+      // First run through to get limits.
+      var  oh;
+      tmin = 1e99;
+      tmax = -1e99;
+      for(i=0;i<ophits.length;i++) {
+        oh = ophits[i];
+        var t = oh[gOpMode.hitVariable]*gOpMode.hitVariableScale;
+        if(t>tmax) tmax = t;
+        if(t<tmin) tmin = t;
+      }
+      width = tmax-tmin;
+      tmin -= width*0.05;
+      tmax += width*0.05;
+      nbins = Math.floor((tmax-tmin),500);
+      while(nbins>800) nbins = Math.floor(nbins/2);
+      gOpMode.cut.min=tmin;
+      gOpMode.cut.max=tmax;
+  
+  
+      this.hist = new Histogram(nbins,tmin,tmax);
+      for(i=0;i<ophits.length;i++) {
+        oh = ophits[i];
+        if(gOpMode.hitWeight !== 1)
+          this.hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale,oh[gOpMode.hitWeight]);
+        else  
+          this.hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale);
+      }    
     }
-    width = tmax-tmin;
-    tmin -= width*0.05;
-    tmax += width*0.05;
-    nbins = Math.floor((tmax-tmin),500);
-    while(nbins>800) nbins = Math.floor(nbins/2);
-    gOpMode.cut.min=tmin;
-    gOpMode.cut.max=tmax;
-  
-  
-    this.hist = new Histogram(nbins,tmin,tmax);
-    for(i=0;i<ophits.length;i++) {
-      oh = ophits[i];
-      if(gOpMode.hitWeight !== 1)
-        this.hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale,oh[gOpMode.hitWeight]);
-      else  
-        this.hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale);
-    }    
-
   } else if (gOpPulsesListName) {
     this.input = "oppulses"; 
     
@@ -137,35 +139,35 @@ OpHitHistogram.prototype.NewRecord = function()
     this.ylabel = "Pulse";
     var oppulses = gRecord.oppulses[gOpPulsesListName];
     if(!oppulses) return; // Zero-length.
-    if(oppulses.length===0) return;
-    gOpMode.hitVariable = "peakTime";
-    gOpMode.hitVariableScale = 1;
-    // First run through to get limits.
-    tmin = 1e99;
-    tmax = -1e99;
-    for(i=0;i<oppulses.length;i++) {
-      p = oppulses[i];
-      var t1 = p.tdc;
-      if(t1<tmin) tmin = t1;
-      var t2 = t1 + p.samples;
-      if(t2 > tmax) tmax = t2;
-    }
-    width = tmax-tmin;
-    tmin -= width*0.05;
-    tmax += width*0.05;
-    nbins = Math.floor((tmax-tmin));
-    while(nbins>200) nbins = Math.floor(nbins/2);
-    this.hist = new Histogram(nbins,tmin,tmax);
-    gOpMode.cut.min = tmin;
-    gOpMode.cut.max = tmax;
-    for(i=0;i<oppulses.length;i++) {
-      p = oppulses[i];
-      for(var s = 0; s<p.waveform.length; s++) {
-        var adc = p.waveform[s];
-        if(adc>0) this.hist.Fill ( p.tdc + s, adc );
+    if(oppulses.length>0){
+      gOpMode.hitVariable = "peakTime";
+      gOpMode.hitVariableScale = 1;
+      // First run through to get limits.
+      tmin = 1e99;
+      tmax = -1e99;
+      for(i=0;i<oppulses.length;i++) {
+        p = oppulses[i];
+        var t1 = p.tdc;
+        if(t1<tmin) tmin = t1;
+        var t2 = t1 + p.samples;
+        if(t2 > tmax) tmax = t2;
       }
-    }    
-    
+      width = tmax-tmin;
+      tmin -= width*0.05;
+      tmax += width*0.05;
+      nbins = Math.floor((tmax-tmin));
+      while(nbins>200) nbins = Math.floor(nbins/2);
+      this.hist = new Histogram(nbins,tmin,tmax);
+      gOpMode.cut.min = tmin;
+      gOpMode.cut.max = tmax;
+      for(i=0;i<oppulses.length;i++) {
+        p = oppulses[i];
+        for(var s = 0; s<p.waveform.length; s++) {
+          var adc = p.waveform[s];
+          if(adc>0) this.hist.Fill ( p.tdc + s, adc );
+        }
+      }    
+    }
   }
   
   
