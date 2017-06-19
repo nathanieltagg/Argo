@@ -462,8 +462,13 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
 
   const recob::TrackTrajectory& traj = track.Trajectory();
   JsonArray jpoints;
+  size_t first_point = traj.FirstValidPoint();
+  size_t last_point  = traj.LastValidPoint();
   size_t npoints = traj.NPoints();
-  for(size_t i = 0; i< npoints; i++) {
+  // cout << " Points: " << npoints << " first: " << first_point << " last: " << last_point << std::endl;
+  for(size_t i = first_point; i<= last_point; i++) {
+    // cout << " constructing point " << i << " next is " <<  traj.NextValidPoint(i) << std::endl;
+    if(!traj.HasValidPoint(i)) continue;
     JsonObject jpoint;
     const auto& xyz = traj.LocationAtPoint(i);
     const auto& mom = traj.MomentumVectorAtPoint(i);
@@ -472,7 +477,7 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
     jpoint.add("x",JsonFixed(xyz.x(),2));
     jpoint.add("y",JsonFixed(xyz.y(),2));
     jpoint.add("z",JsonFixed(xyz.z(),2));
-    if((i==0) || (i==(npoints-1))) { // save space by not including direction.  This kills BEZIER tracks!
+    if((i==first_point) || (i==last_point)) { // save space by not including direction.  This kills BEZIER tracks!
       recob::Trajectory::Vector_t dir;
       if(p>0) dir = mom/p;
       else    dir = mom;

@@ -354,7 +354,6 @@ $(function(){
 
   // Issue custom commands to resize inner content.
   $(".dock").bind('sortstop', function(event, ui) {
-    $(ui.item).width("100%");
     $('.pad',ui.item).trigger("resize");
   });
   

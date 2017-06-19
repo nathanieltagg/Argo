@@ -151,11 +151,11 @@ WireInfo.prototype.Draw = function()
     wire = gHoverState.obj.wire;
     plane = gHoverState.obj.plane;
     chan = gGeo.channelOfWire(plane,wire);
-    h += "Hit: q:" + gHoverState.obj.q + " t:" + gHoverState.obj.t + "<br/>";
-    h += "Channel: " +  chan + '<br/>';
-    h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
-    h += "TDC: " +tdc + '<br/>';
-    if(gHoverState.obj.t1) h += "StartTDC: " + gHoverState.obj.t1 + " StopTDC:" + gHoverState.obj.t2 + '<br/>';
+    h += "Hit: q:" + gHoverState.obj.q + " t:" + gHoverState.obj.t;
+    h += "  Channel: " +  chan;
+    h += "  Plane: " + plane + "  Wire: " +  wire;
+    h += "  TDC: " +tdc;
+    if(gHoverState.obj.t1) h += "  StartTDC: " + gHoverState.obj.t1 + "   StopTDC:" + gHoverState.obj.t2;
     showgraph = true;
   }
   $(this.txt_element).html(h);

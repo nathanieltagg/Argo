@@ -7,3 +7,4 @@ basetag.inc
 local.css
 mysetup
 logs
+*.root

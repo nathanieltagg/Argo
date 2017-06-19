@@ -5,6 +5,8 @@
 
 #include "JsonElement.h"
 #include "online_monitor/Plexus.h"
+#include <openssl/md5.h>
+
 #include "datatypes/ub_EventRecord.h"
 
 #include <math.h>

@@ -19,6 +19,8 @@
 #include "TStreamerInfo.h"
 #include "Timer.h"
 #include "TVirtualCollectionProxy.h"
+#include "Math/DisplacementVector3D.h"
+#include "Math/PositionVector3D.h"
 
 #include <iostream>
 #include <fstream>
@@ -426,45 +428,89 @@ void  ArtRecordComposer::composeTracks()
     std::string name = leafnames[iname];
     TimeReporter timer(name);
     std::cout << "Looking at track object " << (name+"obj_").c_str() << endl;
+    std::cout.flush();
     JsonArray jTracks;
     TLeaf* l = fTree->GetLeaf((name+"obj_").c_str());
     if(!l) continue;
     int n = l->GetLen();
     cout << "Found " << n << " objects" << endl;
     
+    // old version    
     TreeElementLooter tel_fXYZ         (fTree,name+"obj.fXYZ");
     TreeElementLooter tel_fDir         (fTree,name+"obj.fDir");
-    TreeElementLooter tel_fCov         (fTree,name+"obj.fCov");
-    TreeElementLooter tel_fdQdx        (fTree,name+"obj.fdQdx");
     TreeElementLooter tel_fFitMomentum (fTree,name+"obj.fFitMomentum");
+
+    // new version, mcc8 or so
+    TreeElementLooter tel_fPositions         (fTree,name+"obj.fTraj.fPositions");
+    TreeElementLooter tel_fMomenta           (fTree,name+"obj.fTraj.fMomenta");
+    
 
     for(int i=0;i<n;i++) {
       JsonObject jtrk;
     
       jtrk.add("id"    ,ftr.getJson(name+"obj.fID"       ,i));
+      JsonArray jpoints;
+
+      // Old version
       const vector<TVector3>          *XYZ           = tel_fXYZ        .get<vector<TVector3>          >(i);
       const vector<TVector3>          *Dir           = tel_fDir        .get<vector<TVector3>          >(i);
-      // const vector<TMatrixT<double> > *Cov           = tel_fCov        .get<vector<TMatrixT<double> > >(i);
-      // const vector<vector<double> >   *dQdx          = tel_fdQdx       .get<vector<vector<double> >   >(i);
       const vector<double>            *FitMomentum   = tel_fFitMomentum.get<vector<double>            >(i);
-      JsonArray jpoints;
       
-      for(size_t j=0;j<XYZ->size();j++) {
-        JsonObject jpoint;
-        jpoint.add("x",(*XYZ)[j].x());
-        jpoint.add("y",(*XYZ)[j].y());
-        jpoint.add("z",(*XYZ)[j].z());
-        jpoint.add("vx",(*Dir)[j].x());
-        jpoint.add("vy",(*Dir)[j].y());
-        jpoint.add("vz",(*Dir)[j].z());
-        // jpoint.add("dQdx",(*dQdx)[0][j]); // Problematic; sometimes crashes
-        // jpoint.add("dQdy",(*dQdx)[1][j]);
-        // jpoint.add("dQdz",(*dQdx)[2][j]);
-        jpoint.add("P",(*FitMomentum)[j]);
-        jpoints.add(jpoint);
+      if(XYZ) {
+        for(size_t j=0;j<XYZ->size();j++) {
+          JsonObject jpoint;
+          jpoint.add("x",(*XYZ)[j].x());
+          jpoint.add("y",(*XYZ)[j].y());
+          jpoint.add("z",(*XYZ)[j].z());
+          if(Dir) {
+            jpoint.add("vx",(*Dir)[j].x());
+            jpoint.add("vy",(*Dir)[j].y());
+            jpoint.add("vz",(*Dir)[j].z());
+          }
+          // jpoint.add("dQdx",(*dQdx)[0][j]); // Problematic; sometimes crashes
+          // jpoint.add("dQdy",(*dQdx)[1][j]);
+          // jpoint.add("dQdz",(*dQdx)[2][j]);
+          
+          if(FitMomentum)
+            jpoint.add("P",(*FitMomentum)[j]);
+          jpoints.add(jpoint);
+        }
       }
-      jtrk.add("points",jpoints);
+      
+      // Somehow this is exploding the output???
+      // New MCC8 or so they switched to this.
+      /// Type for representation of position in physical 3D space.
+         using Coord_t = double;
+          using Point_t
+            = ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<Coord_t>>;
+          using Vector_t
+            = ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<Coord_t>>;
 
+      const vector<Point_t>
+               *pos   = tel_fPositions  .get<vector<Point_t>  >(i);
+      const vector<Vector_t>
+               *mom   = tel_fMomenta  .get<vector<Vector_t>  >(i);
+      if(pos) {
+        for(size_t j=0;j<pos->size();j++) {
+          JsonObject jpoint;
+          jpoint.add("x",(*pos)[j].x());
+          jpoint.add("y",(*pos)[j].y());
+          jpoint.add("z",(*pos)[j].z());
+          if(mom) {
+            Vector_t v = (*mom)[j].Unit();
+            jpoint.add("vx",v.x());
+            jpoint.add("vy",v.y());
+            jpoint.add("vz",v.z());
+            jpoint.add("P",sqrt( (*mom)[j].Mag2() ));
+          }
+          jpoints.add(jpoint);
+        }
+
+      }
+
+      
+      
+      jtrk.add("points",jpoints);
       jTracks.add(jtrk);
     }
 
