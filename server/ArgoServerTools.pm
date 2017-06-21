@@ -298,10 +298,19 @@ sub request
     #  (e.g. pretty-print might clobber it) 
     #  but it returns considerably faster! Somehow, waiting for the socket to 
     #  close in that while() loop can take many seconds!
-    $result = <$sock>;
+    # $result = <$sock>;
+
+    $done = 0;
+    $tot = 0;
+    while($done==0) {
+      my $bytes_read = $sock->sysread($result, 1000000, $tot);
+      $tot += $bytes_read;
+      if($bytes_read == 0) { $done = 1; }
+    }
+
     # print REQUESTLOG "Socket finished with total " . length($result) . " bytes\n";
     
-    print "Got result from ntuple-server. Length: " . length($result) . " bytes\n<br/>";
+    print "Got result from ${exec_name}. Length: " . length($result) . " bytes\n<br/>";
     print "Time to send query:   " . tv_interval( $time_start, $time_start_req)*1000 . " ms\n<br/>";
     print "Time to get response: " . tv_interval( $time_start_req, [gettimeofday])*1000 . " ms\n<br/>";
     
