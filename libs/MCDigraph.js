@@ -84,18 +84,14 @@ MCDigraph.prototype.NewRecord = function()
   // };
   // particle_by_track_id[0] =  gRecord.mc.gtruth[0];
   
-  function buildNestedObject(p) 
-  {
-    var trkid = p.ftrackId;
-    // console.log("Building node",trkid);
-    // var p = particle_by_track_id[trkid];
-    var node = { id: "particle-track-"+trkid,
-                 name: "unknown",
-                 data: {},
-                 children: []
-               };
-    if(p && p.trajectory && p.trajectory[0]) {
+  function nodeNameFromMCParticle(p){
+    if(!p) return "-error-";
+    var nname = "";
+    if(p.fpdgCode) {
       var particle_name = GetParticle(p.fpdgCode);
+      nname += "<span style='float:left;'>" + particle_name + "</span>";
+    }
+    if(p && p.trajectory && p.trajectory[0]) {
       var start =  p.trajectory[0];
       var E = start.E;
       var px = start.px;
@@ -108,39 +104,86 @@ MCDigraph.prototype.NewRecord = function()
       if(eround < 1 ) {
         etext = Math.round(ke*1e6) + " keV";
       } 
-      node.name = "<span style='float:left;'>" + particle_name + "</span><span style='float:right;'>"+etext+"</span>";
-      if(p.fprocess) node.name += " " + p.fprocess;
-    
-      node.data = { particle: p };
+      nname += "<span style='float:right;'>"+etext+"</span>";
     }
-    
-    for(var i=0;i<particles.length; i++) {
-      if(particles[i].fmother === trkid) { 
-        node.children.push(buildNestedObject(particles[i]));
+    if(p.process) nname += " " + p.process;
+    return nname;
+  }
+  
+  function buildNestedObject(p,list) 
+  {
+    var trkid = p.ftrackId;
+    // console.log("Building node",trkid);
+    // var p = particle_by_track_id[trkid];
+    var node = { id: "particle-track-"+trkid,
+                 name: "unknown",
+                 data: {},
+                 children: []
+               };
+    node.name = nodeNameFromMCParticle(p);
+    node.data = { particle: p };
+  
+    // for(var i=0;i<particles.length; i++) {
+    for(var i=0;i<list.length; i++) {
+      if(particles[list[i]].fmother === trkid) { 
+        node.children.push(buildNestedObject(particles[list[i]],list));
       }
     }
     return node;
   }
   
   // build root node.
-  var root = { id: 0, data: gRecord.mc.gtruth[0], children:[] };
+  var root = { id: 0, data: null, children:[] };
    // Modify the root object to be the interaction.
+
+  root.name = "MC Truth";
   
-  var inters = gRecord.mc.gtruth[gMCTruthListName];
-  if(inters && inters[0]) {
-    var inter = inters[0];
-    var incE = inter.fProbeP4_fE;
-    root.name = incE.toFixed(3)  + " GeV"  +
-               " " + GetParticle(inter.fProbePDG) +
-               " " + InteractionCode[inter.fGint] +
-               " " + ScatterCode[inter.fGscatter];  
-  }
-  for(var i=0;i<particles.length; i++) {
-    if(particles[i].fmother === 0){
-      // console.log("adding to root:",particles[i],particles[i].ftrackId);
-      root.children.push(buildNestedObject(particles[i]));
+  // Add MCTruth nodes to the root node.
+  for(var truthtype in gRecord.mc.mctruth) {
+    var tname = truthtype.split('_')[1]; // Get generator name
+    // create a node for each generator class
+    var typenode = { id: tname, data: gRecord.mc.mctruth[truthtype], children:[], name: tname };
+
+    for(var imctruth = 0; imctruth<gRecord.mc.mctruth[truthtype].length; imctruth++) {
+      var mctruth = gRecord.mc.mctruth[truthtype][imctruth];
+      // create a node for each generator
+      var mctruthnode = { id: tname+imctruth, data: mctruth, name: tname+" "+imctruth, children:[]};
+      typenode.children.push(mctruthnode);
+      
+      if(mctruth.neutrino.nu && mctruth.neutrino.nu.fpdgCode) {
+        mctruthnode.name = nodeNameFromMCParticle(mctruth.neutrino.nu);
+        mctruthnode.name += "<br/>" + mctruth.neutrino.CCNC + " " + mctruth.neutrino.interactiontype;
+      } else {
+        mctruthnode.name = tname+imctruth + "<br/>" + mctruth.particles.length + " particles";
+      }
+      
+      var list = gRecord.associations[truthtype][gMCParticlesListName][imctruth];
+      for(var i=0;i<list.length; i++) {
+        if(particles[list[i]].fmother==0) {
+          mctruthnode.children.push(buildNestedObject(particles[list[i]],list));          
+        }
+      }
+      
     }
+    root.children.push(typenode);
   }
+  
+  // var inters = gRecord.mc.gtruth[gMCTruthListName];
+  // if(inters && inters[0]) {
+  //   var inter = inters[0];
+  //   var incE = inter.fProbeP4_fE || inter.fProbeP4.E; // Newer and older versions
+  //   root.name = incE.toFixed(3)  + " GeV"  +
+  //              " " + GetParticle(inter.fProbePDG) +
+  //              " " + InteractionCode[inter.fGint] +
+  //              " " + ScatterCode[inter.fGscatter];
+  // }
+  // for(var i=0;i<particles.length; i++) {
+  //   if(particles[i].fmother === 0){
+  //     // console.log("adding to root:",particles[i],particles[i].ftrackId);
+  //     // Find which thing they're associated with.
+  //     root.children.push(buildNestedObject(particles[i]));
+  //   }
+  // }
   
   // var root = buildNestedObject(0);
     

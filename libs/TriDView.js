@@ -264,6 +264,8 @@ TriDView.prototype.CreateShowers = function()
   var curColor = "rgba(255, 28, 28, 1)";
   for(var ishw=0;ishw<showers.length;ishw++) {
     var shw = showers[ishw];
+    if(!shw.start) continue;
+    if(shw.start.x===null) continue;
     var hovobj = {obj:shw, type:"shower", collection: showers};    
     this.AddArrow(shw.start.x,shw.start.y,shw.start.z, 
       shw.Length * shw.dir.x + shw.start.x,

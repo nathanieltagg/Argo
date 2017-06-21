@@ -143,7 +143,9 @@ int main(int argc, char **argv)
     // write a PID file.
     {
       std::string pidfilename(progname);
+      pidfilename = pidfilename.substr(pidfilename.find_last_of('/')+1);
       pidfilename+=".pid";
+      cout << "Writing PID file to " << pidfilename << std::endl;
       ofstream pidfile(pidfilename.c_str());
       pidfile << gSystem->GetPid();
       pidfile.close();
@@ -231,7 +233,7 @@ int main(int argc, char **argv)
             cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
             if(forking_) _exit(0);
           }
-          ss->RemoveClient(client); // Make sure we're not servicing the client in the main fork anymore.
+          ss->Close(client); // Make sure we're not servicing the client in the main fork anymore.
           
           ResultComposer::events_served++;
         }

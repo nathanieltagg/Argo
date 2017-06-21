@@ -6,3 +6,5 @@ live_event_cache
 basetag.inc
 local.css
 mysetup
+logs
+*.root

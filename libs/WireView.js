@@ -709,7 +709,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   
   // Find the hits that are associated with this cluster.
   // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
-  if(!gRecord.associations) {console.err("Can't find associations"); return; }
+  if(!gRecord.associations) {console.error("Can't find associations"); return; }
   var assns = gRecord.associations[clustername];
   var hitname = null;
   for(var name in assns) {

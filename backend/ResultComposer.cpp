@@ -15,6 +15,10 @@
 #include "LarliteRecordComposer.h"  
 #endif
 
+#ifdef GALLERY
+#include "GalleryRecordComposer.h"
+#endif
+
 #include <TTree.h>
 #include <TFile.h>
 #include <TROOT.h>
@@ -224,8 +228,14 @@ void ResultComposer::compose_from_art(
   //
   // Get it.
   //
+
   // Here's where all the joy happens.
+#ifdef GALLERY
+  GalleryRecordComposer composer(result,inRootFile,jentry,inOptions);
+#else
   ArtRecordComposer composer(result,tree,jentry,inOptions);
+#endif
+  
   composer.fCacheStoragePath     = m_config["CacheStoragePath"];
   composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
   composer.fCreateSubdirCache = false;
