@@ -653,7 +653,7 @@ void GalleryRecordComposer::composeWires()
         float amplify = 10;
         if(is_supernova) amplify = 1;
         
-        for(int i = FirstTick ; i<= EndTick; i++){
+        for(int i = FirstTick ; i< EndTick; i++){
          (*noiseform_ptr)[i] = 0;
          (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
         }

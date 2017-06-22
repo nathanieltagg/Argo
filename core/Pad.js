@@ -108,6 +108,7 @@ function Pad( element, options )
   // Options - defaults. Sensible for a wide range of stuff.  
   var defaults = {
     nlayers: 1,
+    create_2dcontext : true,
     
     width: 10,
     height: 10,
@@ -155,14 +156,15 @@ function Pad( element, options )
   // override defaults with options.
   $.extend(true,defaults,options);
   ABoundObject.call(this, element, defaults); // Give settings to ABoundObject contructor.
-  
+
+
   this.layers = [];
   this.ctxs = [];
   this.layer0 = this.canvas;
   this.layers[0] = this.canvas;
   $(this.element).css("position","relative");
   $(this.canvas).attr("style","position: absolute; left: 0; top: 0; z-index: 0;");
-  
+
   // Look for an existing canvas, and build one if it's not there.
   for(var i=0;i<this.nlayers;i++) {
     var layername = "layer"+i;
@@ -177,18 +179,20 @@ function Pad( element, options )
       this.layers[i] = c;
 
       // Build the drawing context.
-      var ctx = c.getContext('2d');
-      if(initCanvas) ctx = initCanvas(c).getContext('2d');
-      if(!ctx) console.error("Problem getting context!");
-      if(typeof ctx == 'undefined') console.error("Problem getting context!");
-      this.ctxs[i] = ctx;      
+      if(this.create_2dcontext){
+        var ctx = c.getContext('2d');
+        if(initCanvas) ctx = initCanvas(c).getContext('2d');
+        if(!ctx) console.error("Problem getting context!");
+        if(typeof ctx == 'undefined') console.error("Problem getting context!");
+        this.ctxs[i] = ctx;      
+      }
     } else {
       this[layername] = this.layers[i] = $('canvas.'+layername,this.element).get(0);
     }      
   }
   this.canvas = this.layers[0];
   this.ctx    = this.ctxs[0];
-    
+  
   // console.warn("Pad created canvas with ", $(this.canvas).css("height"),$(this.canvas).height());
   // Resize the canvas to the coordinates specified, either in html, the css, or options provided.
   this.Resize();
@@ -343,13 +347,16 @@ Pad.prototype.Resize = function()
     this.layers[i].setAttribute('height', height *  this.padPixelScaling);
     $(this.layers[i]).css('width', width );
     $(this.layers[i]).css('height', height );
-    this.ctxs[i].setTransform(1, 0, 0, 1, 0, 0);  // Reset all transforms
-    this.ctxs[i].scale(this.padPixelScaling,this.padPixelScaling);
-    if(this.rotate_90){
-         this.ctx.translate(0,this.height);
-         this.ctx.rotate(-Math.PI/2);       
+    if(this.create_2dcontext){
+      this.ctxs[i].setTransform(1, 0, 0, 1, 0, 0);  // Reset all transforms
+      this.ctxs[i].scale(this.padPixelScaling,this.padPixelScaling);
+      if(this.rotate_90){
+           this.ctx.translate(0,this.height);
+           this.ctx.rotate(-Math.PI/2);       
+      }
     }
   }
+
   if(this.rotate_90) {
     width    = this.canvas.height/  this.padPixelScaling;
     this.width   = this.canvas.height/  this.padPixelScaling;
