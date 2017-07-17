@@ -21,6 +21,7 @@ public:
   void composeHeader();
   bool composeHeaderTrigger(JsonObject& trig);
   void composeTPC();
+  void composeTPC_SN();
   void composePMTs();
   void composeLaser();
 

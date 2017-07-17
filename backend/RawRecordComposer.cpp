@@ -118,6 +118,7 @@ void RawRecordComposer::compose()
   // slm();
   
   try{ composeTPC(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
+  try{ composeTPC_SN(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
   try{ composePMTs(); } catch(...) { std::cerr << "Caught exception in composePMTs();" << std::endl; }
   composeLaser();
   
@@ -292,7 +293,6 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
       {
         // Scope a lock.
         boost::mutex::scoped_lock lock(sChanMutex);
-        std::string str = hit.str();
         outhits.add(hit);
       }
     }
@@ -303,6 +303,11 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   //   std::cout << "wirenum:" << wirenum << "\t ped: " << ped << " rms: " << rms << " hits" << pf.size() << std::endl;
   // }
 }
+
+
+
+
+
  
 void RawRecordComposer::composeTPC()
 {
@@ -312,9 +317,6 @@ void RawRecordComposer::composeTPC()
   if(!gPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
   // The big wire map.
     
-  JsonObject jTPC;
-  JsonArray jCrates;
-
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(8256));
   std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(8256));
   int ntdc = 0;
@@ -338,7 +340,6 @@ void RawRecordComposer::composeTPC()
       const tpc_crate_data_t& crate_data = crate_it->second;
       std::unique_ptr<tpc_crate_data_t::ub_CrateHeader_t> const& crate_header = crate_data.crateHeader();
 
-      JsonArray jCards;
       boost::thread_group unpack_threads;    
 
       std::vector<tpc_crate_data_t::card_t> const& cards = crate_data.getCards();
@@ -346,8 +347,6 @@ void RawRecordComposer::composeTPC()
         // const tpc_crate_data_t::card_t::ub_CardHeader_t& card_header = card_data.getHeader();
         int card = card_data.getModule();
       
-        JsonObject jCard;
-        jCard.add("cardId",crate);
         int num_card_channels = 0;
         
         
@@ -379,20 +378,8 @@ void RawRecordComposer::composeTPC()
         } // loop channels
         unpack_threads.join_all();
 
-        jCard.add("num_channels",num_card_channels);
-        jCards.add(jCard);        
       } // loop cards
     
-      JsonObject jCrate;
-      jCrate.add("cards",jCards);
-      jCrate.add("crateNumber",crate);
-      jCrate.add("sebSec",crate_header->local_host_time.seb_time_sec);
-      jCrate.add("sebUsec",crate_header->local_host_time.seb_time_usec);
-      jCrate.add("type",crate_header->crate_type);
-      jCrate.add("eventNumber",crate_header->event_number);
-      jCrate.add("frameNumber",crate_header->frame_number);
-      jCrate.add("cardCount",crate_header->card_count);
-      jCrates.add(jCrate);
       
     } // loop seb/crate
   
@@ -408,13 +395,17 @@ void RawRecordComposer::composeTPC()
     fOutput.add("raw",reco_list);    
   } else {
     for(auto it: *wireMap) {
-      wires_read++;
-      int nsamp = it->size();
-      if(ntdc<nsamp) ntdc = nsamp;
+      if(it) {
+        wires_read++;
+        int nsamp = it->size();
+        if(ntdc<nsamp) ntdc = nsamp;
+      }
     }
+    if(wires_read == 0) return; // no data.
+    
     // Ensure uniform length. Can happen due to 0x503f issue.
     for(auto it: *wireMap) {
-      it->resize(ntdc,0);
+      if(it) it->resize(ntdc,0);
     }
     
     // Now we should have a semi-complete map.
@@ -452,11 +443,6 @@ void RawRecordComposer::composeTPC()
     }
     
   }
-  
-    
-  jTPC.add("crates",jCrates);
-  fOutput.add("TPC",jTPC);
-
 
   // hits.
   cout << "Created " << hits.length() << " hits" << endl;
@@ -468,6 +454,233 @@ void RawRecordComposer::composeTPC()
   
   timer.addto(fStats);
 }
+
+
+
+//////////////////////////////////// Supernova mode
+
+
+void unpack_channel_sn(waveform_ptr_t waveform_ptr, waveform_ptr_t noise_ptr, 
+                    const tpc_sn_crate_data_t::card_t::card_channel_type& channel_data, 
+                    const Plexus::Plek& plek,
+                    JsonArray& outhits) 
+{
+  // Copy the channel data to my own signed vector array
+  waveform_t& waveform = *waveform_ptr;
+  waveform.reserve(3200);
+  waveform_t& noiseform = *noise_ptr;
+  noiseform.reserve(3200);
+    
+  int wirenum = plek.wirenum();
+  int plane = plek.plane();
+  int planewire = plek.planewire();
+  waveform._servicecard = plek._servicecard_id;
+  waveform._status = gDeadChannelMap->status(wirenum);
+  
+  // Go through packets.
+  std::vector<int16_t> packet;
+  packet.reserve(200); // Temporary storage; reusable and exapandable
+  std::vector<JsonObject> hits;
+  
+  for(auto const& p: channel_data.packets_) {
+    size_t tdc = p.header().getSampleNumber();
+    if(p.data().size()==0) continue; // zero-sized packet. 
+    packet.resize(0);
+    
+    p.decompress_into(packet,false); // False flag indicates unpacker shouldn't offset to tdc address in array when unpacking.
+    
+    // Remove built-in pedestal, using first word as pedestal.
+    int16_t ped = *packet.begin();
+    size_t  n = packet.size();
+
+    // copy to output waveform
+    if(waveform.size() < tdc+n) {
+      waveform.resize(tdc+n,0);
+      noiseform.resize(tdc+n,0x7fff); // Mask all as dead
+    }
+    for(size_t i=0;i<n;i++) {
+      waveform[tdc+i] = packet[i]- ped;
+      noiseform[tdc+i] = 0;         // unmask as good.
+    }
+        
+    double sign = -1;
+    if(plane==2) sign = 1;
+    double thresh = 8; // close to what is used in regular data.
+    waveform_tools::peak_finder pf(thresh,sign,3); // last is # of samples required over threshold.
+    for(size_t i =0; i< n; i++) {
+      pf(packet[i]-ped); // run through peakfinder
+      
+    }
+    if(waveform._status <0 || waveform._status>=4) { // It's a good channel, or unlisted in channel map
+      for(auto peak: pf) {
+        JsonObject hit;
+        hit.add("wire",planewire);
+        hit.add("plane",plane);
+        hit.add("q",peak.integral);
+        hit.add("t",tdc+peak.tpeak);
+        hit.add("t1",tdc+peak.tstart);
+        hit.add("t2",tdc+peak.tstop);
+        hits.push_back(hit);
+      }
+    }
+  }
+  {
+    // Scope a lock.
+    boost::mutex::scoped_lock lock(sChanMutex);
+    for(size_t i=0;i<hits.size();i++) {
+      outhits.add(hits[i]);
+    }
+  }
+}
+
+
+
+ 
+void RawRecordComposer::composeTPC_SN()
+{
+  JsonObject reco_list;
+  JsonObject r;
+  
+  if(!gPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
+  // The big wire map.
+    
+  std::shared_ptr<wiremap_t> wireMap(new wiremap_t(8256));
+  std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(8256)); 
+  int ntdc = 0;
+  TimeReporter timer("TPC");    
+  
+  bool superspeed = false;
+  if( std::string::npos != fOptions.find("_SUPERSPEED_")) superspeed=true;
+  
+  int wires_read = 0;
+  JsonArray hits;
+  
+  int nsamp_max = 3200;
+  {
+    TimeReporter timer_read("TPCReadDAQ_SN");  
+    
+    // Loop through all channels.
+    ub_EventRecord::tpc_sn_map_t sn_map = fRecord->getTpcSnSEBMap();
+    for( auto const & seb_it: sn_map ) {
+       //get the crateHeader/crateData objects
+      int crate = seb_it.first;
+
+      boost::thread_group unpack_threads;    
+
+      for(auto const& card_data: (seb_it.second).getCards() ) {
+        // const tpc_crate_data_t::card_t::ub_CardHeader_t& card_header = card_data.getHeader();
+        int card = card_data.getModule();
+        int num_card_channels = 0;
+                
+        for(auto const& channel_data : card_data.getChannels() ) {
+          int channel       = channel_data.getChannelNumber();        
+          num_card_channels++;
+          // Find the wire number of this channel.
+          const Plexus::Plek& p = gPlexus.get(crate,card,channel);
+          int wire = p.wirenum();
+          
+          if(superspeed && (wire%4)!=0) continue;
+          // std::cout << "found wire " << wire << std::endl;
+          if(wire<0) continue;
+  
+          // Waveform storage.
+          waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t(0));
+          waveform_ptr_t noise_ptr    = waveform_ptr_t(new waveform_t(0,0x7fff));
+          
+          if(wire>=wireMap->size()) wireMap->resize(wire+1);
+          if((*wireMap)[wire])  {
+            cerr << "Two channels with wire number " << wire << " seem to have the same crate/card/channel map." << endl;
+            continue;
+          }
+          (*wireMap)[wire] = waveform_ptr;    
+          (*noiseMap)[wire] =   noise_ptr;    
+          
+          // unpack_channel(waveform_ptr,channel_data,plane,planewire,wire,hits);
+          unpack_threads.create_thread(boost::bind(unpack_channel_sn,waveform_ptr,noise_ptr,boost::cref(channel_data),
+                                                  boost::cref(p), boost::ref(hits)));
+        } // loop channels
+        unpack_threads.join_all();
+
+      } // loop cards
+    
+    } // loop seb/crate
+  
+    timer_read.addto(fStats);
+  }
+  
+  
+  if( std::string::npos != fOptions.find("_NORAW_")) {
+    std::cout << "Not doing wire images." << std::endl;
+    reco_list.add("SNDAQ",JsonElement());
+    fOutput.add("raw",reco_list);    
+  } else {
+    for(auto it: *wireMap) {
+      if(it) {
+        wires_read++;
+        int nsamp = it->size();
+        if(ntdc<nsamp) ntdc = nsamp;
+      }
+    }
+    if(wires_read == 0) return; // no data.
+    
+    // Ensure uniform length. 
+    for(auto it: *wireMap) {
+      if(it) it->resize(ntdc,0);
+    }
+    for(auto it: *noiseMap) {
+      if(it) it->resize(ntdc,0x7fff);
+    }
+
+    // Now we should have a semi-complete map.
+    fmintdc = 0;
+    fmaxtdc = ntdc;
+    int nwire = wireMap->size();
+    
+    // CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
+  
+    if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
+    cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
+    MakeEncodedTileset(     r,
+                            wireMap, 
+                            noiseMap,
+                            nwire,
+                            ntdc,
+                            fCurrentEventDirname,
+                            fCurrentEventUrl,
+                            fOptions);
+
+    reco_list.add("SNDAQ",r);
+    fOutput.add("raw",reco_list);
+    {
+      JsonObject r2;
+      TimeReporter lowres_stats("time_to_make_lowres");
+      MakeLowres( r2,
+                     wireMap,
+                     noiseMap,
+                     nwire,
+                     ntdc, fCurrentEventDirname, fCurrentEventUrl, fOptions, false );
+      JsonObject reco_list2;
+      reco_list2.add("DAQ",r2);
+      fOutput.add("raw_lowres",reco_list2);
+    }
+    
+  }
+  
+  // hits.
+  cout << "Created " << hits.length() << " hits" << endl;
+  cout.flush();
+  
+  JsonObject hits_lists;
+  hits_lists.add("SNDAQ",hits);
+  fOutput.add("hits",hits_lists);
+  
+  timer.addto(fStats);
+}
+
+
+
+
+
 
 uint32_t resolveFrame(uint32_t frameCourse,uint32_t frameFine, uint32_t bitmask)
 {
