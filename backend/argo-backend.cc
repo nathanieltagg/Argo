@@ -233,7 +233,7 @@ int main(int argc, char **argv)
             cout << "Time to compose: " << t2-t1 << "  Time to Serve: " << t3-t2 << " Total: " << t4-t1 << std::endl;
             if(forking_) _exit(0);
           }
-          ss->RemoveClient(client); // Make sure we're not servicing the client in the main fork anymore.
+          ss->Close(client); // Make sure we're not servicing the client in the main fork anymore.
           
           ResultComposer::events_served++;
         }

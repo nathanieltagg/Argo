@@ -150,7 +150,7 @@ MCDigraph.prototype.NewRecord = function()
       var mctruthnode = { id: tname+imctruth, data: mctruth, name: tname+" "+imctruth, children:[]};
       typenode.children.push(mctruthnode);
       
-      if(mctruth.neutrino.nu.fpdgCode) {
+      if(mctruth.neutrino.nu && mctruth.neutrino.nu.fpdgCode) {
         mctruthnode.name = nodeNameFromMCParticle(mctruth.neutrino.nu);
         mctruthnode.name += "<br/>" + mctruth.neutrino.CCNC + " " + mctruth.neutrino.interactiontype;
       } else {
