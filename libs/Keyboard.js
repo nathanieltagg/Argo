@@ -100,8 +100,11 @@ $(function() {
       // case 95: //'_'
       //   DoSlicePrev(); return false;
       // case 43: //'+'
-      // case 61: //'='
-      //   DoSliceNext(); return false;
+      case 61: //'='
+        $('#ctl-hitsum-circle').click().checkbox_announce("Summing Hits Near Mouse:");
+        return false;
+        
+        
       case 112: // 'p'
         DoPrevEvent(); return false;
       case 110: // 'n'

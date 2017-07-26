@@ -1342,12 +1342,20 @@ void GalleryRecordComposer::composeAssociations()
       >;
     for_each(*this,Outer<association_types2>{}, association_types2{});
 
+
     using association_types3 = type_list<
         recob::PFParticle,
         recob::Shower,
         recob::Track        
       >;
     for_each(*this,Outer<association_types3>{}, association_types3{});
+
+    using association_types4 = type_list<
+        recob::Track,
+        recob::Hit
+      >;
+    for_each(*this,Outer<association_types4>{}, association_types4{});
+
   }
   
   // composeAssociation<anab::Calorimetry,recob::Track>();

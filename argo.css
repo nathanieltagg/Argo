@@ -124,10 +124,12 @@ span.ZoomControl-Info
 #mag-sliders label {
 }
 
-#mag-sliders {
+.mag-sliders {
   display: inline-block;
   width: 160px;
 }
+
+#
 
 #blob-opacity {
   display: inline-block;

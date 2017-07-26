@@ -229,7 +229,7 @@ function ComposeTrackInfo(s)
     vy = vy/v;
     vz = vz/v;
   }
-  var length = 0;
+  var trklen = 0;
   var dQ1 = 0;
   var dQ2 = 0;
   var dQ3 = 0;
@@ -243,7 +243,7 @@ function ComposeTrackInfo(s)
     y = trk.points[i].y;  var dy = y-lasty;
     z = trk.points[i].z;  var dz = z-lastz;
     var dl2 = (dx*dx) + (dy*dy) + (dz*dz);
-    length += Math.sqrt(dl2);
+    trklen += Math.sqrt(dl2);
     dQ1 += trk.points[i].dQdx;
     dQ2 += trk.points[i].dQdy;
     dQ3 += trk.points[i].dQdz;
@@ -253,7 +253,7 @@ function ComposeTrackInfo(s)
   }
 
   var h = "<h3>Track " + id+ "</h3>";
-  h += listname + "</br>";
+  h += trk._owner + "</br>";
   h += "<table class='.hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
@@ -267,6 +267,7 @@ function ComposeTrackInfo(s)
                          "vz: " + (vz).toFixed(3) + "<br/>" + c;
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
+  h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
   // h+= a + "Total &Delta;Q"  + b +
   //     Math.round(dQ1) + "</br>" +
   //     Math.round(dQ2) + "</br>" +
