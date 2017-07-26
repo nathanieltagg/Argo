@@ -645,6 +645,13 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var sumRadiusU =  sumRadius * gGeo.wirePitch;
   var sumRadiusV =  sumRadius / gGeo.drift_cm_per_tick;
   var doHitSum = ($('#ctl-hitsum-circle').is(':checked'));
+  var track_assn = [];
+  if( gRecord.associations &&  this.hitsListName in gRecord.associations ){
+    if(trackname in gRecord.associations[this.hitsListName]) {
+      track_assn = gRecord.associations[h.hit._owner][trackname];
+    }
+  }
+  
   var trackname = $("#ctl-TrackLists").val();
   if( (this.fMouseInContentArea) && doHitSum ){
     this.ctx.save();
@@ -695,10 +702,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
           hitsum_tdc += h.hit.t;
           hitsum_n += 1;
           // Is it associated with the current tracks?
-          if(trackname in gRecord.associations[h.hit._owner]) {
-            if(gRecord.associations[h.hit._owner][trackname][h.hit._idx].length>0)
+          if(track_assn[h.hit._idx] && track_assn[h.hit._idx].length>0)
               hitsum_ntrk += 1;
-          }
         }
       }
     }
