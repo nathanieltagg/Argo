@@ -639,7 +639,29 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var hoverVisHit = null;
   var h,u,v,x,dx,y,dy,c;
   
+  
+  // Draw the circle where hits can be summed.
+  var sumRadius =  parseFloat($('#ctl-hitsum-circle-size').val()); // cm
+  var sumRadiusU =  sumRadius * gGeo.wirePitch;
+  var sumRadiusV =  sumRadius / gGeo.drift_cm_per_tick;
+  var doHitSum = ($('#ctl-hitsum-circle').is(':checked'));
+  if( (this.fMouseInContentArea) && doHitSum ){
+    this.ctx.save();
+    this.ctx.setLineDash([1, 2]);
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle = "orange";
+  
+    this.ctx.beginPath();
+    
+    var wire_width_in_pixels = this.GetX(1) - this.GetX(0);
+    var draw_hit_radius = sumRadius * gGeo.wirePitch * wire_width_in_pixels;
+    
+    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, draw_hit_radius+1, 0,1.9999*Math.PI,false);
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
    
+  var hitsum = 0;
   for(var i=0;i<this.visHits.length;i++) {
     h = this.visHits[i];
     u = h.u;
@@ -656,6 +678,17 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     if(dx<1.5) dx = 1.5;  //exaggerate
     if(dy<1.5) dy = 1.5; 
     c = gHitColorScaler.GetColor(h.c);
+
+
+    if(doHitSum){
+      var delu = u - this.fMousePos.u;
+      var delv = v - this.fMousePos.v;
+      if(delu*delu/(sumRadiusU*sumRadiusU) + delv*delv/(sumRadiusV*sumRadiusV) < 1) {
+        c="255,165,0";
+        if(this.magnifying==false) hitsum += h.hit.q;
+      }
+    }
+    
 
     if(h.hit.saveselection)      c="10,10,10";
     if(this.fShiftSelecting && ((h.u >= this.fShiftRect.u1) && (h.u < this.fShiftRect.u2) && (h.v >= this.fShiftRect.v1) && (h.v < this.fShiftRect.v2))) {
@@ -696,6 +729,21 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       this.ctx.lineWidth = w;
       this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);          
       
+    }
+    
+    if( this.fMouseInContentArea && doHitSum  && !this.magnifying ){
+      // put the marker on.
+      console.log('hitsum',hitsum);
+      var offset = getAbsolutePosition(this.element);
+      var x = this.GetX(this.fMousePos.u + sumRadiusU ) + offset.x;
+      var y = this.GetY(this.fMousePos.v - sumRadiusV ) + offset.y;
+      $('#hitsum').css({
+        position: 'absolute',
+        zIndex : 2000,
+        left: x, top: y
+      }).html(
+        "Sum: " + hitsum + " ADC"
+      );
     }
 };
 
