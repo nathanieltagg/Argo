@@ -32,6 +32,7 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
 <!--(#)include virtual="html/libraries.inc"-->
 <!--#include virtual="libraries.cgi"-->
 <!--#include virtual="shaders/shaders.inc" -->
+<!--#include virtual="shaders/shaders_padgl.inc" -->
 
 
 </head>
@@ -107,6 +108,8 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
   <div id="content-main">
   <div id="content-wide" class="dock">
     
+    <!--#include virtual="html/WireViewGL.inc" -->
+
     <div class="portlet" id="rgbwireview-port"> 
       <div class="portlet-header">RGB View</div>
       <div class="portlet-content" style="background-color:white; display:none;">

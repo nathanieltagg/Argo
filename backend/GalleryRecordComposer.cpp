@@ -653,7 +653,7 @@ void GalleryRecordComposer::composeWires()
         float amplify = 10;
         if(is_supernova) amplify = 1;
         
-        for(int i = FirstTick ; i<= EndTick; i++){
+        for(int i = FirstTick ; i< EndTick; i++){
          (*noiseform_ptr)[i] = 0;
          (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
         }
@@ -1383,7 +1383,7 @@ void GalleryRecordComposer::composeAssociations()
   // Read out the association objects.
   fAssnHelper->output(*fEvent,assns);
   
-  cout << "Association total size: " << assns.str().length() << std::endl;
+  // cout << "Association total size: " << assns.str().length() << std::endl;
   {
     boost::mutex::scoped_lock lck(fOutputMutex);
     fOutput.add("associations",assns);
@@ -1418,7 +1418,6 @@ void GalleryRecordComposer::compose()
 
   if(!doCal) composeCalAvailability(); // just look at branch names.
   if(!doRaw) composeRawAvailability();
-
   
   
   
@@ -1434,6 +1433,8 @@ void GalleryRecordComposer::compose()
   if(doCal)   composeWires();
   if(doRaw)   composeRaw();
   composeHits();
+
+
 
   composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", fOutput );
   composeObjectsVector< std::vector<recob::Cluster   > >("clusters"   , fOutput );
@@ -1456,7 +1457,7 @@ void GalleryRecordComposer::compose()
   }
   composeAssociations();
 
-  boost::thread_group threads;
+  // boost::thread_group threads;
   // if(doCal)   threads.create_thread(boost::bind(&GalleryRecordComposer::composeWires,this));
   // if(doRaw)   threads.create_thread(boost::bind(&GalleryRecordComposer::composeRaw,this));
 
@@ -1476,9 +1477,8 @@ void GalleryRecordComposer::compose()
   //
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeMC,this));
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeAssociations,this));
-  //
-    
-  threads.join_all();
+  //    
+  // threads.join_all();
   // Database lookup.
   // slomon_thread.join();
   // JsonElement hv; hv.setStr(slm.val);
@@ -1486,6 +1486,8 @@ void GalleryRecordComposer::compose()
   timer.addto(fStats);
   fOutput.add("stats",fStats);
   
+  // TimeReporter st("Stringify");
+  // fOutput.str();
   
 }
 
