@@ -645,6 +645,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var sumRadiusU =  sumRadius * gGeo.wirePitch;
   var sumRadiusV =  sumRadius / gGeo.drift_cm_per_tick;
   var doHitSum = ($('#ctl-hitsum-circle').is(':checked'));
+  var trackname = $("#ctl-TrackLists").val();
   if( (this.fMouseInContentArea) && doHitSum ){
     this.ctx.save();
     this.ctx.setLineDash([1, 2]);
@@ -664,6 +665,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var hitsum_adc = 0;
   var hitsum_tdc = 0;
   var hitsum_n = 0;
+  var hitsum_ntrk = 0;
   for(var i=0;i<this.visHits.length;i++) {
     h = this.visHits[i];
     u = h.u;
@@ -686,11 +688,17 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var delu = u - this.fMousePos.u;
       var delv = v - this.fMousePos.v;
       if(delu*delu/(sumRadiusU*sumRadiusU) + delv*delv/(sumRadiusV*sumRadiusV) < 1) {
-        c="255,165,0";
+        c="255,165,0"; // Draw orange.
+        
         if(this.magnifying==false) {
           hitsum_adc += h.hit.q;
           hitsum_tdc += h.hit.t;
           hitsum_n += 1;
+          // Is it associated with the current tracks?
+          if(trackname in gRecord.associations[h.hit._owner]) {
+            if(gRecord.associations[h.hit._owner][trackname][h.hit._idx].length>0)
+              hitsum_ntrk += 1;
+          }
         }
       }
     }
@@ -744,13 +752,17 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var x = this.GetX(this.fMousePos.u + sumRadiusU ) + offset.x;
       var y = this.GetY(this.fMousePos.v - sumRadiusV ) + offset.y;
       var txt = "";
-      if(hitsum_n>0) txt = "" + (hitsum_adc/hitsum_n).toFixed(1) + " ADC avg <br>"
+      if(hitsum_n>0) txt = ""
+        + hitsum_n  +" hits<br>"
+        + hitsum_ntrk + " on trk<br>"
+        + (hitsum_adc/hitsum_n).toFixed(1) + " ADC avg <br>"
         +(hitsum_tdc/hitsum_n).toFixed(1) + "  TDC avg<br>"
         + hitsum_adc + " ADC tot";
       $('#hitsum').css({
         position: 'absolute',
         zIndex : 2000,
-        left: x, top: y
+        left: x, top: y,
+        'background-color': 'white'
       }).html(txt);
     }
 };
