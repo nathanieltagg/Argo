@@ -768,7 +768,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
         zIndex : 2000,
         left: x, top: y,
         'background-color': 'white'
-      }).html(txt);
+      }).html(txt).show();
     }
 };
 

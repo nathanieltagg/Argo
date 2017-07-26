@@ -33,6 +33,7 @@ $(function(){
       slide: function(event, ui) {$("#ctl-hitsum-circle-size").val(ui.value);}
     }
   );
+  $('#ctl-hitsum-circle').change(function(ev) { $('#hitsum').hide(); });
   
   
   gStateMachine.Bind('recordChange',CheckWireData);
