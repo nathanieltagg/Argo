@@ -661,7 +661,9 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     this.ctx.restore();
   }
    
-  var hitsum = 0;
+  var hitsum_adc = 0;
+  var hitsum_tdc = 0;
+  var hitsum_n = 0;
   for(var i=0;i<this.visHits.length;i++) {
     h = this.visHits[i];
     u = h.u;
@@ -685,7 +687,11 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var delv = v - this.fMousePos.v;
       if(delu*delu/(sumRadiusU*sumRadiusU) + delv*delv/(sumRadiusV*sumRadiusV) < 1) {
         c="255,165,0";
-        if(this.magnifying==false) hitsum += h.hit.q;
+        if(this.magnifying==false) {
+          hitsum_adc += h.hit.q;
+          hitsum_tdc += h.hit.t;
+          hitsum_n += 1;
+        }
       }
     }
     
@@ -737,13 +743,15 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var offset = getAbsolutePosition(this.element);
       var x = this.GetX(this.fMousePos.u + sumRadiusU ) + offset.x;
       var y = this.GetY(this.fMousePos.v - sumRadiusV ) + offset.y;
+      var txt = "";
+      if(hitsum_n>0) txt = "" + (hitsum_adc/hitsum_n).toFixed(1) + " ADC avg <br>"
+        +(hitsum_tdc/hitsum_n).toFixed(1) + "  TDC avg<br>"
+        + hitsum_adc + " ADC tot";
       $('#hitsum').css({
         position: 'absolute',
         zIndex : 2000,
         left: x, top: y
-      }).html(
-        "Sum: " + hitsum + " ADC"
-      );
+      }).html(txt);
     }
 };
 
