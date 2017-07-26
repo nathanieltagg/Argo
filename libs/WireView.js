@@ -774,6 +774,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 {
   if(!gRecord.endpoint2d) return;
+  if(!gRecord.endpoint2d.length) return;
   var endpoints = gRecord.endpoint2d[$("#ctl-EndpointLists").val()];
   for(var i=0;i<endpoints.length;i++) {
       var pt = endpoints[i];
