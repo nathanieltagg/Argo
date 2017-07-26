@@ -34,7 +34,7 @@ pwd := $(shell pwd)
 
 CPPFLAGS := -g -I.. -Wno-deprecated-declarations 
 #CPP := g++44 -std=c++0x
-CPP := g++ -std=c++1y -O3
+CPP := g++ -std=c++1y -O0
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -45,6 +45,7 @@ ifeq ($(UNAME),Darwin)
   # CPP = clang++ -std=c++1y -Wno-return-type-c-linkage
   # LD = clang++ -std=c++1y
   LDFLAGS = -prebind   -g
+  CPPFLAGS += -I /usr/local/opt/openssl/include
 else 
   CPPFLAGS += -fPIC
   LDFLAGS += -lgomp -fPIC

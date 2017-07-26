@@ -1,6 +1,6 @@
 # needed the first time to get clang++ setup as the apache user.
 # not needed if using ups
-# xcode-select --install
+xcode-select --install
 
 
 ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
@@ -11,6 +11,12 @@ source /Users/larsoft/setup
 setup gallery v1_03_12_tagg -q e14:nu:debug
 #setup boost v1_63_0a -q e14:debug
 #setup postgresql v9_5_6
-setup uboonecode v06_34_00 -q e14:debug
+#setup uboonedaq-datatypes -v06_22_00
+
+#setup uboonecode v06_34_00 -q e14:debug
+export PRODUCTS=~/slar/localProducts_uboonecode_v06_41_00_e14_debug/:$PRODUCTS
+#source ~/slar/localProducts_uboonecode_v06_41_00_e14_debug/setup
+setup uboonecode v06_41_00 -q debug:e14
+
 
 source ../backend/larlite/config/setup.sh

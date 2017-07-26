@@ -74,6 +74,8 @@ function getEncodedPngValNoise(imgdata, x)
 {
   var i = Math.floor(x);
   var b = imgdata.data[i*4+2];
+  if(b>=0xff) return 0; // This indicates dead zone, usually around a recob::Wire ROI deadzone or a SN deadzone
+  
   return b - 0x80;
 }
 
@@ -111,7 +113,6 @@ WireInfo.prototype.GetWireDataHistograms = function( offScreenCtx, channel, tdc,
   for(var i=0;i<x2-x1;i++) {
     var d = getEncodedPngVal(imgdata,i);
     var s = getEncodedPngValNoise(imgdata,i);
-    
     retval.raw.SetBinContent(i,d);
     retval.noise.SetBinContent(i,s);
     retval.noiseremoved.SetBinContent(i,d-s);
