@@ -208,6 +208,7 @@ function ComposeTrackInfo(s)
   var trk = s.obj;
   var id = trk._idx;
   var start =  trk.points[0];
+  var end   =  trk.points[trk.points.length-1];
   var listname = $('#ctl-TrackLists').val();
 
   var P = start.P;
@@ -229,6 +230,22 @@ function ComposeTrackInfo(s)
     vy = vy/v;
     vz = vz/v;
   }
+
+  var endvx,endvy, endvz;
+  if(end.vx) {
+    endvx = end.vx;
+    endvy = end.vy;
+    endvz = end.vz;
+  } else {
+    p2 = trk.points[trk.points.length-2];
+    endvx = p2.x-end.x;
+    endvy = p2.y-end.y;
+    endvz = p2.z-end.z;
+    v = Math.sqrt(vx*vx+vy*vy+vz*vz);
+    endvx = endvx/v;
+    endvy = endvy/v;
+    endvz = endvz/v;
+  }
   var trklen = 0;
   var dQ1 = 0;
   var dQ2 = 0;
@@ -247,7 +264,7 @@ function ComposeTrackInfo(s)
     dQ1 += trk.points[i].dQdx;
     dQ2 += trk.points[i].dQdy;
     dQ3 += trk.points[i].dQdz;
-    lastx = x;
+    lastx = x; 
     lasty = y;
     lastz = z;
   }
@@ -266,6 +283,15 @@ function ComposeTrackInfo(s)
   h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
                          "vy: " + (vy).toFixed(3) + "<br/>" +
                          "vz: " + (vz).toFixed(3) + "<br/>" + c;
+
+  h+= a + "Endpoint" + b + "x: " +  Math.round(end.x) + " cm<br/>" +
+                           "y: " +  Math.round(end.y) + " cm<br/>" +
+                           "z: " +  Math.round(end.z) + " cm<br/>" + c;
+
+  h+= a + "End direction" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
+                         "vy: " + (vy).toFixed(3) + "<br/>" +
+                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
+
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
   h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
