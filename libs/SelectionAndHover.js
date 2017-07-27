@@ -251,6 +251,7 @@ function ComposeTrackInfo(s)
     lasty = y;
     lastz = z;
   }
+  
 
   var h = "<h3>Track " + id+ "</h3>";
   h += trk._owner + "</br>";
@@ -268,6 +269,13 @@ function ComposeTrackInfo(s)
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
   h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
+
+  if(gRecord.associations && gRecord.associations[trk._owner]) {
+    for ( n in gRecord.associations[trk._owner]) {
+      h+= a + n + b + gRecord.associations[trk._owner][n][trk._idx].length + c;
+    }
+  }
+
   // h+= a + "Total &Delta;Q"  + b +
   //     Math.round(dQ1) + "</br>" +
   //     Math.round(dQ2) + "</br>" +
