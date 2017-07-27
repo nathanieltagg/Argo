@@ -758,17 +758,17 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var y = this.GetY(this.fMousePos.v - sumRadiusV ) + offset.y;
       var txt = "";
       if(hitsum_n>0) txt = ""
-        + hitsum_n  +" hits<br>"
-        + hitsum_ntrk + " on trk<br>"
-        + (hitsum_adc/hitsum_n).toFixed(1) + " ADC avg <br>"
-        +(hitsum_tdc/hitsum_n).toFixed(1) + "  TDC avg<br>"
+        + hitsum_n  +" hits\n"
+        + hitsum_ntrk + " on trk\n"
+        + (hitsum_adc/hitsum_n).toFixed(1) + " ADC avg\n"
+        +(hitsum_tdc/hitsum_n).toFixed(1) + "  TDC avg\n"
         + hitsum_adc + " ADC tot";
       $('#hitsum').css({
         position: 'absolute',
         zIndex : 2000,
         left: x, top: y,
         'background-color': 'white'
-      }).html(txt).show().select();
+      }).show().find('textarea').html(txt).select();
     }
 };
 
