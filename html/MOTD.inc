@@ -13,10 +13,10 @@
   <div style="clear:both;">
   Recent updates:
     <ul> 
+      <li> New tools for Sowjanya and her students ('charge sum circle')</li>
+      <li> Supernova stream raw .ubdaq files now supported. </li>
       <li> Now uses Gallery as the underlying data collection mechanism.</li>
-      <li> Faster.</li>
-      <li> Can now show recob::Wire as color map again!</li>
-      <li> Handles MCC8 files without problem.</li>
+      <li> Can now show recob::Wire data</li>
     </ul>
   </div>
 </div> 
