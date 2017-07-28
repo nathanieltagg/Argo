@@ -1,8 +1,11 @@
-
-source /grid/fermiapp/products/uboone/setup_uboone.sh
-source /home/argo/install/setup
+# source /cvmfs/fermilab.opensciencegrid.org/products/larsoft/setup
+# setup mrb
+source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
+source /home/argo/argo-uboonecode/localProducts_*/setup
+source /home/argo/ubdaq/install/setup
+source /home/argo/install/setup #gallery
 setup gallery v1_03_12_tagg -q e14:nu:debug
-setup uboonecode v06_34_00 -q e14:debug
+setup uboonecode v06_41_00_tagg -q e14:debug
 
 source ../backend/larlite/config/setup.sh
 
