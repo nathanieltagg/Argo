@@ -56,14 +56,22 @@ sub get_filesize_str
 }
 if(! -d $default_path) { $default_path = `pwd`; chomp $default_path;}
 
-$cur_path = $default_path;
-$cook_path = cookie($cookie_name);
-if(defined $cook_path) {
-   $cur_path = $cook_path;
+
+$cur_path = 0;
+# note: encoding prevents XSS attacks.
+if(defined param('path')) {
+  $cur_path = HTML::Entities::encode(param('path'));
+} else {
+  $cur_path = $default_path;
+  $cook_path = cookie($cookie_name);
+  if(defined $cook_path) {
+     $cur_path = $cook_path;
+  }
+  #redirect instead of load; this ensures the URL is always good for the user.
+  print redirect("file_browser.cgi?path=".$cur_path);
+  return;
 }
 
-# note: encoding prevents XSS attacks.
-if(defined param('path')) {$cur_path = HTML::Entities::encode(param('path'));};
 
 
 $cookie = cookie(-name=>$cookie_name,
