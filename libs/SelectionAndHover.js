@@ -208,6 +208,7 @@ function ComposeTrackInfo(s)
   var trk = s.obj;
   var id = trk._idx;
   var start =  trk.points[0];
+  var end   =  trk.points[trk.points.length-1];
   var listname = $('#ctl-TrackLists').val();
 
   var P = start.P;
@@ -229,7 +230,23 @@ function ComposeTrackInfo(s)
     vy = vy/v;
     vz = vz/v;
   }
-  var length = 0;
+
+  var endvx,endvy, endvz;
+  if(end.vx) {
+    endvx = end.vx;
+    endvy = end.vy;
+    endvz = end.vz;
+  } else {
+    p2 = trk.points[trk.points.length-2];
+    endvx = p2.x-end.x;
+    endvy = p2.y-end.y;
+    endvz = p2.z-end.z;
+    v = Math.sqrt(vx*vx+vy*vy+vz*vz);
+    endvx = endvx/v;
+    endvy = endvy/v;
+    endvz = endvz/v;
+  }
+  var trklen = 0;
   var dQ1 = 0;
   var dQ2 = 0;
   var dQ3 = 0;
@@ -243,17 +260,18 @@ function ComposeTrackInfo(s)
     y = trk.points[i].y;  var dy = y-lasty;
     z = trk.points[i].z;  var dz = z-lastz;
     var dl2 = (dx*dx) + (dy*dy) + (dz*dz);
-    length += Math.sqrt(dl2);
+    trklen += Math.sqrt(dl2);
     dQ1 += trk.points[i].dQdx;
     dQ2 += trk.points[i].dQdy;
     dQ3 += trk.points[i].dQdz;
-    lastx = x;
+    lastx = x; 
     lasty = y;
     lastz = z;
   }
+  
 
   var h = "<h3>Track " + id+ "</h3>";
-  h += listname + "</br>";
+  h += trk._owner + "</br>";
   h += "<table class='.hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
@@ -265,7 +283,24 @@ function ComposeTrackInfo(s)
   h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
                          "vy: " + (vy).toFixed(3) + "<br/>" +
                          "vz: " + (vz).toFixed(3) + "<br/>" + c;
+
+  h+= a + "Endpoint" + b + "x: " +  Math.round(end.x) + " cm<br/>" +
+                           "y: " +  Math.round(end.y) + " cm<br/>" +
+                           "z: " +  Math.round(end.z) + " cm<br/>" + c;
+
+  h+= a + "End direction" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
+                         "vy: " + (vy).toFixed(3) + "<br/>" +
+                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
+
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
+
+  h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
+
+  if(gRecord.associations && gRecord.associations[trk._owner]) {
+    for ( n in gRecord.associations[trk._owner]) {
+      h+= a + n + b + gRecord.associations[trk._owner][n][trk._idx].length + c;
+    }
+  }
 
   // h+= a + "Total &Delta;Q"  + b +
   //     Math.round(dQ1) + "</br>" +

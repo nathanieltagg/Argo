@@ -12,6 +12,7 @@ Styles for the floating object-selection overlay
   border-top-width: 2px;
   border-top-color: black;
   border-top-style: solid;
+  z-index:100;
   
 }
 

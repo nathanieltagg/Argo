@@ -10,7 +10,7 @@
         <label>Ticks</label><input type="text" id="ctl-shift-hits-value" value="2400" size='5'/></div>
 
         <div><input type="checkbox" id="ctl-magnifying-glass"  class="saveable" name="ctl-magnifying-glass"   checked="checked" /><label for="ctl-magnifying-glass"  ><b>(g)</b> Magnifying glass</label></div>
-        <div id="mag-sliders">
+        <div class="mag-sliders">
           <div>
           <label for="ctl-magnifier-size">Mag. Size:</label>         
           <input id="ctl-magnifier-size" class="saveable" type="text" value="60" size="4" />
@@ -22,6 +22,17 @@
           </div>
           <div id="ctl-magnifier-mag-slider"></div>
         </div>
+        
+        <div><input type="checkbox" id="ctl-hitsum-circle"  class="saveable" name="ctl-hitsum-circle"   /><label for="ctl-hitsum-circle"  ><b>(=)</b>Sum hits around mouse</label></div>
+        <div>
+          <label for="ctl-hitsum-circle-size">Sum Hit Size:</label>         
+          <input id="ctl-hitsum-circle-size" class="saveable" type="text" value="2" size="5" /> cm
+          </div>
+        <div class="mag-sliders">
+          <div id="ctl-hitsum-size-slider"></div>
+        </div>
+        
+
         <div><input type="checkbox" id="ctl-histo-logscale" name="ctl-histo-logscale" checked="checked" class="saveable  ctl-histo-logscale"/><label for="ctl-histo-logscale"><b>(l)</b>og-scale Histograms</label></div>
         <div><input type="checkbox" id="ctl-show-labels" name="ctl-show-labels" checked="checked" class="saveable"/><label for="ctl-show-labels">Draw Axis Labels</label></div>
         <div><input type="checkbox" id="ctl-show-tick-labels" name="ctl-show-tick-labels" checked="checked" class="saveable"/><label for="ctl-show-tick-labels">Draw Tick Values</label></div>

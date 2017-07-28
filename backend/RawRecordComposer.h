@@ -5,7 +5,7 @@
 
 #include "JsonElement.h"
 #include "online_monitor/Plexus.h"
-#include <openssl/md5.h>
+// #include <openssl/md5.h>
 
 #include "datatypes/ub_EventRecord.h"
 
@@ -21,6 +21,7 @@ public:
   void composeHeader();
   bool composeHeaderTrigger(JsonObject& trig);
   void composeTPC();
+  void composeTPC_SN();
   void composePMTs();
   void composeLaser();
 

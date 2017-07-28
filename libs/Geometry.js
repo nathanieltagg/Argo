@@ -114,6 +114,8 @@ function Geometry()
 
   // X distance from origin of wire planes 0,1,2.
   this.wirePlaneX = [0,0.270,0.521];
+  
+  this.wirePitch = 3.33333; // wire per cm
 }
 
 

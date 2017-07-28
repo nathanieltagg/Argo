@@ -8,3 +8,5 @@ local.css
 mysetup
 logs
 *.root
+defs.txt
+defs_sorted.txt
