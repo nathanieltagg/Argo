@@ -91,7 +91,8 @@ function LiveControl( element )
         if(event.data != self.recent_cache_file) {
           self.time_last_refresh = Date.now();
           var par = { live:1, request_cache: event.data };
-          window.location.hash = '#' + $.param(par);
+          // window.location.hash = '#' + $.param(par);
+          location.reload();
           //QueryServer(par,"server/serve_live.cgi");        
         }
       }
