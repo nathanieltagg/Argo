@@ -269,7 +269,7 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   $('input.psuedoSaturation').val(gWirePseudoColor.saturation );  // $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
   $('input.psuedoCutoffLow') .val(gWirePseudoColor.cutoffLow  );  // $('input.psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
   $('input.psuedoCutoffHigh').val(gWirePseudoColor.cutoffHigh );  // $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
-  self.ControlAdjusted();
+  this.ControlAdjusted();
   console.log('dddd',gWirePseudoColor.dialOffset);
   
   this.NewRecord();
