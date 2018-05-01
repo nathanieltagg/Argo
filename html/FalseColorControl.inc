@@ -19,7 +19,7 @@
  <!-- <button class="falseColorMinus1">-1</button>
  <button class="falseColorPlus1">+1</button> -->
       <div class="hist-element" style="height: 120px"></div>
-      <input type="hidden" id="falsecolor-scheme" value="falsecolor-LOCS" class='saveable auto-save-on-change'/>
+      <input type="hidden" id="falsecolor-scheme" value="falsecolor-Rainbow" class='saveable auto-save-on-change'/>
 
   	<ul>
       <li><a href="#falsecolor-Rainbow">Rainbow</a></li>
@@ -40,23 +40,23 @@
       Hue-rotation <br/>
       <div class='psuedoColorRow' > <span class='pslabel'>Shift</span>
                 <div class='psslide psuedoDialOffsetSlider'></div>
-                <input id='falsecolor-rainbow-dialoffset' class='psval saveable psuedoDialOffset' type="number" value='-0.17503753776026354' width='3'/></div>
+                <input id='falsecolor-rainbow-dialoffset' class='psval  psuedoDialOffset' type="number" value='0.754' width='3'/></div>
 
       <div class='psuedoColorRow' > <span class='pslabel'>Warp</span> 
                 <div class='psslide psuedoAdcScaleSlider'></div> 
-                <input id='falsecolor-rainbow-adcscale' class='psval saveable psuedoAdcScale'  type="text"  value='20' width='3'/> </div>
+                <input id='falsecolor-rainbow-adcscale' class='psval  psuedoAdcScale'  type="text"  value='153.5' width='3'/> </div>
 
       <div class='psuedoColorRow' > <span class='pslabel'>Scale</span>
                 <div class='psslide psuedoDialScaleSlider'></div>
-                <input id='falsecolor-rainbow-dialscale' class='psval saveable psuedoDialScale'  type="text"  value='0.8' width='3'/> </div>
+                <input id='falsecolor-rainbow-dialscale' class='psval  psuedoDialScale'  type="text"  value='0.7' width='3'/> </div>
 
       <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
                 <div class='psslide psuedoSaturationSlider'></div>
-                <input id='falsecolor-rainbow-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div>
+                <input id='falsecolor-rainbow-saturation' class='psval  psuedoSaturation'  type="text" value='0.8' width='3'/> </div>
 
       <div class='psuedoColorRow'> Cutoff &nbsp;
-        <input id='falsecolor-rainbow-cutlow' class='psval saveable psuedoCutoffLow'  type="text"  value='0' width='3'/>&nbsp; to &nbsp;
-        <input id='falsecolor-rainbow-cuthigh'class='psval saveable psuedoCutoffHigh'  type="text" value='0' width='3'/></span>&nbsp; ADC &nbsp;
+        <input id='falsecolor-rainbow-cutlow' class='psval  psuedoCutoffLow'  type="text"  value='0' width='3'/>&nbsp; to &nbsp;
+        <input id='falsecolor-rainbow-cuthigh'class='psval  psuedoCutoffHigh'  type="text" value='5' width='3'/></span>&nbsp; ADC &nbsp;
       </div>
 
     </div>

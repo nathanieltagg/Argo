@@ -479,6 +479,7 @@ function RestoreSettings( slot ) {
   $(".portlet").each(function(){
     var should_be_hidden = false;
     var this_portlet_is_configured = false;
+    if($(this).hasClass('hidden-by-default')) {should_be_hidden=true; this_portlet_is_configured=true;}
     if(jQuery.inArray(this.id,  hidden_list)>=0) {should_be_hidden=true; this_portlet_is_configured=true;}
     if(jQuery.inArray(this.id,unhidden_list)>=0) {should_be_hidden=false; this_portlet_is_configured=true;}
 

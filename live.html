@@ -87,88 +87,78 @@ div.A-TimeHistogram {
 
   <div style="clear:both;"></div>
   <div id="expando-target" style="z-index:998;"></div>
-
-  <div id='live-rightbar'>
-    <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"  class="saveable auto-save-on-change show-hits"  /><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label>
-    <input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" checked="checked" class="saveable auto-save-on-change show-wireimg" /><label for="ctl-show-wireimg"><b>(w)</b> Show Wires</label>
- <button  style='font-size: 10px;' class="ctl-restore-defaults" />Restore Defaults</button>
- </div>
+  <div id='display-zone' style="display:flex; width:100%; align-items: stretch;">
+    <div id='live-rightbar2' style='flex: 1 auto; pading: 20px; min-width: 100px;'>
+        <div><input type="checkbox" id="ctl-show-hits"    name="show-hits"  class="saveable auto-save-on-change show-hits"  /><label for="ctl-show-hits">    <b>(h)</b> Show Hits </label>
+        <input type="checkbox" id="ctl-show-wireimg" name="show-wireimg" checked="checked" class="saveable auto-save-on-change show-wireimg" /><label for="ctl-show-wireimg"><b>(w)</b> Show Wires</label>
+     <button  style='font-size: 10px;' class="ctl-restore-defaults" />Restore Defaults</button>
+     </div>
     
-    <div class="portlet" id="eventinfo-port"> 
-    <div class="portlet-header">Event Info</div>
-      <div  class="portlet-content">
-        <div class="A-EventInfo">
-          <table class="eventinfo"><tbody>
-            <tr><td class="key">Run</td>        <td class="val event-run">?</td></tr>
-            <tr><td class="key">SubRun</td>     <td class="val event-subrun">?</td></tr>
-            <tr><td class="key">Event</td>      <td class="val event-event">?</td></tr>
-            <tr><td class="key">Data Type</td>  <td class="val event-datatype">MC</td></tr>
-            <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
-            <tr><td class="key">Date:</td>      <td class="val event-time"></td></tr>
-           <tr><td class="key">Drift HV       </td>  <td class="val event-hv">Unknown</td></tr>
-          </tbody></table>
+        <div class="portlet" id="eventinfo-port"> 
+        <div class="portlet-header">Event Info</div>
+          <div  class="portlet-content">
+            <div class="A-EventInfo">
+              <table class="eventinfo"><tbody>
+                <tr><td class="key">Run</td>        <td class="val event-run">?</td></tr>
+                <tr><td class="key">SubRun</td>     <td class="val event-subrun">?</td></tr>
+                <tr><td class="key">Event</td>      <td class="val event-event">?</td></tr>
+                <tr><td class="key">Data Type</td>  <td class="val event-datatype">MC</td></tr>
+                <tr><td class="key">Entry</td>      <td><span class="val event-entry">?</span>/<span class="val event-numEntriesInFile"></span></td></tr>
+                <tr><td class="key">Date:</td>      <td class="val event-time"></td></tr>
+               <tr><td class="key">Drift HV       </td>  <td class="val event-hv">Unknown</td></tr>
+              </tbody></table>
         
-          <div class="event-laser-info"></div>
+              <div class="event-laser-info"></div>
           
+            </div>
+          </div>
+        </div>  <!-- portlet -->
+
+      <!--#include virtual="html/FalseColorControl.inc" -->
+      <!--#include virtual="html/WireInfo.inc" -->
+      <!--#include virtual="html/TimeHistogram.inc" -->
+      <!--#include virtual="html/HitHistogram.inc" -->
+  
+      <!--#include virtual="html/ZoomControl.inc" -->
+
+    </div>
+  
+    <div id='main-column' style="flex: 5 70%; min-width: 300px;">
+      <div id='live-wireview-container2' style='width:100%'>
+
+      <div class="portlet hidden-by-default" id="live0-wireimg-port">
+        <div class="portlet-header">"U" View / View 0 / Plane 0</div>
+        <div class="portlet-content" style="background-color:white">
+             <div class="pad A-WireView"      data-options='{"plane": 0}'></div>
+             <!-- <div class="pad A-WireHistogram" data-options='{"plane": 0}'></div> -->
         </div>
       </div>
-    </div>  <!-- portlet -->
 
-  <!--#include virtual="html/FalseColorControl.inc" -->
-  <!--#include virtual="html/WireInfo.inc" -->
-  <!--#include virtual="html/TimeHistogram.inc" -->
-  <!--#include virtual="html/HitHistogram.inc" -->
+
+      <div class="portlet hidden-by-default" id="live1-wireimg-port">
+        <div class="portlet-header">"V" View / View 1 / Plane 1</div>
+        <div class="portlet-content" style="background-color:white">
+            <div class="pad A-WireView"      data-options='{"plane": 1}'></div>
+            <!-- <div class="pad A-WireHistogram" data-options='{"plane": 1}'></div> -->
+        </div>
+      </div>
+
+      <div class="portlet" id="live2-wireimg-port">
+        <div class="portlet-header">"Y" View / View 2 / Plane 2</div>
+        <div class="portlet-content" style="background-color:white">
+            <div class="pad A-WireView"      data-options='{"plane": 2}'></div>
+            <!-- <div class="pad A-WireHistogram" data-options='{"plane": 2}'></div> -->
+        </div>
+      </div>
+
+      <!--#include virtual="html/OpHits.inc" -->
+            <div><label>OpHits</label></div>
+            <div><b>(shift-O)</b>  <select id="ctl-OpHitLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
+
+      </div> <!-- live-wireview-container-->
   
-  <!--#include virtual="html/ZoomControl.inc" -->
-  <table style="display:inline; border:0;"><tr>
-     <td><img src="images/Otterbein.png" width="100" height="100" alt="logo"/></td>
-  </table>
-
-  </div>
-  
-  <div id='live-wireview-container'>
-
-  <div class="portlet" id="live0-wireimg-port">
-    <div class="portlet-header">"U" View / View 0 / Plane 0</div>
-    <div class="portlet-content" style="background-color:white">
-         <div class="pad A-WireView"      data-options='{"plane": 0}'></div>
-         <!-- <div class="pad A-WireHistogram" data-options='{"plane": 0}'></div> -->
-    </div>
-  </div>
-
-
-  <div class="portlet" id="live1-wireimg-port">
-    <div class="portlet-header">"V" View / View 1 / Plane 1</div>
-    <div class="portlet-content" style="background-color:white">
-        <div class="pad A-WireView"      data-options='{"plane": 1}'></div>
-        <!-- <div class="pad A-WireHistogram" data-options='{"plane": 1}'></div> -->
-    </div>
-  </div>
-
-  <div class="portlet" id="live2-wireimg-port">
-    <div class="portlet-header">"Y" View / View 2 / Plane 2</div>
-    <div class="portlet-content" style="background-color:white">
-        <div class="pad A-WireView"      data-options='{"plane": 2}'></div>
-        <!-- <div class="pad A-WireHistogram" data-options='{"plane": 2}'></div> -->
-    </div>
-  </div>
-
-  <!--#include virtual="html/OpHits.inc" -->
-        <div><label>OpHits</label></div>
-        <div><b>(shift-O)</b>  <select id="ctl-OpHitLists"  class="saveable align-right"></select><div style="clear:both;"></div></div>
-
-  </div> <!-- live-wireview-container-->
-
-  <div style="clear:both;"></div>
-  <div style="float:right: width: 39%">
-  
-  </div>
-
-
-  <div style="float:left; width:49%;">
-  </div>
-
-  
+    </div> <!-- main-column -->
+  </div> <!--display-zone -->
   <div id="footer">
     <!--#include virtual="html/Debugging.inc" -->
     

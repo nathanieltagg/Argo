@@ -194,7 +194,7 @@ function FalseColorControl( element  )
     $(self.top_element).tabs('option', 'active', index);
   }
   // Set up initial tab.
-  forceTab("falsecolor-LOCS");
+  forceTab("falsecolor-Rainbow");
   
   // Set up initial tab, if changed by the save/restore routines.
   $('#falsecolor-scheme').change(function(){
@@ -261,8 +261,21 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
   else if(id == 'falsecolor-Interp3')     gWirePseudoColor = new PsuedoInterpolator(3); 
   else if(id == 'falsecolor-Interp4')     gWirePseudoColor = new PsuedoInterpolator(4); 
   
+  /// ddddddd
+  console.log('dddd',gWirePseudoColor.dialOffset);
+  $('input.psuedoDialOffset').val(gWirePseudoColor.dialOffset );  // $('input.psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoAdcScale')  .val(gWirePseudoColor.adcScale   );  // $('input.psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoDialScale') .val(gWirePseudoColor.dialScale  );  // $('input.psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoSaturation').val(gWirePseudoColor.saturation );  // $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoCutoffLow') .val(gWirePseudoColor.cutoffLow  );  // $('input.psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
+  $('input.psuedoCutoffHigh').val(gWirePseudoColor.cutoffHigh );  // $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
+  self.ControlAdjusted();
+  console.log('dddd',gWirePseudoColor.dialOffset);
+  
   this.NewRecord();
+  console.log('dddd',gWirePseudoColor.dialOffset);
   this.TriggerViewChange();
+  console.log('dddd',gWirePseudoColor.dialOffset);
   // gStateMachine.Trigger('ChangePsuedoColor');
   
 }
