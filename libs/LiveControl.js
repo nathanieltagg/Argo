@@ -118,9 +118,8 @@ LiveControl.prototype.Refresh = function()
   }
   this.time_last_refresh = Date.now();
 
-  // QueryServer(par,"server/serve_live.cgi"); // older
-  window.location.hash = '#' + $.param(par);  // old
-  //Preload(par,"server/serve_live.cgi"); // new.
+  // window.location.hash = '#' + $.param(par);  // old
+  location.reload();
 }
 
 LiveControl.prototype.refresh_live = function( force ) {
