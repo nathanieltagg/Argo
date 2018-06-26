@@ -952,6 +952,7 @@ void GalleryRecordComposer::composeObject(const simb::MCParticle& particle, Json
   TLorentzVector x_last  = (traj[0].first);
   TLorentzVector p_last  = (traj[0].second);
   size_t j  = 0;
+  size_t n_saved = 0;
   for(const auto& pt: traj) {
     TLorentzVector x   = (pt.first);
     TLorentzVector p   = (pt.second);
@@ -974,11 +975,12 @@ void GalleryRecordComposer::composeObject(const simb::MCParticle& particle, Json
       jtraj.add(trajpoint); 
       x_last = x;
       p_last = p;
-      j++;
+      n_saved++;
     }
+    j++;
   }
   jobj.add("trajectory",jtraj);
-  
+  std::cout << "Trajectory sparsification: before " << n << " after " << n_saved << std::endl;
 }
 
 

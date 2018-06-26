@@ -13,10 +13,7 @@
   <div style="clear:both;">
   Recent updates:
     <ul> 
-      <li> Now uses Gallery as the underlying data collection mechanism.</li>
-      <li> Faster.</li>
-      <li> Can now show recob::Wire as color map again!</li>
-      <li> Handles MCC8 files without problem.</li>
+      <li> Fixed MC display bug found by Brandon (Sept 18)</li>
     </ul>
   </div>
 </div> 

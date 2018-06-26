@@ -106,13 +106,13 @@ PsuedoRainbow.prototype = new PseudoColor();
 function PsuedoRainbow( )
 {
 //   this.adcScale = 200;
-  this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
-  this.dialScale = 1;
-  this.dialOffset = 0;
+  this.adcScale = 153.5; // Rollover point - below this, color is pretty linear with ADC
+  this.dialScale = 0.7;
+  this.dialOffset = 0.754;
   this.hueOffset= 0.2;
-  this.saturation = 0.9;
+  this.saturation = 0.8;
   this.cutoffLow = 0;
-  this.cutoffHigh = 0;
+  this.cutoffHigh = 5;
 }
 
 PsuedoRainbow.prototype.ColorDialToColor = function( colorDial )

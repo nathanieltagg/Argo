@@ -1,6 +1,7 @@
 AddDefaultCharset UTF-8
 Options +ExecCGI -Includes
 AddHandler cgi-script .cgi
+AddType application/x-httpd-php .profile
 
 SetEnv no-gzip 1
 

@@ -149,7 +149,7 @@ void ResultComposer::compose_from_art(
 
 
   // OK, find the entry in question.
-  Long64_t nentries = tree->GetEntriesFast();
+  Long64_t nentries = tree->GetEntries();
   if(nentries<1){
     result.add("error",string("No entries in tree in file ") + inRootFile);
     return;

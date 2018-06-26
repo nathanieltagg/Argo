@@ -91,7 +91,8 @@ function LiveControl( element )
         if(event.data != self.recent_cache_file) {
           self.time_last_refresh = Date.now();
           var par = { live:1, request_cache: event.data };
-          window.location.hash = '#' + $.param(par);
+          // window.location.hash = '#' + $.param(par);
+          location.reload();
           //QueryServer(par,"server/serve_live.cgi");        
         }
       }
@@ -117,9 +118,8 @@ LiveControl.prototype.Refresh = function()
   }
   this.time_last_refresh = Date.now();
 
-  // QueryServer(par,"server/serve_live.cgi"); // older
-  window.location.hash = '#' + $.param(par);  // old
-  //Preload(par,"server/serve_live.cgi"); // new.
+  // window.location.hash = '#' + $.param(par);  // old
+  location.reload();
 }
 
 LiveControl.prototype.refresh_live = function( force ) {
