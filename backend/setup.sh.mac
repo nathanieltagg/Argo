@@ -1,19 +1,13 @@
 ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+#echo $ABSOLUTE_PATH
 
 # needed the first time to get clang++ setup as the apache user.
-
 # not needed if using ups
 # check if xcode has been setup already:
 xcode-select -p > /dev/null 2>&1
 if [ $? -ne 0 ] ; then
   xcode-select --install
 fi
-
-
-
-#echo $ABSOLUTE_PATH
-
-#export DYLD_LIBRARY_PATH=$ABSOLUTE_PATH/boost/lib:$DYLD_LIBRARY_PATH
 
 # Set up your main larsoft directory.
 source /Users/larsoft/setup
