@@ -269,7 +269,7 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
     if(waveform_ptr) {
       // We have a good wire recorded.0
       waveform_t& waveform = *(waveform_ptr);
-      uint8_t encoded_ped = (uint32_t)abs(waveform._pedwidth) & 0xF;
+      // uint8_t encoded_ped = (uint32_t)abs(waveform._pedwidth) & 0xF;
       // uint16_t blue_channel = encoded_ped + ( ((waveform._servicecard)&0xF) << 4 );
       
       waveform_t& noisewaveform = dummy;      

@@ -32,19 +32,21 @@ pwd := $(shell pwd)
 #override, since setup is poor.
 #uboonedaq  = $(HOME)/development/uboonedaq/projects
 
-CPPFLAGS := -g -I.. -Wno-deprecated-declarations 
+# CPPFLAGS := -g -I.. -Wno-error-deprecated-declarations
 #CPP := g++44 -std=c++0x
-CPP := g++ -std=c++1y -O3
+CPP := g++ -std=c++1y -O0
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
 
 
 ifeq ($(UNAME),Darwin)
-  CPPFLAGS += -fPIC -g 
-  # CPP = clang++ -std=c++1y -Wno-return-type-c-linkage
+  CPP = clang++ 
+  # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
   # LD = clang++ -std=c++1y
+  # CPPFLAGS += -fPIC -g
   LDFLAGS = -prebind   -g
+  CPPFLAGS += -I /usr/local/opt/openssl/include
 else 
   CPPFLAGS += -fPIC
   LDFLAGS += -lgomp -fPIC
@@ -82,7 +84,7 @@ vpath %.cpp $(uboonedaq)/online_monitor
 
 CPPFLAGS += -I $(uboonedaq)
 # CPPFLAGS += -I $(uboonedaq_datatypes_inc)
-CPPFLAGS += -D nullptr=0
+# CPPFLAGS += -D nullptr=0
 
 
 # Don't use the default FCL and messagelogger.
@@ -97,10 +99,15 @@ BLIBS += -lboost_serialization -lboost_system -lboost_thread -lboost_program_opt
 
 ifeq ($(UNAME),Darwin)
   # LDFLAGS += -Wl,-rpath,@executable_path/boost/lib/
-  CPPFLAGS +=  -ftemplate-depth=512
+  # CPPFLAGS +=  -ftemplate-depth=512
 endif
 
-CPPFLAGS += -I $(BOOST_INC) 
+ifeq ($(UNAME),Darwin)
+  CPPFLAGS += -isystem $(BOOST_INC)   
+else 
+  CPPFLAGS += -I $(BOOST_INC) 
+endif
+
 BLIBS += -L ${BOOST_LIB}
 
 
@@ -117,21 +124,25 @@ endif
 PATH+=:${ROOTSYS}/bin
 LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
-CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
+# CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
 
 ### LarLite
 ## comment out this section if larlite not available
 ## symlink larlite to current directory
-
-ifneq ($(origin LARLITE_BASEDIR), undefined)
-	CPPFLAGS += -DLARLITE=1
-	LARLITE_PATH = ./larlite
-	CPPFLAGS += -I $(LARLITE_PATH)/core
-	LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
-	LDFLAGS +=   -Wl,-rpath,larlite/lib/
-endif
+## 
+# ifneq ($(origin LARLITE_BASEDIR), undefined)
+#   CPPFLAGS += -DLARLITE=1
+#   LARLITE_PATH = ./larlite
+#   CPPFLAGS += -I $(LARLITE_PATH)/core
+#   LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
+#   LDFLAGS +=   -Wl,-rpath,larlite/lib/
+# endif
 
 ### Products added via ups
+LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
+CPPFLAGS += -I ${HEP_CONCURRENCY_INC}
+CPPFLAGS += -I ${CANVAS_ROOT_IO_INC} 
+LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
 CPPFLAGS += -I ${GALLERY_INC}
 LIBS     += -L ${GALLERY_LIB} -l gallery 
 CPPFLAGS += -I ${CANVAS_INC}
@@ -142,22 +153,33 @@ CPPFLAGS += -I ${LARCOREOBJ_INC}
 CPPFLAGS += -I ${NUSIMDATA_INC} 
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
 CPPFLAGS += -I ${CETLIB_INC}          -I ${CETLIB_EXCEPT_INC}
-LIBS     += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+LIBS     += -L ${CETLIB_LIB_DIR} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
 CPPFLAGS += -I ${FHICLCPP_INC}
 CPPFLAGS += -I ${UBOONECODE_INC}
 LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
 CPPFLAGS += -I ${UBOONEDAQ_DATATYPES_INC}
 LIBS     += -L ${UBOONEDAQ_DATATYPES_LIB} -l ubdata_types
+CPPFLAGS += -I ${ROOT_INC}
 
 CPPFLAGS += -DGALLERY
-LIBS += -lgomp
+# LIBS += -lgomp
+
+## LARLITE is optional.
+ifneq ($(origin LARLITE_DIR), undefined)
+  CPPFLAGS += -DLARLITE=1
+  CPPFLAGS += -I  ${LARLITE_COREDIR}
+  LIBS += -L${LARLITE_LIBDIR} -lLArLite_DataFormat -lLArLite_Base
+endif
+
+
+CPPFLAGS += -I/usr/local/include  # for png.h
 
 # add any other desired libs here
 # PNG
 LIBS += -L/opt/X11/lib -lpng -lcrypto
 
 
-CPPFLAGS := $(filter-out -stdlib=libc++,$(CPPFLAGS))
+# CPPFLAGS := $(filter-out -stdlib=libc++,$(CPPFLAGS))
 LDFLAGS := $(filter-out -stdlib=libc++,$(LDFLAGS))
 LIBS := $(filter-out -stdlib=libc++,$(LIBS))
 
@@ -183,6 +205,12 @@ endif
 
 #libcurl
 BLIBS += -lcurl
+
+
+ifeq ($(UNAME),Darwin)
+  CPPFLAGS += -g -gdwarf-4 -O0 -std=c++98 -Wno-dynamic-exception-spec -Wno-error=deprecated-declarations -pedantic -Wno-unused-local-typedefs -std=c++17 -Wall  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -fPIC
+  # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
+endif
 
 
 #Dependency rule
@@ -226,7 +254,8 @@ tmp/Cint.o : Cint.cpp
 
 
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@ \
+  -Wl,-rpath,${CLHEP_LIB_DIR}
 
 # Now integrated into main build
 #argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
