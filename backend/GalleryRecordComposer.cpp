@@ -144,8 +144,9 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
   auto p1 = std::lower_bound(fBranchNames.begin(),fBranchNames.end(),pattern);
   for(auto p=p1; p!=fBranchNames.end(); p++) {
     const std::string& found = *p;
+    // std::cout << "Compare to " << found << std::endl;
     // Does it begin with our object type?
-    if(found.find(pattern)!=0) return retval; // finished
+    if(found.find(pattern)!=0) continue; //return retval; // finished
 
     // It's a match, so tokenize and return.
     // Tokenize by underscore.
@@ -161,6 +162,7 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
     if(p0==string::npos || p0==0) continue;
 
     art::InputTag tag(found.substr(p0+1,p1-p0-1),  found.substr(p1+1,p2-p1-1), found.substr(p2+1,p3-p2-1));
+    std::cout << "Found " << found << ":" << tag << std::endl;
     retval.push_back( make_pair( found, tag ));
     
   }
@@ -205,7 +207,7 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
   //   art::InputTag tag(found.substr(p0+1,p1-p0-1),  found.substr(p1+1,p2-p1-1), found.substr(p2+1,p3-p2-1));
   //   retval.push_back( make_pair( found, tag ));
   // }
-  return retval;
+  // return retval;
   
 }
 
@@ -464,7 +466,7 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
   JsonArray jpoints;
   size_t first_point = traj.FirstValidPoint();
   size_t last_point  = traj.LastValidPoint();
-  size_t npoints = traj.NPoints();
+  // size_t npoints = traj.NPoints();
   // cout << " Points: " << npoints << " first: " << first_point << " last: " << last_point << std::endl;
   for(size_t i = first_point; i<= last_point; i++) {
     // cout << " constructing point " << i << " next is " <<  traj.NextValidPoint(i) << std::endl;
@@ -781,7 +783,7 @@ void GalleryRecordComposer::composeRaw()
       for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
       pedcomp.finish(20);
       int ped = pedcomp.ped();
-      double rms = pedcomp.pedsig(); // auto-adjusted rms.
+      // double rms = pedcomp.pedsig(); // auto-adjusted rms.
 
       for(size_t i =0; i< nsamp; i++) {
         waveform[i] -= ped;
@@ -1202,14 +1204,21 @@ struct GalleryAssociationHelper {
   {  
     for(auto& itr1: _assn_1) {
       JsonObject j1;
-      const art::BranchDescription* desc1 = event.dataGetterHelper()->branchMapReader().productToBranch(itr1.first);
-      std::string name1 = stripdots(desc1->branchName());
+      // const art::BranchDescription* desc1 = event.dataGetterHelper()->branchMapReader().productToBranch(itr1.first);
+      // std::string name1 = stripdots(desc1->branchName());
+      art::BranchDescription const& desc1 = event.getProductDescription(itr1.first);
+      std::string name1 = stripdots(desc1.branchName());
+
       std::cout << name1 << std::endl;
       
       for(auto& itr2: itr1.second) {
         JsonObject j2;
-        const art::BranchDescription* desc2 = event.dataGetterHelper()->branchMapReader().productToBranch(itr2.first);
-        std::string name2 = stripdots(desc2->branchName());
+        
+        // const art::BranchDescription* desc2 = event.dataGetterHelper()->branchMapReader().productToBranch(itr2.first);
+        // std::string name2 = stripdots(desc2->branchName());
+        art::BranchDescription const& desc2 = event.getProductDescription(itr2.first);
+        std::string name2 = stripdots(desc2.branchName());
+
         std::cout << "\t" << name2 << std::endl;
         
         
@@ -1232,6 +1241,7 @@ void GalleryRecordComposer::composeAssociation()
 {
   typedef art::Assns<A,B> assn_t;
 
+  std::cout << "GalleryRecordComposer::composeAssociation() " << typeid(A).name() << " " << typeid(B).name() << std::endl;
   for(auto product: findByType<assn_t>(fEvent->getTTree())) {
     gallery::Handle< assn_t > assnhandle;
     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,assnhandle);}

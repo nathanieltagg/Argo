@@ -167,6 +167,8 @@ bool RawRecordComposer::composeHeaderTrigger(JsonObject& trig)
   
    // get trigger card data.
   const ub_EventRecord::trig_map_t trigmap = fRecord->getTRIGSEBMap();
+  m_trig_frame=0;
+  m_trig_time_64MHz=0;
   if(trigmap.size()==0) {
     return false;
   }
@@ -810,6 +812,8 @@ void RawRecordComposer::composePMTs()
           JsonArray &ophits = ophits_lists[collection];
 
           uint32_t frame = resolveFrame(pmt_event_frame,window_header.getFrame(),0x7);
+          // for SN, no trigger, so guess.
+          if(m_trig_frame ==0) m_trig_frame=frame;
           if( (pmt_readout_frame==0xFFFFFFFF) && ((disc&0x4)==4) ) {
             // Set the readout start time here.
             pmt_readout_frame_mod8  = window_header.getFrame();

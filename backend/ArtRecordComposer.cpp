@@ -858,7 +858,7 @@ void ArtRecordComposer::composeCal()
     TLeaf* lchannel= fTree->GetLeaf((name+"obj.fRawDigit.key_").c_str());
     TLeaf* lsignal = fTree->GetLeaf((name+"obj.fSignal").c_str());
     TLeaf* lroi    = fTree->GetLeaf((name+"obj.fSignalROI").c_str());
-    TLeaf* lroi2    = fTree->GetLeaf((name+"obj.fSignalROI.nominal_size").c_str());
+    // TLeaf* lroi2    = fTree->GetLeaf((name+"obj.fSignalROI.nominal_size").c_str());
     TreeElementLooter* simpleLooter =0;
     TreeElementLooter* roiLooter =0;
     TreeElementLooter* roiLooter2ranges =0;
@@ -1043,7 +1043,7 @@ void ArtRecordComposer::composeRaw()
       for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
       pedcomp.finish(20);
       int ped = pedcomp.ped();
-      double rms = pedcomp.pedsig(); // auto-adjusted rms.
+      // double rms = pedcomp.pedsig(); // auto-adjusted rms.
 
       for(size_t i =0; i< nsamp; i++) {
         waveform[i] -= ped;
@@ -1367,7 +1367,7 @@ void ArtRecordComposer::composeMC()
     TLeaf* lp_fmass      = fTree->GetLeaf( (name+"obj.fmass"     ).c_str());
     TLeaf* lp_fmother    = fTree->GetLeaf( (name+"obj.fmother"   ).c_str());
     TLeaf* lp_fpdgCode   = fTree->GetLeaf( (name+"obj.fpdgCode"  ).c_str());
-    TLeaf* lp_fprocess   = fTree->GetLeaf( (name+"obj.fprocess"  ).c_str());
+    // TLeaf* lp_fprocess   = fTree->GetLeaf( (name+"obj.fprocess"  ).c_str());
     TLeaf* lp_frescatter = fTree->GetLeaf( (name+"obj.frescatter").c_str());
     TLeaf* lp_fstatus    = fTree->GetLeaf( (name+"obj.fstatus"   ).c_str());
     TLeaf* lp_ftrackId   = fTree->GetLeaf( (name+"obj.ftrackId"  ).c_str());
@@ -1425,7 +1425,7 @@ void ArtRecordComposer::composeMC()
       JsonArray jtraj;
       TLorentzVector x_last  = ((*traj)[0].first);
       TLorentzVector p_last  = ((*traj)[0].second);
-      int n_need = 1;
+
       for(int j=0;j<n;j++) {
         TLorentzVector x   = ((*traj)[j].first);
         TLorentzVector p   = ((*traj)[j].second);
@@ -1437,8 +1437,8 @@ void ArtRecordComposer::composeMC()
           // Keep this point.
           JsonObject trajpoint;
           
-          const TLorentzVector& pos = (*traj)[j].first;
-          const TLorentzVector& mom = (*traj)[j].second;
+          // const TLorentzVector& pos = (*traj)[j].first;
+          // const TLorentzVector& mom = (*traj)[j].second;
           // trajpoint.add("acc",ptAcc[j]);
           trajpoint.add("x",JsonFixed(x.X(),1));
           trajpoint.add("y",JsonFixed(x.Y(),1));

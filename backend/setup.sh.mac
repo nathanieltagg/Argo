@@ -1,22 +1,30 @@
-# needed the first time to get clang++ setup as the apache user.
-# not needed if using ups
-xcode-select --install
-
-
 ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
-echo $ABSOLUTE_PATH
-export DYLD_LIBRARY_PATH=$ABSOLUTE_PATH/boost/lib:$DYLD_LIBRARY_PATH
+
+# needed the first time to get clang++ setup as the apache user.
+
+# not needed if using ups
+# check if xcode has been setup already:
+xcode-select -p > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+  xcode-select --install
+fi
+
+
+
+#echo $ABSOLUTE_PATH
+
+#export DYLD_LIBRARY_PATH=$ABSOLUTE_PATH/boost/lib:$DYLD_LIBRARY_PATH
+
+# Set up your main larsoft directory.
 source /Users/larsoft/setup
-#setup lardataobj v1_15_02 -q e14:debug
-setup gallery v1_03_12_tagg -q e14:nu:debug
-#setup boost v1_63_0a -q e14:debug
-#setup postgresql v9_5_6
-#setup uboonedaq-datatypes -v06_22_00
 
-#setup uboonecode v06_34_00 -q e14:debug
-export PRODUCTS=~/slar/localProducts_uboonecode_v06_41_00_e14_debug/:$PRODUCTS
-#source ~/slar/localProducts_uboonecode_v06_41_00_e14_debug/setup
-setup uboonecode v06_41_00 -q debug:e14
+# if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
+#export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
+setup uboonecode v06_80_00 -q debug:c2
+setup gallery v1_10_00 -q c2:debug
 
-source ../backend/larlite/config/setup.sh
+# optional:
+setup larlite v06_70_00b -q c2:debug
+
+# source ../backend/larlite/config/setup.sh

@@ -208,7 +208,7 @@ void AnaRecordComposer::composeTracks()
 			// Get array sizes for trackpoints.
 			TLeaf* lxyz = fTree->GetLeaf((std::string("trkxyz_")+trkname).c_str());
 			if(!lxyz) return;
-			int r1 = 3;
+			//int r1 = 3;
 			int r2 = 2000;
 			int r3 = 3;
 			// That is, the trkxyz has dimensions [ntrack][3][2000][3]

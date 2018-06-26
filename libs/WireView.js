@@ -54,7 +54,7 @@ function WireView( element, options )
     margin_bottom : 40,
     margin_top    : 5,
     margin_right  : 5,
-    margin_left   : 30,
+    margin_left   : 34,
     xlabel : "Wire",
     ylabel : "TDC",
     zooming: true, // set false to lock view on starting coordinates
@@ -224,6 +224,12 @@ WireView.prototype.NewRecord = function()
   //
   if(!gRecord) return;
   this.NewRecord_hits();
+
+  // Find sample size.
+  if(gRecord._raw && gRecord._raw && gRecord._raw.tiled_canvas ) this.ntdc = gRecord._raw.tiled_canvas.canvas.width;
+  else if(gRecord._cal && gRecord._cal && gRecord._cal.tiled_canvas ) this.ntdc = gRecord._cal.tiled_canvas.canvas.width;
+  else this.ntdc = 9600;
+
   // this.NewRecord_image();
   this.NewRecord_mc();
 };
@@ -388,9 +394,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
                         this.span_x, this.span_y /*too much*/);
     }
 
-    if(max_v > 9600) { // FIXME: Should be number of samples.!
+    if(max_v > this.ntdc) { 
       this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
-                        this.span_x, this.GetY(9600)-(this.origin_y-this.span_y));
+                        this.span_x, this.GetY(this.ntdc)-(this.origin_y-this.span_y));
     }
     
     

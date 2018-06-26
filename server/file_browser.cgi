@@ -17,7 +17,7 @@ $cookie_name = 'argo_file_browser';
 $cookie_name_recent = 'argo_file_browser_recent';
 $link_target = "../arachne.html";
 $restrict_to = [ getcwd(), "/uboone","/minos","/minerva","/pnfs"];
-$quick_links = [ "/uboone/app", "/uboone/data", "/pnfs/uboone"];
+$quick_links = [ "/uboone/app", "/uboone/data", "/pnfs/uboone" ];
 $force_paths = [ "/uboone/app", "/uboone/data" ];
 
 # Config for Argo release:
@@ -111,7 +111,7 @@ print h2({-id=>"title"},$title);
 
 
 # Resolve path to see if it's legal. NO poking around in /etc!
-$req_path_abs = realpath($cur_path);
+$req_path_abs = realpath($cur_path) || $cur_path;
 # Check to make sure it's rooted in an allowed area.
 $good=0;
 foreach $basepath (@$restrict_to)
@@ -121,7 +121,7 @@ foreach $basepath (@$restrict_to)
 if($good==0) {
   
   print p(HTML::Entities::encode("$cur_path"));
-  print p("This path is not a standard file location. Contact Nathaniel if you need to see this area.");
+  print p("This path -$cur_path -  $req_path_abs  - is not a standard file location. Contact Nathaniel if you need to see this area.");
   print p(@$restrict_to);
 
   print end_html;

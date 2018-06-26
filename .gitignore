@@ -10,3 +10,4 @@ logs
 *.root
 defs.txt
 defs_sorted.txt
+*.ubdaq
