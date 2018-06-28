@@ -1222,14 +1222,18 @@ struct GalleryAssociationHelper {
   {
     for(auto& itr1: _assn_1) {
       JsonObject j1;
-      const art::BranchDescription* desc1 = event.dataGetterHelper()->branchMapReader().productToBranch(itr1.first);
-      std::string name1 = stripdots(desc1->branchName());
+      // const art::BranchDescription* desc1 = event.dataGetterHelper()->branchMapReader().productToBranch(itr1.first);
+      // std::string name1 = stripdots(desc1->branchName());
+      art::BranchDescription const& desc1 = event.getProductDescription(itr1.first);
+      std::string name1 = stripdots(desc1.branchName());
       std::cout << name1 << std::endl;
 
       for(auto& itr2: itr1.second) {
         JsonObject j2;
-        const art::BranchDescription* desc2 = event.dataGetterHelper()->branchMapReader().productToBranch(itr2.first);
-        std::string name2 = stripdots(desc2->branchName());
+        // const art::BranchDescription* desc2 = event.dataGetterHelper()->branchMapReader().productToBranch(itr2.first);
+        // std::string name2 = stripdots(desc2->branchName());
+        art::BranchDescription const& desc2 = event.getProductDescription(itr2.first);
+        std::string name2 = stripdots(desc2.branchName());
         std::cout << "\t" << name2 << std::endl;
 
 
@@ -1419,8 +1423,14 @@ void GalleryRecordComposer::compose()
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
+<<<<<<< HEAD
 
   fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
+=======
+  
+  int dummy;
+  fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
+>>>>>>> deploy
 
   // parse some options.
   int doCal = 1;

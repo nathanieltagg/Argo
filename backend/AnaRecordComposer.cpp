@@ -71,6 +71,9 @@ void AnaRecordComposer::compose()
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
   
+  int dummy;
+  fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
+
   // parse some options.
 
   // Set branches to read here.
