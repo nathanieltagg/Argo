@@ -102,11 +102,11 @@ ifeq ($(UNAME),Darwin)
   # CPPFLAGS +=  -ftemplate-depth=512
 endif
 
-ifeq ($(UNAME),Darwin)
-  CPPFLAGS += -isystem $(BOOST_INC)   
-else 
+# ifeq ($(UNAME),Darwin)
+#   CPPFLAGS += -isystem $(BOOST_INC)
+# else
   CPPFLAGS += -I $(BOOST_INC) 
-endif
+# endif
 
 BLIBS += -L ${BOOST_LIB}
 
