@@ -61,8 +61,8 @@ RawRecordComposer::RawRecordComposer(JsonObject& output,
                                       std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record, 
                                       const std::string options)
   : fOutput(output)
-  , fRecord(record)
   , fOptions(options)
+  , fRecord(record)
   , fmintdc(0)
   , fmaxtdc(0)
 {
@@ -87,6 +87,9 @@ void RawRecordComposer::compose()
     fOutput.add("error","Bad record!");
     return;
   } 
+  
+  int dummy;
+  fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
   
   std::string id = Form("r%08d_s%04d_e%08d"
                             ,fRecord->getGlobalHeader().getRunNumber()    
@@ -340,7 +343,7 @@ void RawRecordComposer::composeTPC()
       //get the crateHeader/crateData objects
       int crate = crate_it->first; // This seems more reliable than the crate daq header.
       const tpc_crate_data_t& crate_data = crate_it->second;
-      std::unique_ptr<tpc_crate_data_t::ub_CrateHeader_t> const& crate_header = crate_data.crateHeader();
+      // std::unique_ptr<tpc_crate_data_t::ub_CrateHeader_t> const& crate_header = crate_data.crateHeader();
 
       boost::thread_group unpack_threads;    
 
@@ -557,7 +560,7 @@ void RawRecordComposer::composeTPC_SN()
   int wires_read = 0;
   JsonArray hits;
   
-  int nsamp_max = 3200;
+  // int nsamp_max = 3200;
   {
     TimeReporter timer_read("TPCReadDAQ_SN");  
     
@@ -759,13 +762,13 @@ void RawRecordComposer::composePMTs()
     std::vector<pmt_crate_data_t::card_t> const& cards = crate_data.getCards();
     for(const pmt_crate_data_t::card_t& card_data: cards) {
       
-      const pmt_crate_data_t::card_t::header_type& card_header = card_data.header();
+      // const pmt_crate_data_t::card_t::header_type& card_header = card_data.header();
       int card = card_data.getModule();
       
       uint32_t pmt_event_frame      = card_data.getFrame();
-      uint32_t pmt_trig_frame_mod16 = card_data.getTrigFrameMod16();
-      uint32_t pmt_trig_frame       = card_data.getTrigFrame(); // The resolved version, fully specified.
-      uint32_t pmt_trig_sample_2MHz = card_data.getTrigSample();
+      // uint32_t pmt_trig_frame_mod16 = card_data.getTrigFrameMod16();
+      // uint32_t pmt_trig_frame       = card_data.getTrigFrame(); // The resolved version, fully specified.
+      // uint32_t pmt_trig_sample_2MHz = card_data.getTrigSample();
       
       JsonArray jChannels;
 
@@ -820,9 +823,9 @@ void RawRecordComposer::composePMTs()
             pmt_readout_frame = frame;
             pmt_readout_sample = sample;
           }
-          int nsamp = window_data.data().size();
-          int peaksamp = 0;
-          int peakval = 0;
+          // int nsamp = window_data.data().size();
+          // int peaksamp = 0;
+          // int peakval = 0;
           const ub_RawData& raw = window_data.data();          
           ub_RawData::const_iterator it;
           int ped = (*(raw.begin()))&0xfff;

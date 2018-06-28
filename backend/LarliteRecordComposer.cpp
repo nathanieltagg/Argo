@@ -76,6 +76,9 @@ void LarliteRecordComposer::compose()
   fStorage_manager.set_io_mode(fStorage_manager.kREAD);
   fStorage_manager.add_in_filename(fFilename);
 
+  int dummy;
+  fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
+  
   if(!fStorage_manager.open()) {
     std::cerr << "Couldn't open storage manager on file " << fFilename << std::endl;
     fOutput.add("error",std::string("Couldn't open storage manager on file ") + fFilename);
@@ -90,6 +93,7 @@ void LarliteRecordComposer::compose()
   for(auto prod: fStorage_manager.list_input_product()) {
     std::cout << Form("product type %3d %10s %s",prod.first, larlite::data::kDATA_TREE_NAME[prod.first].c_str(), prod.second.c_str()) << std::endl;
   }
+
   compose_header();
   compose_hits();
   compose_tracks();

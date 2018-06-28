@@ -1479,7 +1479,8 @@ void ArtRecordComposer::compose()
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
   
-  fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
+  int dummy;
+  fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
 
   // parse some options.
   int doCal = 1;
