@@ -52,17 +52,14 @@ else
   LDFLAGS += -lgomp -fPIC
 endif
 
+CPPFLAGS += -Wno-return-type-c-linkage
+
 
 SOURCES = $(notdir $(wildcard *.cpp)) \
           # $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) 
-SOURCES +=DaqFile.cpp \
-          Plexus.cpp  \
-          Client.cpp \
-          DispatcherMessage.cpp \
-          KvpSet.cpp \
-          Logging.cpp \
-          ConvertDispatcherToEventRecord.cpp \
-          Timer.cpp \
+
+UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp 
+UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h 
 
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
@@ -78,11 +75,14 @@ tmp/Cint.o
 
 #Where to look for source files
 # vpath %.cpp $(uboonedaq_datatypes_src)/datatypes
-vpath %.cpp $(uboonedaq)/dispatcher
-vpath %.cpp $(uboonedaq)/online_monitor
+
+
+# vpath %.cpp $(uboonedaq)/dispatcher
+# vpath %.cpp $(uboonedaq)/online_monitor
+
 #Where to look for include files
 
-CPPFLAGS += -I $(uboonedaq)
+# CPPFLAGS += -I $(uboonedaq)
 # CPPFLAGS += -I $(uboonedaq_datatypes_inc)
 # CPPFLAGS += -D nullptr=0
 
@@ -90,57 +90,15 @@ CPPFLAGS += -I $(uboonedaq)
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 
-# Boost.
-BOOST_INC ?= boost/include # Usually defined for us, use local symlink ./boost if not
-BOOST_LIB ?= boost/lib
 
-BLIBS += -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
-# LIBS += -lboost_serialization -lboost_system -lboost_thread
-
-ifeq ($(UNAME),Darwin)
-  # LDFLAGS += -Wl,-rpath,@executable_path/boost/lib/
-  # CPPFLAGS +=  -ftemplate-depth=512
-endif
-
-ifeq ($(UNAME),Darwin)
-  CPPFLAGS += -isystem $(BOOST_INC)   
-else 
-  CPPFLAGS += -I $(BOOST_INC) 
-endif
-
-BLIBS += -L ${BOOST_LIB}
-
-
-# Root.
-ifeq ($(origin ROOTSYS), undefined)
-		export ROOTSYS ?= ${pwd}/root  # Usually defined for us, use local symlink ./root if not
-			export LD_LIBRARY_PATH+=${ROOTSYS}/lib
-endif
-
-ifeq ($(UNAME),Darwin)
-	# LDFLAGS += -Wl,-rpath,root -Wl,-rpath,$(ROOTSYS)
-endif
-
-PATH+=:${ROOTSYS}/bin
 LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
-# CPPFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -I/opt/X11/include
-
-### LarLite
-## comment out this section if larlite not available
-## symlink larlite to current directory
-## 
-# ifneq ($(origin LARLITE_BASEDIR), undefined)
-#   CPPFLAGS += -DLARLITE=1
-#   LARLITE_PATH = ./larlite
-#   CPPFLAGS += -I $(LARLITE_PATH)/core
-#   LIBS += -L$(LARLITE_PATH)/lib -lLArLite_DataFormat -lLArLite_Base
-#   LDFLAGS +=   -Wl,-rpath,larlite/lib/
-# endif
 
 ### Products added via ups
-LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
+CPPFLAGS += -I ${BOOST_INC}
+LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
 CPPFLAGS += -I ${HEP_CONCURRENCY_INC}
+LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
 CPPFLAGS += -I ${CANVAS_ROOT_IO_INC} 
 LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
 CPPFLAGS += -I ${GALLERY_INC}
@@ -160,6 +118,11 @@ LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
 CPPFLAGS += -I ${UBOONEDAQ_DATATYPES_INC}
 LIBS     += -L ${UBOONEDAQ_DATATYPES_LIB} -l ubdata_types
 CPPFLAGS += -I ${ROOT_INC}
+
+CPPFLAGS += -I ${POSTGRESQL_INC}
+LIBS     += -L ${POSTGRESQL_LIBRARIES} -lpq
+CPPFLAGS += -I ${SQLITE_INC} 
+LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 
 CPPFLAGS += -DGALLERY
 # LIBS += -lgomp
@@ -184,24 +147,24 @@ LDFLAGS := $(filter-out -stdlib=libc++,$(LDFLAGS))
 LIBS := $(filter-out -stdlib=libc++,$(LIBS))
 
 # postgresql
-ifeq ($(UNAME),Darwin)
-  # Use the Postgres app, instead of a fullblown installation.
-#  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
-  CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
-endif
-ifneq ($(origin POSTGRESQL_INC), undefined)
-	CPPFLAGS += -I ${POSTGRESQL_INC} 
-	BLIBS += -L $(POSTGRESQL_LIBRARIES) -lpq
-else 
-  BLIBS += -lpq
-endif
+# ifeq ($(UNAME),Darwin)
+#   # Use the Postgres app, instead of a fullblown installation.
+# #  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
+#   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
+# endif
+# ifneq ($(origin POSTGRESQL_INC), undefined)
+#   CPPFLAGS += -I ${POSTGRESQL_INC}
+#   BLIBS += -L $(POSTGRESQL_LIBRARIES) -lpq
+# else
+#   BLIBS += -lpq
+# endif
 
-ifneq ($(origin SQLITE_INC), undefined)	
-         CPPFLAGS += -I ${SQLITE_INC} 
-         BLIBS += -L ${SQLITE_LIB}  -lsqlite3_ups
-else
-         BLIBS += -lsqlite3
-endif
+# ifneq ($(origin SQLITE_INC), undefined)
+#          CPPFLAGS += -I ${SQLITE_INC}
+#          BLIBS += -L ${SQLITE_LIB}  -lsqlite3_ups
+# else
+#          BLIBS += -lsqlite3
+# endif
 
 #libcurl
 BLIBS += -lcurl
@@ -297,12 +260,23 @@ testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 
-install-boost: Makefile
-	#Thing for Mac OSX; change the internal name of the boost libraries.
-	install_name_tool -id @rpath/libboost_serialization.dylib ${BOOST_LIB}/libboost_serialization.dylib
-	install_name_tool -id @rpath/libboost_system.dylib ${BOOST_LIB}/libboost_system.dylib
-	install_name_tool -id @rpath/libboost_thread.dylib ${BOOST_LIB}/libboost_thread.dylib
-	install_name_tool -id @rpath/libboost_program_options.dylib ${BOOST_LIB}/libboost_program_options.dylib
+# This is a brute-force copy.
+copy: $(foreach f,$(UBOONEDAQ_FILES),$(wildcard $(uboonedaq)/*/$(f)))
+	cp $? .
+
+
+#$(UBOONEDAQ_FILES:%.cpp): $(wildcard $(uboonedaq)/*/%.cpp)
+# 	@echo $?
+# 	@echo $(wildcard $(uboonedaq)/*/$@)
+# 	@echo "Copying new version of $< $@"
+# 	# cp $< $@
+
+# install-boost: Makefile
+#   #Thing for Mac OSX; change the internal name of the boost libraries.
+#   install_name_tool -id @rpath/libboost_serialization.dylib ${BOOST_LIB}/libboost_serialization.dylib
+#   install_name_tool -id @rpath/libboost_system.dylib ${BOOST_LIB}/libboost_system.dylib
+#   install_name_tool -id @rpath/libboost_thread.dylib ${BOOST_LIB}/libboost_thread.dylib
+#   install_name_tool -id @rpath/libboost_program_options.dylib ${BOOST_LIB}/libboost_program_options.dylib
 
 depend: $(DEPS)
 

@@ -22,8 +22,8 @@
 #include "SocketServer.h"
 #include "ResultComposer.h"
 
-#include "dispatcher/KvpSet.h"
-#include "online_monitor/Plexus.h"
+#include "KvpSet.h"
+#include "Plexus.h"
 #include "DeadChannelMap.h"
 
 #include <signal.h>
