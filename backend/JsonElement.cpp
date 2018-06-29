@@ -46,20 +46,55 @@ const std::string JsonElement::quotestring( const std::string& input )
 
 // ----------------------------------------------------------------------------------
 // JsonObject
-JsonObject& JsonObject::add(const std::string& key,const JsonElement& value)
+JsonObject& JsonObject::add(const std::string& key,const JsonObject& value)
 {
-  if(fElements++>0) {
-    fContent << ",";
-  }
-  if(sfPrettyPrint) fContent << std::endl << "  ";
-  fContent << "\"" << key << "\":";
-  fContent << value.str();
+  fMap[key]=std::shared_ptr<JsonElement>(new JsonObject(value));
   return *this;
 }
 
 
 JsonObject& JsonObject::add(const std::string& key,const JsonArray& value)
 {
+  fMap[key]=std::shared_ptr<JsonElement>(new JsonArray(value));
+  return *this;
+}
+
+JsonObject& JsonObject::add(const std::string& key,const JsonElement& value)
+{
+  fMap[key]=std::shared_ptr<JsonElement>(new JsonElement(value));
+  return *this;
+}
+
+JsonObject& JsonObject::addBare(const std::string& key,const std::string& value)
+{
+  fMap[key]=std::shared_ptr<JsonElement>(new JsonElementBare(value));
+  return *this;
+}
+
+
+const std::string JsonObject::str() const
+{
+  std::string out = "{";
+  omap_t::const_iterator it = fMap.begin();
+  if(it!=fMap.end()) { 
+    out += "\"" + it->first + "\":" + it->second->str(); 
+    ++it; 
+  }
+  for(; it!=fMap.end();++it) {
+    out += ",\"" + it->first + "\":" + it->second->str();       
+  }
+  out += "}";
+  if(sfPrettyPrint) {out += "\n";};
+  return out;
+}
+
+
+
+
+// ----------------------------------------------------------------------------------
+// JsonObjectSimple
+JsonObjectSimple& JsonObjectSimple::add(const std::string& key,const JsonElement& value)
+{
   if(fElements++>0) {
     fContent << ",";
   }
@@ -69,7 +104,19 @@ JsonObject& JsonObject::add(const std::string& key,const JsonArray& value)
   return *this;
 }
 
-JsonObject& JsonObject::addBare(const std::string& key,const std::string& value)
+
+JsonObjectSimple& JsonObjectSimple::add(const std::string& key,const JsonArray& value)
+{
+  if(fElements++>0) {
+    fContent << ",";
+  }
+  if(sfPrettyPrint) fContent << std::endl << "  ";
+  fContent << "\"" << key << "\":";
+  fContent << value.str();
+  return *this;
+}
+
+JsonObjectSimple& JsonObjectSimple::addBare(const std::string& key,const std::string& value)
 {
   if(fElements++>0) {
     fContent << ",";
@@ -80,7 +127,7 @@ JsonObject& JsonObject::addBare(const std::string& key,const std::string& value)
   return *this;
 }
 
-const std::string JsonObject::str() const
+const std::string JsonObjectSimple::str() const
 {
   std::string out = "{";
   out += fContent.str();

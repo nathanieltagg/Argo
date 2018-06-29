@@ -8,6 +8,7 @@
 #include <math.h>
 #include <cmath>
 #include <vector>
+#include <map>
 #include <cstdio>
 
 class JsonElement;
@@ -55,6 +56,14 @@ protected:
     virtual const std::string quotestring( const std::string& s );
     std::ostringstream fContent;
     
+};
+
+class JsonElementBare : public JsonElement
+{ 
+public:
+  // Use with caution. Does not quote strings.
+  JsonElementBare() {};
+  JsonElementBare(const std::string& value) { fContent << value; }
 };
 
 // This class is used to create values 
@@ -125,17 +134,35 @@ public:
   }
 };
 
-
 // A JsonObject is anything that is inside curly braces {}.
 class JsonObject : public JsonElement
 {
 public:
-  JsonObject() : JsonElement() , fElements(0) {fContent.str(""); };
-  JsonObject(const JsonObject& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
-  void operator=(const JsonObject& c) { fixed(); fContent.str(c.fContent.str());fElements = c.fElements; }; // Copy constructor.
-  virtual JsonObject& add(const std::string& key,const JsonElement& value);
+  JsonObject() : JsonElement()  {fContent.str(""); };
+  JsonObject(const JsonObject& c) { fMap = c.fMap;  };
+  void operator=(const JsonObject& c) { fMap = c.fMap; }; // Copy constructor.
+  virtual JsonObject& add(const std::string& key,const JsonObject& value);
   virtual JsonObject& add(const std::string& key,const JsonArray& value);
+  virtual JsonObject& add(const std::string& key,const JsonElement& value);
   virtual JsonObject& addBare(const std::string& key,const std::string& value);
+    
+  virtual const std::string str() const;
+protected:
+  typedef std::map<std::string,std::shared_ptr<JsonElement>> omap_t;
+  omap_t fMap;
+};
+
+
+// A JsonObject is anything that is inside curly braces {}.
+class JsonObjectSimple : public JsonElement
+{
+public:
+  JsonObjectSimple() : JsonElement() , fElements(0) {fContent.str(""); };
+  JsonObjectSimple(const JsonObjectSimple& c) { fixed(); fContent << c.fContent.str(); fElements = c.fElements; };
+  void operator=(const JsonObjectSimple& c) { fixed(); fContent.str(c.fContent.str());fElements = c.fElements; }; // Copy constructor.
+  virtual JsonObjectSimple& add(const std::string& key,const JsonElement& value);
+  virtual JsonObjectSimple& add(const std::string& key,const JsonArray& value);
+  virtual JsonObjectSimple& addBare(const std::string& key,const std::string& value);
   
     
   // template<typename T>
