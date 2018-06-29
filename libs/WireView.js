@@ -404,10 +404,14 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   this.DrawScale();
   
+  
   if($('#ctl-show-watermark').is(":checked"))
      this.DrawWatermark();
 
   this.ctx.restore();
+  
+  // Remove clipping region, then:
+  this.DrawPmts();
 
   // this.ClearOverlays();
   // this.ctxs[1].fillStyle="green";
@@ -1471,6 +1475,72 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 
 };
 
+
+WireView.prototype.DrawPmts = function()
+{
+  var listname = $('#ctl-OpHitLists').val();
+  if(gRecord && gRecord.ophits && gRecord.ophits[listname]) {
+    this.ctx.save();
+    var ophits = gRecord.ophits[listname];
+    
+    ophits.sort(function(a,b){return a[gOpMode.hitVariable]>b[gOpMode.hitVariable]; });
+    
+    for(var i=0;i<ophits.length;i++) {
+      // find projection position of PMT in horizontal position for this view.
+      var ophit = ophits[i];
+      
+      var det = gGeo.opDets.OpDetByChannel(ophit.opDetChan);
+      var u = gGeo.yzToWire(this.plane,det.y, det.z) - this.wire_shift[this.plane];
+      
+      if(u<this.min_u || u>this.max_u) continue;
+      // viewport coordinates
+      var x=this.GetX(u);
+      var dx=this.GetX(u+15.2) - x;
+      var y=this.height;
+      x += det.y/20;
+      
+      // Timing.
+      // is this PMT consistent with ANY time in this view, or ALL times in this view?
+      var t1 = (this.min_v-3200)/2; // 2 MHz ticks - convert to  us
+      var t2 = (this.max_v-3200)/2;
+      var td = 128.175*2 / gGeo.drift_cm_per_tick /2; // Drift time
+      var tpmt = ophit.peakTime*1e-3; // us
+      var could_any = ((tpmt < t2) && (tpmt>t1-td));
+      var could_all = ((tpmt < t1) && (tpmt>t2-td));
+
+      // color
+      var w = ophit[gOpMode.hitVariable]*gOpMode.hitVariableScale;
+      if(w<10) continue;
+      if(w<gOpMode.cut.min) continue;
+      if(w>gOpMode.cut.max) continue;
+      var c = gOpColorScaler.GetColor(w);
+      console.log(tpmt,t1,t2,td);
+      
+
+      // console.log("wirehit",det.y,det.z,this.wire_shift[this.plane],gGeo.yzToWire(det.y, det.z),u,x,y);
+      this.ctx.strokeStyle="black";
+      var alpha = 0.1
+      if(could_any) alpha = 0.5;
+      if(could_all) alpha = 0.9;
+      this.ctx.fillStyle = "rgba(" + c + "," + alpha + ")";
+      console.log("dx",dx);
+      this.ctx.beginPath();
+      this.ctx.moveTo(x,y);
+      this.ctx.lineTo(x-dx,y-10);
+      this.ctx.arcTo(x,y-14, x+dx,y-10, 20);
+      this.ctx.lineTo(x+dx,y-10);
+      this.ctx.lineTo(x,y);
+      this.ctx.closePath();
+      if(could_all) this.ctx.stroke();
+      this.ctx.fill();
+      
+      //this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,hov);
+    }
+    this.ctx.restore();
+  }
+}
+
+
 WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
 {
   // Drawing the dEdX path.
@@ -1720,4 +1790,5 @@ WireView.prototype.DoMouseWheel = function(ev,dist)
   }
   return true;
 };
+
 
