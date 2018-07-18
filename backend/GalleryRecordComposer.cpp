@@ -35,10 +35,10 @@
 #include "JsonElement.h"
 #include "TimeReporter.h"
 
+#include "gallery/Event.h"
 #include "canvas/Utilities/TypeID.h"
 #include "canvas/Persistency/Common/Assns.h"
 #include "canvas/Persistency/Provenance/rootNames.h"
-#include "gallery/Event.h"
 #include "gallery/BranchMapReader.h"
 #include "gallery/DataGetterHelper.h"
 #include <TTree.h>

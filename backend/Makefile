@@ -139,10 +139,14 @@ LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
 # endif
 
 ### Products added via ups
-LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
-CPPFLAGS += -I ${HEP_CONCURRENCY_INC}
-CPPFLAGS += -I ${CANVAS_ROOT_IO_INC} 
-LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
+ifneq ($(origin HEP_CONCURRENCY_LIB), undefined)
+  LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
+  CPPFLAGS += -I ${HEP_CONCURRENCY_INC}
+endif
+ifneq ($(origin CANVAS_ROOT_IO_INC), undefined)
+  CPPFLAGS += -I ${CANVAS_ROOT_IO_INC} 
+  LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
+endif
 CPPFLAGS += -I ${GALLERY_INC}
 LIBS     += -L ${GALLERY_LIB} -l gallery 
 CPPFLAGS += -I ${CANVAS_INC}
