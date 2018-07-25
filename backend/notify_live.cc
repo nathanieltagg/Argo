@@ -8,6 +8,12 @@
 #include <math.h>
 #include <vector>
 #include <sys/stat.h>
+#include <sys/time.h>
+
+#include <sys/types.h>
+
+#include <sys/select.h>
+
 
 
 std::string getLastFile(const std::string& dir, const std::string& suffix );
@@ -263,8 +269,8 @@ int main()
   
   std::vector<std::string> list;
   getFileList(dir,suffix,list);
-  for(auto s:list) {
-    report(s);
+  for(std::vector<std::string>::iterator it = list.begin(); it!= list.end(); it++) {
+    report(*it);
   }
   // while(!list.empty()) {
   //   report(list.back());

@@ -254,8 +254,9 @@ testbin: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
 
 
-notify-live.cgi:  tmp/notify_live.o
-	$(CPP) $(filter %.o,$^) -o $@  
+
+notify-live.cgi: 
+	g++ -std=c++98 notify_live.cc -o notify-live.cgi
   
 
 
