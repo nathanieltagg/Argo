@@ -356,7 +356,7 @@ Pad3d.prototype.RotateY = function( mat, angle )
 };
 
 
-Pad3d.prototype.AddLine = function(x1,y1,z1,x2,y2,z2,width,color,source)
+Pad3d.prototype.AddLine = function(x1,y1,z1,x2,y2,z2,width,color,source,extras)
 {
   var line = {
     type: "l",
@@ -364,12 +364,26 @@ Pad3d.prototype.AddLine = function(x1,y1,z1,x2,y2,z2,width,color,source)
     b: Vector.create([x2,y2,z2,1]),
     linewidth: width,
     stroke: color,
-    source: source
+    source: source,
+    extras: extras
   };
   this.objects.push(line);
 };
 
-Pad3d.prototype.AddPoint = function(x1,y1,z1,size,fill,highlightfill,source)
+Pad3d.prototype.AddLineDash = function(x1,y1,z1,x2,y2,z2,width,color,source,)
+{
+  var linedash = {
+    type: "l",
+    a: Vector.create([x1,y1,z1,1]),
+    b: Vector.create([x2,y2,z2,1]),
+    linewidth: width,
+    stroke: color,
+    source: source,
+  };
+  this.objects.push(linedash);
+};
+
+Pad3d.prototype.AddPoint = function(x1,y1,z1,size,fill,highlightfill,source,)
 {
   var obj = {
     type: "p",
@@ -616,7 +630,16 @@ Pad3d.prototype.DrawLines = function()
         } else {
           this.ctx.strokeStyle = obj.stroke;
         }
-        
+        //draw line different style
+        if(obj.extras=="dash") // set
+        {
+          this.ctx.setLineDash([5,2]);
+        }
+        else // regular line
+        {
+          this.ctx.setLineDash([]);
+        }
+
         this.ctx.beginPath();
         this.ctx.moveTo(x1,y1);
         this.ctx.lineTo(x2,y2);
@@ -638,6 +661,7 @@ Pad3d.prototype.DrawLines = function()
         this.ctx.restore();
 
         if(this.should_outline) {
+			this.begin_highlight_point = [cu-obj.au,cv-obj.av];
             this.final_highlight_point = [cu-obj.au,cv-obj.av];
         }
 

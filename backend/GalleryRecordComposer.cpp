@@ -66,6 +66,7 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCFlux.h"
 #include "uboone/CRT/CRTProducts/CRTHit.hh"
+#include "uboone/CRT/CRTProducts/CRTTrack.hh"
 
 #include "MakePng.h"
 #include "EncodedTileMaker.h"
@@ -497,6 +498,7 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
 template<>
 void GalleryRecordComposer::composeObject(const crt::CRTHit& crthit, JsonObject& jcrthit)
 {
+	std::cout << "CRT HIT " << crthit.peshit << std::endl;
   jcrthit.add("peshit"       ,crthit.peshit);
   jcrthit.add("ts0_s"        ,crthit.ts0_s);
   jcrthit.add("ts0_s_corr"   ,crthit.ts0_s_corr);
@@ -510,6 +512,18 @@ void GalleryRecordComposer::composeObject(const crt::CRTHit& crthit, JsonObject&
   jcrthit.add("y_err"        ,crthit.y_err);
   jcrthit.add("z_pos"        ,crthit.z_pos);
   jcrthit.add("z_err"        ,crthit.z_err);
+}
+
+template<>
+void GalleryRecordComposer::composeObject(const crt::CRTTrack& crttrack, JsonObject& jcrttrack)
+{
+  std::cout << "CRT Track " << crttrack.peshit << std::endl;
+  jcrttrack.add("x1_pos",crttrack.x1_pos);
+  jcrttrack.add("y1_pos",crttrack.y1_pos);
+  jcrttrack.add("z1_pos",crttrack.z1_pos);
+  jcrttrack.add("x2_pos",crttrack.x2_pos);
+  jcrttrack.add("y2_pos",crttrack.y2_pos);
+  jcrttrack.add("z2_pos",crttrack.z2_pos);
 }
 
 
@@ -1423,14 +1437,8 @@ void GalleryRecordComposer::compose()
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
-<<<<<<< HEAD
-
-  fOutput.add("converter","ComposeResult.cpp $Revision$ $Date$ ");
-=======
-  
   int dummy;
   fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
->>>>>>> deploy
 
   // parse some options.
   int doCal = 1;
@@ -1475,7 +1483,8 @@ void GalleryRecordComposer::compose()
   composeObjectsVector< std::vector<recob::OpFlash   > >("opflashes"  , fOutput );
   composeObjectsVector< std::vector<recob::OpHit     > >("ophits"     , fOutput );
   composeObjectsVector< std::vector<raw::OpDetPulse  > >("oppulses"   , fOutput );
-  composeObjectsVector< std::vector<crt::CRTHit      > >("crthit"     , fOutput );
+  composeObjectsVector< std::vector<crt::CRTHit      > >("crthits"    , fOutput );
+  composeObjectsVector< std::vector<crt::CRTTrack    > >("crttracks"    , fOutput );
 
   JsonObject mc;
   bool got_mc = false;

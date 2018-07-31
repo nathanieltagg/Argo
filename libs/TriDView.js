@@ -140,8 +140,10 @@ TriDView.prototype.Rebuild = function ()
   if ($(this.ctl_show_tracks ).is(":checked")) this.CreateTracks();
   if ($(this.ctl_show_showers).is(":checked")) this.CreateShowers();
   if ($(this.ctl_show_mc     ).is(":checked")) this.CreateMC();
-  
+
+  this.CreateCrtHits();
   this.CreateAuxDets();
+  this.CreateCrtTracks();
   
   this.Draw();
 };
@@ -160,6 +162,9 @@ TriDView.prototype.CreateFrame = function()
 
   var dy = 116.5; // half-length
   
+
+
+
   // All coords are in cm.
   var curColor = "rgba(50, 50, 255, 1)";
   this.AddLine( 0, -dy, 0,  dx,-dy, 0,   3, curColor);
@@ -176,6 +181,18 @@ TriDView.prototype.CreateFrame = function()
   this.AddLine(dx,-dy, 0 , dx ,-dy, dz,  3, curColor);
   this.AddLine( 0, dy, 0 ,  0 , dy, dz,  3, curColor);
   this.AddLine(dx, dy, 0 ,  dx, dy, dz,  3, curColor);
+
+  // //for CRT planes
+  // //for crt plans, y_crt0, x_crt1, x_crt2, y_crt3 identify where are plane 0, 1, 2, 3.
+  // var y_crt0 = -261.61; //botton plane.
+  // var x_crt1 = -142.48; //pipe plane.
+  // var x_crt2 = 393; //feedthrough plane is not accurately parrallel to MicrobooNE, I choose one as standerd.
+  // var y_crt3 = 658.25; //top plane.
+  // //plane 0(botton plane)
+  // this.AddLine(301.215, y_crt0, 778.075 ,  -44.865, y_crt0, 778.075,  3, curColor);
+  // this.AddLine(301.215, y_crt0, 258.725 ,  -44.865, y_crt0, 258.725,  3, curColor);
+  // this.AddLine(301.215, y_crt0, 778.075 ,  301.215, y_crt0, 258.725,  3, curColor);
+  // this.AddLine(-44.865, y_crt0, 778.075 ,  -44.865, y_crt0, 258.725,  3, curColor);
 
   // MRI slice
   if(gMRI && gMRI.has_been_adjusted){
@@ -209,6 +226,117 @@ TriDView.prototype.CreateFrame = function()
   
 };
 
+
+TriDView.prototype.CreateCrtHits = function()
+{
+  // gHitsListName = $("#ctl-HitLists").val();
+  // if(!gHitsListName) return;
+  // var hits = gRecord.hits[gHitsListName];
+  console.log("looking for CRT hits");
+  if(gRecord.crthits && gRecord.crthits["crt::CRTHits_merger__Swizzler"]) {
+	  var crts = gRecord.crthits["crt::CRTHits_merger__Swizzler"];
+	  var crt_z_axis = [];
+	  for(var i=0;i<crts.length;i++) {
+        var crt       = crts[i];
+        var crt_x     = crt.x_pos;
+        var crt_y     = crt.y_pos;
+        var crt_z     = crt.z_pos;
+        var crt_x_err = crt.x_err;
+        var crt_y_err = crt.y_err;
+        var crt_z_err = crt.z_err;
+        var x1        = crt_x + crt_x_err;
+        var y1        = crt_y + crt_y_err;
+        var z1        = crt_z + crt_z_err;
+        var x2        = crt_x - crt_x_err;
+        var y2        = crt_y - crt_y_err;
+        var z2        = crt_z - crt_z_err;
+        var hovobj = {obj:crt, type:"crt", collection: crts};
+        //Draw crt hit points.
+        var color = "red";
+        this.AddLine(x1, crt_y, crt_z, x2, crt_y, crt_z, 2,"red", hovobj);
+        this.AddLine(crt_x, y1, crt_z, crt_x, y2, crt_z, 2, "red", hovobj);
+        this.AddLine(crt_x, crt_y, z1, crt_x, crt_y, z2, 2, "red", hovobj);
+        this.AddPoint(crt_x, crt_y, crt_z, 2, color, "rbga(0,255,0.5)", hovobj);
+        
+
+        
+
+        
+        //for z axis, chose the farest two z positions.
+        crt_z_axis.push(crt_z);
+
+		    console.log("crt",crt);
+	  }
+
+    // //creat crt planes farme.
+    //     //for crt plans, y_crt0, x_crt1, x_crt2, y_crt3 identify where are plane 0, 1, 2, 3.
+    //     var y_crt0 = -261.61;
+    //     var x_crt1 = -142.48;
+    //     var x_crt2 = 393; //plane 2 is not accurately parrallel to MicrobooNE, I choose one as standerd.
+    //     var y_crt3 = 658.25;
+    //     var z_min  = Math.min(...crt_z_axis);
+    //     var z_max  = Math.max(...crt_z_axis);
+    //     var curColor = "rgba(50, 50, 255, 1)";
+    //     //plane 0,botton plane
+    //     this.AddLine(x_crt1, y_crt0, z_min, x_crt1, y_crt0, z_max, 1, curColor);
+    //     this.AddLine(x_crt2, y_crt0, z_min, x_crt2, y_crt0, z_max, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt0, z_min, x_crt2, y_crt0, z_min, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt0, z_max, x_crt2, y_crt0, z_max, 1, curColor); 
+    //     //plane 1, side plane
+    //     this.AddLine(x_crt1, y_crt0, z_min, x_crt1, y_crt0, z_max, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt3, z_min, x_crt1, y_crt3, z_max, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt0, z_min, x_crt1, y_crt3, z_min, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt0, z_max, x_crt1, y_crt3, z_max, 1, curColor);
+    //     //plane 2, sideplane
+
+    //     //plane 3, topplane
+    //     this.AddLine(x_crt1, y_crt3, z_min, x_crt1, y_crt3, z_max, 1, curColor);
+    //     this.AddLine(x_crt2, y_crt3, z_min, x_crt2, y_crt3, z_max, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt3, z_min, x_crt2, y_crt3, z_min, 1, curColor);
+    //     this.AddLine(x_crt1, y_crt3, z_max, x_crt2, y_crt3, z_max, 1, curColor); 
+
+  }
+};
+  TriDView.prototype.CreateCrtTracks = function()
+{
+  // before looking for crttrack, you need run CRTTrackProducer.fcl to get crttrack data first.
+  console.log("looking for CRTtrack");
+  if(gRecord.crttracks && gRecord.crttracks["crt::CRTTracks_crttrack__CRTTrackProducer"]) {
+	  var crttracks = gRecord.crttracks["crt::CRTTracks_crttrack__CRTTrackProducer"];
+	  for(var i=0;i<crttracks.length;i++) {
+      var crttrack = crttracks[i];
+      var x1 = crttrack.x1_pos;
+      var x2 = crttrack.x2_pos;
+      var y1 = crttrack.y1_pos;
+      var y2 = crttrack.y2_pos;
+      var z1 = crttrack.z1_pos;
+      var z2 = crttrack.z2_pos;
+      var hovobj = {obj:crttrack, type:"crttrack", collection: crttracks};
+      
+      this.AddLine(x1, y1, z1, x2, y2, z2, 4,"green", hovobj,"dash");
+      console.log("crttrack",crttrack);
+	  }
+  }
+  //
+  // var cs = new ColorScaler();
+  // cs.max = 2000;
+  //
+  // for(var i=0;i<hits.length;i++) {
+  //   var h = hits[i];
+  //   var hovobj = {obj:h, type:"hit", collection: hits};
+  //
+  //   if(h.t1 > gZoomRegion.tdc[1]) continue;
+  //   if(h.t2 < gZoomRegion.tdc[0]) continue;
+  //   var gwire = gGeo.getWire(h.plane,h.wire);
+  //   var c = cs.GetColor(h.q);
+  //   var color = "rgba(" + c + ",0.2)";
+  //   var x = gGeo.getXofTDC(h.plane,h.t);
+  //   // if(h.view<2) continue;
+  //   this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);
+  // }
+};
+
+
 TriDView.prototype.CreateHits = function()
 {
   gHitsListName = $("#ctl-HitLists").val();
@@ -229,7 +357,8 @@ TriDView.prototype.CreateHits = function()
     var color = "rgba(" + c + ",0.2)";
     var x = gGeo.getXofTDC(h.plane,h.t);
     // if(h.view<2) continue;
-    this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);    
+    this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);
+    console.log("hit",h);    
   }
 };
 
@@ -751,4 +880,3 @@ TriDView.prototype.DrawWatermark = function()
   }
   
 }
-
