@@ -71,6 +71,9 @@ void AnaRecordComposer::compose()
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
   
+  int dummy;
+  fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
+
   // parse some options.
 
   // Set branches to read here.
@@ -208,7 +211,7 @@ void AnaRecordComposer::composeTracks()
 			// Get array sizes for trackpoints.
 			TLeaf* lxyz = fTree->GetLeaf((std::string("trkxyz_")+trkname).c_str());
 			if(!lxyz) return;
-			int r1 = 3;
+			//int r1 = 3;
 			int r2 = 2000;
 			int r3 = 3;
 			// That is, the trkxyz has dimensions [ntrack][3][2000][3]

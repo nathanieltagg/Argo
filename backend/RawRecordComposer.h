@@ -4,7 +4,7 @@
 
 
 #include "JsonElement.h"
-#include "online_monitor/Plexus.h"
+#include "Plexus.h"
 // #include <openssl/md5.h>
 
 #include "datatypes/ub_EventRecord.h"
@@ -37,7 +37,7 @@ public:
   std::string fWorkingSuffix;
   std::string fFinalSuffix;
   
-  std::string fCurrentEventDirname;
+  std::string fCurrentEventDirname; 
   std::string fCurrentEventUrl;
   
     
