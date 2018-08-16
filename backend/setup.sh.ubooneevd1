@@ -1,11 +1,28 @@
-# source /cvmfs/fermilab.opensciencegrid.org/products/larsoft/setup
-# setup mrb
+ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+#echo $ABSOLUTE_PATH
+
+# needed the first time to get clang++ setup as the apache user.
+# not needed if using ups
+# check if xcode has been setup already:
+xcode-select -p > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+  xcode-select --install
+fi
+
+# Set up your main larsoft directory.
+# source /Users/larsoft/setup
 source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
-source /home/argo/argo-uboonecode/localProducts_*/setup
-source /home/argo/ubdaq/install/setup
-source /home/argo/install/setup #gallery
-setup gallery v1_03_12_tagg -q e14:nu:debug
-setup uboonecode v06_41_00_tagg -q e14:debug
 
-source ../backend/larlite/config/setup.sh
+# if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
+#export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
+export PRODUCTS=/home/argo/install:$PRODUCTS
+setup uboonecode v07_01_00 -q debug:e15
+setup gallery v1_10_00 -q e15:debug
+setup uboonedaq_datatypes v6_22_03_offline -q e15:debug
+
+
+# optional:
+setup larlite v06_70_00b -q e15:debug
+
+# source ../backend/larlite/config/setup.sh
