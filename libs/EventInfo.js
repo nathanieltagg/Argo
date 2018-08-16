@@ -12,8 +12,8 @@
 gEventInfo = null;
 
 // Constants
-var kTriggerNames = ["PMT 0 (Beam)"
-                    ,"PMT 1 (Cosmic)"
+var kTriggerNames = ["Beam" // "PMT 0 (Beam)"
+                    ,"Cosmic" // "PMT 1 (Cosmic)"
                     ,"PMT 2"
                     ,"PMT 3"
                     ,"PMT 4"
@@ -23,9 +23,9 @@ var kTriggerNames = ["PMT 0 (Beam)"
                     ,"PC"
                     ,"External"
                     ,"Active"
-                    ,"Gate2"
+                    ,"BNB"
                     ,"Gate1"
-                    ,"Veto"
+                    ,"LASER" // daq sez "veto" but that's not right
                     ,"Calib"
                     ,"bit16" //Phase0"
                     ,"bit17" //Phase1"
