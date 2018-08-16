@@ -1,10 +1,10 @@
 
 source /datalocal/install/setup
-#setup uboonecode v06_82_01 -q debug:e15
-#setup gallery v1_10_00 -q e15:debug
-#setup uboonedaq_datatypes v6_22_03_offline -q e15:debug
+setup uboonecode v06_82_01 -q debug:e15
+setup gallery v1_10_00 -q e15:debug
+setup uboonedaq_datatypes v6_22_03_offline -q e15:debug
 
-setup gallery v1_03_12_tagg -q e14:nu:debug
-setup uboonecode v06_34_01 -q e14:debug
+#setup gallery v1_03_12_tagg -q e14:nu:debug
+#setup uboonecode v06_34_01 -q e14:debug
 #source ../backend/larlite/config/setup.sh
 
