@@ -36,15 +36,12 @@ extern gov::fnal::uboone::online::Plexus gPlexus;
 
 using namespace std;
 
-VoidFuncPtr_t initfuncs[] = { 0 };
-TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
-void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg);
-void TerminationHandler(int signal);
 
 
 
 int main(int argc, char **argv)
 {
+  ArgoInitGlobals();
   std::string progname = argv[0];
   std::string options = "_tilesize1024_";
   std::string filename;
@@ -115,7 +112,7 @@ int main(int argc, char **argv)
   gPlexus.rebuild((double)TTimeStamp(),0);
   gDeadChannelMap->Rebuild(std::string(path).append("/db/dead_channels.txt"));
     
-  gTimeStart = gSystem->Now();
+  // gTimeStart = gSystem->Now();
   cout << "Request Parameters:" << endl;
   cout << "    Filename: --" << filename << "--" << endl;
   cout << "    Selection:--" << selection << "--" << endl;
@@ -139,14 +136,4 @@ int main(int argc, char **argv)
   ofstream outstream(jsonfilename.c_str());
   outstream << *payload;
   outstream.close();
-}
-
-void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
-{
-  // Suppress warning messages about branch sets.
-  TString m(msg);
-  if(m.BeginsWith("unknown branch")) return;
-  
-  //DefaultErrorHandler(level, abort, location, msg);
-//  exit(1);
 }

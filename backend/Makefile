@@ -7,6 +7,9 @@ buildtargets = libargo-backend.dylib argo-backend argo-live-backend argo-run-one
 .PHONY: bin
 bin: $(buildtargets)
 
+clean:
+	rm -rf tmp/*
+
 #IGNORE := $(shell bash -c "source root/bin/thisroot.sh; env | sed 's/=/:=/' | sed 's/^/export /' > makeenv") 
 #include makeenv 
 
@@ -55,8 +58,7 @@ endif
 CPPFLAGS += -Wno-return-type-c-linkage
 
 
-SOURCES = $(notdir $(wildcard *.cpp)) \
-          # $(notdir $(wildcard $(uboonedaq_datatypes_src)/datatypes/*.cpp)) 
+SOURCES = $(notdir $(wildcard *.cpp)) 
 
 UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp 
 UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h 
@@ -64,54 +66,61 @@ UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logg
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
 
-backend_obj = \
-tmp/MakePng.o       tmp/ResultComposer.o    tmp/TreeReader.o \
-tmp/ColorMap.o      tmp/RootToJson.o        tmp/cencode.o \
-tmp/FormString.o    tmp/SocketServer.o      tmp/WirePalette.o \
-tmp/FormulaLooter.o tmp/Timer.o 	    tmp/crc32checksum.o\
-tmp/JsonElement.o   tmp/RecordComposer.o    tmp/TreeElementLooter.o \
-tmp/DeadChannelMap.o \
-tmp/Cint.o 
-
-#Where to look for source files
-# vpath %.cpp $(uboonedaq_datatypes_src)/datatypes
-
-
-# vpath %.cpp $(uboonedaq)/dispatcher
-# vpath %.cpp $(uboonedaq)/online_monitor
-
-#Where to look for include files
-
-# CPPFLAGS += -I $(uboonedaq)
-# CPPFLAGS += -I $(uboonedaq_datatypes_inc)
-# CPPFLAGS += -D nullptr=0
-
 
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 
 
-LIBS  += -L/usr/X11R6/lib $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer
+# abortive attempt:
+
+# define myaddpkg
+# ifneq ($(origin $(1)_LIB), undefined)
+#   LIBS += -L $${$(1)_LIB}
+# 	LIBS += $2
+# endif
+# ifneq ($(origin $(1)_INC), undefined)
+#   cadd = -I $${$(1)_INC}
+# 	CPPFLAGS += -I $${$(1)_INC}
+# endif
+#
+# endef
+#
+# $(eval $(call myaddpkg, BOOST                       ,-lboost_serialization -lboost_system -lboost_thread -lboost_program_options))
+
+
+#ROOT Special:
+LIBS  += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
+CPPFLAGS += -I ${ROOT_INC}
+
+#nonstandard:
+CPPFLAGS += -I ${POSTGRESQL_INC}
+LIBS     += -L ${POSTGRESQL_LIBRARIES} -lpq
 
 ### Products added via ups
 CPPFLAGS += -I ${BOOST_INC}
 LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
 CPPFLAGS += -I ${HEP_CONCURRENCY_INC}
 LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
-CPPFLAGS += -I ${CANVAS_ROOT_IO_INC} 
+CPPFLAGS += -I ${CANVAS_ROOT_IO_INC}
 LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
 CPPFLAGS += -I ${GALLERY_INC}
-LIBS     += -L ${GALLERY_LIB} -l gallery 
+LIBS     += -L ${GALLERY_LIB} -l gallery
 CPPFLAGS += -I ${CANVAS_INC}
 LIBS     += -L ${CANVAS_LIB} -l canvas
 CPPFLAGS += -I ${LARDATAOBJ_INC}
 LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
 CPPFLAGS += -I ${LARCOREOBJ_INC}
-CPPFLAGS += -I ${NUSIMDATA_INC} 
+CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
 CPPFLAGS += -I ${CETLIB_INC}          -I ${CETLIB_EXCEPT_INC}
+ifneq ($(origin CET_LIB_DIR), undefined)
 LIBS     += -L ${CETLIB_LIB_DIR} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+endif
+ifneq ($(origin CETLIB_LIB), undefined)
+LIBS     += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+endif
+
 CPPFLAGS += -I ${FHICLCPP_INC}
 CPPFLAGS += -I ${UBOONECODE_INC}
 LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
@@ -119,9 +128,7 @@ CPPFLAGS += -I ${UBOONEDAQ_DATATYPES_INC}
 LIBS     += -L ${UBOONEDAQ_DATATYPES_LIB} -l ubdata_types
 CPPFLAGS += -I ${ROOT_INC}
 
-CPPFLAGS += -I ${POSTGRESQL_INC}
-LIBS     += -L ${POSTGRESQL_LIBRARIES} -lpq
-CPPFLAGS += -I ${SQLITE_INC} 
+CPPFLAGS += -I ${SQLITE_INC}
 LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 
 CPPFLAGS += -DGALLERY
@@ -137,6 +144,15 @@ endif
 
 CPPFLAGS += -I/usr/local/include  # for png.h
 
+
+
+packages:
+	@echo $(LIBS)
+	@echo $(CPPFLAGS)
+	# echo $(a)
+	# echo ${nLIBS}
+	# echo ${A} ${FOO}
+
 # add any other desired libs here
 # PNG
 LIBS += -L/opt/X11/lib -lpng -lcrypto
@@ -146,28 +162,8 @@ LIBS += -L/opt/X11/lib -lpng -lcrypto
 LDFLAGS := $(filter-out -stdlib=libc++,$(LDFLAGS))
 LIBS := $(filter-out -stdlib=libc++,$(LIBS))
 
-# postgresql
-# ifeq ($(UNAME),Darwin)
-#   # Use the Postgres app, instead of a fullblown installation.
-# #  BLIBS +=  -L/Applications/Postgres.app/Contents/MacOS/lib -lpq
-#   CPPFLAGS += -I/Applications/Postgres.app/Contents/MacOS/include
-# endif
-# ifneq ($(origin POSTGRESQL_INC), undefined)
-#   CPPFLAGS += -I ${POSTGRESQL_INC}
-#   BLIBS += -L $(POSTGRESQL_LIBRARIES) -lpq
-# else
-#   BLIBS += -lpq
-# endif
-
-# ifneq ($(origin SQLITE_INC), undefined)
-#          CPPFLAGS += -I ${SQLITE_INC}
-#          BLIBS += -L ${SQLITE_LIB}  -lsqlite3_ups
-# else
-#          BLIBS += -lsqlite3
-# endif
-
 #libcurl
-BLIBS += -lcurl
+LIBS += -lcurl
 
 
 ifeq ($(UNAME),Darwin)
@@ -216,9 +212,18 @@ tmp/Cint.o : Cint.cpp
 
 
 
-argo-backend: $(OBJ) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@ \
-  -Wl,-rpath,${CLHEP_LIB_DIR}
+argo-backend: libargo-backend.dylib tmp/argo-backend.o Makefile
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS) -o $@ \
+		-Wl,-rpath,@executable_path/../lib  \
+		-Wl,-rpath,@executable_path
+
+
+argo-backend-new: libargo-backend.dylib tmp/argo-backend.o Makefile
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS) -o $@ \
+	 -Wl,-rpath,@executable_path/../lib  -Wl,-rpath,@executable_path
+	# mkdir -p ../install/bin
+	# cp argo-backend-new ../install/bin
+  
 
 # Now integrated into main build
 #argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
@@ -240,7 +245,8 @@ argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
   # -Wl,-rpath,@loader_path/boost/lib\
 
 libargo-backend.dylib: $(OBJ) tmp/Cint.o Makefile
-	$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
+	#$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib -install_name @rpath/libargo-backend.dylib
 
 testbin: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
@@ -249,11 +255,6 @@ testbin: $(OBJ) tmp/argo-backend.o Makefile
 notify-live.cgi:  tmp/notify_live.o
 	$(CPP) $(filter %.o,$^) -o $@  
   
-
-
-myroot: $(backend_obj) tmp/myroot-main.o tmp/Cint.o Makefile
-	@echo "Building " $@ $(OBJ)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
@@ -287,5 +288,3 @@ printenv:
 	@echo " Objects: $(OBJ)"
 	@echo " RHEADERS = $(RHEADERS)"
 
-clean:
-	rm -rf tmp/*

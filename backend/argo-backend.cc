@@ -151,7 +151,7 @@ int main(int argc, char **argv)
       pidfile.close();
     }
 
-    gTimeStart = gSystem->Now();
+    // gTimeStart = gSystem->Now();
 
     while (1) {
       //cout << ".";

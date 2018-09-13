@@ -38,13 +38,33 @@
 
 using namespace std; 
 
-UInt_t ResultComposer::events_served = 0;
+size_t ResultComposer::events_served = 0;
 
 TTime  gTimeStart;
+
+void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
+{
+  // Suppress warning messages about branch sets.
+  TString m(msg);
+  if(m.BeginsWith("unknown branch")) return;
+  
+  //DefaultErrorHandler(level, abort, location, msg);
+//  exit(1);
+}
+// void TerminationHandler(int signal);
+VoidFuncPtr_t initfuncs[] = { 0 };
+TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
+
+void ArgoInitGlobals() // For ROOT and stuff.
+{
+  std::cout << "ArgoInitGlobals" << std::endl;
+  SetErrorHandler(MyErrorHandler);
+}
 
 ResultComposer::ResultComposer(const ResultComposer::config_t& config)
   : rootfile(0)
   , tree(0)
+  , result(new JsonObject)
   , m_config()
 {
   m_config["CacheStoragePath"]     = "../datacache";
@@ -59,8 +79,8 @@ std::shared_ptr<std::string> ResultComposer::compose(
          const char* inOptions,
          const char* inFile,
          const char* inSelection,
-         Long64_t inStart,
-         Long64_t inEnd )
+         int64_t inStart,
+         int64_t inEnd )
 {
 
   long eventTimeStart = gSystem->Now();
@@ -100,17 +120,17 @@ std::shared_ptr<std::string> ResultComposer::compose(
   else if(is_anafile) compose_from_ana(inOptions,inFile,inSelection,inStart,inEnd);
   else if(is_larlite) compose_from_larlite(inOptions,inFile,inSelection,inStart,inEnd);
   else {
-    result.add("error",string("Unrecognized or unreadable file"));
+    result->add("error",string("Unrecognized or unreadable file"));
     std::cout << "Unrecognized or unreadable file "<< inFile << std::endl;
     
   }
   
   // Add profiling.
   long ElapsedServerTime = ((long)(gSystem->Now()) - eventTimeStart);
-  result.add("ElapsedServerTime",ElapsedServerTime);
+  result->add("ElapsedServerTime",ElapsedServerTime);
   std::cout << "ElapsedServerTime: " << ElapsedServerTime << std::endl;
   
-  std::shared_ptr<std::string> outString(new std::string(result.str()));
+  std::shared_ptr<std::string> outString(new std::string(result->str()));
   return outString;
 }
 
@@ -119,8 +139,8 @@ void ResultComposer::compose_from_art(
          const char* inOptions,
          const char* inRootFile,
          const char* inSelection,
-         Long64_t inStart,
-         Long64_t inEnd )
+         int64_t inStart,
+         int64_t inEnd )
 {
   // This is how to check options:
   // if( std::string::npos != options.find("+REFRESH")) oRefresh = true;
@@ -134,7 +154,7 @@ void ResultComposer::compose_from_art(
   rootfile = new TFile(inRootFile,"READ");
   if(rootfile->IsZombie()) {
     // Bad file.
-    result.add("error",string("Cannot open file ") + inRootFile + " for reading.");
+    result->add("error",string("Cannot open file ") + inRootFile + " for reading.");
     return;
   }
 
@@ -143,35 +163,35 @@ void ResultComposer::compose_from_art(
   TTree* tree = (TTree*) rootfile->Get("Events");
 
   if(!tree) {
-    result.add("error",string("Could not open tree 'Events' on file ") + inRootFile);
+    result->add("error",string("Could not open tree 'Events' on file ") + inRootFile);
     return;
   }
 
 
   // OK, find the entry in question.
-  Long64_t nentries = tree->GetEntries();
+  int64_t nentries = tree->GetEntries();
   if(nentries<1){
-    result.add("error",string("No entries in tree in file ") + inRootFile);
+    result->add("error",string("No entries in tree in file ") + inRootFile);
     return;
   }
 
   // Scan through entries, looking for specified selection.
   TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
   if (!select) {
-      result.add("error","Could not create TTreeFormula.");
+      result->add("error","Could not create TTreeFormula.");
       return;
   }
   if (!select->GetNdim()) {
     delete select;
-    result.add("error","Problem with your selection function..");
+    result->add("error","Problem with your selection function..");
     return;
   }
 
-  Long64_t jentry;
+  int64_t jentry;
   bool match = false;
   if( inStart >=0 ) {
     // Forward search, situation normal
-    Long64_t stop = nentries;
+    int64_t stop = nentries;
     if(inEnd>0 && inEnd<stop) stop = inEnd;
     for (jentry=inStart; jentry<stop; jentry++) {
       // cerr << "GetEntry(" << jentry << ")" << endl;
@@ -188,10 +208,10 @@ void ResultComposer::compose_from_art(
     }
   } else {
     // inStart<0 : backward search
-    Long64_t start = nentries+inStart;
+    int64_t start = nentries+inStart;
     if(start>=nentries) start = nentries-1;
     if(start<0) start = 0;
-    Long64_t stop = 0;
+    int64_t stop = 0;
     if(inEnd>0 && inEnd<=start) stop = inEnd;
     for (jentry=start; jentry>=stop; jentry--) {
       cerr << "GetEntry(" << jentry << ")" << endl;
@@ -210,7 +230,7 @@ void ResultComposer::compose_from_art(
   }
   delete select;
   if(!match) {
-    result.add("error","Selection matched no events in file.");
+    result->add("error","Selection matched no events in file.");
     return;
   }
 
@@ -222,7 +242,7 @@ void ResultComposer::compose_from_art(
   source.add("entry",jentry);
   source.add("options",inOptions);
   source.add("numEntriesInFile",nentries);
-  result.add("source",source);
+  result->add("source",source);
 
   addMonitorData();
   //
@@ -231,9 +251,9 @@ void ResultComposer::compose_from_art(
 
   // Here's where all the joy happens.
 #ifdef GALLERY
-  GalleryRecordComposer composer(result,inRootFile,jentry,inOptions);
+  GalleryRecordComposer composer(*result,inRootFile,jentry,inOptions);
 #else
-  ArtRecordComposer composer(result,tree,jentry,inOptions);
+  ArtRecordComposer composer(*result,tree,jentry,inOptions);
 #endif
   
   composer.fCacheStoragePath     = m_config["CacheStoragePath"];
@@ -248,13 +268,11 @@ void ResultComposer::compose_from_raw(
          const char* inOptions,
          const char* inFile,
          const char* inSelection,
-         Long64_t inStart,
-         Long64_t inEnd )
+         int64_t inStart,
+         int64_t inEnd )
 {
   std::cout << "Composing from raw UBDAQ file" << std::endl;
-  
-  long eventTimeStart = gSystem->Now();
-  
+    
   // This is how to check options:
   // if( std::string::npos != options.find("+REFRESH")) oRefresh = true;
   
@@ -272,7 +290,7 @@ void ResultComposer::compose_from_raw(
   
   if(! daqfile.Good() ) {
     // Bad file. 
-    result.add("error",string("Cannot open file ") + inFile + " for reading.");
+    result->add("error",string("Cannot open file ") + inFile + " for reading.");
     return;
   }
     
@@ -293,12 +311,12 @@ void ResultComposer::compose_from_raw(
   try {
     record = daqfile.GetEvent(inStart);
   } catch ( std::exception& e ) {
-    //result.add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile + " " + e.what());
+    //result->add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile + " " + e.what());
     //return;
   }
   
   if(!record) {
-    result.add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile);
+    result->add("error",string("Cannot read or unpack event ") + std::to_string(inStart) + " in file " + inFile);
     //return;
   }
       
@@ -311,7 +329,7 @@ void ResultComposer::compose_from_raw(
   source.add("options",inOptions);
   source.add("numEntriesInFile",daqfile.NumEvents());
   source.add("fileClosedCleanly",daqfile.ClosedCleanly());
-  result.add("source",source);
+  result->add("source",source);
 
   addMonitorData();
 
@@ -319,7 +337,7 @@ void ResultComposer::compose_from_raw(
   // Get it.
   //
   // Here's where all the joy happens.
-  RawRecordComposer composer(result,record,inOptions);
+  RawRecordComposer composer(*result,record,inOptions);
   // Set it so it doesn't generate subdirectories like it does in live
   composer.fCacheStoragePath     = m_config["CacheStoragePath"];
   composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
@@ -342,8 +360,8 @@ void ResultComposer::compose_from_ana(
          const char* inOptions,
          const char* inRootFile,
          const char* inSelection,
-         Long64_t inStart,
-         Long64_t inEnd )
+         int64_t inStart,
+         int64_t inEnd )
 {
   std::cout << "Composing from AnalysisTree  file" << std::endl;
   
@@ -355,29 +373,29 @@ void ResultComposer::compose_from_ana(
   TTree* tree = (TTree*) rootfile->Get("analysistree/anatree");
 
   // OK, find the entry in question.
-  Long64_t nentries = tree->GetEntriesFast();
+  int64_t nentries = tree->GetEntriesFast();
   if(nentries<1){
-    result.add("error",string("No entries in tree in file ") + inRootFile);
+    result->add("error",string("No entries in tree in file ") + inRootFile);
     return;
   }
 
   // Scan through entries, looking for specified selection.
   TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
   if (!select) {
-      result.add("error","Could not create TTreeFormula.");
+      result->add("error","Could not create TTreeFormula.");
       return;
   }
   if (!select->GetNdim()) {
     delete select;
-    result.add("error","Problem with your selection function..");
+    result->add("error","Problem with your selection function..");
     return;
   }
 
-  Long64_t jentry;
+  int64_t jentry;
   bool match = false;
   if( inStart >=0 ) {
     // Forward search, situation normal
-    Long64_t stop = nentries;
+    int64_t stop = nentries;
     if(inEnd>0 && inEnd<stop) stop = inEnd;
     for (jentry=inStart; jentry<stop; jentry++) {
       // cerr << "GetEntry(" << jentry << ")" << endl;
@@ -394,10 +412,10 @@ void ResultComposer::compose_from_ana(
     }
   } else {
     // inStart<0 : backward search
-    Long64_t start = nentries+inStart;
+    int64_t start = nentries+inStart;
     if(start>=nentries) start = nentries-1;
     if(start<0) start = 0;
-    Long64_t stop = 0;
+    int64_t stop = 0;
     if(inEnd>0 && inEnd<=start) stop = inEnd;
     for (jentry=start; jentry>=stop; jentry--) {
       cerr << "GetEntry(" << jentry << ")" << endl;
@@ -416,7 +434,7 @@ void ResultComposer::compose_from_ana(
   }
   delete select;
   if(!match) {
-    result.add("error","Selection matched no events in file.");
+    result->add("error","Selection matched no events in file.");
     return;
   }
 
@@ -428,14 +446,14 @@ void ResultComposer::compose_from_ana(
   source.add("entry",jentry);
   source.add("options",inOptions);
   source.add("numEntriesInFile",nentries);
-  result.add("source",source);
+  result->add("source",source);
 
   addMonitorData();
   //
   // Get it.
   //
   // Here's where all the joy happens.
-  AnaRecordComposer composer(result,tree,jentry,inOptions);
+  AnaRecordComposer composer(*result,tree,jentry,inOptions);
   composer.fCacheStoragePath     = m_config["CacheStoragePath"];
   composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
   composer.fCreateSubdirCache = false;
@@ -446,8 +464,8 @@ void ResultComposer::compose_from_larlite(
          const char* inOptions,
          const char* inRootFile,
          const char* inSelection,
-         Long64_t inStart,
-         Long64_t inEnd )
+         int64_t inStart,
+         int64_t inEnd )
 {
 #ifdef LARLITE
   std::cout << "Composing from Larlite file" << std::endl;
@@ -456,29 +474,29 @@ void ResultComposer::compose_from_larlite(
   TTree* tree = (TTree*) rootfile->Get("larlite_id_tree");
 
   // OK, find the entry in question.
-  Long64_t nentries = tree->GetEntriesFast();
+  int64_t nentries = tree->GetEntriesFast();
   if(nentries<1){
-    result.add("error",string("No entries in tree in file ") + inRootFile);
+    result->add("error",string("No entries in tree in file ") + inRootFile);
     return;
   }
 
   // Scan through entries, looking for specified selection.
   TTreeFormula* select = new TTreeFormula("Selection",inSelection,tree);
   if (!select) {
-      result.add("error","Could not create TTreeFormula.");
+      result->add("error","Could not create TTreeFormula.");
       return;
   }
   if (!select->GetNdim()) {
     delete select;
-    result.add("error","Problem with your selection function..");
+    result->add("error","Problem with your selection function..");
     return;
   }
 
-  Long64_t jentry;
+  int64_t jentry;
   bool match = false;
   if( inStart >=0 ) {
     // Forward search, situation normal
-    Long64_t stop = nentries;
+    int64_t stop = nentries;
     if(inEnd>0 && inEnd<stop) stop = inEnd;
     for (jentry=inStart; jentry<stop; jentry++) {
       // cerr << "GetEntry(" << jentry << ")" << endl;
@@ -495,10 +513,10 @@ void ResultComposer::compose_from_larlite(
     }
   } else {
     // inStart<0 : backward search
-    Long64_t start = nentries+inStart;
+    int64_t start = nentries+inStart;
     if(start>=nentries) start = nentries-1;
     if(start<0) start = 0;
-    Long64_t stop = 0;
+    int64_t stop = 0;
     if(inEnd>0 && inEnd<=start) stop = inEnd;
     for (jentry=start; jentry>=stop; jentry--) {
       cerr << "GetEntry(" << jentry << ")" << endl;
@@ -517,7 +535,7 @@ void ResultComposer::compose_from_larlite(
   }
   delete select;
   if(!match) {
-    result.add("error","Selection matched no events in file.");
+    result->add("error","Selection matched no events in file.");
     return;
   }
 
@@ -529,14 +547,14 @@ void ResultComposer::compose_from_larlite(
   source.add("entry",jentry);
   source.add("options",inOptions);
   source.add("numEntriesInFile",nentries);
-  result.add("source",source);
+  result->add("source",source);
 
   addMonitorData();
   //
   // Get it.
   //
   // Here's where all the joy happens.
-  LarliteRecordComposer composer(result,inRootFile,jentry,inOptions);
+  LarliteRecordComposer composer(*result,inRootFile,jentry,inOptions);
   composer.fCacheStoragePath     = m_config["CacheStoragePath"];
   composer.fCacheStorageUrl      = m_config["CacheStorageUrl"];
   composer.fCreateSubdirCache = false;
@@ -575,7 +593,7 @@ void ResultComposer::addMonitorData()
   monitor.add("MemVirtual"     ,   Form("%f MB",procinfo.fMemVirtual/1000.));
 
   monitor.add("WallClockTime"  ,   ((long)(gSystem->Now() - gTimeStart))/1000.);
-  result.add("backend_monitor",monitor);
+  result->add("backend_monitor",monitor);
 }
 
 

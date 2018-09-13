@@ -1,17 +1,18 @@
-#ifndef MAKE_XML_H
-#define MAKE_XML_H
+#ifndef RESULT_COMPOSER_H
+#define RESULT_COMPOSER_H
+
+
+// NB Keep this file as clean as possible: no dependencies.
 
 #include <memory>
-#include <TObject.h>
-#include <TTime.h>
-#include "JsonElement.h"
 #include <map>
 #include <string>
 
-extern TTime  gTimeStart;
+void ArgoInitGlobals(); // For ROOT and stuff.
 
 class TTree;
 class TFile;
+class JsonObject;
 
 class ResultComposer
 {
@@ -22,8 +23,8 @@ class ResultComposer
    std::shared_ptr<std::string> compose(  const char* inOptions,
                                           const char* inRootFile,
                                           const char* inSelection,
-                                          Long64_t entrystart=0,
-                                          Long64_t entryend=1000000000                       
+                                          int64_t entrystart=0,
+                                          int64_t entryend=1000000000                       
                                           );  
 
 
@@ -31,46 +32,46 @@ class ResultComposer
 
    ~ResultComposer();
    
-   static UInt_t events_served;
+   static size_t events_served;
 
  private:
    void compose_from_raw(  const char* inOptions,
                                           const char* inRootFile,
                                           const char* inSelection,
-                                          Long64_t entrystart=0,
-                                          Long64_t entryend=1000000000                       
+                                          int64_t entrystart=0,
+                                          int64_t entryend=1000000000                       
                                           );  
                                           
    void compose_from_art(  const char* inOptions,
                                          const char* inRootFile,
                                          const char* inSelection,
-                                         Long64_t entrystart=0,
-                                         Long64_t entryend=1000000000                       
+                                         int64_t entrystart=0,
+                                         int64_t entryend=1000000000                       
                                          );  
 
    void compose_from_ana(  const char* inOptions,
                                          const char* inRootFile,
                                          const char* inSelection,
-                                         Long64_t entrystart=0,
-                                         Long64_t entryend=1000000000                       
+                                         int64_t entrystart=0,
+                                         int64_t entryend=1000000000                       
                                          );  
    
    void compose_from_larlite(  const char* inOptions,
                                          const char* inRootFile,
                                          const char* inSelection,
-                                         Long64_t entrystart=0,
-                                         Long64_t entryend=1000000000                       
+                                         int64_t entrystart=0,
+                                         int64_t entryend=1000000000                       
                                          );  
    
    void addMonitorData();
 
    TFile* rootfile;
    TTree* tree;
-   JsonObject result;
+   std::shared_ptr<JsonObject> result;
    std::map<std::string,std::string> m_config;
    
 };
 
 
-#endif /* MAKE_XML_H */
+#endif /* RESULT_COMPOSER_H */
 
