@@ -5,6 +5,7 @@ Styles for the floating object-selection overlay
 .selected-object-info {
   font-size: 1em;
   font-family: "Times New Roman", Times, serif;
+  z-index:50;
 }
 
 
@@ -13,7 +14,10 @@ Styles for the floating object-selection overlay
   border-top-color: black;
   border-top-style: solid;
   z-index:100;
-  
+  -webkit-user-select: all;  /* Chrome 49+ */
+   -moz-user-select: all;     /* Firefox 43+ */
+   -ms-user-select: all;      /* No support yet */
+   user-select: all;          /* Likely future */   
 }
 
 
@@ -56,9 +60,9 @@ div.floating { postion: absolute; zIndex: 999;}
 }
 .triangle-isosceles.left:after {
   top:16px; /* controls vertical position */
-  left:-80px; /* value = - border-left-width - border-right-width */
+  left:-60px; /* value = - border-left-width - border-right-width */
   bottom:auto;
-  border-width:30px 50px;
+  border-width:30px 30px;
 
   border-color:transparent #285c00 transparent transparent;
 /*  border-color:transparent inherit transparent transparent;*/
