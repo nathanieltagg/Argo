@@ -1,0 +1,197 @@
+<html>
+<head>
+  <link href="css/le-frog/jquery-ui.css" rel="stylesheet">
+  <link href="css/le-frog/jquery.ui.theme.css" rel="stylesheet">
+
+  <script src="js/jquery-1.9.0.js"></script>
+  <script src="js/jquery-ui-1.10.0.custom.js"></script>
+
+  <!-- IE detection -->
+  <script type="text/javascript" src="js/modernizr.js"></script>
+  <script type="text/javascript" src="libs/check_browser.js"></script>
+
+
+  <script type="text/javascript" src="js/jquery.mousewheel.min.js"></script>
+  <script type="text/javascript" src="js/ajax-upload.3.5.js"></script>
+  <script type="text/javascript" src="js/jquery.cookie.js"></script>
+  <script type="text/javascript" src="js/jquery.blockUI.js"></script>
+  <script type="text/javascript" src="js/jquery.ba-resize.min.js"></script>
+  <style>
+  </style>
+  
+  <script type="text/javascript" charset="utf-8">
+  
+  $(function(){
+    // see https://github.com/10gen-labs/sleepy.mongoose/wiki
+    // for details.
+    var new_rec = {blah:"full of eels"};
+    var args = { func: "_insert"
+               , db: "mydb"
+               , col: "testData"
+               , batch_size: 50
+               , docs: JSON.stringify([new_rec])
+             };
+             var data = "docs="+JSON.stringify([new_rec]);
+    $.ajax({url: 'scan/dreamy.cgi'
+        , type:'POST'
+        , dataType: "json"
+        , data: args
+        ,  success: function(response) { 
+          console.log("insert:",response);
+        }
+        });
+    
+    
+    // Custom call to my mongo interface.
+    var criteria = {hovercraft:{"$exists":true}};
+    var args = { func: "_find"
+               , db: "mydb"
+               , col: "testData"
+               , batch_size: 50
+               , criteria: JSON.stringify(criteria)
+             };
+    $.ajax({url: 'scan/dreamy.cgi'
+        , type:'GET'
+        ,  dataType: "json"
+        , data: args
+        ,  success: function(response) { 
+          console.log(response);
+        }
+        });
+
+    
+    $('#goScanSubmit').click(function(){
+      var data = {};
+      var serial = $('form').serializeArray();
+      for(var i=0;i<serial.length;i++) {
+        var s = serial[i];
+        var val = parseFloat(s.value)
+        data[s.name] = isNaN(val)?s.value:val;
+      };
+      // Add unchecked checkboxes.
+      $('form input:checkbox:not(:checked)').each(function(){
+        data[this.name]=0;
+      })
+      
+      var args = { func: "_insert"
+                 , db: "mydb"
+                 , col: "testData"
+                 , batch_size: 50
+                 , docs: JSON.stringify([data])
+               };
+     console.log("inserting ",data);
+      $.ajax({url: 'scan/dreamy.cgi'
+          , type:'POST'
+          , dataType: "json"
+          , data: args
+          ,  success: function(response) { 
+            console.log("insert:",response);
+          }
+          });
+      
+    })
+  });
+  
+  </script>
+</head>
+<body>
+  
+  <div class="portlet" id="scan-entry-port"> 
+
+    <div class="portlet-header">New Scan Entry</div>
+    <div id="scan-entry" class="scan-input portlet-content" >
+      <form id='scan-form'>
+      <div id='scan-login-form' style='display:none'>
+        <!-- this div usually hidden -->
+        <p><label>User Name:</label><br/><input type="text" class="ui-state-default" name="inScanUserName" value="Anonymous Coward" />
+           </p>
+      </div>
+      
+      <div id='scan-logged-in'>
+        <input class="ui-state-default ui-corner-all" type="button" name="scan-change-login" value="Change Login" />            
+          Logged in as: <span id='scan-logged-in-as'>Error!</span>
+      </div>
+        
+       <div class="collapsible-title">Scan Form</div>
+       <div class="collapsible" >
+         <span class="scan-input">Flags for  Events:</span><br />
+          <input type="checkbox" class="ui-state-default scan-input"  name="inScanCheckboxBit1" value="1" /><span class="scan-input">1</span><br />
+          <input type="checkbox" class="ui-state-default scan-input"  name="inScanCheckboxBit2" value="1" /><span class="scan-input">2</span><br />
+          <input type="checkbox" class="ui-state-default scan-input"  name="inScanCheckboxBit3" value="1" /><span class="scan-input">3</span><br />
+          <input type="checkbox" class="ui-state-default scan-input"  name="inScanCheckboxBit4" value="1" /><span class="scan-input">4</span><br />
+          <input type="checkbox" class="ui-state-default scan-input"  name="inScanCheckboxBit5" value="1" /><span class="scan-input">5</span><br />
+
+      <select name="inScan_VertexHits"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      <span class="scan-input scan-input-label">Vertex Activity</span>
+      <select name="inScan_ShowerProngs"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      <span class="scan-input scan-input-label">Shower Prongs</span>
+      <select name="inScan_TrackProngs"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      <span class="scan-input scan-input-label">Track Prongs</span>
+      <div>
+      <span class="scan-input">Prong 1:</span>
+        <span class="scan-input"><input type="radio" name="inScan_Prong1" value="0" checked="checked"/>N/A</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong1" value="1"/>Exit HCAL rear</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong1" value="2"/>Exit HCAL side</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong1" value="3"/>Scatter</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong1" value="4"/>Shower</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong1" value="5"/>Range-stop</span>&nbsp;
+      </div>
+      
+      <div>
+      <span class="scan-input">Prong 2:</span>
+        <span class="scan-input"><input type="radio" name="inScan_Prong2" value="0" checked="checked"/>N/A</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong2" value="Exit HCAL rear"/>Exit HCAL rear</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong2" value="2"/>Exit HCAL side</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong2" value="3"/>Scatter</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong2" value="4"/>Shower</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong2" value="5"/>Range-stop</span>&nbsp;
+      </div>
+      
+      <div>
+      <span class="scan-input">Prong 3:</span>
+        <span class="scan-input"><input type="radio" name="inScan_Prong3" value="0" checked="checked"/>N/A</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong3" value="1"/>Exit HCAL rear</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong3" value="2"/>Exit HCAL side</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong3" value="3"/>Scatter</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong3" value="4"/>Shower</span>&nbsp;
+        <span class="scan-input"><input type="radio" name="inScan_Prong3" value="5"/>Range-stop</span>&nbsp;
+      </div>
+      
+      
+      <select name="inScan_GammaConversions"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      <span class="scan-input scan-input-label">Gammas</span>
+      <select name="inScan_VeeVertices"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      <span class="scan-input scan-input-label">K<sup>0</sup>/&Lambda; decays</span>
+      <select name="inScan_neutrons"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      <span class="scan-input scan-input-label">Neutrons</span>
+      </div> <!-- collapsible -->
+      
+
+      <div class="collapsible-title" revealed="false">Notes:</div>
+      <div class="collapsible">
+       <textarea class="ui-state-default scan-input" rows="2" style="width: 98%" name="inScanNotes"></textarea><br /> 
+      </div>
+      <div class="collapsible-title" revealed="false">Manual Reconstruction:</div>
+      <div class="collapsible">
+       <div class="manreco-paths"></div>
+          <span class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-all manreco-add-vertex" name='manreco-add-vertex'>New Vertex</span>  
+          <span class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-all manreco-add-track" name='manreco-add-track'>New Track</span>  
+          <span class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-all manreco-undo" name='manreco-undo'>Undo</span>
+          <span class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-all manreco-redo" name='manreco-redo'>Redo</span>
+          <span class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-all manreco-showxml" name='manreco-showxml'>Show Result XML</span>
+      </div>
+       <input class="ui-state-disabled ui-corner-all" type="button" name="goScanSubmitAndAdvance" value="Submit And Advance" />
+       <input class="ui-state-default ui-corner-all" type="button" id="goScanSubmit" value="Submit" />
+
+       <div class="align-right">
+       <input class="ui-state-disabled ui-corner-all" type="button" name="goScanReverse" value="Skip Back" />
+       <input class="ui-state-disabled ui-corner-all" type="button" name="goScanAdvance" value="Skip Forward" />
+       </div>
+     </form>
+     </div> <!-- scan-entry -->
+
+  </div> <!-- portlet -->
+  
+   
+</body>
+</html>
