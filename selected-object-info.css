@@ -9,7 +9,7 @@ Styles for the floating object-selection overlay
 }
 
 
-.selected-object-info tr {
+.selected-object-info table.hoverinfo>tbody>tr {
   border-top-width: 2px;
   border-top-color: black;
   border-top-style: solid;

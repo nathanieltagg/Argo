@@ -272,25 +272,33 @@ function ComposeTrackInfo(s)
 
   var h = "<h3>Track " + id+ "</h3>";
   h += trk._owner + "</br>";
-  h += "<table class='.hoverinfo'>";
+  h += "<table class='hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
   var c = "</td></tr>";  
-  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" +
-                         "y: " +  Math.round(start.y) + " cm<br/>" +
-                         "z: " +  Math.round(start.z) + " cm<br/>" + c;
+  h+= a + "Vertex" + b + "<table>" 
+                      + "<tr><td>x:</td><td>" +  Math.round(start.x) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>y:</td><td>" +  Math.round(start.y) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>z:</td><td>" +  Math.round(start.z) + "</td><td>cm</td></tr>" 
+                      + "</table>" + c;
 
-  h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
-                         "vy: " + (vy).toFixed(3) + "<br/>" +
-                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
+  h+= a + "Dir" + b    + "<table>" 
+                      + "<tr><td>vx:</td><td>" +  (vx).toFixed(3) + "</td></tr>" 
+                      + "<tr><td>vy:</td><td>" +  (vy).toFixed(3) + "</td></tr>" 
+                      + "<tr><td>vz:</td><td>" +  (vz).toFixed(3) + "</td></tr>" 
+                      + "</table>" + c;
 
-  h+= a + "Endpoint" + b + "x: " +  Math.round(end.x) + " cm<br/>" +
-                           "y: " +  Math.round(end.y) + " cm<br/>" +
-                           "z: " +  Math.round(end.z) + " cm<br/>" + c;
+  h+= a + "Endpoint" + b + "<table>" 
+                      + "<tr><td>x:</td><td>" +  Math.round(end.x) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>y:</td><td>" +  Math.round(end.y) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>z:</td><td>" +  Math.round(end.z) + "</td><td>cm</td></tr>" 
+                      + "</table>" + c;
 
-  h+= a + "End direction" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
-                         "vy: " + (vy).toFixed(3) + "<br/>" +
-                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
+  h+= a + "End direction" + b   + "<table>" 
+                      + "<tr><td>vx:</td><td>" +  (vx).toFixed(3) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>vy:</td><td>" +  (vy).toFixed(3) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>vz:</td><td>" +  (vz).toFixed(3) + "</td><td>cm</td></tr>" 
+                      + "</table>" + c;
 
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 

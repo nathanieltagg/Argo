@@ -30,6 +30,22 @@ var gFinishedDrawTime;
 
 var gEventsLoadedThisSession = 0;
 
+$.circleProgress.defaults.setValue = function(newValue) {
+    if (this.animation) {
+        var canvas = $(this.canvas),
+            q = canvas.queue();
+        
+        if (q[0] == 'inprogress') {
+            canvas.stop(true, true);
+        }
+        
+        this.animationStartValue = this.lastFrameValue;
+    }
+    
+    this.value = newValue;
+    this.draw();
+};
+
 // Get optimal tilesize.
 // Create openGL engine.
 var kMaxTileSize = 3048;
@@ -200,9 +216,12 @@ function QueryServer( par, myurl )
             success:  QuerySuccess,
             xhrFields: {
               onprogress : function(evt){
-                console.log("progress",parseInt(evt.loaded/evt.total*100)+'%');
-                 $('#main-circleprogress').circleProgress('value', 100*evt.loaded/evt.total);
-                 $('#main-circleprogress strong').html("network<br/>"+parseInt(evt.loaded/evt.total*100)+'%');
+                // console.log("progress",parseFloat(evt.loaded)/parseFloat(evt.total));
+                 var val = 0; 
+                 if(evt.loaded>0) val = (0.2+evt.loaded)/(0.2+evt.total); 
+                 $('#main-circleprogress').circleProgress('value', val);
+                 $('#main-circleprogress strong').html("Network<br/>"+parseInt(evt.loaded/evt.total*100)+'%');
+                 $('#main-circleprogress').circleProgress();
                  
                }
               
