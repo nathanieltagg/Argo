@@ -20,7 +20,11 @@ Styles for the floating object-selection overlay
    user-select: all;          /* Likely future */   
 }
 
-
+div.supertiny {
+  height: 20px;
+  font-size: 0.1em;
+  overflow: hidden;
+}
 div.floating { postion: absolute; zIndex: 999;}
 
 .triangle-isosceles h3 {
