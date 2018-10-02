@@ -79,8 +79,9 @@ if(scalar @cacheentries == 0) {
 
   # Check request params.
 
-  if(defined param('request_cache') ) {
+  if(defined param('request_cache')  ) {
     $event = param('request_cache');
+    
   }
   elsif(defined param('latest_cache') && defined param('recent_cache')) {
     $latest_cache = param('latest_cache'); #ID of the latest event yet seen by that client
@@ -104,7 +105,7 @@ if(scalar @cacheentries == 0) {
   # my $jsonfile = $event."/event.json";
   $result = "";
   print "Opening $event.\n";
-  if(open(READCACHE,$event)){
+  if(open(READCACHE,"<$event")){
     while(<READCACHE>) {
       $result .= $_;
     }
