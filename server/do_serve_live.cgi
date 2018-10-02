@@ -34,7 +34,7 @@ $heartbeat = "{}";
 $need_to_restart = 0;
 if( -r  $heartbeat_file) {
   # Get heartbeat contents.
-  open(HEARTBEAT,$heartbeat_file) || print "Can't open heartbeat for reading </br>\n";
+  open(HEARTBEAT,"<",$heartbeat_file) || print "Can't open heartbeat for reading </br>\n";
   $heartbeat = "";
   while(<HEARTBEAT>) {
     $heartbeat .= $_;
@@ -104,7 +104,7 @@ if(scalar @cacheentries == 0) {
   # my $jsonfile = $event."/event.json";
   $result = "";
   print "Opening $event.\n";
-  if(open(READCACHE,$event)){
+  if(open(READCACHE,"<",$event)){
     while(<READCACHE>) {
       $result .= $_;
     }
