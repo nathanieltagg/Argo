@@ -22,7 +22,7 @@
 
 std::string getLastFile(const std::string& dir, const std::string& suffix );
 int watch_directory_for_new(const std::string& dir, const std::string& suffix, double heartbeat_secs);
-void report(const std::string& filename);
+void report(const std::string& filename, const std::string& dir, const std::string& suffix );
 
 void getFileList(const std::string& dir, const std::string& suffix, std::vector<std::string>& out)
 {
@@ -36,7 +36,8 @@ void getFileList(const std::string& dir, const std::string& suffix, std::vector<
         
   std::string first = globbuf.gl_pathv[0];
   for(size_t i = 0; i< globbuf.gl_pathc; i++) {
-    out.push_back(globbuf.gl_pathv[i]);
+    std::string s = globbuf.gl_pathv[i];
+    out.push_back(s);
   }
   globfree(&globbuf);
 }
@@ -84,7 +85,7 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
       FD_ZERO(&set); /* clear the set */
       FD_SET(inotifyFd, &set); /* add our file descriptor to the set */
       rv = select(inotifyFd + 1, &set, NULL, NULL, &timeout);
-      if(rv==0) report(""); // heartbeat.
+      if(rv==0) report("","",""); // heartbeat.
     }
     
     int numRead = read(inotifyFd, buffer, kBuffSize);
@@ -123,9 +124,9 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
 
       if(event->len > 0) {
         std::string name = event->name;
-        if(name.rfind(suffix) != std::string::npos) {    
-          std::string pathname = dir + name;
-          report(pathname);
+        if(name.rfind(suffix) != std::string::npos) {  
+          std::string s = name;          
+          report(s,dir,suffix);
         }
       }
       
@@ -204,7 +205,7 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
           break;
       }
       if (event_count) {
-        report(getLastFile(dir,suffix));
+        report(getLastFile(dir,suffix),dir,suffix);
           // printf("Event %ld occurred.  Filter %d, flags %d, filter flags %s, filter data %lu , path %s\n",
           //     event_data[0].ident,
           //     event_data[0].filter,
@@ -234,7 +235,7 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
 unsigned long gId = 0;
 std::string   gLastFile = "";
 
-void report(const std::string& filename)
+void report(const std::string& filename, const std::string& dir, const std::string& suffix)
 {
   if(filename == "") {
     std::cout << "id: " << gId++ << "\n";
@@ -243,11 +244,16 @@ void report(const std::string& filename)
     return;
   }
   if(filename == gLastFile) return;  // Don't over-report.
+  
   std::string jsonfile = filename+"/event.json";
+  std::string s = filename;
+  s.erase(0,dir.size());
+  s.erase(s.size()-suffix.size(),suffix.size());
+
   struct stat jsonstat;
   if(0 == stat(jsonfile.c_str(),&jsonstat)) {
     std::cout << "id: " << gId++ << "\n";
-    std::cout << "data: " <<  jsonfile << "\n\n";
+    std::cout << "data: " <<  s << "\n\n";
     std::cout.flush();
     gLastFile = filename;    
   }
@@ -276,7 +282,7 @@ int main()
   
   getFileList(dir,suffix,list);
   for(std::vector<std::string>::iterator it = list.begin(); it!= list.end(); it++) {
-    report(*it);
+    report(*it,dir,suffix);
   }
   // while(!list.empty()) {
   //   report(list.back());
