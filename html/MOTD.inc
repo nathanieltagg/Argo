@@ -13,7 +13,7 @@
   <div style="clear:both;">
   Recent updates:
     <ul> 
-      <li> Hello MasterClass!  (Oct 2018) </li>
+      <li> Hello MasterClass!  Updated sum-hit window. Changed all-track info to be collection only. (Oct 2018) </li>
     </ul>
   </div>
 </div> 

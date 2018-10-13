@@ -119,4 +119,17 @@ if (!Function.prototype.bind) {
   };
 }
 
+//
+// Select text in object.
+(function ( $ ) {
+ 
+    $.fn.mySelectContents = function() {
+      return this.each(function() {
+        window.getSelection().selectAllChildren( this );
+      });
+    };
+ 
+}( jQuery ));
+
+
 

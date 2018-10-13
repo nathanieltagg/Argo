@@ -767,18 +767,19 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       var x = this.GetX(this.fMousePos.u + sumRadiusU ) + offset.x;
       var y = this.GetY(this.fMousePos.v - sumRadiusV ) + offset.y;
       var txt = "";
-      if(hitsum_n>0) txt = ""
-        + hitsum_n  +" hits\n"
-        + hitsum_ntrk + " on trk\n"
-        + (hitsum_adc/hitsum_n).toFixed(1) + " ADC avg\n"
-        +(hitsum_tdc/hitsum_n).toFixed(1) + "  TDC avg\n"
-        + hitsum_adc + " ADC tot";
+      if(hitsum_n>0) txt = "<table>"
+        + "<tr><td>" + hitsum_n  +"</td><td>hits</td></tr>"
+        + "<tr><td>" + hitsum_ntrk +"</td><td>trk hits</td></tr>"
+        + "<tr><td>" + (hitsum_adc/hitsum_n).toFixed(1) +"</td><td>avg ADC</td></tr>"
+        + "<tr><td>" +(hitsum_tdc/hitsum_n).toFixed(1) +"</td><td>avg TDC</td></tr>"
+        + "<tr><td>" + hitsum_adc +"</td><td>tot ADC</td></tr>"
+        + "</table>";
       $('#hitsum').css({
         position: 'absolute',
         zIndex : 2000,
         left: x, top: y,
         'background-color': 'white'
-      }).show().find('textarea').html(txt).select();
+      }).show().find('.hitsumtext').html(txt).mySelectContents();
     }
 };
 
@@ -1514,7 +1515,7 @@ WireView.prototype.DrawPmts = function()
       if(w<gOpMode.cut.min) continue;
       if(w>gOpMode.cut.max) continue;
       var c = gOpColorScaler.GetColor(w);
-      console.log(tpmt,t1,t2,td);
+      // console.log(tpmt,t1,t2,td);
       
 
       // console.log("wirehit",det.y,det.z,this.wire_shift[this.plane],gGeo.yzToWire(det.y, det.z),u,x,y);
@@ -1523,7 +1524,7 @@ WireView.prototype.DrawPmts = function()
       if(could_any) alpha = 0.5;
       if(could_all) alpha = 0.9;
       this.ctx.fillStyle = "rgba(" + c + "," + alpha + ")";
-      console.log("dx",dx);
+      // console.log("dx",dx);
       this.ctx.beginPath();
       this.ctx.moveTo(x,y);
       this.ctx.lineTo(x-dx,y-10);
