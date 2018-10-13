@@ -317,13 +317,48 @@ function ComposeTrackInfo(s)
       var hitlist = gRecord.hits[hitname];
       h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
       h += "<tr><th>TDC:</th><th>ADC</th></tr>";
-      for(var i=1;i<hitids.length;i++) { 
+      for(var i=0;i<hitids.length;i++) { 
         var hit = hitlist[hitids[i]];
         if(h.plane==2)
           h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
       }
       h+="</table></div>"
       h+= c;  
+    }
+    
+    if(hitname) {
+      // Attempt auto-fit HV and track-to-hit offset.
+      var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
+      var hitlist = gRecord.hits[hitname];
+      // find min/max tdc.
+      var min_tdc = 1e99;
+      var max_tdc = -1e99;
+      var min_x = (start.x<end.x)?start.x:end.x;
+      var max_x = (start.x<end.x)?end.x:start.x;
+      for(var i=0;i<hitids.length;i++) { 
+        var hit = hitlist[hitids[i]];
+        if(hit.t < min_tdc) min_tdc = hit.t;
+        if(hit.t > max_tdc) max_tdc = hit.t;
+      }
+      var max_all_tdc = 0;
+      for(var i=0;i<hitlist.length;i++) {
+        var hit = hitlist[i];
+        if(hit.t>max_all_tdc) max_all_tdc = hit.t;
+      }
+      // now interpolate.
+      console.log('autofit track.');
+      console.log('max_all_tdc',max_all_tdc);
+      console.log("x",x,'lastx',lastx);
+      
+      console.log("min_tdc",min_tdc,'min_x',min_x);
+      console.log("max_tdc",max_tdc,'max_x',max_x);
+      var slope = (max_tdc-min_tdc)/(max_x-min_x);
+      var offset = min_tdc - slope*min_x;
+      // t = mx + b
+      // t1 = m x1 + b
+      console.log("slope = ",slope, 'hv gives',1./gGeo.drift_cm_per_tick);
+      console.log("offset = ",offset,"tdc");
+      
     }
 
     for ( n in gRecord.associations[trk._owner]) {
