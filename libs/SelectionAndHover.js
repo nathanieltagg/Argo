@@ -307,25 +307,24 @@ function ComposeTrackInfo(s)
   // horrible point info
   // Get associated hit info.
   
-  // find an associated hit collection
-  var types = Object.keys(gRecord.associations[trk._owner]);
-  var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
-  if(hitname) {
-    var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
-    var hitlist = gRecord.hits[hitname];
-    h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
-    h += "<tr><th>TDC:</th><th>ADC</th></tr>";
-    for(var i=1;i<hitids.length;i++) { 
-      var hit = hitlist[hitids[i]];
-      h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
-    }
-    h+="</table></div>"
-    h+= c;
-    
-  }
-
   
   if(gRecord.associations && gRecord.associations[trk._owner]) {
+    // find an associated hit collection
+    var types = Object.keys(gRecord.associations[trk._owner]);
+    var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
+    if(hitname) {
+      var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
+      var hitlist = gRecord.hits[hitname];
+      h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
+      h += "<tr><th>TDC:</th><th>ADC</th></tr>";
+      for(var i=1;i<hitids.length;i++) { 
+        var hit = hitlist[hitids[i]];
+        h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
+      }
+      h+="</table></div>"
+      h+= c;  
+    }
+
     for ( n in gRecord.associations[trk._owner]) {
       h+= a + n + b + gRecord.associations[trk._owner][n][trk._idx].length + c;
     }

@@ -13,7 +13,7 @@
   <div style="clear:both;">
   Recent updates:
     <ul> 
-      <li> Fixed MC display bug found by Brandon (Sept 18)</li>
+      <li> Hello MasterClass!  (Oct 2018) </li>
     </ul>
   </div>
 </div> 
