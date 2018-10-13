@@ -319,7 +319,8 @@ function ComposeTrackInfo(s)
       h += "<tr><th>TDC:</th><th>ADC</th></tr>";
       for(var i=1;i<hitids.length;i++) { 
         var hit = hitlist[hitids[i]];
-        h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
+        if(h.plane==2)
+          h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
       }
       h+="</table></div>"
       h+= c;  
