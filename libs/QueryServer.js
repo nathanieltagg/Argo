@@ -358,6 +358,11 @@ function StartEvent()
   // Do initial data indexing and bookmarking.
   DoInitialBookmarking();
   
+  // Attempt to guess event configuration and set controls accordingly.
+  AutoFitHitTrackOffsets();
+  
+  
+  
   // Trigger the automatic routines - stuff not yet pulled out of this routine.
   gTimeStats_RecordChange = performance.now();
   
@@ -376,6 +381,106 @@ function StartEvent()
   console.log("                      `..|'          ");
   console.log("Cool, you know how to open the console. You should definitely work on Argo with us. --Nathaniel");
 }
+
+
+function AutoFitHitTrackOffsets()
+{
+  // attempt to figure out the high voltage setting, and hit/track offsets from the data.
+  console.warn('AutoFitHitTrackOffsets');
+
+  console.time("AutoFitHitTrackOffsets");
+  
+  // Requires hits
+  var max_all_tdc = -1e99;
+  if(gRecord.hits) {
+    for( hitname in gRecord.hits ) {
+      for(var i=0;i<gRecord.hits[hitname].length; i++) {
+        var hit = gRecord.hits[hitname][i];
+        if(hit.t>max_all_tdc) max_all_tdc = hit.t;
+      }
+    }    
+  }
+  // Judgement call: if the hit list doesn't extend all the way to 9600, this is probably a processed reco file, and there's a 2400 tick offset.
+  if(max_all_tdc < 6401) 
+    $('#ctl-shift-hits-value').val(2400);
+  else  
+    $('#ctl-shift-hits-value').val(0);
+
+  // Requires tracks.
+  var slopes = [];
+  var offsets = [];
+  if(gRecord.tracks && gRecord.associations) {
+    for( trkname in gRecord.tracks ) {
+      console.warn(trkname);
+      if( gRecord.associations[trkname]) {
+        var types = Object.keys(gRecord.associations[trkname]);
+        var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
+        if(hitname) {
+          var hitlist = gRecord.hits[hitname];
+          var max_all_tdc = 0;
+          for(var i=0;i<hitlist.length;i++) {
+            var hit = hitlist[i];
+            if(hit.t>max_all_tdc) max_all_tdc = hit.t;
+          }
+          
+          console.warn(hitname);
+          for(var itrk = 0; itrk<gRecord.tracks[trkname].length; itrk++) {
+            trk = gRecord.tracks[trkname][itrk];
+            var min_x = 1e99;
+            var max_x = -1e99;
+            for(var ipt = 0;ipt<trk.points.length; ipt++) {
+              var x = trk.points[ipt].x;
+              if(x<min_x) min_x = x;
+              if(x>max_x) max_x = x;
+            }
+            var start =  trk.points[0];
+            var end   =  trk.points[trk.points.length-1];
+          
+            // Attempt auto-fit HV and track-to-hit offset.
+            var hitids  = gRecord.associations[trkname][hitname][itrk];
+            // find min/max tdc.
+            var min_tdc = 1e99;
+            var max_tdc = -1e99;
+            var min_x = (start.x<end.x)?start.x:end.x;
+            var max_x = (start.x<end.x)?end.x:start.x;
+            if(max_x - min_x < 20) continue;
+            for(var i=0;i<hitids.length;i++) { 
+              var hit = hitlist[hitids[i]];
+              if(hit.t < min_tdc) min_tdc = hit.t;
+              if(hit.t > max_tdc) max_tdc = hit.t;
+            }
+            // now interpolate.      
+            console.log("min_tdc",min_tdc,'min_x',min_x);
+            console.log("max_tdc",max_tdc,'max_x',max_x);
+            var slope = (max_tdc-min_tdc)/(max_x-min_x);
+            var offset = min_tdc - slope*min_x;
+            if(slope>10 && slope < 30 && offset>0) {
+              slopes.push(slope);
+              offsets.push(offset);
+                
+            }
+            // t = mx + b
+            // t1 = m x1 + b
+            console.log("slope = ",slope, 'hv gives',1./gGeo.drift_cm_per_tick);
+            console.log("offset = ",offset,"tdc");
+          }
+        }
+      }
+    }
+  }
+  console.log(slopes,offsets);
+  var avgslope = slopes.reduce((a,b)=>{return a+b;},0) / slopes.length;
+  var avgoffset = offsets.reduce((a,b)=>{return a+b;},0) / offsets.length;
+  var medslope = slopes[parseInt(slopes.length/2)];
+  var medoffset = offsets[parseInt(offsets.length/2)];
+  console.log("averages:",avgslope,avgoffset);
+  console.log("medians:",medslope,medoffset);
+  gGeo.drift_cm_per_tick = 1.0/medslope;  
+  $('#ctl-track-shift-value').val(parseInt($('#ctl-shift-hits-value').val())+parseInt(medoffset));
+  console.timeEnd("AutoFitHitTrackOffsets");
+  
+}
+
 
 function DoPerformanceStats()
 {

@@ -100,7 +100,7 @@ Histogram.prototype.TwoSideExpandFill = function(x,val)
     binwidth = (this.max - this.min)/this.n;
     this.min = this.min - binwidth*nadd;
     this.max = this.max + binwidth*nadd;
-    console.warn("TwoSideExpand: x="+x+" min:"+this.min+" max:"+this.max);
+    // console.warn("TwoSideExpand: x="+x+" min:"+this.min+" max:"+this.max);
     this.n += nadd*2;
     bin = this.GetBin(x); // should be 0 or n-1 now.
   }

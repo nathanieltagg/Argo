@@ -98,7 +98,7 @@ EventInfo.prototype.NewRecord = function()
         var trignames  = [];
         for(var i = 0;i<kTriggerNames.length;i++) {
           var bit = 1 << i;
-          console.warn("TRIG",i,bit,trig.triggerword,(trig.triggerword & bit)!=0,kTriggerNames[i]);
+          // console.warn("TRIG",i,bit,trig.triggerword,(trig.triggerword & bit)!=0,kTriggerNames[i]);
           if(((trig.triggerword & bit) !=0) && kTriggerNames[i].length )trignames.push(kTriggerNames[i]);
         }
         $(".event-triggernames").text(trignames.join(", "));

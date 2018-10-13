@@ -70,8 +70,10 @@ function DataSource()
   $('button.next-event').button().click(DoNextEvent);
   $('button.prev-event').button().click(DoPrevEvent);
   
+  
   gStateMachine.BindObj('recordChange',this,"NewRecord");  
 }
+
 
 
 
