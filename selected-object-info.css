@@ -7,23 +7,25 @@ Styles for the floating object-selection overlay
   font-family: "Times New Roman", Times, serif;
   z-index:50;
 }
-
-
-.selected-object-info table.hoverinfo>tbody>tr {
-  border-top-width: 2px;
-  border-top-color: black;
-  border-top-style: solid;
-  z-index:100;
+.selected-object-info table.hoverinfo {
   -webkit-user-select: all;  /* Chrome 49+ */
    -moz-user-select: all;     /* Firefox 43+ */
    -ms-user-select: all;      /* No support yet */
    user-select: all;          /* Likely future */   
 }
 
+.selected-object-info table.hoverinfo>tbody>tr {
+  border-top-width: 2px;
+  border-top-color: black;
+  border-top-style: solid;
+  z-index:100;
+}
+
 div.supertiny {
   height: 20px;
   font-size: 0.1em;
   overflow: hidden;
+  background-color: black;
 }
 div.floating { postion: absolute; zIndex: 999;}
 
