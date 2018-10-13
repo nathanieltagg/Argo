@@ -469,14 +469,16 @@ function AutoFitHitTrackOffsets()
     }
   }
   console.log(slopes,offsets);
-  var avgslope = slopes.reduce((a,b)=>{return a+b;},0) / slopes.length;
-  var avgoffset = offsets.reduce((a,b)=>{return a+b;},0) / offsets.length;
-  var medslope = slopes[parseInt(slopes.length/2)];
-  var medoffset = offsets[parseInt(offsets.length/2)];
-  console.log("averages:",avgslope,avgoffset);
-  console.log("medians:",medslope,medoffset);
-  gGeo.drift_cm_per_tick = 1.0/medslope;  
-  $('#ctl-track-shift-value').val(parseInt($('#ctl-shift-hits-value').val())+parseInt(medoffset));
+  if(slopes.length>0) {
+    // var avgslope = slopes.reduce((a,b)=>{return a+b;},0) / slopes.length;
+    // var avgoffset = offsets.reduce((a,b)=>{return a+b;},0) / offsets.length;
+    // console.log("averages:",avgslope,avgoffset);
+    var medslope = slopes[parseInt(slopes.length/2)];
+    var medoffset = offsets[parseInt(offsets.length/2)];
+    console.log("medians:",medslope,medoffset);
+    gGeo.drift_cm_per_tick = 1.0/medslope;  
+    $('#ctl-track-shift-value').val(parseInt($('#ctl-shift-hits-value').val())+parseInt(medoffset));
+  }
   console.timeEnd("AutoFitHitTrackOffsets");
   
 }
