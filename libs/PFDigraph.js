@@ -103,12 +103,12 @@ PFDigraph.prototype.NewRecord = function()
     for(var j=0;j<p.daughters.length;j++) {
       // Trap strange error where a particle is it's own daughter.
       if(p.daughters[j]== p._idx) {console.error("PFParticle is it's own daughter!"); continue;}
-      console.log("daughter",p.daughters[j]);
-      console.log("daughter",pfparticles[p.daughters[j]]);
+      // console.log("daughter",p.daughters[j]);
+      // console.log("daughter",pfparticles[p.daughters[j]]);
       
       node.children.push(buildPfNode(pfparticles[p.daughters[j]]));
     }
-    console.log(node);
+    // console.log(node);
     return node;
   }
   

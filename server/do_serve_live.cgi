@@ -34,7 +34,7 @@ $heartbeat = "{}";
 $need_to_restart = 0;
 if( -r  $heartbeat_file) {
   # Get heartbeat contents.
-  open(HEARTBEAT,$heartbeat_file) || print "Can't open heartbeat for reading </br>\n";
+  open(HEARTBEAT,"<",$heartbeat_file) || print "Can't open heartbeat for reading </br>\n";
   $heartbeat = "";
   while(<HEARTBEAT>) {
     $heartbeat .= $_;
@@ -61,11 +61,14 @@ print "Looking at cache....\n";
 $event = undef;
 
 # look at the available cached files.
-@cacheentries = glob("$cache_dir/*.event/event.json");
+@cacheentries_tmp = glob("$cache_dir/*.event/event.json");
 # Sort by filename
-@cacheentries = reverse sort @cacheentries;
-for $f (@cacheentries) {
-  print $f . "\n";
+@cacheentries_tmp = reverse sort @cacheentries_tmp;
+@cacheentries = ();
+for $f (@cacheentries_tmp) {
+  my ($s) = $f =~ qr/^.+\/(.*).event\/event.json/;
+  push @cacheentries,$s;
+  print $s . "\n";
 }
   
 if(scalar @cacheentries == 0) {
@@ -81,6 +84,8 @@ if(scalar @cacheentries == 0) {
 
   if(defined param('request_cache') ) {
     $event = param('request_cache');
+    $event =~ s/[^[a-zA-Z0-9_]]//g;
+    
   }
   elsif(defined param('latest_cache') && defined param('recent_cache')) {
     $latest_cache = param('latest_cache'); #ID of the latest event yet seen by that client
@@ -104,12 +109,13 @@ if(scalar @cacheentries == 0) {
   # my $jsonfile = $event."/event.json";
   $result = "";
   print "Opening $event.\n";
-  if(open(READCACHE,$event)){
+  $p = $cache_dir.'/'.$event.".event/event.json";
+  if(open(READCACHE,"<$p")){
     while(<READCACHE>) {
       $result .= $_;
     }
     close READCACHE;
-    if(length($result)==0) { $result='{"error":"Empty event"}'; }    
+    if(length($result)==0) { $result='{"error":"Empty event"}'; }
   } else {
     print "Can't open $event for reading: $! </br>\n";
     $result="{\"error\":\"Cannot open file $event\"}";

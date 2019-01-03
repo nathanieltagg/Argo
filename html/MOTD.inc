@@ -13,7 +13,9 @@
   <div style="clear:both;">
   Recent updates:
     <ul> 
-      <li> Fixed MC display bug found by Brandon (Sept 18)</li>
+      <li> Hello MasterClass! </li>
+      <li> Updated sum-hit window. Changed all-track info to be collection only. (Oct 2018) </li>
+      <li> Attempt to auto-fit track and hit offset settings, as well as tick-per-cm from looking at hit/track associations (Oct 2018) </li>
     </ul>
   </div>
 </div> 

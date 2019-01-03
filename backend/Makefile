@@ -65,11 +65,8 @@ UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logg
 
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
-
-
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
-
 
 # abortive attempt:
 
@@ -122,8 +119,6 @@ LIBS     += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
 endif
 
 CPPFLAGS += -I ${FHICLCPP_INC}
-CPPFLAGS += -I ${UBOONECODE_INC}
-LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
 CPPFLAGS += -I ${UBOONEDAQ_DATATYPES_INC}
 LIBS     += -L ${UBOONEDAQ_DATATYPES_LIB} -l ubdata_types
 CPPFLAGS += -I ${ROOT_INC}
@@ -133,6 +128,17 @@ LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 
 CPPFLAGS += -DGALLERY
 # LIBS += -lgomp
+
+ifneq ($(origin UBOBJ_INC), undefined)
+  CPPFLAGS += -DSPLIT_UBOONECODE=1
+  CPPFLAGS += -I  ${UBOBJ_INC}
+  LIBS += -L${UBOBJ_LIB} 
+else 
+  CPPFLAGS += -I ${UBOONECODE_INC}
+  LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
+endif
+
+
 
 ## LARLITE is optional.
 ifneq ($(origin LARLITE_DIR), undefined)
@@ -211,16 +217,25 @@ tmp/Cint.o : Cint.cpp
 	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -fPIC -c $< -o $@
 
 
+ 
+ifeq ($(UNAME),Darwin)
+  libargo = libargo-backend.dylib
+else
+  libargo = libargo-backend.so
+endif
 
-argo-backend: libargo-backend.dylib tmp/argo-backend.o Makefile
+argo-backend: $(OBJ) tmp/argo-backend.o Makefile
+	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
+		-Wl,-rpath,@executable_path/../lib  \
+		-Wl,-rpath,@executable_path \
+		-Wl,--unresolved-symbols=ignore-in-shared-libs
+
+
+argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path
 
-
-argo-backend-new: libargo-backend.dylib tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS) -o $@ \
-	 -Wl,-rpath,@executable_path/../lib  -Wl,-rpath,@executable_path
 	# mkdir -p ../install/bin
 	# cp argo-backend-new ../install/bin
   
@@ -244,16 +259,23 @@ argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
   # -Wl,-rpath,@loader_path/root/lib\
   # -Wl,-rpath,@loader_path/boost/lib\
 
-libargo-backend.dylib: $(OBJ) tmp/Cint.o Makefile
+libflags = 
+ifeq ($(UNAME),Darwin)
+  libflags = -install_name @rpath/libargo-backend.dylib
+else
+  libflags = -shared
+endif
+
+$(libargo): $(OBJ) tmp/Cint.o Makefile
 	#$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib -install_name @rpath/libargo-backend.dylib
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib $(libflags)
 
 testbin: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
 
 
-notify-live.cgi:  tmp/notify_live.o
-	$(CPP) $(filter %.o,$^) -o $@  
+notify-live.cgi:  notify_live.cc
+	/usr/bin/g++ $^ -o $@  
   
 
 testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile

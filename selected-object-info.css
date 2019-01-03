@@ -5,18 +5,28 @@ Styles for the floating object-selection overlay
 .selected-object-info {
   font-size: 1em;
   font-family: "Times New Roman", Times, serif;
+  z-index:50;
+}
+.selected-object-info table.hoverinfo {
+  -webkit-user-select: all;  /* Chrome 49+ */
+   -moz-user-select: all;     /* Firefox 43+ */
+   -ms-user-select: all;      /* No support yet */
+   user-select: all;          /* Likely future */   
 }
 
-
-.selected-object-info tr {
+.selected-object-info table.hoverinfo>tbody>tr {
   border-top-width: 2px;
   border-top-color: black;
   border-top-style: solid;
   z-index:100;
-  
 }
 
-
+div.supertiny {
+  height: 20px;
+  font-size: 0.1em;
+  overflow: hidden;
+  background-color: black;
+}
 div.floating { postion: absolute; zIndex: 999;}
 
 .triangle-isosceles h3 {
@@ -56,9 +66,9 @@ div.floating { postion: absolute; zIndex: 999;}
 }
 .triangle-isosceles.left:after {
   top:16px; /* controls vertical position */
-  left:-80px; /* value = - border-left-width - border-right-width */
+  left:-60px; /* value = - border-left-width - border-right-width */
   bottom:auto;
-  border-width:30px 50px;
+  border-width:30px 30px;
 
   border-color:transparent #285c00 transparent transparent;
 /*  border-color:transparent inherit transparent transparent;*/
