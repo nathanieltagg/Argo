@@ -1,9 +1,9 @@
 //
 // Code for the Arachne Event Display
 // Author: Nathaniel Tagg ntagg@otterbein.edu
-//
+// 
 // Licence: this code is free for non-commertial use. Note other licences may apply to 3rd-party code.
-// Any use of this code must include attribution to Nathaniel Tagg at Otterbein University, but otherwise
+// Any use of this code must include attribution to Nathaniel Tagg at Otterbein University, but otherwise 
 // you're free to modify and use it as you like.
 //
 
@@ -69,8 +69,6 @@
 #include "nusimdata/SimulationBase/GTruth.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCFlux.h"
-#include "uboone/CRT/CRTProducts/CRTHit.hh"
-#include "uboone/CRT/CRTProducts/CRTTrack.hh"
 
 #include "MakePng.h"
 #include "EncodedTileMaker.h"
@@ -103,9 +101,9 @@ GalleryRecordComposer::GalleryRecordComposer(JsonObject& output, std::string fil
   fCacheStorageUrl      = "live_event_cache";
   fWorkingSuffix = "working";
   fFinalSuffix   = "event";
-  fCreateSubdirCache = true;
+  fCreateSubdirCache = true;  
 }
-
+  
 GalleryRecordComposer::~GalleryRecordComposer()
 {
 }
@@ -122,11 +120,11 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
       TObject* o = list->At(i);
       TBranch* br = dynamic_cast<TBranch*>(o);
       std::string found = br->GetName();
-
+  
       // Does it end with '.'?
-      string::size_type p3 = found.find_last_of('.');
+      string::size_type p3 = found.find_last_of('.'); 
       if(p3!=found.length()-1 || p3==0) continue;
-
+      
       fBranchNames.push_back(found);
     }
     std::sort(fBranchNames.begin(),fBranchNames.end());
@@ -134,12 +132,12 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
 
   vector<std::pair<string,art::InputTag>> retval;
   // Leaf names for std::vector<recob::Wire> get renamed
-  // to the art version of "recob::Wires" by this.
+  // to the art version of "recob::Wires" by this. 
   std::string pattern = art::TypeID(typeid(T)).friendlyClassName() + '_';
   std::cout << "Looking for leaf of type " << pattern << "label_instance_process." << endl;
 
   // Look through every branch name.
-
+  
   // We're looking for:
   // OBJ_LABEL_INSTANCE_PROCESSNAME.obj_
   // Where OBJ is something like "recob::Wires"
@@ -150,13 +148,14 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
   auto p1 = std::lower_bound(fBranchNames.begin(),fBranchNames.end(),pattern);
   for(auto p=p1; p!=fBranchNames.end(); p++) {
     const std::string& found = *p;
+    // std::cout << "Compare to " << found << std::endl;
     // Does it begin with our object type?
-    if(found.find(pattern)!=0) return retval; // finished
+    if(found.find(pattern)!=0) continue; //return retval; // finished
 
     // It's a match, so tokenize and return.
     // Tokenize by underscore.
     string::size_type p3 = found.length()-1; // skip trailing '.'.
-
+    
     string::size_type p2 = found.rfind("_",p3-1);
     if(p2==string::npos || p2==0) continue;
 
@@ -167,8 +166,9 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
     if(p0==string::npos || p0==0) continue;
 
     art::InputTag tag(found.substr(p0+1,p1-p0-1),  found.substr(p1+1,p2-p1-1), found.substr(p2+1,p3-p2-1));
+    std::cout << "Found " << found << ":" << tag << std::endl;
     retval.push_back( make_pair( found, tag ));
-
+    
   }
   return retval;
     //
@@ -211,8 +211,8 @@ vector<std::pair<string,art::InputTag>>  GalleryRecordComposer::findByType(TTree
   //   art::InputTag tag(found.substr(p0+1,p1-p0-1),  found.substr(p1+1,p2-p1-1), found.substr(p2+1,p3-p2-1));
   //   retval.push_back( make_pair( found, tag ));
   // }
-  return retval;
-
+  // return retval;
+  
 }
 
 
@@ -229,14 +229,14 @@ bool GalleryRecordComposer::composeObjectsVector(const std::string& output_name,
 {
   JsonObject reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
   TimeReporter cov_timer(output_name);
-
+ 
   int found = 0;
   auto products = findByType<V>(fEvent->getTTree());  // Get a list of all products matching template
   for(auto product: products) {
     std::cout << "Looking at " << boost::core::demangle( typeid(V).name() ) <<" object " << product.first << std::endl;
 
     TimeReporter timer(product.first);    // This object creates statistics on how long this reco took.
-    gallery::Handle<V> handle;
+    gallery::Handle<V> handle;            
 
     { // Create a scope
       boost::mutex::scoped_lock b(fGalleryLock); // Mutex thread lock exists within brace scope
@@ -247,7 +247,7 @@ bool GalleryRecordComposer::composeObjectsVector(const std::string& output_name,
       continue;
     }
     found++;
-
+    
     JsonArray jlist;    // List of objects (e.g. Kalman Spacepoints)
     for(const auto& item: *handle) {
       // item is a specific object (e.g. SpacePoint), jitem is the objected moved to JSON (one spacepoint)
@@ -261,11 +261,11 @@ bool GalleryRecordComposer::composeObjectsVector(const std::string& output_name,
   {
     boost::mutex::scoped_lock lck(fOutputMutex);  // Scope a lock around the global output object
     output.add(output_name,reco_list);           // Add the output.
-    cov_timer.addto(fStats);
-  }
+    cov_timer.addto(fStats);  
+  }  
   return(found>0);
 }
-
+  
 template<typename T>
 void GalleryRecordComposer::composeObject(const T&, JsonObject& out)
 {
@@ -372,7 +372,7 @@ void GalleryRecordComposer::composeHits()
       std::cerr << "No data!" << std::endl;
       continue;
     }
-
+    
     JsonArray arr;
     // Hit histograms.
     TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
@@ -470,7 +470,7 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
   JsonArray jpoints;
   size_t first_point = traj.FirstValidPoint();
   size_t last_point  = traj.LastValidPoint();
-  size_t npoints = traj.NPoints();
+  // size_t npoints = traj.NPoints();
   // cout << " Points: " << npoints << " first: " << first_point << " last: " << last_point << std::endl;
   for(size_t i = first_point; i<= last_point; i++) {
     // cout << " constructing point " << i << " next is " <<  traj.NextValidPoint(i) << std::endl;
@@ -500,38 +500,6 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
 }
 
 template<>
-void GalleryRecordComposer::composeObject(const crt::CRTHit& crthit, JsonObject& jcrthit)
-{
-	std::cout << "CRT HIT " << crthit.peshit << std::endl;
-  jcrthit.add("peshit"       ,crthit.peshit);
-  jcrthit.add("ts0_s"        ,crthit.ts0_s);
-  jcrthit.add("ts0_s_corr"   ,crthit.ts0_s_corr);
-  jcrthit.add("ts0_ns"       ,crthit.ts0_ns);
-  jcrthit.add("ts0_ns_corr"  ,crthit.ts0_ns_corr);
-  jcrthit.add("ts1_ns"       ,crthit.ts1_ns);
-  jcrthit.add("plane"        ,crthit.plane);
-  jcrthit.add("x_pos"        ,crthit.x_pos);
-  jcrthit.add("x_err"        ,crthit.x_err);
-  jcrthit.add("y_pos"        ,crthit.y_pos);
-  jcrthit.add("y_err"        ,crthit.y_err);
-  jcrthit.add("z_pos"        ,crthit.z_pos);
-  jcrthit.add("z_err"        ,crthit.z_err);
-}
-
-template<>
-void GalleryRecordComposer::composeObject(const crt::CRTTrack& crttrack, JsonObject& jcrttrack)
-{
-  std::cout << "CRT Track " << crttrack.peshit << std::endl;
-  jcrttrack.add("x1_pos",crttrack.x1_pos);
-  jcrttrack.add("y1_pos",crttrack.y1_pos);
-  jcrttrack.add("z1_pos",crttrack.z1_pos);
-  jcrttrack.add("x2_pos",crttrack.x2_pos);
-  jcrttrack.add("y2_pos",crttrack.y2_pos);
-  jcrttrack.add("z2_pos",crttrack.z2_pos);
-}
-
-
-template<>
 void GalleryRecordComposer::composeObject(const recob::Shower& shower, JsonObject& jshw)
 {
 
@@ -549,7 +517,7 @@ void GalleryRecordComposer::composeObject(const recob::Shower& shower, JsonObjec
   jdir.add("y", dir.y() );
   jdir.add("z", dir.z() );
   jshw.add("dir",jdir);
-
+  
   JsonObject jEnd;
   jEnd.add("x", xyz.x() );
   jEnd.add("y", xyz.y() );
@@ -571,22 +539,22 @@ void GalleryRecordComposer::composeObject(const recob::PFParticle& p, JsonObject
 {
   jpf.add("self"    ,p.Self()    );
   jpf.add("pdg"     ,p.PdgCode() );
-  jpf.add("parent"  ,p.Parent()  );
+  jpf.add("parent"  ,p.Parent()  ); 
   jpf.add("daughters", JsonArray(p.Daughters())); // Implicit conversion vector<size_t> to JsonArray
 }
 
 template<>
 void GalleryRecordComposer::composeObject(const recob::OpFlash& flash, JsonObject& jflash)
 {
-  jflash.add("time"       ,flash.Time()       );
-  jflash.add("timeWidth"  ,flash.TimeWidth()  );
-  jflash.add("absTime"    ,flash.AbsTime()    );
-  jflash.add("yCenter"    ,flash.YCenter()    );
-  jflash.add("yWidth"     ,flash.YWidth()     );
-  jflash.add("zCenter"    ,flash.ZCenter()    );
-  jflash.add("zWidth"     ,flash.ZWidth()     );
-  jflash.add("onBeamTime" ,flash.OnBeamTime() );
-  jflash.add("inBeamFrame",flash.InBeamFrame());
+  jflash.add("time"       ,flash.Time()       ); 
+  jflash.add("timeWidth"  ,flash.TimeWidth()  ); 
+  jflash.add("absTime"    ,flash.AbsTime()    ); 
+  jflash.add("yCenter"    ,flash.YCenter()    ); 
+  jflash.add("yWidth"     ,flash.YWidth()     ); 
+  jflash.add("zCenter"    ,flash.ZCenter()    ); 
+  jflash.add("zWidth"     ,flash.ZWidth()     ); 
+  jflash.add("onBeamTime" ,flash.OnBeamTime() ); 
+  jflash.add("inBeamFrame",flash.InBeamFrame()); 
 
   // Would have to pull it out one at a time. But I don't think I use this.
   //jflash.add("pePerOpDet",     JsonArray(*(tel_fPEperOpDet .get<vector<double> >(i))));
@@ -605,7 +573,7 @@ void GalleryRecordComposer::composeObject(const raw::OpDetPulse& pulse, JsonObje
   jobj.add("samples", pulse.Samples());
   jobj.add("tdc", pulse.FirstSample());
   jobj.add("frame", pulse.PMTFrame());
-  // In fact, this class is fundamentally broken: there is no const version of Waveform(), so the data is write-only!
+  // In fact, this class is fundamentally broken: there is no const version of Waveform(), so the data is write-only! 
   // if(pulse.Samples() < 10000) {
     // jobj.add("waveform",JsonArray(pulse.Waveform()));
   // }
@@ -660,7 +628,7 @@ void GalleryRecordComposer::composeWires()
     }
 
     bool is_supernova = (product.second.label() == "sndaq");
-
+    
     size_t nchannels = handle->size();
     if(nchannels<1) {
       std::cout << "No entries in object;" << std::endl;
@@ -670,17 +638,17 @@ void GalleryRecordComposer::composeWires()
     JsonObject r;
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
     std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
-
+    
     size_t ntdc = handle->begin()->NSignal();
     std::cout << " Channels: " << nchannels << " TDCs: " << ntdc << std::endl;
     if(ntdc<=0) continue;
-
+    
     for(const recob::Wire& wire : *handle) {
       int channel = wire.Channel(); // default
       // std::cout << "Channel " << channel << std::endl;
       waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( ntdc )); // Storage space
       waveform_ptr_t noiseform_ptr = waveform_ptr_t(new waveform_t( ntdc,  0x7fff )); // Storage space
-
+      
       const recob::Wire::RegionsOfInterest_t & rois = wire.SignalROI();
       for (auto iROI = rois.begin_range(); iROI!=rois.end_range(); ++iROI) {
         const auto& ROI = *iROI;
@@ -690,7 +658,7 @@ void GalleryRecordComposer::composeWires()
         if(is_supernova) subtract_pedestal = ROI[FirstTick];
         float amplify = 10;
         if(is_supernova) amplify = 1;
-
+        
         for(int i = FirstTick ; i< EndTick; i++){
          (*noiseform_ptr)[i] = 0;
          (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
@@ -747,7 +715,7 @@ void GalleryRecordComposer::composeWires()
     fOutput.add("cal_lowres",reco_list2);
   }
   std::cout << "Wires finishing" << std::endl;
-
+  
 }
 
 void GalleryRecordComposer::composeRawAvailability()
@@ -763,13 +731,13 @@ void GalleryRecordComposer::composeRawAvailability()
     boost::mutex::scoped_lock lck(fOutputMutex);
     fOutput.add("raw",reco_list);
   }
-
+  
 }
 
 
 void GalleryRecordComposer::composeRaw()
 {
-
+  
   typedef vector<raw::RawDigit> current_type_t;
   auto products = findByType<current_type_t>(fEvent->getTTree());
 
@@ -777,7 +745,7 @@ void GalleryRecordComposer::composeRaw()
   JsonObject reco_list2; // lowres
 
   for(auto product: products) {
-
+  
 
     std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
     TimeReporter timer(product.first);
@@ -819,7 +787,7 @@ void GalleryRecordComposer::composeRaw()
       for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
       pedcomp.finish(20);
       int ped = pedcomp.ped();
-      double rms = pedcomp.pedsig(); // auto-adjusted rms.
+      // double rms = pedcomp.pedsig(); // auto-adjusted rms.
 
       for(size_t i =0; i< nsamp; i++) {
         waveform[i] -= ped;
@@ -873,7 +841,7 @@ void GalleryRecordComposer::composeRaw()
     fOutput.add("raw_lowres",reco_list2);
   }
   std::cout << "RawDigits finishing" << std::endl;
-
+  
 }
 //
 //
@@ -983,22 +951,23 @@ void GalleryRecordComposer::composeObject(const simb::MCParticle& particle, Json
   // }
   // jobj.add("trajectory",jtraj);
 
-
+  
   // My version of sparsification is more aggressive than the built-in version.
   TLorentzVector x_last  = (traj[0].first);
   TLorentzVector p_last  = (traj[0].second);
   size_t j  = 0;
+  size_t n_saved = 0;
   for(const auto& pt: traj) {
     TLorentzVector x   = (pt.first);
     TLorentzVector p   = (pt.second);
-
+    
     if(  j==0  // keep first point
       || j==n-1  // keep last point
       || pointOffLine(x_last,p_last,x,0.2)) // keep any point not on projected line within a 0.2 cm tolerance
     {
       // Keep this point.
       JsonObject trajpoint;
-
+      
       trajpoint.add("x",JsonFixed(x.X(),1));
       trajpoint.add("y",JsonFixed(x.Y(),1));
       trajpoint.add("z",JsonFixed(x.Z(),1));
@@ -1007,14 +976,15 @@ void GalleryRecordComposer::composeObject(const simb::MCParticle& particle, Json
       trajpoint.add("py",JsonFixed(p.Y(),4));
       trajpoint.add("pz",JsonFixed(p.Z(),4));
       trajpoint.add("E" ,JsonFixed(p.T(),6));
-      jtraj.add(trajpoint);
+      jtraj.add(trajpoint); 
       x_last = x;
       p_last = p;
-      j++;
+      n_saved++;
     }
+    j++;
   }
   jobj.add("trajectory",jtraj);
-
+  std::cout << "Trajectory sparsification: before " << n << " after " << n_saved << std::endl;
 }
 
 
@@ -1084,7 +1054,7 @@ const char* lookupmode(int mode)
     case simb::kCCCOH                         : return "CCCOH";
     case simb::kNuElectronElastic             : return "NuElectronElastic";
     case simb::kInverseMuDecay                : return "InverseMuDecay";
-  };
+  }; 
   return "";
 }
 
@@ -1164,8 +1134,8 @@ void GalleryRecordComposer::composeObject(const simb::MCTruth& truth, JsonObject
   JsonObject jnu;
   composeObject(truth.GetNeutrino(),jnu);
   jobj.add("neutrino",jnu);
-
-
+    
+    
   JsonArray jparticles;
   for(int i=0;i<truth.NParticles();i++) {
     JsonObject jpart;
@@ -1193,14 +1163,14 @@ struct GalleryAssociationHelper {
   assn_1_t::iterator _assn_1_itr;
   assn_2_t::iterator _assn_2_itr;
   assn_3_t::iterator _assn_3_itr;
-
+  
   GalleryAssociationHelper() : _assn_1_itr(_assn_1.end()) {};
 
   void add(art::ProductID const& id1, size_t key1, art::ProductID const& id2, size_t key2)
   {
-    // Efficient adding to my map of maps of maps of arrays.  Optimize on the last call to this function
+    // Efficient adding to my map of maps of maps of arrays.  Optimize on the last call to this function 
     // (stored in the _itr members) is the same as the previous call.
-    // Uses maps for efficient storage.
+    // Uses maps for efficient storage. 
     // Assn3 COULD be done as a vector of JsonArrays, but with dynamic resizing I'm not convinced it's faster.
     if((_assn_1_itr == _assn_1.end()) || (_assn_1_itr->first!=id1)) {
       _assn_1_itr = _assn_1.find(id1);
@@ -1211,7 +1181,7 @@ struct GalleryAssociationHelper {
     }
     // the _assn_1_itr now points correctly.
     assn_2_t& assn_2 = _assn_1_itr->second;
-
+    
     if((_assn_2_itr == assn_2.end()) || (_assn_2_itr->first!=id2)) {
       _assn_2_itr = assn_2.find(id2);
       if(_assn_2_itr == assn_2.end()) {
@@ -1219,52 +1189,55 @@ struct GalleryAssociationHelper {
         _assn_3_itr = _assn_2_itr->second.end(); // reset itr 3
       }
     }
-
+    
     // _assn_2_itr is now correct.
     assn_3_t& assn_3 = _assn_2_itr->second;
-
+    
     if((_assn_3_itr == assn_3.end()) || (_assn_3_itr->first!=key1)) {
       _assn_3_itr = assn_3.find(key1);
       if(_assn_3_itr == assn_3.end()) {
         _assn_3_itr = (assn_3.insert(assn_3_t::value_type(key1,JsonArray()))).first; // insert returns itr,bool
       }
     }
-
+     
     // _assn_3_itr is now correct
     _assn_3_itr->second.add(key2); // add to jsonarray
     // std::cout << " " << _assn_3_itr->second.length() << std::endl;
-
-  }
-
-  void output(gallery::Event& event, JsonObject& assns)
-  {
+    
+  } 
+  
+  void output(gallery::Event& event, JsonObject& assns) 
+  {  
     for(auto& itr1: _assn_1) {
       JsonObject j1;
       // const art::BranchDescription* desc1 = event.dataGetterHelper()->branchMapReader().productToBranch(itr1.first);
       // std::string name1 = stripdots(desc1->branchName());
       art::BranchDescription const& desc1 = event.getProductDescription(itr1.first);
       std::string name1 = stripdots(desc1.branchName());
-      std::cout << name1 << std::endl;
 
+      std::cout << name1 << std::endl;
+      
       for(auto& itr2: itr1.second) {
         JsonObject j2;
+        
         // const art::BranchDescription* desc2 = event.dataGetterHelper()->branchMapReader().productToBranch(itr2.first);
         // std::string name2 = stripdots(desc2->branchName());
         art::BranchDescription const& desc2 = event.getProductDescription(itr2.first);
         std::string name2 = stripdots(desc2.branchName());
+
         std::cout << "\t" << name2 << std::endl;
-
-
+        
+        
         for(auto& itr3: itr2.second) {
           j2.add(std::to_string(itr3.first),itr3.second);
         }
-
+        
         j1.add(name2,j2);
       }
-
+      
       assns.add(name1,j1);
     }
-
+    
   }
 };
 
@@ -1274,6 +1247,7 @@ void GalleryRecordComposer::composeAssociation()
 {
   typedef art::Assns<A,B> assn_t;
 
+  std::cout << "GalleryRecordComposer::composeAssociation() " << typeid(A).name() << " " << typeid(B).name() << std::endl;
   for(auto product: findByType<assn_t>(fEvent->getTTree())) {
     gallery::Handle< assn_t > assnhandle;
     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,assnhandle);}
@@ -1341,7 +1315,7 @@ struct Outer {
 void GalleryRecordComposer::composeAssociations()
 {
   TimeReporter timer("Associations");
-
+    
   fAssnHelper.reset(new GalleryAssociationHelper());
   JsonObject assns;
 
@@ -1384,14 +1358,22 @@ void GalleryRecordComposer::composeAssociations()
       >;
     for_each(*this,Outer<association_types2>{}, association_types2{});
 
+
     using association_types3 = type_list<
         recob::PFParticle,
         recob::Shower,
-        recob::Track
+        recob::Track        
       >;
     for_each(*this,Outer<association_types3>{}, association_types3{});
-  }
 
+    using association_types4 = type_list<
+        recob::Track,
+        recob::Hit
+      >;
+    for_each(*this,Outer<association_types4>{}, association_types4{});
+
+  }
+  
   // composeAssociation<anab::Calorimetry,recob::Track>();
   // composeAssociation<anab::CosmicTag,recob::Hit>();
   // composeAssociation<anab::CosmicTag,recob::PFParticle>();
@@ -1424,13 +1406,13 @@ void GalleryRecordComposer::composeAssociations()
 
   // Read out the association objects.
   fAssnHelper->output(*fEvent,assns);
-
+  
   // cout << "Association total size: " << assns.str().length() << std::endl;
   {
     boost::mutex::scoped_lock lck(fOutputMutex);
     fOutput.add("associations",assns);
     fStats.add("Associations",timer.t.Count());
-
+    
   }
 }
 
@@ -1441,6 +1423,7 @@ void GalleryRecordComposer::compose()
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
   fCurrentEventDirname = fCacheStoragePath;
   fCurrentEventUrl     = fCacheStorageUrl;
+  
   int dummy;
   fOutput.add("composer",abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy));
 
@@ -1460,9 +1443,9 @@ void GalleryRecordComposer::compose()
 
   if(!doCal) composeCalAvailability(); // just look at branch names.
   if(!doRaw) composeRawAvailability();
-
-
-
+  
+  
+  
   //
   // OK, now build the result.
   //
@@ -1486,9 +1469,7 @@ void GalleryRecordComposer::compose()
   composeObjectsVector< std::vector<recob::PFParticle> >("pfparticles", fOutput );
   composeObjectsVector< std::vector<recob::OpFlash   > >("opflashes"  , fOutput );
   composeObjectsVector< std::vector<recob::OpHit     > >("ophits"     , fOutput );
-  composeObjectsVector< std::vector<raw::OpDetPulse  > >("oppulses"   , fOutput );
-  composeObjectsVector< std::vector<crt::CRTHit      > >("crthits"    , fOutput );
-  composeObjectsVector< std::vector<crt::CRTTrack    > >("crttracks"    , fOutput );
+  composeObjectsVector< std::vector<  raw::OpDetPulse> >("oppulses"   , fOutput );
 
   JsonObject mc;
   bool got_mc = false;
@@ -1497,7 +1478,7 @@ void GalleryRecordComposer::compose()
   got_mc |= composeObjectsVector< std::vector<simb::MCParticle> >("particles", mc );
   if(got_mc) {
     boost::mutex::scoped_lock lck(fOutputMutex);
-    fOutput.add("mc",mc);
+    fOutput.add("mc",mc);    
   }
   composeAssociations();
 
@@ -1521,16 +1502,21 @@ void GalleryRecordComposer::compose()
   //
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeMC,this));
   // threads.create_thread(boost::bind(&GalleryRecordComposer::composeAssociations,this));
-  //
+  //    
   // threads.join_all();
   // Database lookup.
   // slomon_thread.join();
   // JsonElement hv; hv.setStr(slm.val);
-  // fOutput.add("hv",hv);
+  // fOutput.add("hv",hv);  
   timer.addto(fStats);
   fOutput.add("stats",fStats);
-
+  
   // TimeReporter st("Stringify");
   // fOutput.str();
-
+  
 }
+
+
+
+
+
