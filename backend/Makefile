@@ -37,7 +37,8 @@ pwd := $(shell pwd)
 
 # CPPFLAGS := -g -I.. -Wno-error-deprecated-declarations
 #CPP := g++44 -std=c++0x
-CPP := g++ -std=c++1y -O0
+#CPP := g++ -std=c++1y -O0
+CPP := g++ -pthread -std=c++98 -std=c++17 
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -52,7 +53,7 @@ ifeq ($(UNAME),Darwin)
   CPPFLAGS += -I /usr/local/opt/openssl/include
 else 
   CPPFLAGS += -fPIC
-  LDFLAGS += -lgomp -fPIC
+  LDFLAGS += -lgomp -fPIC 
 endif
 
 CPPFLAGS += -Wno-return-type-c-linkage
@@ -106,10 +107,9 @@ LIBS     += -L ${GALLERY_LIB} -l gallery
 CPPFLAGS += -I ${CANVAS_INC}
 LIBS     += -L ${CANVAS_LIB} -l canvas
 CPPFLAGS += -I ${LARDATAOBJ_INC}
-LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
+LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase -l lardataobj_Simulation -l lardataobj_AnalysisBase
 CPPFLAGS += -I ${LARCOREALG_INC}
-LIBS     += -L ${LARCOREALG_LIB} -l larcorealg_Geometry
-CPPFLAGS += -I ${LARCOREOBJ_INC}
+LIBS     += -L ${LARCOREALG_LIB} -l larcorealg_Geometry 
 CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
 CPPFLAGS += -I ${CETLIB_INC}          -I ${CETLIB_EXCEPT_INC}
@@ -131,14 +131,14 @@ LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 CPPFLAGS += -DGALLERY
 # LIBS += -lgomp
 
-ifneq ($(origin UBOBJ_INC), undefined)
-  CPPFLAGS += -DSPLIT_UBOONECODE=1
-  CPPFLAGS += -I  ${UBOBJ_INC}
-  LIBS += -L${UBOBJ_LIB} 
-else 
-  # CPPFLAGS += -I ${UBOONECODE_INC}
-  # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
-endif
+# ifneq ($(origin UBOBJ_INC), undefined)
+#   CPPFLAGS += -DSPLIT_UBOONECODE=1
+#   CPPFLAGS += -I  ${UBOBJ_INC}
+#   LIBS += -L${UBOBJ_LIB}
+# else
+#   # CPPFLAGS += -I ${UBOONECODE_INC}
+#   # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
+# endif
 
 
 
