@@ -269,13 +269,13 @@ void TerminationHandler(int signal)
     exit(1);
   }
 }
-
-void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
-{
-  // Suppress warning messages about branch sets.
-  TString m(msg);
-  if(m.BeginsWith("unknown branch")) return;
-  
-  //DefaultErrorHandler(level, abort, location, msg);
-//  exit(1);
-}
+//
+// void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
+// {
+//   // Suppress warning messages about branch sets.
+//   TString m(msg);
+//   if(m.BeginsWith("unknown branch")) return;
+//
+//   //DefaultErrorHandler(level, abort, location, msg);
+// //  exit(1);
+// }

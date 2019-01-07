@@ -176,7 +176,7 @@ bool RawRecordComposer::composeHeaderTrigger(JsonObject& trig)
     return false;
   }
   auto const& trigger = fRecord->getTRIGSEBMap().begin()->second;
-  auto const& ch = trigger.crateHeader();
+  // auto const& ch = trigger.crateHeader();
   auto const& trigger_cards = trigger.getCards();
   trig.add("trigger_cards",trigger_cards.size());
   // Fixme: look at GPS 

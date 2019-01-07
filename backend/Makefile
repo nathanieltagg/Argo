@@ -45,10 +45,8 @@ LDFLAGS = -g
 
 ifeq ($(UNAME),Darwin)
   CPP = clang++ 
-  # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
-  # LD = clang++ -std=c++1y
-  # CPPFLAGS += -fPIC -g
-  LDFLAGS = -prebind   -g
+  # LDFLAGS = -prebind   -g
+  LDFLAGS =  -g
   CPPFLAGS += -I /usr/local/opt/openssl/include
 else 
   CPPFLAGS += -fPIC
@@ -108,6 +106,8 @@ LIBS     += -L ${CANVAS_LIB} -l canvas
 CPPFLAGS += -I ${LARDATAOBJ_INC}
 LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
 CPPFLAGS += -I ${LARCOREOBJ_INC}
+LIBS     += -L ${LARCOREALG_LIB} 
+CPPFLAGS += -I ${LARCOREALG_INC}
 CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
 CPPFLAGS += -I ${CETLIB_INC}          -I ${CETLIB_EXCEPT_INC}
@@ -135,7 +135,8 @@ ifneq ($(origin UBOBJ_INC), undefined)
   LIBS += -L${UBOBJ_LIB} 
 else 
   CPPFLAGS += -I ${UBOONECODE_INC}
-  LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
+  # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
+  # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData
 endif
 
 
@@ -173,7 +174,7 @@ LIBS += -lcurl
 
 
 ifeq ($(UNAME),Darwin)
-  CPPFLAGS += -g -gdwarf-4 -O0 -std=c++98 -Wno-dynamic-exception-spec -Wno-error=deprecated-declarations -pedantic -Wno-unused-local-typedefs -std=c++17 -Wall  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -fPIC
+  CPPFLAGS += -g -gdwarf-4 -O0 -std=c++98 -Wno-dynamic-exception-spec -Wno-error-deprecated-declarations -Wno-return-type-c-linkage -pedantic -Wno-unused-local-typedefs -std=c++17 -Wall  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -fPIC
   # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
 endif
 
@@ -227,8 +228,9 @@ endif
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
-		-Wl,-rpath,@executable_path \
-		-Wl,--unresolved-symbols=ignore-in-shared-libs
+		-Wl,-rpath,@executable_path 
+    
+    # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 
 argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
