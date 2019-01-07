@@ -48,7 +48,7 @@ ifeq ($(UNAME),Darwin)
   # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
   # LD = clang++ -std=c++1y
   # CPPFLAGS += -fPIC -g
-  LDFLAGS = -prebind   -g
+  LDFLAGS =  -g
   CPPFLAGS += -I /usr/local/opt/openssl/include
 else 
   CPPFLAGS += -fPIC
@@ -60,8 +60,6 @@ CPPFLAGS += -Wno-return-type-c-linkage
 
 SOURCES = $(notdir $(wildcard *.cpp)) 
 
-UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp 
-UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h 
 
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
@@ -109,6 +107,8 @@ CPPFLAGS += -I ${CANVAS_INC}
 LIBS     += -L ${CANVAS_LIB} -l canvas
 CPPFLAGS += -I ${LARDATAOBJ_INC}
 LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
+CPPFLAGS += -I ${LARCOREALG_INC}
+LIBS     += -L ${LARCOREALG_LIB} -l larcorealg_Geometry
 CPPFLAGS += -I ${LARCOREOBJ_INC}
 CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
@@ -136,8 +136,8 @@ ifneq ($(origin UBOBJ_INC), undefined)
   CPPFLAGS += -I  ${UBOBJ_INC}
   LIBS += -L${UBOBJ_LIB} 
 else 
-  CPPFLAGS += -I ${UBOONECODE_INC}
-  LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
+  # CPPFLAGS += -I ${UBOONECODE_INC}
+  # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
 endif
 
 
@@ -230,7 +230,7 @@ argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
-		-Wl,--unresolved-symbols=ignore-in-shared-libs
+    # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 
 argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
@@ -285,9 +285,11 @@ testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 
-# This is a brute-force copy.
-copy: $(foreach f,$(UBOONEDAQ_FILES),$(wildcard $(uboonedaq)/*/$(f)))
-	cp $? .
+# This is a brute-force copy. This is now obsolete, since instead have these files committed to the argo repository.
+# UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp
+# UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h
+# copy: $(foreach f,$(UBOONEDAQ_FILES),$(wildcard $(uboonedaq)/*/$(f)))
+#   cp $? .
 
 
 #$(UBOONEDAQ_FILES:%.cpp): $(wildcard $(uboonedaq)/*/%.cpp)
