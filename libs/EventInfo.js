@@ -12,8 +12,8 @@
 gEventInfo = null;
 
 // Constants
-var kTriggerNames = ["PMT 0 (Beam)"
-                    ,"PMT 1 (Cosmic)"
+var kTriggerNames = ["Beam" // "PMT 0 (Beam)"
+                    ,"Cosmic" // "PMT 1 (Cosmic)"
                     ,"PMT 2"
                     ,"PMT 3"
                     ,"PMT 4"
@@ -23,15 +23,27 @@ var kTriggerNames = ["PMT 0 (Beam)"
                     ,"PC"
                     ,"External"
                     ,"Active"
-                    ,"Gate2"
+                    ,"BNB"
                     ,"Gate1"
-                    ,"Veto"
+                    ,"LASER" // daq sez "veto" but that's not right
                     ,"Calib"
-                    ,"" //Phase0"
-                    ,"" //Phase1"
+                    ,"bit16" //Phase0"
+                    ,"bit17" //Phase1"
                     ,"GateFake"
                     ,"BeamFake"
-                    ,"MuCS (Spare1)"];
+                    ,"MuCS (Spare1)"
+,"bit21"
+,"bit22"
+,"bit23"
+,"bit24"
+,"bit25"
+,"bit26"
+,"bit27"
+,"bit28"
+,"bit29"
+,"bit30"
+,"bit31"
+            ];
 
 
 // Automatic runtime configuration.
@@ -82,11 +94,11 @@ EventInfo.prototype.NewRecord = function()
     if(gRecord.header.trigger) {
       var trig = gRecord.header.trigger;
       if(trig.triggerword) {
-        $(".event-triggerword").text('0x'+trig.triggerword.toString(16));
+        $(".event-triggerword").text(trig.triggerword+' 0x'+trig.triggerword.toString(16));
         var trignames  = [];
         for(var i = 0;i<kTriggerNames.length;i++) {
           var bit = 1 << i;
-          console.warn(i,bit,trig.triggerword,(trig.triggerword & bit)!=0,kTriggerNames[i]);
+          // console.warn("TRIG",i,bit,trig.triggerword,(trig.triggerword & bit)!=0,kTriggerNames[i]);
           if(((trig.triggerword & bit) !=0) && kTriggerNames[i].length )trignames.push(kTriggerNames[i]);
         }
         $(".event-triggernames").text(trignames.join(", "));

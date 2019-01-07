@@ -204,6 +204,7 @@ ZoomControl.prototype.AutoZoom = function()
           var ix = Math.floor(hit.wire/width_wire - offset_x);
           var iy = Math.floor((hit.t+offset_hit_time)/width_tdc - offset_y);
           if(ix>=nbox_x) console.warn("autozoom wtf?");
+          if(iy>=nbox_y) console.warn("autozoom wtf?");
           gridboxes[ix+iy*nbox_x] += 1;
         }
       }
@@ -222,13 +223,13 @@ ZoomControl.prototype.AutoZoom = function()
       }
     }    
   }
-  console.log("Most hits in box:",most_xbox,most_ybox,most_xoff,most_yoff,"n:",most);
-  var tdc_lo = (most_ybox+most_yoff)*width_tdc;
-  var tdc_hi = (most_ybox+most_yoff+1)*width_tdc;
+  console.log("autozoom Most hits in box:",most_xbox,most_ybox,most_xoff,most_yoff,"n:",most);
+  var tdc_lo = (most_ybox+most_yoff)*width_tdc - offset_hit_time;
+  var tdc_hi = (most_ybox+most_yoff+1)*width_tdc - offset_hit_time;
 
   var wire_lo = (most_xbox+most_xoff)*width_wire;
   var wire_hi = (most_xbox+most_xoff+1)*width_wire;
-  console.log("Zoom to box:",wire_lo,wire_hi,tdc_lo,tdc_hi);
+  console.log("autozoom Zoom to box:",wire_lo,wire_hi,tdc_lo,tdc_hi);
   // gZoomRegion.tdc[0] = tdc_lo;
   // gZoomRegion.tdc[1] = tdc_hi;
 
@@ -236,7 +237,7 @@ ZoomControl.prototype.AutoZoom = function()
   // or doing it with manual controls.
   // :-(
       
-  console.log("Zoom to wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
+  console.log("autozoom Zoom to wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);
   gZoomRegion.changeTimeRange(tdc_lo,tdc_hi);
   gZoomRegion.setLimits(2,wire_lo,wire_hi);
   // console.warn("AutoZoom wire",wire_lo,wire_hi," tdc ",tdc_lo,tdc_hi);

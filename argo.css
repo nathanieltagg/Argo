@@ -33,7 +33,7 @@ body {
 
         -webkit-print-color-adjust:exact;  /* When printing in Chrome, include BG images in PDF*/
 
-        -moz-user-select: none;-webkit-user-select: none;
+        user-select:none;  -ms-user-select: none; -moz-user-select: none;-webkit-user-select: none;
 
 
         font-size: 10pt;

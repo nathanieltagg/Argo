@@ -17,7 +17,7 @@ plexusConnection_fallback= host=localhost port=5432;
 #period=5; # min time between event builds. could be slower.
 
 # This is what needs changing for laser:
-options=_NOCAL_NORAW__SUPERSPEED_; # laser running
+#options=_NOCAL_NORAW__SUPERSPEED_; # laser running
 period=0.01; # min time between event builds. could be slower.
 
 # Cache file location.

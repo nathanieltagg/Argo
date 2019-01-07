@@ -35,10 +35,10 @@
 #include "JsonElement.h"
 #include "TimeReporter.h"
 
+#include "gallery/Event.h"
 #include "canvas/Utilities/TypeID.h"
 #include "canvas/Persistency/Common/Assns.h"
 #include "canvas/Persistency/Provenance/rootNames.h"
-#include "gallery/Event.h"
 #include "gallery/BranchMapReader.h"
 #include "gallery/DataGetterHelper.h"
 #include <TTree.h>
@@ -47,7 +47,11 @@
 // Data objects
 #include "canvas/Persistency/Provenance/EventAuxiliary.h"
 #include "lardataobj/RawData/TriggerData.h"
-#include "uboone/RawData/utils/ubdaqSoftwareTriggerData.h"
+// #ifdef SPLIT_UBOONECODE
+//  #include "ubobj/RawData/utils/ubdaqSoftwareTriggerData.h"
+// #else
+//  #include "uboone/RawData/utils/ubdaqSoftwareTriggerData.h"
+// #endif
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/OpDetPulse.h"
 #include "lardataobj/RecoBase/Wire.h"
@@ -324,24 +328,24 @@ void GalleryRecordComposer::composeHeaderData()
   }
 
   // The swtrigger data object is in uboone,
-  {
-    auto products = findByType< vector<raw::ubdaqSoftwareTriggerData> >(fEvent->getTTree());
-    for(auto product: products) {
-
-      std::cout << "Looking at SW Trigger object " << product.first << std::endl;
-      gallery::Handle< vector<raw::ubdaqSoftwareTriggerData> > handle;
-      {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
-      if(!handle.isValid()) { continue;  }
-      JsonArray sw_triggers;
-      cout << "trigs: " << handle->size() << std::endl;
-      for(const raw::ubdaqSoftwareTriggerData& swtrig: *handle) {
-        for(int i = 0; i< swtrig.getNumberOfAlgorithms(); i++) {
-          if(swtrig.getPass(i)) sw_triggers.add(swtrig.getTriggerAlgorithm(i));
-        }
-      }
-      trigger.add("sw_triggers",sw_triggers);
-    }
-  }
+  // {
+  //   auto products = findByType< vector<raw::ubdaqSoftwareTriggerData> >(fEvent->getTTree());
+  //   for(auto product: products) {
+  //
+  //     std::cout << "Looking at SW Trigger object " << product.first << std::endl;
+  //     gallery::Handle< vector<raw::ubdaqSoftwareTriggerData> > handle;
+  //     {boost::mutex::scoped_lock b(fGalleryLock); fEvent->getByLabel(product.second,handle);}
+  //     if(!handle.isValid()) { continue;  }
+  //     JsonArray sw_triggers;
+  //     cout << "trigs: " << handle->size() << std::endl;
+  //     for(const raw::ubdaqSoftwareTriggerData& swtrig: *handle) {
+  //       for(int i = 0; i< swtrig.getNumberOfAlgorithms(); i++) {
+  //         if(swtrig.getPass(i)) sw_triggers.add(swtrig.getTriggerAlgorithm(i));
+  //       }
+  //     }
+  //     trigger.add("sw_triggers",sw_triggers);
+  //   }
+  // }
   header.add("trigger",trigger);
 
   {

@@ -272,31 +272,61 @@ function ComposeTrackInfo(s)
 
   var h = "<h3>Track " + id+ "</h3>";
   h += trk._owner + "</br>";
-  h += "<table class='.hoverinfo'>";
+  h += "<table class='hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
   var c = "</td></tr>";  
-  h+= a + "Vertex" + b + "x: " +  Math.round(start.x) + " cm<br/>" +
-                         "y: " +  Math.round(start.y) + " cm<br/>" +
-                         "z: " +  Math.round(start.z) + " cm<br/>" + c;
+  h+= a + "Vertex" + b + "<table>" 
+                      + "<tr><td>x:</td><td>" +  Math.round(start.x) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>y:</td><td>" +  Math.round(start.y) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>z:</td><td>" +  Math.round(start.z) + "</td><td>cm</td></tr>" 
+                      + "</table>" + c;
 
-  h+= a + "Dir" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
-                         "vy: " + (vy).toFixed(3) + "<br/>" +
-                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
+  h+= a + "Dir" + b    + "<table>" 
+                      + "<tr><td>vx:</td><td>" +  (vx).toFixed(3) + "</td></tr>" 
+                      + "<tr><td>vy:</td><td>" +  (vy).toFixed(3) + "</td></tr>" 
+                      + "<tr><td>vz:</td><td>" +  (vz).toFixed(3) + "</td></tr>" 
+                      + "</table>" + c;
 
-  h+= a + "Endpoint" + b + "x: " +  Math.round(end.x) + " cm<br/>" +
-                           "y: " +  Math.round(end.y) + " cm<br/>" +
-                           "z: " +  Math.round(end.z) + " cm<br/>" + c;
+  h+= a + "Endpoint" + b + "<table>" 
+                      + "<tr><td>x:</td><td>" +  Math.round(end.x) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>y:</td><td>" +  Math.round(end.y) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>z:</td><td>" +  Math.round(end.z) + "</td><td>cm</td></tr>" 
+                      + "</table>" + c;
 
-  h+= a + "End direction" + b    + "vx: " + (vx).toFixed(3) + "<br/>" +
-                         "vy: " + (vy).toFixed(3) + "<br/>" +
-                         "vz: " + (vz).toFixed(3) + "<br/>" + c;
+  h+= a + "End direction" + b   + "<table>" 
+                      + "<tr><td>vx:</td><td>" +  (vx).toFixed(3) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>vy:</td><td>" +  (vy).toFixed(3) + "</td><td>cm</td></tr>" 
+                      + "<tr><td>vz:</td><td>" +  (vz).toFixed(3) + "</td><td>cm</td></tr>" 
+                      + "</table>" + c;
 
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
   h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
-
+  
+  // horrible point info
+  // Get associated hit info.
+  
+  
   if(gRecord.associations && gRecord.associations[trk._owner]) {
+    // find an associated hit collection
+    var types = Object.keys(gRecord.associations[trk._owner]);
+    var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
+    if(hitname) {
+      var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
+      var hitlist = gRecord.hits[hitname];
+      h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
+      h += "<tr><th>TDC:</th><th>ADC</th></tr>";
+      for(var i=0;i<hitids.length;i++) { 
+        var hit = hitlist[hitids[i]];
+        if(h.plane==2)
+          h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
+      }
+      h+="</table></div>"
+      h+= c;  
+    }
+  
+
     for ( n in gRecord.associations[trk._owner]) {
       h+= a + n + b + gRecord.associations[trk._owner][n][trk._idx].length + c;
     }
