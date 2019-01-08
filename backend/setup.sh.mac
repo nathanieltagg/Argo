@@ -15,19 +15,11 @@ source /Users/larsoft/setup
 # if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
 #export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
-#setup uboonecode v06_80_00 -q debug:c2
-
-# setup uboonecode v08_00_00_01 -q debug:c2
-
 setup lardata v08_00_00 -q debug:c2
 setup uboonedaq_datatypes v6_22_05a -q debug:c2:offline
+unsetup gallery
 setup gallery v1_10_00 -q c2:debug
-
-#setup gallery v1_10_00 -q c2:debug
-#setup uboonedaq_datatypes v6_22_03_offline -q c2:debug
-
 
 # optional:
 setup larlite v06_70_00b -q c2:debug
 
-# source ../backend/larlite/config/setup.sh

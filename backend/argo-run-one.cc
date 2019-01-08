@@ -132,6 +132,8 @@ int main(int argc, char **argv)
   std::shared_ptr<std::string> payload = rc.compose(options.c_str(),filename.c_str(),selection.c_str(),entrystart,entryend);
   payload->append("\n");
   long t2 = gSystem->Now();
+  (void) t2;
+  (void) t1;
   
   ofstream outstream(jsonfilename.c_str());
   outstream << *payload;

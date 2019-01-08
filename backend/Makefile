@@ -15,29 +15,7 @@ clean:
 
 pwd := $(shell pwd)
 
-# ifeq ($(origin UBOONEDAQ_DATATYPES_DIR), undefined)
-#   uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
-#   uboonedaq_datatypes_src = $(HOME)/ubdaq/uboonedaq-datatypes/projects
-#   uboonedaq_datatypes_inc = $(HOME)/ubdaq/uboonedaq-datatypes/projects
-# else
-#   uboonedaq           = $(UBOONEDAQ_DIR)/source
-#   uboonedaq_datatypes_src = $(UBOONEDAQ_DATATYPES_DIR)/source
-#   uboonedaq_datatypes_inc = $(UBOONEDAQ_DATATYPES_DIR)/include
-# endif
-
-#ifeq ($(origin UBOONEDAQ_DIR), undefined)
-  uboonedaq           = $(HOME)/ubdaq/uboonedaq/projects
-#else
-#  uboonedaq           = $(UBOONEDAQ_DIR)/source
-#endif
-
-
-#override, since setup is poor.
-#uboonedaq  = $(HOME)/development/uboonedaq/projects
-
-# CPPFLAGS := -g -I.. -Wno-error-deprecated-declarations
-#CPP := g++44 -std=c++0x
-CPP := g++ -std=c++1y -O0
+CPP := g++
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -45,120 +23,130 @@ LDFLAGS = -g
 
 ifeq ($(UNAME),Darwin)
   CPP = clang++ 
-  # LDFLAGS = -prebind   -g
+  # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
+  # LD = clang++ -std=c++1y
+  # CPPFLAGS += -fPIC -g
   LDFLAGS =  -g
   CPPFLAGS += -I /usr/local/opt/openssl/include
 else 
   CPPFLAGS += -fPIC
-  LDFLAGS += -lgomp -fPIC
+  LDFLAGS += -lgomp -fPIC 
 endif
 
-CPPFLAGS += -Wno-return-type-c-linkage
-
-
+# all library sources are cpp files.
 SOURCES = $(notdir $(wildcard *.cpp)) 
 
-UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp 
-UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h 
-
+# object files and dependency files
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
+
 # Don't use the default FCL and messagelogger.
 CPPFLAGS += -D NO_MSGLOG=1 -D NO_FCL=1
 
 # abortive attempt:
-
-# define myaddpkg
+#
+# define myaddpkg =
+# echo $(1)
 # ifneq ($(origin $(1)_LIB), undefined)
-#   LIBS += -L $${$(1)_LIB}
-# 	LIBS += $2
+# LIBS += -L $${$(1)_LIB}
+# LIBS += $2
 # endif
 # ifneq ($(origin $(1)_INC), undefined)
-#   cadd = -I $${$(1)_INC}
-# 	CPPFLAGS += -I $${$(1)_INC}
+# cadd = -I $${$(1)_INC}
+# CPPFLAGS += -I $${$(1)_INC}
 # endif
-#
 # endef
 #
-# $(eval $(call myaddpkg, BOOST                       ,-lboost_serialization -lboost_system -lboost_thread -lboost_program_options))
+# $(eval $(call myaddpkg, BOOST, -lboost_serialization -lboost_system -lboost_thread -lboost_program_options))
 
+# ldpaths=
 
 #ROOT Special:
 LIBS  += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libs )  -lTreePlayer -lTreeViewer
 LDFLAGS += $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --ldflags)
+# ldpaths += -Wl,-rpath,$(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --libdir)
 CPPFLAGS += -I ${ROOT_INC}
 
 #nonstandard:
 CPPFLAGS += -I ${POSTGRESQL_INC}
 LIBS     += -L ${POSTGRESQL_LIBRARIES} -lpq
+# ldpaths  += -Wl,-rpath,${POSTGRESQL_LIBRARIES}
 
 ### Products added via ups
 CPPFLAGS += -I ${BOOST_INC}
 LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
+# ldpaths  += -Wl,-rpath,${BOOST_LIB}
+
 CPPFLAGS += -I ${HEP_CONCURRENCY_INC}
 LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
+# ldpaths  += -Wl,-rpath,${HEP_CONCURRENCY_LIB}
+
 CPPFLAGS += -I ${CANVAS_ROOT_IO_INC}
 LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
+# ldpaths  += -Wl,-rpath,${CANVAS_ROOT_IO_LIB}
+
 CPPFLAGS += -I ${GALLERY_INC}
 LIBS     += -L ${GALLERY_LIB} -l gallery
+# ldpaths  += -Wl,-rpath,${GALLERY_LIB}
+
 CPPFLAGS += -I ${CANVAS_INC}
 LIBS     += -L ${CANVAS_LIB} -l canvas
+# ldpaths  += -Wl,-rpath,${CANVAS_LIB}
+
 CPPFLAGS += -I ${LARDATAOBJ_INC}
-LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
-CPPFLAGS += -I ${LARCOREOBJ_INC}
-LIBS     += -L ${LARCOREALG_LIB} 
+LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase -l lardataobj_Simulation -l lardataobj_AnalysisBase
+# ldpaths  += -Wl,-rpath,${LARDATAOBJ_LIB}
+
 CPPFLAGS += -I ${LARCOREALG_INC}
+LIBS     += -L ${LARCOREALG_LIB} -l larcorealg_Geometry
+# ldpaths  += -Wl,-rpath,${LARCOREALG_LIB}
+
+CPPFLAGS += -I ${LARCOREOBJ_INC} 
+
 CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
-CPPFLAGS += -I ${CETLIB_INC}          -I ${CETLIB_EXCEPT_INC}
+# ldpaths  += -Wl,-rpath,${NUSIMDATA_LIB}
+
+CPPFLAGS += -I ${CETLIB_INC}  -I ${CETLIB_EXCEPT_INC}
+
 ifneq ($(origin CET_LIB_DIR), undefined)
 LIBS     += -L ${CETLIB_LIB_DIR} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+# ldpaths  += -Wl,-rpath,${CETLIB_LIB_DIR} -Wl,-rpath,${CETLIB_EXCEPT_LIB}
 endif
 ifneq ($(origin CETLIB_LIB), undefined)
 LIBS     += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+# ldpaths  += -Wl,-rpath,${CETLIB_LIB} -Wl,-rpath,${CETLIB_EXCEPT_LIB}
 endif
 
 CPPFLAGS += -I ${FHICLCPP_INC}
 CPPFLAGS += -I ${UBOONEDAQ_DATATYPES_INC}
 LIBS     += -L ${UBOONEDAQ_DATATYPES_LIB} -l ubdata_types
+# ldpaths  += -Wl,-rpath,${UBOONEDAQ_DATATYPES_LIB}
+
 CPPFLAGS += -I ${ROOT_INC}
 
 CPPFLAGS += -I ${SQLITE_INC}
 LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
+# ldpaths  += -Wl,-rpath,${SQLITE_LIB}
+
 
 CPPFLAGS += -DGALLERY
-# LIBS += -lgomp
-
-ifneq ($(origin UBOBJ_INC), undefined)
-  CPPFLAGS += -DSPLIT_UBOONECODE=1
-  CPPFLAGS += -I  ${UBOBJ_INC}
-  LIBS += -L${UBOBJ_LIB} 
-else 
-  CPPFLAGS += -I ${UBOONECODE_INC}
-  # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData_utils_dict -l uboone_RawData
-  # LIBS     += -L ${UBOONECODE_LIB} -l uboone_RawData
-endif
-
-
 
 ## LARLITE is optional.
 ifneq ($(origin LARLITE_DIR), undefined)
   CPPFLAGS += -DLARLITE=1
   CPPFLAGS += -I  ${LARLITE_COREDIR}
   LIBS += -L${LARLITE_LIBDIR} -lLArLite_DataFormat -lLArLite_Base
+  # ldpaths  += -Wl,-rpath,${LARLITE_LIBDIR}
 endif
-
 
 CPPFLAGS += -I/usr/local/include  # for png.h
 
-
-
 packages:
+	@echo LIBS:
 	@echo $(LIBS)
+	@echo CPPFLAGS:
 	@echo $(CPPFLAGS)
-	# echo $(a)
-	# echo ${nLIBS}
-	# echo ${A} ${FOO}
 
 # add any other desired libs here
 # PNG
@@ -174,7 +162,7 @@ LIBS += -lcurl
 
 
 ifeq ($(UNAME),Darwin)
-  CPPFLAGS += -g -gdwarf-4 -O0 -std=c++98 -Wno-dynamic-exception-spec -Wno-error-deprecated-declarations -Wno-return-type-c-linkage -pedantic -Wno-unused-local-typedefs -std=c++17 -Wall  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -fPIC
+  CPPFLAGS += -g -gdwarf-4 -O0 -std=c++98 -Wno-dynamic-exception-spec -Wno-error=deprecated-declarations -pedantic -Wno-unused-local-typedefs -std=c++17 -Wall  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -fPIC
   # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
 endif
 
@@ -228,23 +216,36 @@ endif
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
-		-Wl,-rpath,@executable_path 
-    
+		-Wl,-rpath,@executable_path \
     # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
+
+
+# Using the $(ldpaths) variable doesn't actually do the job, 
+# because the libraries are dependent on other libraries, so runtime can't find them unless the environment is set up.
+# There are various solutions here:
+# - Copy all the dependent libraries into one place (../lib or install/lib) and then use LD_LIBRARY_PATH on that one place
+#   - Works well on linux, see linux-copy-libraries.sh
+# - Do in-situ rpath adds to all libraries. This is invasive and probably stupid.
+# - Copy all the dependent libraries into ../lib and change all rpaths to look in the same spot
+#   - This doesn't work on linux, since chrpath and patchelf don't seem to be in the standard FermiLinux distros
+#   - CAN work with mac os X using install_name_tool
+#
+# HOWEVER: none of that is useful because ROOT still needs to see the source code paths in order to build it's run-time object constructors
+# In needs access to the compiler and to all the bits of code under
+# I NEED to have the full UPS chain set up. Grr.
 
 argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
-		-Wl,-rpath,@executable_path
-
+		-Wl,-rpath,@executable_path \
+		-Wl,-rpath,$$ORIGIN \
+    # -Wl,-rpath,$$ORIGIN/../lib \
+		#$(ldpaths)
 	# mkdir -p ../install/bin
 	# cp argo-backend-new ../install/bin
   
 
-# Now integrated into main build
-#argo-raw-backend: $(OBJ) tmp/argo-raw-backend.o Makefile
-#	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
@@ -261,6 +262,7 @@ argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
   # -Wl,-rpath,@loader_path/root/lib\
   # -Wl,-rpath,@loader_path/boost/lib\
 
+
 libflags = 
 ifeq ($(UNAME),Darwin)
   libflags = -install_name @rpath/libargo-backend.dylib
@@ -270,10 +272,9 @@ endif
 
 $(libargo): $(OBJ) tmp/Cint.o Makefile
 	#$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib $(libflags)
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib $(libflags) 
+  # $(ldpaths)
 
-testbin: $(OBJ) tmp/argo-backend.o Makefile
-	$(CPP) tmp/argo-backend.o $(LDFLAGS) -L. -largo-backend $(LIBS) $(BLIBS) -o $@
 
 
 notify-live.cgi:  notify_live.cc
@@ -285,23 +286,13 @@ testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 
-# This is a brute-force copy.
-copy: $(foreach f,$(UBOONEDAQ_FILES),$(wildcard $(uboonedaq)/*/$(f)))
-	cp $? .
+# This is a brute-force copy. This is now obsolete, since instead have these files committed to the argo repository.
+# UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp
+# UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h
+# copy: $(foreach f,$(UBOONEDAQ_FILES),$(wildcard $(uboonedaq)/*/$(f)))
+#   cp $? .
 
 
-#$(UBOONEDAQ_FILES:%.cpp): $(wildcard $(uboonedaq)/*/%.cpp)
-# 	@echo $?
-# 	@echo $(wildcard $(uboonedaq)/*/$@)
-# 	@echo "Copying new version of $< $@"
-# 	# cp $< $@
-
-# install-boost: Makefile
-#   #Thing for Mac OSX; change the internal name of the boost libraries.
-#   install_name_tool -id @rpath/libboost_serialization.dylib ${BOOST_LIB}/libboost_serialization.dylib
-#   install_name_tool -id @rpath/libboost_system.dylib ${BOOST_LIB}/libboost_system.dylib
-#   install_name_tool -id @rpath/libboost_thread.dylib ${BOOST_LIB}/libboost_thread.dylib
-#   install_name_tool -id @rpath/libboost_program_options.dylib ${BOOST_LIB}/libboost_program_options.dylib
 
 depend: $(DEPS)
 
@@ -311,4 +302,6 @@ printenv:
 	@echo " Sources: $(SOURCES)"
 	@echo " Objects: $(OBJ)"
 	@echo " RHEADERS = $(RHEADERS)"
+	
+		
 

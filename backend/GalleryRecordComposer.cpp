@@ -47,11 +47,6 @@
 // Data objects
 #include "canvas/Persistency/Provenance/EventAuxiliary.h"
 #include "lardataobj/RawData/TriggerData.h"
-// #ifdef SPLIT_UBOONECODE
-//  #include "ubobj/RawData/utils/ubdaqSoftwareTriggerData.h"
-// #else
-//  #include "uboone/RawData/utils/ubdaqSoftwareTriggerData.h"
-// #endif
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/OpDetPulse.h"
 #include "lardataobj/RecoBase/Wire.h"
@@ -474,7 +469,8 @@ void GalleryRecordComposer::composeObject(const recob::Track& track, JsonObject&
   // cout << " Points: " << npoints << " first: " << first_point << " last: " << last_point << std::endl;
   for(size_t i = first_point; i<= last_point; i++) {
     // cout << " constructing point " << i << " next is " <<  traj.NextValidPoint(i) << std::endl;
-    if(!traj.HasValidPoint(i)) continue;
+    auto aaaa = recob::TrajectoryPointFlagTraits::NoPoint;
+    if(!traj.HasPoint(i)) continue;
     JsonObject jpoint;
     const auto& xyz = traj.LocationAtPoint(i);
     const auto& mom = traj.MomentumVectorAtPoint(i);
