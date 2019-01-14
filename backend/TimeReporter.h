@@ -2,8 +2,9 @@
 #define TIMEREPORTER_H_79AD56D4
 
 
-#include "JsonElement.h"
+#include "json.hpp"
 #include "Timer.h"
+#include <iostream>
 
 class TimeReporter
 {
@@ -13,7 +14,7 @@ public:
   TimeReporter(const std::string& name="") :fName(name), t() {};
   ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
   
-  void addto(JsonObject& stats) { stats.add(fName,t.Count()); }
+  void addto(nlohmann::json& stats) { stats[fName]=t.Count(); }
 };
 
 

@@ -1,7 +1,7 @@
 #ifndef ROOTTOJSON_H_1VW0NCQF
 #define ROOTTOJSON_H_1VW0NCQF
 
-#include "JsonElement.h"
+#include "json_fwd.hpp"
 
 // Tools to convert ROOT objects to JSON objects.
 
@@ -9,8 +9,8 @@
 class TH1;
 class TH2;
 
-JsonObject TH1ToHistogram( TH1* hist, int maxbins = 0 );
-JsonObject TH2ToHistogram( TH2* hist, int maxbins = 0 );
+nlohmann::json TH1ToHistogram( TH1* hist, int maxbins = 0 );
+nlohmann::json TH2ToHistogram( TH2* hist, int maxbins = 0 );
 
 
 

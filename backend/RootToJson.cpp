@@ -2,8 +2,9 @@
 #include <TH1.h>
 #include <TH2.h>
 #include <TDirectory.h>
-
+#include "json.hpp"
 #include <iostream>
+#include "json_tools.h"
 
 
 int findDivisor(int n, int m)
@@ -21,25 +22,25 @@ int findDivisor(int n, int m)
   return 1;
 }
 
-JsonElement getObjectInfo( TH1* hist )
+nlohmann::json getObjectInfo( TH1* hist )
 {
-  JsonElement j;
+  nlohmann::json j;
   TDirectory* dir = hist->GetDirectory();
   std::string name = hist->GetName();
   name += "_Info";
   if(!dir) return j;
   TNamed* info = dynamic_cast<TNamed*>(dir->Get(name.c_str()));
   if(!info) return j;
-  j.setStr(info->GetTitle());
+  j = info->GetTitle();
   return j;
 }
 
-JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
+nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
 {
-  JsonObject h;
+  nlohmann::json h;
   // Convert a histogram into a JSON file.
-  h.add("name" ,inHist->GetName());
-  h.add("title",inHist->GetTitle());
+  h["name" ] = inHist->GetName();
+  h["title"] = inHist->GetTitle();
  
   // Rebin if requested.
   TH1* hist = inHist;
@@ -48,76 +49,76 @@ JsonObject TH1ToHistogram( TH1* inHist, int maxbins )
     int rebin = findDivisor(maxbins,inHist->GetNbinsX());
     htemp = inHist->Rebin(rebin,"htemp");
     hist = htemp;
-    h.add("original_n",inHist->GetNbinsX());
-    h.add("rebinned_x_by",rebin);
+    h["original_n"] = inHist->GetNbinsX();
+    h["rebinned_x_by"] = rebin;
   }
   if(!hist) return h;
-  h.add("classname",hist->ClassName());
-  h.add("xlabel",hist->GetXaxis()->GetTitle());
-  h.add("ylabel",hist->GetYaxis()->GetTitle());
+  h["classname"] = hist->ClassName();
+  h["xlabel"] = hist->GetXaxis()->GetTitle();
+  h["ylabel"] = hist->GetYaxis()->GetTitle();
   // Custom axis labels.
   if(hist->GetXaxis()->GetLabels()) {
-    JsonArray binlabels;
+    nlohmann::json binlabels;
     for(int i=1; i <= hist->GetNbinsX();i++) {
-      binlabels.add(hist->GetXaxis()->GetBinLabel(i));
+      binlabels.push_back(hist->GetXaxis()->GetBinLabel(i));
     }
-    h.add("binlabelsx",binlabels);
+    h["binlabelsx"] = binlabels;
   }
   // Custom bin widths
   if(hist->GetXaxis()->IsVariableBinSize()) {
-    JsonArray xbins;
+    nlohmann::json xbins;
     const TArrayD* Xbins = hist->GetXaxis()->GetXbins();
-    for(int bin=0;bin<hist->GetNbinsX();bin++) xbins.add(Xbins->At(bin));
-    h.add("x_bins",xbins);
+    for(int bin=0;bin<hist->GetNbinsX();bin++) xbins.push_back(Xbins->At(bin));
+    h["x_bins"] = xbins;
   } else {
     std::cout << hist->GetName() << " does not have variable bins" << std::endl;
     
   }
   
-  h.add("n",hist->GetNbinsX());
-  h.add("min",JsonElement(hist->GetXaxis()->GetXmin(),10));
-  h.add("max",JsonElement(hist->GetXaxis()->GetXmax(),10));
-  h.add("underflow",hist->GetBinContent(0));
-  h.add("overflow",hist->GetBinContent(hist->GetNbinsX()+1));
+  h["n"] = hist->GetNbinsX();
+  h["min"] = jsontool::fixed(hist->GetXaxis()->GetXmin(),10);
+  h["max"] = jsontool::fixed(hist->GetXaxis()->GetXmax(),10);
+  h["underflow"] = hist->GetBinContent(0);
+  h["overflow"] = hist->GetBinContent(hist->GetNbinsX()+1);
   double stats[11];  // TProfile and TH2 each have 7 entries, TH3 has 11. Be safe: this caused an abort trap when called incorrectly.
   hist->GetStats(stats);
-  h.add("total",JsonElement(stats[0],9));
-  h.add("sum_x",JsonElement(stats[2],9));
-  h.add("sum_x2",JsonElement(stats[3],9));
-  h.add("max_content",JsonElement(hist->GetMaximum(),4));
-  h.add("min_content",JsonElement(hist->GetMinimum(),4));
-  h.add("time_on_x",hist->GetXaxis()->GetTimeDisplay());
-  JsonArray data;
-  JsonArray errs;
+  h["total"] = jsontool::fixed(stats[0],9);
+  h["sum_x"] = jsontool::fixed(stats[2],9);
+  h["sum_x2"] = jsontool::fixed(stats[3],9);
+  h["max_content"] = jsontool::fixed(hist->GetMaximum(),4);
+  h["min_content"] = jsontool::fixed(hist->GetMinimum(),4);
+  h["time_on_x"] = hist->GetXaxis()->GetTimeDisplay();
+  nlohmann::json data;
+  nlohmann::json errs;
   // Does it have errors that aren't just simple sqrt(N)?
   bool has_err = (hist->GetSumw2()->fN>0);
   double max_content_with_err = hist->GetMaximum();
   double min_content_with_err = hist->GetMaximum();
   for(int i=1; i <= hist->GetNbinsX();i++) {
-    data.add(JsonSigFig(hist->GetBinContent(i),4));
-    errs.add(JsonSigFig(hist->GetBinError(i),4));
+    data.push_back(jsontool::sigfig(hist->GetBinContent(i),4));
+    errs.push_back(jsontool::sigfig(hist->GetBinError(i),4));
     double ehigh = hist->GetBinContent(i)+hist->GetBinError(i);
     double elow  = hist->GetBinContent(i)-hist->GetBinError(i);
     if(ehigh> max_content_with_err) max_content_with_err = ehigh;
     if(elow < min_content_with_err) min_content_with_err = elow;
   }
 
-  h.add("data",data);
+  h["data"] = data;
   if(has_err) {
-    h.add("errs",errs);
-    h.add("min_content_with_err",JsonElement(min_content_with_err,4));
-    h.add("max_content_with_err",JsonElement(max_content_with_err,4));
+    h["errs"] = errs;
+    h["min_content_with_err"] = jsontool::fixed(min_content_with_err,4);
+    h["max_content_with_err"] = jsontool::fixed(max_content_with_err,4);
   }
-  h.add("info",getObjectInfo(inHist));
+  h["info"] = getObjectInfo(inHist);
 
   if(htemp) delete htemp;
   return h;
 }
 
 
-JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
+nlohmann::json TH2ToHistogram( TH2* inHist, int maxbins )
 {
-  JsonObject h;
+  nlohmann::json h;
 
   // Rebin if requested.
   TH2* hist = inHist;
@@ -127,96 +128,96 @@ JsonObject TH2ToHistogram( TH2* inHist, int maxbins )
     int rebinY = findDivisor(maxbins,inHist->GetNbinsY());
     htemp = inHist->Rebin2D(rebinX,rebinY,"htemp");
     hist = htemp;
-    h.add("original_n_x",inHist->GetNbinsX());
-    h.add("original_n_y",inHist->GetNbinsY());
-    h.add("rebinned_x_by",rebinX);
-    h.add("rebinned_y_by",rebinY);
+    h["original_n_x"] = inHist->GetNbinsX();
+    h["original_n_y"] = inHist->GetNbinsY();
+    h["rebinned_x_by"] = rebinX;
+    h["rebinned_y_by"] = rebinY;
         
   }
   if(hist->GetXaxis()->GetLabels()) {
-    JsonArray binlabels;
+    nlohmann::json binlabels;
     for(int i=1; i <= hist->GetNbinsX();i++) {
-      binlabels.add(hist->GetXaxis()->GetBinLabel(i));
+      binlabels.push_back(hist->GetXaxis()->GetBinLabel(i));
     }
-    h.add("binlabelsx",binlabels);
+    h["binlabelsx"] = binlabels;
   }
   if(hist->GetYaxis()->GetLabels()) {
-    JsonArray binlabels;
+    nlohmann::json binlabels;
     for(int i=1; i <= hist->GetNbinsY();i++) {
-      binlabels.add(hist->GetYaxis()->GetBinLabel(i));
+      binlabels.push_back(hist->GetYaxis()->GetBinLabel(i));
     }
-    h.add("binlabelsy",binlabels);
+    h["binlabelsy"] = binlabels;
   }
  
   if(!hist) return h;
-  h.add("classname",hist->ClassName());
-  h.add("name" ,inHist->GetName());
-  h.add("title",inHist->GetTitle());
-  h.add("xlabel",hist->GetXaxis()->GetTitle());
-  h.add("ylabel",hist->GetYaxis()->GetTitle());
+  h["classname"] = hist->ClassName();
+  h["name" ] = inHist->GetName();
+  h["title"] = inHist->GetTitle();
+  h["xlabel"] = hist->GetXaxis()->GetTitle();
+  h["ylabel"] = hist->GetYaxis()->GetTitle();
   
-  h.add("n_x",hist->GetNbinsX());
-  h.add("min_x",hist->GetXaxis()->GetXmin());
-  h.add("max_x",hist->GetXaxis()->GetXmax());
-  h.add("n_y",hist->GetNbinsY());
-  h.add("min_y",hist->GetYaxis()->GetXmin());
-  h.add("max_y",hist->GetYaxis()->GetXmax());
-  h.add("max_content",hist->GetMaximum());
-  h.add("min_content",hist->GetMinimum());
+  h["n_x"] = hist->GetNbinsX();
+  h["min_x"] = hist->GetXaxis()->GetXmin();
+  h["max_x"] = hist->GetXaxis()->GetXmax();
+  h["n_y"] = hist->GetNbinsY();
+  h["min_y"] = hist->GetYaxis()->GetXmin();
+  h["max_y"] = hist->GetYaxis()->GetXmax();
+  h["max_content"] = hist->GetMaximum();
+  h["min_content"] = hist->GetMinimum();
   
   
   double stats[8];
   hist->GetStats(stats);
-  h.add("total",JsonElement(stats[0],9));
-  h.add("sum_x",JsonElement(stats[2],9));
-  h.add("sum_x2",JsonElement(stats[3],9));
-  h.add("sum_y",JsonElement(stats[6],9));
-  h.add("sum_y2",JsonElement(stats[7],9));
+  h["total"] = jsontool::fixed(stats[0],9);
+  h["sum_x"] = jsontool::fixed(stats[2],9);
+  h["sum_x2"] = jsontool::fixed(stats[3],9);
+  h["sum_y"] = jsontool::fixed(stats[6],9);
+  h["sum_y2"] = jsontool::fixed(stats[7],9);
   
 
   double tot = hist->GetSumOfWeights();
-  h.add("total",tot);
+  h["total"] = tot;
 
-  JsonArray errs;
+  nlohmann::json errs;
   // Does it have errors that aren't just simple sqrt(N)?
   bool has_err = (hist->GetSumw2()->fN>0);
 
   int nx = hist->GetNbinsX();
   int ny = hist->GetNbinsY();
-  JsonArray data;
+  nlohmann::json data;
   for(int i=1; i <= nx;i++) {
-    JsonArray data2;
-    JsonArray errs2;
+    nlohmann::json data2;
+    nlohmann::json errs2;
     for(int j=1; j<= ny; j++) {
       int bin = hist->GetBin(i,j);
-      data2.add(JsonSigFig(hist->GetBinContent(bin),3));
-      errs2.add(JsonSigFig(hist->GetBinError  (bin),3));
+      data2.push_back(jsontool::sigfig(hist->GetBinContent(bin),3));
+      errs2.push_back(jsontool::sigfig(hist->GetBinError  (bin),3));
     }
-    data.add(data2);
-    errs.add(errs2);
+    data.push_back(data2);
+    errs.push_back(errs2);
   }
-  h.add("data",data);
-  if(has_err) h.add("errs",errs);
+  h["data"] =data;
+  if(has_err) h["errs"] = errs;
   
-  JsonArray underflow_x;
-  JsonArray overflow_x;
+  nlohmann::json underflow_x;
+  nlohmann::json overflow_x;
   for(int j=1; j <= ny;j++)  {
-    underflow_x.add(JsonSigFig(hist->GetBinContent(hist->GetBin(0,j)),3));
-    overflow_x .add(JsonSigFig(hist->GetBinContent(hist->GetBin(0,nx+1)),3));
+    underflow_x.push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(0,j)),3));
+    overflow_x .push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(0,nx+1)),3));
   }
   
-  JsonArray overflow_y;
-  JsonArray underflow_y;
+  nlohmann::json overflow_y;
+  nlohmann::json underflow_y;
   for(int i=1; i <= nx;i++)  {
-    underflow_y.add(JsonSigFig(hist->GetBinContent(hist->GetBin(i,0)),3));
-    overflow_y.add(JsonSigFig(hist->GetBinContent(hist->GetBin(i,ny+1)),3));
+    underflow_y.push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(i,0)),3));
+    overflow_y .push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(i,ny+1)),3));
   }
-  h.add("underflow_x",underflow_x);  
-  h.add("overflow_x", overflow_x);  
-  h.add("underflow_y",underflow_y);  
-  h.add("overflow_y", overflow_y);  
+  h["underflow_x"] = underflow_x;  
+  h["overflow_x"] =  overflow_x;  
+  h["underflow_y"] = underflow_y;  
+  h["overflow_y"] =  overflow_y;  
   
-  h.add("info",getObjectInfo(inHist));
+  h["info"] = getObjectInfo(inHist);
   
   if(htemp) delete htemp;
   return h;

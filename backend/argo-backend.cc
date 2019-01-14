@@ -20,7 +20,7 @@
 #include <TError.h>
 
 #include "SocketServer.h"
-#include "ResultComposer.h"
+#include "ComposerFactory.h"
 
 #include "KvpSet.h"
 #include "Plexus.h"
@@ -30,8 +30,9 @@
 #include <algorithm>
 #include <string>
 
+#include "json.hpp"
 
-extern gov::fnal::uboone::online::Plexus gPlexus;
+gov::fnal::uboone::online::Plexus gPlexus;
 
 
 
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
   if (filename) sscanf(filename,"%d",&tcpPortNumber);
   
   
-  
+  ROOT::EnableImplicitMT(20);
     // if(argc>1) {
     //   sscanf(argv[1],"%d",&tcpPortNumber);
     // }
@@ -150,6 +151,13 @@ int main(int argc, char **argv)
       pidfile << gSystem->GetPid();
       pidfile.close();
     }
+    
+    Config_t configuration(new nlohmann::json);
+    (*configuration)["CacheStoragePath"] = "../datacache";
+    (*configuration)["CacheStorageUrl"]  = "datacache";
+    
+    ComposerFactory factory(configuration);
+    factory.initialize();
 
     // gTimeStart = gSystem->Now();
 
@@ -215,13 +223,18 @@ int main(int argc, char **argv)
             
             long t1 = gSystem->Now();
             // Now do your stuff.
-            ResultComposer::config_t rc_cfg;
-            rc_cfg["CacheStoragePath"] = "../datacache";
-            rc_cfg["CacheStorageUrl"]  = "datacache";
             
-            ResultComposer rc(rc_cfg);           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
-            std::shared_ptr<std::string> payload = rc.compose(options,filename,selection,entrystart,entryend);
-            payload->append("\n");
+            Request_t request(new nlohmann::json);
+            (*request)["options"] = options;
+            (*request)["filename"] = filename;
+            (*request)["selection"] = selection;
+            (*request)["entrystart"] = entrystart;
+            (*request)["entryend"] = entryend;
+
+            Result_t result = factory.compose(request);
+
+            std::shared_ptr<std::string> payload(new std::string(result->dump()));
+  
             long t2 = gSystem->Now();
             // Send it out.
             ss->SendTo(client, (unsigned char*)payload->c_str(),  payload->length() );
@@ -235,7 +248,7 @@ int main(int argc, char **argv)
           }
           ss->Close(client); // Make sure we're not servicing the client in the main fork anymore.
           
-          ResultComposer::events_served++;
+          ComposerFactory::events_served++;
         }
 
       }

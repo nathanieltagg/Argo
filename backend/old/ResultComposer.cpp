@@ -106,10 +106,10 @@ std::shared_ptr<std::string> ResultComposer::compose(
     rootfile = new TFile(inFile,"READ");
     if(! (rootfile->IsZombie())) {
       std::cout << "Can open file. " << inFile << std::endl;
-      
-      if(rootfile->Get("Events") )               is_artfile = true;
-      if(rootfile->Get("analysistree/anatree") ) is_anafile = true;
-      if(rootfile->Get("larlite_id_tree") )      is_larlite = true;
+      auto keys = rootfile.GetListOfKeys();
+      if(rootfile.GetListOfKeys()->Contains("Events") )               is_artfile = true;
+      if(rootfile.GetListOfKeys()->Contains("analysistree/anatree") ) is_anafile = true;
+      if(rootfile.GetListOfKeys()->Contains("larlite_id_tree") )      is_larlite = true;
     } else {
       std::cout << "Can't open file! " << inFile << std::endl;
     }

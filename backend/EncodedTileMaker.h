@@ -2,7 +2,7 @@
 #define ENCODEDTILEMAKER_H_FE65EB56
 
 #include "MakePng.h"
-#include "JsonElement.h"
+#include "json.hpp"
 #include "RootToJson.h"
 #include <string>
 #include <map>
@@ -46,13 +46,13 @@ public:
   
   void process();
   
-  JsonObject json() {
-    JsonObject j;
-    j.add("url",m_outUrl + m_filename);
-    j.add("x",m_tdcStart);
-    j.add("y",m_wireStart);
-    j.add("width",(m_tdcEnd-m_tdcStart));
-    j.add("height",(m_wireEnd-m_wireStart));
+  nlohmann::json json() {
+    nlohmann::json j;
+    j["url"]=m_outUrl + m_filename;
+    j["x"]=m_tdcStart;
+    j["y"]=m_wireStart;
+    j["width"]=(m_tdcEnd-m_tdcStart);
+    j["height"]=(m_wireEnd-m_wireStart);
     return j;
   }
 
@@ -70,7 +70,7 @@ public:
   
 };
 
-void MakeEncodedTileset(JsonObject& output,
+void MakeEncodedTileset(nlohmann::json& output,
                         std::shared_ptr<wiremap_t> wireMap, 
                         std::shared_ptr<wiremap_t> noiseWireMap,                         
                         size_t nwires,
@@ -80,7 +80,7 @@ void MakeEncodedTileset(JsonObject& output,
                         const std::string& options="",
                         bool fill_empty_space=false);
 
-void MakeLowres(JsonObject& r,
+void MakeLowres(nlohmann::json& r,
             std::shared_ptr<wiremap_t> wireMap, 
             std::shared_ptr<wiremap_t> noiseWireMap,                                     
             size_t nwire,

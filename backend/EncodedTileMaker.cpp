@@ -4,6 +4,7 @@
 #include "TH1D.h"
 #include "boost/thread/thread.hpp"
 #include "wireOfChannel.h"
+#include "json_tools.h"
 
 
 // given an input wiremap,
@@ -11,7 +12,7 @@
 // threaded jobs
 
 
-void MakeLowres(JsonObject& r,
+void MakeLowres(nlohmann::json& r,
               std::shared_ptr<wiremap_t> wireMap, 
               std::shared_ptr<wiremap_t> noiseWireMap, 
               size_t nwire,
@@ -68,18 +69,18 @@ void MakeLowres(JsonObject& r,
   }
   EncodedTileMaker tm(wireMap_out, noiseWireMap_out, 0, nwire_out, 0, nsamp_out, path, url, fill_empty_space);
   tm.process();
-  JsonArray jtiles;
-  JsonArray jrow;
-  jrow.add(tm.json());
-  jtiles.add(jrow);      
-  r.add("wireimg_scale_x",factor_x);
-  r.add("wireimg_scale_y",factor_y);
-  r.add("wireimg_encoded_tiles",jtiles);  
+  nlohmann::json jtiles;
+  nlohmann::json jrow;
+  jrow.push_back(tm.json());
+  jtiles.push_back(jrow);      
+  r.emplace("wireimg_scale_x",factor_x);
+  r.emplace("wireimg_scale_y",factor_y);
+  r.emplace("wireimg_encoded_tiles",jtiles);  
 }
 
 
 
-void MakeEncodedTileset(JsonObject& r,
+void MakeEncodedTileset(nlohmann::json& r,
                         std::shared_ptr<wiremap_t> wireMap, 
                         std::shared_ptr<wiremap_t> noiseWireMap, 
                         size_t nwire,
@@ -160,18 +161,18 @@ void MakeEncodedTileset(JsonObject& r,
 
     std::cout << "Finished tile threads"<< std::endl;
 
-    JsonArray jtiles;
+    nlohmann::json jtiles;
     for(int i=0;i<table.size();i++) {
       row_t& row = table[i];
-      JsonArray jrow;
+      nlohmann::json jrow;
       for(int j=0;j<row.size();j++) {
         EncodedTileMaker& tilemaker = row[j];
-        jrow.add(tilemaker.json());
+        jrow.push_back(tilemaker.json());
       }
-      jtiles.add(jrow);      
+      jtiles.push_back(jrow);      
     }
   
-    r.add("wireimg_encoded_tiles",jtiles);
+    r.emplace("wireimg_encoded_tiles",jtiles);
   
     timer_tiles.addto(r);    
   }
@@ -219,12 +220,12 @@ void MakeEncodedTileset(JsonObject& r,
     // timeProfile.Rebin(10);
     for(int i=0;i<ntdc;i++) { timeProfile.Fill(i,timeProfileData[i]); }
   
-    r.add("timeHist",TH1ToHistogram(&timeProfile));
-    JsonArray jPlaneHists;
-    jPlaneHists.add(TH1ToHistogram(planeProfile[0]));
-    jPlaneHists.add(TH1ToHistogram(planeProfile[1]));
-    jPlaneHists.add(TH1ToHistogram(planeProfile[2]));
-    r.add("planeHists",jPlaneHists);
+    r.emplace("timeHist",TH1ToHistogram(&timeProfile));
+    nlohmann::json jPlaneHists;
+    jPlaneHists.push_back(TH1ToHistogram(planeProfile[0]));
+    jPlaneHists.push_back(TH1ToHistogram(planeProfile[1]));
+    jPlaneHists.push_back(TH1ToHistogram(planeProfile[2]));
+    r.emplace("planeHists",jPlaneHists);
     
 
     delete planeProfile[0];
