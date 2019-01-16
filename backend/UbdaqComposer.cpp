@@ -427,9 +427,9 @@ void UbdaqComposer::composeTPC()
           }
           (*wireMap)[wire] = waveform_ptr;          
           
-          // unpack_channel(waveform_ptr,channel_data,plane,planewire,wire,hits);
-          unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
-                                                  boost::cref(p), boost::ref(hits)));
+          unpack_channel(waveform_ptr,channel_data,p,hits);
+          // unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
+          //                                         boost::cref(p), boost::ref(hits)));
         } // loop channels
         unpack_threads.join_all();
 

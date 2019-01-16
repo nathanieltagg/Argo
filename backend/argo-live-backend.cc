@@ -19,6 +19,7 @@
 #include "Client.h"
 #include "KvpSet.h"
 #include "ConvertDispatcherToEventRecord.h"
+#include "datatypes/raw_data_access.h"
 #include "TTimeStamp.h"
 
 #include <signal.h>
@@ -101,6 +102,15 @@ int main(int argc, char **argv)
   signal (SIGINT, TerminationHandler);
   signal (SIGHUP, TerminationHandler);
   signal (SIGTERM, TerminationHandler);
+ // Startup:
+  gov::fnal::uboone::datatypes::peek_at_next_event<ub_TPC_CardData_v6>(false);
+  gov::fnal::uboone::datatypes::peek_at_next_event<ub_PMT_CardData_v6>(false);
+  gov::fnal::uboone::datatypes::handle_missing_words<ub_TPC_CardData_v6>(true);
+  gov::fnal::uboone::datatypes::handle_missing_words<ub_PMT_CardData_v6>(true);
+ // explicitly unpack.
+  pmt_crate_data_t::doDissect(true);
+  tpc_crate_data_t::doDissect(true);
+  trig_crate_data_t::doDissect(true);
 
   
   // write a PID file.

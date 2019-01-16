@@ -45,7 +45,9 @@ protected:
 };
 
 
-#endif /* LARLITE */
+#else /* LARLITE */
+class LarliteComposer : public Composer{};
+#endif
 #endif 
 
 

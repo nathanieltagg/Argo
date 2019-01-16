@@ -3,7 +3,13 @@ UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
 
-buildtargets = gtest libargo-backend.dylib argo-backend argo-live-backend argo-run-one notify-live.cgi
+ifeq ($(UNAME),Darwin)
+  libargo = libargo-backend.dylib
+else
+  libargo = libargo-backend.so
+endif
+
+buildtargets = gtest $(libargo) argo-backend argo-live-backend argo-run-one notify-live.cgi
 .PHONY: bin
 bin: $(buildtargets)
 #bin: gtest
@@ -16,7 +22,7 @@ clean:
 
 pwd := $(shell pwd)
 
-CPP := g++
+CPP := g++ -g
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 

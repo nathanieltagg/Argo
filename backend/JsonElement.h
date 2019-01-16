@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <cstdio>
+#include <memory>
 
 class JsonElement;
 class JsonObject;
