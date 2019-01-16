@@ -22,6 +22,7 @@ public:
       int compression = 3,  // 1 is fast and not very good. larger numbers are slower but compress more.
       const std::vector<unsigned char>& palette=std::vector<unsigned char>(),
       const std::vector<unsigned char>& palette_transparency=std::vector<unsigned char>() );
+      
   void AddRow(const std::vector<unsigned char>& data); // normalized
   void Finish();
   unsigned char* getData() { return (unsigned char*) outdata; };
@@ -33,10 +34,8 @@ public:
   
 
 private:
-  void AddData(png_structp png_ptr, png_bytep   data, png_size_t  length);
-  friend void my_user_write_data( png_structp png_ptr,  png_bytep   data,   png_size_t  length);
-  int width;
-  int height;
+  int _width;
+  int _height;
   Color_Mode_t colormode;
   png_structp png_ptr;
   png_infop   info_ptr;
@@ -47,6 +46,8 @@ private:
   png_bytep   outdata;
   size_t  outdatalen;
   
+  void AddData(png_structp png_ptr, png_bytep   data, png_size_t  length);
+  friend void my_user_write_data( png_structp png_ptr,  png_bytep   data,   png_size_t  length);
 };
 
 void BuildThumbnail(const std::string& pathname, const std::string& thumbname);

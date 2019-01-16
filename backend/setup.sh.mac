@@ -17,8 +17,6 @@ source /Users/larsoft/setup
 
 setup larsoftobj v08_01_01 -q debug:c2
 setup uboonedaq_datatypes v6_22_05a -q debug:c2:offline
-# unsetup gallery
-# setup gallery v1_10_00 -q c2:debug
 
 # optional:
 setup larlite v06_70_00b -q c2:debug

@@ -11,43 +11,43 @@
 
 class TTree;
 class TLeaf;
-#include <TObject.h>
 #include <string>
 #include <map>
 #include <vector>
 //#include <XmlElement.h>
-#include "JsonElement.h"
+// #include "JsonElement.h"
+#include "json_fwd.hpp"
 
 class TreeReader
 {
 public:
-  TreeReader(TTree* tree);
+  TreeReader(TTree* tree = nullptr);
   ~TreeReader();
+  void        setTree(TTree* tree) { fTree=tree; }
   
   // Commands to get values from named leaves.
-  Double_t    getVal(TLeaf* leaf, int index = 0, int second_index = -1);
-  Double_t    getVal(const std::string& leafname, int index = 0, int second_index = -1);
-  Int_t       getInt(const std::string& leafname, int index = 0, int second_index = -1)
-              {  return (Int_t)getVal(leafname,index,second_index); }  // FIXME - casting here converts, might have roundoff error.
-  Int_t       getInt(TLeaf* leaf, int index = 0, int second_index = -1)
-              {  return (Int_t)getVal(leaf,index,second_index); }  // FIXME ditto
+  double    getVal(TLeaf* leaf, int index = 0, int second_index = -1);
+  double    getVal(const std::string& leafname, int index = 0, int second_index = -1);
+  int       getInt(const std::string& leafname, int index = 0, int second_index = -1)
+              {  return (int)getVal(leafname,index,second_index); }  // FIXME - casting here converts, might have roundoff error.
+  int       getInt(TLeaf* leaf, int index = 0, int second_index = -1)
+              {  return (int)getVal(leaf,index,second_index); }  // FIXME ditto
   
 
   std::string getStr(TLeaf* leaf, int index = 0, int second_index = -1);
 
-  JsonElement getJson(const std::string& leafname, int index = 0, int second_index = -1);
-  JsonElement getJson(TLeaf* leaf, int index = 0, int second_index = -1);
+  nlohmann::json getJson(const std::string& leafname, int index = 0, int second_index = -1);
+  nlohmann::json getJson(TLeaf* leaf, int index = 0, int second_index = -1);
   
-  JsonArray   makeArray(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs);
-  std::vector<JsonObject>   makeVector(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs, int limit=9999999);
-  JsonArray   makeFArray(const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
+  nlohmann::json   makeArray(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs, int limit=9999999);
+  nlohmann::json   makeFArray(const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
 
-  JsonArray   makeSimpleFArray(const std::string& k);
+  nlohmann::json   makeSimpleFArray(const std::string& k);
 
 
   // Commands to get values via TTreeFormulas.
-  Double_t    getF(const std::string& formula, int index = 0);
-  JsonElement jsonF(const std::string& formula, int index = 0);
+  double         getF(const std::string& formula, int index = 0);
+  nlohmann::json jsonF(const std::string& formula, int index = 0);
 
 
   // 
@@ -79,7 +79,7 @@ public:
   // XmlElement  getXmlArray(const std::string& tagname, const std::string& leafname, int index); //.
     
   TTree* fTree;
-  Double_t fDefaultValue;
+  double fDefaultValue;
 };
 
 

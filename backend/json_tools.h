@@ -7,25 +7,10 @@
 
 namespace jsontool 
 {
-
-  // use obj.value(key,default)
-  template<typename T> T get_or_default(nlohmann::json& j,const std::string& key, T the_default)
-  {
-    if(j.find(key) == j.end()) return the_default;
-    else return j.at(key).get<T>();
-  }
-
-  // template<typename T> T get_or_default(std::shared_ptr<nlohmann::json> j,const std::string& key,const T& the_default)
-  // {
-  //   if(!j) return the_default;
-  //   if(j->find(key) == j->end()) return the_default;
-  //   else return j->at(key).get<T>();
-  // }
-
   inline nlohmann::json sigfig(double value, unsigned int sig_figs=3){
     if(!std::isfinite(value)) { return nlohmann::json("nan"); }
     if(value==0) { return nlohmann::json(0); }
-  
+
     // Find exponent
     int X = (int)floor(log10(value));
     unsigned int maxchar = sig_figs + 7;
@@ -42,9 +27,10 @@ namespace jsontool
   }
 
   inline nlohmann::json fixed(double value, unsigned int precision=3){
+
     if(!std::isfinite(value)) { return nlohmann::json("nan"); }
     if(value==0) { return nlohmann::json(0); }
-  
+
     const int maxchar = 30;
     char* buff = new char[maxchar];
     int p = snprintf(buff,maxchar,"%.*f",precision,value);

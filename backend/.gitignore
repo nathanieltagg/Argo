@@ -21,3 +21,5 @@ makeenv
 *.dylib
 *.dSYM
 *.ubdaq
+gtest
+*.json

@@ -247,7 +247,7 @@ PsuedoRootRainbow.prototype.ColorDialToColor = function( colorDial )
   var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
 
   var j = 0;
-  while(this.stops[j]<norm) j++;
+  while(this.stops[j]<=norm) j++;
   var i = j-1;
   
   var dx = (norm - this.stops[i])/(this.stops[j]-this.stops[i]);

@@ -1,7 +1,7 @@
 #ifndef ROOTTOJSON_H_1VW0NCQF
 #define ROOTTOJSON_H_1VW0NCQF
 
-#include "json_fwd.hpp"
+#include "json.hpp"
 
 // Tools to convert ROOT objects to JSON objects.
 

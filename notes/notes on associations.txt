@@ -1,0 +1,58 @@
+besziertracker cluster<->track
+    cluster has processIndex 4 productIndex 7
+    track   has processIndex 5 productIndex 58
+    
+TBranch::GetName() put through the crc32 hash yields the BranchID
+
+MetaData tree has a list of all the BranchIDs and their associated names in the ProductRegistry branch.
+
+MetaData tree also has (jackpot!) the BranchIDLists element:
+- it's a vector<vector<unsigned int>>.
+
+lists[processID-1][processIndex-1]
+
+It works!
+BranchIDLists[4-1][7-1] yields a value crc32hash of 2.87761e+09, which matches the crc32 hash of the fuzzycluster!
+
+Yay!
+
+Now I just need to write the code to implement all of this:
+On event load:
+- Loop over the branches of the tree, generate map of crc32 code -> branchname
+- Make copy of the BranchIDLists vector<vector<uint>>
+
+Then, for each assn:
+- Find the two branches it associates to.
+- Find the shortnames for each branch and typenames for each type
+- Get list a and b list
+- Build a JSON object:
+assns: {
+  cluster: {
+    fuzzycluster: {
+        tracks: {
+            bezier: [ <list of a->b assns> ]
+        }        
+    }
+  }
+
+  tracks: {
+      bezier: {
+          cluster: {
+            fuzzycluster: [ <list of b->a assns> ]
+      
+            }
+      }        
+  }
+}
+
+This is an efficient storage format, although lookup will be slightly harder than before.
+
+In javascript, start describing an object not with the object itself, but instead:
+ gRecord[coord1][coord2][coord3][coord4]  (e.g. gRecord["hits"]["gaushit"][3])
+and have a path object:
+ path = [coord1,coord2,coord3,coord4]
+
+The selected object can always have one of these paths associated with it, so it's easy to map to associated objects!
+
+I can do this!
+

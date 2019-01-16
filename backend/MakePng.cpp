@@ -1,3 +1,4 @@
+
 #include <png.h>
 #include "MakePng.h"
 #include <cassert>
@@ -32,15 +33,14 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
                   int compression,
                   const std::vector<unsigned char>& inPalette,
                   const std::vector<unsigned char>& inPaletteTrans)
-  : width(width)
-    , height(height)
+    : _width(width)
+    , _height(height)
     , colormode(c)
     , outdata(NULL)
     , outdatalen(0)
 {
   png_ptr = NULL;
   info_ptr = NULL;
-
 
   /* Initialize the write struct. */
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -73,8 +73,8 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   /* Set image attributes. */
   png_set_IHDR(png_ptr,
                info_ptr,
-               width,
-               height,
+               _width,
+               _height,
                8, // No point in using 16-bit, since it gets truncated in browser anyway.
                color_type,
                PNG_INTERLACE_NONE,
@@ -120,7 +120,7 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
   int bytes_per_pixel = (int)colormode;
   if((colormode == palette) || (colormode == palette_alpha)) bytes_per_pixel = 1;
   if(bytes_per_pixel<1) bytes_per_pixel=1;
-  bytes_per_row = width * bytes_per_pixel * sizeof(png_byte); //
+  bytes_per_row = _width * bytes_per_pixel * sizeof(png_byte); //
   // Allocate memory for one row (3 bytes per pixel - RGB)
   // rowdata = (png_bytep) malloc(bytes_per_row);
   rows_done = 0;
@@ -130,13 +130,13 @@ MakePng::MakePng(int width, int height, Color_Mode_t c,
 
 void MakePng::AddRow(const std::vector<unsigned char>& data)
 {
-  assert(rows_done++ < height);
+  assert(rows_done++ < _height);
   assert(data.size() >= bytes_per_row);
   png_write_row(png_ptr,(png_byte*)&data[0]);
 
   // // copy data into 16-bit grayscale.
   // uint16_t* row_as_short = (uint16_t*)(rowdata);
-  // for(int i=0;i<width;i++) {
+  // for(int i=0;i<_width;i++) {
   //   uint16_t word = (uint16_t)(floatrow[i]*65535);
   //   row_as_short[i] = (word >> 8) | (word << 8); // Magic byte swap.
   // }
@@ -210,7 +210,7 @@ std::string MakePng::getBase64Encoded()
 MakePng::~MakePng()
 {
   if(outdata) free(outdata); 
-}
+} 
 
 void BuildThumbnail(const std::string& pathname, const std::string& thumbname)
 {
@@ -224,4 +224,6 @@ void BuildThumbnail(const std::string& pathname, const std::string& thumbname)
   std::cerr << "BuildThumbnail: " << cmd << std::endl;
   system(cmd.c_str());
 }
-  
+   
+
+

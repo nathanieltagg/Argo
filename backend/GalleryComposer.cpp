@@ -62,11 +62,27 @@ std::string stripdots(const std::string& s)
 }
 
 
+GalleryComposer::GalleryComposer() 
+  : m_stats(nlohmann::json::object())
+  , m_Event(nullptr)
+{
+    std::cout << "GalleryComposer ctor" << std::endl; 
+
+}
+
+GalleryComposer::~GalleryComposer() 
+  // : m_Event(nullptr)
+  // , m_stats(nlohmann::json::object())
+{
+    std::cout << "GalleryComposer dtor" << std::endl; 
+    // std::cout << "m_Event:" << ((m_Event)?"set":"unset") << std::endl; 
+}
+
 void GalleryComposer::initialize()
 {
   std::cout << *m_config << std::endl;
-  m_CacheStoragePath  = m_config->value("CacheStoragePath", std::string("../live_event_cache"));
-  m_CacheStorageUrl   = m_config->value("CacheStorageUrl",  std::string("live_event_cache"));
+  m_CacheStoragePath  = m_config->value("CacheStoragePath", std::string("../datacache"));
+  m_CacheStorageUrl   = m_config->value("CacheStorageUrl",  std::string("datacache"));
   m_WorkingSuffix     = m_config->value("WorkingSuffix",    "working");
   m_FinalSuffix       = m_config->value("FinalSuffix",      "event");
   m_CreateSubdirCache = m_config->value("CreateSubdirCache" ,true);
@@ -78,7 +94,9 @@ vector<std::pair<string,art::InputTag>>  GalleryComposer::findByType(TTree* tree
 {
   // First, have we initialized our branch list for quick access?
   if(m_BranchNames.size()==0) {
+    assert(tree);
     TObjArray* list = tree->GetListOfBranches();
+    assert(list);
     for(int i=0;i<list->GetEntriesFast();i++) {
       TObject* o = list->At(i);
       TBranch* br = dynamic_cast<TBranch*>(o);
@@ -107,7 +125,8 @@ vector<std::pair<string,art::InputTag>>  GalleryComposer::findByType(TTree* tree
   // Where LABEL is something like "pandora"
   // INSTANCE is usually (always?) blank
   // Where PROCESSNAME is something like "McRecoAprStage1"
-
+  // json br(m_BranchNames);
+  // std::cout << "branches: " << br.dump(2) << std::endl;
   auto p1 = std::lower_bound(m_BranchNames.begin(),m_BranchNames.end(),pattern);
   for(auto p=p1; p!=m_BranchNames.end(); p++) {
     const std::string& found = *p;
@@ -161,7 +180,7 @@ bool GalleryComposer::composeObjectsVector(const std::string& output_name, json&
     }
     found++;
     
-    json jlist;    // List of objects (e.g. Kalman Spacepoints)
+    json jlist = json::array();    // List of objects (e.g. Kalman Spacepoints)
     for(const auto& item: *handle) {
       // item is a specific object (e.g. SpacePoint), jitem is the objected moved to JSON (one spacepoint)
       json jitem;
@@ -184,7 +203,6 @@ void GalleryComposer::composeObject(const T&, json& out)
 {
   out["Unimplimented"] = json();
 }
-
 
 
 
@@ -269,6 +287,7 @@ void GalleryComposer::composeHeaderData()
   ttt.addto(m_stats);
 }
 
+
 void GalleryComposer::composeHits()
 {
   typedef vector<recob::Hit> current_type_t;
@@ -321,7 +340,7 @@ void GalleryComposer::composeHits()
 
     json hists;
     hists["timeHist"] = TH1ToHistogram(&timeProfile);
-    json jPlaneHists;
+    json jPlaneHists = json::array();
     jPlaneHists.push_back(TH1ToHistogram(planeProfile[0]));
     jPlaneHists.push_back(TH1ToHistogram(planeProfile[1]));
     jPlaneHists.push_back(TH1ToHistogram(planeProfile[2]));
@@ -352,11 +371,11 @@ void GalleryComposer::composeObject(const recob::SpacePoint& sp, json& jsp)
 {
   // cout << "Composing spacepoint " << sp.ID() << std::endl;
   jsp["id"    ] = sp.ID()   ;
-  jsp["chisq" ] = sp.Chisq();
-  json xyz;
-  xyz.push_back(sp.XYZ()[0]);
-  xyz.push_back(sp.XYZ()[1]);
-  xyz.push_back(sp.XYZ()[2]);
+  jsp["chisq" ] = jsontool::fixed(sp.Chisq(),1);
+  json xyz = json::array();
+  xyz.push_back(jsontool::fixed(sp.XYZ()[0],1));
+  xyz.push_back(jsontool::fixed(sp.XYZ()[1],1));
+  xyz.push_back(jsontool::fixed(sp.XYZ()[2],1));
 
   // Error matrix isn't used and takes up lots of space.
   // json errXyz;
@@ -382,7 +401,7 @@ void GalleryComposer::composeObject(const recob::Track& track, json& jtrk)
   jtrk["phi"    ] = track.Phi();
 
   const recob::TrackTrajectory& traj = track.Trajectory();
-  json jpoints;
+  json jpoints = json::array();
   size_t first_point = traj.FirstValidPoint();
   size_t last_point  = traj.LastValidPoint();
   // size_t npoints = traj.NPoints();
@@ -406,9 +425,6 @@ void GalleryComposer::composeObject(const recob::Track& track, json& jtrk)
       jpoint["vy"] = jsontool::fixed(dir.y(),4);
       jpoint["vz"] = jsontool::fixed(dir.z(),4);
     }
-
-    jpoint["points"] = jpoints;
-
     jpoints.push_back(jpoint);
   }
   jtrk["points"] = jpoints;
@@ -597,7 +613,9 @@ void GalleryComposer::composeWires()
     int nwire = wireMap->size();
     std::cout << "maxwire:" << nwire << " nwire:" << wireMap->size() << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
-
+    int tilesize = m_request->value("tilesize",2400);
+    std::cout << "Doing tilesize" << tilesize << std::endl;
+    
     MakeEncodedTileset(     r,
                             wireMap,
                             noiseMap,
@@ -605,8 +623,8 @@ void GalleryComposer::composeWires()
                             ntdc,
                             m_CacheStoragePath,
                             m_CacheStorageUrl,
-                            m_options,
-                            true );
+                            tilesize,
+                            false );
 
     reco_list[stripdots(product.first)] = r;
 
@@ -618,7 +636,7 @@ void GalleryComposer::composeWires()
                      wireMap,
                      noiseMap,
                      nwire,
-                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, m_options, false );
+                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
       reco_list2[stripdots(product.first)] = r2;
     }
     timer.addto(m_stats);
@@ -681,7 +699,7 @@ void GalleryComposer::composeRaw()
       continue;
     }
 
-    json jpedestals;
+    json jpedestals = json::array();
     std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
     std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
 
@@ -726,6 +744,7 @@ void GalleryComposer::composeRaw()
     std::cout << "nwire:" << nwire << std::endl;
     std::cout << "ntdc :" << ntdc << std::endl;
     json r;
+    int tilesize = m_request->value("tilesize",2400);
     MakeEncodedTileset(     r,
                             wireMap,
                             noiseMap,
@@ -733,7 +752,7 @@ void GalleryComposer::composeRaw()
                             ntdc,
                             m_CacheStoragePath,
                             m_CacheStorageUrl,
-                            m_options,
+                            tilesize,
                             true );
 
     reco_list[stripdots(product.first)] = r;
@@ -745,7 +764,7 @@ void GalleryComposer::composeRaw()
                      wireMap,
                      noiseMap,
                      nwire,
-                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, m_options, false );
+                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
       reco_list2[stripdots(product.first)] = r2;
     }
 
@@ -846,7 +865,7 @@ void GalleryComposer::composeObject(const simb::MCParticle& particle, json& jobj
   jobj["rescatter"   ] = particle.Rescatter();
 
   // Trajectory. Make a copy so we can sparsify it.
-  json jtraj;
+  json jtraj = json::array();
   const simb::MCTrajectory& traj = particle.Trajectory();
   size_t n = traj.size();
   if(n==0) return;
@@ -1054,7 +1073,7 @@ void GalleryComposer::composeObject(const simb::MCTruth& truth, json& jobj)
   jobj["neutrino"] = jnu;
     
     
-  json jparticles;
+  json jparticles = json::array();
   for(int i=0;i<truth.NParticles();i++) {
     json jpart;
     composeObject(truth.GetParticle(i),jpart);
@@ -1062,7 +1081,6 @@ void GalleryComposer::composeObject(const simb::MCTruth& truth, json& jobj)
   }
   jobj["particles"] = jparticles;
 }
-
 
 
 
@@ -1154,6 +1172,7 @@ struct GalleryAssociationHelper {
     
   }
 };
+
 
 
 template<typename A, typename B>
@@ -1331,56 +1350,58 @@ void GalleryComposer::composeAssociations()
 }
 
 
+
 void GalleryComposer::satisfy_request(Request_t request, Result_t output)
 {
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
+  TimeReporter timer("TOTAL");
+  
   assert(output.get());
+  
 
   m_request = request;
   m_result = output;
-  (*m_result)["request"] = *request;
-  
-  std::cout << "Request: " << std::endl;
-  std::cout << m_result->dump(2) << std::endl;
-  TimeReporter timer("TOTAL");
-  
+  (*m_result)["request"] = *request;  
+
   if(request->find("filename")==request->end()) {
     (*m_result)["error"] = "No file requested";
     return;
   }
   std::string filename =  (*request)["filename"].get<std::string>();
+  std::string sel   = request->value("selection","1");
+  long long     start = request->value("entrystart",(long long)0);
+  long long     end   = request->value("entryend",(long long)999999999);
   m_options = request->value("options",std::string(""));
-  
 
-  // Find the entry.
-  TFile tfile(filename.c_str(),"READ");
-  TTree* tree = (TTree*) tfile.Get("Events");
-  if(!tree) {
-    (*m_result)["error"] = "Could not find Events tree.";
-    return;
-  }
-  
-  std::string sel = (*request)["selection"].get<std::string>();
-  int64_t     start = (*request)["entrystart"].get<int64_t>();
-  int64_t     end   = (*request)["entryend"].get<int64_t>();
-  
-  std::string error;
-  m_entry = Composer::find_entry_in_tree( tree, sel, start, end, error);
-  if(m_entry<0) {
-    (*m_result)["error"] = "Could not find entry in tree: "+error;
-    return;    
-  }
+  // Fixme: check to make sure request is valid
 
-  
-  // if(request->find("entry")==request->end()) {
-  //   (*m_result)["error"] = "No entry requested";
-  //   return;
-  // }  
-  // m_entry = (*request)["entry"].get<long long>();
+  //
+  std::cout << filename << std::endl;
+
+  m_entry = start;  
   {
     TimeReporter tr("Open file");
-    std::cout << "m_Event" << m_Event.get() << std::endl;
-    m_Event = std::unique_ptr<gallery::Event>(new gallery::Event({filename}));
+    gallery::Event* event = new gallery::Event({filename});
+    m_Event.reset(event);
+    std::cout << "Gallery file opened" << std::endl;cout.flush();
+    tr.addto(m_stats);
+  }
+  
+  {
+    TimeReporter tr("Find entry");
+    std::string error;
+    std::cout << "calling find_entry_in_tree: " << m_Event->getTTree() << "\t" << sel << "\t" << start << "\t" << end << std::endl;
+    m_entry = Composer::find_entry_in_tree( m_Event->getTTree(), sel, start, end, error);
+    if(m_entry<0) {
+      (*m_result)["error"] = "Could not find entry in tree: "+error;
+      return;
+    } 
+    tr.addto(m_stats);
+  }
+     
+  {
+    TimeReporter tr("GoTo");
+    m_Event->goToEntry(m_entry);
     tr.addto(m_stats);
   }
   
@@ -1391,24 +1412,27 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   int dummy;
   (*m_result)["composer"]=abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
 
+  //
+  // OK, now build the result.
+  //
+  json source;
+  source["file"] = filename;
+  // source["selection"] = inSelection;
+  source["start"] = start;
+  source["end"] = end;
+  source["entry"] = m_entry;
+  source["options"] = m_options;
+  source["selection"] = sel;
+  (*m_result)["source"] = source;
+  
+
+  composeHeaderData();
+
   // parse some options.
   int doCal = 1;
   int doRaw = 1;
   if( std::string::npos != m_options.find("_NOCAL_")) doCal = 0;
   if( std::string::npos != m_options.find("_NORAW_")) doRaw = 0;
-
-
-  // Go to required event
-  // FIXME: PROBABLY HUGELY INEFFICIENT; need to implement GoTo in Event
-  // m_Event->toBegin();
-  // for(int i=0;i<fEntry;i++) m_Event->next();
-  {
-      TimeReporter tt("-go-to-event");
-      m_Event->goToEntry(m_entry);
-      tt.addto(m_stats);
-  }
-
-  composeHeaderData();
 
   {
       TimeReporter tt("availability");
@@ -1416,24 +1440,14 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
       if(!doRaw) composeRawAvailability();
       tt.addto(m_stats);
   }
-
   
-  
-  
-  //
-  // OK, now build the result.
-  //
-
-  // composeHeaderData();
   // Wire data.
   // End first so background image conversion tasks can be Ended as we build the rest.
-
-
   if(doCal)   composeWires();
   if(doRaw)   composeRaw();
+
+
   composeHits();
-
-
 
   composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", *m_result );
   composeObjectsVector< std::vector<recob::Cluster   > >("clusters"   , *m_result );
@@ -1484,9 +1498,6 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   // (*m_result)["hv"] = hv;  
   timer.addto(m_stats);
   (*m_result)["stats"] = m_stats;
-  
-  // TimeReporter st("Stringify");
-  // m_result->str();
 }
 
 // Json_t GalleryComposer::get_or_compose(std::string jsonPointer);

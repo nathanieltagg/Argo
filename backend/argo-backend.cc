@@ -23,7 +23,6 @@
 #include "ComposerFactory.h"
 
 #include "KvpSet.h"
-#include "Plexus.h"
 #include "DeadChannelMap.h"
 
 #include <signal.h>
@@ -31,9 +30,6 @@
 #include <string>
 
 #include "json.hpp"
-
-gov::fnal::uboone::online::Plexus gPlexus;
-
 
 
 // Quick and dirty option parsing, from StackOverflow.
@@ -52,9 +48,6 @@ bool cmdOptionExists(char** begin, char** end, const std::string& option)
 
 using namespace std;
 
-// VoidFuncPtr_t initfuncs[] = { 0 };
-// TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
-void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg);
 void TerminationHandler(int signal);
 
 
@@ -84,11 +77,14 @@ bool isChild = false;
 int  childClient = -1;
 
 
+
 int main(int argc, char **argv)
 {
   int tcpPortNumber = 9092;
   bool forking_ = true;
 
+  std::cout << gSystem << "  " << gSystem->GetBuildCompilerVersion() << std::endl;
+  
   std::string progname = argv[0];
   
   if(cmdOptionExists(argv, argv+argc, "-h")) {
@@ -127,16 +123,6 @@ int main(int argc, char **argv)
     cout << progname << " starting up at " <<  TTimeStamp().AsString() << " on port " << tcpPortNumber << endl;
     if(forking_) cout << "  Will fork on new clients." << endl;
     else         cout << "  Forking turned off for profiling." << endl;
-    SetErrorHandler(MyErrorHandler);
-
-
-    // Plexus.
-    gPlexus.assignSources(
-      "sqlite ../db/current-plexus.db",
-      "sqlite ../db/current-plexus.db"
-    );  
-    gPlexus.rebuild((double)TTimeStamp(),0);
-    gDeadChannelMap->Rebuild();
     
     ss = new MySocketServer(tcpPortNumber);
     if(ss->Setup()) exit(1);  // Quit if socket won't bind.
@@ -155,9 +141,11 @@ int main(int argc, char **argv)
     Config_t configuration(new nlohmann::json);
     (*configuration)["CacheStoragePath"] = "../datacache";
     (*configuration)["CacheStorageUrl"]  = "datacache";
+    (*configuration)["plexus"] = { {"tpc_source", "sqlite ../db/current-plexus.db"}
+                                 , {"pmt_source", "sqlite ../db/current-plexus.db"}
+                                 };
     
     ComposerFactory factory(configuration);
-    factory.initialize();
 
     // gTimeStart = gSystem->Now();
 
@@ -210,9 +198,7 @@ int main(int argc, char **argv)
               // freopen(logfilename.c_str(),"w",stderr);
             }
             
-            VoidFuncPtr_t initfuncs[] = { 0 };
-            TROOT root("Rint", "The ROOT Interactive Interface", initfuncs);
-            cout << "Fork started." << endl;
+            cout << "Request started." << endl;
             cout << "Environment: " << getenv("ROOTSYS") << endl;
             
             cout << "Request Parameters:" << endl;
@@ -232,7 +218,6 @@ int main(int argc, char **argv)
             (*request)["entryend"] = entryend;
 
             Result_t result = factory.compose(request);
-
             std::shared_ptr<std::string> payload(new std::string(result->dump()));
   
             long t2 = gSystem->Now();
@@ -282,13 +267,3 @@ void TerminationHandler(int signal)
     exit(1);
   }
 }
-//
-// void MyErrorHandler(int level, Bool_t abort, const char *location, const char *msg)
-// {
-//   // Suppress warning messages about branch sets.
-//   TString m(msg);
-//   if(m.BeginsWith("unknown branch")) return;
-//
-//   //DefaultErrorHandler(level, abort, location, msg);
-// //  exit(1);
-// }

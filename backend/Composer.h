@@ -15,17 +15,20 @@ class TTree;
 
 // Base class defines common interface
 
-
+#include <gallery/Event.h>
+#include <iostream>
 
 
 class Composer {
 public:
   
   
-  Composer() : m_result(new nlohmann::json) {}; // Constructor
+  Composer()
+      {        
+      }; // Constructor
   virtual ~Composer() {}; // Destructor
   
-  virtual void config(Config_t config) { m_config = config; }
+  virtual void configure(Config_t config) { m_config = config; }
   virtual void initialize(){};
   
   // Required: return true if we can satisfy the request.
@@ -47,19 +50,21 @@ public:
   // The get_or_compose
 
   // get or compose
-  virtual Json_t get_or_compose(std::string jsonPointer);
-  // May block.  May be put into a thread
-  // Put a read lock on the data pointed to by the jsonPointer, wait until released,
-  // See if there is data there. If not, upgrade to a write lock. Call compose() on that data.
-  // Return when data available.
-
-  virtual void compose(std::string jsonPointer, Result_t& result); 
-  // Compose. should ONLY be called from get_or_compose. 
-  // No mutex locking required at this stage: compose the result json object (or array or whatever)
+  // virtual Json_t get_or_compose(std::string jsonPointer);
+  // // May block.  May be put into a thread
+  // // Put a read lock on the data pointed to by the jsonPointer, wait until released,
+  // // See if there is data there. If not, upgrade to a write lock. Call compose() on that data.
+  // // Return when data available.
+  //
+  // virtual void compose(std::string jsonPointer, Result_t& result);
+  // // Compose. should ONLY be called from get_or_compose.
+  // // No mutex locking required at this stage: compose the result json object (or array or whatever)
 
   // Utility function for finding events in a TTree.
   // Returns an entry number, with event loaded.
   int64_t find_entry_in_tree(TTree* inTree, std::string& inSelection, int64_t inStart, int64_t inEnd, std::string& outError);
+  
+  virtual nlohmann::json monitor_data();
   
   typedef std::string  ConstituentAddress_t;  // Actually a jsonPointer
   struct Constituent_t{
@@ -77,7 +82,7 @@ public:
   Json_t         m_manifest;  // empty JSON framework. Do we need this?
   int            m_id;
   Config_t       m_config;
-  Json_t         m_result;
+  Result_t       m_result;
 };
 
 // Might want to wrap this guy so that he can be spoken to via forks

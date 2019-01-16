@@ -19,7 +19,7 @@ void MakeLowres(nlohmann::json& r,
               size_t nsamp,
               const std::string& path,
               const std::string& url,
-              const std::string& options,
+              int tilesize,
               bool fill_empty_space)
 {
   int factor_x =10;
@@ -87,7 +87,7 @@ void MakeEncodedTileset(nlohmann::json& r,
                         size_t ntdc,
                         const std::string& path,
                         const std::string& url,
-                        const std::string& options,
+                        int  tilesize,
                         bool fill_empty_space)
 {
   {
@@ -98,15 +98,14 @@ void MakeEncodedTileset(nlohmann::json& r,
         << "\n --storage: "  << path 
         << "\n --url:     "  << url 
         << "\n --Filling space: "  << fill_empty_space 
-        << "\n --options: " << options  << std::endl;
+        << "\n --tilesize: " << tilesize  << std::endl;
     boost::thread_group tile_threads;
     
     typedef std::vector<EncodedTileMaker> row_t;
     typedef std::vector<row_t> table_t;
     
     table_t table;
-    size_t p = options.find("_tilesize");
-    if(p==std::string::npos) {
+    if(tilesize<=0) {
       std::cout << "Doing standard 9-tile layout." << std::endl;
       row_t row0;
       row0.push_back(EncodedTileMaker(wireMap, noiseWireMap, 0, 2399, 0,    3200   , path, url,fill_empty_space));
@@ -125,11 +124,6 @@ void MakeEncodedTileset(nlohmann::json& r,
       row2.push_back(EncodedTileMaker(wireMap, noiseWireMap, 4798, nwire, 6400, ntdc, path, url,fill_empty_space));
       table.push_back(row2);
     } else {
-      int tilesize = 0;
-      std::istringstream ss(options.substr(p+9));
-      ss >> tilesize;
-      if(tilesize <= 0 || tilesize > 10000) tilesize = 2048;
-      
       int rows = ceil((float)nwire/(float)tilesize);
       int cols = ceil((float)ntdc/(float)tilesize);
       std::cout << "Doing tilesize " << tilesize << " with " << rows << " x " << cols << std::endl;

@@ -3,9 +3,10 @@ UNAME := $(shell uname -s)
 .PHONY: all
 all: depend bin
 
-buildtargets = libargo-backend.dylib argo-backend argo-live-backend argo-run-one notify-live.cgi
+buildtargets = gtest libargo-backend.dylib argo-backend argo-live-backend argo-run-one notify-live.cgi
 .PHONY: bin
 bin: $(buildtargets)
+#bin: gtest
 
 clean:
 	rm -rf tmp/*
@@ -22,7 +23,7 @@ LDFLAGS = -g
 
 
 ifeq ($(UNAME),Darwin)
-  CPP = clang++ 
+  CPP = clang++ -O0
   # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
   # LD = clang++ -std=c++1y
   # CPPFLAGS += -fPIC -g
@@ -187,12 +188,12 @@ endif
 tmp/%.o : %.cpp
 	@mkdir -p tmp
 	@echo "compiling $@ $<"
-	$(CPP) $(CPPFLAGS) -o $@ -c $<
+	@$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 tmp/%.o : %.cc
 	@mkdir -p tmp
 	@echo "compiling $@ $<"
-	$(CPP) $(CPPFLAGS) -o $@ -c $<
+	@$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 
 #Rootcint rule:
@@ -214,11 +215,18 @@ else
 endif
 
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
+	@echo Building executable $@
+	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
     # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
+gtest: $(OBJ) tmp/gtest.o Makefile
+	@echo Building executable $@
+	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/gtest.o -W $(LIBS) -o $@ \
+		-Wl,-rpath,@executable_path/../lib  \
+		-Wl,-rpath,@executable_path \
+    # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 
 # Using the $(ldpaths) variable doesn't actually do the job, 

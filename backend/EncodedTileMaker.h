@@ -77,7 +77,7 @@ void MakeEncodedTileset(nlohmann::json& output,
                         size_t ntdc,
                         const std::string& path,
                         const std::string& url,
-                        const std::string& options="",
+                        int  tilesize,
                         bool fill_empty_space=false);
 
 void MakeLowres(nlohmann::json& r,
@@ -87,7 +87,7 @@ void MakeLowres(nlohmann::json& r,
             size_t nsamp,
             const std::string& path,
             const std::string& url,
-            const std::string& options,
+            int  tilesize,
             bool fill_emty_space);
                         
 
