@@ -1,27 +1,29 @@
-# Configuration file. KVP format (param=value;)
+{
+  "_comment": "This is a configuration file for argo-backend-live in JSON format",
 
-# Connection details to dispatcher server.
-dispatcherHost=ubdaq-prod-evb-priv;
-dispatcherPort=2013;
+  "dispatcher_comment" : "Connection to the dispatcher.",
+  "dispatcherHost":"ubdaq-prod-evb-priv",
+  "dispatcherPort":2013;
 
-# Connection to plexus
-plexusInterface=mysql;
-plexusConnection=/uboonenew/online_database/plexus.db;
-plexusInterface_fallback=postgresql;
-plexusConnection_fallback= host=localhost port=5432;
+  "plexus_comment" : "Database connections to the plexus",
+  "plexus":{
+    "tpc_source" : "mysql /uboonenew/online_database/plexus.db"
+    "pmt_source" : "mysql /uboonenew/online_database/plexus.db"
+    "tpc_source_fallback" : "postgresql host=localhost port=5432"
+    "pmt_source_fallback" : "postgresql host=localhost port=5432"
+  },
 
+  "options_comment" : "The options to build the record."
+  "options" : "",
 
-# options used for building event.
-options=;
+  "cache_comment": "Where to store the image files",
+  "CacheStoragePath": "../live_event_cache",
+  "CacheStorageUrl":  "live_event_cache",
 
-# Cache file location.
-cacheDir=../live_event_cache;
-cacheUrl=live_event_cache;
+  "period_comment": "Minimum time between calls for more data. Could be slower if processor is getting hogged.",
+  "period":20,
 
-# Minimum time between calls for more data to dispatcher.
-# Could be slower if the processor bogs down
-period=20;
-
-# Maximum number of events to keep in the cache before deleting.
-maxFiles=30;
+  "maxfiles_comment": "Maximum number of events to keep in the cache before deleting.",
+  "maxFiles":30
+}
 

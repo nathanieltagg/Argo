@@ -123,6 +123,9 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output)
 void UbdaqComposer::satisfy_request(Request_t request, Result_t output,
      std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record)
 {
+  m_options = request->value("options",std::string(""));
+  m_result = output;
+  
   m_record = record;
   if(!m_record) {
     (*m_result)["error"] = "Bad record!";

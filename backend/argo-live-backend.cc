@@ -14,26 +14,23 @@
 #include <fstream>
 
 #include "SocketServer.h"
-#include "RawRecordComposer.h"
+#include "UbdaqComposer.h"
 #include "Timer.h"
 #include "Client.h"
 #include "KvpSet.h"
 #include "ConvertDispatcherToEventRecord.h"
-#include "datatypes/raw_data_access.h"
-#include "Plexus.h"
-#include "datatypes/uboone_data_utils.h"
-#include "DeadChannelMap.h"
-
 #include "TTimeStamp.h"
 
 #include <signal.h>
 #include <glob.h>
+#include "json.hpp"
 
 using namespace std; 
 using namespace gov::fnal::uboone::dispatcher;
 using gov::fnal::uboone::datatypes::ub_EventRecord;
 
 using namespace std;
+using nlohmann::json;
 
 // Configuration globals.
 string oDispHost;
@@ -43,20 +40,20 @@ string oCacheDir;
 string oCacheUrl;     
 double oPeriod;       
 int    oMaxFiles;     
-JsonObject oConfigJson;
+json oConfigJson;
 
-JsonObject KvpToJson(KvpSet& kvp)
-{
-  JsonObject j;
-  for(int i=0;i<kvp.n();i++) {
-    j.add(kvp.getKey(i), kvp.getVal(i));
-  }
-  return j;
-}
 
 
 void TerminationHandler(int signal);
 
+json KvpToJson(KvpSet& kvp)
+{
+  json j;
+  for(int i=0;i<kvp.n();i++) {
+    j[kvp.getKey(i)] = kvp.getVal(i);
+  }
+  return j;
+}
 
 
 void CleanCacheDirectory(std::string dir, int max)
@@ -85,14 +82,12 @@ void CleanCacheDirectory(std::string dir, int max)
 }
 
 
-void SaveHeartbeat(JsonObject& heartbeatInfo,const std::string& error = "")
+void SaveHeartbeat(json heartbeatInfo,const std::string& error = "")
 {
-  if(error.length()>0) heartbeatInfo.add("error",error);
+  if(error.length()>0) heartbeatInfo["error"]=error;
   std::string filename=oCacheDir + "/heartbeat.json";
   ofstream heartbeatfile(filename);
-  JsonElement::SetPrettyPrint(true);
-  heartbeatfile << heartbeatInfo.str();
-  JsonElement::SetPrettyPrint(false);
+  heartbeatfile << heartbeatInfo.dump(2) << std::endl;
   heartbeatfile.close();
   logInfo << "Saved heartbeat";
 }
@@ -107,11 +102,6 @@ int main(int argc, char **argv)
   signal (SIGHUP, TerminationHandler);
   signal (SIGTERM, TerminationHandler);
 
-  // Startup:
-  gov::fnal::uboone::datatypes::peek_at_next_event<ub_TPC_CardData_v6>(false);
-  gov::fnal::uboone::datatypes::peek_at_next_event<ub_PMT_CardData_v6>(false);
-  gov::fnal::uboone::datatypes::handle_missing_words<ub_TPC_CardData_v6>(true);
-  gov::fnal::uboone::datatypes::handle_missing_words<ub_PMT_CardData_v6>(true);
   
   // write a PID file.
   std::string progname = argv[0];
@@ -125,76 +115,47 @@ int main(int argc, char **argv)
   }
   
   // Load configuration from config file.
-  std::string configfilename = "live.config";
+  std::string configfilename = "live.config.json";
   if(argc>1) configfilename = argv[1];
 
   std::cout << "Loading config file " << configfilename << std::endl;
   ifstream configfile(configfilename);
-  std::string configstr;
-  while(configfile) {
-    std::string line;
-    std::getline(configfile,line);
-    //std::cout << line << "--" << std::endl;
-    size_t found = line.find_first_of("#");
-    if (found != string::npos) {
-      //std::cout << "found hash " << found << endl;
-     	line.erase(found);
-    }
-    //std::cout << line << "--" << std::endl;
-    
-    configstr += line;
-  }
+  json config;
+  configfile >> config;
   configfile.close();
-  KvpSet config(configstr);
   std::cout << "----Configuration:----" << std::endl;
-  std::cout << config.pretty_print();
-  
-  // Plexus.
-  std::string  plexSource     = config.getString("plexusInterface","sqlite");
-  std::string  plexConnection = config.getString("plexusConnection","../db/current-plexus.db");
-
-  gPlexus.assignSources(
-      config.getString("plexusTpcSource","sqlite ../db/current-plexus.db"),
-      config.getString("plexusPmtSource","sqlite ../db/current-plexus.db"),
-      config.getString("plexusTpcSource_fallback",""),
-      config.getString("plexusPmtSource_fallback","")
-    );
-  
-  gPlexus.rebuild((double)TTimeStamp());
-  gDeadChannelMap->Rebuild();
+  std::cout << config.dump(2) << std::endl;
   
   
   // Connect to dispatcher.
   // FIXME: Make configurable.
-  oDispHost      = config.getString("dispatcherHost","localhost");
-  oDispPort      = config.getString("dispatcherPort","2013");
-  oOptions       = config.getString("options","");
-  oCacheDir      = config.getString("cacheDir","../live_event_cache");
-  oCacheUrl      = config.getString("cacheUrl","live_event_cache");
-  oPeriod        = config.getDouble("period",5.0);
-  oMaxFiles      = config.getInt   ("maxFiles",30);
-  oConfigJson = KvpToJson(config);
+  oDispHost      = config.value("dispatcherHost","localhost");
+  oDispPort      = std::to_string(config.value("dispatcherPort",2013));
+  oOptions       = config.value("options","");
+  oCacheDir      = config.value("cacheDir","../live_event_cache");
+  oCacheUrl      = config.value("cacheUrl","live_event_cache");
+  oPeriod        = config.value("period",5.0);
+  oMaxFiles      = config.value("maxFiles",30);
+  oConfigJson = config;
 
-  // explicitly unpack.
-  pmt_crate_data_t::doDissect(true);
-  tpc_crate_data_t::doDissect(true);
-  trig_crate_data_t::doDissect(true);
-
-  
-  JsonObject heartbeat_init;
-  heartbeat_init.add("config",oConfigJson);
-  heartbeat_init.add("starting",1);
+  json heartbeat_init;
+  heartbeat_init["config"]=oConfigJson;
+  heartbeat_init["starting"]=1;
   SaveHeartbeat(heartbeat_init);
   
   Client client(false);
   client.connect(oDispHost,oDispPort); 
   Timer retryTimer(0); // Zero means time is up.
 
+  UbdaqComposer composer;
+  composer.configure(std::shared_ptr<json>(new json(config)));
+
+
   // Main loop.
   while(true) {
     
-    JsonObject heartbeatInfo;
-    heartbeatInfo.add("config",oConfigJson);
+    json heartbeatInfo;
+    heartbeatInfo["config"]=oConfigJson;
     
     
     // Check for too many files. Delete as required
@@ -236,13 +197,14 @@ int main(int argc, char **argv)
       continue;
     }
     KvpSet md(metadata);
-    JsonObject mdj = KvpToJson(md);
+    json mdj = KvpToJson(md);
 
-    JsonObject result;
-    JsonObject source;
-    source.add("dispatcher",mdj);
-    result.add("source",source);
-    heartbeatInfo.add("dispatcher",mdj);
+    Result_t result(new json);
+    json source;
+    source["dispatcher"]=mdj;
+    (*result)["source"]=source;
+
+    heartbeatInfo["dispatcher"]=mdj;
     logInfo << "Got reply: payload: " << data->payload_size() << " bytes, metadata: "
       << " requestId="<< md.get("requestId")
       << " requestHeaderOnly="<< md.get("requestHeaderOnly")
@@ -265,21 +227,20 @@ int main(int argc, char **argv)
       continue;
     }    
     
-    RawRecordComposer composer(result,record,oOptions);
+    Request_t request(new json);
+    (*request)["options"]=oOptions;
     try {
-       composer.fCacheStoragePath     = oCacheDir;
-       composer.fCacheStorageUrl      = oCacheUrl;
-
-       composer.compose();
-       std::string filename = composer.fCurrentEventDirname + "/" + "event.json";
-       ofstream json(filename,std::ios_base::trunc);
-       json << composer.fOutput;
-       json.close();
+       composer.satisfy_request(request,result,record);
+       
+       std::string filename = composer.m_current_event_dir_name + "/" + "event.json";
+       ofstream jsonfile(filename,std::ios_base::trunc);
+       jsonfile << *result;
+       jsonfile.close();
        // atomic rename from working area to final area.
-       std::string finalDirName = composer.fCurrentEventDirname;
+       std::string finalDirName = composer.m_current_event_dir_name;
        size_t pos = finalDirName.find(".working",0);
        if(pos != std::string::npos) finalDirName.replace(pos,8,".event");
-       rename(composer.fCurrentEventDirname.c_str(),finalDirName.c_str());
+       rename(composer.m_current_event_dir_name.c_str(),finalDirName.c_str());
     }
     catch (const std::exception& error)
     {
@@ -295,8 +256,8 @@ int main(int argc, char **argv)
         continue;
     }
     
-    heartbeatInfo.add("success",1);
-    heartbeatInfo.add("timeToProcess",timeToProcess.Count());
+    heartbeatInfo["success"]=1;
+    heartbeatInfo["timeToProcess"]=timeToProcess.Count();
     SaveHeartbeat(heartbeatInfo);
      
   } // End main loop

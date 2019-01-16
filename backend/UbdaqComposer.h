@@ -26,6 +26,9 @@ public:
   virtual void satisfy_request(Request_t request, Result_t,
      std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record);
 
+   std::string m_current_event_dir_name;
+   std::string m_current_event_url;
+
    protected:
   void compose();
   void composeHeader();
@@ -47,8 +50,6 @@ public:
   std::string m_FinalSuffix;
   
   std::string m_options;
-  std::string m_current_event_dir_name;
-  std::string m_current_event_url;
   
     
   // State things:

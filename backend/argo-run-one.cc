@@ -19,19 +19,12 @@
 #include <TTimeStamp.h>
 #include <TError.h>
 
-#include "SocketServer.h"
-#include "ResultComposer.h"
-
-#include "KvpSet.h"
-#include "Plexus.h"
-#include "DeadChannelMap.h"
+#include "ComposerFactory.h"
 
 #include <signal.h>
 #include <algorithm>
 #include <string>
 #include <boost/program_options.hpp>
-
-extern gov::fnal::uboone::online::Plexus gPlexus;
 
 
 using namespace std;
@@ -41,7 +34,6 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-  ArgoInitGlobals();
   std::string progname = argv[0];
   std::string options = "_tilesize1024_";
   std::string filename;
@@ -102,15 +94,14 @@ int main(int argc, char **argv)
   if (vm.count("path")) {
     path = vm["path"].as<string>();
   }
-  // assume being run from root directory.
-  // Plexus.
-  gPlexus.assignSources(
-    std::string("sqlite ").append(path).append("db/current-plexus.db"),
-    std::string("sqlite ").append(path).append("db/current-plexus.db"),
-    "",""
-  );  
-  gPlexus.rebuild((double)TTimeStamp(),0);
-  gDeadChannelMap->Rebuild(std::string(path).append("/db/dead_channels.txt"));
+
+
+  Config_t configuration(new nlohmann::json);
+  (*configuration)["CacheStoragePath"] = "../datacache";
+  (*configuration)["CacheStorageUrl"]  = "datacache";
+  (*configuration)["plexus"] = { {"tpc_source", std::string("sqlite ").append(path).append("db/current-plexus.db")}
+                               , {"pmt_source", std::string("sqlite ").append(path).append("db/current-plexus.db")}
+                               };
     
   // gTimeStart = gSystem->Now();
   cout << "Request Parameters:" << endl;
@@ -118,22 +109,17 @@ int main(int argc, char **argv)
   cout << "    Selection:--" << selection << "--" << endl;
   cout << "    From:     --" << entrystart << " to " << entryend << endl;
   cout << "    Options:  --" << options << endl;
-  
-  long t1 = gSystem->Now();
-  // Now do your stuff.
-  ResultComposer::config_t rc_cfg;
-  std::string datacachedir = path+"/datacache";
-  
-  cout << "Writing png files to " << datacachedir;
-  rc_cfg["CacheStoragePath"] = datacachedir;
-  rc_cfg["CacheStorageUrl"]  = datacachedir;
-            
-  ResultComposer rc(rc_cfg);           // rc gets destroyed only after the client connection has been closed, which saves a little time (20%)
-  std::shared_ptr<std::string> payload = rc.compose(options.c_str(),filename.c_str(),selection.c_str(),entrystart,entryend);
-  payload->append("\n");
-  long t2 = gSystem->Now();
-  (void) t2;
-  (void) t1;
+
+  Request_t request(new nlohmann::json);
+  (*request)["options"] = options;
+  (*request)["filename"] = filename;
+  (*request)["selection"] = selection;
+  (*request)["entrystart"] = entrystart;
+  (*request)["entryend"] = entryend;
+
+  ComposerFactory factory(configuration);
+  Result_t result = factory.compose(request);
+  std::shared_ptr<std::string> payload(new std::string(result->dump()));
   
   ofstream outstream(jsonfilename.c_str());
   outstream << *payload;
