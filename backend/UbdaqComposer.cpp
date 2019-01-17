@@ -47,7 +47,7 @@ void UbdaqComposer::initialize()
   m_WorkingSuffix     = m_config->value("WorkingSuffix",    "working");
   m_FinalSuffix       = m_config->value("FinalSuffix",      "event");
   m_CreateSubdirCache = m_config->value("CreateSubdirCache" ,true);
-  m_unpack_threads    = m_config->value("unpack_threads",   5);
+  m_max_threads        = m_config->value("max_threads",   5);
   
   gov::fnal::uboone::datatypes::peek_at_next_event<ub_TPC_CardData_v6>(false);
   gov::fnal::uboone::datatypes::peek_at_next_event<ub_PMT_CardData_v6>(false);
@@ -389,7 +389,7 @@ void UbdaqComposer::composeTPC()
   
   {
     TimeReporter timer_read("TPCReadDAQ");  
-    ThreadPool thread_pool(m_unpack_threads);
+    ThreadPool thread_pool(m_max_threads);
     
     // Loop through all channels.
     ub_EventRecord::tpc_map_t tpc_map = m_record->getTPCSEBMap();
@@ -489,7 +489,7 @@ void UbdaqComposer::composeTPC()
                             ntdc,
                             m_current_event_dir_name,
                             m_current_event_url,
-                            tilesize, false, m_unpack_threads);
+                            tilesize, false, m_max_threads);
 
     reco_list["DAQ"] = r;
     (*m_result)["raw"] = reco_list;
@@ -501,7 +501,7 @@ void UbdaqComposer::composeTPC()
                      wireMap,
                      noiseMap,
                      nwire,
-                     ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_unpack_threads );
+                     ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_max_threads );
       json reco_list2;
       reco_list2["DAQ"] = r2;
       (*m_result)["raw_lowres"] = reco_list2;

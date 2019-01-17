@@ -19,6 +19,7 @@
   "cache_comment": "Where to store the image files",
   "CacheStoragePath": "../live_event_cache",
   "CacheStorageUrl":  "live_event_cache",
+  "max_threads": 5,
 
   "period_comment": "Minimum time between calls for more data. Could be slower if processor is getting hogged.",
   "period":20,

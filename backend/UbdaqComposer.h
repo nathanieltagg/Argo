@@ -48,7 +48,7 @@ public:
   std::string m_CacheStorageUrl;
   std::string m_WorkingSuffix;
   std::string m_FinalSuffix;
-  size_t      m_unpack_threads;
+  size_t      m_max_threads;
   
   std::string m_options;
   
