@@ -28,10 +28,12 @@ void        wireOfChannel(int channel, int& plane, int& wire);
 class EncodedTileMaker
 {
 public:
-  EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, std::shared_ptr<wiremap_t> noiseWireMap, int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
-    const std::string& outDir,
-    const std::string& outUrl,
-    bool fill_empty_space )
+  EncodedTileMaker( std::shared_ptr<wiremap_t> wireMap, 
+                    std::shared_ptr<wiremap_t> noiseWireMap, 
+                    int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
+                    const std::string& outDir,
+                    const std::string& outUrl,
+                    bool fill_empty_space )
     : m_wireMap(wireMap) 
     , m_noiseWireMap(noiseWireMap)
     , m_wireStart(wireStart)
@@ -72,23 +74,25 @@ public:
 
 void MakeEncodedTileset(nlohmann::json& output,
                         std::shared_ptr<wiremap_t> wireMap, 
-                        std::shared_ptr<wiremap_t> noiseWireMap,                         
+                        std::shared_ptr<wiremap_t> noiseWireMap,
                         size_t nwires,
                         size_t ntdc,
                         const std::string& path,
                         const std::string& url,
                         int  tilesize,
-                        bool fill_empty_space=false);
+                        bool fill_empty_space=false,
+                        size_t max_threads = 10);
 
 void MakeLowres(nlohmann::json& r,
             std::shared_ptr<wiremap_t> wireMap, 
-            std::shared_ptr<wiremap_t> noiseWireMap,                                     
+            std::shared_ptr<wiremap_t> noiseWireMap,
             size_t nwire,
             size_t nsamp,
             const std::string& path,
             const std::string& url,
             int  tilesize,
-            bool fill_emty_space);
+            bool fill_emty_space,
+            size_t max_threads = 10);
                         
 
 #endif /* end of include guard: ENCODEDTILEMAKER_H_FE65EB56 */

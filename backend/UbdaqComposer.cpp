@@ -489,7 +489,7 @@ void UbdaqComposer::composeTPC()
                             ntdc,
                             m_current_event_dir_name,
                             m_current_event_url,
-                            tilesize);
+                            tilesize, false, m_unpack_threads);
 
     reco_list["DAQ"] = r;
     (*m_result)["raw"] = reco_list;
@@ -501,7 +501,7 @@ void UbdaqComposer::composeTPC()
                      wireMap,
                      noiseMap,
                      nwire,
-                     ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false );
+                     ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_unpack_threads );
       json reco_list2;
       reco_list2["DAQ"] = r2;
       (*m_result)["raw_lowres"] = reco_list2;

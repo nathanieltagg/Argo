@@ -5,7 +5,7 @@
 #include "boost/thread/thread.hpp"
 #include "wireOfChannel.h"
 #include "json_tools.h"
-
+#include "ThreadPool.h"
 
 // given an input wiremap,
 // create the slew of output .pngs using crafty 
@@ -20,7 +20,8 @@ void MakeLowres(nlohmann::json& r,
               const std::string& path,
               const std::string& url,
               int tilesize,
-              bool fill_empty_space)
+              bool fill_empty_space,
+              size_t max_threads)
 {
   int factor_x =10;
   int factor_y =10;
@@ -88,7 +89,8 @@ void MakeEncodedTileset(nlohmann::json& r,
                         const std::string& path,
                         const std::string& url,
                         int  tilesize,
-                        bool fill_empty_space)
+                        bool fill_empty_space,
+                        size_t max_threads)
 {
   {
     TimeReporter timer_tiles("time_to_make_tiles");
@@ -99,7 +101,8 @@ void MakeEncodedTileset(nlohmann::json& r,
         << "\n --url:     "  << url 
         << "\n --Filling space: "  << fill_empty_space 
         << "\n --tilesize: " << tilesize  << std::endl;
-    boost::thread_group tile_threads;
+    // boost::thread_group tile_threads;
+    ThreadPool thread_pool(max_threads);
     
     typedef std::vector<EncodedTileMaker> row_t;
     typedef std::vector<row_t> table_t;
@@ -148,11 +151,12 @@ void MakeEncodedTileset(nlohmann::json& r,
       row_t& row = table[i];
       for(int j=0;j<row.size();j++) {
         EncodedTileMaker& tilemaker = row[j];
-        tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tilemaker));
+        // tile_threads.create_thread(boost::bind(&EncodedTileMaker::process,&tilemaker));
+        thread_pool.AddJob(boost::bind(&EncodedTileMaker::process,&tilemaker));
       }
     }
-    tile_threads.join_all();
-
+    // tile_threads.join_all();
+    thread_pool.JoinAll();
     std::cout << "Finished tile threads"<< std::endl;
 
     nlohmann::json jtiles;
