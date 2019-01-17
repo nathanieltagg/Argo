@@ -23,6 +23,7 @@
 #include "DeadChannelMap.h"
 #include "TTimeStamp.h"
 
+#include "ThreadPool.h"
 #include <sys/stat.h>
 
 using namespace std;
@@ -46,6 +47,7 @@ void UbdaqComposer::initialize()
   m_WorkingSuffix     = m_config->value("WorkingSuffix",    "working");
   m_FinalSuffix       = m_config->value("FinalSuffix",      "event");
   m_CreateSubdirCache = m_config->value("CreateSubdirCache" ,true);
+  m_unpack_threads    = m_config->value("unpack_threads",   5);
   
   gov::fnal::uboone::datatypes::peek_at_next_event<ub_TPC_CardData_v6>(false);
   gov::fnal::uboone::datatypes::peek_at_next_event<ub_PMT_CardData_v6>(false);
@@ -365,7 +367,6 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
 
 
 
- 
 void UbdaqComposer::composeTPC()
 {
   json reco_list;
@@ -388,6 +389,7 @@ void UbdaqComposer::composeTPC()
   
   {
     TimeReporter timer_read("TPCReadDAQ");  
+    ThreadPool thread_pool(m_unpack_threads);
     
     // Loop through all channels.
     ub_EventRecord::tpc_map_t tpc_map = m_record->getTPCSEBMap();
@@ -429,17 +431,21 @@ void UbdaqComposer::composeTPC()
           }
           (*wireMap)[wire] = waveform_ptr;          
           
-          unpack_channel(waveform_ptr,channel_data,p,hits);
+          // unpack_channel(waveform_ptr,channel_data,p,hits);
           // unpack_threads.create_thread(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
           //                                         boost::cref(p), boost::ref(hits)));
+          thread_pool.AddJob(boost::bind(unpack_channel,waveform_ptr,boost::cref(channel_data),
+                                                     boost::cref(p), boost::ref(hits)));
+                                                     
         } // loop channels
-        unpack_threads.join_all();
+        //unpack_threads.join_all();
 
       } // loop cards
     
       
     } // loop seb/crate
   
+    thread_pool.JoinAll();
     timer_read.addto(m_stats);
   }
   

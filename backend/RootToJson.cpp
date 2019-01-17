@@ -71,8 +71,7 @@ nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
     for(int bin=0;bin<hist->GetNbinsX();bin++) xbins.push_back(Xbins->At(bin));
     h["x_bins"] = xbins;
   } else {
-    std::cout << hist->GetName() << " does not have variable bins" << std::endl;
-    
+    // std::cout << hist->GetName() << " does not have variable bins" << std::endl;
   }
   
   h["n"] = hist->GetNbinsX();
