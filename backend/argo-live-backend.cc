@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 
   UbdaqComposer composer;
   composer.configure(std::shared_ptr<json>(new json(config)));
-
+  composer.initialize();
 
   // Main loop.
   while(true) {
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
       continue;
     }    
     
-    Request_t request(new json);
+    Request_t request(new json(json::object()));
     (*request)["options"]=oOptions;
     try {
        composer.satisfy_request(request,result,record);

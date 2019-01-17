@@ -125,6 +125,7 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output,
 {
   m_options = request->value("options",std::string(""));
   m_result = output;
+  m_request = request;
   
   m_record = record;
   if(!m_record) {
@@ -146,6 +147,7 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output,
   
     ::umask(0000); // need this first??
     ::mkdir(m_current_event_dir_name.c_str(),0777);
+    std::cout << "Writing event to " << m_current_event_dir_name << std::endl;
   } else {
     m_current_event_dir_name = m_CacheStoragePath;
     m_current_event_url      = m_CacheStorageUrl;
