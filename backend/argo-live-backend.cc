@@ -209,10 +209,9 @@ int main(int argc, char **argv)
     KvpSet md(metadata);
     json mdj = KvpToJson(md);
 
-    Result_t result(new json);
     json source;
-    source["dispatcher"]=mdj;
-    (*result)["source"]=source;
+    // source["dispatcher"]=mdj;
+    // (*result)["source"]=source;
 
     heartbeatInfo["dispatcher"]=mdj;
     logInfo << "Got reply: payload: " << data->payload_size() << " bytes, metadata: "
@@ -240,11 +239,11 @@ int main(int argc, char **argv)
     Request_t request(new json(json::object()));
     (*request)["options"]=oOptions;
     try {
-       composer.satisfy_request(request,result,record);
+       Output_t payload = composer.satisfy_request(request,record);
        
        std::string filename = composer.m_current_event_dir_name + "/" + "event.json";
        ofstream jsonfile(filename,std::ios_base::trunc);
-       jsonfile << *result;
+       jsonfile << *payload;
        jsonfile.close();
        // atomic rename from working area to final area.
        std::string finalDirName = composer.m_current_event_dir_name;

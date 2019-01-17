@@ -8,7 +8,7 @@
 
 typedef std::shared_ptr<nlohmann::json> Request_t ;
 typedef std::shared_ptr<nlohmann::json> Config_t  ;
-typedef std::shared_ptr<nlohmann::json> Result_t  ;
+typedef std::shared_ptr<std::string>    Output_t  ;
 typedef std::shared_ptr<nlohmann::json> Json_t ;
 
 class TTree;
@@ -19,14 +19,15 @@ class TTree;
 #include <iostream>
 
 
+
+
 class Composer {
 public:
   
   
-  Composer()
-      {        
-      }; // Constructor
-  virtual ~Composer() {}; // Destructor
+  Composer() : m_result(nlohmann::json::object())
+      { }; // Constructor
+  virtual ~Composer()  {}; // Destructor
   
   virtual void configure(Config_t config) { m_config = config; }
   virtual void initialize(){};
@@ -36,8 +37,8 @@ public:
   // Called only if the client specifically requests us.
   virtual bool can_satisfy(Request_t) {return false;};
 
-  // Need only satify this:: it fills the output object. 
-  virtual void satisfy_request(Request_t request, Result_t output);
+  // Need only satify this: 
+  virtual Output_t satisfy_request(Request_t request);
   // Check to see if our current event matches the request.
   // Get the event specified in the request.
   // Build the _consituent map, including mutexes.
@@ -65,11 +66,12 @@ public:
   int64_t find_entry_in_tree(TTree* inTree, std::string& inSelection, int64_t inStart, int64_t inEnd, std::string& outError);
   
   virtual nlohmann::json monitor_data();
+  virtual Output_t       dump_result() { return Output_t(new std::string(m_result.dump())); }
   
   typedef std::string  ConstituentAddress_t;  // Actually a jsonPointer
   struct Constituent_t{
     ConstituentAddress_t m_address;
-    Result_t             m_data;
+    Json_t             m_data;
     boost::mutex         m_mutex;
   };
 
@@ -82,7 +84,17 @@ public:
   Json_t         m_manifest;  // empty JSON framework. Do we need this?
   int            m_id;
   Config_t       m_config;
-  Result_t       m_result;
+  nlohmann::json m_result;
+  
+
+public:
+  static Output_t return_error(const std::string& err) 
+  {
+    nlohmann::json j;
+    j["error"] = err;
+    std::cerr << err << std::endl;
+    return Output_t(new std::string(j.dump()));
+  }
 };
 
 // Might want to wrap this guy so that he can be spoken to via forks

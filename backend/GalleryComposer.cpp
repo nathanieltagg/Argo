@@ -282,7 +282,7 @@ void GalleryComposer::composeHeaderData()
 
   {
     boost::mutex::scoped_lock lck(m_output_mutex);
-    (*m_result)["header"] = header;
+    m_result["header"] = header;
   }
   ttt.addto(m_stats);
 }
@@ -357,8 +357,8 @@ void GalleryComposer::composeHits()
 
     toptimer.addto(m_stats);
 
-    (*m_result)["hits"] = reco_list;
-    (*m_result)["hit_hists"] = hist_list;
+    m_result["hits"] = reco_list;
+    m_result["hit_hists"] = hist_list;
   }
   std::cout << "Hits finishing" << std::endl;
 }
@@ -534,7 +534,7 @@ void GalleryComposer::composeCalAvailability()
   }
   {
     boost::mutex::scoped_lock lck(m_output_mutex);
-    (*m_result)["cal"] = reco_list;
+    m_result["cal"] = reco_list;
   }
 }
 
@@ -646,8 +646,8 @@ void GalleryComposer::composeWires()
   {
     boost::mutex::scoped_lock lck(m_output_mutex);
 
-    (*m_result)["cal"] = reco_list;
-    (*m_result)["cal_lowres"] = reco_list2;
+    m_result["cal"] = reco_list;
+    m_result["cal_lowres"] = reco_list2;
   }
   std::cout << "Wires finishing" << std::endl;
   
@@ -665,7 +665,7 @@ void GalleryComposer::composeRawAvailability()
   }
   {
     boost::mutex::scoped_lock lck(m_output_mutex);
-    (*m_result)["raw"] = reco_list;
+    m_result["raw"] = reco_list;
   }
   
 }
@@ -774,8 +774,8 @@ void GalleryComposer::composeRaw()
   }
   {
     boost::mutex::scoped_lock lck(m_output_mutex);
-    (*m_result)["raw"] = reco_list;
-    (*m_result)["raw_lowres"] = reco_list2;
+    m_result["raw"] = reco_list;
+    m_result["raw_lowres"] = reco_list2;
   }
   std::cout << "RawDigits finishing" << std::endl;
   
@@ -1343,7 +1343,7 @@ void GalleryComposer::composeAssociations()
   // cout << "Association total size: " << assns.str().length() << std::endl;
   {
     boost::mutex::scoped_lock lck(m_output_mutex);
-    (*m_result)["associations"] = assns;
+    m_result["associations"] = assns;
     m_stats["Associations"]=timer.t.Count();
     
   }
@@ -1351,21 +1351,16 @@ void GalleryComposer::composeAssociations()
 
 
 
-void GalleryComposer::satisfy_request(Request_t request, Result_t output)
+Output_t GalleryComposer::satisfy_request(Request_t request)
 {
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
   TimeReporter timer("TOTAL");
   
-  assert(output.get());
-  
-
   m_request = request;
-  m_result = output;
-  (*m_result)["request"] = *request;  
+  m_result["request"] = *request;  
 
   if(request->find("filename")==request->end()) {
-    (*m_result)["error"] = "No file requested";
-    return;
+    return return_error("No file requested");
   }
   std::string filename =  (*request)["filename"].get<std::string>();
   std::string sel   = request->value("selection","1");
@@ -1374,7 +1369,6 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   m_options = request->value("options",std::string(""));
 
   // Fixme: check to make sure request is valid
-
   //
   std::cout << filename << std::endl;
 
@@ -1393,8 +1387,7 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
     std::cout << "calling find_entry_in_tree: " << m_Event->getTTree() << "\t" << sel << "\t" << start << "\t" << end << std::endl;
     m_entry = Composer::find_entry_in_tree( m_Event->getTTree(), sel, start, end, error);
     if(m_entry<0) {
-      (*m_result)["error"] = "Could not find entry in tree: "+error;
-      return;
+      return return_error("Could not find entry in tree: "+error);
     } 
     tr.addto(m_stats);
   }
@@ -1410,7 +1403,7 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   m_current_event_url       = m_CacheStorageUrl;
   
   int dummy;
-  (*m_result)["composer"]=abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
+  m_result["composer"]=abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
 
   //
   // OK, now build the result.
@@ -1423,7 +1416,7 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   source["entry"] = m_entry;
   source["options"] = m_options;
   source["selection"] = sel;
-  (*m_result)["source"] = source;
+  m_result["source"] = source;
   
 
   composeHeaderData();
@@ -1449,15 +1442,15 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
 
   composeHits();
 
-  composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", *m_result );
-  composeObjectsVector< std::vector<recob::Cluster   > >("clusters"   , *m_result );
-  composeObjectsVector< std::vector<recob::Track     > >("tracks"     , *m_result );
-  composeObjectsVector< std::vector<recob::Shower    > >("showers"    , *m_result );
-  composeObjectsVector< std::vector<recob::EndPoint2D> >("endpoint2d" , *m_result );
-  composeObjectsVector< std::vector<recob::PFParticle> >("pfparticles", *m_result );
-  composeObjectsVector< std::vector<recob::OpFlash   > >("opflashes"  , *m_result );
-  composeObjectsVector< std::vector<recob::OpHit     > >("ophits"     , *m_result );
-  composeObjectsVector< std::vector<  raw::OpDetPulse> >("oppulses"   , *m_result );
+  composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", m_result );
+  composeObjectsVector< std::vector<recob::Cluster   > >("clusters"   , m_result );
+  composeObjectsVector< std::vector<recob::Track     > >("tracks"     , m_result );
+  composeObjectsVector< std::vector<recob::Shower    > >("showers"    , m_result );
+  composeObjectsVector< std::vector<recob::EndPoint2D> >("endpoint2d" , m_result );
+  composeObjectsVector< std::vector<recob::PFParticle> >("pfparticles", m_result );
+  composeObjectsVector< std::vector<recob::OpFlash   > >("opflashes"  , m_result );
+  composeObjectsVector< std::vector<recob::OpHit     > >("ophits"     , m_result );
+  composeObjectsVector< std::vector<  raw::OpDetPulse> >("oppulses"   , m_result );
 
   json mc;
   bool got_mc = false;
@@ -1466,7 +1459,7 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   got_mc |= composeObjectsVector< std::vector<simb::MCParticle> >("particles", mc );
   if(got_mc) {
     boost::mutex::scoped_lock lck(m_output_mutex);
-    (*m_result)["mc"] = mc;    
+    m_result["mc"] = mc;    
   }
   composeAssociations();
 
@@ -1495,9 +1488,10 @@ void GalleryComposer::satisfy_request(Request_t request, Result_t output)
   // Database lookup.
   // slomon_thread.join();
   // JsonElement hv; hv.setStr(slm.val);
-  // (*m_result)["hv"] = hv;  
+  // m_result["hv"] = hv;  
   timer.addto(m_stats);
-  (*m_result)["stats"] = m_stats;
+  m_result["stats"] = m_stats;
+  return dump_result();
 }
 
 // Json_t GalleryComposer::get_or_compose(std::string jsonPointer);

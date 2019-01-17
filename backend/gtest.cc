@@ -10,11 +10,10 @@ int main(int argc, char **argv)
   using nlohmann::json;
   
   Config_t config(new json(json::object()));
-  Result_t final_result;
+  Output_t final_result;
 
   ComposerFactory factory(config);
 
-  std::shared_ptr<std::string> s(new std::string);
   for(int iter=0;iter<1;iter++){
 
     Request_t request(new json(json::object()));
@@ -35,19 +34,19 @@ int main(int argc, char **argv)
     // gc->initialize();
     // gc->satisfy_request(request,result);
 
-    Request_t result = factory.compose(request);
+    Output_t result = factory.compose(request);
 
     final_result = result;
-    *s = result->dump();
-
   }
-  std::cout << "Result: " << s->size() << std::endl;
+  std::cout << "Result: " << final_result->size() << std::endl;
   std::ofstream ofs("test.json");
-  ofs << *s;
+  ofs << *final_result;
   ofs.close();
 
+  // reparse
+  json data = json::parse(*final_result);
   std::cout << "Data sizes: " << std::endl;
-  for(json::iterator it = final_result->begin(); it!=final_result->end(); it++ ) {
+  for(json::iterator it = data.begin(); it!=data.end(); it++ ) {
     std::string substr = it.value().dump();
     std::cout << Form("%20s %10lu %100s",it.key().c_str(),substr.size(),substr.substr(0,100).c_str()) << std::endl;
   }

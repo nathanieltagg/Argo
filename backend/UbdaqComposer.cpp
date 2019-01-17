@@ -61,18 +61,16 @@ UbdaqComposer::~UbdaqComposer()
 {
 }
 
-void UbdaqComposer::satisfy_request(Request_t request, Result_t output)
+Output_t UbdaqComposer::satisfy_request(Request_t request)
 {
   TimeReporter timer("TOTAL");
   std::cout << "UBDAQ COMPOSER" << std::endl;
   
   m_request = request;
-  m_result = output;
-  (*m_result)["request"] = *request;
+  m_result["request"] = *request;
   // See if we can find the record in question.
   if(request->find("filename")==request->end()) {
-    (*m_result)["error"] = "No file requested";
-    return;
+    return return_error("No file requested");
   }
   std::string filename =  (*request)["filename"].get<std::string>();
   long long  start = request->value("entrystart",(long long)0);
@@ -85,8 +83,7 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output)
   DaqFile daqfile(filename);
   if(! daqfile.Good() ) {
     // Bad file.
-    (*m_result)["error"] = string("Cannot open file ") + filename + " for reading.";
-    return;
+    return return_error(string("Cannot open file ") + filename + " for reading.");
   }
   // Ensure full dissection is on.
   // Explicitly turn on unpacking.
@@ -103,8 +100,7 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output)
   }
 
   if(!record) {
-    (*m_result)["error"] = string("Cannot read or unpack event ") + std::to_string(entry) + " in file " + filename;
-    return;;
+    return return_error(string("Cannot read or unpack event ") + std::to_string(entry) + " in file " + filename);
   }
   
   json source;
@@ -116,23 +112,21 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output)
   source["options"] = m_options;
   source["numEntriesInFile"] = daqfile.NumEvents();
   source["fileClosedCleanly"] = daqfile.ClosedCleanly();
-  (*m_result)["source"] = source;
+  m_result["source"] = source;
 
-  satisfy_request(request,output,record);
+  return satisfy_request(request,record);
 }
 
 
-void UbdaqComposer::satisfy_request(Request_t request, Result_t output,
+Output_t UbdaqComposer::satisfy_request(Request_t request, 
      std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record)
 {
   m_options = request->value("options",std::string(""));
-  m_result = output;
   m_request = request;
   
   m_record = record;
   if(!m_record) {
-    (*m_result)["error"] = "Bad record!";
-    return;
+    return return_error("Bad record!");
   } 
     
   std::string id = Form("r%08d_s%04d_e%08d"
@@ -172,11 +166,11 @@ void UbdaqComposer::satisfy_request(Request_t request, Result_t output,
   
   json hv; 
   hv = slm.val;
-  (*m_result)["hv"] = hv;  
-  (*m_result)["stats"] = m_stats;
+  m_result["hv"] = hv;  
+  m_result["stats"] = m_stats;
   
-  (*m_result)["monitor"] = monitor_data();
-
+  m_result["monitor"] = monitor_data();
+  return dump_result();
 }
 
 
@@ -294,7 +288,7 @@ void UbdaqComposer::composeHeader()
   header["trigger"] = trig;
   
   
-  (*m_result)["header"] = header;  
+  m_result["header"] = header;  
 }
 
 
@@ -455,7 +449,7 @@ void UbdaqComposer::composeTPC()
   if( std::string::npos != m_options.find("_NORAW_")) {
     std::cout << "Not doing wire images." << std::endl;
     reco_list["DAQ"] = json();
-    (*m_result)["raw"] = reco_list;    
+    m_result["raw"] = reco_list;    
   } else {
     for(auto it: *wireMap) {
       if(it) {
@@ -492,7 +486,7 @@ void UbdaqComposer::composeTPC()
                             tilesize, false, m_max_threads);
 
     reco_list["DAQ"] = r;
-    (*m_result)["raw"] = reco_list;
+    m_result["raw"] = reco_list;
     
     {
       json r2;
@@ -504,7 +498,7 @@ void UbdaqComposer::composeTPC()
                      ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_max_threads );
       json reco_list2;
       reco_list2["DAQ"] = r2;
-      (*m_result)["raw_lowres"] = reco_list2;
+      m_result["raw_lowres"] = reco_list2;
     }
     
   }
@@ -515,7 +509,7 @@ void UbdaqComposer::composeTPC()
   
   json hits_lists;
   hits_lists["DAQ"] = hits;
-  (*m_result)["hits"] = hits_lists;
+  m_result["hits"] = hits_lists;
   
   timer.addto(m_stats);
 }
@@ -677,7 +671,7 @@ void UbdaqComposer::composeTPC_SN()
   if( std::string::npos != m_options.find("_NORAW_")) {
     std::cout << "Not doing wire images." << std::endl;
     reco_list["SNDAQ"] = json();
-    (*m_result)["raw"] = reco_list;    
+    m_result["raw"] = reco_list;    
   } else {
     for(auto it: *wireMap) {
       if(it) {
@@ -718,7 +712,7 @@ void UbdaqComposer::composeTPC_SN()
                             tilesize);
 
     reco_list["SNDAQ"] = r;
-    (*m_result)["raw"] = reco_list;
+    m_result["raw"] = reco_list;
     {
       json r2;
       TimeReporter lowres_stats("time_to_make_lowres");
@@ -729,7 +723,7 @@ void UbdaqComposer::composeTPC_SN()
                      ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
       json reco_list2;
       reco_list2["DAQ"] = r2;
-      (*m_result)["raw_lowres"] = reco_list2;
+      m_result["raw_lowres"] = reco_list2;
     }
     
   }
@@ -740,7 +734,7 @@ void UbdaqComposer::composeTPC_SN()
   
   json hits_lists;
   hits_lists["SNDAQ"] = hits;
-  (*m_result)["hits"] = hits_lists;
+  m_result["hits"] = hits_lists;
   
   timer.addto(m_stats);
 }
@@ -968,11 +962,11 @@ void UbdaqComposer::composePMTs()
   for(auto& list: ophits_lists) {
     reco_list[list.first] = list.second;
   }
-  (*m_result)["ophits"] = reco_list;
+  m_result["ophits"] = reco_list;
   
   json jPMT;
   jPMT["crates"] = jCrates;   
-  (*m_result)["PMT"] = jPMT;   
+  m_result["PMT"] = jPMT;   
   timer.addto(m_stats);
 }
 
@@ -1006,7 +1000,7 @@ void UbdaqComposer::composeLaser()
     jlaser[index]=j;
   };
   json reco_list;
-  (*m_result)["laser"] = jlaser;
+  m_result["laser"] = jlaser;
   
 #endif
 }

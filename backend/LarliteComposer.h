@@ -22,7 +22,7 @@ public:
   
   virtual bool can_satisfy(Request_t) {return true;};
 
-  virtual void satisfy_request(Request_t request, Result_t output);
+  virtual Output_t satisfy_request(Request_t request);
   
 protected:
 

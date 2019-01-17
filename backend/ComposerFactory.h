@@ -9,7 +9,7 @@ class ComposerFactory
   public:
    ComposerFactory(const Config_t config) : m_config(config){};
    
-   Result_t compose(Request_t request);
+   Output_t compose(Request_t request);
   
    ~ComposerFactory() {};
    

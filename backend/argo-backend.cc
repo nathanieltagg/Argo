@@ -217,8 +217,7 @@ int main(int argc, char **argv)
             (*request)["entrystart"] = entrystart;
             (*request)["entryend"] = entryend;
 
-            Result_t result = factory.compose(request);
-            std::shared_ptr<std::string> payload(new std::string(result->dump()));
+            Output_t payload = factory.compose(request);
   
             long t2 = gSystem->Now();
             // Send it out.

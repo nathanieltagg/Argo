@@ -20,16 +20,16 @@ public:
   virtual bool can_satisfy(Request_t) {return true;};
 
   // To be called if there's a file
-  virtual void satisfy_request(Request_t request, Result_t output);
+  virtual Output_t satisfy_request(Request_t request);
 
   // To be called by the LIVE system, with dispatcher input
-  virtual void satisfy_request(Request_t request, Result_t,
-     std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record);
+  virtual Output_t satisfy_request(Request_t request, 
+                                    std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record);
 
-   std::string m_current_event_dir_name;
-   std::string m_current_event_url;
+  std::string m_current_event_dir_name;
+  std::string m_current_event_url;
 
-   protected:
+  protected:
   void compose();
   void composeHeader();
   bool composeHeaderTrigger(nlohmann::json& trig);

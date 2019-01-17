@@ -118,8 +118,7 @@ int main(int argc, char **argv)
   (*request)["entryend"] = entryend;
 
   ComposerFactory factory(configuration);
-  Result_t result = factory.compose(request);
-  std::shared_ptr<std::string> payload(new std::string(result->dump()));
+  Output_t payload = factory.compose(request);
   
   ofstream outstream(jsonfilename.c_str());
   outstream << *payload;

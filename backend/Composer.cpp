@@ -6,7 +6,7 @@
 #include <TTreeFormula.h>
 #include <TSystem.h>
 
-void Composer::satisfy_request(const Request_t request, Result_t output)
+Output_t Composer::satisfy_request(Request_t request)
 {
   // Check to see if our current event matches the request.
   // Get the event specified in the request.
@@ -18,12 +18,8 @@ void Composer::satisfy_request(const Request_t request, Result_t output)
   // Copy data from _consituents to the result.
   // output[pointer] = get_or_compose(pointer);
   // The get_or_compose
- 
-
+  return Output_t(nullptr);
 }
-
-
-
   
 int64_t Composer::find_entry_in_tree(TTree* inTree, std::string& inSelection, int64_t inStart, int64_t inEnd, std::string& error)
 { 
@@ -135,7 +131,7 @@ nlohmann::json Composer::monitor_data()
   
   monitor["WallClockTime"  ] =    ((long)gSystem->Now())/1000.;
   int dummy;
-  (*m_result)["composer"] = abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
+  m_result["composer"] = abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
   return monitor;
 }
 

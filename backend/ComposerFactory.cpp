@@ -17,21 +17,21 @@ size_t ComposerFactory::events_served = 0;
 
 #include <gallery/Event.h>
 
-Result_t ComposerFactory::compose(Request_t request)
+Output_t ComposerFactory::compose(Request_t request)
 {
-  Result_t result(new json(json::object()));
-
   long eventTimeStart = gSystem->Now();
 
+  
   if(!request) {
-    (*result)["error"] = "Bad request"; return result;
+    return Composer::return_error("Bad request");
   }
+
   std::string filename = "";
   try {
     filename = request->value("filename","");
   } catch(...) {};
   if(filename=="") {
-    (*result)["error"] = "Bad request"; return result;
+    return Composer::return_error("No filename!");
   }
 
 
@@ -54,8 +54,7 @@ Result_t ComposerFactory::compose(Request_t request)
       if(rootfile.Get("analysistree/anatree") ) is_anafile = true;
       if(rootfile.Get("larlite_id_tree") )      is_larlite = true;
     } else {
-      std::cout << "Can't open file! " << filename << std::endl;
-      (*result)["error"] = "Cannot open file " + filename; return result;
+      return Composer::return_error( "Can't open file! " + filename );
     }
     // delete rootfile;
   }
@@ -72,56 +71,19 @@ Result_t ComposerFactory::compose(Request_t request)
   else if(is_anafile) composer = new AnalysisTreeComposer();
   else if(is_larlite) composer = new LarliteComposer();
   else {
-    (*result)["error"] = "Unrecognized file type.";
-    return result;
+    return Composer::return_error( "Unrecognized file type: " + filename );
   }
   
   composer->configure(m_config);
   composer->initialize();
-  composer->satisfy_request(request,result);
+  Output_t output = composer->satisfy_request(request);
   delete composer;
-
-  // // Add statistics.
-//   json monitor;
-//   monitor["pid"] = gSystem->GetPid();
-//   monitor["events_served"] = events_served;
-//   SysInfo_t sysinfo;  gSystem->GetSysInfo(&sysinfo);
-//   // CpuInfo_t cpuinfo;  gSystem->GetCpuInfo(&cpuinfo);
-//   MemInfo_t meminfo;  gSystem->GetMemInfo(&meminfo);
-//   ProcInfo_t procinfo; gSystem->GetProcInfo(&procinfo);
-//
-//   monitor["OS"           ] =  sysinfo.fOS.Data();
-//   monitor["ComputerModel"] =  sysinfo.fModel.Data();
-//   monitor["CpuType"      ] =   sysinfo.fCpuType.Data();
-//   monitor["Cpus"         ] =   sysinfo.fCpus;
-//   monitor["CpuSpeed"     ] =   sysinfo.fCpuSpeed;
-//   monitor["PhysicalRam"  ] =   sysinfo.fPhysRam;
-//
-//   monitor["MemTotal"     ] =   Form("%d MB",meminfo.fMemTotal);
-//   monitor["MemUsed"      ] =   Form("%d MB",meminfo.fMemUsed);
-//   monitor["MemFree"      ] =   Form("%d MB",meminfo.fMemFree);
-//   monitor["SwapTotal"    ] =   Form("%d MB",meminfo.fSwapTotal);
-//   monitor["SwapUsed"     ] =   Form("%d MB",meminfo.fSwapUsed);
-//   monitor["SwapFree"     ] =   Form("%d MB",meminfo.fSwapFree);
-//
-//   monitor["CpuTimeUser"     ] =   procinfo.fCpuUser;
-//   monitor["CpuTimeSys"     ] =    procinfo.fCpuSys;
-//   monitor["MemResident"    ] =    Form("%f MB",procinfo.fMemResident/1000.);
-//   monitor["MemVirtual"     ] =    Form("%f MB",procinfo.fMemVirtual/1000.);
-//
-//   monitor["WallClockTime"  ] =    ((long)gSystem->Now())/1000.;
-//   result->emplace("backend_monitor",monitor);
-//
-//
-//   long ElapsedServerTime = ((long)(gSystem->Now()) - eventTimeStart);
-//   (*result)["ElapsedServerTime"] = ElapsedServerTime;
-//   std::cout << "ElapsedServerTime: " << ElapsedServerTime << std::endl;
-//
 
   // cleaup any unused composers.
   // FIXME
+
   long eventTimeEnd = gSystem->Now();
   std::cout << "Total factory time: " << eventTimeEnd - eventTimeStart << std::endl;
-  return result;
+  return output;
 }
 

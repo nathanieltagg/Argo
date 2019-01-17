@@ -46,21 +46,16 @@ void AnalysisTreeComposer::initialize()
 {
 }
 
-void AnalysisTreeComposer::satisfy_request(Request_t request, Result_t output)
+Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
 {
   std::cout << "ANALYSISTREE COMPOSER!!!" << std::endl;
   TimeReporter timer("TOTAL");
-  
-  assert(output.get());
-  
 
   m_request = request;
-  m_result = output;
-  (*m_result)["request"] = *request;  
+  m_result["request"] = *request;  
 
   if(request->find("filename")==request->end()) {
-    (*m_result)["error"] = "No file requested";
-    return;
+    return return_error("No file requested");
   }
   m_filename =  (*request)["filename"].get<std::string>();
   std::string sel   = request->value("selection","1");
@@ -74,14 +69,12 @@ void AnalysisTreeComposer::satisfy_request(Request_t request, Result_t output)
     m_file = new TFile(m_filename.c_str(),"READ");
     if(!m_file->IsOpen()) {
       delete m_file;
-      (*m_result)["error"] = "File could not be opened for reading";      
-      return;
+      return return_error("File could not be opened for reading"); 
     }
     m_tree = dynamic_cast<TTree*>(m_file->Get("analysistree/anatree"));
     if(!m_tree) {
       delete m_file;
-      (*m_result)["error"] = "Could not find analysistree/anatree in file " + m_filename;      
-      return;
+      return return_error("Could not find analysistree/anatree in file " + m_filename);
     }
     tr.addto(m_stats);
   }
@@ -93,8 +86,7 @@ void AnalysisTreeComposer::satisfy_request(Request_t request, Result_t output)
     if(m_entry<0) {
       m_tree = 0;
       delete m_file;
-      (*m_result)["error"] = err;
-      return;    
+      return return_error(err);
     }
   }
   
@@ -106,11 +98,12 @@ void AnalysisTreeComposer::satisfy_request(Request_t request, Result_t output)
   source["entry"] = m_entry;
   source["options"] = m_options;
   source["selection"] = sel;
-  (*m_result)["source"] = source;
+  m_result["source"] = source;
 
-  (*m_result)["monitor"] = monitor_data();
+  m_result["monitor"] = monitor_data();
 
   compose();
+  return dump_result();
 }
 
 void AnalysisTreeComposer::compose()
@@ -156,7 +149,7 @@ void AnalysisTreeComposer::composeHeader()
   header["trigger"] = trigger;
   {
     boost::mutex::scoped_lock lck(m_result_mutex);
-    (*m_result)["header"] = header;
+    m_result["header"] = header;
   }
 }
 
@@ -218,8 +211,8 @@ void AnalysisTreeComposer::composeHits()
   {
     boost::mutex::scoped_lock lck(m_result_mutex);
   
-    (*m_result)["hits"] = reco_list;
-    (*m_result)["hit_hists"] = hist_list;
+    m_result["hits"] = reco_list;
+    m_result["hit_hists"] = hist_list;
   }
 }
 
@@ -282,7 +275,7 @@ void AnalysisTreeComposer::composeTracks()
 	}
     {
       boost::mutex::scoped_lock lck(m_result_mutex);
-      (*m_result)["tracks"] = reco_list;
+      m_result["tracks"] = reco_list;
     }
 }
 
@@ -317,7 +310,7 @@ void AnalysisTreeComposer::composeOpFlash()
   timer.addto(m_stats);
   {
   boost::mutex::scoped_lock lck(m_result_mutex);
-  (*m_result)["opflashes"] = reco_list;
+  m_result["opflashes"] = reco_list;
   }
 }
     

@@ -63,21 +63,16 @@ void LarliteComposer::initialize()
 {}
   
   
-void LarliteComposer::satisfy_request(Request_t request, Result_t output)
+Output_t LarliteComposer::satisfy_request(Request_t request)
 {
   std::cout << "LARLITE COMPOSER!!!" << std::endl;
   TimeReporter timer("TOTAL");
   
-  assert(output.get());
-  
-
   m_request = request;
-  m_result = output;
-  (*m_result)["request"] = *request;  
+  m_result["request"] = *request;  
 
   if(request->find("filename")==request->end()) {
-    (*m_result)["error"] = "No file requested";
-    return;
+    return return_error("No file requested.");
   }
   m_filename =  (*request)["filename"].get<std::string>();
   std::string sel   = request->value("selection","1");
@@ -93,14 +88,12 @@ void LarliteComposer::satisfy_request(Request_t request, Result_t output)
     file = new TFile(m_filename.c_str(),"READ");
     if(!file->IsOpen()) {
       delete file;
-      (*m_result)["error"] = "File could not be opened for reading";      
-      return;
+      return return_error("File could not be opened for reading");
     }
     tree = dynamic_cast<TTree*>(file->Get("larlite_id_tree"));
     if(!tree) {
       delete file;
-      (*m_result)["error"] = "Could not find larlite_id_tree in file " + m_filename;      
-      return;
+      return return_error("Could not find larlite_id_tree in file " + m_filename);
     }
     tr.addto(m_stats);
   }
@@ -111,8 +104,7 @@ void LarliteComposer::satisfy_request(Request_t request, Result_t output)
     m_entry = find_entry_in_tree(tree, sel, start, end, err);
     if(m_entry<0) {
       delete file;
-      (*m_result)["error"] = err;
-      return;    
+      return return_error(err);
     }
   }
   delete file;
@@ -125,11 +117,12 @@ void LarliteComposer::satisfy_request(Request_t request, Result_t output)
   source["entry"] = m_entry;
   source["options"] = m_options;
   source["selection"] = sel;
-  (*m_result)["source"] = source;
+  m_result["source"] = source;
 
-  (*m_result)["monitor"] = monitor_data();
+  m_result["monitor"] = monitor_data();
 
   compose();
+  return dump_result();
 }
 
 
@@ -142,12 +135,12 @@ void LarliteComposer::compose()
   
   if(!m_storage_manager.open()) {
     std::cerr << "Couldn't open storage manager on file " << m_filename << std::endl;
-    (*m_result)["error"] = std::string("Couldn't open storage manager on file ") + m_filename;
+    m_result["error"] = std::string("Couldn't open storage manager on file ") + m_filename;
     return;
   }
   if(!m_storage_manager.go_to(m_entry)) {
     std::cerr << "Can't go_to entry " << m_entry << std::endl;
-    (*m_result)["error"] = std::string("Can't go_to entry ") + std::to_string(m_entry);
+    m_result["error"] = std::string("Can't go_to entry ") + std::to_string(m_entry);
     return;
   }
   
@@ -187,7 +180,7 @@ void LarliteComposer::compose_header()
 
   {
     boost::mutex::scoped_lock lck(m_result_mutex);
-    (*m_result)["header"] = header;
+    m_result["header"] = header;
   }
 }
 
@@ -223,7 +216,7 @@ void LarliteComposer::compose_hits()
   
   {
     boost::mutex::scoped_lock lck(m_result_mutex);
-    (*m_result)["hits"] = reco_list;
+    m_result["hits"] = reco_list;
   }
 }
 
@@ -270,7 +263,7 @@ void LarliteComposer::compose_tracks()
   
   {
     boost::mutex::scoped_lock lck(m_result_mutex);
-    (*m_result)["tracks"] = reco_list;
+    m_result["tracks"] = reco_list;
   }
 }
 
