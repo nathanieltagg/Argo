@@ -11,10 +11,13 @@
   "dependencies": {
     "argo": "file:argo",
     "compression": "^1.7.3",
+    "cookie-parser": "^1.4.3",
+    "cookieparser": "^0.1.0",
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "http": "0.0.0",
     "https": "^1.0.0",
+    "moment": "^2.24.0",
     "morgan": "^1.9.1",
     "node-glob": "^1.2.0",
     "pug": "^2.0.3",

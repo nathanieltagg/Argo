@@ -7,6 +7,7 @@ var compression = require('compression');
 var glob = require("glob");
 var cors = require('cors');
 var path = require("path");
+var morgan = require('morgan');
 
 // My backend instantiation (maps to a ComposerFactory object) 
 var backend = require("argo");
@@ -24,6 +25,8 @@ var includes = new ssi("../",
                         "*.html");
 includes.compile();
 
+app.use(morgan('tiny',{immediate:true}));
+app.use(morgan('tiny'));
 
 app.get("/server/serve_event.cgi",function(req,res,next){
   console.log(req.query);
@@ -76,7 +79,9 @@ app.use('/shaders/',express.static('../shaders'));
 app.use('/css/',express.static('../css/'));
 app.use('/datacache/',express.static('../datacache/'));
 
-
+var browser = require("./browser.js");
+app.use("/browser/",browser.router);
+app.use("/server/file_browser.cgi",browser.router);
 
 process.send = process.send || function () {}; // in case there's no prcoess manager
 httpServer.listen(4590); // looks a little like 'argo'
