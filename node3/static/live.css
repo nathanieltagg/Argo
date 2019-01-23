@@ -1,0 +1,44 @@
+#live-status {
+  margin-left: 10px;
+  float: right;
+  font-size: 1.5em;
+  text-align: center;
+  background-color:silver;
+}
+
+
+div#live-wireview-container{
+  width: 70%;
+  display: block;
+}
+div.A-WireView {
+  height: 500px;
+  width: 100%;
+}
+div.A-WireHist {
+  height: 8px;
+  width: 100%;
+}
+
+#live-rightbar {
+  float: right;
+  width:29%;
+}
+
+#recentEvents {
+  white-space:nowrap;
+  overflow-x:auto;
+}
+
+#recentEvents span {
+  cursor: pointer;
+  text-decoration: underline;
+  color: blue;
+}
+
+#recentEvents span.current-event-highlight
+{
+  font-weight: bold;
+  color: black;
+}
+  

@@ -1,0 +1,26 @@
+.portlet#hithistogram-port
+  .portlet-header Hit Color
+  .portlet-content
+    .A-HitHistogram(style='height: 120px')
+    select.hit-hist-field.saveable#hit-hist-field
+      option(value='q', selected='') Charge
+      option(value='t') Time
+      option(value='σq') σ Charge
+      option(value='σt') σ Time
+      option(value='view') View
+      option(value='wire') Wire
+      option(value='plane') Plane
+      option(value='m') Multiplicity
+    select#ctl-hit-color-scale.saveable
+      option(value='RedBluePalette', selected='') Red-Blue
+      option(value='BrownPurplePalette') Brown-Purple
+      option(value='GrayscalePalette') Grayscale
+      option(value='CurtPalette') Curt's
+      option(value='PhilipColorPalette') Philip's
+    br
+    label
+      input.saveable.hit-cut-max(type='checkbox')
+      |  Cut high
+    label
+      input.saveable.hit-cut-min(type='checkbox', checked='')
+      |  Cut low

@@ -1,0 +1,19 @@
+.portlet#bigwireimg-port
+  .portlet-header Big Wire View
+  .portlet-content
+    #BigWireView.pad.A-WireView(style='width:100%; height:300px', data-options='{"plane": 2, "zooming": true, "margin_left": 50}')
+    span.bigwireview-select.align-right
+      input.bigwireview-select-button#bigwireview-select-0(type='radio', name='wireview-select', value='0')
+      label(for='bigwireview-select-0') Plane 0
+      input.bigwireview-select-button#bigwireview-select-1(type='radio', name='wireview-select', value='1')
+      label(for='bigwireview-select-1') Plane 1
+      input.bigwireview-select-button#bigwireview-select-2(type='radio', name='wireview-select', value='2', checked='')
+      label(for='bigwireview-select-2') Plane 2
+    span.align-left
+      button#ctl-publication-settings.publication-settings Publication Settings
+    div
+      |   
+      input.ctl-lock-aspect-ratio.saveable(type='checkbox', name='ctl-lock-aspect-ratio')
+      label(for='ctl-lock-aspect-ratio') Lock TDC/Wire aspect ratio
+  // portlet-content 
+// portlet 

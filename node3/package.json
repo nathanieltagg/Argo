@@ -1,0 +1,23 @@
+{
+  "name": "node3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "argo": "file:argo",
+    "compression": "^1.7.3",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "http": "0.0.0",
+    "https": "^1.0.0",
+    "morgan": "^1.9.1",
+    "node-glob": "^1.2.0",
+    "pug": "^2.0.3",
+    "ssi": "^0.3.0"
+  }
+}
