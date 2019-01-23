@@ -15,7 +15,6 @@ class TTree;
 
 // Base class defines common interface
 
-#include <gallery/Event.h>
 #include <iostream>
 
 
@@ -26,10 +25,12 @@ public:
   
   
   Composer() : m_result(nlohmann::json::object())
+             , m_progress_target(1)
+             , m_progress_so_far(0)
       { }; // Constructor
   virtual ~Composer()  {}; // Destructor
   
-  virtual void configure(Config_t config) { m_config = config; }
+  virtual void configure(Config_t config, int id=0) { m_config = config; m_id = id; }
   virtual void initialize(){};
   
   // Required: return true if we can satisfy the request.
@@ -95,6 +96,23 @@ public:
     std::cerr << err << std::endl;
     return Output_t(new std::string(j.dump()));
   }
+  
+  // Progress meter stuff:
+public:
+  typedef std::function<void(float,const std::string&)> ProgressCallback_t;
+  virtual void set_progress_callback(ProgressCallback_t cb) {m_progress_callback = cb;}
+  
+protected:
+  ProgressCallback_t m_progress_callback;
+  float              m_progress_target;
+  float              m_progress_so_far;
+  // used by caller:
+  void progress_made(const std::string msg="",float increment=1) {
+    m_progress_so_far+=increment;
+    float frac = m_progress_so_far/m_progress_target;
+    if(m_progress_callback) m_progress_callback(frac,msg);
+  }
+  
 };
 
 // Might want to wrap this guy so that he can be spoken to via forks

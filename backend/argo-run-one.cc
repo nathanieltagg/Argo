@@ -117,7 +117,8 @@ int main(int argc, char **argv)
   (*request)["entrystart"] = entrystart;
   (*request)["entryend"] = entryend;
 
-  ComposerFactory factory(configuration);
+  ComposerFactory factory;
+  factory.configure(configuration);
   Output_t payload = factory.compose(request);
   
   ofstream outstream(jsonfilename.c_str());

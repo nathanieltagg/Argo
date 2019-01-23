@@ -22,6 +22,7 @@
 #include "CoherentNoiseFilter.h"
 #include "DeadChannelMap.h"
 #include "TTimeStamp.h"
+#include "TString.h"
 
 #include "ThreadPool.h"
 #include <sys/stat.h>
@@ -169,6 +170,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   m_result["hv"] = hv;  
   m_result["stats"] = m_stats;
   
+  m_result["composer_id"] = m_id;
   m_result["monitor"] = monitor_data();
   return dump_result();
 }

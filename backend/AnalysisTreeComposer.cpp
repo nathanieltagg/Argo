@@ -100,6 +100,7 @@ Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
   source["selection"] = sel;
   m_result["source"] = source;
 
+  m_result["composer_id"] = m_id;
   m_result["monitor"] = monitor_data();
 
   compose();

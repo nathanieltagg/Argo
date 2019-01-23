@@ -145,7 +145,8 @@ int main(int argc, char **argv)
                                  , {"pmt_source", "sqlite ../db/current-plexus.db"}
                                  };
     
-    ComposerFactory factory(configuration);
+    ComposerFactory factory;
+    factory.configure(configuration);
 
     // gTimeStart = gSystem->Now();
 

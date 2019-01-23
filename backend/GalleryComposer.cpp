@@ -162,6 +162,8 @@ bool GalleryComposer::composeObjectsVector(const std::string& output_name, json&
   json reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
   TimeReporter cov_timer(output_name);
  
+  progress_made("Composing "+output_name+"...");  
+  
   int found = 0;
   auto products = findByType<V>(m_Event->getTTree());  // Get a list of all products matching template
   for(auto product: products) {
@@ -192,7 +194,7 @@ bool GalleryComposer::composeObjectsVector(const std::string& output_name, json&
   }
   {
     boost::mutex::scoped_lock lck(m_output_mutex);  // Scope a lock around the global output object
-    output[output_name] = reco_list;           // Add the output.
+    output[output_name] = reco_list;                // Add the output.
     cov_timer.addto(m_stats);  
   }  
   return(found>0);
@@ -307,7 +309,7 @@ void GalleryComposer::composeHits()
       continue;
     }
     
-    json arr;
+    json arr(json::array());
     // Hit histograms.
     TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
     std::vector<TH1*> planeProfile;
@@ -1358,6 +1360,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   
   m_request = request;
   m_result["request"] = *request;  
+  m_progress_so_far =0;
+  m_progress_target = 10;
 
   if(request->find("filename")==request->end()) {
     return return_error("No file requested");
@@ -1371,6 +1375,7 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   // Fixme: check to make sure request is valid
   //
   std::cout << filename << std::endl;
+  progress_made("Opening file",0);
 
   m_entry = start;  
   {
@@ -1379,6 +1384,7 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     m_Event.reset(event);
     std::cout << "Gallery file opened" << std::endl;cout.flush();
     tr.addto(m_stats);
+    progress_made("Opened file");
   }
   
   {
@@ -1390,20 +1396,22 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
       return return_error("Could not find entry in tree: "+error);
     } 
     tr.addto(m_stats);
+    progress_made("Entry found");
+    
   }
      
   {
     TimeReporter tr("GoTo");
     m_Event->goToEntry(m_entry);
     tr.addto(m_stats);
+    progress_made("Entry loaded");
+    
   }
   
   
   m_current_event_dir_name  = m_CacheStoragePath;
   m_current_event_url       = m_CacheStorageUrl;
   
-  int dummy;
-  m_result["composer"]=abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
 
   //
   // OK, now build the result.
@@ -1417,9 +1425,13 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   source["options"] = m_options;
   source["selection"] = sel;
   m_result["source"] = source;
-  
 
+  m_result["composer_id"] = m_id;
+  m_result["monitor"] = monitor_data();
+  
+  progress_made("Composing header");
   composeHeaderData();
+
 
   // parse some options.
   int doCal = 1;
@@ -1436,10 +1448,13 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   
   // Wire data.
   // End first so background image conversion tasks can be Ended as we build the rest.
+  progress_made("Composing wire images...");  
   if(doCal)   composeWires();
+  progress_made("Composing raw digit images...");  
   if(doRaw)   composeRaw();
 
 
+  progress_made("Composing hits...");  
   composeHits();
 
   composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", m_result );
