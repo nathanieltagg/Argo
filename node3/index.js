@@ -18,12 +18,7 @@ httpServer = http.createServer(app);
 
 app.use(cors());
 
-ssi = require("ssi");
 
-var includes = new ssi("../",
-                        "./compiled/",
-                        "*.html");
-includes.compile();
 
 app.use(morgan('tiny',{immediate:true}));
 app.use(morgan('tiny'));
