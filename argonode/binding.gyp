@@ -17,7 +17,8 @@
       "include_dirs" : [
                 "<!(node -e \"require('nan')\")",
                 "../libargo",
-                "<!(echo $ROOTSYS)/include"
+                "<!(echo $ROOTSYS)/include",
+                "<!(echo $BOOST_INC)"
                ],
       "libraries": [
                 "-L ../../libargo", "-largo-backend"

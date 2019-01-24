@@ -22,7 +22,8 @@ clean:
 
 pwd := $(shell pwd)
 
-CPP := g++ -g
+# CPP := g++ -std=c++17
+CPP = clang++ -O0 -std=c++17
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -293,7 +294,7 @@ $(libargo): $(OBJ) tmp/Cint.o Makefile
 ifeq ($(UNAME),Darwin)
   LIBTOOL=libtool -static
 else 
-  LIBTOOL=ar rcs
+  LIBTOOL=ar -cvq
 endif
 
 libargo-backend.a: $(OBJ) tmp/Cint.o Makefile
