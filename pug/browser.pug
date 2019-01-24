@@ -1,11 +1,35 @@
 html
   head
-    link(rel='stylesheet', href='/browser.css', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/browser.css', type='text/css', media='all')
     script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js')
-    script(type='text/javascript', src='/js/jquery.tablesorter.js')
+    script(type='text/javascript', src='/js/third-party/jquery.tablesorter.js')
     script(type="text/javascript").
       $(function(){
-        $('table.filetable').tablesorter(); // Fixme doesn't get sizes right.
+        $.tablesorter.addParser({
+            // set a unique id
+            id: 'data',
+            is: function(s, table, cell, $cell) {
+              // return false so this parser is not auto detected
+              return false;
+            },
+            format: function(s, table, cell, cellIndex) {
+              return $(cell).data('sort');
+            },
+            // flag for filter widget (true = ALWAYS search parsed values; false = search cell text)
+            parsed: false,
+            // set type, either numeric or text
+            type: 'numeric'
+          });
+
+          $('table.filetable').tablesorter({
+            theme: 'blue',
+            headers: {
+              1 : { sorter: 'data' },
+              2 : { sorter: 'data' }
+            },
+          });
+        
+        
       });
   body
     h2 File Browser

@@ -1,0 +1,38 @@
+ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+#echo $ABSOLUTE_PATH
+
+# needed the first time to get clang++ setup as the apache user.
+# not needed if using ups
+# check if xcode has been setup already:
+xcode-select -p > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+  xcode-select --install
+fi
+
+# Set up your main larsoft directory.
+# source /Users/larsoft/setup
+source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
+
+# if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
+#export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
+
+export PRODUCTS=/home/argo/install:$PRODUCTS
+
+# Jan 2019: this works
+#setup uboonecode v08_01_00 -q e17:debug
+#unsetup gallery
+# or this: 
+setup lardata v08_00_00 -q e17:debug
+setup gallery v1_10_00 -q e15:debug
+setup uboonedaq_datatypes v6_22_05a -q e17:debug:offline
+
+#setup uboonedaq_datatypes v6_22_03_offline -q e15:debug
+
+#setup lardata v08_02_00  -q c2:debug
+#setup uboonedaq_datatypes v6_22_05a -q c2:debug:offline
+setup gallery v1_10_00 -q e15:debug
+
+# optional:
+setup larlite v06_70_00b -q e15:debug
+
+# source ../backend/larlite/config/setup.sh

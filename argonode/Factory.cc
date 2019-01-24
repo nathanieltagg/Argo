@@ -104,7 +104,11 @@ public:
       this,
        std::ref(ep),
       std::placeholders::_1, std::placeholders::_2);
-    output = factory->compose(request, cb);
+    // try{
+      output = factory->compose(request, cb);      
+    // } catch (std::exception& e) {
+    //   Nan::ThrowError(e.what());
+    // }
     
   }
 

@@ -16,14 +16,14 @@
       
       "include_dirs" : [
                 "<!(node -e \"require('nan')\")",
-                "/Users/tagg/Argo/backend",
+                "../libargo",
                 "<!(echo $ROOTSYS)/include"
                ],
       "libraries": [
-                "-L /Users/tagg/Argo/backend", "-largo-backend"
+                "-L ../../libargo", "-largo-backend"
               ],
      "link_settings": {
-        "libraries": [ "-Wl,-rpath,/Users/tagg/Argo/backend", "-largo-backend" ]
+        "libraries": [ "-Wl,-rpath,../../../libargo","-Wl,-rpath,libargo", "-largo-backend" ]
         }
     }
   ]

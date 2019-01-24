@@ -99,7 +99,7 @@ async function browser(path,req,res,next)
   }
   
   // console.log(result);
-  res.send( pug.renderFile("pugified/browser.pug",result) );
+  res.send( pug.renderFile("pug/browser.pug",result) );
   
 }
 

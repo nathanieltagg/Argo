@@ -28,10 +28,12 @@ var config = defaults;
 var backend = require("argonode");
 var composerFactory = new backend({
   "max_composers":0,
+  "forking": false,
+  "fork_logs": __dirname + "/logs/",
   "CacheStoragePath": config.datacache,
   "CacheStorageUrl": "/datacache",
   "WorkingSuffix": "event",
-  "CreateSubdirCache": true
+  "CreateSubdirCache": true,
 });
 var app = express();
 httpServer = http.createServer(app);
@@ -61,13 +63,16 @@ app.get("/server/serve_event.cgi",function(req,res,next){
     if(fs.existsSync(event_req.filename)) {
       // FIXME PNFS CHECK
       console.log("Constructed request:",event_req);
-      composerFactory.compose(event_req,
+      composerFactory.composeWithProgress(event_req,
           function(result){
               console.log("Result complete:",result.length);
               // var doc = JSON.parse(result);
               res.setHeader('Content-Type', 'application/json');
               res.send("{\"record\":"+result+"}");
               return;
+            },
+            function(progress){
+              console.log("PROGRESS",progress);
             }
       );
     }
