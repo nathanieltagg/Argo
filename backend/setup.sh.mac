@@ -21,3 +21,11 @@ setup uboonedaq_datatypes v6_22_05a -q debug:c2:offline
 # optional:
 setup larlite v06_70_00b -q c2:debug
 
+# Node-gyp fails hard if you use larsoft python
+unsetup python
+
+# Stupid build means sqlite isn't properly found:
+setup sqlite v3_20_01_00
+
+#This is required by node-gyp to build the argonode patch library correctly:
+CXX=clang
