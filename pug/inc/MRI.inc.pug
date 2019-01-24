@@ -1,0 +1,19 @@
+.portlet#mri-port
+  .portlet-header "MRI" Timeslice View
+  .portlet-content
+    .A-MRI(style='height: 300px; width: 100%')
+    span.MRI-Info
+    //       <span class="align-right" style="width: 35px;">
+            <input type="checkbox" class="align-right mri-autoscan" id="mri-autoscan1" /><label for="mri-autoscan1">AutoScan</label>
+          </span> 
+    div
+      div
+        | Window:
+        .mri-slider-window-size(style='display:inline-block; width: 50%;  margin: 5px;')
+      // <div>Ends:    <div class="mri-slider-ends"        style="display:inline-block; width: 80%;  margin: 5px; "></div>     </div> 
+      div
+        | Position:
+        div
+          span.align-left.mri-slider-grip-size-nudge-left nudgeleft
+          span.align-right.mri-slider-grip-size-nudge-right nudgeright
+          .mri-slider-grip(style='display:inline-block; width: 50%; margin-left: 50px;  margin-right: 50px')

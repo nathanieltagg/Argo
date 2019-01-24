@@ -1,13 +1,10 @@
 Argo.dmg
 live_event_cache
 .DS_Store
-.htaccess
-.nfs*
-basetag.inc
-local.css
-mysetup
+setup.sh
+datacache
 logs
 *.root
-defs.txt
-defs_sorted.txt
 *.ubdaq
+node_modules
+package-lock.json

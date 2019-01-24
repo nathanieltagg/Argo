@@ -1,0 +1,12 @@
+{
+  "name": "argonode",
+  "version": "3.0.0",
+  "description": "Binary linkage to argo",
+  "main": "argo.js",
+  "private": true,
+  "gypfile": true,
+  "dependencies": {
+    "nan": "*",
+    "node-gyp": "*"
+  }
+}
