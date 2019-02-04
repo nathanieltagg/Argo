@@ -22,8 +22,8 @@ clean:
 
 pwd := $(shell pwd)
 
-# CPP := g++ -std=c++17
-CPP = clang++ -O0 -std=c++17
+CPP := g++ -std=c++17
+# CPP = clang++ -O0 -std=c++17
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -90,7 +90,7 @@ LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
 # ldpaths  += -Wl,-rpath,${HEP_CONCURRENCY_LIB}
 
 CPPFLAGS += -I ${CANVAS_ROOT_IO_INC}
-LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io
+LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io -lcanvas_root_io_Dictionaries_wrapped_std_dict
 # ldpaths  += -Wl,-rpath,${CANVAS_ROOT_IO_LIB}
 
 CPPFLAGS += -I ${GALLERY_INC}
@@ -230,9 +230,10 @@ argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 
 gtest: $(OBJ) tmp/gtest.o Makefile
 	@echo Building executable $@
-	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/gtest.o -W $(LIBS) -o $@ \
+	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/gtest.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
+		-lCling    
     # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 
