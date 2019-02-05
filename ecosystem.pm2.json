@@ -1,0 +1,15 @@
+{
+  "apps" : [
+    {
+           "name": "argo-node",
+           "script": "index.js",
+           "watch": false,
+           "cwd":'/home/argo/Argo_dev',
+           "env": {
+             "NODE_ENV": "production",
+           }
+         }
+
+
+  ]
+}

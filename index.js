@@ -129,6 +129,7 @@ async function clean_datacache()
 
 clean_datacache();
 
+console.log("dirname is ",__dirname);
 var browser = require("./browser.js");
 app.use("/browser/",browser.router);
 app.use("/server/file_browser.cgi",browser.router);
