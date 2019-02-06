@@ -214,7 +214,7 @@ int watch_directory_for_new(const std::string& dir, const std::string& suffix, d
           //     event_data[0].data,
           //     (char *)event_data[0].udata);
       } else {
-        report(""); 
+        report("","",""); 
         //printf("No event.\n");
       }
 
