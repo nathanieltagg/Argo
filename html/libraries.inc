@@ -47,24 +47,6 @@
 <!-- <script type='text/javascript' 
         src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
 <script type="text/javascript">
-  if (window['loadFirebugConsole']) {
-      window.loadFirebugConsole();
-  } else {
-    if (!window['console'])   window.console = {};
-    if (!window.console['time']      ) window.console.time        = function(){};
-    if (!window.console['timeEnd']   ) window.console.timeEnd     = function(){};
-    if (!window.console['debug']     ) window.console.debug       = function(){};
-    if (!window.console['info']      ) window.console.info        = function(){};
-    if (!window.console['log']       ) window.console.log         = function(){};
-    if (!window.console['warn']      ) window.console.warn        = function(){};
-    if (!window.console['profile']   ) window.console.profile     = function(){};
-    if (!window.console['profileEnd']) window.console.profileEnd  = function(){};
-    if (!window.console['trace']     ) window.console.trace       = function(){};
-    if (!window.console['error']     ) window.console.error       = function(){};
-    if (!window.console['timeStamp'] ) window.console.timeStamp   - function(){};
-    if (!window.performance)           window.performance = {};  
-    if (!window.performance['now']     ) window.performance.now = function(){};
-  }
 </script>
 
 <!--Core. -->

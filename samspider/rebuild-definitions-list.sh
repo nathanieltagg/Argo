@@ -24,6 +24,13 @@ source /grid/fermiapp/products/uboone/setup_uboone.sh
 setup sam_web_client
 cd $DIR
 samweb list-definitions > defs.txt
+# remove all definitions with hash-codes like uboonepro_dd8becd2-fa73-4202-92d3-efbf508c04f5
+# This is the vast majority of lines.
+sed -i '/[a-z0-9]\{8\}-[a-z0-9]\{4\}-[a-z0-9]\{4\}-[a-z0-9]\{4\}-[a-z0-9]\{12\}/d'
+
+#remove all definitions with 000123 run numbers - they aren't useful
+# This removes another large chunk
+sed -i '/[[:digit:]]\{6\}/d' ./defs.txt
 
 # while read -r line || [[ -n "$line" ]]; do
 #   samfiles=`samweb count-definition-files $line`

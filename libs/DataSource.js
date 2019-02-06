@@ -27,11 +27,13 @@ function DataSource()
   function PushRawRunHash()
   {
     $.bbq.pushState({
-      what: 'raw',
+      what: 'sam',
       run:   $('#inRawRun').val(),
-      subrun:$('#inRawSubrun').val(),
-      entry: $('#inRunEntry').val(),
-      //selection: $('#inFeSelection').val()
+      // subrun:$('#inRawSubrun').val(),
+      event: $('#inRawEvent').val(),
+      trig:  $('#inRawTrig').val(),
+      tier:  $('#inRawTier').val(),
+      selection: "EventAuxiliary.id_.event_=="+$('#inRawEvent').val()
     },2);
   }
   

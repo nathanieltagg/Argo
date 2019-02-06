@@ -54,6 +54,7 @@ sub serve
 
   #package and manually gzip. 
   $msglog =~ s/\n/\<br\/\>/g;
+  $msglog =~ s/\"/\\\"/g;
   
   my $serving = '{"record":' . $_[0] . ',"serve_event_log":"' . encode_utf8($msglog) . '"}';
   my $zipped = ""; 

@@ -16,6 +16,7 @@ use ArgoServerTools qw(setup myerror);
 
 my $start_time = Time::HiRes::gettimeofday();
 
+my $samweb = "/cvmfs/fermilab.opensciencegrid.org/products/common/prd/sam_web_client/v2_0/NULL/bin/samweb -e uboone";
 
 ArgoServerTools::setup();
 
@@ -45,28 +46,55 @@ if(defined param('filename')){
     $pathglob=uri_unescape(param('filename'));
 } 
 
-#raw:
 
-if(param('what') eq 'raw') {
+if(param('what') eq 'sam') {
   my $run = param('run')||0;
-  my $subrun = param('subrun') || 0;
-  
-  # full 8-digits of run number
-  my $longrun = sprintf("%08d",$run);
-  my $longsubrun = sprintf("%05d",$subrun);
-  my $ver = param('ver') || 'v6_00_00';
+  my $event = param('event')||0;
+  # samweb list-values data_streams
+  my $trigtype = param('trig')|| "outextbnb";
+  my $datatier = param('tier')|| "raw"; # swizzled
 
-  my $r1 = substr $longrun, 0, 2;
-  my $r2 = substr $longrun, 2, 2;
-  my $r3 = substr $longrun, 4, 2;
-  my $r4 = substr $longrun, 6, 2;
-  my $fnal_path = "/pnfs/uboone/data/uboone/raw/online/assembler/"
-                    .$ver."/" .$r1."/" .$r2."/" .$r3."/" .$r4;
+  #find the file.
+  my $spec = "list-files \"data_tier $datatier and data_stream $trigtype and run_number=$run and first_event<=$event and last_event>=$event minus ub_blinding.blind true\"";
+  my $cmd = "$samweb $spec | head -n 1";
+  print $cmd . "\n";
+  my $filename = qx/$cmd/;
+  if(length($filename)<2) {     myerror("Couldn't find any files declared in sam: samweb $spec"); }
+
+
+  print "Filename: $filename\n";
+  $cmd = "$samweb locate-file $filename";
   
-  $longrun = sprintf("%07d",$run); #filename has only 7
-  $pathglob = $fnal_path . "/*-$longrun-$longsubrun.ubdaq";
+  my $loc = `$cmd`;
+  print "Loc: $loc\n";
+  my ($p) = $loc =~ /enstore:([^(]*)/;
+  $pathglob = $p . "/" . $filename;
+  print "Swizzled: " . $pathglob . "\n";
 }
 
+# Obsolete. Doesn't work with blinding.
+#raw:
+#
+# if(param('what') eq 'raw') {
+#   my $run = param('run')||0;
+#   my $subrun = param('subrun') || 0;
+#
+#   # full 8-digits of run number
+#   my $longrun = sprintf("%08d",$run);
+#   my $longsubrun = sprintf("%05d",$subrun);
+#   my $ver = param('ver') || 'v6_00_00';
+#
+#   my $r1 = substr $longrun, 0, 2;
+#   my $r2 = substr $longrun, 2, 2;
+#   my $r3 = substr $longrun, 4, 2;
+#   my $r4 = substr $longrun, 6, 2;
+#   my $fnal_path = "/pnfs/uboone/data/uboone/raw/online/assembler/"
+#                     .$ver."/" .$r1."/" .$r2."/" .$r3."/" .$r4;
+#
+#   $longrun = sprintf("%07d",$run); #filename has only 7
+#   $pathglob = $fnal_path . "/*-$longrun-$longsubrun.ubdaq";
+# }
+#
 my $print_pathglob = $pathglob;
 $print_pathglob =~ s/ /\n<br\/>\n/g;
 print "serve_event.cgi looking in pathglob: $print_pathglob\n<br/>\n";
