@@ -27,6 +27,7 @@ var gServerRequestTime;
 var gServerResponseTime;
 var gClientParseTime;
 var gFinishedDrawTime;
+var gSocket=0;
 
 var gEventsLoadedThisSession = 0;
 
@@ -98,7 +99,7 @@ function ChangeEvent(  )
   
   if     ( par.localFile ) ReadLocalFile(par);
   else if( par.serverfile) QueryServer(par,par.serverfile);
-  else if( par.filename  ) QueryServer(par,  "/server/serve_event.cgi");
+  else if( par.filename  ) QueryServerStream(par,  "/server/serve_event.cgi");
   else if( par.what      ) QueryServer(par,  "/server/serve_event.cgi");
   else if( gPageName == 'live' || par.live ) QueryServer(par,"server/serve_live.cgi");
   else QueryServer(par,"server/default_event.json");
@@ -135,6 +136,97 @@ function ReadLocalFileSuccess()
   QuerySuccess(obj,null,null);
 }
 
+
+function QueryServerStream( par, myurl )
+{
+    gTimeStats_StartQuery = performance.now();
+    console.log("QueryServer",par,myurl);
+    $("input").blur();
+    
+    var data = {};
+    var opts = "";
+    if (!$(".show-wireimg").is(":checked")) {
+      opts += "_NORAW__NOCAL_";
+      $('#loading_feedback').html("<i>Not loading RawDigit or Wire data for speed.</i><br/>");
+    } else {
+      $('#loading_feedback').html("<b>Loading RawDigit or Wire data.. may be slower! Uncheck \"Show Wires\" to disable.</b></br/>");
+    }
+    
+    var tilesize = 2400;
+    if(kMaxTileSize < tilesize) tilesize = kMaxTileSize;
+    opts+= "_tilesize" + tilesize + "_";
+
+
+    // Default: do file-and-entry read from parameters. Should check for other options first.
+    data = $.extend({},par)
+    if(data.filename) data.filename = encodeURIComponent(par.filename);
+    if(!data.options) data.options = opts;
+    
+        
+    var param = $.param(data);
+    
+    $('#status').attr('class', 'status-transition');
+    $("#status").text("Querying server for event data...");
+    $('#main-circleprogress').circleProgress('value', 0);
+    $('#main-circleprogress strong').text('Building');
+    
+    
+    console.log("requesting "+myurl+"?"+param);
+    $("#debuglinks").html(
+      "Link to json data: <a href=\""+myurl+"?"+param+"\">"+myurl+"?"+param+"</a>"
+    );
+    $('#download-this-event').html('<a href="'+myurl+'?'+param+'&download">Download this event</a>');
+    
+    // Modify the "URL to the json data file" link with the actual query.
+    $('#inXmlUrl').val(myurl+"?"+param);
+
+    // gLastQueryType = querytype;
+    gServerRequestTime = (new Date()).getTime();
+
+    // Modify the cursor to show we're fetching.
+    document.body.style.cursor='wait';
+
+    console.log("Starting AJAX calls:",myurl,param);
+
+    var wsurl = 'ws://localhost:4590/server/stream-event'+'?'+param;
+    gSocket = new WebSocket(wsurl);
+    gSocket.onopen =  function (event) {
+      console.log("opened websocket");
+    };
+    gSocket.onmessage = function(event) {
+      console.log("onmessage",event.timeStamp,event.data.length);
+      try {
+        var o = JSON.parse(event.data);
+        if("record" in o) {
+          console.log("onmessage message not progress, assuming done.");
+          if(event.data.length<200) console.log("onmessage data:",event.data,o);
+          QuerySuccess(o,"OK-WS",event);
+          gSocket.close();
+        }
+        else if("progress" in o) {
+          console.log("onmessage PROGRESS",o);
+          $('#main-circleprogress').circleProgress('value', o.progress*100);
+          $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
+          
+        }
+        else if("payload_incoming" in o) {
+          // gSocket.close();
+          
+          $('#main-circleprogress').circleProgress('value', 0);
+          $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
+        }else {
+          console.error("UNKNOWN MESSAGE TYPE")
+        }
+      } catch {
+        console.log("onmessage Caught socket issue");
+        QueryError(o,"BAD",event)
+      }
+    };
+    
+  console.log("ws Query made!")
+    
+    return false;
+}
 
 function QueryServer( par, myurl )
 {
@@ -202,7 +294,7 @@ function QueryServer( par, myurl )
     document.body.style.cursor='wait';
 
     console.log("Starting AJAX calls:",myurl,param);
-    
+
     // JQuery call for compatibility.
     $.ajax({
             type: "GET",
@@ -217,14 +309,14 @@ function QueryServer( par, myurl )
             xhrFields: {
               onprogress : function(evt){
                 // console.log("progress",parseFloat(evt.loaded)/parseFloat(evt.total));
-                 var val = 0; 
-                 if(evt.loaded>0) val = (0.2+evt.loaded)/(0.2+evt.total); 
+                 var val = 0;
+                 if(evt.loaded>0) val = (0.2+evt.loaded)/(0.2+evt.total);
                  $('#main-circleprogress').circleProgress('value', val);
                  $('#main-circleprogress strong').html("Network<br/>"+parseInt(evt.loaded/evt.total*100)+'%');
                  $('#main-circleprogress').circleProgress();
-                 
+
                }
-              
+
             }
             // xhr: function(){
  //                 // get the native XmlHttpRequest object

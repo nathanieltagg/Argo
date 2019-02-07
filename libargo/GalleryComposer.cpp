@@ -162,7 +162,7 @@ bool GalleryComposer::composeObjectsVector(const std::string& output_name, json&
   json reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
   TimeReporter cov_timer(output_name);
  
-  progress_made("Composing "+output_name+"...");  
+  progress_made("Composing "+output_name);  
   
   int found = 0;
   auto products = findByType<V>(m_Event->getTTree());  // Get a list of all products matching template
@@ -366,6 +366,17 @@ void GalleryComposer::composeHits()
 }
 
 
+// default template for vectors:
+template<typename TT> 
+void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out)
+{
+  out = json::array();
+  for(auto item: v) {
+    json j;
+    composeObject(item,j);
+    out.push_back(j);
+  }
+} 
 
 
 template<>
@@ -1355,7 +1366,80 @@ void GalleryComposer::composeAssociations()
   }
 }
 
+template<typename T>  void     
+GalleryComposer::composeSkeleton(nlohmann::json& out) {
+  auto products = findByType< std::vector<T> >(m_Event->getTTree());
+  for(auto product: products) {
+    // out[stripdots(product.first)] = true;
+    
+    std::cout << "Found " << boost::core::demangle( typeid(T).name() )  <<" object " << product.first << std::endl;
+    gallery::Handle<std::vector<T>> handle;            
+    { // Create a scope
+      boost::mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
+      m_Event->getByLabel(product.second,handle); // Get data from the file
+    }
+    
+    if(!handle.isValid()) {
+      out[stripdots(product.first)] = handle->size();
+    }
+  }
+}
 
+void GalleryComposer::composeSkeleton(nlohmann::json& out)
+{
+  std::cout << "SKELETON" << std::endl;
+  composeSkeleton< recob::Hit       >(out["hits"]);
+  composeSkeleton< recob::Wire      >(out["cal"]);
+  composeSkeleton< raw::RawDigit    >(out["raw"]);
+  composeSkeleton< recob::SpacePoint>(out["spacepoints"]);
+  composeSkeleton< recob::Cluster   >(out["clusters"]);
+  composeSkeleton< recob::Track     >(out["tracks"]);
+  composeSkeleton< recob::Shower    >(out["showers"]);
+  composeSkeleton< recob::EndPoint2D>(out["endpoint2d" ]);
+  composeSkeleton< recob::PFParticle>(out["pfparticles"]);
+  composeSkeleton< recob::OpFlash   >(out["opflashes"  ]);
+  composeSkeleton< recob::OpHit     >(out["ophits"     ]);
+  composeSkeleton< raw::OpDetPulse  >(out["oppulses"]);
+  composeSkeleton< simb::GTruth     >(out["gtruth"]);
+  composeSkeleton< simb::MCTruth    >(out["mctruth"]);
+  composeSkeleton< simb::MCParticle >(out["particles"]);
+}
+
+
+
+template<typename T> void GalleryComposer::composePiece(const std::string& name, nlohmann::json& out)
+{
+  auto products = findByType< std::vector<T> >(m_Event->getTTree());
+  for(auto product: products) {
+    std::string pname = stripdots(product.first);
+    std::cout << "Looking for match: " << name << " match? " << pname << std::endl;
+    if(name == pname) {
+      gallery::Handle< std::vector<T> > handle;            
+
+      { // Create a scope
+        boost::mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
+        m_Event->getByLabel(product.second,handle); // Get data from the file
+      }
+      if(handle.isValid()) {
+        composeObject(*handle,out[name]);
+      }      
+    }
+  }
+}
+
+template<typename Out>
+void split(const std::string &s, char delim, Out result) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        *(result++) = item;
+    }
+}
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, std::back_inserter(elems));
+    return elems;
+}
 
 Output_t GalleryComposer::satisfy_request(Request_t request)
 {
@@ -1390,11 +1474,12 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     m_Event.reset(event);
     std::cout << "Gallery file opened" << std::endl;cout.flush();
     tr.addto(m_stats);
-    progress_made("Opened file");
   }
   
   {
     TimeReporter tr("Find entry");
+    progress_made("Finding event");
+    
     std::string error;
     std::cout << "calling find_entry_in_tree: " << m_Event->getTTree() << "\t" << sel << "\t" << start << "\t" << end << std::endl;
     m_entry = Composer::find_entry_in_tree( m_Event->getTTree(), sel, start, end, error);
@@ -1402,16 +1487,25 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
       return return_error("Could not find entry in tree: "+error);
     } 
     tr.addto(m_stats);
-    progress_made("Entry found");
     
   }
      
   {
     TimeReporter tr("GoTo");
+    progress_made("Loading event");
+    
     m_Event->goToEntry(m_entry);
     tr.addto(m_stats);
     progress_made("Entry loaded");
     
+  }
+  
+  {
+    TimeReporter tr("Skeleton");
+    progress_made("Inventorying event data");
+    
+    composeSkeleton(m_result["skeleton"]);
+    tr.addto(m_stats);
   }
   
   
@@ -1438,7 +1532,21 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   progress_made("Composing header");
   composeHeaderData();
 
-
+  if(request->find("piece")!=request->end()) {
+    std::vector<std::string> a = split((*request)["piece"],'/');
+    if(a.size()>1) {
+      std::string type = a[0];
+      std::string name = a[1];
+      std::cout << "Piece request: composing " << type << " " << name << std::endl;
+      progress_made("Piece "+type+" "+name);
+      
+      if(type=="ophits") composePiece<recob::OpHit>(name,m_result[type]);
+    }
+    m_result["stats"] = m_stats;
+    return dump_result();
+    
+  }
+  
   // parse some options.
   int doCal = 1;
   int doRaw = 1;
@@ -1454,13 +1562,13 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   
   // Wire data.
   // End first so background image conversion tasks can be Ended as we build the rest.
-  progress_made("Composing wire images...");  
+  progress_made("Composing recob::Wire image");  
   if(doCal)   composeWires();
-  progress_made("Composing raw digit images...");  
+  progress_made("Composing raw::Digit image");  
   if(doRaw)   composeRaw();
 
 
-  progress_made("Composing hits...");  
+  progress_made("Composing hits");  
   composeHits();
 
   composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", m_result );
@@ -1482,6 +1590,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     boost::mutex::scoped_lock lck(m_output_mutex);
     m_result["mc"] = mc;    
   }
+  progress_made("Composing associations");  
+  
   composeAssociations();
 
   // boost::thread_group threads;

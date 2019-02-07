@@ -6,6 +6,22 @@
 #include <TTreeFormula.h>
 #include <TSystem.h>
 
+
+bool Composer::can_satisfy(Request_t request ) 
+{
+  std::string filename = "";
+  try {
+    filename = request->value("filename","");
+  } catch(...) {};
+  if(filename=="") {
+    return false;
+  }
+  if(m_filename.length()>0 && filename!=m_filename)
+    return false;
+  
+  return true;
+}
+
 Output_t Composer::satisfy_request(Request_t request)
 {
   // Check to see if our current event matches the request.

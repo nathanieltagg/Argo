@@ -93,7 +93,7 @@ public:
     report["state"] = std::string(s);  // prevents segfault - the handle is a good thing to use.
     std::string out = report.dump();
     std::cout << "do_progress " << out << std::endl;
-    // progress.Send(out.c_str(), out.size());
+    progress.Send(out.c_str(), out.size());
   }
 
   void Execute(const Nan::AsyncProgressWorker::ExecutionProgress &ep) {

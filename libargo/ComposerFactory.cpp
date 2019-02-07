@@ -12,14 +12,12 @@
 #include "LarliteComposer.h"
 #include "ForkedComposer.h"
 #include <exception>
-#include <TApplication.h>
 
 using nlohmann::json;
 size_t ComposerFactory::events_served = 0;
 
 
 #include <gallery/Event.h>
-TApplication app("MyApp", 0, 0);
 
 ComposerFactory::ComposerFactory()
   : m_config(std::shared_ptr<json>(new json(json::object())))

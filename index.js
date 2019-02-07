@@ -45,15 +45,71 @@ mkdirp(config.datacache);
 // app.use(morgan('tiny',{immediate:true}));
 app.use(morgan('tiny'));
 
+
+
+var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
+
+
+app.ws('/server/stream-event', function(ws, req) {
+  console.log("ws server hit!",req.query)
+  var event_req = req.query;
+  
+  event_req.pathglob= "";
+  event_req.selection=  req.query.selection?(String(req.query.selection)):"1";
+  event_req.entrystart= req.query.entry?parseInt(req.query.entry):0;
+  event_req.entryend= 1000000000;
+  event_req.options= req.query.options || "";
+  if(req.query.filename) event_req.pathglob = decodeURIComponent(req.query.filename);
+  // FIXME raw file lookup req.param.what == 'raw'
+  console.log("pathglob:",req.query.filename,event_req.pathglob);
+  var alive = true;
+  glob(event_req.pathglob,  function (er, files) {
+    console.log("found files",files);
+    event_req.filename = files[0];
+    if(fs.existsSync(event_req.filename)) {
+      // FIXME PNFS CHECK
+      console.log("Constructed request:",event_req);
+            
+      composerFactory.composeWithProgress(event_req,
+          function(result){
+            try{
+              ws.send(JSON.stringify({payload_incoming:result.length}));
+              ws.send("{\"record\":"+result+"}",{compress:true});
+              console.log(ws._sender);
+              return;
+            } catch (err) {
+              console.log("ws send error",err);
+            }
+           },
+          function(progress){
+            try { 
+              ws.send(progress);
+            } catch (err) {
+              console.log("ws send error",err);
+            }
+            console.log("PROGRESS",progress);
+          }
+      );
+    }
+  });
+  ws.on('message', function(msg) {
+    console.log(msg);
+  });
+  ws.on('close', function() {
+    console.log("socket closed");
+  });
+});
+
+
 app.get("/server/serve_event.cgi",function(req,res,next){
   console.log(req.query);
-  var event_req = {
-    pathglob: "",
-    selection:  req.query.selection?(String(req.query.selection)):"1",
-    entrystart: req.query.entry?parseInt(req.query.entry):0,
-    entryend: 1000000000,
-    options: req.query.options || "",
-  };
+  var event_req = req.query;
+  
+  event_req.pathglob= "";
+  event_req.selection=  req.query.selection?(String(req.query.selection)):"1";
+  event_req.entrystart= req.query.entry?parseInt(req.query.entry):0;
+  event_req.entryend= 1000000000;
+  event_req.options= req.query.options || "";
   if(req.query.filename) event_req.pathglob = decodeURIComponent(req.query.filename);
   // FIXME raw file lookup req.param.what == 'raw'
   console.log("pathglob:",req.query.filename,event_req.pathglob);

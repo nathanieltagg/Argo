@@ -24,6 +24,14 @@ public:
 
   virtual Output_t satisfy_request(Request_t request);
 
+  // virtual Result_t composeSkeletonPart()
+  
+private:
+  template<typename T> void     composeSkeleton(nlohmann::json& out);
+  void composeSkeleton(nlohmann::json& out);
+
+  template<typename T> void composePiece(const std::string& name,nlohmann::json& out );
+
   // virtual Json_t get_or_compose(std::string jsonPointer);
   //
   // virtual void compose(std::string jsonPointer, Result_t& result);
@@ -44,6 +52,10 @@ protected:
 
   template<typename V>
     bool composeObjectsVector(const std::string& output_name, nlohmann::json& output);
+
+  template<typename TT> 
+    void composeObject(const std::vector<TT>&v, nlohmann::json& out);
+
   template<typename T>
     void composeObject(const T&, nlohmann::json& out);
 

@@ -36,7 +36,8 @@ public:
   // Required: return true if we can satisfy the request.
   // If false, a new composer object will be instantiated to fulfill it.
   // Called only if the client specifically requests us.
-  virtual bool can_satisfy(Request_t) {return false;};
+  // By default, it just reports if the filename matches.
+  virtual bool can_satisfy(Request_t);
 
   // Need only satify this: 
   virtual Output_t satisfy_request(Request_t request);
@@ -99,11 +100,25 @@ public:
   
   // Progress meter stuff:
 public:
-  typedef std::function<void(float,const std::string&)> ProgressCallback_t;
-  virtual void set_progress_callback(ProgressCallback_t cb) {m_progress_callback = cb;}
+  typedef unsigned short OutputType_t;
+  enum OutputTypeEnum_t: OutputType_t {
+    kUnknown     =0,  // error
+    kEmpty       =1,       // No string, may be final
+    kProgress,   =2  // Progress notification
+    kPiecePreview=4,// The next message will be a kPiece, here's some metadata
+    kPiece,      =8 // An actual piece of data
+    kRecord,     =16 // Legacy: a complete record
+    kFinal       =32 // 
+  } // note this is a bitmask.
+
+  typedef std::function<void(OutputType_t type, const std::string& json)> OutputCallback_t;
+  virtual void set_output_callback(OutputCallback_t cb) {m_output_callback = cb;}
+  
   
 protected:
-  ProgressCallback_t m_progress_callback;
+  std::string m_filename;
+  OutputCallback_t m_response_callback;
+
   float              m_progress_target;
   float              m_progress_so_far;
   // used by caller:
