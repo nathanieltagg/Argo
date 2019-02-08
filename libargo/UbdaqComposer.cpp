@@ -71,7 +71,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   m_result["request"] = *request;
   // See if we can find the record in question.
   if(request->find("filename")==request->end()) {
-    return return_error("No file requested");
+    return Error("No file requested");
   }
   std::string filename =  (*request)["filename"].get<std::string>();
   long long  start = request->value("entrystart",(long long)0);
@@ -84,7 +84,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   DaqFile daqfile(filename);
   if(! daqfile.Good() ) {
     // Bad file.
-    return return_error(string("Cannot open file ") + filename + " for reading.");
+    return Error(string("Cannot open file ") + filename + " for reading.");
   }
   // Ensure full dissection is on.
   // Explicitly turn on unpacking.
@@ -101,7 +101,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   }
 
   if(!record) {
-    return return_error(string("Cannot read or unpack event ") + std::to_string(entry) + " in file " + filename);
+    return Error(string("Cannot read or unpack event ") + std::to_string(entry) + " in file " + filename);
   }
   
   json source;
@@ -127,7 +127,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   
   m_record = record;
   if(!m_record) {
-    return return_error("Bad record!");
+    return Error("Bad record!");
   } 
     
   std::string id = Form("r%08d_s%04d_e%08d"

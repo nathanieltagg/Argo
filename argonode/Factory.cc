@@ -1,5 +1,5 @@
 #include "Factory.h"
-#include "ComposerFactory.h"
+#include "UniversalComposer.h"
 
 #include <iostream>
 
@@ -26,11 +26,11 @@ using v8::Value;
 
 class MyFactoryWorker : public Nan::AsyncWorker {
 public:
-  Factory* factory;
+  UniversalComposerWrap* factory;
   Request_t request;
   Output_t output;
     
-  MyFactoryWorker(Factory* f, Request_t req, Nan::Callback *done_callback )
+  MyFactoryWorker(UniversalComposerWrap* f, Request_t req, Nan::Callback *done_callback )
     : Nan::AsyncWorker(done_callback)
     , factory(f)
     , request(req)
@@ -42,7 +42,7 @@ public:
     //   this->SetErrorMessage("An error occured!");
     //   return;
     // }
-    output = factory->compose(request);
+    output = factory->satisfy_request(request);
   }
 
   void HandleOKCallback() {
@@ -70,11 +70,11 @@ public:
 class MyFactoryWorkerWithProgress : public Nan::AsyncProgressWorker{
 public:
   Nan::Callback* progress_callback;
-  Factory* factory;
+  UniversalComposerWrap* factory;
   Request_t request;
   Output_t output;
     
-  MyFactoryWorkerWithProgress(Factory* f, Request_t req, Nan::Callback* progress_callback, Nan::Callback *done_callback )
+  MyFactoryWorkerWithProgress(UniversalComposerWrap* f, Request_t req, Nan::Callback* progress_callback, Nan::Callback *done_callback )
     : Nan::AsyncProgressWorker(done_callback)
     , progress_callback(progress_callback) 
     , factory(f)
@@ -85,27 +85,26 @@ public:
   ~MyFactoryWorkerWithProgress() { delete progress_callback; }
 
 
-  void do_progress(const Nan::AsyncProgressWorker::ExecutionProgress& progress, float f, const std::string& s) 
+  void do_output(const Nan::AsyncProgressWorker::ExecutionProgress& progress, Composer::OutputType_t type, Output_t output) 
   {
-    std::cout << "do_progress " << f << " " << s << std::endl;
     nlohmann::json report;
-    report["progress"] = f;
-    report["state"] = std::string(s);  // prevents segfault - the handle is a good thing to use.
+    report["type"] = Composer::to_string(type);
+    report["output"] = (output)?(*output):""; 
     std::string out = report.dump();
-    std::cout << "do_progress " << out << std::endl;
     progress.Send(out.c_str(), out.size());
   }
 
   void Execute(const Nan::AsyncProgressWorker::ExecutionProgress &ep) {
     // Bind this object's do_progress() call to 
     
-    Composer::ProgressCallback_t cb = std::bind(
-      &MyFactoryWorkerWithProgress::do_progress,
+    Composer::OutputCallback_t cb = std::bind(
+      &MyFactoryWorkerWithProgress::do_output,
       this,
        std::ref(ep),
       std::placeholders::_1, std::placeholders::_2);
     // try{
-      output = factory->compose(request, cb);      
+      factory->set_output_callback(cb);
+      output = factory->satisfy_request(request);      
     // } catch (std::exception& e) {
     //   Nan::ThrowError(e.what());
     // }
@@ -142,33 +141,33 @@ public:
 
 // A wrapper for ComposerFactory.
 
-Nan::Persistent<v8::FunctionTemplate> Factory::constructor;
+Nan::Persistent<v8::FunctionTemplate> UniversalComposerWrap::constructor;
 
-Factory::Factory(const std::string& config) : ComposerFactory()
+UniversalComposerWrap::UniversalComposerWrap(const std::string& config) : UniversalComposer()
 {
   Config_t c(new nlohmann::json(nlohmann::json::parse(config)));
   std::cout << "Configure with " << c->dump(2) << std::endl;
   configure(c);
 }
 
-Factory::~Factory() {
+UniversalComposerWrap::~UniversalComposerWrap() {
 }
 
-NAN_MODULE_INIT(Factory::Init) {
-  v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(Factory::New);
+NAN_MODULE_INIT(UniversalComposerWrap::Init) {
+  v8::Local<v8::FunctionTemplate> ctor = Nan::New<v8::FunctionTemplate>(UniversalComposerWrap::New);
   constructor.Reset(ctor);
   ctor->InstanceTemplate()->SetInternalFieldCount(1);
-  ctor->SetClassName(Nan::New("Factory").ToLocalChecked());
+  ctor->SetClassName(Nan::New("Composer").ToLocalChecked());
   Nan::SetPrototypeMethod(ctor, "composeSync", composeSync);
   Nan::SetPrototypeMethod(ctor, "compose", composeAsync);
   Nan::SetPrototypeMethod(ctor, "composeWithProgress", composeWithProgress);
   
-  target->Set(Nan::New("Factory").ToLocalChecked(), ctor->GetFunction());
+  target->Set(Nan::New("Composer").ToLocalChecked(), ctor->GetFunction());
  }
 
 
-// void Factory::New(const FunctionCallbackInfo<Value>& args) {
-NAN_METHOD(Factory::New) {
+// void UniversalComposerWrap::New(const FunctionCallbackInfo<Value>& args) {
+NAN_METHOD(UniversalComposerWrap::New) {
   Isolate* isolate = info.GetIsolate();
   /*Local<Context> context = */isolate->GetCurrentContext();
 
@@ -185,7 +184,7 @@ NAN_METHOD(Factory::New) {
         configstr = *s;
       }
     }
-    Factory* obj = new Factory(configstr);
+    UniversalComposerWrap* obj = new UniversalComposerWrap(configstr);
     obj->Wrap(info.This());
     info.GetReturnValue().Set(info.This());
   } else {
@@ -202,10 +201,10 @@ NAN_METHOD(Factory::New) {
 //   }
 }
 
-NAN_METHOD(Factory::composeSync){//(const FunctionCallbackInfo<Value>& args) {
+NAN_METHOD(UniversalComposerWrap::composeSync){//(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = info.GetIsolate();
 
-  Factory* factory = ObjectWrap::Unwrap<Factory>(info.Holder());
+  UniversalComposerWrap* factory = ObjectWrap::Unwrap<UniversalComposerWrap>(info.Holder());
   if(!info[0]->IsObject()) {
     return Nan::ThrowError(Nan::New("Need a request object as first argument.").ToLocalChecked());
   }
@@ -218,7 +217,7 @@ NAN_METHOD(Factory::composeSync){//(const FunctionCallbackInfo<Value>& args) {
       v8::Local<v8::String> v8string = NanJSON.Stringify(obj).ToLocalChecked();
       v8::String::Utf8Value s(isolate,v8string);
       Request_t request(new nlohmann::json(nlohmann::json::parse(*s)));
-      Output_t output = factory->compose(request);
+      Output_t output = factory->satisfy_request(request);
       Local<String> retval = String::NewFromUtf8(isolate, output->c_str());
       info.GetReturnValue().Set(retval);
     }
@@ -230,9 +229,9 @@ NAN_METHOD(Factory::composeSync){//(const FunctionCallbackInfo<Value>& args) {
 
 
 // Async
-NAN_METHOD(Factory::composeAsync){
+NAN_METHOD(UniversalComposerWrap::composeAsync){
   Isolate* isolate = info.GetIsolate();
-  Factory* factory = ObjectWrap::Unwrap<Factory>(info.Holder());
+  UniversalComposerWrap* factory = ObjectWrap::Unwrap<UniversalComposerWrap>(info.Holder());
   if(!info[0]->IsObject()) {
     return Nan::ThrowError(Nan::New("Need a request object as first argument.").ToLocalChecked());
   }
@@ -261,9 +260,9 @@ NAN_METHOD(Factory::composeAsync){
 
 
 // Async
-NAN_METHOD(Factory::composeWithProgress){
+NAN_METHOD(UniversalComposerWrap::composeWithProgress){
   Isolate* isolate = info.GetIsolate();
-  Factory* factory = ObjectWrap::Unwrap<Factory>(info.Holder());
+  UniversalComposerWrap* factory = ObjectWrap::Unwrap<UniversalComposerWrap>(info.Holder());
   if(!info[0]->IsObject()) {
     return Nan::ThrowError(Nan::New("Need a request object as first argument.").ToLocalChecked());
   }
@@ -306,7 +305,7 @@ NAN_METHOD(Factory::composeWithProgress){
   //   NODE_SET_METHOD(module, "exports", Factory::New);
   // }
   //
-  NODE_MODULE(NODE_GYP_MODULE_NAME, Factory::Init)
+  NODE_MODULE(NODE_GYP_MODULE_NAME, UniversalComposerWrap::Init)
 
 
 }  // namespace argo

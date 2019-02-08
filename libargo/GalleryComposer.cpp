@@ -290,8 +290,13 @@ void GalleryComposer::composeHeaderData()
 }
 
 
+
+
 void GalleryComposer::composeHits()
 {
+  ///
+  /// Obsolete: hit histograms are burdensome and awkward in new system, and don't really buy me anything since
+  /// I stopped using them ages ago. The ZoomControl still references them, but I think I'm better off doing p
   typedef vector<recob::Hit> current_type_t;
   auto products = findByType<current_type_t>(m_Event->getTTree());
   TimeReporter toptimer("hits");
@@ -376,6 +381,24 @@ void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out
     composeObject(item,j);
     out.push_back(j);
   }
+} 
+
+template<>
+void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h)
+{
+  int wire = hit.WireID().Wire;
+  int plane = hit.WireID().Plane;
+  double q  = hit.Integral();
+  double t  = hit.PeakTime();
+  double t1 = hit.StartTick();
+  double t2 = hit.EndTick();
+
+  h["wire"] =   wire;
+  h["plane"] =  plane;
+  h["q"] =      jsontool::fixed(q,0)     ;
+  h["t"] =      jsontool::fixed(t,1)     ;
+  h["t1"] =     jsontool::fixed(t1,1)    ;
+  h["t2"] =     jsontool::fixed(t2,1)    ;
 } 
 
 
@@ -1368,6 +1391,7 @@ void GalleryComposer::composeAssociations()
 
 template<typename T>  void     
 GalleryComposer::composeSkeleton(nlohmann::json& out) {
+  std::cout << "composeSkeleton " << boost::core::demangle( typeid(T).name() ) << std::endl;
   auto products = findByType< std::vector<T> >(m_Event->getTTree());
   for(auto product: products) {
     // out[stripdots(product.first)] = true;
@@ -1379,7 +1403,7 @@ GalleryComposer::composeSkeleton(nlohmann::json& out) {
       m_Event->getByLabel(product.second,handle); // Get data from the file
     }
     
-    if(!handle.isValid()) {
+    if(handle.isValid()) {
       out[stripdots(product.first)] = handle->size();
     }
   }
@@ -1432,7 +1456,7 @@ void split(const std::string &s, char delim, Out result) {
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, delim)) {
-        *(result++) = item;
+        if(item.size()>0) *(result++) = item;
     }
 }
 std::vector<std::string> split(const std::string &s, char delim) {
@@ -1452,7 +1476,7 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   m_progress_target = 10;
 
   if(request->find("filename")==request->end()) {
-    return return_error("No file requested");
+    return Error("No file requested");
   }
   std::string filename =  (*request)["filename"].get<std::string>();
   std::string sel   = request->value("selection","1");
@@ -1484,7 +1508,7 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     std::cout << "calling find_entry_in_tree: " << m_Event->getTTree() << "\t" << sel << "\t" << start << "\t" << end << std::endl;
     m_entry = Composer::find_entry_in_tree( m_Event->getTTree(), sel, start, end, error);
     if(m_entry<0) {
-      return return_error("Could not find entry in tree: "+error);
+      return Error("Could not find entry in tree: "+error);
     } 
     tr.addto(m_stats);
     
@@ -1531,20 +1555,47 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   
   progress_made("Composing header");
   composeHeaderData();
-
-  if(request->find("piece")!=request->end()) {
-    std::vector<std::string> a = split((*request)["piece"],'/');
-    if(a.size()>1) {
-      std::string type = a[0];
-      std::string name = a[1];
-      std::cout << "Piece request: composing " << type << " " << name << std::endl;
-      progress_made("Piece "+type+" "+name);
-      
-      if(type=="ophits") composePiece<recob::OpHit>(name,m_result[type]);
+  
+  // find if there is 'piece' or 'pieces' in the request
+  json pieces = json::array();
+  if((*request)["pieces"].is_array()) pieces = (*request)["pieces"];
+  if(!(*request)["piece"].is_null()) pieces.push_back((*request)["piece"]);
+  
+  std::vector<std::string> atest = split("/a/b/c/d//e/f/",'/');
+  m_result["testtest"] = json(atest);
+  
+  if(pieces.size() >0 ) {
+    for( auto& p: pieces ) {
+      if(p.is_string()) {
+        std::vector<std::string> a = split(p.get<std::string>(),'/');
+        if(a.size()>1) {
+          std::string type = a[0];
+          std::string name = a[1];
+          std::cout << "Piece request: composing " << type << " " << name << std::endl;
+          progress_made("Piece "+type+" "+name);
+          json outPiece;
+          if(type=="hits"       ) composePiece<recob::Hit       >( name, outPiece[type] );
+          if(type=="spacepoints") composePiece<recob::SpacePoint>( name, outPiece[type] );
+          if(type=="clusters"   ) composePiece<recob::Cluster   >( name, outPiece[type] );
+          if(type=="tracks"     ) composePiece<recob::Track     >( name, outPiece[type] );
+          if(type=="showers"    ) composePiece<recob::Shower    >( name, outPiece[type] );
+          if(type=="endpoint2d" ) composePiece<recob::EndPoint2D>( name, outPiece[type] );
+          if(type=="pfparticles") composePiece<recob::PFParticle>( name, outPiece[type] );
+          if(type=="opflashes"  ) composePiece<recob::OpFlash   >( name, outPiece[type] );
+          if(type=="ophits"     ) composePiece<recob::OpHit     >( name, outPiece[type] );
+          if(type=="oppulses"   ) composePiece<raw::OpDetPulse  >( name, outPiece[type] );
+    
+          // FIXME: change in MC structure.
+          if(type=="gtruth"   ) composePiece<simb::GTruth    >( name, outPiece[type] );
+          if(type=="mctruth"  ) composePiece<simb::MCTruth   >( name, outPiece[type] );
+          if(type=="particles") composePiece<simb::MCParticle>( name, outPiece[type] );
+          // dispatch it.
+          dispatch_piece(outPiece);
+        }
+      }        
     }
     m_result["stats"] = m_stats;
-    return dump_result();
-    
+    return dump_result();    
   }
   
   // parse some options.
@@ -1569,8 +1620,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
 
 
   progress_made("Composing hits");  
-  composeHits();
-
+  // composeHits();
+  composeObjectsVector< std::vector<recob::Hit       > >("hits"       , m_result );
   composeObjectsVector< std::vector<recob::SpacePoint> >("spacepoints", m_result );
   composeObjectsVector< std::vector<recob::Cluster   > >("clusters"   , m_result );
   composeObjectsVector< std::vector<recob::Track     > >("tracks"     , m_result );

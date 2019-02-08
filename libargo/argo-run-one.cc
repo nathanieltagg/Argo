@@ -19,7 +19,7 @@
 #include <TTimeStamp.h>
 #include <TError.h>
 
-#include "ComposerFactory.h"
+#include "UniversalComposer.h"
 
 #include <signal.h>
 #include <algorithm>
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
   (*request)["entrystart"] = entrystart;
   (*request)["entryend"] = entryend;
 
-  ComposerFactory factory;
-  factory.configure(configuration);
-  Output_t payload = factory.compose(request);
+  UniversalComposer composer;
+  composer.configure(configuration);
+  Output_t payload = composer.satisfy_request(request);
   
   ofstream outstream(jsonfilename.c_str());
   outstream << *payload;

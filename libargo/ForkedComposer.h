@@ -19,10 +19,13 @@ public:
 
   ForkedComposer() : _is_child(false), _pid(0) 
   {  
+      std::cout <<"ForkedComposer ctor " << typeid(*this).name() <<std::endl;
   }
  
   ~ForkedComposer() 
-  {  
+  {        
+    std::cout <<"ForkedComposer dtor " << typeid(*this).name() << (_is_child?"child":"parent") << std::endl;
+
     if(_pid) { 
       // A child process exists. Nuke it.
       std::cout << "Composer " << m_id << " is destructing; killing process " << _pid << std::endl;
@@ -42,7 +45,8 @@ public:
   }
     
     
-  virtual void initialize() {
+  virtual void configure(Config_t config, int id=0) {
+    Composer::configure(config,id);
     // Called exactly once.
     // Set up I/O pipes.
     if(pipe(_input_pipe)==-1) throw std::runtime_error("Couldn't open input pipe.");
@@ -61,31 +65,32 @@ public:
       signal ( SIGILL,  ForkTerminationHandler);
       signal ( SIGFPE,  ForkTerminationHandler);
       
-      std::string dir = (*m_config)["fork_logs"].template get<std::string>();
-      std::string logfilename = dir + "argo_backend_" + std::to_string(m_id) + ".log";
-      std::string errfilename = dir + "argo_backend_" + std::to_string(m_id) + ".err";
+      std::string dir = m_config->value("fork_logdir",".");
+      std::string logfilename = dir + "/argo_backend_" + std::to_string(m_id) + ".log";
+      std::string errfilename = dir + "/argo_backend_" + std::to_string(m_id) + ".err";
 
       freopen(logfilename.c_str(),"w",stdout);
-      freopen(errfilename.c_str(),"a",stderr);
+      freopen(errfilename.c_str(),"w",stderr);
+      std::cout << "ForkedComposer child running " << std::endl;
       
       _composer = std::shared_ptr<C>(new C);
       _composer->configure(m_config,m_id); // Important: our child has the same ID as us.
       _composer->initialize();
-      _composer->set_progress_callback([this](float f, const std::string& s){pass_progress(f,s);});
+      _composer->set_output_callback([this](OutputType_t t, Output_t o){pass_output(t,o);});
       close(_input_pipe[1]); // No writing to input pipe
       while(true) {
         Output_t request_str;
-        int type;
+        OutputType_t type;
         read_from_pipe(_input_pipe,type,request_str);
         Request_t req(new nlohmann::json);
         *req = nlohmann::json::parse(*request_str);
         std::cout << "Doing request " << req->dump(2) << std::endl;
         try{
-          Output_t result = _composer->satisfy_request(req);
-          write_to_pipe(_output_pipe,kResult,*result);
+          Output_t result = _composer->satisfy_request(req);          
+          write_to_pipe(_output_pipe,kRetval,*result);
         } catch (std::exception& e) {
           std::string s=std::string("{\"error\":\"Exception caught in Forked Composer: ") + e.what() + "\"}";
-          write_to_pipe(_output_pipe,kResult,s);
+          write_to_pipe(_output_pipe,kRetval|kError,s);
         }
       }
 
@@ -112,14 +117,14 @@ public:
 
     // blocking.
     while(true) {
-      Output_t output;
-      int      type;
+      Output_t      output;
+      OutputType_t  type;
       read_from_pipe(_output_pipe, type, output);
-      if(type==kProgress && output) {
-        nlohmann::json j = nlohmann::json::parse(*output);
-         if(m_progress_callback) m_progress_callback(j["f"],j["s"]);
-      } else {
+      if((type & kRetval)==kRetval) {
         return output;
+      } 
+      if(m_output_callback) {
+        m_output_callback(type,output);
       }
     }
   }
@@ -127,20 +132,17 @@ public:
 private:
   
   
-  void pass_progress(float f,const std::string& s) {
-    // Called in client thread by Composer. 
-    nlohmann::json j;
-    j["f"] = f;
-    j["s"] = s;
-    write_to_pipe(_output_pipe,kProgress,j.dump());
+  // Called in client thread by Composer: 
+  void pass_output(OutputType_t type, Output_t output) {
+    if(output) write_to_pipe(_output_pipe,type,*output);
   }
   
-  void read_from_pipe(int pipe[], int &type, Output_t& output)
+  void read_from_pipe(int pipe[], OutputType_t &type, Output_t& output)
   {
     size_t size = 0;
     int retval;
-    retval = read(pipe[0], &size, sizeof(size_t));    if(retval<0) throw std::runtime_error("pipe read error");
-    retval = read(pipe[0], &type, sizeof(int));       if(retval<0) throw std::runtime_error("pipe read error");
+    retval = read(pipe[0], &type, sizeof(OutputType_t));  if(retval<0) throw std::runtime_error("pipe read error");
+    retval = read(pipe[0], &size, sizeof(size_t));        if(retval<0) throw std::runtime_error("pipe read error");
     
     output = Output_t(new std::string(size,0));
     size_t got = 0;
@@ -149,20 +151,19 @@ private:
       if(retval<0) throw std::runtime_error("pipe read error");
       got += retval;
     }
-    std::cout << _pid << " READ FROM PIPE SIZE " << size << std::endl;
-    std::cout << _pid << " READ FROM PIPE " << output->substr(0,50) << std::endl;
+    std::cout << _pid << " READ FROM PIPE TYPE " << to_string(type) << " SIZE " << size << std::endl;
+    std::cout << _pid << " READ FROM PIPE " << output->substr(0,50) << " " << output->size() << std::endl;
   }
   
-  void write_to_pipe(int pipe[], int type, const std::string& str)
+  void write_to_pipe(int pipe[], OutputType_t type, const std::string& str)
   {
     size_t size = str.size();
-    std::cout << _pid << " WRITE TO PIPE SIZE " << size << std::endl;
+    std::cout << _pid << " WRITE TO PIPE TYPE " << to_string(type) << " SIZE " << size << std::endl;
+    write(pipe[1], &type, sizeof(OutputType_t));
     write(pipe[1], &size, sizeof(size_t));
-    write(pipe[1], &type, sizeof(int));
     write(pipe[1], &str[0], size);
   }
   
-  typedef enum { kRequest = 0, kResult = 1, kProgress = 2} MessageType_t;
   std::shared_ptr<C> _composer;
   bool               _is_child;
   pid_t              _pid;

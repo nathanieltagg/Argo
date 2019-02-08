@@ -55,7 +55,7 @@ Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
   m_result["request"] = *request;  
 
   if(request->find("filename")==request->end()) {
-    return return_error("No file requested");
+    return Error("No file requested");
   }
   m_filename =  (*request)["filename"].get<std::string>();
   std::string sel   = request->value("selection","1");
@@ -69,12 +69,12 @@ Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
     m_file = new TFile(m_filename.c_str(),"READ");
     if(!m_file->IsOpen()) {
       delete m_file;
-      return return_error("File could not be opened for reading"); 
+      return Error("File could not be opened for reading"); 
     }
     m_tree = dynamic_cast<TTree*>(m_file->Get("analysistree/anatree"));
     if(!m_tree) {
       delete m_file;
-      return return_error("Could not find analysistree/anatree in file " + m_filename);
+      return Error("Could not find analysistree/anatree in file " + m_filename);
     }
     tr.addto(m_stats);
   }
@@ -86,7 +86,7 @@ Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
     if(m_entry<0) {
       m_tree = 0;
       delete m_file;
-      return return_error(err);
+      return Error(err);
     }
   }
   

@@ -72,7 +72,7 @@ Output_t LarliteComposer::satisfy_request(Request_t request)
   m_result["request"] = *request;  
 
   if(request->find("filename")==request->end()) {
-    return return_error("No file requested.");
+    return Error("No file requested.");
   }
   m_filename =  (*request)["filename"].get<std::string>();
   std::string sel   = request->value("selection","1");
@@ -88,12 +88,12 @@ Output_t LarliteComposer::satisfy_request(Request_t request)
     file = new TFile(m_filename.c_str(),"READ");
     if(!file->IsOpen()) {
       delete file;
-      return return_error("File could not be opened for reading");
+      return Error("File could not be opened for reading");
     }
     tree = dynamic_cast<TTree*>(file->Get("larlite_id_tree"));
     if(!tree) {
       delete file;
-      return return_error("Could not find larlite_id_tree in file " + m_filename);
+      return Error("Could not find larlite_id_tree in file " + m_filename);
     }
     tr.addto(m_stats);
   }
@@ -104,7 +104,7 @@ Output_t LarliteComposer::satisfy_request(Request_t request)
     m_entry = find_entry_in_tree(tree, sel, start, end, err);
     if(m_entry<0) {
       delete file;
-      return return_error(err);
+      return Error(err);
     }
   }
   delete file;

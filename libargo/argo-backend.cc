@@ -20,7 +20,7 @@
 #include <TError.h>
 
 #include "SocketServer.h"
-#include "ComposerFactory.h"
+#include "UniversalComposer.h"
 
 #include "KvpSet.h"
 #include "DeadChannelMap.h"
@@ -145,8 +145,8 @@ int main(int argc, char **argv)
                                  , {"pmt_source", "sqlite ../db/current-plexus.db"}
                                  };
     
-    ComposerFactory factory;
-    factory.configure(configuration);
+    // ComposerFactory factory;
+    // factory.configure(configuration);
 
     // gTimeStart = gSystem->Now();
 
@@ -217,8 +217,10 @@ int main(int argc, char **argv)
             (*request)["selection"] = selection;
             (*request)["entrystart"] = entrystart;
             (*request)["entryend"] = entryend;
+            UniversalComposer composer;
+            composer.configure(configuration);
 
-            Output_t payload = factory.compose(request);
+            Output_t payload = composer.satisfy_request(request);
   
             long t2 = gSystem->Now();
             // Send it out.
@@ -233,7 +235,7 @@ int main(int argc, char **argv)
           }
           ss->Close(client); // Make sure we're not servicing the client in the main fork anymore.
           
-          ComposerFactory::events_served++;
+          // ComposerFactory::events_served++;
         }
 
       }

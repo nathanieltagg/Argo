@@ -1,19 +1,19 @@
 #ifndef WRAPPEDFACTORY_H_F458F326
 #define WRAPPEDFACTORY_H_F458F326
 #include <nan.h>
-#include "ComposerFactory.h"
+#include "UniversalComposer.h"
 namespace argo {
   
 
-  class Factory : public Nan::ObjectWrap, public ComposerFactory {
+  class UniversalComposerWrap : public Nan::ObjectWrap, public UniversalComposer {
    public:
     static NAN_MODULE_INIT(Init);
 
     static NAN_METHOD(New); //void New(const v8::FunctionCallbackInfo<v8::Value>& args);
 
    private:
-    explicit Factory(const std::string& config);
-    ~Factory();
+    explicit UniversalComposerWrap(const std::string& config);
+    ~UniversalComposerWrap();
 
     static NAN_METHOD(composeSync);
     static NAN_METHOD(composeAsync); // Async

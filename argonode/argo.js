@@ -12,14 +12,16 @@ module.exports=addon.Factory;
 
 
 var test = function(){
+  const chalk = require('chalk');
+  
     // main code
   
   // test code:
   var config={"max_composers":123};
 
-  var factory = new addon.Factory(config);
+  var composer = new addon.Composer(config);
 
-  console.log(factory);
+  console.log(composer);
 
   var request= {
     "filename":
@@ -30,7 +32,11 @@ var test = function(){
       "entrystart":0,
       "entryend"  :99999,
       "selection" : "1",
-      "options"   : "__NORAW__NOCAL__"
+      "options"   : "__NORAW__NOCAL__",
+      "piece"  : "/hits/recob::Hits_gaushit__DataRecoStage1",
+      "pieces" : [ "/hits/recob::Hits_pandoraCosmicHitRemoval__DataRecoStage2", 
+                   "/hits/recob::Hits_trajcluster__DataRecoStage2",
+                  ]
   };
 
   // Synchronous request:
@@ -41,17 +47,20 @@ var test = function(){
     var doc = JSON.parse(result);
     for(i in doc) {
       var s = JSON.stringify(doc[i]);
-      console.log(i,"\t",s.length,"\t",s.substr(0,20));
+      console.log(i,"\t",s.length,"\t",s.substr(0,1000));
     }
+    console.log(doc.skeleton);
   }
   // Asyncronous request:
   // factory.compose(request, check_result);
   // console.log("WORKING WORKING");
 
   // Asyncronous request with a progressbar callback::
-  factory.composeWithProgress(request,check_result,
+  composer.composeWithProgress(request,check_result,
       function(s) {
-          console.log("PROGRESS CALLBACK PPPPPPP" + s);
+          var o = JSON.parse(s);
+    
+          console.log(chalk.bold.red("Callback Output"),o.type,chalk.red(o.output.substr(0,200)));
         }
 
   );

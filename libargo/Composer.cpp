@@ -6,6 +6,17 @@
 #include <TTreeFormula.h>
 #include <TSystem.h>
 
+Composer::Composer() : m_result(nlohmann::json::object())
+           , m_progress_target(1)
+           , m_progress_so_far(0)
+{   
+};
+
+
+Composer::~Composer()
+{
+}; // Destructor
+
 
 bool Composer::can_satisfy(Request_t request ) 
 {
@@ -150,4 +161,22 @@ nlohmann::json Composer::monitor_data()
   m_result["composer"] = abi::__cxa_demangle(typeid(*this).name(),0,0,&dummy);
   return monitor;
 }
+
+
+std::string Composer::to_string(OutputType_t type)
+{
+  std::string s;
+  if(type==kUnknown    ) s = "kUnknown";
+  if(type&kEmpty       ) s+="kEmpty";
+  if(type&kProgress    ) s+="kProgress";
+  if(type&kPiecePreview) s+="kPiecePreview";
+  if(type&kPiece       ) s+="kPiece";
+  if(type&kRecord      ) s+="kRecord";
+  if(type&kFinal       ) s+="kFinal";
+  if(type&kError       ) s+="kError";
+  if(type&kRetval      ) s+="kRetval";
+  if(type&kRequest     ) s+="kRequest";
+  return s;
+}
+
 
