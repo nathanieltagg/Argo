@@ -28,7 +28,7 @@ using v8::Value;
 
 
 
-class MyProgressWorker : public Nan::AsyncProgressWorker{
+class MyProgressWorker : public Nan::AsyncProgressQueueWorker<char>{
 public:
   ComposerWrapper* composerWrap;
   Nan::Callback* output_callback;
@@ -38,7 +38,7 @@ public:
   MyProgressWorker( 
                     ComposerWrapper* c,
                     Request_t req, Nan::Callback* ioutput_callback, Nan::Callback *idone_callback )
-    : Nan::AsyncProgressWorker(idone_callback)
+    : Nan::AsyncProgressQueueWorker<char>(idone_callback)
     , composerWrap(c)
     , output_callback(ioutput_callback) 
     , request(req)

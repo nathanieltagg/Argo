@@ -91,8 +91,6 @@ protected:
   
   
   // Request things
-
-  long long m_entry;
   std::string m_options;
   std::string m_current_event_dir_name;
   std::string m_current_event_url;

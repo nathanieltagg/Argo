@@ -183,3 +183,28 @@ std::string Composer::to_string(OutputType_t type)
 }
 
 
+std::string Composer::form_event_descriptor()
+{
+  std::string s = m_filename;
+  s.append(std::to_string(m_entry));
+  s.append(":");
+  s.append(std::to_string((long)gSystem->Now()));
+  return s;
+}
+
+
+void Composer::dispatch_piece(const nlohmann::json& p) {
+  if(m_output_callback) {
+     nlohmann::json out;
+     out["event_descriptor"] = m_cur_event_descriptor;
+     out["piece"] = p;
+     Output_t ot(new std::string(out.dump()));
+     m_output_callback(kPiece,ot);
+     std::cout << "dispatch piece" << *ot << std::endl;
+  } else {
+    std::cout << "No output callback!" << std::endl;
+  }
+}
+
+
+

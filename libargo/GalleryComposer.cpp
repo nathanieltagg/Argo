@@ -1526,6 +1526,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     source["subrun"]=aux.id().subRun();
     source["event"]=aux.id().event();
     m_result["source"] = source;
+    m_cur_event_descriptor = form_event_descriptor();
+    m_result["event_descriptor"] = m_cur_event_descriptor;    
   }
   
   m_result["request"] = *request;  
@@ -1553,9 +1555,13 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   m_result["testtest"] = json(atest);
   
   if(pieces.size() >0 ) {
+    std::cout << "dispatching source" << endl;
     dispatch_piece(json({{"source",m_result["source"]}}));
+    std::cout << "dispatching header" << endl;
     dispatch_piece(json({{"header",m_result["header"]}}));
+    std::cout << "dispatching monitor" << endl;
     dispatch_piece(json({{"monitor",m_result["monitor"]}}));
+    std::cout << "dispatching requested pieces" << endl;
     for( auto& p: pieces ) {
       if(p.is_string()) {
         std::vector<std::string> a = split(p.get<std::string>(),'/');
@@ -1588,7 +1594,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
       }        
     }
     m_result["stats"] = m_stats;
-    return dump_result();    
+    return Output_t(new std::string("{}"));
+    // return dump_result();
   }
   
   // Legacy code: do the entire event.

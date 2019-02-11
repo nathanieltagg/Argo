@@ -109,15 +109,16 @@ EventInfo.prototype.NewRecord = function()
     }
     $(".event-daqversion").text(gRecord.header.DAQVersionLabel + gRecord.header.DAQVersionQualifiers); 
     
+
+    // var t = gRecord.header.seconds*1000 + gRecord.header.nanoSeconds*1e-6;
+    var date = new Date(gRecord.header.eventTime);
+    $(".event-date").text(date.toLocaleDateString());
+    $(".event-time").text(date.toLocaleTimeString());
+
+    $(".event-age").html(CreateTimeAgoElement(gRecord.header.eventTime));
     
   }
 
-  // var t = gRecord.header.seconds*1000 + gRecord.header.nanoSeconds*1e-6;
-  var date = new Date(gRecord.header.eventTime);
-  $(".event-date").text(date.toLocaleDateString());
-  $(".event-time").text(date.toLocaleTimeString());
-
-  $(".event-age").html(CreateTimeAgoElement(gRecord.header.eventTime));
   
   if(gRecord.source) {
     if("file" in gRecord.source)  $(".event-file").text(gRecord.source.file);

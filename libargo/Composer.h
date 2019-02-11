@@ -91,6 +91,10 @@ public:
     std::cerr << err << std::endl;
     return Output_t(new std::string(j.dump()));
   }
+  
+  virtual std::string form_event_descriptor();
+  std::string m_cur_event_descriptor;
+  
 
   // Message passing back to caller  
 public:
@@ -120,6 +124,7 @@ protected:
 
   OutputCallback_t   m_output_callback;  
   std::string        m_filename;
+  long long          m_entry;
 
   float              m_progress_target;
   float              m_progress_so_far;
@@ -137,9 +142,7 @@ protected:
       
     }
   }
-  void dispatch_piece(const nlohmann::json& p) {
-    if(m_output_callback) { m_output_callback(kPiece,Output_t(new std::string(p.dump()))); };
-  }
+  void dispatch_piece(const nlohmann::json& p);
   
   
 };

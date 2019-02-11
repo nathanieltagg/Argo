@@ -77,6 +77,13 @@ function attach_stream(ws,req)
       // Make a new composer object.
       ws.my_composer = new Composer(composer_config,function(data) {
         console.log(chalk.red("Sending data"),data.length,data.substr(0,50));
+        // dont' need this, but debugging:
+        var o = JSON.parse(data);
+        for(k in o) {        
+          console.log("  ",chalk.red(k.padEnd(10)));
+          if(typeof o[k] == 'object') for(kk in o[k])
+            console.log("    ",chalk.red(kk.padEnd(10)));
+        }
         ws.send(data);
       });
       // Initiate the initial request.

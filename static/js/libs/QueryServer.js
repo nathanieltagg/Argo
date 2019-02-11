@@ -88,13 +88,15 @@ function ChangeEvent(  )
   // Clear all selection targets.
   $("input").blur();
 
-  // User feedback that we are querying
-  $.blockUI.defaults.themedCSS.top = '25%'; 
-  $.blockUI({ 
-            theme:     true, 
-            title:    'Please wait', 
-            message:    $('#MOTD')
-        });
+  // // User feedback that we are querying
+  // $.blockUI.defaults.themedCSS.top = '25%';
+  // $.blockUI({
+  //           theme:     true,
+  //           title:    'Please wait',
+  //           message:    $('#MOTD')
+  //       });
+  
+  
   
   
   if     ( par.localFile ) ReadLocalFile(par);
@@ -161,7 +163,7 @@ function QueryServerStream( par, myurl )
     data = $.extend({},par)
     if(data.filename) data.filename = encodeURIComponent(par.filename);
     if(!data.options) data.options = opts;
-    
+    data.piece = "/hits/*";
         
     var param = $.param(data);
     
@@ -197,35 +199,42 @@ function QueryServerStream( par, myurl )
       console.log("onmessage",event.timeStamp,event.data.length);
       try {
         var o = JSON.parse(event.data);
-        if("record" in o) {
-          console.log("onmessage message not progress, assuming done.");
-          if(event.data.length<200) console.log("onmessage data:",event.data,o);
-          QuerySuccess(o,"OK-WS",event);
-          gSocket.close();
-        }
-        else if("progress" in o) {
-          console.log("onmessage PROGRESS",o);
-          $('#main-circleprogress').circleProgress('value', o.progress*100);
-          $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
-          
-        }
-        else if("payload_incoming" in o) {
-          // gSocket.close();
-          
-          $('#main-circleprogress').circleProgress('value', 0);
-          $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
-        }else {
-          console.error("UNKNOWN MESSAGE TYPE")
-        }
       } catch {
-        console.log("onmessage Caught socket issue");
-        QueryError(o,"BAD",event)
+        console.log("onmessage Caught socket issue",event);
+        QueryError(o,"BAD",event);
+        return false;
+      }
+      console.warn("msg with components",Object.keys(o));
+      if("record" in o) {
+        console.log("onmessage message not progress, assuming done.");
+        if(event.data.length<200) console.log("onmessage data:",event.data,o);
+        QuerySuccess(o,"OK-WS",event);
+        gSocket.close();
+      }
+      else if("progress" in o) {
+        console.log("onmessage PROGRESS",o);
+        $('#main-circleprogress').circleProgress('value', o.progress*100);
+        $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
+        
+      }
+      else if("piece" in o) {
+        console.warn("piece with components",Object.keys(o.piece));
+        
+        GotPiece(o);
+        // $('#main-circleprogress').circleProgress('value', 0);
+        // $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
+      }else if("composer" in o) { // skip - fix this later
+        
+      }else if("error" in o) {
+          $('#status').attr('class', 'status-error');
+          $("#status").text('serve-event error: '+o.error);
+      }else {
+        console.error("UNKNOWN MESSAGE TYPE",o)
       }
     };
     
   console.log("ws Query made!")
-    
-    return false;
+  return false;
 }
 
 function QueryServer( par, myurl )
@@ -341,6 +350,29 @@ function QueryServer( par, myurl )
     return false;
 }
 
+
+function GotPiece(o)
+{
+  // NB Oliver Steele pattern for nested objects
+  // const name = ((user || {}).personalInfo || {}).name;
+  console.log("GotPiece",o);
+  if(!o.event_descriptor) console.error("No event description in piece");
+  if(!o.piece) console.error("No piece in piece!");
+  gRecord = gRecord || {};
+  if(gRecord.event_descriptor != o.event_descriptor) {
+    console.warn("New event seen!",gRecord,o);
+    gRecord = {event_descriptor:o.event_descriptor};
+  }
+    
+  for(n1 in o.piece) {
+    gRecord[n1] = gRecord[n1] || {}
+    for(n2 in o.piece[n1]) {
+      gRecord[n1][n2] = o.piece[n1][n2];
+    }
+  }
+  StartEvent();
+  
+}
 
 function QueryFilter(data, type)
 {
