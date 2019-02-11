@@ -26,24 +26,32 @@ using v8::Value;
 // Wrapper that allows continuous streaming output via callback. Based on "progress".
 // See https://github.com/nodejs/nan/blob/master/test/cpp/asyncprogressworker.cpp
 
+// based on Nan::AsyncProgressQueueWorker but with less sucking.
 
 
-class MyProgressWorker : public Nan::AsyncProgressQueueWorker<char>{
+class MyProgressWorker : public Nan::AsyncBareProgressWorkerBase{
 public:
   ComposerWrapper* composerWrap;
   Nan::Callback* output_callback;
   Request_t request;
   Output_t output;
-    
+  
+  uv_mutex_t                                                           async_lock;
+  std::queue<std::pair<Composer::OutputType_t, Output_t> > asyncdata_;
+
+  
+  
+  
   MyProgressWorker( 
                     ComposerWrapper* c,
                     Request_t req, Nan::Callback* ioutput_callback, Nan::Callback *idone_callback )
-    : Nan::AsyncProgressQueueWorker<char>(idone_callback)
+    : Nan::AsyncBareProgressWorkerBase(idone_callback)
     , composerWrap(c)
     , output_callback(ioutput_callback) 
     , request(req)
     , output(new std::string)
   {
+       uv_mutex_init(&async_lock);
   }
 
   ~MyProgressWorker() { 
@@ -52,17 +60,50 @@ public:
   }
 
 
-  void do_output(const ExecutionProgress& progress, Composer::OutputType_t type, Output_t output) 
+  void do_output(Composer::OutputType_t type, Output_t output) 
   {
-    if(output) progress.Send(output->c_str(),output->size());
+    if(output) {
+      uv_mutex_lock(&async_lock);
+      asyncdata_.push(std::pair<Composer::OutputType_t, Output_t>(type,output));
+      uv_mutex_unlock(&async_lock);
+      uv_async_send(&this->async);
+    }
+  }
+  
+  void WorkProgress() {
+      uv_mutex_lock(&async_lock);
+      while (!asyncdata_.empty()) {
+        std::pair<Composer::OutputType_t, Output_t> &datapair = asyncdata_.front();
+        
+        Output_t out = datapair.second;
+        Composer::OutputType_t outt = datapair.first;
+
+        asyncdata_.pop();
+        uv_mutex_unlock(&async_lock);
+
+        // Don't send progress events after we've already completed.
+        if (this->callback) {
+          Nan::HandleScope scope;          
+          v8::Local<v8::Value> argv[] = {
+              // This consumes the string, but no one should be using it any more!
+              Nan::New(std::string(std::move(*out))).ToLocalChecked(),
+              Nan::New(outt)
+          };
+          output_callback->Call(2, argv, async_resource);
+          
+        }
+
+        uv_mutex_lock(&async_lock);
+      }
+
+      uv_mutex_unlock(&async_lock);
   }
 
-  void Execute(const ExecutionProgress &ep) {
+  void Execute() {
     // Bind this composer's OutputCallback_t call to do_output    
     Composer::OutputCallback_t cb = std::bind(
       &MyProgressWorker::do_output,
       this,
-       std::ref(ep),
       std::placeholders::_1, std::placeholders::_2);
     // ComposerWrapper* composerWrap = Nan::ObjectWrap::Unwrap<ComposerWrapper>(composerHandle);
     if(composerWrap->m_running) std::cout << "OH NO TRIED TO START an ASYNC REQUEST WHEN ONE WAS ALREADY RUNNING" << std::endl;
@@ -92,14 +133,7 @@ public:
     Nan::Call(callback->GetFunction(), Nan::GetCurrentContext()->Global(), 2, argv);
   }
   
-  void HandleProgressCallback(const char *data, size_t count) {
-     Nan::HandleScope scope;
-
-     v8::Local<v8::Value> argv[] = {
-         Nan::New(std::string(data,count)).ToLocalChecked()
-     };
-     output_callback->Call(1, argv, async_resource);
-   }
+  void HandleProgressCallback(const char *data, size_t count) {};
 };
 
 

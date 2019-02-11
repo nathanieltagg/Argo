@@ -200,10 +200,11 @@ void Composer::dispatch_piece(const nlohmann::json& p) {
      out["piece"] = p;
      Output_t ot(new std::string(out.dump()));
      m_output_callback(kPiece,ot);
-     std::cout << "dispatch piece" << *ot << std::endl;
-  } else {
-    std::cout << "No output callback!" << std::endl;
+     // std::cout << "dispatch piece" << *ot << std::endl;
   }
+   // else {
+    // std::cout << "No output callback!" << std::endl;
+  // }
 }
 
 
