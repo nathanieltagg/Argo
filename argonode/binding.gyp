@@ -3,7 +3,7 @@
     {
       "target_name": "addon",
       "sources": [
-        "Factory.cc"
+        "ComposerWrapper.cc"
       ],
       'cflags_cc!': [ '-fno-rtti' ],
       'conditions': [
@@ -24,7 +24,7 @@
                 "-L ../../libargo", "-largo-backend"
               ],
      "link_settings": {
-        "libraries": [ "-Wl,-rpath,../../../libargo","-Wl,-rpath,libargo", "-largo-backend" ]
+        "libraries": [ "-Wl,-rpath,../../../libargo","-Wl,-rpath,libargo","-Wl,-rpath,../libargo", "-largo-backend" ]
         }
     }
   ]

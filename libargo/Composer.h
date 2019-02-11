@@ -144,34 +144,6 @@ protected:
   
 };
 
-// Might want to wrap this guy so that he can be spoken to via forks
-// template<class C>
-// class ComposerFork {
-//   int         _pipefd;
-//   bool        _we_are_client;
-//   Composer*   _composer;
-//   ComposerFork(const Config_t& config) {}
-//   int fork() {
-//     // Fork a process.
-//     // If we're the server, return.
-//     // If we're the client, start to listen for requests.
-//   }
-//   int client_listen_for_requests() {
-//     // listen to pipe
-//     // If we get a complete request, satisfy it and return.
-//   }
-//   virtual int satisfy_request(const Request_t& request, JsonObject& output) {
-//     // called by server, send request to pipe and listen for reply.
-//     // maybe needs a callback function?
-//     //
-//   }
-//   Config_t& config;
-// };
-
-
-
-
-
 
 #endif 
 

@@ -7,7 +7,7 @@
   "gypfile": true,
   "dependencies": {
     "chalk": "^2.4.2",
-    "nan": "*",
+    "nan": "^2.12.1",
     "node-gyp": "*"
   }
 }

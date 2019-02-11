@@ -30,7 +30,7 @@ private:
   template<typename T> void     composeSkeleton(nlohmann::json& out);
   void composeSkeleton(nlohmann::json& out);
 
-  template<typename T> void composePiece(const std::string& name,nlohmann::json& out );
+  template<typename T> bool composePiece(const std::string& name,nlohmann::json& out );
 
   // virtual Json_t get_or_compose(std::string jsonPointer);
   //
@@ -79,6 +79,8 @@ protected:
   nlohmann::json  m_stats;
   double          m_event_time;
   
+  
+  Request_t   m_last_request;
   //configuration:
   bool        m_CreateSubdirCache;  
   std::string m_CacheStoragePath; 

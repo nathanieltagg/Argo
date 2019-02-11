@@ -5,11 +5,14 @@
 #include <TTree.h>
 #include <TTreeFormula.h>
 #include <TSystem.h>
+#include <TROOT.h>
 
 Composer::Composer() : m_result(nlohmann::json::object())
            , m_progress_target(1)
            , m_progress_so_far(0)
 {   
+  // ROOT::EnableThreadSafety ();  // This actually makes it FAIL big time!
+  
 };
 
 

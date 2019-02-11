@@ -11,7 +11,7 @@ var morgan = require('morgan');
 var moment = require('moment');
 var path = require('path');
 var mkdirp = require('mkdirp');
-
+var chalk = require('chalk');
 
 // conifig defaults:
 var defaults = {
@@ -24,17 +24,16 @@ var defaults = {
 var config = defaults;
 
 
-// My backend instantiation (maps to a ComposerFactory object) 
-var backend = require("argonode");
-var composerFactory = new backend({
-  "max_composers":0,
+// My backend instantiation (maps to a ComposerWithQueue object) 
+var Composer = require("argonode");
+var composer_config ={
   "forking": false,
   "fork_logs": __dirname + "/logs/",
   "CacheStoragePath": config.datacache,
   "CacheStorageUrl": "/datacache",
   "WorkingSuffix": "event",
   "CreateSubdirCache": true,
-});
+};
 var app = express();
 httpServer = http.createServer(app);
 
@@ -49,9 +48,13 @@ app.use(morgan('tiny'));
 
 var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
 
+app.ws('/server/stream-event', attach_stream);
 
-app.ws('/server/stream-event', function(ws, req) {
+function attach_stream(ws,req)
+{
+  // ws might be wss or ws
   console.log("ws server hit!",req.query)
+
   var event_req = req.query;
   
   event_req.pathglob= "";
@@ -66,39 +69,43 @@ app.ws('/server/stream-event', function(ws, req) {
   glob(event_req.pathglob,  function (er, files) {
     console.log("found files",files);
     event_req.filename = files[0];
+    
     if(fs.existsSync(event_req.filename)) {
       // FIXME PNFS CHECK
       console.log("Constructed request:",event_req);
-            
-      composerFactory.composeWithProgress(event_req,
-          function(result){
-            try{
-              ws.send(JSON.stringify({payload_incoming:result.length}));
-              ws.send("{\"record\":"+result+"}",{compress:true});
-              console.log(ws._sender);
-              return;
-            } catch (err) {
-              console.log("ws send error",err);
-            }
-           },
-          function(progress){
-            try { 
-              ws.send(progress);
-            } catch (err) {
-              console.log("ws send error",err);
-            }
-            console.log("PROGRESS",progress);
-          }
-      );
-    }
-  });
-  ws.on('message', function(msg) {
-    console.log(msg);
-  });
-  ws.on('close', function() {
-    console.log("socket closed");
-  });
-});
+      
+      // Make a new composer object.
+      ws.my_composer = new Composer(composer_config,function(data) {
+        console.log(chalk.red("Sending data"),data.length,data.substr(0,50));
+        ws.send(data);
+      });
+      // Initiate the initial request.
+      ws.my_composer.request(event_req);
+      // Declare where messages should go 
+      ws.onmessage = function(msg) {
+        let newreq = JSON.parse(msg);
+        let merge_req = {...newreq,...event_req}
+        console.log(chalk.green("Passing subsequent request"),merge_req);
+        ws.my_composer.request(msg);
+      }
+      // What to do if client disconnects
+      ws.onclose = function() {
+        console.log(chalk.blue("Socket closed, shutting down"));        
+        ws.my_composer.shutdown(); // Tell it to stop processing queue.
+        delete ws.my_composer; // release it.
+        ws.onmessage = null; // remove listener.
+      }
+      return;
+    } else {
+      // If we got to here, we got a request but were unable to handle it.
+      ws.send({
+        "error": "Unable to find a file matching request for "
+                  +pathlglob
+                  +(err?" ("+err+")":"")
+      });
+    } // glob callback
+  }); // glob
+};
 
 
 app.get("/server/serve_event.cgi",function(req,res,next){
