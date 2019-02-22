@@ -15,7 +15,7 @@ public:
   UbdaqComposer();
   ~UbdaqComposer();
   
-  virtual void initialize();
+  virtual void configure(Config_t config, int id=0);
   
   virtual bool can_satisfy(Request_t) {return true;};
 

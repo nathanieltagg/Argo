@@ -2,19 +2,55 @@
 
 // Create the mapper objects.
 $(function(){
-  gGLMapperRawLowres = new GLMapper('raw_lowres');
-  gGLMapperCalLowres = new GLMapper('cal_lowres');
+  // gGLMapperRawLowres = new GLMapper('raw_lowres');
+  // gGLMapperCalLowres = new GLMapper('cal_lowres');
+  //
+  // gGLMapperRaw = new GLMapper('raw');
+  // gGLMapperCal = new GLMapper('cal');
+  //
+  // gGLMappers = {
+  //   'raw': gGLMapperRaw,
+  //   'cal': gGLMapperCal,
+  //   'raw_lowres': gGLMapperRawLowres,
+  //   'cal_lowres': gGLMapperCalLowres,
+  // }
+  //
+  gStateMachine.Bind('newPiece',CreateGLMappers);
 
-  gGLMapperRaw = new GLMapper('raw');
-  gGLMapperCal = new GLMapper('cal');
+  gStateMachine.Bind('ChangePsuedoColor',GLChangePsuedoColor);
   
-  gGLMappers = {
-    'raw': gGLMapperRaw,
-    'cal': gGLMapperCal,
-    'raw_lowres': gGLMapperRawLowres,
-    'cal_lowres': gGLMapperCalLowres,
-  }
 });
+
+
+function CreateGLMappers()
+{
+  if(!gRecord) return;
+  // Create the tiled images. Do only for full images (not lowres)
+  for(_type of ["wireimg-lowres", "wireimg"]) {
+    if(gRecord[_type]) 
+      for(_name in gRecord[_type]) {
+        if(! gRecord[_type][_name]._glmapper) {
+          console.warn("Create GL mapper on ",_type,_name);
+          gRecord[_type][_name]._glmapper = new GLMapper(_type,_name);
+        
+        }
+      }
+  }
+}
+
+function GLChangePsuedoColor()
+{
+  if(!gRecord) return;
+  
+  for(_type of ["wireimg-lowres", "wireimg"]) {
+    if(gRecord[_type]) 
+      for(_name in gRecord[_type]) 
+        if( gRecord[_type][_name]._glmapper) 
+          gRecord[_type][_name]._glmapper.need_lut_rebuild = true;
+  }
+}
+
+
 
 //
 // Add a function to the built-in Image object
@@ -47,9 +83,10 @@ Image.prototype.completedLoaded = 0;
 // Image.prototype.onprogress = function(e) { console.log("default onprogress",e); };
 
 
-function GLMapper(typ) // "raw" or "cal"
+function GLMapper(_type,_name) // "raw" or "cal"
 {
-  this.typ = typ; 
+  this._type = _type; 
+  this._name = _name; 
   
   // Space to hold image tiles.
   this.tile_images = [];
@@ -63,14 +100,18 @@ function GLMapper(typ) // "raw" or "cal"
   // Space to hold textures.
   this.tile_textures = [];
 
-  var self = this;
-  gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
-  // gStateMachine.Bind('ChangePsuedoColor',this.Render.bind(this));
-  gStateMachine.Bind('ChangePsuedoColor',function(){self.need_lut_rebuild = true;});
-
   this.SetupGLAndCanvas(10,10);
+  
+  // Start loading.
+  this.src = gRecord[this._type][this._name];
+  if(this.src) {
+    this.tile_urls= this.src.wireimg_encoded_tiles;
+    this.scale_x  = this.src.wireimg_scale_x || 1;
+    this.scale_y  = this.src.wireimg_scale_y || 1;
+    if(this.tile_urls) this.StartLoad();
+  }    
+  
 }
-
 
 
 GLMapper.prototype.SetupGLAndCanvas = function(width, height)
@@ -154,30 +195,13 @@ GLMapper.prototype.SetupGLAndCanvas = function(width, height)
   
 }
 
-GLMapper.prototype.NewRecord = function()
-{
-  // console.log("GLMapper",this.typ," NewRecord()");
-  if(!gRecord) return;
-  
-  
-  for(product in gRecord[this.typ]) {
-    // Create a tiled image to hold this raw data.
-    if(gRecord[this.typ][product]) {
-      this.tile_urls= gRecord[this.typ][product].wireimg_encoded_tiles;
-      this.scale_x  = gRecord[this.typ][product].wireimg_scale_x || 1;
-      this.scale_y  = gRecord[this.typ][product].wireimg_scale_y || 1;
-      if(this.tile_urls) this.StartLoad();
-    }    
-  }
-}
-
 GLMapper.prototype.StartLoad = function()
 {
   // FIXME Could explicitly delete images and textures - might improve GPU memory, but not required.
   this.tile_images = [];
   this.tile_textures = [];
   
-  console.time("GLMapper.StartLoad",this.typ);
+  console.time("GLMapper.StartLoad",this._type,this._name);
   var self = this;
   
   this.loaded = false;
@@ -264,7 +288,6 @@ GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
 
 GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 {
-  // console.log("GLMapper::ImageLoaded",this.typ,jrow,jcol);
   console.time("GLMapper::ImageLoaded: one image");
   this.ImageProgress(jrow,jcol);
   //Draw in this particular item.
@@ -306,7 +329,7 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   if(!this.loaded) return;
   console.timeEnd("GLMapper.StartLoad");
 
-  console.log("GLMapper finished loading, going on to render ",this.typ,this.num_images_loaded);
+  console.log("GLMapper finished loading, going on to render ",this._type,this._name,this.num_images_loaded);
   // $("div.wireimg-encoded-progressbar").progressbar("destroy");
   $('.wireimg-encoded-progressbar-text').text("Loaded!");
   

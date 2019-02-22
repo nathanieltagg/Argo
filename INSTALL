@@ -2,10 +2,9 @@ First, you'll need to download an installation of larsoft.
 You need larsoftobj version v08_01_01 or later, ideally with the c2 compiler.
 You'll also need the uboondaq_datatypes v6_22_05a
 
-Then, edit backend/setup.sh using one of the templates.  Source this file. You'll need to source it every time.
+Then, edit backend/setup.sh using one of the templates.  Source this file. You'll need to source it every time you run.
 
-
-$ cd backend
+$ cd libargo
 $ make
 $ cd ..
 $ npm install
@@ -17,3 +16,11 @@ $ node index.js
 
 And point your browser at localhost:4590
 
+
+Further installation notes:
+To install samweb / sam_web_client on your non-fnal machine:
+   Connect to the VPN
+   source the setup script
+   setup upd
+   upd install -G -c sam_web_client v2_0
+   

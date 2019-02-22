@@ -128,9 +128,7 @@ Reco.prototype.Do3dMatchFinding = function(planes)
 Reco.prototype.DoReco = function()
 {
   // Sort by hit start time.
-  gHitsListName = $("#ctl-HitLists").val();
-  if(!gHitsListName) return;
-  var inhits = gRecord.hits[gHitsListName];
+  var inhits = GetSelected("hits");
   if(inhits.length===0) return;
   
   var i, hit;

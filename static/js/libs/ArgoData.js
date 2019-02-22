@@ -33,9 +33,11 @@ function DoInitialBookmarking()
   // This ensures that anything that is in an array has an _idx property set to that array's element number.
   // Pretty cool, and only takes a ~30 milliseconds
   // has_list stuff tries to only label things that have arrays of objects.
+  // Argo3 update: ignore things that start with underscore
   console.time("indexing");
   function indexArraysIn(o,owner,name) {
     var has_list = false;
+    if(name && name[0]=='_') return false;
     if(o instanceof Object){
       var j;
       // console.log ('recursing',name);

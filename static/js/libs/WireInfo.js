@@ -17,6 +17,8 @@ $(function(){
   });  
 });
 
+WireInfo.prototype = new ABoundObject(); 
+
 function WireInfo( element  )
 {
   gWireInfo = this;
@@ -45,7 +47,7 @@ function WireInfo( element  )
 
   var self=this;
   
-  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
   $(this.ctl_wireimg_type).click(function(ev) { return self.Draw(); });
   
   
@@ -167,14 +169,12 @@ WireInfo.prototype.Draw = function()
   // Pull a single horizontal line from the png into the histogram
   var offscreenCtx;
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
-  
-  if(!gRecord) return;
-  if(show_image == 'cal'  && gRecord._cal && gRecord._cal.tiled_canvas && gRecord._cal.tiled_canvas.loaded ) {
-    offscreenCtx = gRecord._cal.tiled_canvas.ctx;
-    this.graph.ylabel="Cal ADC";
-  } else if( gRecord._raw && gRecord._raw.tiled_canvas && gRecord._raw.tiled_canvas.loaded ) {
-    offscreenCtx = gRecord._raw.tiled_canvas.ctx;
-    this.graph.ylabel="Raw ADC";    
+  var image_name = GetSelectedName("wireimg");
+  var tiled_canvas = (((gRecord || {}).wireimg || {})[image_name] || {})._tiled_canvas || {};
+  if( tiled_canvas.loaded ) {
+    offscreenCtx = tiled_canvas.ctx;
+    if(image_name.includes("recob::Wire")) this.graph.ylabel="Deconvoluted ADC";    
+    if(image_name.includes("raw::RawDigit")) this.graph.ylabel="Raw ADC";    
   } else return;
 
   this.graph.hists = [];

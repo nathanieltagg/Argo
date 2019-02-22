@@ -65,11 +65,11 @@ int main(int argc, char **argv)
   Composer* composer1 = new UniversalComposer;
   composer1->configure(config);
   composer1->set_output_callback(&progress);
-  Composer* composer2 = new UniversalComposer;
-  composer2->configure(config);
-  composer2->set_output_callback(&progress);
+  // Composer* composer2 = new UniversalComposer;
+  // composer2->configure(config);
+  // composer2->set_output_callback(&progress);
   Output_t result1;
-  Output_t result2;
+  // Output_t result2;
 
   // ROOT::EnableThreadSafety ();  std::cout << "EnableThreadSafety initialized" << std::endl;      // This actually makes it FAIL big time!
   // std::cout << "XXX Main thread it 1" << std::endl;
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
   {
     boost::thread t1{boost::bind(do_one,composer1,request1,std::ref(result1))};
     // sleep(1); std::cout << "mississipi" << std::endl;
-    std::cout << "Launching thread 2" << std::endl;
-    boost::thread t2{boost::bind(do_one,composer2,request2,std::ref(result2))};
+    // std::cout << "Launching thread 2" << std::endl;
+    // boost::thread t2{boost::bind(do_one,composer2,request2,std::ref(result2))};
     // boost::thread tdummy(do_dummy);
     // do_dummy();
 
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 
     // tdummy.join();
     t1.join();
-    t2.join();
+    // t2.join();
   }
   Output_t result = result1;
   

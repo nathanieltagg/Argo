@@ -29,20 +29,21 @@ function PFDigraph( element )
   $(this.element).resize( function(ev){ self.NewRecord(); });                                               
   gStateMachine.BindObj('hoverChange',this,"HoverChanged");
  
-  $('#ctl-switch-to-pandora').click(function(){
-    console.log("switch to pandora products");
-    if(gRecord && self.listname) {
-      // Look up what the assocated lists are.
-      var others = gRecord.associations[self.listname];
-      for(var othername in others) {
-        // Dunno if this is cluster or spacepoint or what, but may as well whack em all
-        console.warn("switch to ",othername);
-        if($('#ctl-TrackLists option[value="'+othername+'"]').length>0)      $('#ctl-TrackLists').val(othername);
-        if($('#ctl-SpacepointLists option[value="'+othername+'"]').length>0) $('#ctl-SpacepointLists').val(othername);
-        if($('#ctl-ClusterLists option[value="'+othername+'"]').length>0)    $('#ctl-ClusterLists').val(othername);
-      }
-    }
-  });
+  // FIXME
+  // $('#ctl-switch-to-pandora').click(function(){
+  //   console.log("switch to pandora products");
+  //   if(gRecord && self.listname) {
+  //     // Look up what the assocated lists are.
+  //     var others = gRecord.associations[self.listname];
+  //     for(var othername in others) {
+  //       // Dunno if this is cluster or spacepoint or what, but may as well whack em all
+  //       console.warn("switch to ",othername);
+  //       if($('#ctl-TrackLists option[value="'+othername+'"]').length>0)      $('#ctl-TrackLists').val(othername);
+  //       if($('#ctl-SpacepointLists option[value="'+othername+'"]').length>0) $('#ctl-SpacepointLists').val(othername);
+  //       if($('#ctl-ClusterLists option[value="'+othername+'"]').length>0)    $('#ctl-ClusterLists').val(othername);
+  //     }
+  //   }
+  // });
 }
 
 
@@ -81,11 +82,7 @@ PFDigraph.prototype.NewRecord = function()
   
   $(this.element).empty();
   this.st = null;
-  if(!gRecord) return;
-  if(!gRecord.pfparticles) return;
-  if(!$("#ctl-PFParticleLists").val()) return;
-  this.listname = $("#ctl-PFParticleLists").val();
-  var pfparticles = gRecord.pfparticles[this.listname];
+  var pfparticles = GetSelected("pfparticles");
   
   if(!pfparticles || pfparticles.length === 0) {
     $(this.element).hide();
@@ -113,7 +110,7 @@ PFDigraph.prototype.NewRecord = function()
   }
   
   var root = { id: 0, data: pfparticles, children:[] };
-  root.name = this.listname;
+  root.name = GetSelectedName("pfparticles");
   for(var i=0;i<pfparticles.length;i++) {
     var p = pfparticles[i];
     if(p.parent<0 || p.parent> pfparticles.length) {

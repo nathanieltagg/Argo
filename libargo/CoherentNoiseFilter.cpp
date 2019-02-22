@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <functional>
 
-const int kWiresToAverage = 48;
+// const int kWiresToAverage = 48;
 void OneWireCoherentNoiseFilter( std::shared_ptr< std::vector<waveform_ptr_t> > input_wires_ptr,  waveform_ptr_t noise_ptr, int ntdc)
 {
   // cast for convenience
@@ -45,29 +45,31 @@ void CoherentNoiseFilter(
   int iwire_end = 0;
   while(iwire_end<(int)nwires) {
     iwire_start = iwire_end;
-    iwire_end = iwire_start;
     // What servicecard are we starting on?
-    int servicecard = (*wireMap)[iwire_start]->_servicecard;
-    // ok, find the logical stopping place on the same servicecard, up to 48 wires away
-    while( (iwire_end < iwire_start+kWiresToAverage)                  // less than 48 wires
-              && (*wireMap)[iwire_end]                                // there exists a wire to look at
-              && (*wireMap)[iwire_end]->_servicecard == servicecard) // The service card matches
-                iwire_end++; // advance
+    auto firstwire = (*wireMap)[iwire_start];
+    if(!(firstwire)) {iwire_end++; continue;} // Skip missing wire objects.
+    int servicecard = 0;
+    servicecard = firstwire->_servicecard;
     
     // Make a noisewire waveform to store.
     waveform_ptr_t noise_ptr(new waveform_t(ntdc,0));
     // build a list for input, add this noisewire to output.
     std::shared_ptr< std::vector<waveform_ptr_t> > input_wires(new std::vector<waveform_ptr_t>());
-    for(int iwire = iwire_start; iwire<iwire_end; iwire++) {
-      waveform_ptr_t wf = (*wireMap)[iwire];
+    
+    // Look at all the wires in sequence
+    for(iwire_end=iwire_start;iwire_end<nwires;iwire_end++) {
+      auto wf = (*wireMap)[iwire_end];
+      if(!wf) continue; // skip missing wires.
+      if(wf->_servicecard!=servicecard) break; 
+      // wire exists and has matching servicecard.
+      
       // Only use it for noise computation if the wire status is OK - not a bad channel.
       int status = wf->_status;
       if(status<0 || status>=4)
         input_wires->push_back(wf);
-      (*noiseWireMap)[iwire] = noise_ptr;
+      (*noiseWireMap)[iwire_end] = noise_ptr;
     }
-    // std::cout << "Noise grouping: " << input_wires->size() << ":" << iwire_start << " to " << iwire_end << std::endl;
-    
+        
     threads.create_thread(boost::bind(OneWireCoherentNoiseFilter,input_wires,noise_ptr,ntdc));
     // OneWireCoherentNoiseFilter(iwire,servicecard,wireMap,noise_ptr,nwires,ntdc);
   }

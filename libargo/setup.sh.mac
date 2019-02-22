@@ -7,8 +7,9 @@ source /Users/larsoft/setup
 # if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
 #export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
-setup larsoftobj v08_01_01 -q debug:c2
-setup uboonedaq_datatypes v6_22_05a -q debug:c2:offline
+setup uboonecode v08_08_00 -q debug:c2
+# setup larsoftobj v08_01_01 -q debug:c2
+# setup uboonedaq_datatypes v6_22_05a -q debug:c2:offline
 
 # optional:
 setup larlite v06_70_00b -q c2:debug
@@ -18,6 +19,8 @@ unsetup python
 
 # Stupid build means sqlite isn't properly found:
 setup sqlite v3_20_01_00
+
+setup sam_web_client
 
 #This is required by node-gyp to build the argonode patch library correctly:
 export CXX=clang++

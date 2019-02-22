@@ -16,23 +16,19 @@
 /// Base class: Pad3d.
 /// This forms a 3-d drawing canvas
 ///
+Pad3d.prototype = new ABoundObject();           
 
 
 function Pad3d( element, options )
 {
+  ABoundObject.call(this, element, options); // Give settings to Pad contructor.
+
   ///
   /// Constructor.
   ///
   // console.log('Pad3d ctor');
-  if(!element) { 
-    // console.log()
-    return; 
-  }
-
-  if($(element).length<1) { 
-    // console.log()
-    return;
-  }
+  if(!element)  return; 
+  if($(element).length<1) return;
   this.element = $(element).get(0); 
 
   this.width  = 1;

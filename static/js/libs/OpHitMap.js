@@ -43,8 +43,7 @@ function OpHitMap( element  )
 
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
-
+  gStateMachine.Bind('change-ophits', this.NewRecord.bind(this) );
 }
 
 
@@ -52,7 +51,7 @@ function OpHitMap( element  )
 OpHitMap.prototype.NewRecord = function()
 {
   this.ophits = [];
-  var listname = $('#ctl-OpHitLists').val();
+  var listname = GetSelectedName("ophits");
   if(gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits";
     this.ophits = gRecord.ophits[listname].slice(0); // Copy
@@ -60,14 +59,11 @@ OpHitMap.prototype.NewRecord = function()
     // Sort hits by time, earliest last. 
   } else {
     this.input = "oppulses";
-    
-    // Make my own hit list.
-    if (!gOpPulsesListName) return;
-    var oppulses = gRecord.oppulses[gOpPulsesListName];
-    if(!oppulses) return; // Zero-length.
+        
+    var oppulses = GetSelected("oppulses");
     if(oppulses.length===0) return;
     
-    this.ophits = []; //gRecord.ophits[gOphitsListName].slice(0); // Copy
+    this.ophits = []; 
     for(var i=0;i<oppulses.length;i++) {
       var p = oppulses[i];
       var hit = { opDetChan: p.opDetChan };

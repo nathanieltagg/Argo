@@ -9,47 +9,29 @@
 
 // First up: bind new records to make tiled images
 
-// $(function(){
-//   gStateMachine.Bind('recordChange',MakeTiledImages);
-// });
+$(function(){
+  gStateMachine.Bind('newPiece',MakeTiledImages);
+});
 
 function MakeTiledImages()
 {
   
-  // Create the tiled images.
-  
-  // FIXME: assumes only 1 type of raw or cal wires in any given loaded event.
-  
-  for(rawtype in gRecord.raw) {
-    // Create a tiled image to hold this raw data.
-    if(gRecord.raw[rawtype]) {
-    tile_urls= gRecord.raw[rawtype].wireimg_encoded_tiles;
+  // Create the tiled images. Do only for full images (not lowres)
+  if(!gRecord) return;
+  if(!gRecord.wireimg) return;
+  for(_name in gRecord.wireimg) {
+    console.log("TiledImageCanvas for ",_name);
+    if(! gRecord.wireimg[_name]._tiled_canvas) {
+      tile_urls= gRecord.wireimg[_name].wireimg_encoded_tiles;
       if(tile_urls) {
-        gRecord._raw = {};
-        gRecord._raw.tiled_canvas= new TiledImageCanvas( 
-                                        tile_urls,
-                                        function(){}, //function(){gStateMachine.Trigger("TiledImageLoaded_raw");},
-                                        "_raw"
-                                        );
+        gRecord.wireimg[_name]._tiled_canvas= new TiledImageCanvas( 
+                                                                  tile_urls,
+                                                                  null,
+                                                                  _name
+                                                                  );      
       }
-    }    
+    }
   }
-  
-  for(rawtype in gRecord.cal) {
-    // Create a tiled image to hold this raw data.
-    if(gRecord.cal[rawtype]) {    
-      tile_urls= gRecord.cal[rawtype].wireimg_encoded_tiles;
-      if(tile_urls) {
-        gRecord._cal = {};
-        gRecord._cal.tiled_canvas= new TiledImageCanvas( 
-                                        tile_urls,
-                                        function(){}, //function(){gStateMachine.Trigger("TiledImageLoaded_cal");},
-                                        "_cal"
-                                        );
-      }
-    }    
-  }
-  
 };
 
 
@@ -140,7 +122,7 @@ TiledImageCanvas.prototype.MapData = function(jrow,jcol)
   // ps = new PsTest();
   // gle.draw_falsecolor_from_canvas(gRecord._raw_tiled_canvas.canvas, ps, gle.gl.getParameter(gle.gl.MAX_TEXTURE_SIZE)/2);
   
-  this.callback_fn.call(this);
+  if(this.callback_fn) this.callback_fn.call(this);
 };
 
 

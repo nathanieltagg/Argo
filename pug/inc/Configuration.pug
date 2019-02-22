@@ -51,11 +51,11 @@
       input#ctl-show-watermark.saveable(type='checkbox', name='ctl-show-watermark')
       label(for='ctl-show-watermark') Show Watermark Logo
     .per-event-controls
-      div
-        input#ctl-show-wireimg.saveable.show-wireimg(type='checkbox', name='show-wireimg', checked='')
-        label(for='ctl-show-wireimg')
-          b (w)
-          | Show Wire data
+      //- div
+      //-   input#ctl-show-wireimg.saveable.show-wireimg(type='checkbox', name='show-wireimg', checked='')
+      //-   label(for='ctl-show-wireimg')
+      //-     b (w)
+      //-     | Show Wire data
       div
         b (Shift-W)
         span.align-right
@@ -65,45 +65,20 @@
           label(for='ctl-show-wireimg-cal') Calibrated
         div(style='clear:both;')
       div
-        input#ctl-show-hits.saveable.show-hits(type='checkbox', name='show-hits')
-        label(for='ctl-show-hits')
-          b (h)
-          | Show Hits
-      div
         b (shift-H)
         select#ctl-HitLists.saveable.align-right
         div(style='clear:both;')
-      div
-        input#ctl-show-clus.saveable.show-clus(type='checkbox', name='show-clus')
-        label(for='ctl-show-clus')
-          b (c)
-          | Show Clusters
       div
         b (shift-C)
         select#ctl-ClusterLists.saveable.align-right
         div(style='clear:both;')
       div
-        input#ctl-show-endpoint2d.saveable.show-endpoint2d(type='checkbox', name='show-endpoint2d')
-        label(for='ctl-show-endpoint2d')
-          b (e)
-          | Show Endpoint2Ds
-      div
         b (shift-E)
         select#ctl-EndpointLists.saveable.align-right
         div(style='clear:both;')
       div
-        input#ctl-show-spoints.saveable.show-spoints(type='checkbox', name='show-spoints')
-        label(for='ctl-show-spoints')
-          b
-          | Show Spacepoints
-      div
         select#ctl-SpacepointLists.saveable.align-right
         div(style='clear:both;')
-      div
-        input#ctl-show-tracks.saveable.show-tracks(type='checkbox', name='show-tracks', checked='')
-        label(for='ctl-show-tracks')
-          b (t)
-          | Show Tracks
       div
         b (shift-T)
         select#ctl-TrackLists.saveable.align-right
@@ -114,18 +89,9 @@
         label(for='track-shift-window') Shift Tracks Ticks:
         input.saveable.track-shift-value#ctl-track-shift-value(type='text', value='2400', size='5')
       div
-        input#ctl-show-showers.saveable.show-showers(type='checkbox', name='show-showers', checked='')
-        label(for='ctl-show-showers')
-          b (s)
-          | Show Showers
-      div
         b (shift-S)
         select#ctl-ShowerLists.saveable.align-right
         div(style='clear:both;')
-      div
-        label
-          input#ctl-show-pfparticles.saveable.show-pfparticles(type='checkbox', name='show-pfparticles', checked='')
-          | Show PFParticles
       div
         select#ctl-PFParticleLists.saveable.align-right
         div(style='clear:both;')

@@ -27,6 +27,9 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCFlux.h"
 
+// Uboone specific:
+#include "ubobj/Trigger/ubdaqSoftwareTriggerData.h"
+
 #include "json_tools.h"
 #include "MakePng.h"
 #include "EncodedTileMaker.h"
@@ -52,7 +55,9 @@ using std::string;
 using std::endl;
 using std::cout;
 
+using boost::mutex;
 boost::mutex global_gallery_mutex;
+
 
 std::string stripdots(const std::string& s)
 {
@@ -62,6 +67,13 @@ std::string stripdots(const std::string& s)
   return out;
 }
 
+bool match_piece_request(std::string& pname, const std::string& request_name, size_t i)
+{
+  if(pname == request_name) return true; // As requested.
+  if(request_name == "*") return true; // User requested everything.
+  if(request_name == "?" && i==0) return true; // User requested first object.
+  return false;
+}
 
 GalleryComposer::GalleryComposer() 
   : m_stats(nlohmann::json::object())
@@ -79,8 +91,10 @@ GalleryComposer::~GalleryComposer()
     // std::cout << "m_Event:" << ((m_Event)?"set":"unset") << std::endl; 
 }
 
-void GalleryComposer::initialize()
+void GalleryComposer::configure(Config_t config, int id)
 {
+  m_config = config; 
+  m_id = id; 
   // std::cout << *m_config << std::endl;
   m_CacheStoragePath  = m_config->value("CacheStoragePath", std::string("../datacache"));
   m_CacheStorageUrl   = m_config->value("CacheStorageUrl",  std::string("datacache"));
@@ -157,57 +171,57 @@ vector<std::pair<string,art::InputTag>>  GalleryComposer::findByType(TTree* tree
 }
 
 
-template<typename V>
-bool GalleryComposer::composeObjectsVector(const std::string& output_name, json& output)
-{
-  json reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
-  TimeReporter cov_timer(output_name);
- 
-  progress_made("Composing "+output_name);  
-  
-  int found = 0;
-  auto products = findByType<V>(m_Event->getTTree());  // Get a list of all products matching template
-  for(auto product: products) {
-    // std::cout << "Looking at " << boost::core::demangle( typeid(V).name() ) <<" object " << product.first << std::endl;
-
-    TimeReporter timer(product.first);    // This object creates statistics on how long this reco took.
-    gallery::Handle<V> handle;            
-
-    { // Create a scope
-      boost::mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
-      boost::mutex::scoped_lock g(global_gallery_mutex);      
-      m_Event->getByLabel(product.second,handle); // Get data from the file
-    }
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-    found++;
-    
-    json jlist = json::array();    // List of objects (e.g. Kalman Spacepoints)
-    for(const auto& item: *handle) {
-      // item is a specific object (e.g. SpacePoint), jitem is the objected moved to JSON (one spacepoint)
-      json jitem;
-      composeObject(item,jitem);
-      jlist.push_back(jitem); // Add to list
-    }
-    reco_list[stripdots(product.first)] = jlist; // Add this list of spacepoints to the list of reco objects
-    //timer.addto(m_stats);    // Naw, don't need that level of ganularity. Needs mutex.
-  }
-  {
-    boost::mutex::scoped_lock lck(m_output_mutex);  // Scope a lock around the global output object
-    output[output_name] = reco_list;                // Add the output.
-    cov_timer.addto(m_stats);  
-  }  
-  return(found>0);
-}
+// Legacy code when we wanted to do everything. composePiece now does this job with more flexibility
+// template<typename V>
+// bool GalleryComposer::composeObjectsVector(const std::string& output_name, json& output)
+// {
+//   json reco_list;  // Place to store all objects of type (e.g. all spacepoint lists.)
+//   TimeReporter cov_timer(output_name);
+//
+//   progress_made("Composing "+output_name);
+//
+//   int found = 0;
+//   auto products = findByType<V>(m_Event->getTTree());  // Get a list of all products matching template
+//   for(auto product: products) {
+//     // std::cout << "Looking at " << boost::core::demangle( typeid(V).name() ) <<" object " << product.first << std::endl;
+//
+//     TimeReporter timer(product.first);    // This object creates statistics on how long this reco took.
+//     gallery::Handle<V> handle;
+//
+//     { // Create a scope
+//       mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
+//       mutex::scoped_lock g(global_gallery_mutex);
+//       m_Event->getByLabel(product.second,handle); // Get data from the file
+//     }
+//     if(!handle.isValid()) {
+//       std::cerr << "No data!" << std::endl;
+//       continue;
+//     }
+//     found++;
+//
+//     json jlist = json::array();    // List of objects (e.g. Kalman Spacepoints)
+//     for(const auto& item: *handle) {
+//       // item is a specific object (e.g. SpacePoint), jitem is the objected moved to JSON (one spacepoint)
+//       json jitem;
+//       composeObject(item,jitem);
+//       jlist.push_back(jitem); // Add to list
+//     }
+//     reco_list[stripdots(product.first)] = jlist; // Add this list of spacepoints to the list of reco objects
+//     //timer.addto(m_stats);    // Naw, don't need that level of ganularity. Needs mutex.
+//   }
+//   {
+//     mutex::scoped_lock lck(m_output_mutex);  // Scope a lock around the global output object
+//     output[output_name] = reco_list;                // Add the output.
+//     cov_timer.addto(m_stats);
+//   }
+//   return(found>0);
+// }
   
 template<typename T>
-void GalleryComposer::composeObject(const T&, json& out)
+void GalleryComposer::composeObject(const T&, json& out, const std::string& type)
 {
-  out["Unimplimented"] = json();
+  out[type] = "Unimplimented";
 }
-
 
 
 
@@ -253,8 +267,8 @@ void GalleryComposer::composeHeaderData()
       // std::cout << "Looking at " << boost::core::demangle( typeid(raw::Trigger).name() ) <<" object " << product.first << std::endl;
       gallery::Handle< vector<raw::Trigger> > handle;
       {
-        boost::mutex::scoped_lock b(m_gallery_mutex); 
-        boost::mutex::scoped_lock g(global_gallery_mutex);      
+        mutex::scoped_lock b(m_gallery_mutex); 
+        mutex::scoped_lock g(global_gallery_mutex);      
         m_Event->getByLabel(product.second,handle);
       }
       if(!handle.isValid()) { continue;  }
@@ -268,28 +282,29 @@ void GalleryComposer::composeHeaderData()
   }
 
   // The swtrigger data object is in uboone,
-  // {
-  //   auto products = findByType< vector<raw::ubdaqSoftwareTriggerData> >(m_Event->getTTree());
-  //   for(auto product: products) {
-  //
-  //     std::cout << "Looking at SW Trigger object " << product.first << std::endl;
-  //     gallery::Handle< vector<raw::ubdaqSoftwareTriggerData> > handle;
-  //     {boost::mutex::scoped_lock b(m_gallery_mutex); m_Event->getByLabel(product.second,handle);}
-  //     if(!handle.isValid()) { continue;  }
-  //     json sw_triggers;
-  //     cout << "trigs: " << handle->size() << std::endl;
-  //     for(const raw::ubdaqSoftwareTriggerData& swtrig: *handle) {
-  //       for(int i = 0; i< swtrig.getNumberOfAlgorithms(); i++) {
-  //         if(swtrig.getPass(i)) sw_triggers.push_back(swtrig.getTriggerAlgorithm(i));
-  //       }
-  //     }
-  //     trigger["sw_triggers"] = sw_triggers;
-  //   }
-  // }
+  {
+    std::cout << "SWTRIGGER...." << std::endl;
+    auto products = findByType< vector<raw::ubdaqSoftwareTriggerData> >(m_Event->getTTree());
+    for(auto product: products) {
+
+      std::cout << "Looking at SW Trigger object " << product.first << std::endl;
+      gallery::Handle< vector<raw::ubdaqSoftwareTriggerData> > handle;
+      {mutex::scoped_lock b(m_gallery_mutex); mutex::scoped_lock g(global_gallery_mutex); m_Event->getByLabel(product.second,handle);}
+      if(!handle.isValid()) { continue;  }
+      json sw_triggers;
+      cout << "trigs: " << handle->size() << std::endl;
+      for(const raw::ubdaqSoftwareTriggerData& swtrig: *handle) {
+        for(int i = 0; i< swtrig.getNumberOfAlgorithms(); i++) {
+          if(swtrig.getPass(i)) sw_triggers.push_back(swtrig.getTriggerAlgorithm(i));
+        }
+      }
+      trigger["sw_triggers"] = sw_triggers;
+    }
+  }
   header["trigger"] = trigger;
 
   {
-    boost::mutex::scoped_lock lck(m_output_mutex);
+    mutex::scoped_lock lck(m_output_mutex);
     m_result["header"] = header;
   }
   ttt.addto(m_stats);
@@ -298,99 +313,99 @@ void GalleryComposer::composeHeaderData()
 
 
 
-void GalleryComposer::composeHits()
-{
-  ///
-  /// Obsolete: hit histograms are burdensome and awkward in new system, and don't really buy me anything since
-  /// I stopped using them ages ago. The ZoomControl still references them, but I think I'm better off doing p
-  typedef vector<recob::Hit> current_type_t;
-  auto products = findByType<current_type_t>(m_Event->getTTree());
-  TimeReporter toptimer("hits");
-
-  json reco_list;
-  json hist_list;
-  for(auto product: products) {
-    // std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
-    TimeReporter timer(product.first);
-
-    gallery::Handle< current_type_t > handle;
-    {boost::mutex::scoped_lock b(m_gallery_mutex);       boost::mutex::scoped_lock g(global_gallery_mutex);   m_Event->getByLabel(product.second,handle);}
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-    
-    json arr(json::array());
-    // Hit histograms.
-    TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
-    std::vector<TH1*> planeProfile;
-    planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",218,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",218,0,2398));
-    planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",432,0,3456));
-
-    for(const recob::Hit& hit: * handle) {
-      json h;
-      int wire = hit.WireID().Wire;
-      int plane = hit.WireID().Plane;
-      double q  = hit.Integral();
-      double t  = hit.PeakTime();
-      double t1 = hit.StartTick();
-      double t2 = hit.EndTick();
-
-      if(plane==2)timeProfile.Fill(t,q);
-      if(plane>=0 && plane<3) planeProfile[plane]->Fill(wire,q);
-
-      h["wire"] =   wire;
-      h["plane"] =  plane;
-      h["q"] =        jsontool::fixed(q,0)     ;
-      h["t"] =        jsontool::fixed(t,1)     ;
-      h["t1"] =       jsontool::fixed(t1,1)    ;
-      h["t2"] =       jsontool::fixed(t2,1)    ;
-      arr.push_back(h);
-    }
-
-    reco_list[stripdots(product.first)] = arr;
-
-    json hists;
-    hists["timeHist"] = TH1ToHistogram(&timeProfile);
-    json jPlaneHists = json::array();
-    jPlaneHists.push_back(TH1ToHistogram(planeProfile[0]));
-    jPlaneHists.push_back(TH1ToHistogram(planeProfile[1]));
-    jPlaneHists.push_back(TH1ToHistogram(planeProfile[2]));
-    hists["planeHists"] = jPlaneHists;
-
-    delete planeProfile[0];
-    delete planeProfile[1];
-    delete planeProfile[2];
-    hist_list[stripdots(product.first)] = hists;
-    //timer.addto(m_stats);
-  }
-  {
-    boost::mutex::scoped_lock lck(m_output_mutex);
-
-    toptimer.addto(m_stats);
-
-    m_result["hits"] = reco_list;
-    m_result["hit_hists"] = hist_list;
-  }
-  // std::cout << "Hits finishing" << std::endl;
-}
+// void GalleryComposer::composeHits()
+// {
+//   ///
+//   /// Obsolete: hit histograms are burdensome and awkward in new system, and don't really buy me anything since
+//   /// I stopped using them ages ago. The ZoomControl still references them, but I think I'm better off doing p
+//   typedef vector<recob::Hit> current_type_t;
+//   auto products = findByType<current_type_t>(m_Event->getTTree());
+//   TimeReporter toptimer("hits");
+//
+//   json reco_list;
+//   json hist_list;
+//   for(auto product: products) {
+//     // std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
+//     TimeReporter timer(product.first);
+//
+//     gallery::Handle< current_type_t > handle;
+//     {mutex::scoped_lock b(m_gallery_mutex);       mutex::scoped_lock g(global_gallery_mutex);   m_Event->getByLabel(product.second,handle);}
+//     if(!handle.isValid()) {
+//       std::cerr << "No data!" << std::endl;
+//       continue;
+//     }
+//
+//     json arr(json::array());
+//     // Hit histograms.
+//     TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
+//     std::vector<TH1*> planeProfile;
+//     planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",218,0,2398));
+//     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",218,0,2398));
+//     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",432,0,3456));
+//
+//     for(const recob::Hit& hit: * handle) {
+//       json h;
+//       int wire = hit.WireID().Wire;
+//       int plane = hit.WireID().Plane;
+//       double q  = hit.Integral();
+//       double t  = hit.PeakTime();
+//       double t1 = hit.StartTick();
+//       double t2 = hit.EndTick();
+//
+//       if(plane==2)timeProfile.Fill(t,q);
+//       if(plane>=0 && plane<3) planeProfile[plane]->Fill(wire,q);
+//
+//       h["wire"] =   wire;
+//       h["plane"] =  plane;
+//       h["q"] =        jsontool::fixed(q,0)     ;
+//       h["t"] =        jsontool::fixed(t,1)     ;
+//       h["t1"] =       jsontool::fixed(t1,1)    ;
+//       h["t2"] =       jsontool::fixed(t2,1)    ;
+//       arr.push_back(h);
+//     }
+//
+//     reco_list[stripdots(product.first)] = arr;
+//
+//     json hists;
+//     hists["timeHist"] = TH1ToHistogram(&timeProfile);
+//     json jPlaneHists = json::array();
+//     jPlaneHists.push_back(TH1ToHistogram(planeProfile[0]));
+//     jPlaneHists.push_back(TH1ToHistogram(planeProfile[1]));
+//     jPlaneHists.push_back(TH1ToHistogram(planeProfile[2]));
+//     hists["planeHists"] = jPlaneHists;
+//
+//     delete planeProfile[0];
+//     delete planeProfile[1];
+//     delete planeProfile[2];
+//     hist_list[stripdots(product.first)] = hists;
+//     //timer.addto(m_stats);
+//   }
+//   {
+//     mutex::scoped_lock lck(m_output_mutex);
+//
+//     toptimer.addto(m_stats);
+//
+//     m_result["hits"] = reco_list;
+//     m_result["hit_hists"] = hist_list;
+//   }
+//   // std::cout << "Hits finishing" << std::endl;
+// }
 
 
 // default template for vectors:
 template<typename TT> 
-void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out)
+void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out, const std::string& type)
 {
   out = json::array();
   for(auto item: v) {
     json j;
-    composeObject(item,j);
+    composeObject(item,j,type);
     out.push_back(j);
   }
 } 
 
 template<>
-void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h)
+void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h, const std::string&)
 {
   int wire = hit.WireID().Wire;
   int plane = hit.WireID().Plane;
@@ -409,7 +424,7 @@ void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h)
 
 
 template<>
-void GalleryComposer::composeObject(const recob::SpacePoint& sp, json& jsp)
+void GalleryComposer::composeObject(const recob::SpacePoint& sp, json& jsp, const std::string& )
 {
   // cout << "Composing spacepoint " << sp.ID() << std::endl;
   jsp["id"    ] = sp.ID()   ;
@@ -433,7 +448,7 @@ void GalleryComposer::composeObject(const recob::SpacePoint& sp, json& jsp)
 }
 
 template<>
-void GalleryComposer::composeObject(const recob::Track& track, json& jtrk)
+void GalleryComposer::composeObject(const recob::Track& track, json& jtrk, const std::string& )
 {
   jtrk["id"    ] = track.ID();
   jtrk["chi2"    ] = track.Chi2();
@@ -473,7 +488,7 @@ void GalleryComposer::composeObject(const recob::Track& track, json& jtrk)
 }
 
 template<>
-void GalleryComposer::composeObject(const recob::Shower& shower, json& jshw)
+void GalleryComposer::composeObject(const recob::Shower& shower, json& jshw, const std::string&)
 {
 
   jshw["id"    ] = shower.ID();
@@ -508,7 +523,7 @@ void GalleryComposer::composeObject(const recob::Shower& shower, json& jshw)
 
 
 template<>
-void GalleryComposer::composeObject(const recob::PFParticle& p, json& jpf)
+void GalleryComposer::composeObject(const recob::PFParticle& p, json& jpf, const std::string& )
 {
   jpf["self"    ] = p.Self()    ;
   jpf["pdg"     ] = p.PdgCode() ;
@@ -517,7 +532,7 @@ void GalleryComposer::composeObject(const recob::PFParticle& p, json& jpf)
 }
 
 template<>
-void GalleryComposer::composeObject(const recob::OpFlash& flash, json& jflash)
+void GalleryComposer::composeObject(const recob::OpFlash& flash, json& jflash, const std::string&)
 {
   jflash["time"       ] = flash.Time()       ; 
   jflash["timeWidth"  ] = flash.TimeWidth()  ; 
@@ -540,7 +555,7 @@ void GalleryComposer::composeObject(const recob::OpFlash& flash, json& jflash)
 
 
 template<>
-void GalleryComposer::composeObject(const raw::OpDetPulse& pulse, json& jobj)
+void GalleryComposer::composeObject(const raw::OpDetPulse& pulse, json& jobj, const std::string&)
 {
   jobj["opDetChan"] =  pulse.OpChannel();
   jobj["samples"] =  pulse.Samples();
@@ -553,7 +568,7 @@ void GalleryComposer::composeObject(const raw::OpDetPulse& pulse, json& jobj)
 }
 
 template<>
-void GalleryComposer::composeObject(const recob::OpHit& hit, json& jobj)
+void GalleryComposer::composeObject(const recob::OpHit& hit, json& jobj, const std::string&)
 {
   jobj["opDetChan"     ] = hit.OpChannel();
   jobj["peakTime"      ] = 1e3*hit.PeakTime();
@@ -564,101 +579,99 @@ void GalleryComposer::composeObject(const recob::OpHit& hit, json& jobj)
   jobj["fastToTotal"   ] = hit.FastToTotal();
 }
 
-void GalleryComposer::composeCalAvailability()
-{
-  typedef vector<recob::Wire> current_type_t;
-  auto products = findByType<current_type_t>(m_Event->getTTree());
 
-  json reco_list;
-  for(auto product: products) {
-    std::string name = product.first;
-    reco_list[stripdots(product.first)] = json();
+/////
+//// Images
+////
+
+
+
+template<typename T> bool GalleryComposer::composePieceImage( const std::string& type, const std::string& name, nlohmann::json& out)
+{
+  bool got = false;
+  auto products = findByType< std::vector<T> >(m_Event->getTTree());
+  size_t nproducts = products.size();
+  for(size_t i=0;i<nproducts;i++) {
+    auto& product = products[i];
+    std::string pname = stripdots(product.first);
+    if(match_piece_request(pname,name,i)) {
+      gallery::Handle< std::vector<T> > handle;            
+      { // Create a scope
+        mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
+        mutex::scoped_lock g(global_gallery_mutex); 
+        m_Event->getByLabel(product.second,handle); // Get data from the file
+      }
+      if(handle.isValid()) {
+        composeObjectImage(*handle,type,product.second,out[pname]);
+        got=true; // at least one.
+      }            
+    }
   }
-  {
-    boost::mutex::scoped_lock lck(m_output_mutex);
-    m_result["cal"] = reco_list;
-  }
+  return got;
+    
 }
 
-void GalleryComposer::composeWires()
+template <>
+void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const std::string& type, art::InputTag tag, nlohmann::json& out)
 {
-  typedef vector<recob::Wire> current_type_t;
-  auto products = findByType<current_type_t>(m_Event->getTTree());
+  bool is_supernova = (tag.label() == "sndaq");
+  
+  size_t nchannels = v.size();
+  if(nchannels<1) {
+    // std::cout << "No entries in object;" << std::endl;
+    out["error"] = "No entries";
+    return;
+  }
+  
+  std::shared_ptr<wiremap_t> wireMap(new wiremap_t(nchannels));
+  std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nchannels));
+  size_t ntdc = v[0].NSignal();
 
-  json reco_list;
-  json reco_list2;
-
-  for(auto product: products) {
-
-    // std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() ) <<" object " << product.first << std::endl;
-    TimeReporter timer(product.first);
-
-    gallery::Handle< current_type_t > handle;
-    {boost::mutex::scoped_lock b(m_gallery_mutex);       boost::mutex::scoped_lock g(global_gallery_mutex);       m_Event->getByLabel(product.second,handle);}
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-
-    bool is_supernova = (product.second.label() == "sndaq");
+  if(ntdc<=0) return;
+  for(const recob::Wire& wire : v) {
+    int channel = wire.Channel(); // default
+    // std::cout << "Channel " << channel << std::endl;
+    waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( ntdc )); // Storage space
+    waveform_ptr_t noiseform_ptr = waveform_ptr_t(new waveform_t( ntdc,  0x7fff )); // Storage space
     
-    size_t nchannels = handle->size();
-    if(nchannels<1) {
-      // std::cout << "No entries in object;" << std::endl;
-      continue;
-    }
-
-    json r;
-    std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
-    std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
-    
-    size_t ntdc = handle->begin()->NSignal();
-    // std::cout << " Channels: " << nchannels << " TDCs: " << ntdc << std::endl;
-    if(ntdc<=0) continue;
-    
-    for(const recob::Wire& wire : *handle) {
-      int channel = wire.Channel(); // default
-      // std::cout << "Channel " << channel << std::endl;
-      waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( ntdc )); // Storage space
-      waveform_ptr_t noiseform_ptr = waveform_ptr_t(new waveform_t( ntdc,  0x7fff )); // Storage space
+    const recob::Wire::RegionsOfInterest_t & rois = wire.SignalROI();
+    for (auto iROI = rois.begin_range(); iROI!=rois.end_range(); ++iROI) {
+      const auto& ROI = *iROI;
+      const int FirstTick = ROI.begin_index();
+      const int EndTick = ROI.end_index();
+      float subtract_pedestal = 0;
+      if(is_supernova) subtract_pedestal = ROI[FirstTick];
+      float amplify = 10;
+      if(is_supernova) amplify = 1;
       
-      const recob::Wire::RegionsOfInterest_t & rois = wire.SignalROI();
-      for (auto iROI = rois.begin_range(); iROI!=rois.end_range(); ++iROI) {
-        const auto& ROI = *iROI;
-        const int FirstTick = ROI.begin_index();
-        const int EndTick = ROI.end_index();
-        float subtract_pedestal = 0;
-        if(is_supernova) subtract_pedestal = ROI[FirstTick];
-        float amplify = 10;
-        if(is_supernova) amplify = 1;
-        
-        for(int i = FirstTick ; i< EndTick; i++){
-         (*noiseform_ptr)[i] = 0;
-         (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
-        }
-
-        // std::cout << " roi " << FirstTick << " to " << EndTick << " :: ";
-        // for(int i = FirstTick ; i<= EndTick; i++) std::cout << ROI[i]*10 << " ";  // Convert float->int
-        // std::cout << endl;
+      for(int i = FirstTick ; i< EndTick; i++){
+       (*noiseform_ptr)[i] = 0;
+       (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
       }
-      // Waveform storage.
-      if(wireMap->size() <= channel) wireMap->resize(channel+1);
-      if(noiseMap->size() <= channel) noiseMap->resize(channel+1);
-      (*wireMap)[channel] = waveform_ptr;
-      (*noiseMap)[channel] = noiseform_ptr;
-      waveform_ptr->_status = gDeadChannelMap->status(channel);
     }
+    // Waveform storage.
+    if(wireMap->size() <= channel) wireMap->resize(channel+1);
+    if(noiseMap->size() <= channel) noiseMap->resize(channel+1);
+    (*wireMap)[channel] = waveform_ptr;
+    (*noiseMap)[channel] = noiseform_ptr;
+    waveform_ptr->_status = gDeadChannelMap->status(channel);
+  }
 
-    noiseMap->resize(wireMap->size());
-
-    // Now we should have a semi-complete map.
-    int nwire = wireMap->size();
-    // std::cout << "maxwire:" << nwire << " nwire:" << wireMap->size() << std::endl;
-    // std::cout << "ntdc :" << ntdc << std::endl;
+  // Now we should have a semi-complete map.
+  int nwire = wireMap->size();
+  int tilesize = m_request->value("tilesize",2400);
+  if(type.find("-lowres")!=std::string::npos) {
+    // Do the low-res version.
+    TimeReporter lowres_stats("time_to_make_lowres");
+    MakeLowres(    out,
+                  wireMap,
+                  noiseMap,
+                  nwire,
+                  ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
+  } else {
+    // High-res.
     int tilesize = m_request->value("tilesize",2400);
-    // std::cout << "Doing tilesize" << tilesize << std::endl;
-    
-    MakeEncodedTileset(     r,
+    MakeEncodedTileset(     out,
                             wireMap,
                             noiseMap,
                             nwire,
@@ -667,127 +680,75 @@ void GalleryComposer::composeWires()
                             m_CacheStorageUrl,
                             tilesize,
                             false );
-
-    reco_list[stripdots(product.first)] = r;
-
-
-    {
-      json r2;
-      TimeReporter lowres_stats("time_to_make_lowres");
-      MakeLowres( r2,
-                     wireMap,
-                     noiseMap,
-                     nwire,
-                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
-      reco_list2[stripdots(product.first)] = r2;
-    }
-    timer.addto(m_stats);
-    
-
-  }
-  {
-    boost::mutex::scoped_lock lck(m_output_mutex);
-
-    m_result["cal"] = reco_list;
-    m_result["cal_lowres"] = reco_list2;
-  }
-  // std::cout << "Wires finishing" << std::endl;
-  
-  
-}
-
-void GalleryComposer::composeRawAvailability()
-{
-  typedef vector<raw::RawDigit> current_type_t;
-  auto products = findByType<current_type_t>(m_Event->getTTree());
-
-  json reco_list;
-  for(auto product: products) {
-    reco_list[stripdots(product.first)] = json();
-  }
-  {
-    boost::mutex::scoped_lock lck(m_output_mutex);
-    m_result["raw"] = reco_list;
   }
   
 }
 
-
-void GalleryComposer::composeRaw()
+// Specific overrides for image data
+//
+// Raw wires
+template <>
+void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, const std::string& type, art::InputTag /*tag*/, nlohmann::json& out)
 {
+  TimeReporter tr("Raw digits");
+  size_t nchannels = v.size();
+  if(nchannels<1) {
+    // std::cout << "No entries in object;" << std::endl;
+    out["error"] = "No entries";
+    return;
+  }
+
+  std::shared_ptr<wiremap_t> wireMap(new wiremap_t(v.size()));
+
+  size_t ntdc = 0;
+  for(const raw::RawDigit& rawdigit: v) {
+    short pedestal = rawdigit.GetPedestal();
+    int wire = rawdigit.Channel();
+    if(pedestal<0) pedestal = 0; // Didn't read correctly.
+
+    waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( rawdigit.ADCs() )); // make a copy
+    waveform_t& waveform = *waveform_ptr;
+    waveform._servicecard = wire/48;
+    size_t nsamp = waveform.size();
+
+    // Find the pedestal manually.
+    waveform_tools::pedestal_computer pedcomp;
+    for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
+    pedcomp.finish(20);
+    int ped = pedcomp.ped();
+    // std::cout << "wire" << wire << " " << ped <<" " << pedcomp.pedsig() << std::endl;
+    // double rms = pedcomp.pedsig(); // auto-adjusted rms.
+
+    for(size_t i =0; i< nsamp; i++) {
+      waveform[i] -= ped;
+    }
+    waveform._status = gDeadChannelMap->status(wire);
+
+    if(wireMap->size() <= wire) wireMap->resize(wire+1);
+    (*wireMap)[wire] = waveform_ptr;
+    ntdc = std::max(ntdc,rawdigit.NADC());
+  }
   
-  typedef vector<raw::RawDigit> current_type_t;
-  auto products = findByType<current_type_t>(m_Event->getTTree());
+  size_t nwire = wireMap->size();
+  std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nwire));
 
-  json reco_list;
-  json reco_list2; // lowres
+  CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
 
-  for(auto product: products) {
-  
+  std::cout << "RAWDIGIT time to assemble data for image-building:";
+  tr.report();
+  int tilesize = m_request->value("tilesize",2400);
 
-    // std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
-    TimeReporter timer(product.first);
-
-    gallery::Handle< current_type_t > handle;
-    {boost::mutex::scoped_lock b(m_gallery_mutex); boost::mutex::scoped_lock g(global_gallery_mutex);      m_Event->getByLabel(product.second,handle);}
-    if(!handle.isValid()) {
-      std::cerr << "No data!" << std::endl;
-      continue;
-    }
-
-    size_t nchannels = handle->size();
-    if(nchannels<1) {
-      // std::cout << "No entries in object;" << std::endl;
-      continue;
-    }
-
-    json jpedestals = json::array();
-    std::shared_ptr<wiremap_t> wireMap(new wiremap_t);
-    std::shared_ptr<wiremap_t> noiseMap(new wiremap_t);
-
-    size_t ntdc = 0;
-
-    for(const raw::RawDigit& rawdigit: *handle) {
-      short pedestal = rawdigit.GetPedestal();
-      int wire = rawdigit.Channel();
-      if(pedestal<0) pedestal = 0; // Didn't read correctly.
-      jpedestals.push_back(pedestal);
-
-      waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( rawdigit.ADCs() )); // make a copy
-
-      // int planewire,plane;
-      // wireOfChannel(wire,plane,planewire);
-      waveform_t& waveform = *waveform_ptr;
-      size_t nsamp = waveform.size();
-
-      // // Find the pedestal manually.
-      waveform_tools::pedestal_computer pedcomp;
-      for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
-      pedcomp.finish(20);
-      int ped = pedcomp.ped();
-      // double rms = pedcomp.pedsig(); // auto-adjusted rms.
-
-      for(size_t i =0; i< nsamp; i++) {
-        waveform[i] -= ped;
-      }
-      waveform._status = gDeadChannelMap->status(wire);
-
-
-      if(wireMap->size() <= wire) wireMap->resize(wire+1);
-      (*wireMap)[wire] = waveform_ptr;
-      ntdc = std::max(ntdc,rawdigit.NADC());
-    }
-    noiseMap->resize(wireMap->size());
-    int nwire = wireMap->size();
-
-    CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
-
-    // Now we should have a semi-complete map.
-    // std::cout << "nwire:" << nwire << std::endl;
-    // std::cout << "ntdc :" << ntdc << std::endl;
-    json r;
-    int tilesize = m_request->value("tilesize",2400);
-    MakeEncodedTileset(     r,
+  if(type.find("-lowres")!=std::string::npos) {
+    // Do the low-res version.
+    TimeReporter lowres_stats("time_to_make_lowres");
+    MakeLowres(    out,
+                   wireMap,
+                   noiseMap,
+                   nwire,
+                   ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
+  } else {
+    // High-res.
+    MakeEncodedTileset(     out,
                             wireMap,
                             noiseMap,
                             nwire,
@@ -796,34 +757,12 @@ void GalleryComposer::composeRaw()
                             m_CacheStorageUrl,
                             tilesize,
                             true );
-
-    reco_list[stripdots(product.first)] = r;
-
-    {
-      json r2;
-      TimeReporter lowres_stats("time_to_make_lowres");
-      MakeLowres( r2,
-                     wireMap,
-                     noiseMap,
-                     nwire,
-                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
-      reco_list2[stripdots(product.first)] = r2;
-    }
-
-    timer.addto(m_stats);
-    break; // only 1 raw list.
-
   }
-  {
-    boost::mutex::scoped_lock lck(m_output_mutex);
-    m_result["raw"] = reco_list;
-    m_result["raw_lowres"] = reco_list2;
-  }
-  // std::cout << "RawDigits finishing" << std::endl;
+  std::cout << "RAWDIGIT total time:";
   
-}
-//
-//
+};
+
+
 int GalleryComposer::pointOffLine(const TLorentzVector& x0, const TLorentzVector& pv, const TLorentzVector& x, double tol)
 {
   // Ending at x0 and moving along a vector p, how far off the line is point x?
@@ -893,7 +832,7 @@ json mom_to_json(const TLorentzVector& v)
 }
 
 template<>
-void GalleryComposer::composeObject(const simb::MCParticle& particle, json& jobj)
+void GalleryComposer::composeObject(const simb::MCParticle& particle, json& jobj, const std::string&)
 {
   if(particle.TrackId() == std::numeric_limits<int>::min()) return;
   jobj["ftrackId"     ] = particle.TrackId();
@@ -1038,7 +977,7 @@ const char* lookupmode(int mode)
 }
 
 template<>
-void GalleryComposer::composeObject(const simb::MCNeutrino& neutrino, json& jnu)
+void GalleryComposer::composeObject(const simb::MCNeutrino& neutrino, json& jnu, const std::string&)
 {
   json nu; composeObject(neutrino.Nu(),nu);  jnu["nu"] = nu;
   json lp; composeObject(neutrino.Lepton(),lp);  jnu["lepton"] = lp;
@@ -1065,7 +1004,7 @@ void GalleryComposer::composeObject(const simb::MCNeutrino& neutrino, json& jnu)
 
 
 template<>
-void GalleryComposer::composeObject(const simb::GTruth& truth, json& jobj)
+void GalleryComposer::composeObject(const simb::GTruth& truth, json& jobj, const std::string&)
 {
   jobj["fGint"       ] =  truth.fGint       ; ///< interaction code
   jobj["fGscatter"   ] =  truth.fGscatter   ; ///< neutrino scattering code
@@ -1095,12 +1034,10 @@ void GalleryComposer::composeObject(const simb::GTruth& truth, json& jobj)
   jobj["fHitNucP4"   ] =  mom_to_json(truth.fHitNucP4   );
   jobj["fProbeP4"    ] =  mom_to_json(truth.fProbeP4    );
   jobj["fVertex"     ] =  pos_to_json(truth.fVertex     );
-
-
 }
 
 template<>
-void GalleryComposer::composeObject(const simb::MCTruth& truth, json& jobj)
+void GalleryComposer::composeObject(const simb::MCTruth& truth, json& jobj, const std::string&)
 {
   switch(truth.Origin()) {
     case simb::kBeamNeutrino:       jobj["origin"] = "kBeamNeutrino"; break;
@@ -1225,7 +1162,7 @@ void GalleryComposer::composeAssociation()
   std::cout << "GalleryComposer::composeAssociation() " << typeid(A).name() << " " << typeid(B).name() << std::endl;
   for(auto product: findByType<assn_t>(m_Event->getTTree())) {
     gallery::Handle< assn_t > assnhandle;
-    {boost::mutex::scoped_lock b(m_gallery_mutex); boost::mutex::scoped_lock g(global_gallery_mutex);  m_Event->getByLabel(product.second,assnhandle);}
+    {mutex::scoped_lock b(m_gallery_mutex); mutex::scoped_lock g(global_gallery_mutex);  m_Event->getByLabel(product.second,assnhandle);}
     if(assnhandle->size()>0) {
       // Add a->b and b->a.  Do seperately in order to keep the cached iterators efficient.
       for(const auto& assnpair: *assnhandle) {
@@ -1358,7 +1295,7 @@ void GalleryComposer::composeAssociations()
   
   // cout << "Association total size: " << assns.str().length() << std::endl;
   {
-    boost::mutex::scoped_lock lck(m_output_mutex);
+    mutex::scoped_lock lck(m_output_mutex);
     m_result["associations"] = assns;
     m_stats["Associations"]=timer.t.Count();
     
@@ -1370,28 +1307,31 @@ GalleryComposer::composeSkeleton(nlohmann::json& out) {
   std::cout << "composeSkeleton " << boost::core::demangle( typeid(T).name() ) << std::endl;
   auto products = findByType< std::vector<T> >(m_Event->getTTree());
   for(auto product: products) {
-    // out[stripdots(product.first)] = true;
-    
-    // std::cout << "Found " << boost::core::demangle( typeid(T).name() )  <<" object " << product.first << std::endl;
-    gallery::Handle<std::vector<T>> handle;            
-    { // Create a scope
-      boost::mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
-      boost::mutex::scoped_lock g(global_gallery_mutex); 
-      m_Event->getByLabel(product.second,handle); // Get data from the file
-    }
-    
-    if(handle.isValid()) {
-      out[stripdots(product.first)] = handle->size();
-    }
+    // This version simply looks for what might be in the file, based on the names of branches in the tree.
+    out[stripdots(product.first)] = true;
+
+    // // This version checks things are valid and gives numbers of objects... but is much slower.
+    // gallery::Handle<std::vector<T>> handle;
+    // { // Create a scope
+    //   mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
+    //   mutex::scoped_lock g(global_gallery_mutex);
+    //   m_Event->getByLabel(product.second,handle); // Get data from the file
+    // }
+    //
+    // if(handle.isValid()) {
+    //   out[stripdots(product.first)] = handle->size();
+    // }
   }
 }
 
 void GalleryComposer::composeSkeleton(nlohmann::json& out)
 {
   std::cout << "SKELETON" << std::endl;
+  // wireimg is special:
+  composeSkeleton< recob::Wire      >(out["wireimg"]);
+  composeSkeleton< raw::RawDigit    >(out["wireimg"]);
+
   composeSkeleton< recob::Hit       >(out["hits"]);
-  composeSkeleton< recob::Wire      >(out["cal"]);
-  composeSkeleton< raw::RawDigit    >(out["raw"]);
   composeSkeleton< recob::SpacePoint>(out["spacepoints"]);
   composeSkeleton< recob::Cluster   >(out["clusters"]);
   composeSkeleton< recob::Track     >(out["tracks"]);
@@ -1408,7 +1348,7 @@ void GalleryComposer::composeSkeleton(nlohmann::json& out)
 
 
 
-template<typename T> bool GalleryComposer::composePiece(const std::string& name, nlohmann::json& out)
+template<typename T> bool GalleryComposer::composePiece( const std::string& type, const std::string& name, nlohmann::json& out)
 {
   // Constructs part of the output.
   // T is a type. This looks for a vector<T> object in the file with InputTag matching 'name', and creates an
@@ -1416,21 +1356,26 @@ template<typename T> bool GalleryComposer::composePiece(const std::string& name,
   // If name is "*", then it puts every available name in.  Otherwise, just one should go in.
   bool got = false;
   auto products = findByType< std::vector<T> >(m_Event->getTTree());
-  for(auto product: products) {
+  std::string inName = name;
+  if(name=="?") {
+    // This means find anything of this type.  Just go with the first one in the file.
+    if(products.size()>0) inName = stripdots(products[0].first);
+  }
+  size_t nproducts = products.size();
+  for(size_t i=0;i<nproducts;i++) {
+    auto& product = products[i];
     std::string pname = stripdots(product.first);
-    // std::cout << "Looking for match: " << name << " match? " << pname << std::endl;
-    if((name=="*") || (name == pname)) { // allow wildcard match, which means "go get 'em all'"
+    if(match_piece_request(pname,name,i)) {
       gallery::Handle< std::vector<T> > handle;            
-
       { // Create a scope
-        boost::mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
-        boost::mutex::scoped_lock g(global_gallery_mutex); 
+        mutex::scoped_lock b(m_gallery_mutex); // Mutex thread lock exists within brace scope
+        mutex::scoped_lock g(global_gallery_mutex); 
         m_Event->getByLabel(product.second,handle); // Get data from the file
       }
       if(handle.isValid()) {
-        composeObject(*handle,out[pname]);
+        composeObject(*handle,out[pname],type);
         got=true; // at least one.
-      }      
+      }            
     }
   }
   return got;
@@ -1450,6 +1395,61 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return elems;
 }
 
+
+/*
+// This all works, but connecting it to the data products requires getting even more stuff from the 
+#include "tkeyvfs.h"
+#include <sqlite3.h>
+
+static int callback(void *data, int argc, char **argv, char **azColName){
+   int i;
+   fprintf(stderr, "%s: ", (const char*)data);
+   
+   for(i = 0; i<argc; i++){
+      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+   }
+   
+   printf("\n");
+   return 0;
+}
+
+void test_parameter_set_retriveal(TFile* f)
+{  
+  TFile* f = m_Event->getTFile();
+  sqlite3* db =0;
+  
+  tkeyvfs_open_v2("RootFileDB",&db,SQLITE_OPEN_READWRITE,f);
+  if(db) {
+    const char* data = "Callback function called";
+    char *zErrMsg = 0;
+    
+    std::cout << "got database!" << std::endl;
+    std::string exec_string = "SELECT name FROM sqlite_master  WHERE type='table' ORDER BY name;"; 
+    int rc = sqlite3_exec(db, exec_string.c_str(), callback, (void*)data, &zErrMsg);
+    if( rc != SQLITE_OK ) {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
+        sqlite3_free(zErrMsg);
+     } else {
+        fprintf(stdout, "Operation done successfully\n");
+     }
+     exec_string = "SELECT * FROM ParameterSets;";
+     rc = sqlite3_exec(db, exec_string.c_str(), callback, (void*)data, &zErrMsg);
+       if( rc != SQLITE_OK ) {
+           fprintf(stderr, "SQL error: %s\n", zErrMsg);
+           fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
+           sqlite3_free(zErrMsg);
+        } else {
+           fprintf(stdout, "Operation done successfully\n");
+        }
+
+
+    sqlite3_close(db);
+    
+  }
+}
+*/
+
 Output_t GalleryComposer::satisfy_request(Request_t request)
 {
   std::cout << "GALLERY COMPOSER!!!" << std::endl;
@@ -1457,40 +1457,50 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   m_progress_so_far =0;
   m_progress_target = 10;
   
-  m_request = request;
-  std::string filename = m_request->value("filename","");
-  m_stats = json::object();
+  // Is this request just asking for an update of the event?
+  bool same_event_request  = (m_Event) // We have an event
+                          && (m_cur_event_descriptor.length()>0) // We have a valid event descriptor/hash/thing
+                          && (request->value("event_descriptor","") == m_cur_event_descriptor); // it matches the request.
   
-  if(filename.size()==0) {
-    return Error("No file requested");
+  if(!same_event_request) {
+    // This is a new event. Act accordingly.
+    m_request = request;      
+    m_result = json::object();    
+    m_stats = json::object();
   }
   
-  bool same_file_as_last_request = (   m_Event && m_last_request && ( m_filename == filename) );
-  if(!same_file_as_last_request) {
-    // This is a new file we haven't looked at before.
-    m_filename = filename;
-    progress_made("Opening file",0);
-    {
-      // Global mutex lock!
-      boost::mutex::scoped_lock b(global_gallery_mutex);      
-      TimeReporter tr("Open file");
-      gallery::Event* event = new gallery::Event({filename});
-      m_Event.reset(event);
-      tr.addto(m_stats);
-    }    
-    std::cout << "Not changing file." << std::endl;
-  }
-
-  // Is the file+event specification the same?
-  if(same_file_as_last_request
-    && ( (*m_last_request)["selection"] == (*m_request)["selection"] )
-    && ( (*m_last_request)["entrystart"] == (*m_request)["entrystart"] )
-    && ( (*m_last_request)["entryend"] == (*m_request)["entryend"] ) ) 
-  {
-    // We do not need to load the event again.
-    std::cout << "Not changing event." << std::endl;
-    m_result = json::object();
+  m_result["request"] = *request;  
+  m_options = request->value("options",m_options); // Client can override existing options.
+  
+  m_current_event_dir_name  = m_CacheStoragePath;
+  m_current_event_url       = m_CacheStorageUrl;
+  
+  
+  if(same_event_request) {
+    std::cout << "This is an update request." << std::endl;
   } else {
+    // Get new file
+    std::string filename = m_request->value("filename","");
+    if(filename.size()==0) {
+      return Error("No file requested");
+    }
+
+    bool same_file_as_last_request = (   m_Event && m_last_request && ( m_filename == filename) );
+    if(same_file_as_last_request) {
+      std::cout << "Not changing file." << std::endl;
+    } else {
+      // This is a new file we haven't looked at before.
+      m_filename = filename;
+      progress_made("Opening file",0);
+      {
+        // Global mutex lock!
+        mutex::scoped_lock b(global_gallery_mutex);      
+        TimeReporter tr("Open file");
+        gallery::Event* event = new gallery::Event({filename});
+        m_Event.reset(event);
+        tr.addto(m_stats);
+      }
+    }    
 
     std::string sel   = request->value("selection","1");
     long long     start = request->value("entrystart",(long long)0);
@@ -1511,56 +1521,69 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     {
       TimeReporter tr("GoTo");
       progress_made("Loading event");
-      boost::mutex::scoped_lock b(global_gallery_mutex);      
+      mutex::scoped_lock b(global_gallery_mutex);      
     
       m_Event->goToEntry(m_entry);
       tr.addto(m_stats);
     }
-    // Source object for this event.
-    json source;
-    source["file"] = m_filename;
-    source["entry"] = m_entry;
-    source["numEntriesInFile"] = m_Event->getTTree()->GetEntriesFast();
-    art::EventAuxiliary const& aux = m_Event->eventAuxiliary();
-    source["run"]=aux.id().run();
-    source["subrun"]=aux.id().subRun();
-    source["event"]=aux.id().event();
-    m_result["source"] = source;
+
+    // Make an event descriptor so client can ask for updates without redoing all that work.
     m_cur_event_descriptor = form_event_descriptor();
     m_result["event_descriptor"] = m_cur_event_descriptor;    
-  }
+
+    // NB - dispatch_piece is cheap and meaningless if there is no listener!    
+    // Source object for this event.
+    json source;
+      source["file"] = m_filename;
+      source["entry"] = m_entry;
+      source["numEntriesInFile"] = m_Event->getTTree()->GetEntriesFast();
+      art::EventAuxiliary const& aux = m_Event->eventAuxiliary();
+      source["run"]=aux.id().run();
+      source["subrun"]=aux.id().subRun();
+      source["event"]=aux.id().event();
+    m_result["source"] = source;
+    dispatch_piece(json({{"source",m_result["source"]}}));
   
-  m_result["request"] = *request;  
-  m_options = request->value("options",std::string(""));
+
+    // if a new event, we need to send header stuff.
+    // Every time (it's cheap)
+    progress_made("Composing header");
+    composeHeaderData();
+    dispatch_piece(json({{"header",m_result["header"]}}));
+
+    m_result["monitor"] = monitor_data();
+    dispatch_piece(json({{"monitor",m_result["monitor"]}}));
+    
+    composeSkeleton(m_result["skeleton"]);
+    dispatch_piece(json({{"skeleton",m_result["skeleton"]}}));
+  } // End of !same_event_request block.
+
   
-  m_current_event_dir_name  = m_CacheStoragePath;
-  m_current_event_url       = m_CacheStorageUrl;
+  // test_parameter_set_retreival(m_Event->GetTFile())''
+
   
   //
-  // OK, now build the result.
+  // OK, now build anything left in the result.
   //
-  m_result["composer_id"] = m_id;
-  m_result["monitor"] = monitor_data();
-  
-  // Every time (it's cheap)
-  progress_made("Composing header");
-  composeHeaderData();
-  
+    
   // find if there is 'piece' or 'pieces' in the request
   json pieces = json::array();
   if((*request)["pieces"].is_array()) pieces = (*request)["pieces"];
   if(!(*request)["piece"].is_null()) pieces.push_back((*request)["piece"]);
   
-  std::vector<std::string> atest = split("/a/b/c/d//e/f/",'/');
-  m_result["testtest"] = json(atest);
-  
+  ///
+  /// Dispatch requested things.   
+  ///
   if(pieces.size() >0 ) {
-    std::cout << "dispatching source" << endl;
-    dispatch_piece(json({{"source",m_result["source"]}}));
-    std::cout << "dispatching header" << endl;
-    dispatch_piece(json({{"header",m_result["header"]}}));
-    std::cout << "dispatching monitor" << endl;
-    dispatch_piece(json({{"monitor",m_result["monitor"]}}));
+    // std::cout << "dispatching source" << endl;
+    // dispatch_piece(json({{"source",m_result["source"]}}));
+    // std::cout << "dispatching header" << endl;
+    // dispatch_piece(json({{"header",m_result["header"]}}));
+    // std::cout << "dispatching monitor" << endl;
+    // dispatch_piece(json({{"monitor",m_result["monitor"]}}));
+    // std::cout << "dispatching requested pieces" << endl;
+    // composeSkeleton(m_result["skeleton"]);
+    // dispatch_piece(json({{"skeleton",m_result["skeleton"]}}));
     std::cout << "dispatching requested pieces" << endl;
     for( auto& p: pieces ) {
       if(p.is_string()) {
@@ -1571,98 +1594,87 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
           std::cout << "Piece request: composing " << type << " " << name << std::endl;
           progress_made("Piece "+type+" "+name);
           json outPiece;
-          if(type=="skeleton"   ) composeSkeleton(outPiece["skeleton"]);
-          if(type=="hits"       ) composePiece<recob::Hit       >( name, outPiece[type] );
-          if(type=="spacepoints") composePiece<recob::SpacePoint>( name, outPiece[type] );
-          if(type=="clusters"   ) composePiece<recob::Cluster   >( name, outPiece[type] );
-          if(type=="tracks"     ) composePiece<recob::Track     >( name, outPiece[type] );
-          if(type=="showers"    ) composePiece<recob::Shower    >( name, outPiece[type] );
-          if(type=="endpoint2d" ) composePiece<recob::EndPoint2D>( name, outPiece[type] );
-          if(type=="pfparticles") composePiece<recob::PFParticle>( name, outPiece[type] );
-          if(type=="opflashes"  ) composePiece<recob::OpFlash   >( name, outPiece[type] );
-          if(type=="ophits"     ) composePiece<recob::OpHit     >( name, outPiece[type] );
-          if(type=="oppulses"   ) composePiece<raw::OpDetPulse  >( name, outPiece[type] );
+          if(type=="skeleton"   ) outPiece=json({{"skeleton",m_result["skeleton"]}});
+          if(type=="hits"       ) composePiece<recob::Hit       >( type, name, outPiece[type]  );
+          if(type=="spacepoints") composePiece<recob::SpacePoint>( type, name, outPiece[type]  );
+          if(type=="clusters"   ) composePiece<recob::Cluster   >( type, name, outPiece[type]  );
+          if(type=="tracks"     ) composePiece<recob::Track     >( type, name, outPiece[type]  );
+          if(type=="showers"    ) composePiece<recob::Shower    >( type, name, outPiece[type]  );
+          if(type=="endpoint2d" ) composePiece<recob::EndPoint2D>( type, name, outPiece[type]  );
+          if(type=="pfparticles") composePiece<recob::PFParticle>( type, name, outPiece[type]  );
+          if(type=="opflashes"  ) composePiece<recob::OpFlash   >( type, name, outPiece[type]  );
+          if(type=="ophits"     ) composePiece<recob::OpHit     >( type, name, outPiece[type]  );
+          if(type=="oppulses"   ) composePiece<raw::OpDetPulse  >( type, name, outPiece[type]  );
     
           // FIXME: change in MC structure.
-          if(type=="gtruth"   ) composePiece<simb::GTruth    >( name, outPiece[type] );
-          if(type=="mctruth"  ) composePiece<simb::MCTruth   >( name, outPiece[type] );
-          if(type=="particles") composePiece<simb::MCParticle>( name, outPiece[type] );
-          if(type=="stats")     outPiece["stats"] = m_result["stats"];
+          if(type=="gtruth"   ) composePiece<simb::GTruth    >( type, name, outPiece[type] );
+          if(type=="mctruth"  ) composePiece<simb::MCTruth   >( type, name, outPiece[type] );
+          if(type=="particles") composePiece<simb::MCParticle>( type, name, outPiece[type] );
+
+          // Note we try looking for both raw::rawDigit and recob::Wire objects. Only one of them will properly match the name and get put in, since the name contains the product class.
+          if(type=="wireimg"       ) composePieceImage<raw::RawDigit     >( type, name, outPiece[type] );
+          if(type=="wireimg"       ) composePieceImage<recob::Wire       >( type, name, outPiece[type] );
+          if(type=="wireimg-lowres") composePieceImage<raw::RawDigit     >( type, name, outPiece[type] );
+          if(type=="wireimg-lowres") composePieceImage<recob::Wire       >( type, name, outPiece[type] );
+          
+          // FIXME: allow for finer-grained associations. Requires thought, though, since names of associations are not names of products. Will need new logic.
+          if(type=="associations") { composeAssociations(); outPiece = json({{"associations",m_result["associations"]}}); }
           // dispatch it.
+          if(type=="stats") { composeAssociations(); outPiece = json({{"stats",m_stats}}); }
           dispatch_piece(outPiece);
         }
       }        
     }
+    dispatch_piece(json({{"stats",m_stats}}));
     m_result["stats"] = m_stats;
-    return Output_t(new std::string("{}"));
-    // return dump_result();
+
+    // Create a final progress report; send it as our return value.
+    json jdone;
+    jdone["progress"] = 1;
+    jdone["state"] = "Done";
+    return Output_t(new std::string(jdone.dump()));
   }
   
-  // Legacy code: do the entire event.
-  
+  // 
+  // Legacy code: build the entire event and return it.
+  //
   // parse some options.
   int doCal = 1;
   int doRaw = 1;
   if( std::string::npos != m_options.find("_NOCAL_")) doCal = 0;
   if( std::string::npos != m_options.find("_NORAW_")) doRaw = 0;
-
-  {
-      TimeReporter tt("availability");
-      if(!doCal) composeCalAvailability(); // just look at branch names.
-      if(!doRaw) composeRawAvailability();
-      tt.addto(m_stats);
-  }
   
   // Wire data.
   // End first so background image conversion tasks can be Ended as we build the rest.
   progress_made("Composing recob::Wire image");  
-  if(doCal)   composeWires();
-  progress_made("Composing raw::Digit image");  
-  if(doRaw)   composeRaw();
+  composePieceImage< recob::Wire       > ( "cal"       , "*", m_result["cal"       ]  );
 
+  progress_made("Composing raw::Digit image");  
+  composePieceImage< raw::RawDigit     > ( "raw"       , "*", m_result["raw"       ]  );
+  
   // Need to think about concurrency here At the moment it's fine, since there's no threading under the hood.
-  composePiece< recob::Hit       > ( "*", m_result["hits"       ] );
-  composePiece< recob::SpacePoint> ( "*", m_result["spacepoints"] );
-  composePiece< recob::Cluster   > ( "*", m_result["clusters"   ] );
-  composePiece< recob::Track     > ( "*", m_result["tracks"     ] );
-  composePiece< recob::Shower    > ( "*", m_result["showers"    ] );
-  composePiece< recob::EndPoint2D> ( "*", m_result["endpoint2d" ] );
-  composePiece< recob::PFParticle> ( "*", m_result["pfparticles"] );
-  composePiece< recob::OpFlash   > ( "*", m_result["opflashes"  ] );
-  composePiece< recob::OpHit     > ( "*", m_result["ophits"     ] );
-  composePiece< raw::OpDetPulse  > ( "*", m_result["oppulses"   ] );
+  composePiece< recob::Hit       > ( "hits"       , "*", m_result["hits"       ]  );
+  composePiece< recob::SpacePoint> ( "spacepoints", "*", m_result["spacepoints"]  );
+  composePiece< recob::Cluster   > ( "clusters"   , "*", m_result["clusters"   ]  );
+  composePiece< recob::Track     > ( "tracks"     , "*", m_result["tracks"     ]  );
+  composePiece< recob::Shower    > ( "showers"    , "*", m_result["showers"    ]  );
+  composePiece< recob::EndPoint2D> ( "endpoint2d" , "*", m_result["endpoint2d" ]  );
+  composePiece< recob::PFParticle> ( "pfparticles", "*", m_result["pfparticles"]  );
+  composePiece< recob::OpFlash   > ( "opflashes"  , "*", m_result["opflashes"  ]  );
+  composePiece< recob::OpHit     > ( "ophits"     , "*", m_result["ophits"     ]  );
+  composePiece< raw::OpDetPulse  > ( "oppulses"   , "*", m_result["oppulses"   ]  );
 
   json mc;
   bool got_mc = false;
-  got_mc |= composePiece <simb::GTruth>     ("*", mc["gtruth"   ] );
-  got_mc |= composePiece <simb::MCTruth>    ("*", mc["mctruth"  ] );
-  got_mc |= composePiece <simb::MCParticle> ("*", mc["particles"] );
+  got_mc |= composePiece <simb::GTruth>     ("gtruth"   ,"*", mc["gtruth"   ] );
+  got_mc |= composePiece <simb::MCTruth>    ("mctruth"  ,"*", mc["mctruth"  ] );
+  got_mc |= composePiece <simb::MCParticle> ("particles","*", mc["particles"] );
   if(got_mc) m_result["mc"] = mc;    
   
   progress_made("Composing associations");  
   composeAssociations();
 
-  // boost::thread_group threads;
-  // if(doCal)   threads.create_thread(boost::bind(&GalleryComposer::composeWires,this));
-  // if(doRaw)   threads.create_thread(boost::bind(&GalleryComposer::composeRaw,this));
-
-  // threads.create_thread(boost::bind(&GalleryComposer::composeHits,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeClusters,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeEndpoint2d,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeSpacepoints,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeTracks,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeShowers,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composePFParticles,this));
-  //
-  // // Optical
-  // threads.create_thread(boost::bind(&GalleryComposer::composeOpPulses,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeOpFlashes,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeOpHits,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeAuxDets,this));
-  //
-  // threads.create_thread(boost::bind(&GalleryComposer::composeMC,this));
-  // threads.create_thread(boost::bind(&GalleryComposer::composeAssociations,this));
-  //    
+  
   // threads.join_all();
   // Database lookup.
   // slomon_thread.join();

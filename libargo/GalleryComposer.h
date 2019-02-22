@@ -14,11 +14,14 @@ struct GalleryAssociationHelper;
 // namespace art{ class InputTag; }
 #include <gallery/Event.h>
 
+// namespace recob { class Wire; }
+// namespace raw   { class Digit; }
+
 class GalleryComposer : public Composer{
 public:
   GalleryComposer(); 
   virtual ~GalleryComposer(); 
-  virtual void initialize();
+  virtual void configure(Config_t config, int id=0) ;
   
   virtual bool can_satisfy(Request_t) {return true;};
 
@@ -30,7 +33,7 @@ private:
   template<typename T> void     composeSkeleton(nlohmann::json& out);
   void composeSkeleton(nlohmann::json& out);
 
-  template<typename T> bool composePiece(const std::string& name,nlohmann::json& out );
+  template<typename T> bool composePiece(const std::string& type, const std::string& name, nlohmann::json& out );
 
   // virtual Json_t get_or_compose(std::string jsonPointer);
   //
@@ -42,22 +45,28 @@ private:
   
   
 protected:
-  void  composeHeaderData();
-  void  composeHits();
-  void  composeCalAvailability();
-  void  composeRawAvailability();
-  void  composeWires();
-  void  composeRaw();
-  void  composeAssociations();
+  void  composeHeaderData(); // Does several things.
 
-  template<typename V>
-    bool composeObjectsVector(const std::string& output_name, nlohmann::json& output);
-
-  template<typename TT> 
-    void composeObject(const std::vector<TT>&v, nlohmann::json& out);
-
+  // Does everything!
   template<typename T>
-    void composeObject(const T&, nlohmann::json& out);
+    void composeObject(const T&, nlohmann::json& out, const std::string& type="");
+
+  // Specific override to do vectors of things
+  template<typename TT> 
+    void composeObject(const std::vector<TT>&v, nlohmann::json& out, const std::string& name="");
+
+  // Everything except the image-building, which needs a bit more.
+  template<typename T> 
+    bool composePieceImage( const std::string& type, const std::string& name, nlohmann::json& out);
+  template <typename T>
+    void composeObjectImage(const std::vector<T>&v, const std::string& type, art::InputTag tag, nlohmann::json& out);
+    
+    
+
+  // template <>
+  // void composeObject(const std::vector<recob::Wire>&v, nlohmann::json& out, const std::string& type);
+  // template <>
+  // void composeObject(const std::vector<raw::Digit>&v, nlohmann::json& out, const std::string& type);
 
 public:
   // Expose this to helper classses
@@ -70,7 +79,10 @@ protected:
  
   template<typename T> std::vector<std::pair<std::string,art::InputTag>>  findByType(TTree* fTree);
  
- 
+  // void composeHits();
+  // void composeWires();
+  // void composeRaw();
+  void composeAssociations();
   
   std::vector<std::string> m_BranchNames;
   boost::mutex m_output_mutex;

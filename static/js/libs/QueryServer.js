@@ -163,12 +163,18 @@ function QueryServerStream( par, myurl )
     data = $.extend({},par)
     if(data.filename) data.filename = encodeURIComponent(par.filename);
     if(!data.options) data.options = opts;
-    data.piece = "/hits/*";
+    data.pieces = [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
+      "/ophits/*",
+      "/clusters/*",
+      "/tracks/*",
+    ];
         
     var param = $.param(data);
     
     $('#status').attr('class', 'status-transition');
     $("#status").text("Querying server for event data...");
+    $('.progress-status').text("Connecting to server...");
+    
     $('#main-circleprogress').circleProgress('value', 0);
     $('#main-circleprogress strong').text('Building');
     
@@ -186,7 +192,7 @@ function QueryServerStream( par, myurl )
     gServerRequestTime = (new Date()).getTime();
 
     // Modify the cursor to show we're fetching.
-    document.body.style.cursor='wait';
+    // document.body.style.cursor='wait';
 
     console.log("Starting AJAX calls:",myurl,param);
 
@@ -212,6 +218,7 @@ function QueryServerStream( par, myurl )
         gSocket.close();
       }
       else if("progress" in o) {
+        $('.progress-status').text(o.state);
         console.log("onmessage PROGRESS",o);
         $('#main-circleprogress').circleProgress('value', o.progress*100);
         $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
@@ -229,12 +236,34 @@ function QueryServerStream( par, myurl )
           $('#status').attr('class', 'status-error');
           $("#status").text('serve-event error: '+o.error);
       }else {
-        console.error("UNKNOWN MESSAGE TYPE",o)
+        console.error("UNKNOWN MESSAGE TYPE",event.data,o)
       }
     };
     
   console.log("ws Query made!")
   return false;
+}
+
+function RequestPiece( piece )
+{
+  var request = {event_descriptor:gRecord.event_descriptor};
+  if(Array.isArray(piece))
+    request.pieces = piece
+  else
+    request.piece = piece
+  try {
+    console.log("RequestPiece",request);
+    gSocket.send(JSON.stringify(request));
+  } catch (err) {
+    // FIXME: attempt reconnect and get a new Composer instance on the server.
+    $('#status').attr('class', 'status-error');
+    $("#status").text('Socket error'+err);
+    
+    
+    // FIXME;
+    // Attempt reconnect
+    console.error("Attempting reconnect to server");
+  } 
 }
 
 function QueryServer( par, myurl )
@@ -356,12 +385,14 @@ function GotPiece(o)
   // NB Oliver Steele pattern for nested objects
   // const name = ((user || {}).personalInfo || {}).name;
   console.log("GotPiece",o);
-  if(!o.event_descriptor) console.error("No event description in piece");
+  if(!o.event_descriptor) console.error("No event description in piece",o);
   if(!o.piece) console.error("No piece in piece!");
   gRecord = gRecord || {};
   if(gRecord.event_descriptor != o.event_descriptor) {
     console.warn("New event seen!",gRecord,o);
     gRecord = {event_descriptor:o.event_descriptor};
+    gStateMachine.Trigger('newRecord');
+    
   }
     
   for(n1 in o.piece) {
@@ -370,6 +401,7 @@ function GotPiece(o)
       gRecord[n1][n2] = o.piece[n1][n2];
     }
   }
+  gStateMachine.Trigger('newPiece');
   StartEvent();
   
 }

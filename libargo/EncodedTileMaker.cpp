@@ -268,14 +268,14 @@ EncodedTileMaker::EncodedTileMaker(
   , m_outUrl(outUrl)
   , m_fill_empty_space(fill_empty_space)  
 {
-  // Pick an output filename
-  char* buffer = new char[m_outDir.length()+20];
-  std::string tmplate= m_outDir + "/XXXXXXXX";
-  strcpy(buffer,tmplate.c_str());
-  m_temp_pathname = std::string(buffer) + ".png.tmp";
-  m_final_pathname = std::string(buffer) + ".png";
-  m_filename = m_final_pathname.substr(m_outDir.length(),std::string::npos);
-  delete [] buffer;
+  // // Pick an output filename
+  // char* buffer = new char[m_outDir.length()+20];
+  // std::string tmplate= m_outDir + "/XXXXXXXX";
+  // strcpy(buffer,tmplate.c_str());
+  // m_temp_pathname = std::string(buffer) + ".png.tmp";
+  // m_final_pathname = std::string(buffer) + ".png";
+  // m_filename = m_final_pathname.substr(m_outDir.length(),std::string::npos);
+  // delete [] buffer;
 }
 
 int EncodedTileMaker::s_compression = 5;
@@ -340,12 +340,13 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
   }
   m_png.Finish();
   
-  // Write the file
-  m_png.writeToFile(m_temp_pathname);
-  // Atomic move.
-  rename(m_temp_pathname.c_str(),m_final_pathname.c_str());
-
-  std::cout << "Tile written to " << m_final_pathname << std::endl;
+  m_filename = m_png.writeToUniqueFile(m_outDir);
+  // // Write the file
+  // m_png.writeToFile(m_temp_pathname);
+  // // Atomic move.
+  // rename(m_temp_pathname.c_str(),m_final_pathname.c_str());
+  // std::cout << "Tile written to " << m_final_pathname << std::endl;
+  std::cout << "Tile written to " << m_filename << std::endl;
   // Done!
 }
 

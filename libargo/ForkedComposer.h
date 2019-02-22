@@ -75,7 +75,6 @@ public:
       
       _composer = std::shared_ptr<C>(new C);
       _composer->configure(m_config,m_id); // Important: our child has the same ID as us.
-      _composer->initialize();
       _composer->set_output_callback([this](OutputType_t t, Output_t o){pass_output(t,o);});
       close(_input_pipe[1]); // No writing to input pipe
       while(true) {

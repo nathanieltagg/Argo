@@ -59,15 +59,15 @@ function TriDView( element, options ){
   var self = this;
  
  
-  this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
-  this.ctl_show_trid_hits    =  GetBestControl(this.element,".show-trid-hits");
-  this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
-  this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
-  this.ctl_show_showers =  GetBestControl(this.element,".show-showers");
-  this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
-  this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
-  this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");  
-  this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
+  this.ctl_show_hits    =  this.GetBestControl(".show-hits");
+  this.ctl_show_trid_hits    =  this.GetBestControl(".show-trid-hits");
+  this.ctl_show_clus    =  this.GetBestControl(".show-clusters");
+  this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
+  this.ctl_show_showers =  this.GetBestControl(".show-showers");
+  this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
+  this.ctl_show_mc      =  this.GetBestControl(".show-mc");
+  this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");  
+  this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
 
   $(this.ctl_show_hits)     .change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_trid_hits).change(function(ev) { return self.Rebuild(); });
@@ -81,9 +81,9 @@ function TriDView( element, options ){
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(); });
 
 
-  $('#ctl-TrackLists') .change(function(ev) { return self.Rebuild(); });
-  $('#ctl-SpacepointLists').change(function(ev) { return self.Rebuild(); });
- 
+  gStateMachine.Bind('change-tracks', this.Rebuild.bind(this,false) );
+  gStateMachine.Bind('change-spacepoints', this.Rebuild.bind(this,false) );
+  
  
   $(this.element).children().on("focus",function(ev){this.blur();});
  
@@ -229,9 +229,6 @@ TriDView.prototype.CreateFrame = function()
 
 TriDView.prototype.CreateCrtHits = function()
 {
-  // gHitsListName = $("#ctl-HitLists").val();
-  // if(!gHitsListName) return;
-  // var hits = gRecord.hits[gHitsListName];
   console.log("looking for CRT hits");
   if(gRecord.crthits && gRecord.crthits["crt::CRTHits_merger__Swizzler"]) {
 	  var crts = gRecord.crthits["crt::CRTHits_merger__Swizzler"];
@@ -339,9 +336,7 @@ TriDView.prototype.CreateCrtHits = function()
 
 TriDView.prototype.CreateHits = function()
 {
-  gHitsListName = $("#ctl-HitLists").val();
-  if(!gHitsListName) return;
-  var hits = gRecord.hits[gHitsListName];
+  var hits = GetSelected("hits");
 
   var cs = new ColorScaler();  
   cs.max = 2000;
@@ -370,8 +365,7 @@ TriDView.prototype.CreateClusters = function()
 
 TriDView.prototype.CreateTracks = function()
 {
-  if(!$("#ctl-TrackLists").val()) return;
-  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
+  var tracks = GetSelected("tracks");
   for(var itrk=0;itrk<tracks.length;itrk++) {
     var trk = tracks[itrk];
     var hovobj = {obj:trk, type:"track", collection: tracks};    
@@ -388,8 +382,7 @@ TriDView.prototype.CreateTracks = function()
 
 TriDView.prototype.CreateShowers = function()
 {
-  if(!$("#ctl-ShowerLists").val()) return;
-  var showers = gRecord.showers[$("#ctl-ShowerLists").val()];
+  var showers = GetSelected("showers");
   var curColor = "rgba(255, 28, 28, 1)";
   for(var ishw=0;ishw<showers.length;ishw++) {
     var shw = showers[ishw];
@@ -408,8 +401,7 @@ TriDView.prototype.CreateShowers = function()
 
 TriDView.prototype.CreateSpacepoints = function()
 {  
-  if(!$("#ctl-SpacepointLists").val()) return;
-  var spacepoints = gRecord.spacepoints[$("#ctl-SpacepointLists").val()];
+  var spacepoints = GetSelected("spacepoints");
   
   // testing:
   // var spacepoints = Reco3dSpacepoints(gRecord.hits.DAQ);

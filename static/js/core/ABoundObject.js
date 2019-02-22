@@ -94,6 +94,17 @@ ABoundObject.prototype.Remove = function(ev)
   $(this.document).off("."+this.NameSpace);
 };
 
+ABoundObject.prototype.GetBestControl = function( selector )
+{
+  var controls = $(selector);
+  if(controls.length == 1) return $(controls[0]);  
+  // var c = GetLocalControl(this.element,selector);
+  // if(c.length>0) return c;
+  // c = $(selector,$('#config-port'));
+  // if(c.length>0) return c;
+  return ClosestMatch(this.element,selector);
+};
+
 //
 // Utility.
 // See : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind

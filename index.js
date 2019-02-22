@@ -12,6 +12,7 @@ var moment = require('moment');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var chalk = require('chalk');
+var spawn = require('child_process');
 
 // conifig defaults:
 var defaults = {
@@ -24,6 +25,9 @@ var defaults = {
 var config = defaults;
 
 
+// IDEA: can do this right here: process.env.DYLD_LIBRARY_PATH="<stuff>"
+// NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
+
 // My backend instantiation (maps to a ComposerWithQueue object) 
 var Composer = require("argonode");
 var composer_config ={
@@ -34,8 +38,29 @@ var composer_config ={
   "WorkingSuffix": "event",
   "CreateSubdirCache": true,
 };
+// var samweb_path = process.env.00
 var app = express();
 httpServer = http.createServer(app);
+
+
+function samweb()
+{
+  // Utility function to call samweb, assuming it's in the current PATH (set up by sam_web_client)
+  //
+  //
+  
+  var sam_args = ["-e","uboone",...arguments];
+  return new Promise(function(resolve,reject) {
+    spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
+      if (error) {
+        // console.log("samweb error",error);
+        reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
+      } else {
+        resolve(stdout.trim());
+      }
+    });
+  });
+}
 
 
 
@@ -43,15 +68,20 @@ mkdirp(config.datacache);
 
 // app.use(morgan('tiny',{immediate:true}));
 app.use(morgan('tiny'));
-
-
-
 var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
 
-app.ws('/server/stream-event', attach_stream);
 
+// Deal with WS connections.
+app.ws('/server/stream-event', attach_stream);
 function attach_stream(ws,req)
 {
+  
+  // Utility function
+  function send_error_message(message) {
+    var p = {"error":message};
+    try{ ws.send(JSON.stringify(p)); } catch(err) { console.error("Websocket error.",err); }    
+  }
+  
   // ws might be wss or ws
   console.log("ws server hit!",req.query)
 
@@ -68,10 +98,21 @@ function attach_stream(ws,req)
   var alive = true;
   glob(event_req.pathglob,  function (er, files) {
     console.log("found files",files);
-    event_req.filename = files[0];
+    event_req.filename = path.resolve(files[0]);
     
     if(fs.existsSync(event_req.filename)) {
-      // FIXME PNFS CHECK
+      // PNFS CHECK
+      if(event_req.filename.startsWith("/pnfs/")) {
+        var pnfs_dotfile = path.join( path.dirname(event_req.filename),  ".(get)("+path.basename(event_req.filename)+")(locality)");
+        var pnfs_status = fs.readFileSync(pnfs_dotfile);
+        console.log("PNFS status of file:",pnfs_status);
+        if(!pnfs_status.includes("ONLINE")) {
+          // Pin it. Tell pnfs to stage the file for 20 min minimum
+          fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(fset)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
+          
+          send_error_message("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
+        }
+      }
       console.log("Constructed request:",event_req);
       
       // Make a new composer object.
@@ -84,35 +125,60 @@ function attach_stream(ws,req)
           if(typeof o[k] == 'object') for(kk in o[k])
             console.log("    ",chalk.red(kk.padEnd(10)));
         }
-        ws.send(data);
+        try{ ws.send(data); } catch(err) { console.error("Websocket error.",err); }
       });
       // Initiate the initial request.
       ws.my_composer.request(event_req);
+  
+  
       // Declare where messages should go 
-      ws.onmessage = function(msg) {
-        let newreq = JSON.parse(msg);
-        let merge_req = {...newreq,...event_req}
+      ws.on("message",function(msg) {
+        console.log(chalk.green("onmessage"),msg);
+        var newreq;
+        try {
+          newreq = JSON.parse(msg);
+        } catch (err) {
+          var errpacket = JSON.stringify({
+              "error": "Bad request "
+                        +newreq
+              +(err?" ("+err+")":"")
+            });  
+          try{ ws.send(errpacket); } catch(err) { console.error("Websocket error.",err); }        
+                  
+        }
+        console.log(chalk.green(newreq,event_req));
+        
+        var merge_req = {...newreq,...event_req}          
         console.log(chalk.green("Passing subsequent request"),merge_req);
-        ws.my_composer.request(msg);
-      }
+        ws.my_composer.request(merge_req); // And we're off and running again!  Or this is queued; the plug-in takes care of it.
+      });
+      
       // What to do if client disconnects
-      ws.onclose = function() {
+      ws.on("close",function() {
         console.log(chalk.blue("Socket closed, shutting down"));        
         ws.my_composer.shutdown(); // Tell it to stop processing queue.
         delete ws.my_composer; // release it.
         ws.onmessage = null; // remove listener.
-      }
-      return;
+      });
+
+      return; // Return to event loop.
+
     } else {
       // If we got to here, we got a request but were unable to handle it.
-      ws.send({
-        "error": "Unable to find a file matching request for "
-                  +pathlglob
-                  +(err?" ("+err+")":"")
-      });
+      var msg = JSON.stringify({
+          "error": "Unable to find a file matching request for "
+                    +pathlglob
+          +(err?" ("+err+")":"")
+        });
+      
+      try{ ws.send(msg); } catch(err) { console.error("Websocket error.",err); }        
     } // glob callback
   }); // glob
 };
+
+
+
+
 
 
 app.get("/server/serve_event.cgi",function(req,res,next){

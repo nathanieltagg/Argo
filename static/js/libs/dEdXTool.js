@@ -171,9 +171,9 @@ function dEdXTool( element, options  )
   
   gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );  
   gStateMachine.Bind('userTrackChange', this.Draw.bind(this) );  
-  this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
-  this.ctl_dedx_width_slider = GetBestControl(this.element,".dEdX-width-slider");
-  this.ctl_dedx_width_text   = GetBestControl(this.element,".dEdX-width-text");
+  this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
+  this.ctl_dedx_width_slider = this.GetBestControl(".dEdX-width-slider");
+  this.ctl_dedx_width_text   = this.GetBestControl(".dEdX-width-text");
 
   $(this.ctl_dedx_width_slider).slider({
     min:1, max:100, step: 1, value:10,
@@ -206,9 +206,7 @@ dEdXTool.prototype.Draw = function()
   $(this.element).show();
 
   // Find all hits that intersect and plot them.
-  gHitsListName = $("#ctl-HitLists").val();
-  if(!gHitsListName) return;
-  var hits = gRecord.hits[gHitsListName];
+  var hits = GetSelected("hits");
 
 
   

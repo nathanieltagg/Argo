@@ -3,7 +3,7 @@ MicroBooNE neutrino experiment.
 
 This code was written by Nathaniel Tagg (ntagg@otterbein.edu) and our group at Otterbein University, 
 with the exception of some third-party libraries (mostly in the js/ directory). 
-Other authors and contributors include Phillip Kellogg, Curtis Brown, Molly Clairemont, 
+Other authors and contributors include Jiyu Li, Phillip Kellogg, Curtis Brown, Molly Clairemont, 
 Jack Brangham, and Erin Cochran.
 
 This code can only be used with permission of the maintainer, who takes no responsibility
@@ -14,9 +14,11 @@ If you use this work for your own projects, you are required to put attribution 
 on your main page.
 
 
-Work on this project is based off of the Arachne event display for Minerva, by the same authors.
-A technical paper describing the operation of this system was published in 
+Work on this project is based off of the Arachne event display for Minerva, by the same author.
+
+A technical paper describing the operation of the original Minerva/Arachne system was published in 
 Nucl.Inst.Meth. 676 (2012) 44-49, and is available on the arXiv at http://arxiv.org/abs/1111.5315
+
 
 --Nathaniel
 

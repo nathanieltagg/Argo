@@ -78,10 +78,9 @@ function OpHitHistogram( element  )
   this.input = "ophits"; 
 
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
-  
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-ophits', this.NewRecord.bind(this) );
   
 }
 
@@ -96,7 +95,7 @@ OpHitHistogram.prototype.NewRecord = function()
   var tmin = 1e99;
   var tmax = -1e99;
   var i, width, nbins, p;
-  var listname = $('#ctl-OpHitLists').val()
+  var listname = GetSelectedName("ophits");
   if(gRecord && gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits"; 
 
@@ -132,12 +131,12 @@ OpHitHistogram.prototype.NewRecord = function()
           this.hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale);
       }    
     }
-  } else if (gOpPulsesListName) {
+  } else if (GetSelectedName("oppulses")) {
     this.input = "oppulses"; 
     
     this.xlabel = "TDC";
     this.ylabel = "Pulse";
-    var oppulses = gRecord.oppulses[gOpPulsesListName];
+    var oppulses = GetSelected("oppulses");
     if(!oppulses) return; // Zero-length.
     if(oppulses.length>0){
       gOpMode.hitVariable = "peakTime";
@@ -201,7 +200,7 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
       // new histogram 
       this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
       
-      var listname = $('#ctl-OpHitLists').val()      
+      var listname = GetSelectedName("ophits");     
       if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[listname] && gRecord.ophits[listname].length) {
         var ophits = gRecord.ophits[listname];
         console.log("one pmt hist", ophits.length,gHoverState.obj);
@@ -215,9 +214,9 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
               this.highlight_hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale);          
           }
         }
-      } else if (gRecord.oppulses && gOpPulsesListName) { // pulses
+      } else if (gRecord.oppulses && GetSelectedName("oppulses")) { // pulses
         
-        var oppulses = gRecord.oppulses[gOpPulsesListName];      
+        var oppulses = gRecord.oppulses[GetSelectedName("oppulses")];      
         if(oppulses && oppulses.length) {
           for(i=0;i<oppulses.length;i++) {
             var p = oppulses[i];

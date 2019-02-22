@@ -17,9 +17,7 @@ class LarliteComposer : public Composer{
 public:
   LarliteComposer();
   ~LarliteComposer();
-  
-  virtual void initialize();
-  
+    
   virtual bool can_satisfy(Request_t) {return true;};
 
   virtual Output_t satisfy_request(Request_t request);

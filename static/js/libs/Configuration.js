@@ -37,8 +37,6 @@ $(function(){
   
   
   gStateMachine.Bind('recordChange',CheckWireData);
-  // gStateMachine.Bind('recordChange',SetListNames);
-
  
 
 

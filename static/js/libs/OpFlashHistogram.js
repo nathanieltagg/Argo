@@ -52,12 +52,13 @@ function OpFlashHistogram( element  )
 
   this.input = "ophits"; 
 
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-ophits', this.NewRecord.bind(this) );
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
   
-  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
+  
   
 }
 
@@ -68,7 +69,7 @@ OpFlashHistogram.prototype.NewRecord = function()
   var tmin = 0;
   var tmax = -1e99;
   var flash;
-  var listname = $('#ctl-OpFlashLists').val();
+  var listname = GetSelectedName("opflashes");
   
   if(gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
     var flashes = gRecord.opflashes[listname];

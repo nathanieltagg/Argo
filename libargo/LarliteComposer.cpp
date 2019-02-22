@@ -59,10 +59,6 @@ LarliteComposer::~LarliteComposer()
 {
 }
 
-void LarliteComposer::initialize()
-{}
-  
-  
 Output_t LarliteComposer::satisfy_request(Request_t request)
 {
   std::cout << "LARLITE COMPOSER!!!" << std::endl;

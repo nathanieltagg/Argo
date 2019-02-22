@@ -54,8 +54,7 @@ function OpHit2dMap( element  )
   
   this.ophits = [];
   this.drawn_flashes = [];
-
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-ophits', this.NewRecord.bind(this) );
   
   this.SetMagnify(true);
 }
@@ -65,7 +64,7 @@ function OpHit2dMap( element  )
 OpHit2dMap.prototype.NewRecord = function()
 {
   this.ophits = [];
-  var listname = $('#ctl-OpHitLists').val();
+  var listname = GetSelectedName("ophits");
   if(gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits";
     this.ophits = gRecord.ophits[listname].slice(0); // Copy
@@ -212,9 +211,9 @@ function OpHit2dMapProjection( element  )
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpTimeLimits.min,gOpTimeLimits.max); });
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-ophits', this.NewRecord.bind(this) );
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.ResetAndDraw(); }); 
 }
 
@@ -226,7 +225,7 @@ OpHit2dMapProjection.prototype.NewRecord = function()
   this.hist.Clear();
   
   this.ophits = [];
-  var listname = $('#ctl-OpHitLists').val();
+  var listname = GetSelectedName("ophits");
   if(gRecord.ophits && gRecord.ophits[listname]) {
     this.input = "ophits";
     this.ophits = gRecord.ophits[listname].slice(0); // Copy

@@ -115,6 +115,11 @@ CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
 # ldpaths  += -Wl,-rpath,${NUSIMDATA_LIB}
 
+
+CPPFLAGS += -I ${UBOBJ_INC}
+LIBS     += -L ${UBOBJ_LIB} -l ubobj_Trigger
+# ldpaths  += -Wl,-rpath,${NUSIMDATA_LIB}
+
 CPPFLAGS += -I ${CETLIB_INC}  -I ${CETLIB_EXCEPT_INC}
 
 ifneq ($(origin CET_LIB_DIR), undefined)
@@ -236,6 +241,12 @@ gtest: $(OBJ) tmp/gtest.o Makefile
 		-lCling    
     # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
+config-dumper: $(OBJ) tmp/config_dumper.o Makefile
+	@echo Building executable $@
+	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
+		-Wl,-rpath,@executable_path/../lib  \
+		-Wl,-rpath,@executable_path \
+    # -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 # Using the $(ldpaths) variable doesn't actually do the job, 
 # because the libraries are dependent on other libraries, so runtime can't find them unless the environment is set up.

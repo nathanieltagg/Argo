@@ -42,10 +42,6 @@ AnalysisTreeComposer::~AnalysisTreeComposer()
 {
 }
 
-void AnalysisTreeComposer::initialize()
-{
-}
-
 Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
 {
   std::cout << "ANALYSISTREE COMPOSER!!!" << std::endl;

@@ -32,6 +32,42 @@ function myGrowl(title,msg)
   }); 
 }
 
+// (function( $ ) {
+//     $.fn.cycle_dropdown = function(txtalert) {
+//       var s = $("option:selected",this).last();
+//       var n = $(s).next();
+//       if(n.length === 0) n = $("option",this).first();
+//       this.val(n.val());
+//       if(txtalert) {
+//         myGrowl(txtalert,this.val());
+//       }
+//       return this;
+//     };
+// }( jQuery ));
+
+function cycle_new_dropdown(_type) {  
+  var retrieved = $('input.retrieved[name="ctl-select-'+_type+'"]');
+  if(retrieved.length == 0) return; // nothing loaded yet!    
+  console.log("cycle_new_dropdown",_type,"retrieved:",retrieved.length);
+  var j = 0;
+  for(var i=0;i<retrieved.length;i++) {
+    console.log(i,$(retrieved[i]).is(":checked"));
+    if($(retrieved[i]).is(":checked")) {
+      j = (i+1)%retrieved.length;
+      console.log("cycle_new_dropdown",_type,"selected:",i,"new:",j);
+      break;
+    }
+  }
+  console.log("cycle_new_dropdown",_type,"new:",j);
+  $(retrieved[j]).prop("checked",true).trigger("change");
+  var label =  $("label.product-type").filter(function(){return $(this).data('product-type')==_type;});
+  label[0].classList.remove("pulse");
+  void label[0].offsetWidth;
+  label[0].classList.add("pulse");
+  myGrowl("Change "+_type,$(retrieved[j]).val());
+  
+}
+
 (function( $ ) {
     $.fn.cycle_dropdown = function(txtalert) { 
       var s = $("option:selected",this).last();
@@ -44,6 +80,7 @@ function myGrowl(title,msg)
       return this;
     }; 
 }( jQuery ));
+
 
 (function( $ ) {
     $.fn.checkbox_announce = function(txtalert) { 
@@ -60,10 +97,6 @@ function myGrowl(title,msg)
 /// Code that sets up keyboard key equivalents.
 ///
 $(function() {
-
-  // crappy hotkey plugin doesn't work.
-  // $(document).on('keypress',null,'Shift+T',function(){  });
-  // $(document).bind('keydown','shift+s',function(){ $('#ctl-SpacepointLists').cycle_dropdown(); });
 
   $(window).keypress(function(event){
     // Don't fire on some special elements, where the keyboard is actually supposed to be used.
@@ -115,7 +148,8 @@ $(function() {
         return false;
 
       case 87: // 'W'
-        CycleWireRadios();
+        cycle_new_dropdown("wireimg");
+        // CycleWireRadios();
         return false;
 
       case 104: // 'h'
@@ -123,15 +157,15 @@ $(function() {
         return false;
 
       case 72: // 'H'
-        $('#ctl-HitLists').cycle_dropdown("Hits:").trigger("change");
+        cycle_new_dropdown("hits");
         return false;
 
-      case 99: // 'c'
-        $('#ctl-show-clus').click().checkbox_announce("Show Clusters:");
+      case 99: // 'c'        
+        $('#ctl-show-clusters').click().checkbox_announce("Show Clusters:");
         return false;
 
       case 67: // 'C'
-        $('#ctl-ClusterLists').cycle_dropdown("Clusters:").trigger("change");
+        cycle_new_dropdown("clusters");        
         return false;
 
       case 101: // 'e'
@@ -139,7 +173,7 @@ $(function() {
         return false;
         
       case 69: // 'E'
-        $('#ctl-EndpointLists').cycle_dropdown("Endpoints:").trigger("change");
+        cycle_new_dropdown("endpoint2d");        
         return false;
         
       case 115: // 's'
@@ -147,7 +181,7 @@ $(function() {
         return false;
 
       case 83: // 'S'
-        $('#ctl-ShowerLists').cycle_dropdown("Showers:").trigger("change");
+        cycle_new_dropdown("showers");        
         return false;
 
       case 116: // 't' 
@@ -155,7 +189,7 @@ $(function() {
         return false;
 
       case 84: // 'T'
-        $('#ctl-TrackLists').cycle_dropdown("Tracks:").trigger("change");
+        cycle_new_dropdown("tracks");
         return false;
 
       case 102: // 'f' 
@@ -163,7 +197,7 @@ $(function() {
         return false;
 
       case 70: // 'F'
-        $('#ctl-OpFlashLists').cycle_dropdown("Opflash:").trigger("change");
+        cycle_new_dropdown("opflashes");        
         return false;
         
       case 111: // 'o' 
@@ -172,7 +206,7 @@ $(function() {
         
 
       case 79: // 'O'
-        $('#ctl-OpHitLists').cycle_dropdown().trigger("change");
+        cycle_new_dropdown("ophits");        
         return false;
         
       case 109: // 'm'

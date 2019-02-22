@@ -117,33 +117,35 @@ function WireView( element, options )
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
  
-  this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
-  this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
-  this.ctl_show_wireimg =  GetBestControl(this.element,".show-wireimg");
-  this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
-  this.ctl_show_endpoint=  GetBestControl(this.element,".show-endpoint2d");
-  this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
-  this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
-  this.ctl_track_shift  =  GetBestControl(this.element,".track-shift-window");
-  this.ctl_track_shift_value  =  GetBestControl(this.element,"#ctl-track-shift-value");
-  this.ctl_show_showers =  GetBestControl(this.element,".show-showers");
-  this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
-  this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
-  this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
-  this.ctl_show_reco =  GetBestControl(this.element,".show-reco");
-  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
-  this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
+  // this.ctl_show_hits    =  this.GetBestControl(".show-hits");
+  this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
+  this.ctl_show_wireimg =  this.GetBestControl(".show-wireimg");
+  this.ctl_show_clus    =  this.GetBestControl(".show-clusters");
+  this.ctl_show_endpoint=  this.GetBestControl(".show-endpoint2d");
+  this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
+  this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
+  this.ctl_track_shift  =  this.GetBestControl(".track-shift-window");
+  this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
+  this.ctl_show_showers =  this.GetBestControl(".show-showers");
+  this.ctl_show_mc      =  this.GetBestControl(".show-mc");
+  this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");
+  this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
+  this.ctl_show_reco =  this.GetBestControl(".show-reco");
+  this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
+  this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
   this.ctl_lock_aspect_ratio    =  GetLocalControl(this.element,".ctl-lock-aspect-ratio");
   
 
-  $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
+  gStateMachine.Bind('toggle-hits', this.Draw.bind(this,false) ); 
+  gStateMachine.Bind('toggle-clusters', this.Draw.bind(this,false) ); 
+  gStateMachine.Bind('toggle-endpoint2d', this.Draw.bind(this,false) );
+  gStateMachine.Bind('toggle-spacepoints', this.Draw.bind(this,false) ); 
+  gStateMachine.Bind('toggle-tracks', this.Draw.bind(this,false) ); 
+  gStateMachine.Bind('toggle-showers', this.Draw.bind(this,false) ); 
+
   $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_clus)   .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_endpoint).change(function(ev) { return self.Draw(false); });
-
-  $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
-  $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
-  $(this.ctl_show_showers).change(function(ev) { return self.Draw(false); });
   $(this.ctl_track_shift) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_track_shift_value) .change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
@@ -151,13 +153,15 @@ function WireView( element, options )
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
-  $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
-  $('#ctl-ShowerLists')      .change(function(ev) { return self.Draw(false); });
-  $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
-  $('#ctl-HitLists'    ) .change(function(ev) { return self.NewRecord_hits(); });
-  $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
+  
+  
+  gStateMachine.Bind('change-tracks', this.Draw.bind(this,false) );
+  gStateMachine.Bind('change-showers', this.Draw.bind(this,false) );
+  gStateMachine.Bind('change-spacepoints', this.Draw.bind(this,false) );
+  gStateMachine.Bind('change-hits', this.NewRecord_hits.bind(this) );
+  gStateMachine.Bind('change-clusters', this.Draw.bind(this,false) );
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
-  $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
+  $(this.GetBestControl(),".show-reco")     .change(function(ev) { return self.Draw(false); });
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(false); });
   $(this.ctl_lock_aspect_ratio). change(function(ev) { 
       // Force the zoom system to acknowledge the change, by making a null zoom.
@@ -240,9 +244,7 @@ WireView.prototype.NewRecord_hits = function()
   this.visHits = [];
   this.hasContent = false;
 
-  this.hitsListName = $("#ctl-HitLists").val();
-  if(!this.hitsListName) return;
-  var hits = gRecord.hits[this.hitsListName];
+  var hits = GetSelected("hits");
   // Go through gHits, and find hits that match our view.
   for(var i=0;i<hits.length;i++) {
     if(hits[i].plane == this.plane) this.myHits.push(hits[i]);
@@ -331,31 +333,31 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   this.mouseable = [];
   if(gRecord) {
-    if ($(this.ctl_show_wireimg).is(":checked")) {
+    if  ($(this.GetBestControl(".show-wireimg")).is(":checked")) {
       this.DrawImage(min_u, max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_clus).is(":checked")) {
+    if  ($(this.GetBestControl(".show-clusters")).is(":checked")) {
       this.DrawClusters(min_u,max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_hits).is(":checked")) {
+    if ($(this.GetBestControl(".show-hits")).is(":checked")) {
       this.DrawHits(min_u,max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_endpoint).is(":checked")) {
+    if  ($(this.GetBestControl(".show-endpoint2d")).is(":checked")) {
       this.DrawEndpoint2d();
     }
 
-    if ($(this.ctl_show_spoints).is(":checked")) {
+    if  ($(this.GetBestControl(".show-spacepoints")).is(":checked")) {
       this.DrawSpacepoints(min_u,max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_tracks).is(":checked")) {
+    if  ($(this.GetBestControl(".show-tracks")).is(":checked")) {
       this.DrawTracks(min_u,max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_showers).is(":checked")) {
+    if  ($(this.GetBestControl(".show-showers")).is(":checked")) {
       this.DrawShowers(min_u,max_u, min_v, max_v, fast);
     }
 
@@ -530,13 +532,23 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // look for offscreen canvas.
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  // 'cal' or 'raw'
 
-   // Figure out which GLMapper to query.
-  var mapper = gGLMappers[this.show_image];
-  if(!mapper || !mapper.loaded) {
-    mapper = gGLMappers[this.show_image+'_lowres'];
-    console.log("Getting lowres mapper");
-  }
-  if(!mapper || !mapper.loaded) return;
+  var mapper = null;
+  
+  var wname = GetSelectedName("wireimg");
+  var wireimg = (((gRecord || {})["wireimg"]        || {})[wname] || {});
+  var wlowres = (((gRecord || {})["wireimg-lowres"] || {})[wname] || {});
+  if      (wireimg._glmapper && wireimg._glmapper.loaded) mapper = wireimg._glmapper;
+  else if (wlowres._glmapper && wlowres._glmapper.loaded) mapper = wlowres._glmapper;
+  
+  //  // Figure out which GLMapper to query.
+  // var mapper = gGLMappers[this.show_image];
+  // if(!mapper || !mapper.loaded) {
+  //   mapper = gGLMappers[this.show_image+'_lowres'];
+  //   console.log("Getting lowres mapper");
+  // }
+  // if(!mapper || !mapper.loaded) return;
+
+  if(!mapper) return;
   var scale_x = mapper.scale_x || 1;
   var scale_y = mapper.scale_y || 1;
   
@@ -656,13 +668,13 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var sumRadiusV =  sumRadius / gGeo.drift_cm_per_tick;
   var doHitSum = ($('#ctl-hitsum-circle').is(':checked'));
   var track_assn = [];
-  if( gRecord.associations &&  this.hitsListName in gRecord.associations ){
-    if(trackname in gRecord.associations[this.hitsListName]) {
+  var trackname = GetSelectedName("tracks"); 
+  if( gRecord.associations &&  GetSelectedName("hits") in gRecord.associations ){
+    if(trackname in gRecord.associations[GetSelectedName]) {
       track_assn = gRecord.associations[h.hit._owner][trackname];
     }
   }
   
-  var trackname = $("#ctl-TrackLists").val();
   if( (this.fMouseInContentArea) && doHitSum ){
     this.ctx.save();
     this.ctx.setLineDash([1, 2]);
@@ -786,10 +798,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 {
   if(!gRecord.clusters) return;
-  var clustername = $("#ctl-ClusterLists").val();
-  var clusters = gRecord.clusters[clustername];
-  if(!clusters) return;  
-
+  var clusters = GetSelected("clusters");
   
   // Find the hits that are associated with this cluster.
   // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
@@ -806,8 +815,6 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   
   var hitassn = assns[hitname];
   var hits = gRecord.hits[hitname];
-  // gHitsListName = $("#ctl-HitLists").val();
-  // if(gHitsListName) hits = gRecord.hits[gHitsListName];
 
   this.clusterHulls = [];
   var   offset_hit_time = 0;
@@ -859,7 +866,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 {
   if(!gRecord.endpoint2d) return;
   if(!gRecord.endpoint2d.length) return;
-  var endpoints = gRecord.endpoint2d[$("#ctl-EndpointLists").val()];
+  var endpoints = GetSelected("endpoint2d");
   for(var i=0;i<endpoints.length;i++) {
       var pt = endpoints[i];
       pt._index = i;
@@ -891,9 +898,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 {
-  if(!$("#ctl-SpacepointLists").val()) return;
-  var sps = gRecord.spacepoints[$("#ctl-SpacepointLists").val()];
-  if(!sps) return;
+  var sps = GetSelected("spacepoints");
   this.ctx.save();
   for(var i = 0; i<sps.length;i++) {
     var sp = sps[i];
@@ -932,7 +937,7 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
-  var tracklistname = $("#ctl-TrackLists").val();
+  var tracklistname = GetSelectedName("tracks");
   if(!tracklistname) return;
 
   this.offset_track_ticks = 0;
@@ -1018,11 +1023,8 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
 {
-  var showerlistname = $("#ctl-ShowerLists").val();
-  if(!showerlistname) return;
-
-  var showers = gRecord.showers[showerlistname];
-  if(!showers) return;
+  var showerlistname = GetSelectedName("showers");
+  var showers = GetSelected("showers");
 
   // find gRecord.associations.showername.recob::Hitsthingthing
   var showerass = null;
@@ -1171,8 +1173,7 @@ WireView.prototype.DetectorXyzToScreenXY = function(x,y,z)
 
 WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast) 
 {
-  var tracklistname = $("#ctl-TrackLists").val();
-  var tracks = gRecord.tracks[tracklistname];
+  var tracks = GetSelected("tracks");
   if(!tracks) return;
   
   // Email exchange with Ben Jones, August 14 2013
@@ -1479,13 +1480,10 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 
 WireView.prototype.DrawPmts = function()
 {
-  var listname = $('#ctl-OpHitLists').val();
-  if(gRecord && gRecord.ophits && gRecord.ophits[listname]) {
-    this.ctx.save();
-    var ophits = gRecord.ophits[listname];
+    var ophits = GetSelected("ophits")
     
-    ophits.sort(function(a,b){return a[gOpMode.hitVariable]>b[gOpMode.hitVariable]; });
-    
+    this.ctx.save();    
+    ophits.sort(function(a,b){return a[gOpMode.hitVariable]>b[gOpMode.hitVariable]; });    
     for(var i=0;i<ophits.length;i++) {
       // find projection position of PMT in horizontal position for this view.
       var ophit = ophits[i];
@@ -1538,7 +1536,6 @@ WireView.prototype.DrawPmts = function()
       //this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,hov);
     }
     this.ctx.restore();
-  }
 }
 
 

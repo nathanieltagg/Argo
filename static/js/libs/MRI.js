@@ -59,21 +59,21 @@ function MRI( element, options )
   // $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
   // $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
  
+  gStateMachine.Bind('change-tracks', this.Draw.bind(this) );
+  gStateMachine.Bind('change-spacepoints', this.Draw.bind(this) );
 
-  $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(); });
-  $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(); });
-  this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
-  this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
-  this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
-  this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
-  this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
-  this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
-  this.slider_ends  =  $(GetBestControl(this.element,".mri-slider-ends"));
-  this.slider_grip  =  $(GetBestControl(this.element,".mri-slider-grip"));
-  this.slider_window_size  =  $(GetBestControl(this.element,".mri-slider-window-size"));
+  this.ctl_show_hits    =  this.GetBestControl(".show-hits");
+  this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
+  this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
+  this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
+  this.ctl_show_mc      =  this.GetBestControl(".show-mc");
+  this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");
+  this.slider_ends  =  $(this.GetBestControl(".mri-slider-ends"));
+  this.slider_grip  =  $(this.GetBestControl(".mri-slider-grip"));
+  this.slider_window_size  =  $(this.GetBestControl(".mri-slider-window-size"));
  
-  this.nudge_left  = $(GetBestControl(this.element,".mri-slider-grip-size-nudge-left"));
-  this.nudge_right = $(GetBestControl(this.element,".mri-slider-grip-size-nudge-right"));
+  this.nudge_left  = $(this.GetBestControl(".mri-slider-grip-size-nudge-left"));
+  this.nudge_right = $(this.GetBestControl(".mri-slider-grip-size-nudge-right"));
  
   this.last_nudge = 0;
   function move_grip(delta) {
@@ -85,7 +85,7 @@ function MRI( element, options )
     self.nudge_timeout=setTimeout(continueNudge,100); 
   }
   var nudge_timeout = 0;
-  this.nudge_right = $(GetBestControl(this.element,".mri-slider-grip-size-nudge-right"));
+  this.nudge_right = $(this.GetBestControl(".mri-slider-grip-size-nudge-right"));
   this.nudge_left.button ({icons:{primary:"ui-icon-circle-triangle-w"},text: false})
     .mousedown(function(){
       move_grip(-1);
@@ -202,9 +202,7 @@ MRI.prototype.ZoomChange = function()
 MRI.prototype.NewRecord = function()
 {
   // Sort by hit start time.
-  gHitsListName = $("#ctl-HitLists").val();
-  if(!gHitsListName) return;
-  var inhits = gRecord.hits[gHitsListName];
+  var inhits = GetSelected("hits");
   if(inhits.length===0) return;
   
   // Get calibration
@@ -285,9 +283,7 @@ MRI.prototype.ChangeT = function( )
 
 MRI.prototype.DrawTracks = function()
 {
-  
-  if(!$("#ctl-TrackLists").val()) return;
-  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
+  var tracks = GetSelected("tracks");
   if(!tracks) return;
   this.ctx.save();
   for(var i=0;i<tracks.length;i++)

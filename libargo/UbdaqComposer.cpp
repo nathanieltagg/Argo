@@ -41,8 +41,10 @@ UbdaqComposer::UbdaqComposer()
 {
 };
 
-void UbdaqComposer::initialize()
+void UbdaqComposer::configure(Config_t config, int id)
 {
+  m_config = config; 
+  m_id = id; 
   m_CacheStoragePath  = m_config->value("CacheStoragePath", std::string("../datacache"));
   m_CacheStorageUrl   = m_config->value("CacheStorageUrl",  std::string("datacache"));
   m_WorkingSuffix     = m_config->value("WorkingSuffix",    "working");

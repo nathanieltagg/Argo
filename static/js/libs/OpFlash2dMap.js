@@ -62,7 +62,7 @@ function OpFlash2dMap( element  )
   this.opflashes = [];
   this.drawn_flashes = [];
 
-  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
   this.SetMagnify(true);
   
   this.hist = null;
@@ -74,18 +74,7 @@ function OpFlash2dMap( element  )
 
 OpFlash2dMap.prototype.NewRecord = function()
 {
-  // var listname = $('#ctl-OpFlashLists').val();
-  //
-  // if(gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
-  //   this.opflashes = gRecord.opflashes[listname].slice(0)
-  // }
-  //
-  // // Sort to draw the good ones on top
-  // this.opflashes.sort(
-  //   function(a,b){ return a.totPe - b.totPe;  }
-  // );
-  //
-  var listname = $('#ctl-OpFlashLists').val();
+  var listname = GetSelectedName("opflashes");
   
   if(gRecord && gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
     var flashes = gRecord.opflashes[listname];
@@ -122,7 +111,7 @@ OpFlash2dMap.prototype.DrawOne = function()
   this.ctx.clip();
 
 
-  var listname = $('#ctl-OpFlashLists').val();
+  var listname = GetSelectedName("opflashes");
   
   if(gRecord && gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
     var flashes = gRecord.opflashes[listname].slice(0);
@@ -273,7 +262,7 @@ function OpFlash2dMapProjection( element  )
   var self= this;
   gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpTimeLimits.min,gOpTimeLimits.max); });
-  $('#ctl-OpFlashLists').change(function(ev) { return self.NewRecord(); });
+  gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
 }
 
 
@@ -281,7 +270,7 @@ function OpFlash2dMapProjection( element  )
 OpFlash2dMapProjection.prototype.NewRecord = function()
 {
   
-  var listname = $('#ctl-OpFlashLists').val();
+  var listname = GetSelectedName("opflashes");
   
   if(gRecord && gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
     var flashes = gRecord.opflashes[listname];

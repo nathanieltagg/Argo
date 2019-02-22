@@ -542,3 +542,181 @@ div.WireInfo-text {
   overflow: hidden;
 }
 
+
+/* ARGO 3.0 stuff! */
+
+/* Control Overlay at top of page */
+
+#ControlOverlay {
+  position: fixed;
+  z-index:1000;
+  left:0;
+  top:0;
+  background-color: #101010;
+  color:            #eeeeff;
+  width: 1000px;
+  height: 80px; /*helps stability*/
+}
+
+#ControlOverlay .event-basefilename{
+  font-size: 9px;
+  width:800px;
+  margin-right:10px;
+  overflow:hidden;
+}
+
+#ControlOverlay .data-product-bar{
+  height: 1em;
+}
+
+
+#ControlOverlay .product-type{
+  min-width:25px;
+  margin-left:3px;
+}
+
+
+#ControlOverlay .glow{
+  text-shadow: 0 0 5px #ff000;
+  transition: 0.5s;
+}
+
+/*https://css-tricks.com/solved-with-css-dropdown-menus/*/
+
+#ControlOverlay .data-product-bar label.unretrieved {
+  /* unretrieved */
+  color: #606060;
+}
+
+#ControlOverlay .data-product-bar label.retrieved {
+  /* unretrieved */
+  color: #eeeeff;
+}
+
+#ControlOverlay .data-product-bar label.active {
+  /* unretrieved */
+  color: #eeeeff;
+  font-weight: bold;
+}
+
+
+
+#ControlOverlay .data-product-bar li {
+ display: block;
+ transition-duration: 0.5s;
+}
+
+
+#ControlOverlay .data-product-bar li:hover {
+  cursor: pointer;
+}
+
+#ControlOverlay .data-product-bar ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+  background-color: #101010;;
+}
+
+#ControlOverlay .data-product-bar fieldset {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+  background-color: #101010;;
+}
+
+#ControlOverlay .data-product-bar li {
+/*    color: #fff;*/
+/*    background: darkorange;*/
+    display: block;
+    float: left;
+/*    padding: 1rem;*/
+    position: relative;
+    text-decoration: none;
+  transition-duration: 0.5s;
+}
+#ControlOverlay .data-product-bar li label {
+  /* non-activated, non-retrieved by default. */
+  display: block;
+  position: relative;
+  clear: both;
+  padding-left: 12px;
+  height: 20px;
+  line-height:20px;
+}
+#ControlOverlay .data-product-bar li:hover {
+    background: red;
+    cursor: pointer;
+}
+
+#ControlOverlay .data-product-bar label:hover {
+    background: red;
+    cursor: pointer;
+}
+
+/* Radio buttons in menus. */
+
+/* Hide the browser's default radio button */
+#ControlOverlay input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom radio button */
+#ControlOverlay .checkmark {
+  position: absolute;
+  top: 7px;
+  left: 6px;
+  height: 6px;
+  width: 6px;
+  border-radius: 50%;
+}
+
+/* When the radio button is checked, add a blue background */
+#ControlOverlay input:checked ~ .checkmark {
+  background-color: #2196F3;
+}
+
+
+#ControlOverlay .data-product-bar ul li fieldset {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  transition: all 0.5s ease;
+/*  margin-top: 1rem;*/
+  left: 0;
+  display: none;
+  
+  
+}
+
+#ControlOverlay .data-product-bar ul li:hover > fieldset,
+#ControlOverlay .data-product-bar ul li fieldset:hover {
+  visibility: visible;
+  opacity: 1;
+  display: block;
+}
+
+#ControlOverlay .data-product-bar ul li fieldset label {
+  display: block;
+  position: relative;
+  clear: both;
+  padding-left: 12px;
+  height: 20px;
+  line-height:20px;
+/*  width: 100%;*/
+}
+
+@keyframes pulse {
+  0% {transform: scale(1);}
+  50% {transform: scale(1.3);}
+  100% {transform: scale(1);}
+}
+.pulse {
+  animation-name: pulse;
+  animation-duration: 1s;
+}
+

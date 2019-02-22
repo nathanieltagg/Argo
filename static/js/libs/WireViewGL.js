@@ -478,22 +478,22 @@ PadThree.prototype.Resize = function()
 //   // if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
 //   // if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
 //
-//   this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
-//   this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
-//   this.ctl_show_wireimg =  GetBestControl(this.element,".show-wireimg");
-//   this.ctl_show_clus    =  GetBestControl(this.element,".show-clus");
-//   this.ctl_show_endpoint=  GetBestControl(this.element,".show-endpoint2d");
-//   this.ctl_show_spoints =  GetBestControl(this.element,".show-spoints");
-//   this.ctl_show_tracks  =  GetBestControl(this.element,".show-tracks");
-//   this.ctl_track_shift  =  GetBestControl(this.element,".track-shift-window");
-//   this.ctl_track_shift_value  =  GetBestControl(this.element,"#ctl-track-shift-value");
-//   this.ctl_show_showers =  GetBestControl(this.element,".show-showers");
-//   this.ctl_show_mc      =  GetBestControl(this.element,".show-mc");
-//   this.ctl_show_mc_neutrals =  GetBestControl(this.element,".show-mc-neutrals");
-//   this.ctl_mc_move_tzero    =  GetBestControl(this.element,".ctl-mc-move-tzero");
-//   this.ctl_show_reco =  GetBestControl(this.element,".show-reco");
-//   this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
-//   this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
+//   this.ctl_show_hits    =  this.GetBestControl(".show-hits");
+//   this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
+//   this.ctl_show_wireimg =  this.GetBestControl(".show-wireimg");
+//   this.ctl_show_clus    =  this.GetBestControl(".show-clusters");
+//   this.ctl_show_endpoint=  this.GetBestControl(".show-endpoint2d");
+//   this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
+//   this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
+//   this.ctl_track_shift  =  this.GetBestControl(".track-shift-window");
+//   this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
+//   this.ctl_show_showers =  this.GetBestControl(".show-showers");
+//   this.ctl_show_mc      =  this.GetBestControl(".show-mc");
+//   this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");
+//   this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
+//   this.ctl_show_reco =  this.GetBestControl(".show-reco");
+//   this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
+//   this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
 //   this.ctl_lock_aspect_ratio    =  GetLocalControl(this.element,".ctl-lock-aspect-ratio");
 //
 //
@@ -512,13 +512,8 @@ PadThree.prototype.Resize = function()
 //   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
 //   $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
 //   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
-//   $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(false); });
-//   $('#ctl-ShowerLists')      .change(function(ev) { return self.Draw(false); });
-//   $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(false); });
-//   $('#ctl-HitLists'    ) .change(function(ev) { return self.NewRecord(); });
-//   $('#ctl-ClusterLists') .change(function(ev) { return self.Draw(false); });
 //   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
-//   $(GetBestControl(this.element),".show-reco")     .change(function(ev) { return self.Draw(false); });
+//   $(this.GetBestControl(),".show-reco")     .change(function(ev) { return self.Draw(false); });
 //   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(false); });
 //   $(this.ctl_lock_aspect_ratio). change(function(ev) {
 //       // Force the zoom system to acknowledge the change, by making a null zoom.

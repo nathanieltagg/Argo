@@ -69,27 +69,25 @@ function HitHistogram( element  )
   gStateMachine.BindObj('hoverChange',this,"HoverChange");
   gStateMachine.BindObj('hitChange',this,"Draw");
   
-  this.ctl_show_hits    =  GetBestControl(this.element,".show-hits");
-  this.ctl_hit_field    =  GetBestControl(this.element,".hit-hist-field");
-  this.ctl_cut_max      =  GetBestControl(this.element,".hit-cut-max");
-  this.ctl_cut_min      =  GetBestControl(this.element,".hit-cut-min");
+  // this.ctl_show_hits    =  this.GetBestControl(".show-hits");
+  this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
+  this.ctl_cut_max      =  this.GetBestControl(".hit-cut-max");
+  this.ctl_cut_min      =  this.GetBestControl(".hit-cut-min");
   
-  $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
+  gStateMachine.Bind('toggle-hits',this.Draw.bind(this)); //  $(this.ctl_show_hits   ).change(function(ev) { self.Draw(); });
   $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
   $(this.ctl_cut_max     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
   $(this.ctl_cut_min     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
-  $("#ctl-HitLists").change(function(ev){return self.BuildHistogram();})
+  gStateMachine.Bind('change-hits',this.BuildHistogram.bind(this));
   
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); });
 }
 
 HitHistogram.prototype.NewRecord = function()
 {
-  gHitsListName = $("#ctl-HitLists").val();  
-  if(!gHitsListName) return;
-  var hits = gRecord.hits[gHitsListName];
+  var hits = GetSelected('hits');
 
   // Get unique fields of an array.
   function unique(list) {
@@ -112,9 +110,7 @@ HitHistogram.prototype.NewRecord = function()
 HitHistogram.prototype.BuildHistogram = function()
 {
   this.hist = null;
-  gHitsListName = $("#ctl-HitLists").val();
-  if(!gHitsListName) return;
-  var hits = gRecord.hits[gHitsListName];
+  var hits = GetSelected('hits');
   
   // Get list of 
   
@@ -166,7 +162,7 @@ HitHistogram.prototype.Draw = function( )
 {
   // console.warn("HitHistogram::Draw()");
   var cs = gHitColorScaler;
-  if(!$(this.ctl_show_hits).is(":checked")) cs = this.blandColorScale;
+  if(!$(this.GetBestControl('.show-hits')).is(":checked")) cs = this.blandColorScale;
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
   if(this.hist) {

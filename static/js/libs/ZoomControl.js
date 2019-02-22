@@ -152,15 +152,14 @@ function ZoomControl( element, options )
   // $(this.element).bind('touchmove' ,function(ev) {  return self.DoMouse(ev); });
   // $(this.element).bind('touchend' ,function(ev) { return self.DoMouse(ev); });
  
-  this.ctl_zoom_auto    =  GetBestControl(this.element,".zoom-auto");
-  this.ctl_zoom_full    =  GetBestControl(this.element,".zoom-full");
-  this.ctl_dedx_path    =  GetBestControl(this.element,".dEdX-Path");
+  this.ctl_zoom_auto    =  this.GetBestControl(".zoom-auto");
+  this.ctl_zoom_full    =  this.GetBestControl(".zoom-full");
+  this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
 
   $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
   $(this.ctl_zoom_full  ).click(function(ev) { return self.FullZoom(); }); 
-  $('#ctl-TrackLists')      .change(function(ev) { return self.Draw(); });
-  $('#ctl-SpacepointLists') .change(function(ev) { return self.Draw(); });
- 
+  gStateMachine.Bind('change-tracks', this.Draw.bind(this,false) );
+  gStateMachine.Bind('change-spacepoints', this.Draw.bind(this,false) );
  
  
   gStateMachine.BindObj('recordChange',this,"NewRecord");
@@ -176,12 +175,11 @@ ZoomControl.prototype.AutoZoom = function()
 {
   if(!gRecord) return;
   if(!gRecord.hits) return this.FullZoom();
-  var hitsListName = $("#ctl-HitLists").val();
-  var hits = gRecord.hits[hitsListName];
-  if(!hits) return this.FullZoom();
+  var hits = GetSelected("hits");
+  if(hits.length==0) return this.FullZoom();
   var   offset_hit_time = 0;
   if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );
-  
+  console.log("Using hits:",GetSelectedName("hits"),hits);
   // Grid it.
   var width_wire = 1000;
   var width_tdc = 1000;
@@ -205,10 +203,10 @@ ZoomControl.prototype.AutoZoom = function()
           var iy = Math.floor((hit.t+offset_hit_time)/width_tdc - offset_y);
           if(ix>=nbox_x) console.warn("autozoom wtf?");
           if(iy>=nbox_y) console.warn("autozoom wtf?");
-          gridboxes[ix+iy*nbox_x] += 1;
+          gridboxes[ix+iy*nbox_x] += hit.q;
         }
       }
-      // console.log(gridboxes);
+      console.log(gridboxes);
       for(var iy=0;iy<nbox_y; iy++) {
         for(var ix=0;ix<nbox_x;ix++) {
           var n = gridboxes[ix+nbox_x*iy];
@@ -224,8 +222,8 @@ ZoomControl.prototype.AutoZoom = function()
     }    
   }
   console.log("autozoom Most hits in box:",most_xbox,most_ybox,most_xoff,most_yoff,"n:",most);
-  var tdc_lo = (most_ybox+most_yoff)*width_tdc - offset_hit_time;
-  var tdc_hi = (most_ybox+most_yoff+1)*width_tdc - offset_hit_time;
+  var tdc_lo = (most_ybox+most_yoff)*width_tdc;
+  var tdc_hi = (most_ybox+most_yoff+1)*width_tdc;
 
   var wire_lo = (most_xbox+most_xoff)*width_wire;
   var wire_hi = (most_xbox+most_xoff+1)*width_wire;
@@ -244,69 +242,6 @@ ZoomControl.prototype.AutoZoom = function()
   gStateMachine.Trigger("zoomChange");
   
   
-  
-  // This algorithm worked OK for single-event files.
-  // var source = null;
-  //
-  // var sacrifice = 0.1;
-  // var wire_pad = 20;
-  //
-  // var hitsListName = $("#ctl-HitLists").val();
-  // if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) source = gRecord.hit_hists[hitsListName];
-  // else if(gCurName.cal) source = gRecord.cal[gCurName.cal];
-  // else if(gCurName.raw) source = gRecord.raw[gCurName.raw];
-  // // else return;
-  //
-  // console.warn("Zoom Control Source:",source);
-  //
-  // if(source){
-  //   if(source.timeHist){
-  //     var timeHist = HistogramFrom(source.timeHist);
-  //     var time_bounds = timeHist.GetROI(0.03);
-  //     gZoomRegion.tdc[0] = time_bounds[0]-20;
-  //     gZoomRegion.tdc[1] = time_bounds[1]+20;
-  //     console.log("AutoZoom: Time: ",gZoomRegion.tdc[0], gZoomRegion.tdc[1]);
-  //   } else {
-  //     gZoomRegion.tdc[0] = 0;
-  //     gZoomRegion.tdc[1] = 3200;
-  //   }
-  //
-  //
-  //   if(source.planeHists) {
-  //     var plane0Hist = HistogramFrom(source.planeHists[0]);
-  //     var plane0_bounds = plane0Hist.GetROI(sacrifice);
-  //     console.log("AutoZoom: Plane 0: ",plane0_bounds[0],plane0_bounds[1],plane0Hist.GetMean());
-  //
-  //     delete source.planeHists[1]._owner;
-  //     var plane1Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[1]);
-  //     var plane1_bounds = plane1Hist.GetROI(sacrifice);
-  //     console.log("AutoZoom: Plane 1: ",plane1_bounds[0],plane1_bounds[1],plane1Hist.GetMean());
-  //
-  //     delete source.planeHists[2]._owner;
-  //     var plane2Hist = $.extend(true,new Histogram(1,0,1), source.planeHists[2]);
-  //     var plane2_bounds = plane2Hist.GetROI(sacrifice);
-  //     console.log("AutoZoom: Plane 2: ",plane2_bounds[0],plane2_bounds[1],plane2Hist.GetMean());
-  //
-  //
-  //     gZoomRegion.setLimits(0,plane0_bounds[0]   ,plane0_bounds[1]);
-  //     gZoomRegion.setLimits(0,plane1_bounds[0]   ,plane1_bounds[1]);
-  //     gZoomRegion.setLimits(2,plane2_bounds[0]-10,plane2_bounds[1]+10);
-  //     if(!isNaN(plane2Hist.GetMean()))
-  //       gZoomRegion.setLimits(2,plane2Hist.GetMean()-1 ,plane2Hist.GetMean()+1);
-  //     if(!isNaN(plane0Hist.GetMean()))
-  //       gZoomRegion.setLimits(0,plane0Hist.GetMean()-1 ,plane0Hist.GetMean()+1);
-  //     if(!isNaN(plane1Hist.GetMean()))
-  //       gZoomRegion.setLimits(1,plane1Hist.GetMean()-1 ,plane1Hist.GetMean()+1);
-  //
-  //     gZoomRegion.setLimits(2,plane2_bounds[0]-wire_pad,plane2_bounds[1]+wire_pad);
-  //   }
-  // } else { // No source available. Maybe try hits?
-  //   this.FullZoom();
-  //   return;
-  //  }
-  //
-  // console.log("zoomChange?");
-  // gStateMachine.Trigger("zoomChange");
 };
 
 ZoomControl.prototype.FullZoom = function()
@@ -347,18 +282,18 @@ ZoomControl.prototype.NewRecord = function()
     gStateMachine.Trigger("zoomChange");
     return;
   }
-
-  if(gPageName=="live") this.FullZoom();
-  else this.AutoZoom();
+  
+  this.FullZoom();
+  //
+  // if(gPageName=="live") this.FullZoom();
+  // else this.AutoZoom();
 };
 
 
 ZoomControl.prototype.DrawTracks = function()
 {
   
-  if(!$("#ctl-TrackLists").val()) return;
-  var tracks = gRecord.tracks[$("#ctl-TrackLists").val()];
-  if(!tracks) return;
+  var tracks = GetSelected("tracks");
   this.ctx.save();
   for(var i=0;i<tracks.length;i++)
   {

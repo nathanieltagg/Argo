@@ -40,9 +40,9 @@ function WireHistogram( element  )
   HistCanvas.call(this, element, settings); // Give settings to Pad contructor.
   
   this.hist = null;
-  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
 
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
   
   gStateMachine.BindObj('recordChange',this,"NewRecord");
@@ -60,7 +60,7 @@ WireHistogram.prototype.Change = function()
 
 WireHistogram.prototype.NewRecord = function()
 {
-  var hitsListName = $("#ctl-HitLists").val();
+  var hitsListName = GetSelectedName("hits");
   this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  
   var wiredesc;
   if(hitsListName && gRecord.hit_hists && gRecord.hit_hists[hitsListName]) {

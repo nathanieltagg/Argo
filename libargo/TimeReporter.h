@@ -11,8 +11,9 @@ class TimeReporter
 public:
   std::string fName;
   Timer t;
+  void report() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl; }
   TimeReporter(const std::string& name="") :fName(name), t() {};
-  ~TimeReporter() { std::cout << "++TimeReporter " << fName << " " << t.Count() << " s" << std::endl;}
+  ~TimeReporter() { report(); }
   
   void addto(nlohmann::json& stats) { stats[fName]=t.Count(); }
 };

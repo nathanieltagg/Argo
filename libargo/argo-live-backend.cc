@@ -159,7 +159,6 @@ int main(int argc, char **argv)
 
   UbdaqComposer composer;
   composer.configure(std::shared_ptr<json>(new json(config)));
-  composer.initialize();
 
   // Main loop.
   while(true) {

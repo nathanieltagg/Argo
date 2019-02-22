@@ -62,9 +62,7 @@ RgbWireView.prototype.NewRecord_hits = function()
   this.visHits = [];
   this.hasContent = false;
 
-  this.hitsListName = $("#ctl-HitLists").val();
-  if(!this.hitsListName) return;
-  this.myHits = gRecord.hits[this.hitsListName];
+  this.myHits = GetSelected("hits");
   this.TrimHits();
 };
 

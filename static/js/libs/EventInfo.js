@@ -121,7 +121,8 @@ EventInfo.prototype.NewRecord = function()
 
   
   if(gRecord.source) {
-    if("file" in gRecord.source)  $(".event-file").text(gRecord.source.file);
+    if("file" in gRecord.source){  $(".event-file").text(gRecord.source.file);
+                                   $(".event-basefilename").text(gRecord.source.file.split('/').pop()); }
     if("entry" in gRecord.source) $(".event-entry").text(gRecord.source.entry);
     if("numEntriesInFile" in gRecord.source) $(".event-numEntriesInFile").text(gRecord.source.numEntriesInFile);
   }

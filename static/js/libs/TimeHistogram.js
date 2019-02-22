@@ -37,9 +37,9 @@ function TimeHistogram( element  )
   
 
   this.hist = null;
-  this.ctl_wireimg_type =  GetBestControl(this.element,"[name=show-wireimg-type]");
+  this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
   
-  this.ctl_histo_logscale= GetBestControl(this.element,".ctl-histo-logscale");
+  this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
     
   gStateMachine.Bind('recordChange',  this.NewRecord.bind(this) ); 
@@ -59,7 +59,7 @@ TimeHistogram.prototype.Change = function()
 
 TimeHistogram.prototype.NewRecord = function()
 {
-  var hitsListName = $("#ctl-HitLists").val();
+  var hitsListName = GetSelectedName("hits");
   var wiredec;
   var cs = new ColorScaleIndexed(0);
   

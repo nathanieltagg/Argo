@@ -43,20 +43,15 @@ function OpFlashMap( element  )
 
   $(this.element).bind('mousemove',function(ev) { return self.DoMouse(ev); });
   $(this.element).bind('touchstart' ,function(ev) { return self.DoMouse(ev); });
-  $('#ctl-OpHitLists').change(function(ev) { return self.NewRecord(); });
-
+  gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
+  
 }
 
 
 
 OpFlashMap.prototype.NewRecord = function()
 {
-  var listname = $('#ctl-OpFlashLists').val();
-  
-  if(gRecord.opflashes && gRecord.opflashes[listname] && gRecord.opflashes[listname].length>0) {
-    this.opflashes = gRecord.opflashes[listname].slice(0)
-  }
-  
+  this.opflashes = GetSelected("opflashes").slice(0);
   // Sort to draw the good ones on top
   this.opflashes.sort(
     function(a,b){ return a.totPe - b.totPe;  }
