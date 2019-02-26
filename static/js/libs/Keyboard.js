@@ -59,11 +59,13 @@ function cycle_new_dropdown(_type) {
     }
   }
   console.log("cycle_new_dropdown",_type,"new:",j);
-  $(retrieved[j]).prop("checked",true).trigger("change");
-  var label =  $("label.product-type").filter(function(){return $(this).data('product-type')==_type;});
-  label[0].classList.remove("pulse");
-  void label[0].offsetWidth;
-  label[0].classList.add("pulse");
+  var new_item = $(retrieved[j])
+  new_item.prop("checked",true).trigger("change");
+  var type_label =  $("input.product-type").filter(function(){return $(this).data('product-type')==_type;}).siblings("label")[0];
+
+  type_label.classList.remove("pulse");
+  void type_label.offsetWidth;
+  type_label.classList.add("pulse");
   myGrowl("Change "+_type,$(retrieved[j]).val());
   
 }

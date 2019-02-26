@@ -66,7 +66,7 @@ function GotRecord(o)
   }
   
   gRecord = {event_descriptor:o.event_descriptor};
-  gStateMachne.Trigger('newRecord');
+  gStateMachine.Trigger('newRecord');
   indexArraysIn(o);
   gRecord = o.record;
   gStateMachine.Trigger('preNewPiece'); // Special trigger for those objects that need to fire first.  

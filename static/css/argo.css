@@ -1,7 +1,24 @@
 /*
-Main style sheet for arachne.html
+Main style sheet for Argo 3
 */
-
+body * {
+  display: none !important;
+}
+body:before {
+  line-height: 1.5;
+  display: block;
+  z-index: 99999999;
+  white-space: pre;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  color: black;
+  background-color: white;
+  margin: 10px;
+  padding: 10px;
+  border: 4px dashed red;
+  margin-bottom: 10px;
+  content: "argo.css is deprecated: change css/argo.css to scss/argo.scss";
+}
 
 
 img {  border-style: none; }
@@ -24,19 +41,15 @@ select.align-right{
 }
 
 body {
-/*  background: #EEEEEE;*/
-        image-rendering: -moz-crisp-edges;         /* Firefox */
-        image-rendering:   -o-crisp-edges;         /* Opera */
-        image-rendering: -webkit-optimize-contrast;/* Webkit (non-standard naming) */
-        image-rendering: crisp-edges;
-        -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
-
-        -webkit-print-color-adjust:exact;  /* When printing in Chrome, include BG images in PDF*/
-
-        user-select:none;  -ms-user-select: none; -moz-user-select: none;-webkit-user-select: none;
-
-
-        font-size: 10pt;
+  /* Ensure that pixel images aren't smoothed */
+  image-rendering: -moz-crisp-edges;         /* Firefox */
+  image-rendering:   -o-crisp-edges;         /* Opera */
+  image-rendering: -webkit-optimize-contrast;/* Webkit (non-standard naming) */
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
+  -webkit-print-color-adjust:exact;  /* When printing in Chrome, include BG images in PDF*/
+  user-select:none;  -ms-user-select: none; -moz-user-select: none;-webkit-user-select: none;
+  font-size: 10pt;
 }
 
 
@@ -129,7 +142,6 @@ span.ZoomControl-Info
   width: 160px;
 }
 
-#
 
 #blob-opacity {
   display: inline-block;
@@ -545,9 +557,9 @@ div.WireInfo-text {
 
 /* ARGO 3.0 stuff! */
 
-/* Control Overlay at top of page */
 
 #ControlOverlay {
+  /* Control Overlay at top of page */
   position: fixed;
   z-index:1000;
   left:0;
@@ -576,14 +588,8 @@ div.WireInfo-text {
 }
 
 
-#ControlOverlay .glow{
-  text-shadow: 0 0 5px #ff000;
-  transition: 0.5s;
-}
-
-/*https://css-tricks.com/solved-with-css-dropdown-menus/*/
-
 #ControlOverlay .data-product-bar label.unretrieved {
+  /*https://css-tricks.com/solved-with-css-dropdown-menus/*/
   /* unretrieved */
   color: #606060;
 }
@@ -654,10 +660,10 @@ div.WireInfo-text {
     cursor: pointer;
 }
 
-/* Radio buttons in menus. */
 
-/* Hide the browser's default radio button */
 #ControlOverlay input {
+  /* Radio buttons in menus. */
+  /* Hide the browser's default radio button */
   position: absolute;
   opacity: 0;
   cursor: pointer;
@@ -665,8 +671,8 @@ div.WireInfo-text {
   width: 0;
 }
 
-/* Create a custom radio button */
 #ControlOverlay .checkmark {
+  /* Create a custom radio button */
   position: absolute;
   top: 7px;
   left: 6px;
@@ -675,8 +681,8 @@ div.WireInfo-text {
   border-radius: 50%;
 }
 
-/* When the radio button is checked, add a blue background */
 #ControlOverlay input:checked ~ .checkmark {
+  /* When the radio button is checked, add a blue background */
   background-color: #2196F3;
 }
 

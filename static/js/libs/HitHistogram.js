@@ -24,7 +24,6 @@ var gHitCut = {
 $(function(){
   $('#ctl-hit-color-scale').addClass("saveable").change(ChangeHitColorScale);
   gHitColorScaler = new ColorScaler("CurtColorPalette");    
-  ChangeHitColorScale();
 
   $('div.A-HitHistogram').each(function(){
     gHitHistogram = new HitHistogram(this);

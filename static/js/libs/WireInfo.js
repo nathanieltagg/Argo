@@ -144,8 +144,8 @@ WireInfo.prototype.Draw = function()
   h += "Channel: " +  chan + '<br/>';
   h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
   h += "TDC: " +tdc + '<br/>';
-  if(gRecord && gRecord.raw && gCurName.raw && gRecord.raw[gCurName.raw] && gRecord.raw[gCurName.raw].pedestals)
-    h+="Pedestal:" + gRecord.raw[gCurName.raw].pedestals[chan] + '<br/>';
+  if(GetSelected("wireimg").pedestals)
+    h+="Pedestal:" + GetSelected("wireimg").pedestals[chan] + '<br/>';
 
 
   if(gHoverState.type == "hit") {

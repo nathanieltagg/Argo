@@ -315,15 +315,17 @@ function ComposeTrackInfo(s)
     if(hitname) {
       var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
       var hitlist = gRecord.hits[hitname];
-      h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
-      h += "<tr><th>TDC:</th><th>ADC</th></tr>";
-      for(var i=0;i<hitids.length;i++) { 
-        var hit = hitlist[hitids[i]];
-        if(h.plane==2)
-          h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
+      if(hitlist) {
+        h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
+        h += "<tr><th>TDC:</th><th>ADC</th></tr>";
+        for(var i=0;i<hitids.length;i++) { 
+          var hit = hitlist[hitids[i]];
+          if(h.plane==2)
+            h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
+        }
+        h+="</table></div>"
+        h+= c;  
       }
-      h+="</table></div>"
-      h+= c;  
     }
   
 

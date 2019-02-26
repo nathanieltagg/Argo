@@ -1,0 +1,672 @@
+//colors
+$color_silver_chalice_approx: #aaa;
+$color_fuscous_gray_approx: #555;
+$white: #fff;
+$color_storm_dust_approx: #666;
+$silver: #c0c0c0;
+$black: #000;
+$blue: #00f;
+$color_woodsmoke_approx: #101010;
+$color_celeste_approx: #ccc;
+$color_mine_shaft_approx: #333;
+$red: #f00;
+$color_champagne_approx: #fbe9ca;
+$color_titan_white_approx: #eef;
+$color_eunry_approx: #c39d9d;
+$color_dodger_blue_approx: #2196f3;
+
+
+$unretrieved_color: $color_storm_dust_approx;
+$retrieved_color:   $color_titan_white_approx;
+$hilite_control_color: red;
+$pending_color: #7082ff;
+$checkmark_color: #7082ff;
+$control_overlay_bg_color: $color_woodsmoke_approx;
+$control_overlay_tx_color: $color_titan_white_approx;
+
+//fonts
+$font_0: "Arial";
+$font_1: "Verdana";
+$font_2: "‘Trebuchet MS’";
+$font_3: "Helvetica";
+$font_4: "sans-serif";
+
+//urls
+$url_0: url("images/bg3.jpg");
+$url_1: url("css/ui-lightness/images/ui-bg_glass_65_ffffff_1x400.png");
+
+//@extend-elements
+//original selectors
+//html, body
+%extend_1 {
+  margin: 0;
+  padding: 0;
+  font-family: $font_0, $font_1;
+}
+
+//original selectors
+%extend_2 {
+  visibility: visible;
+  opacity: 1;
+  display: block;
+}
+
+
+img {
+  border-style: none;
+}
+.align-left {
+  float: left;
+}
+.align-right {
+  float: right;
+}
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+body {
+  //vendor-prefix found
+  //image-rendering: -moz-crisp-edges
+  //vendor-prefix found
+  //image-rendering: -o-crisp-edges
+  //vendor-prefix found
+  //image-rendering: -webkit-optimize-contrast
+  image-rendering: crisp-edges;
+  //vendor-prefix found
+  //-ms-interpolation-mode: nearest-neighbor
+  //vendor-prefix found
+  //-webkit-print-color-adjust: exact
+  //Instead of the line below you could use @include user-select($select)
+  user-select: none;
+  //vendor-prefix found
+  //-ms-user-select: none
+  //vendor-prefix found
+  //-moz-user-select: none
+  //vendor-prefix found
+  //-webkit-user-select: none
+  font-size: 10pt;
+  @extend %extend_1;
+}
+#event-id-info {
+  margin-left: 30px;
+  float: right;
+  font-size: 1.5em;
+}
+div {
+  &.pad {
+    margin: 0;
+    padding: 0;
+  }
+  &.boxed {
+    border: 1px solid $color_storm_dust_approx;
+    margin-bottom: 5px;
+  }
+  &.event-info {
+    font-size: 0.7em;
+  }
+  &.A-EventInfo {
+    overflow: scroll;
+  }
+  &.spacer {
+  }
+  &.ui-dialog {
+    font-size: 0.9em;
+  }
+  &.A-WireView {
+    height: 400px;
+  }
+  &.A-WireViewGL {
+    height: 400px;
+  }
+  &.A-RgbWireView {
+    height: 400px;
+  }
+  &.A-WireHistogram {
+    height: 100px;
+  }
+  &.A-ZoomControl {
+    height: 100px;
+  }
+  &.A-TimeHistogram {
+    height: 120px;
+  }
+  &.WireInfo-text {
+    height: 55px;
+    overflow: hidden;
+  }
+  &.important-links a {
+    white-space: nowrap;
+    margin: 2px;
+    padding: 4px;
+    border: 1px solid $color_silver_chalice_approx;
+    //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
+    border-radius: 5px;
+    display: inline-block;
+    color: $color_fuscous_gray_approx;
+  }
+}
+#BigWireView {
+  image-rendering: auto;
+}
+span {
+  &.ZoomControl-Info {
+    background-color: $white;
+  }
+  &.keypress-hint {
+    float: right;
+    font-weight: bold;
+    color: $black;
+  }
+  &.scan-input {
+    white-space: nowrap;
+  }
+  &.scan-input-label {
+    width: 30em;
+  }
+}
+#header {
+  width: 650px;
+  margin: auto;
+  margin-top: 20px;
+}
+#content {
+  width: auto;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+#content-main {
+  width: auto;
+  margin-right: 240px;
+}
+#content-left {
+  float: left;
+  width: 48%;
+}
+#content-middle {
+  width: 48%;
+  margin-left: 50%;
+}
+#content-wide {
+  width: auto;
+}
+#footer {
+  clear: both;
+  width: auto;
+  max-width: 800px;
+  margin: auto;
+}
+#content-top {
+  width: 1200px;
+  margin: auto;
+}
+#content-right {
+  float: right;
+  width: 300px;
+  margin: 0;
+}
+.mag-sliders {
+  display: inline-block;
+  width: 160px;
+}
+#blob-opacity {
+  display: inline-block;
+  width: 160px;
+}
+#hitmaps {
+}
+#input-fe {
+  span {
+    display: block;
+    overflow: hidden;
+    padding-right: 5px;
+    padding-left: 10px;
+  }
+  label.tbfill {
+    float: left;
+  }
+  input.tbfill {
+    width: 100%;
+  }
+}
+html {
+  @extend %extend_1;
+}
+table {
+  border-collapse: collapse;
+  &.eventinfo {
+    border-collapse: separate;
+    border-spacing: 5px;
+    td {
+      border-left-width: 2px;
+      border-left-style: solid;
+      margin-top: 2px;
+      margin-bottom: 2px;
+      &.key {
+        border-left-width: 0;
+        border-left-style: none;
+        margin-top: auto;
+        margin-bottom: auto;
+      }
+    }
+  }
+  &.mc-info {
+    font-size: 0.8em;
+  }
+  &.mc-fs {
+    font-size: 0.8em;
+    width: 100%;
+    td {
+      vertical-align: top;
+    }
+  }
+  &.event-info {
+    vertical-align: top;
+    display: inline-block;
+    max-width: 250px;
+  }
+  &.slice-info td {
+    vertical-align: top;
+  }
+}
+.header-links {
+  font-size: 0.875em;
+}
+#column-bl {
+  background: $silver;
+  width: 400px;
+}
+#triD-view {
+  height: 380px;
+}
+#column-br {
+  float: right;
+  width: 400px;
+}
+#inFileUpload {
+  width: 200px;
+  margin: auto;
+  font-size: 1.2em;
+}
+#output {
+  overflow: auto;
+  height: 500px;
+}
+.ui-dialog {
+  opacity: 1.0;
+}
+.ui-tabs {
+  font-size: 80% !important;
+}
+.ui-tabs-panel {
+  padding: 0.1em !important;
+}
+#minos-info-table {
+  width: 100%;
+  border: 1px solid $black;
+  background: $white;
+  text-align: center;
+}
+td {
+  &.event-info-caption {
+    vertical-align: top;
+    width: 100px;
+  }
+  &.gate-info-caption {
+  }
+  &.slice-info-caption {
+  }
+}
+.scan-input {
+  font-size: 0.8em;
+}
+.scanner-info {
+  font-size: 0.7em;
+}
+.scanner-info-cur-slice {
+  color: $blue;
+}
+.scanner-info-diff-slice {
+  color: $color_woodsmoke_approx;
+}
+.glowbutton {
+  cursor: pointer;
+  text-align: center;
+  border: 1px solid $color_celeste_approx;
+  width: 75%;
+  background: $url_0 repeat 0 0;
+}
+#ctl-color-scale {
+  font-size: 0.7em;
+}
+.portlet {
+  margin: 0 0 1em 0;
+  overflow: hidden;
+}
+.portlet-header {
+  margin: 0.3em;
+  padding-bottom: 4px;
+  padding-left: 0.2em;
+  font-size: 0.8em;
+  cursor: pointer;
+  .ui-icon {
+    float: right;
+  }
+}
+.portlet-content {
+  padding: 0.4em;
+  overflow: hidden;
+  font-size: 0.8em;
+  height: 100%;
+}
+.ui-sortable-placeholder {
+  border: 1px dotted $black;
+  visibility: visible !important;
+  height: 100px !important;
+  * {
+    visibility: hidden;
+  }
+}
+.portlet-fullscreen {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+}
+.dialog {
+  font-size: 0.7em;
+}
+.vertical-text {
+  color: $color_mine_shaft_approx;
+  zIndex: -1;
+  background-color: $white;
+  border: 0 solid $red;
+  writing-mode: tb-rl;
+  //vendor-prefix found
+  //-webkit-transform: rotate(270deg)
+  //vendor-prefix found
+  //-moz-transform: rotate(270deg)
+  //vendor-prefix found
+  //-o-transform: rotate(270deg)
+  white-space: nowrap;
+  display: block;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
+  font-family: $font_2, $font_3, $font_4;
+  font-variant: small-caps;
+  font-size: 14px;
+  font-weight: normal;
+  vertical-align: bottom;
+  text-align: right;
+}
+.status-transition {
+  background-color: $white;
+}
+.status-ok {
+  background-color: MediumSpringGreen;
+}
+.status-error {
+  background-color: $red;
+}
+.status-warning {
+  background-color: Orange;
+}
+.stateMachineStat {
+  display: block;
+}
+.keyhint {
+  font-weight: bold;
+  text-decoration: underline;
+}
+.onclickfn {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mc-jit-node-hover {
+  background-color: $red;
+}
+.pf-jit-node-hover {
+  background-color: $red;
+}
+.full-screen {
+  width: 100% !important;
+  height: 100% !important;
+}
+.shiftspinner {
+  overflow: hidden;
+  * {
+    //vendor-prefix found
+    //-moz-user-select: none
+    //vendor-prefix found
+    //-webkit-user-select: none
+    cursor: pointer;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  li {
+    float: left;
+    display: inline;
+    overflow: hidden;
+  }
+}
+
+
+#ControlOverlay {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  background-color: $control_overlay_bg_color;
+  color: $control_overlay_tx_color;
+  width: 1000px;
+  height: 80px;
+  .event-basefilename {
+    font-size: 9px;
+    width: 800px;
+    margin-right: 10px;
+    overflow: hidden;
+  }
+  .data-product-bar {
+    height: 1em;
+    
+    label {
+      &:hover {
+        background-color: $hilite_control_color;
+        cursor: pointer;
+      }
+    }
+   
+    ul {
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+      li {
+        
+        display: block;
+        float: left;
+        position: relative;
+        text-decoration: none;
+        //Instead of the line below you could use @include transition-duration($duration-1, $duration-2, $duration-3, $duration-4, $duration-5, $duration-6, $duration-7, $duration-8, $duration-9, $duration-10)
+        transition-duration: 0.5s;
+        &:hover {
+          background: $red;
+          cursor: pointer;
+        }
+        
+        label {
+          display: block;
+          position: relative;
+          clear: both;
+          padding-left: 12px;
+          height: 20px;
+          line-height: 20px;
+        }
+        
+        
+        fieldset {
+          visibility: hidden;
+          opacity: 0;
+          position: absolute;
+          //Instead of the line below you could use @include transition($transition-1, $transition-2, $transition-3, $transition-4, $transition-5, $transition-6, $transition-7, $transition-8, $transition-9, $transition-10)
+          transition: all 0.5s ease;
+          left: 0;
+          background-color: $control_overlay_bg_color;
+          
+          display: none;
+          &:hover {
+            @extend %extend_2;
+          }
+          div {
+            display: block;
+            position: relative;
+            clear: both;
+            height: 20px;
+            line-height: 20px;
+          }
+        }
+        &:hover > fieldset {
+          @extend %extend_2;
+        }
+      }
+    }
+  }
+  .product-type {
+    min-width: 25px;
+    margin-left: 3px;
+  }
+  
+  // This stuff is used to remove the native checkmark from checkbox/radio buttons. the 
+  input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+    
+    &.unretrieved ~ label {
+        color: $unretrieved_color; //$color_storm_dust_approx;        
+    }
+    &.retrieved  ~ label {
+        color: $retrieved_color; //$color_storm_dust_approx;        
+    }
+    
+    &:checked + .checkmark {
+      background-color: $checkmark_color;
+      
+    }
+    &.pending:checked + .checkmark {
+        background-color: transparent;
+        border-top: 2px solid $pending_color;
+        border-right: 2px solid transparent;
+        animation: spinner .6s linear infinite;
+    }
+  }
+  @keyframes spinner {
+    to {transform: rotate(360deg);}
+  }
+  .checkmark {
+    position: absolute;
+    top: 7px;
+    left: 4px;
+    height: 6px;
+    width: 6px;
+    //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
+    border-radius: 50%;
+    thing:;
+  }
+}
+@keyframes pulse {
+  0% {
+    //Instead of the line below you could use @include transform($scale, $rotate, $transx, $transy, $skewx, $skewy, $originx, $originy)
+    transform: scale(1);
+  }
+  50% {
+    //Instead of the line below you could use @include transform($scale, $rotate, $transx, $transy, $skewx, $skewy, $originx, $originy)
+    transform: scale(1.3);
+  }
+  100% {
+    //Instead of the line below you could use @include transform($scale, $rotate, $transx, $transy, $skewx, $skewy, $originx, $originy)
+    transform: scale(1);
+  }
+}
+.pulse {
+  animation-name: pulse;
+  animation-duration: 1s;
+}
+select.align-right {
+  direction: rtl;
+}
+#mag-sliders label {
+}
+.pad canvas {
+  cursor: crosshair;
+  margin: 0;
+  //vendor-prefix found
+  //-webkit-touch-callout: none
+  //vendor-prefix found
+  //-webkit-user-select: none
+  //vendor-prefix found
+  //-khtml-user-select: none
+  //vendor-prefix found
+  //-moz-user-select: none
+  //vendor-prefix found
+  //-ms-user-select: none
+  //Instead of the line below you could use @include user-select($select)
+  user-select: none;
+}
+.ui-button .ui-button-text {
+  padding: 4px 4px 4px 4px !important;
+}
+#event-info div {
+  &.collapsible {
+    vertical-align: top;
+    display: inline-block;
+    max-width: 200px;
+  }
+  &.subtable {
+    vertical-align: top;
+    display: inline-block;
+    max-width: 250px;
+  }
+}
+th.scanner-info {
+  text-align: right;
+}
+.ui-slider .ui-slider-handle {
+  width: 2.2em;
+  text-decoration: none;
+  text-align: center;
+}
+.collapsible-title .ui-icon {
+  float: left;
+}
+.help-text.dialog {
+  font-size: 1.1em;
+}
+tr.rowstripe {
+  background-color: $color_champagne_approx;
+}
+.cursor-nwse-resize .cursor-nwse-resize:active {
+  cursor: nwse-resize;
+}
+.cursor-nesw-resize .cursor-nesw-resize:active {
+  cursor: nesw-resize;
+}
+.cursor-ew-resize .cursor-ew-resize:active {
+  cursor: ew-resize;
+}
+.cursor-move .cursor-move:active {
+  cursor: move;
+}
+:-webkit-full-screen .portlet {
+  width: 100% !important;
+  height: 100% !important;
+}

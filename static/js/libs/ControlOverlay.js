@@ -1,3 +1,4 @@
+"use strict;"
 //
 // Functions to handle micrboone json data.
 //
@@ -89,36 +90,42 @@ ControlOverlay.prototype.NewPiece = function()
         console.log(_type);
         var elem = $('<li></li>').data("product-type",_type).addClass("product-type").hide();
 
-        var label = $('<label><label>').addClass('unretrieved').addClass('product-type').text(_type).data('product-type',_type);
+        // var label = $('<label><label>').addClass('unretrieved').addClass('product-type').text(_type).data('product-type',_type); // move all labels to input.
+        var label = $('<label><label>').text(_type).attr('for',"ctl-show-"+_type);
         var input = $('<input type="checkbox" />')
               .addClass('product-type')
+              .addClass('unretrieved')
               .addClass('saveable auto-save')
               .addClass('show-'+_type)
               .data('product-type',_type)
               .attr("id","ctl-show-"+_type)
-        label.append(input).append('<span class="checkmark"></span>');
+        elem.append(input);
+        elem.append('<span class="checkmark"></span>');
         elem.append(label);
         
         var fs = $('<fieldset></fieldset>').addClass("dropdown");
         for(var _name in gRecord.skeleton[_type]) {
-          var nlabel = $('<label></label>')
-            .addClass('unretrieved')
-            .addClass('product-name')
-            .text(simpleName(_name))
-            .data('product-name',_name)
-            .data('product-type',_type)
-            // .attr('title',nameToTitle(_name))
-            ;
+          var div = $('<div></div>');
+          var nlabel = $('<label></label>').attr('for','product-'+_name).text(simpleName(_name));
+            // .addClass('unretrieved')
+            // .addClass('product-name')
+            // 
+            // .data('product-name',_name)
+            // .data('product-type',_type)
+            // // .attr('title',nameToTitle(_name))
+            // ;
           var ninput = $('<input type="radio"/>')
+              .attr('id','product-'+_name)
               .attr('name','ctl-select-'+_type)
               .addClass('product-name')
               .addClass('unretrieved')
               .attr('value',_name)
               .data('product-name',_name)
               .data('product-type',_type);
-          nlabel.append(ninput).append('<span class="checkmark"></span>');
-          
-          fs.append(nlabel);
+            div.append(ninput).append('<span class="checkmark"></span>').append(nlabel);
+            fs.append(div);
+//           nlabel.append(ninput).append('<span class="checkmark"></span>');
+//           fs.append(nlabel);
         }
         $('input.product-name',fs).prop("checked",false);
         elem.append(fs);
@@ -142,33 +149,49 @@ ControlOverlay.prototype.NewPiece = function()
   } else {
     console.log("No Skeleton");
   }
+  
+  // Now look at the actual content. Look for new things by seeing if they've already been marked as retrieved.
   for(_type in gRecord) {
     var product_type_elem =  $("li.product-type").filter(function(){return $(this).data('product-type')==_type;});
+    var product_type_input = $("input.product-type",product_type_elem);
     if(product_type_elem.length==0) continue;
-    var product_type_label = $("label.product-type",product_type_elem);
-    product_type_label.removeClass('unretrieved').addClass('retrieved');
-    // $("input.product_type",product_type_elem).prop("checked","checked"); // FIXME: ONLY IF WE ARE SHOWING THIS ELEMENT
+
     var n_new =0;
+    var n_retrieved_before = $("input.product-name.retrieved",product_type_elem).length;
     
     for(_name in gRecord[_type]) {
-      var item = $("label",product_type_elem).filter(function(){return $(this).data('product-name')==_name;});
+      var item = $("input.product-name",product_type_elem).filter(function(){return $(this).data('product-name')==_name;});
       if(!item.hasClass('retrieved')) {
         n_new++;
         // This is a new piece.
         console.log("ControlOverlay: registered new item in the gRecord",_type,_name)
-        item.removeClass('unretrieved').addClass('retrieved');
-        $('input',item).removeClass('unretrieved').addClass('retrieved');
-        product_type_label[0].classList.remove("pulse");
-        void product_type_label[0].offsetWidth; // allows pulse retriggering see https://codepen.io/chriscoyier/pen/EyRroJ
-        product_type_label[0].classList.add("pulse");
+        item.removeClass('unretrieved').removeClass("pending").addClass('retrieved');
+        // $('input',item).removeClass('unretrieved').removeClass("pending").addClass('retrieved');
         
         // Is it selected? if so, update everyone accordingly
       }
       
       // $('input[value="'+_name+'"]',product_type_elem).removeClass('unretrieved').addClass('retrieved');
     }
-    if(n_new>0) gStateMachine.Trigger('change-'+_type);
     
+    var n_pending = $("input.product-name.pending",product_type_elem).length;
+    console.warn("pending check",_type,n_pending);
+    if(n_pending == 0) product_type_input.removeClass("pending");
+    if(n_new>0) {
+      // Turn on the product label.
+      // product_type_label.removeClass('unretrieved').addClass('retrieved');
+      // Pulse the label.
+      product_type_input.removeClass('unretrieved');
+      label = product_type_input.siblings("label")[0];
+      label.classList.remove("pulse");
+      void label.offsetWidth; // allows pulse retriggering see https://codepen.io/chriscoyier/pen/EyRroJ
+      label.classList.add("pulse");
+    }
+    if(n_new>0 && n_retrieved_before==0) {
+      // We don't have one type selected as a radio box. That ain't good... select one.
+      $('input.retrieved',product_type_elem).first().click();
+      gStateMachine.Trigger('change-'+_type);
+    }
   }
   
   // Glow on/off for activated types.
@@ -184,8 +207,8 @@ ControlOverlay.prototype.OnChangeProductType = function(ev)
   // Toggle this type of thing on/off
   var tgt = $(ev.currentTarget);
   var _type = tgt.data('product-type');
-  gStateMachine.Trigger('toggle-'+_type);
   console.log("OnChangeProductType",_type);
+  gStateMachine.Trigger('toggle-'+_type);
 }
 
 ControlOverlay.prototype.OnChangeProductName = function(ev)
@@ -193,13 +216,17 @@ ControlOverlay.prototype.OnChangeProductName = function(ev)
   var tgt = $(ev.currentTarget);
   var _type = tgt.data('product-type');
   var _name = tgt.data('product-name');
-  var product_type_input =  $("input.product-type").filter(function(){return $(this).data('product-type')==_type;}).prop("checked","checked");
+  var product_type_input =  $("input.product-type").filter(function(){return $(this).data('product-type')==_type;});
+  
   // do we have it?
   var thing = ((gRecord || {})[_type] || {})[_name];
   if(thing) // it exists
     gStateMachine.Trigger('change-'+_type);
-  else
-    RequestPiece('/'+_type+'/'+_name);
+  else {
+    product_type_input.addClass("pending").prop("checked","checked");
+    tgt.addClass("pending");
+    RequestPiece('/'+_type+'/'+_name);    
+  }
 }
 
 

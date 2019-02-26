@@ -64,23 +64,25 @@ function samweb()
   });
 }
 
-// test samweb
-samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
-. then( (o)=>{console.log(o);}  )
-. catch();
+// Samweb test.
+// samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+// . then( (o)=>{console.log(o);}  )
+// . catch();
 
-// test file loading
-var default_event = {};
-var default_event_text = fs.readFileSync("static/default_event.json");
-console.time("parse json");
-default_event = JSON.parse(default_event_text);
-console.timeEnd("parse json")
-console.time("redole json");
-for(i in default_event) {
-  var bit = JSON.stringify(default_event[i]);
-  console.log(i,bit.length);
-}
-console.timeEnd("redole json");
+// // test file loading
+// // This takes only 12 ms to parse and 6 ms to redole (on mac). That indicates it makes sense for Node to read saved files and then piece them out just
+// // like the C++ code!
+// var default_event = {};
+// var default_event_text = fs.readFileSync("static/default_event.json");
+// console.time("parse json");
+// default_event = JSON.parse(default_event_text);
+// console.timeEnd("parse json")
+// console.time("redole json");
+// for(i in default_event) {
+//   var bit = JSON.stringify(default_event[i]);
+//   console.log(i,bit.length);
+// }
+// console.timeEnd("redole json");
 
 
 
@@ -244,6 +246,7 @@ app.get("/server/serve_event.cgi",function(req,res,next){
 });
 
 
+// Pug templates.
 var pug = require('pug');
 app.set('view engine', 'pug')
 app.set('views','pug');
@@ -251,10 +254,28 @@ app.get('/', function (req, res) {
   res.render('argo', { pagename: 'argo' })
 })
 
-app.use(express.static(__dirname + '/static'));
-app.use('/datacache',express.static(config.datacache));
 
-// FIXME: cleanup datacache
+
+
+// CSS precompiler. needs to come before /static call
+var compileSass = require('express-compile-sass');
+app.use('/css',compileSass({
+    root: __dirname+'/scss',
+    sourceMap: true, // Includes Base64 encoded source maps in output css
+    sourceComments: true, // Includes source comments in output css
+    watchFiles: true, // Watches sass files and updates mtime on main files for each change
+    logToConsole: false // If true, will log to console.error on errors
+}));
+app.use('/css',express.static(__dirname + '/scss'));
+
+
+// static files.
+app.use(express.static(__dirname + '/static'));
+
+app.use("/server",express.static(__dirname+'/static'));
+
+// Datacache files
+app.use('/datacache',express.static(config.datacache));
 async function clean_datacache()
 {
 
@@ -287,9 +308,12 @@ async function clean_datacache()
     
 }
 
+// clean at program start.
 clean_datacache();
 
 console.log("dirname is ",__dirname);
+
+// File browser
 var browser = require("./browser.js");
 app.use("/browser/",browser.router);
 app.use("/server/file_browser.cgi",browser.router);
