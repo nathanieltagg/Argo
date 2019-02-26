@@ -79,7 +79,21 @@ function DataSource()
 
 DataSource.prototype.NewRecord = function()
 {
+  var entry = ((gRecord || {}).source || {}).entry;
+  var file = ((gRecord || {}).source || {}).file;
+  $("#inFeEntry").val(entry);
+  if($('#inEntryOrEvent').val()=="Event" && gRecord.header.event) $("#inFeEntry").val(gRecord.header.event);
+  $('#inFilename').val(file);
   
+  $(".inRun").val(((gRecord || {}).source || {}).run);
+  $(".inSubrun").val(((gRecord || {}).source || {}).subrun);
+  
+  // Title of the window, also used for bookmarking
+  if(gRecord.header) {
+    if(gRecord.header.run) {
+      window.document.title = "Argo "+ gRecord.header.run + "|"+gRecord.header.subrun+"|"+gRecord.header.event;
+    }
+  }
   
   if(gUrlToThisEvent) gUrlToLastEvent = gUrlToThisEvent;
   gUrlToThisEvent = window.location;
@@ -104,15 +118,7 @@ DataSource.prototype.NewRecord = function()
   
   gUrlToThisEvent = window.location.protocol + "//" + window.location.hostname + path + par + "#" + hash;
   var fasturl     = window.location.protocol + "//" + window.location.hostname + fastpath + par +  "#" + hash;
-  
-  
-   // baseurl + "?"
-   //                  +"filename="+gFile
-   //                  +"&entry="+gEntry
-   //                  // +"&slice="+gCurrentSlice
-   //                  ;    
-   // Doing it this way is less efficient, but it prevents XSS attacks in the hash part of the URL
- 
+   
   $('a.linktothis').attr('href',gUrlToThisEvent);
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Argo Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
 };
@@ -122,8 +128,9 @@ function DoNextEvent()
 {
   console.log("DoNextEvent");
   // Check bounds - are we about to hit end of file?
-  var n = gRecord.source.numEntriesInFile;
-  if(n && gEntry+1 >= n) {
+  var n = ((gRecord || {}).source || {}).numEntriesInFile;
+  var entry = ((gRecord || {}).source || {}).entry;
+  if(n && entry+1 >= n) {
     $('#warning-dialog-message').html("You are at the last entry of the file/subrun. Can't advance.");
     $( "#warning-dialog" ).dialog({
           modal: true,
@@ -132,13 +139,14 @@ function DoNextEvent()
           }
     });
   } else {
-    $.bbq.pushState({entry: gEntry+1}, 0); // merge into current hash.
+    $.bbq.pushState({entry: entry+1}, 0); // merge into current hash.
   }
 }
 
 function DoPrevEvent()
 {  
-  if(gEntry <= 0) {
+  var entry = ((gRecord || {}).source || {}).entry;
+  if(entry <= 0) {
     $('#warning-dialog-message').html("You are at the first entry of the file/subrun. Can't move back.");
     $( "#warning-dialog" ).dialog({
           modal: true,
@@ -147,7 +155,7 @@ function DoPrevEvent()
           }
     });
   } else {
-    $.bbq.pushState({entry: gEntry-1}, 0); // merge into current hash.
+    $.bbq.pushState({entry: entry-1}, 0); // merge into current hash.
   }
 }
 

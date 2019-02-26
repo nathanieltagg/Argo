@@ -87,6 +87,9 @@ function HitHistogram( element  )
 
 HitHistogram.prototype.NewRecord = function()
 {
+  var sel = $('#ctl-hit-color-scale option:selected').val();
+  gHitColorScaler.SetScale(sel);
+  
   var hits = GetSelected('hits');
 
   // Get unique fields of an array.

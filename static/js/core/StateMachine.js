@@ -27,7 +27,7 @@ function StateMachine()
   
   this.stats = {};
   var self = this;
-  $(document).on("statemachine:trigger", function(ev,arg){self.DoTrigger(arg);} );
+  $(document).on("statemachine:trigger", this.DoTrigger.bind(this) );
 }
 
 
@@ -70,7 +70,7 @@ StateMachine.prototype.BindObj = function( trigType, obj, callback )
 //  Trigger() : call all registered callbacks.
 //
 
-StateMachine.prototype.SimplifyQueue = function(  )
+StateMachine.prototype.SimplifyQueue = function( callstack )
 {
   // Remove redundant entries from an event queue.
   var newlist=[];
@@ -79,25 +79,26 @@ StateMachine.prototype.SimplifyQueue = function(  )
     var m = newlist.length;
     var add = 1;
     for(var j=0;j<m;j++) {
-      if(this.eventQueue[i]===newlist[j]) add = 0;
+      if(this.eventQueue[i].trigType===newlist[j].trigType) add = 0;
       // console.warn("removing from statemachine queue:",this.eventQueue[i]);
     }
-    if(add>0) newlist.push(this.eventQueue[i]);
-    // else console.warn("removing from statemachine queue:",this.eventQueue[i]);
+    newlist.push(this.eventQueue[i]);
+    if(add>0) {}
+    else console.warn("Redundant event in statemachine queue:",this.eventQueue[i]);
   }
   this.eventQueue = newlist;
 };
 
-StateMachine.prototype.Trigger = function( trigType )
+StateMachine.prototype.Trigger = function( trigType, data )
 {
-  console.log('StateMachine::Trigger',trigType);
+  // console.warn('StateMachine::Trigger',trigType);
   // Queue a callback.
-  $( document ).trigger( "statemachine:trigger", [ trigType ] );
+  $( document ).trigger( "statemachine:trigger", [ trigType, data, Error().stack ] );
 
   
 }
 
-StateMachine.prototype.DoTrigger = function( trigType )
+StateMachine.prototype.DoTrigger = function( rawEvent, trigType, data, callstack )
 {
   // New logic:
   // We don't want trigger cascades:
@@ -112,7 +113,7 @@ StateMachine.prototype.DoTrigger = function( trigType )
   // Instead, let's create a queue of events we want to have happen.
   //
   console.log('StateMachine::DoTrigger',trigType);
-  this.eventQueue.push(trigType);
+  this.eventQueue.push({trigType:trigType, data:data, trigger_callstack:callstack});
 
   if(this.eventExecuting) {
     // console.log("Pushing " + trigType + " into event queue for delayed execution.");
@@ -126,12 +127,13 @@ StateMachine.prototype.DoTrigger = function( trigType )
     // remove redudant entries in the eventQueue.
     this.SimplifyQueue();
 
-    var t = this.eventQueue.shift();
+    var ev =  this.eventQueue.shift();
+    var t = ev.trigType;
     
     //console.debug("StateMachine::Trigger -> ",trigType);
 
     if(!(t in this.triggers)) {
-      console.warn("StateMachine::Trigger called with trigger type ",t," which has no registrants. Maybe a typo?");
+      console.warn("StateMachine::Trigger called with trigger type ",t," which has no registrants. Maybe a typo? Triggered at ",callstack);
       continue; // skip to next event.
     }
     //console.trace();
@@ -144,7 +146,7 @@ StateMachine.prototype.DoTrigger = function( trigType )
       // console.time("Trigger"+i);
       // console.log("Running trigger ",this.triggers[t][i]);
       var cb = this.triggers[t][i];
-      cb();
+      cb(ev.data);
       // console.timeEnd("Trigger"+i);
     }
     var endTime = $.now();

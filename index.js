@@ -19,6 +19,7 @@ var defaults = {
   datacache: __dirname + "/datacache",
   datacache_max_files: 100,
   datacache_max_age:   3600000, // one hour, in ms
+  sam_arguments :["-e","uboone"]
 }
 
 
@@ -48,19 +49,38 @@ function samweb()
   // Utility function to call samweb, assuming it's in the current PATH (set up by sam_web_client)
   //
   //
-  
-  var sam_args = ["-e","uboone",...arguments];
+  console.time('samweb');
+  var sam_args = [...config.sam_arguments,...arguments];
   return new Promise(function(resolve,reject) {
     spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
       if (error) {
         // console.log("samweb error",error);
         reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
       } else {
+        console.timeEnd('samweb');
         resolve(stdout.trim());
       }
     });
   });
 }
+
+// test samweb
+samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+. then( (o)=>{console.log(o);}  )
+. catch();
+
+// test file loading
+var default_event = {};
+var default_event_text = fs.readFileSync("static/default_event.json");
+console.time("parse json");
+default_event = JSON.parse(default_event_text);
+console.timeEnd("parse json")
+console.time("redole json");
+for(i in default_event) {
+  var bit = JSON.stringify(default_event[i]);
+  console.log(i,bit.length);
+}
+console.timeEnd("redole json");
 
 
 
@@ -75,7 +95,7 @@ var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDefla
 app.ws('/server/stream-event', attach_stream);
 function attach_stream(ws,req)
 {
-  
+  console.log("attach stream",req.query);
   // Utility function
   function send_error_message(message) {
     var p = {"error":message};
@@ -98,6 +118,10 @@ function attach_stream(ws,req)
   var alive = true;
   glob(event_req.pathglob,  function (er, files) {
     console.log("found files",files);
+    if(files.length==0) {
+      send_error_message("No such file exists ("+event_req.pathglob+")");
+      return;
+    }
     event_req.filename = path.resolve(files[0]);
     
     if(fs.existsSync(event_req.filename)) {
@@ -182,7 +206,7 @@ function attach_stream(ws,req)
 
 
 app.get("/server/serve_event.cgi",function(req,res,next){
-  console.log(req.query);
+  console.log("serve_event.cgi",req.query);
   var event_req = req.query;
   
   event_req.pathglob= "";

@@ -2,158 +2,216 @@
 // Functions to handle micrboone json data.
 //
 
-// Global bookmarks into data record.
-gCurObjNames = {
-  raw: null,
-  cal: null,
-};
-gHitsListName = null;
-gMCParticlesListName = null;
-gMCTruthListName = null;
-gOpPulsesListName = null;
+$(function(){
+  gStateMachine.Bind('preNewPiece',SetHV);
+});
 
-function DoInitialBookmarking()
+
+
+function RecieveData(o)
 {
-  gCurName = {
-    raw: null,
-    cal: null,
-  };
-  gHitsListName = null;
-  gOphitsListName=null;
-  gOpflashesListName=null;
-  gOpPulsesListName=null;
-  gMCParticlesListName = null;
-  gMCTruthListName = null;
-  
-  gSelectedTrack = null;
-  
-  var i;
-  
-  // Attach index numbers to EVERYTHING.
-  // This ensures that anything that is in an array has an _idx property set to that array's element number.
-  // Pretty cool, and only takes a ~30 milliseconds
-  // has_list stuff tries to only label things that have arrays of objects.
-  // Argo3 update: ignore things that start with underscore
-  console.time("indexing");
-  function indexArraysIn(o,owner,name) {
-    var has_list = false;
-    if(name && name[0]=='_') return false;
-    if(o instanceof Object){
-      var j;
-      // console.log ('recursing',name);
-      if(o instanceof Array) {        
-        for(j=0;j<o.length;j++) if(o[j] instanceof Object) {o[j]._idx = j; o[j]._owner = name;}
-      } else {
-        for(j in o){
-          has_list |= indexArraysIn(o[j],name,j);  
-        }
-      }
-      // if(name)  o._name  = name;
-      // if(owner) o._owner = owner;
-    }
-    return has_list;
-  }
-  indexArraysIn(gRecord,null,null);
-  console.timeEnd("indexing");
-  
-  
-  if(gRecord.raw) {
-    for(i in gRecord.raw) { // element can be set to null; just key exists if not loaded.
-      if(gRecord.raw[i] && gRecord.raw[i].wireimg_encoded_tiles) {gCurName.raw = i; break;}
-    }
-  }
-
-  if(gRecord.cal) {
-    for(i in gRecord.cal) { 
-      if(gRecord.cal[i] && gRecord.cal[i].wireimg_encoded_tiles) {gCurName.cal =i; break;}
-    }
-  }
-
-
-  $('#ctl-HitLists').empty();
-  if(gRecord.hits) {
-    for(i in gRecord.hits) { 
-      $('#ctl-HitLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-      if(gRecord.hits[i].length > 0) gHitsListName = i; // Select the first list that has nonzero entries.
-    }
-  }
-
-  $('#ctl-ClusterLists').empty();
-  if(gRecord.clusters) {
-    for(i in gRecord.clusters) { 
-      $('#ctl-ClusterLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-    }
-  }
-
-  $('#ctl-EndpointLists').empty();
-  if(gRecord.endpoint2d) {
-    for(i in gRecord.endpoint2d) { 
-      $('#ctl-EndpointLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-    }
-  }
-
-
-  $('#ctl-SpacepointLists').empty();
-  for(i in gRecord.spacepoints) { 
-    // Sanitize name a little: remove everything before and including first underscore.
-    $('#ctl-SpacepointLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-  }
-
-  $('#ctl-TrackLists').empty();
-  for(i in gRecord.tracks) { 
-    $('#ctl-TrackLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-  }
-
-  $('#ctl-ShowerLists').empty();
-  for(i in gRecord.showers) { 
-    $('#ctl-ShowerLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-  }
-
-  $('#ctl-PFParticleLists').empty();
-  for(i in gRecord.pfparticles) { 
-    $('#ctl-PFParticleLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-  }
-  
-  if(gRecord.oppulses) {
-    for(i in gRecord.oppulses) { 
-      gOpPulsesListName = i;
-      if(gRecord.oppulses[i].length > 0) break; // Select the first list that has nonzero entries.
-    }
-  }
-
-  $('#ctl-OpHitLists').empty();
-  for(i in gRecord.ophits) { 
-    $('#ctl-OpHitLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-  }
-
-  $('#ctl-OpFlashLists').empty();
-  for(i in gRecord.opflashes) { 
-    $('#ctl-OpFlashLists').append("<option value='"+i+"'>"+i.replace(/^[^_]*_/,"")+"</option>");
-  }
-
-  if(gRecord.mc) {
-    if(gRecord.mc.gtruth) {
-      for(i in gRecord.mc.gtruth) { 
-        gMCTruthListName = i;
-        if(gRecord.mc.gtruth[i].length > 0) break; // Select the first list that has nonzero entries.
-      }
-    }
-
-    if(gRecord.mc.particles) {
-      for(i in gRecord.mc.particles) { 
-        gMCParticlesListName = i;
-        if(gRecord.mc.particles[i].length > 0) break; // Select the first list that has nonzero entries.
-      }
-    }
+  console.warn("RecieveData",Object.keys(o));
+  if("progress" in o) {
+    $('.progress-status').text(o.state);
+    console.log("onmessage PROGRESS",o);
+    // $('#main-circleprogress').circleProgress('value', o.progress*100);
+    // $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
     
   }
+  else if("piece" in o) {
+    console.warn("piece with components",Object.keys(o.piece));
+    gServing = o;
+    GotPiece(o);
+    // $('#main-circleprogress').circleProgress('value', 0);
+    // $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
+  }else if("record" in o) {
+    console.warn("full record",Object.keys(o.piece));
+    gServing = o;
+    GotRecord(o);
+    // $('#main-circleprogress').circleProgress('value', 0);
+    // $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
+  }else if("error" in o) {
+      $('#status').attr('class', 'status-error');
+      $("#status").text('serve-event error: '+o.error);
+  }else {
+    console.error("UNKNOWN MESSAGE TYPE",event.data,o)
+  }
+};
+
+
+function indexArraysIn(o,owner,name) {
+  var has_list = false;
+  if(name && name[0]=='_') return false;
+  if(o instanceof Object){
+    var j;
+    // console.log ('recursing',name);
+    if(o instanceof Array) {        
+      for(j=0;j<o.length;j++) if(o[j] instanceof Object) {o[j]._idx = j; o[j]._owner = name;}
+    } else {
+      for(j in o){
+        has_list |= indexArraysIn(o[j],name,j);  
+      }
+    }
+  }
+  return has_list;
+}
+
+
+function GotRecord(o) 
+{
+  if(o.record.error) { 
+    $('#status').attr('class', 'status-error');
+    $("#status").text('serve-event error: '+o.record.error);
+    return;
+  }
   
+  gRecord = {event_descriptor:o.event_descriptor};
+  gStateMachne.Trigger('newRecord');
+  indexArraysIn(o);
+  gRecord = o.record;
+  gStateMachine.Trigger('preNewPiece'); // Special trigger for those objects that need to fire first.  
+  gStateMachine.Trigger('newPiece');
+  gStateMachine.Trigger('recordChange'); // FIXME: Want to remove this
+  
+}
+
+function GotPiece(o)
+{
+  // NB Oliver Steele pattern for nested objects
+  // const name = ((user || {}).personalInfo || {}).name;
+  console.log("GotPiece",o);
+  if(!o.event_descriptor) console.error("No event description in piece",o);
+  if(!o.piece) console.error("No piece in piece!");
+  gRecord = gRecord || {};
+  if(gRecord.event_descriptor != o.event_descriptor) {
+    console.warn("New event seen!",gRecord,o);
+    gRecord = {event_descriptor:o.event_descriptor};
+    gStateMachine.Trigger('newRecord');
+    
+  }
+  indexArraysIn(o.piece);
+    
+  for(n1 in o.piece) {
+    gRecord[n1] = gRecord[n1] || {}
+    for(n2 in o.piece[n1]) {
+      gRecord[n1][n2] = o.piece[n1][n2];
+    }
+  }
+  gStateMachine.Trigger('newPiece');
+  gStateMachine.Trigger('recordChange'); // FIXME: Want to remove this
+  
+  
+}
+
+
+function SetHV()
+{
+  AutoFitHitTrackOffsets();
+ 
   if(gRecord.hv && gRecord.hv.avg) {
     $('#ctl-high-voltage').val(gRecord.hv.avg/1000.);
   }
   var hv = parseFloat($('#ctl-high-voltage').val()) || 128.0;
   gGeo.SetHV(hv);
   
-  RestoreControlSettings("save",$('div.per-event-controls'));
+}
 
+function AutoFitHitTrackOffsets()
+{
+  // attempt to figure out the high voltage setting, and hit/track offsets from the data.
+  console.warn('AutoFitHitTrackOffsets');
+
+  console.time("AutoFitHitTrackOffsets");
+  
+  // Requires hits
+  var max_all_tdc = -1e99;
+  if(gRecord.hits) {
+    for( hitname in gRecord.hits ) {
+      for(var i=0;i<gRecord.hits[hitname].length; i++) {
+        var hit = gRecord.hits[hitname][i];
+        if(hit.t>max_all_tdc) max_all_tdc = hit.t;
+      }
+    }    
+  }
+  // Judgement call: if the hit list doesn't extend all the way to 9600, this is probably a processed reco file, and there's a 2400 tick offset.
+  if(max_all_tdc < 6401) 
+    $('#ctl-shift-hits-value').val(2400);
+  else  
+    $('#ctl-shift-hits-value').val(0);
+
+  // Requires tracks.
+  var slopes = [];
+  var offsets = [];
+  if(gRecord.tracks && gRecord.associations) {
+    for( trkname in gRecord.tracks ) {
+      console.warn(trkname);
+      if( gRecord.associations[trkname]) {
+        var types = Object.keys(gRecord.associations[trkname]);
+        var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
+        if(hitname) {
+          var hitlist = gRecord.hits[hitname];
+          var max_all_tdc = 0;
+          for(var i=0;i<hitlist.length;i++) {
+            var hit = hitlist[i];
+            if(hit.t>max_all_tdc) max_all_tdc = hit.t;
+          }
+          
+          console.warn(hitname);
+          for(var itrk = 0; itrk<gRecord.tracks[trkname].length; itrk++) {
+            trk = gRecord.tracks[trkname][itrk];
+            var min_x = 1e99;
+            var max_x = -1e99;
+            for(var ipt = 0;ipt<trk.points.length; ipt++) {
+              var x = trk.points[ipt].x;
+              if(x<min_x) min_x = x;
+              if(x>max_x) max_x = x;
+            }
+            var start =  trk.points[0];
+            var end   =  trk.points[trk.points.length-1];
+          
+            // Attempt auto-fit HV and track-to-hit offset.
+            var hitids  = gRecord.associations[trkname][hitname][itrk];
+            // find min/max tdc.
+            var min_tdc = 1e99;
+            var max_tdc = -1e99;
+            var min_x = (start.x<end.x)?start.x:end.x;
+            var max_x = (start.x<end.x)?end.x:start.x;
+            if(max_x - min_x < 20) continue;
+            for(var i=0;i<hitids.length;i++) { 
+              var hit = hitlist[hitids[i]];
+              if(hit.t < min_tdc) min_tdc = hit.t;
+              if(hit.t > max_tdc) max_tdc = hit.t;
+            }
+            // now interpolate.      
+            console.log("min_tdc",min_tdc,'min_x',min_x);
+            console.log("max_tdc",max_tdc,'max_x',max_x);
+            var slope = (max_tdc-min_tdc)/(max_x-min_x);
+            var offset = min_tdc - slope*min_x;
+            if(slope>10 && slope < 30 && offset>0) {
+              slopes.push(slope);
+              offsets.push(offset);
+                
+            }
+            // t = mx + b
+            // t1 = m x1 + b
+            console.log("slope = ",slope, 'hv gives',1./gGeo.drift_cm_per_tick);
+            console.log("offset = ",offset,"tdc");
+          }
+        }
+      }
+    }
+  }
+  console.log(slopes,offsets);
+  if(slopes.length>0) {
+    // var avgslope = slopes.reduce((a,b)=>{return a+b;},0) / slopes.length;
+    // var avgoffset = offsets.reduce((a,b)=>{return a+b;},0) / offsets.length;
+    // console.log("averages:",avgslope,avgoffset);
+    var medslope = slopes[parseInt(slopes.length/2)];
+    var medoffset = offsets[parseInt(offsets.length/2)];
+    console.log("medians:",medslope,medoffset);
+    gGeo.drift_cm_per_tick = 1.0/medslope;  
+    $('#ctl-track-shift-value').val(parseInt($('#ctl-shift-hits-value').val())+parseInt(medoffset));
+  }
+  console.timeEnd("AutoFitHitTrackOffsets");
+  
 }

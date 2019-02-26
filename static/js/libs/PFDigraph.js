@@ -61,7 +61,7 @@ PFDigraph.prototype.DoClick = function(node,label)
  //    }
  //  );
  //  gStateMachine.Trigger("changeSelectedTrajectories");
-  ChangeSelection({obj: node.data.particle, type: "mcparticle", collection: gRecord.mc.particles});
+  ChangeSelection({obj: node.data.particle, type: "pfparticle", collection: gRecord.pfparticles});
 };
 
 PFDigraph.prototype.HoverChanged = function() 

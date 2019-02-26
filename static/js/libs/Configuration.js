@@ -35,9 +35,7 @@ $(function(){
   );
   $('#ctl-hitsum-circle').change(function(ev) { $('#hitsum').hide(); });
   
-  
-  gStateMachine.Bind('recordChange',CheckWireData);
- 
+   
 
 
 
@@ -50,10 +48,6 @@ $(function(){
   });
   
 
-
-  /// Important: callback to load wire data if user re-checks the box.
-  $('#ctl-show-wireimg').change(CheckWireDataReload);
-  
   // prevent controls from capturing the keyboard events.  Remove focus if gathereed.
   $('#config-port input:checkbox').on("focus",function(ev){this.blur();});
   $('#config-port input:text').on("change",function(ev){this.blur();});
@@ -63,51 +57,7 @@ $(function(){
 
 });
 
-function CheckWireDataReload()
-{
-  var turning_on = $('#ctl-show-wireimg').is(":checked");
-  if(turning_on) {
-    // Does the event have any wiredata?
-    // Does the event have any VALID wiredata?
-    var lists = 0;
-    var valid = 0;
-    var i;
-    if(!gRecord) return;
-    if(gRecord.cal) { for(i in gRecord.cal) { lists++; if(gRecord.cal[i] && gRecord.cal[i].wireimg_encoded_tiles) valid++; } }
-    if(gRecord.raw) { for(i in gRecord.raw) { lists++; if(gRecord.raw[i] && gRecord.raw[i].wireimg_encoded_tiles) valid++; } }
-    // alert("lists: " + lists + " valid:"+valid);
-    if(lists>0 && valid===0) {
-      // We need to go back to the server.
-      // Don't push a hashchange; we need to be more
-      ChangeEvent(); //QueryServer();
-    }
-  }
-}
 
-function CheckWireData()
-{
-  if(!gRecord) return;
-  if(gCurName.cal && gRecord.cal[gCurName.cal].wireimg_encoded_tiles) {
-    $('#ctl-show-wireimg-cal').prop('disabled', false);
-  } else {
-    $('#ctl-show-wireimg-cal').prop('disabled', true);
-  }    
-
-  if(gCurName.raw && gRecord.raw[gCurName.raw].wireimg_encoded_tiles) {
-    $('#ctl-show-wireimg-raw').prop('disabled', false);
-  } else {
-    $('#ctl-show-wireimg-raw').prop('disabled', true);
-  }
-
-  // Select the correct one.
-  if(gCurName.raw && !gCurName.cal && $('#ctl-show-wireimg-cal').is(":checked")) {
-    $('#ctl-show-wireimg-raw').prop("checked",true);
-  }
-
-  if(gCurName.cal && !gCurName.raw &&  $('#ctl-show-wireimg-raw').is(":checked")) {
-    $('#ctl-show-wireimg-cal').prop("checked",true);
-  }
-}
 
 
 

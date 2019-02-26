@@ -46,7 +46,7 @@ MCDigraph.prototype.DoClick = function(node,label)
  //    }
  //  );
  //  gStateMachine.Trigger("changeSelectedTrajectories");
-  ChangeSelection({obj: node.data.particle, type: "mcparticle", collection: gRecord.mc.particles});
+  ChangeSelection({obj: node.data.particle, type: "mcparticle", collection: gRecord.mcparticles});
 };
 
 MCDigraph.prototype.HoverChanged = function() 
@@ -66,9 +66,7 @@ MCDigraph.prototype.NewRecord = function()
 {
   $(this.element).empty();
   this.st = null;
-  if(!gRecord) return;
-  if(!gRecord.mc) return;
-  var particles = gRecord.mc.particles[gMCParticlesListName];
+  var particles = GetSelected("mcparticles");
   
   if(!particles || particles.length === 0) {
     $(this.element).hide();
@@ -82,7 +80,7 @@ MCDigraph.prototype.NewRecord = function()
   //   particle_by_track_id[particles[it].ftrackId] = particles[it];
   //   console.log(particles[it].ftrackId,"->",particles[it].fmother);
   // };
-  // particle_by_track_id[0] =  gRecord.mc.gtruth[0];
+  // particle_by_track_id[0] =  gRecord.gtruth[0];
   
   function nodeNameFromMCParticle(p){
     if(!p) return "-error-";
@@ -139,13 +137,13 @@ MCDigraph.prototype.NewRecord = function()
   root.name = "MC Truth";
   
   // Add MCTruth nodes to the root node.
-  for(var truthtype in gRecord.mc.mctruth) {
+  for(var truthtype in gRecord.mctruth) {
     var tname = truthtype.split('_')[1]; // Get generator name
     // create a node for each generator class
-    var typenode = { id: tname, data: gRecord.mc.mctruth[truthtype], children:[], name: tname };
+    var typenode = { id: tname, data: gRecord.mctruth[truthtype], children:[], name: tname };
 
-    for(var imctruth = 0; imctruth<gRecord.mc.mctruth[truthtype].length; imctruth++) {
-      var mctruth = gRecord.mc.mctruth[truthtype][imctruth];
+    for(var imctruth = 0; imctruth<gRecord.mctruth[truthtype].length; imctruth++) {
+      var mctruth = gRecord.mctruth[truthtype][imctruth];
       // create a node for each generator
       var mctruthnode = { id: tname+imctruth, data: mctruth, name: tname+" "+imctruth, children:[]};
       typenode.children.push(mctruthnode);
@@ -168,7 +166,7 @@ MCDigraph.prototype.NewRecord = function()
     root.children.push(typenode);
   }
   
-  // var inters = gRecord.mc.gtruth[gMCTruthListName];
+  // var inters = gRecord.gtruth[gMCTruthListName];
   // if(inters && inters[0]) {
   //   var inter = inters[0];
   //   var incE = inter.fProbeP4_fE || inter.fProbeP4.E; // Newer and older versions
@@ -300,7 +298,7 @@ MCDigraph.prototype.NewRecord = function()
         $('.mc-jit-node-hover').removeClass("mc-jit-node-hover");
         $('#'+node.id).addClass("mc-jit-node-hover");
         console.log("HOVER:",node,eventInfo, e);
-        ChangeHover({obj: node.data.particle, type: "mcparticle", collection: gRecord.mc.particles});
+        ChangeHover({obj: node.data.particle, type: "mcparticle", collection: gRecord.mcparticles});
       },
       onMouseLeave: function(node,eventInfo, e) {
         $('#'+node.id).removeClass("mc-jit-node-hover");        

@@ -58,24 +58,16 @@ function TriDView( element, options ){
 
   var self = this;
  
- 
-  this.ctl_show_hits    =  this.GetBestControl(".show-hits");
-  this.ctl_show_trid_hits    =  this.GetBestControl(".show-trid-hits");
-  this.ctl_show_clus    =  this.GetBestControl(".show-clusters");
-  this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
-  this.ctl_show_showers =  this.GetBestControl(".show-showers");
-  this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
-  this.ctl_show_mc      =  this.GetBestControl(".show-mc");
   this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");  
   this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
 
-  $(this.ctl_show_hits)     .change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_trid_hits).change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_clus)     .change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_spoints)  .change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_showers)  .change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_tracks)   .change(function(ev) { return self.Rebuild(); });
-  $(this.ctl_show_mc     )   .change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-hits')       ).change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-trid_hits'  )).change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-clusters')   ).change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-spacepoints')).change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-showers')    ).change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-tracks')     ).change(function(ev) { return self.Rebuild(); });
+  $(this.GetBestControl('.show-mcparticles')).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Rebuild(); });
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(); });
@@ -83,8 +75,8 @@ function TriDView( element, options ){
 
   gStateMachine.Bind('change-tracks', this.Rebuild.bind(this,false) );
   gStateMachine.Bind('change-spacepoints', this.Rebuild.bind(this,false) );
+  gStateMachine.Bind('change-hits', this.Rebuild.bind(this,false) );
   
- 
   $(this.element).children().on("focus",function(ev){this.blur();});
  
   this.ResetView();
@@ -100,9 +92,10 @@ TriDView.prototype.HoverChange = function()
   this.Draw(); return;
   // Only need a redraw if the over change affected something we care about.
   switch(gHoverState.type) {
-    case "hit": 
-      if ($(this.ctl_show_hits).is(":checked") && $(this.ctl_show_trid_hits).is(":checked") ) this.Draw(); 
-      break;
+    // Turning this off: it's too nasty.
+    // case "hit":
+    //   if ($(this.GetBestControl(".show-hits")).is(":checked") && $(this.GetBestControl(".show-trid-hits")).is(":checked") ) this.Draw();
+    //   break;
     // case "cluster":
     case "spacepoint":
     case "track":
@@ -111,9 +104,9 @@ TriDView.prototype.HoverChange = function()
     default: break;
   }
   switch(gLastHoverState.type) {
-    case "hit": 
-      if ($(this.ctl_show_hits).is(":checked") && $(this.ctl_show_trid_hits).is(":checked") ) this.Draw(); 
-      break;
+    // case "hit":
+    //   if ($(this.GetBestControl(".show-hits")).is(":checked") && $(this.GetBestControl(".show-trid-hits")).is(":checked") ) this.Draw();
+    //   break;
     // case "cluster":
     case "spacepoint":
     case "track":
@@ -133,13 +126,13 @@ TriDView.prototype.Rebuild = function ()
   this.CreateFrame();
   if(!gRecord) return;
 
-  if ($(this.ctl_show_hits).is(":checked") &&
-      $(this.ctl_show_trid_hits).is(":checked") ) this.CreateHits();
-  if ($(this.ctl_show_clus).is(":checked"))    this.CreateClusters();
-  if ($(this.ctl_show_spoints).is(":checked")) this.CreateSpacepoints();
-  if ($(this.ctl_show_tracks ).is(":checked")) this.CreateTracks();
-  if ($(this.ctl_show_showers).is(":checked")) this.CreateShowers();
-  if ($(this.ctl_show_mc     ).is(":checked")) this.CreateMC();
+  if ($(this.GetBestControl(".show-hits")).is(":checked") &&
+      $(this.GetBestControl(".show-trid-hits")).is(":checked") ) this.CreateHits();
+  if ($(this.GetBestControl(".show-clusters")).is(":checked"))    this.CreateClusters();
+  if ($(this.GetBestControl(".show-spacepoints")).is(":checked")) this.CreateSpacepoints();
+  if ($(this.GetBestControl(".show-tracks") ).is(":checked")) this.CreateTracks();
+  if ($(this.GetBestControl(".show-showers")).is(":checked")) this.CreateShowers();
+  if ($(this.GetBestControl(".show-mcparticles") ).is(":checked")) this.CreateMC();
 
   this.CreateCrtHits();
   this.CreateAuxDets();
@@ -417,10 +410,7 @@ TriDView.prototype.CreateSpacepoints = function()
 
 TriDView.prototype.CreateMC = function()
 {
-  if(!gRecord) return;
-  if(!gRecord.mc) return;
-  if(!gMCParticlesListName) return;
-  var particles = gRecord.mc.particles[gMCParticlesListName];
+  var particles = GetSelected("mcparticles");
   if(!particles) return;
   var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
   var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");

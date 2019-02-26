@@ -1,4 +1,4 @@
-
+"use strict";
 
 // Create the mapper objects.
 $(function(){
@@ -21,12 +21,30 @@ $(function(){
   
 });
 
+/// Do this even before the start-of-document functions.
+// Get optimal tilesize.
+// Create openGL engine.
+var kMaxTileSize = 3048;
+var testGLcanvas = document.createElement('canvas');
+var testGL = testGLcanvas.getContext('webgl');
+if(testGL) kMaxTileSize = testGL.getParameter(testGL.MAX_TEXTURE_SIZE);
+testGL = null; // release
+testGLcanvas = null;  //release
+  
+
+// Debugging functionality for gl contexts
+function logGLCall(functionName, args) {   
+   console.log("gl." + functionName + "(" + 
+      WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
+} 
+
+
 
 function CreateGLMappers()
 {
   if(!gRecord) return;
   // Create the tiled images. Do only for full images (not lowres)
-  for(_type of ["wireimg-lowres", "wireimg"]) {
+  for(var _type of ["wireimg-lowres", "wireimg"]) {
     if(gRecord[_type]) 
       for(_name in gRecord[_type]) {
         if(! gRecord[_type][_name]._glmapper) {
@@ -338,8 +356,8 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   // setTimeout(this.Render.bind(this),500);
   gStateMachine.Trigger('colorWireMapsChanged');  
 
-  console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
-  console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
+  // console.log("Time to finish drawing via full-canvas:", performance.now() - gTimeStats_RecordChange);
+  // console.log("Time from start of query:", performance.now() - gTimeStats_StartQuery);
   
 }
 

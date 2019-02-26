@@ -1270,19 +1270,24 @@ void GalleryComposer::composeAssociations()
       >;
     for_each(*this,Outer<association_types2>{}, association_types2{});
 
-
     using association_types3 = type_list<
-        recob::PFParticle,
-        recob::Shower,
-        recob::Track        
+        recob::Hit,
+        recob::Shower
       >;
     for_each(*this,Outer<association_types3>{}, association_types3{});
 
     using association_types4 = type_list<
+        recob::PFParticle,
+        recob::Shower,
+        recob::Track        
+      >;
+    for_each(*this,Outer<association_types4>{}, association_types4{});
+
+    using association_types5 = type_list<
         recob::Track,
         recob::Hit
       >;
-    for_each(*this,Outer<association_types4>{}, association_types4{});
+    for_each(*this,Outer<association_types5>{}, association_types5{});
 
   }
 
@@ -1668,7 +1673,7 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   bool got_mc = false;
   got_mc |= composePiece <simb::GTruth>     ("gtruth"   ,"*", mc["gtruth"   ] );
   got_mc |= composePiece <simb::MCTruth>    ("mctruth"  ,"*", mc["mctruth"  ] );
-  got_mc |= composePiece <simb::MCParticle> ("particles","*", mc["particles"] );
+  got_mc |= composePiece <simb::MCParticle> ("mcparticles","*", mc["mcparticles"] );
   if(got_mc) m_result["mc"] = mc;    
   
   progress_made("Composing associations");  

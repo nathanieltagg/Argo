@@ -31,13 +31,9 @@ MCInfo.prototype.NewRecord = function()
 {
   // console.debug("MCInfo::Build()");
   $(".accordion",this.fElement).empty();
-  
-  var mc = gRecord.mc;
-  if(!mc) return;
+  h="";
 
-  var h="";
-
-  var ints = mc.gtruth;
+  var ints = GetSelected("gtruth");
   for(var whichint=0;whichint<ints.length;whichint++) {
     var inter = ints[whichint];
     // console.log(inter.index);
@@ -77,9 +73,9 @@ MCInfo.prototype.NewRecord = function()
 
     h += "Final State: <br/>";
     var fss = [];
-    for(var i =0; i< mc.particles.length; i++) {
-      // console.log(mc.particles[i],mc.particles[i].fmother);
-      if(mc.particles[i].fmother===0) fss.push(mc.particles[i]);
+    var mcparticles = GetSelected("mcparticles");
+    for(var i =0; i< mcparticles.length; i++) {
+      if(mcparticles[i].fmother===0) fss.push(mcparticles[i]);
     }
     h+= "<table border='0' class='mc-fs'>";
     for(var j=0;j<fss.length;j++) {

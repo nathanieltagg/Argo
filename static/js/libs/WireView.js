@@ -669,11 +669,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   var doHitSum = ($('#ctl-hitsum-circle').is(':checked'));
   var track_assn = [];
   var trackname = GetSelectedName("tracks"); 
-  if( gRecord.associations &&  GetSelectedName("hits") in gRecord.associations ){
-    if(trackname in gRecord.associations[GetSelectedName]) {
-      track_assn = gRecord.associations[h.hit._owner][trackname];
-    }
-  }
+  var hitname   = GetSelectedName("hits");
+  var track_assn = (((gRecord||{}).associations||{})[hitname]||{})[trackname];
   
   if( (this.fMouseInContentArea) && doHitSum ){
     this.ctx.save();
@@ -797,8 +794,9 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
 WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 {
-  if(!gRecord.clusters) return;
   var clusters = GetSelected("clusters");
+  if(clusters.length==0) return;
+  var clustername = GetSelectedName("clusters");
   
   // Find the hits that are associated with this cluster.
   // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
@@ -815,6 +813,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   
   var hitassn = assns[hitname];
   var hits = gRecord.hits[hitname];
+  if(!hits) return;
 
   this.clusterHulls = [];
   var   offset_hit_time = 0;
@@ -1342,10 +1341,8 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
 
 WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 {  
-  if(!gRecord) return;
-  if(!gRecord.mc) return;
-  var particles = gRecord.mc.particles[gMCParticlesListName];
-  if(!particles) return;
+  var particles = GetSelected("mcparticles");
+  if(particles.length==0) return;
   var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
   var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
   if(move_t0) console.warn('moving mc t0');
