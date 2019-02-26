@@ -1,4 +1,4 @@
-"use strict;"
+"use strict";
 //
 // Functions to handle micrboone json data.
 //
@@ -23,15 +23,15 @@ $(function(){
   });  
 });
 
-// Things the user is likely to want to see, based on recent history.  Save this in a cookie or something.
-gDesires = {
-  hits: { active: true, name: "gaushit" },
-}
+// // Things the user is likely to want to see, based on recent history.  Save this in a cookie or something.
+// gDesires = {
+//   hits: { active: true, name: "gaushit" },
+// }
 
 
 
 
-gControlOverlay = null;
+var gControlOverlay = null;
 
 
 function ControlOverlay( element )
@@ -55,8 +55,8 @@ function ControlOverlay( element )
   this.bar_ul.on("change","input.product-name",this.OnChangeProductName.bind(this))
 
 
-  gStateMachine.BindObj('newRecord',this,"NewRecord");
-  gStateMachine.BindObj('newPiece',this,"NewPiece");
+  gStateMachine.Bind('newRecord',this.NewRecord.bind(this));
+  gStateMachine.Bind('newPiece',this.NewPiece.bind(this));
   this.event_descriptor = "invalid!!111!!";
 }
 
@@ -64,25 +64,24 @@ function ControlOverlay( element )
 ControlOverlay.prototype.NewRecord = function()
 {
   this.bar_ul.empty(); // The rest is taken care of below.
+  this.waiting_for_skeleton = true;
 }
 
 
-ControlOverlay.prototype.NewPiece = function()
+ControlOverlay.prototype.NewPiece = function(piece)
 {
-  
+  // console.log("ControlOverlay::NewPiece()");
   function simpleName(prod){ return prod.split('_')[1]; }
   function nameToTitle(prod){ var v = prod.split('_'); return "Type: "+v[0] + " Name: " + v[1] + " Process: " + v[3]; };
   
+  // console.warn("ControlOverlay Got a new piece",piece);
   
   // Called when a new piece arrives
   if(gRecord.skeleton){
-    // Is it new?  Use the event_descriptor
-    // FIXME: look for the new newRecord event
-    // var sskel =JSON.stringify(gRecord.skeleton);
-    // if(JSON.stringify(gRecord.skeleton) != this.skeleton_json) {
-    if(gRecord.event_descriptor != this.event_descriptor) {
-      console.log("ControlOverlay: New skeleton",this.event_descriptor,gRecord.event_descriptor);
+    if(this.waiting_for_skeleton) {
+      this.waiting_for_skeleton = false;
       this.event_descriptor = gRecord.event_descriptor;
+      // console.log("ControlOverlay: New skeleton",this.event_descriptor,gRecord.event_descriptor);
       this.bar_ul.empty();
       var bar_ul = this.bar_ul;
 
@@ -136,12 +135,10 @@ ControlOverlay.prototype.NewPiece = function()
       // Default menu order:
       var menus = ['wireimg','hits','tracks','showers','particles','spacepoints','endpoint2d','ophits','oppulses','opflashes'];
       for( t of menus) { 
-        console.log(t,t in gRecord.skeleton);
         if( t in gRecord.skeleton ) add_type(t);
       }
       
       for( var t in gRecord.skeleton ) {
-        console.log(t,menus.includes(t));
         if(!menus.includes(t)) add_type(t);
       }
       
@@ -151,7 +148,7 @@ ControlOverlay.prototype.NewPiece = function()
   }
   
   // Now look at the actual content. Look for new things by seeing if they've already been marked as retrieved.
-  for(_type in gRecord) {
+  for(var _type in gRecord) {
     var product_type_elem =  $("li.product-type").filter(function(){return $(this).data('product-type')==_type;});
     var product_type_input = $("input.product-type",product_type_elem);
     if(product_type_elem.length==0) continue;
@@ -159,7 +156,8 @@ ControlOverlay.prototype.NewPiece = function()
     var n_new =0;
     var n_retrieved_before = $("input.product-name.retrieved",product_type_elem).length;
     
-    for(_name in gRecord[_type]) {
+    for(var _name in gRecord[_type]) {
+      console.log("ControlOverlay: inspecting ",_type,_name);
       var item = $("input.product-name",product_type_elem).filter(function(){return $(this).data('product-name')==_name;});
       if(!item.hasClass('retrieved')) {
         n_new++;
@@ -182,7 +180,7 @@ ControlOverlay.prototype.NewPiece = function()
       // product_type_label.removeClass('unretrieved').addClass('retrieved');
       // Pulse the label.
       product_type_input.removeClass('unretrieved');
-      label = product_type_input.siblings("label")[0];
+      var label = product_type_input.siblings("label")[0];
       label.classList.remove("pulse");
       void label.offsetWidth; // allows pulse retriggering see https://codepen.io/chriscoyier/pen/EyRroJ
       label.classList.add("pulse");
@@ -208,6 +206,23 @@ ControlOverlay.prototype.OnChangeProductType = function(ev)
   var tgt = $(ev.currentTarget);
   var _type = tgt.data('product-type');
   console.log("OnChangeProductType",_type);
+  // Do we have any products to show?
+  if(!gRecord[_type] || !gRecord[_type][name]) {
+    // We have nothing to toggle on!  Go retrieve something!
+    // Which one? 
+    // FIXME: allow the last thing user looked at, as stored in cookie
+    // Ok, no preference? Go get the first thing.
+    var _name = Object.keys(gRecord.skeleton[_type])[0];
+    if(_name) {
+      var radio = $("input.product-name").filter(function(){return $(this).data('product-name')==_name;});
+      radio.addClass("pending");
+      tgt.addClass("pending");
+    }
+      
+    RequestPiece(_type,Object.keys(gRecord.skeleton[_type])[0]);
+  }
+  var n_retrieved =  $("input.product-name.retrieved").filter(function(){return $(this).data('product-type')==_type;}).length;
+  
   gStateMachine.Trigger('toggle-'+_type);
 }
 
@@ -225,7 +240,7 @@ ControlOverlay.prototype.OnChangeProductName = function(ev)
   else {
     product_type_input.addClass("pending").prop("checked","checked");
     tgt.addClass("pending");
-    RequestPiece('/'+_type+'/'+_name);    
+    RequestPiece(_type,_name);
   }
 }
 

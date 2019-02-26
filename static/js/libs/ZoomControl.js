@@ -162,7 +162,8 @@ function ZoomControl( element, options )
   gStateMachine.Bind('change-spacepoints', this.Draw.bind(this,false) );
  
  
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
+  gStateMachine.BindObj('newRecord',this,"NewRecord");
+  gStateMachine.BindObj('newPiece',this,"NewPiece");
   gStateMachine.BindObj('zoomChange',this,"Draw");
   gStateMachine.BindObj('zoomChangeFast',this,"Draw");
   gStateMachine.BindObj('hoverChange',this,"Draw");  
@@ -280,13 +281,13 @@ ZoomControl.prototype.NewRecord = function()
     gZoomRegion.setLimits(2,plane2-h,plane2+h);
     
     gStateMachine.Trigger("zoomChange");
-    return;
+  } else {
+    this.FullZoom();    
   }
-  
-  this.FullZoom();
-  //
-  // if(gPageName=="live") this.FullZoom();
-  // else this.AutoZoom();
+}
+
+ZoomControl.prototype.NewPiece = function()
+{
 };
 
 

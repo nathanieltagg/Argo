@@ -195,13 +195,22 @@ function QueryServerStream( par, myurl )
   }
 }
 
-function RequestPiece( piece )
+
+function RequestPiece( _type, _name ) // call with piece address, or type,name
 {
-  var request = {event_descriptor:gRecord.event_descriptor};
-  if(Array.isArray(piece))
-    request.pieces = piece
-  else
-    request.piece = piece
+  var piece = "/"+_type+"/"+_name;
+  
+  var request = {
+                event_descriptor:gRecord.event_descriptor,
+                pieces: [piece]};
+
+  // Some things shouldn't be loaded alone. For example:
+  if(_name == "clusters" || _name=="_showers") {
+    if(!gRecord.associations) request.pieces.push("/associations/"+_name);
+    if(!gRecord.hits) request.pieces.push("/hits/*");
+  }
+                
+  
   try {
     console.log("RequestPiece",request);
     gSocket.send(JSON.stringify(request));

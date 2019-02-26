@@ -1,3 +1,4 @@
+"use strict";
 //
 // Code for the ARgo Event Display
 // Author: Nathaniel Tagg ntagg@otterbein.edu
@@ -22,7 +23,7 @@
 // Subclass of Pad.
 WireView.prototype = new Pad();
 
-gWireViews = [];
+var gWireViews = [];
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
@@ -106,7 +107,8 @@ function WireView( element, options )
   // $(this.element).bind('resize' ,function(ev) { if(self.hasContent == false) self.Draw(); });
   
     
-  gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );
+  gStateMachine.Bind('newRecord', this.NewRecord.bind(this) );
+  gStateMachine.Bind('newPiece', this.NewPiece.bind(this) );
   gStateMachine.Bind('TimeCutChange',this.Draw.bind(this) );
   gStateMachine.Bind('hoverChange',  this.HoverChange.bind(this) );
   gStateMachine.Bind('selectChange', this.Draw.bind(this) );
@@ -117,25 +119,25 @@ function WireView( element, options )
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
   if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
  
-  // this.ctl_show_hits    =  this.GetBestControl(".show-hits");
-  this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
-  this.ctl_show_wireimg =  this.GetBestControl(".show-wireimg");
-  this.ctl_show_clus    =  this.GetBestControl(".show-clusters");
-  this.ctl_show_endpoint=  this.GetBestControl(".show-endpoint2d");
-  this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
-  this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
-  this.ctl_track_shift  =  this.GetBestControl(".track-shift-window");
+  this.ctl_hit_field          =  this.GetBestControl(".hit-hist-field");
+  this.ctl_show_wireimg       =  this.GetBestControl(".show-wireimg");
+  this.ctl_show_clus          =  this.GetBestControl(".show-clusters");
+  this.ctl_show_endpoint      =  this.GetBestControl(".show-endpoint2d");
+  this.ctl_show_spoints       =  this.GetBestControl(".show-spacepoints");
+  this.ctl_show_tracks        =  this.GetBestControl(".show-tracks");
+  this.ctl_track_shift        =  this.GetBestControl(".track-shift-window");
   this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
-  this.ctl_show_showers =  this.GetBestControl(".show-showers");
-  this.ctl_show_mc      =  this.GetBestControl(".show-mc");
-  this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");
-  this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
-  this.ctl_show_reco =  this.GetBestControl(".show-reco");
-  this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
-  this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
-  this.ctl_lock_aspect_ratio    =  GetLocalControl(this.element,".ctl-lock-aspect-ratio");
+  this.ctl_show_showers       =  this.GetBestControl(".show-showers");
+  this.ctl_show_mc            =  this.GetBestControl(".show-mc");
+  this.ctl_show_mc_neutrals   =  this.GetBestControl(".show-mc-neutrals");
+  this.ctl_mc_move_tzero      =  this.GetBestControl(".ctl-mc-move-tzero");
+  this.ctl_show_reco          =  this.GetBestControl(".show-reco");
+  this.ctl_wireimg_type       =  this.GetBestControl("[name=show-wireimg-type]");
+  this.ctl_dedx_path          =  this.GetBestControl(".dEdX-Path");
+  this.ctl_lock_aspect_ratio  =  GetLocalControl(".ctl-lock-aspect-ratio");
   
 
+  gStateMachine.Bind('toggle-wireimg', this.Draw.bind(this,false) ); 
   gStateMachine.Bind('toggle-hits', this.Draw.bind(this,false) ); 
   gStateMachine.Bind('toggle-clusters', this.Draw.bind(this,false) ); 
   gStateMachine.Bind('toggle-endpoint2d', this.Draw.bind(this,false) );
@@ -152,13 +154,13 @@ function WireView( element, options )
   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
-  $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
+  $(this.ctl_wireimg_type).click(function(ev)  { return self.Draw(false); });
   
   
   gStateMachine.Bind('change-tracks', this.Draw.bind(this,false) );
   gStateMachine.Bind('change-showers', this.Draw.bind(this,false) );
   gStateMachine.Bind('change-spacepoints', this.Draw.bind(this,false) );
-  gStateMachine.Bind('change-hits', this.NewRecord_hits.bind(this) );
+  gStateMachine.Bind('change-hits', this.RebuildHits.bind(this) );
   gStateMachine.Bind('change-clusters', this.Draw.bind(this,false) );
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   $(this.GetBestControl(),".show-reco")     .change(function(ev) { return self.Draw(false); });
@@ -183,8 +185,7 @@ function WireView( element, options )
   this.ctl_plane.click(function(ev) { 
     self.plane = parseInt( $(self.ctl_plane).filter(":checked").val() );
     // console.warn("changing plane",self,$(this.ctl_plane).filter(":checked").val(),self.plane);
-    
-    return self.NewRecord(); 
+    self.RebuildHits()
   });
 }
 
@@ -226,19 +227,18 @@ WireView.prototype.NewRecord = function()
   //
   // called on new record available.
   //
-  if(!gRecord) return;
-  this.NewRecord_hits();
+  this.myHits = [];
+  this.visHits = [];
+}
 
-  // Find sample size.
-  if(gRecord._raw && gRecord._raw && gRecord._raw.tiled_canvas ) this.ntdc = gRecord._raw.tiled_canvas.canvas.width;
-  else if(gRecord._cal && gRecord._cal && gRecord._cal.tiled_canvas ) this.ntdc = gRecord._cal.tiled_canvas.canvas.width;
-  else this.ntdc = 9600;
 
-  // this.NewRecord_image();
-  this.NewRecord_mc();
-};
+WireView.prototype.NewPiece = function()
+{
+   // FIXME not sure how to handle. Still. 
+   this.ntdc = 9600;
+ };
 
-WireView.prototype.NewRecord_hits = function()
+WireView.prototype.RebuildHits = function()
 {
   this.myHits = [];
   this.visHits = [];
@@ -252,11 +252,6 @@ WireView.prototype.NewRecord_hits = function()
   this.TrimHits();
 };
 
-
-WireView.prototype.NewRecord_mc = function()
-{
-  
-};
 
 WireView.prototype.TrimHits = function()
 {
@@ -824,7 +819,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     var clus = clusters[i];
     clus._index = i;
 
-    chits = hitassn[i]; // Look up in the association table
+    var chits = hitassn[i]; // Look up in the association table
     var points = [];
     for(var ihit=0;ihit<chits.length;ihit++) {
       var hid = chits[ihit];
@@ -1024,21 +1019,31 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
 {
   var showerlistname = GetSelectedName("showers");
   var showers = GetSelected("showers");
+  if(showers.length==0) return;
 
   // find gRecord.associations.showername.recob::Hitsthingthing
   var showerass = null;
   var showerhitname = null;
-  var hitlist = null
-  var hitassn = null
+  var hitlist = null;
+  var hitassn = null;
   if(gRecord.associations) showerass = gRecord.associations[showerlistname];
   if(showerass) {
-    for( n in showerass ) {
+    for( var n in showerass ) {
         if( n.indexOf( "::Hits" ) > -1 ) { showerhitname = n; }
       }
     if(showerhitname) {
       hitassn = showerass[n]
       hitlist = gRecord.hits[showerhitname];
     }
+  }
+  if(!showerhitname)  {
+    $('#status').attr('class', 'status-warning');
+    $("#status").text('Need to load associations to see showers.');    
+  }
+  if(!hitlist) {
+    $('#status').attr('class', 'status-warning');
+    $("#status").text('Need to load hit list '+showerhitname+' to see showers.');    
+    
   }
 
 

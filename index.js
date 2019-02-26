@@ -174,9 +174,9 @@ function attach_stream(ws,req)
         }
         console.log(chalk.green(newreq,event_req));
         
-        var merge_req = {...newreq,...event_req}          
-        console.log(chalk.green("Passing subsequent request"),merge_req);
-        ws.my_composer.request(merge_req); // And we're off and running again!  Or this is queued; the plug-in takes care of it.
+        // var merge_req = {...newreq,...event_req}
+        console.log(chalk.green("Passing subsequent request"),newreq);
+        ws.my_composer.request(newreq); // And we're off and running again!  Or this is queued; the plug-in takes care of it.
       });
       
       // What to do if client disconnects
