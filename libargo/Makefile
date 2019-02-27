@@ -9,7 +9,7 @@ else
   libargo = libargo-backend.so
 endif
 
-buildtargets = gtest $(libargo) argo-backend argo-live-backend argo-run-one notify-live.cgi libargo-backend.a
+buildtargets = gtest $(libargo) argo-backend argo-live-backend argo-run-one notify-live.cgi 
 .PHONY: bin
 bin: $(buildtargets)
 #bin: gtest

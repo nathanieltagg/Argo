@@ -1,3 +1,4 @@
+console.log("starting")
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
@@ -44,25 +45,25 @@ var app = express();
 httpServer = http.createServer(app);
 
 
-function samweb()
-{
-  // Utility function to call samweb, assuming it's in the current PATH (set up by sam_web_client)
-  //
-  //
-  console.time('samweb');
-  var sam_args = [...config.sam_arguments,...arguments];
-  return new Promise(function(resolve,reject) {
-    spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
-      if (error) {
-        // console.log("samweb error",error);
-        reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
-      } else {
-        console.timeEnd('samweb');
-        resolve(stdout.trim());
-      }
-    });
-  });
-}
+// function samweb()
+// {
+//   // Utility function to call samweb, assuming it's in the current PATH (set up by sam_web_client)
+//   //
+//   //
+//   console.time('samweb');
+//   var sam_args = [...config.sam_arguments,...arguments];
+//   return new Promise(function(resolve,reject) {
+//     spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
+//       if (error) {
+//         // console.log("samweb error",error);
+//         reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
+//       } else {
+//         console.timeEnd('samweb');
+//         resolve(stdout.trim());
+//       }
+//     });
+//   });
+// }
 
 // Samweb test.
 // samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
@@ -92,12 +93,17 @@ mkdirp(config.datacache);
 app.use(morgan('tiny'));
 var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
 
+app.get('/test', function(req,res,next){
+  console.log("test");
+  res.send("test");
+});
+
 
 // Deal with WS connections.
-app.ws('/server/stream-event', attach_stream);
+app.ws('/ws/stream-event', attach_stream);
 function attach_stream(ws,req)
 {
-  console.log("attach stream",req.query);
+  console.log("attach stream");
   // Utility function
   function send_error_message(message) {
     var p = {"error":message};
@@ -118,10 +124,12 @@ function attach_stream(ws,req)
   // FIXME raw file lookup req.param.what == 'raw'
   console.log("pathglob:",req.query.filename,event_req.pathglob);
   var alive = true;
-  glob(event_req.pathglob,  function (er, files) {
+  glob(event_req.pathglob,  function (er, files) 
+  {
     console.log("found files",files);
     if(files.length==0) {
-      send_error_message("No such file exists ("+event_req.pathglob+")");
+      console.log("No files match glob.");
+      send_error_message("Cannot find matching file 11!!11 ("+event_req.pathglob+")");
       return;
     }
     event_req.filename = path.resolve(files[0]);
@@ -191,9 +199,10 @@ function attach_stream(ws,req)
 
     } else {
       // If we got to here, we got a request but were unable to handle it.
+      console.log("Can't open file?");
       var msg = JSON.stringify({
-          "error": "Unable to find a file matching request for "
-                    +pathlglob
+          "error": "Unable to open file "
+                    +event_req.filename
           +(err?" ("+err+")":"")
         });
       
@@ -272,7 +281,7 @@ app.use('/css',express.static(__dirname + '/scss'));
 // static files.
 app.use(express.static(__dirname + '/static'));
 
-app.use("/server",express.static(__dirname+'/static'));
+// app.use("/server",express.static(__dirname+'/static'));
 
 // Datacache files
 app.use('/datacache',express.static(config.datacache));
@@ -320,4 +329,4 @@ app.use("/server/file_browser.cgi",browser.router);
 
 process.send = process.send || function () {}; // in case there's no prcoess manager
 httpServer.listen(4590); // looks a little like 'argo'
-console.log("Port openend on 4590");
+console.log(chalk.red("Port openend on 4590"));

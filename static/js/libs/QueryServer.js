@@ -173,7 +173,7 @@ function QueryServerStream( par, myurl )
 
   console.log("Starting AJAX calls:",myurl,param);
 
-  var wsurl = 'ws://localhost:4590/server/stream-event'+'?'+param;
+  var wsurl = 'ws://'+window.location.host+'/ws/stream-event'+'?'+param;
   gSocket = new WebSocket(wsurl);
   gSocket.onopen =  function (event) {
     console.log("opened websocket");
