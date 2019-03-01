@@ -46,7 +46,7 @@ function CreateGLMappers()
   // Create the tiled images. Do only for full images (not lowres)
   for(var _type of ["wireimg-lowres", "wireimg"]) {
     if(gRecord[_type]) 
-      for(_name in gRecord[_type]) {
+      for(var _name in gRecord[_type]) {
         if(! gRecord[_type][_name]._glmapper) {
           console.warn("Create GL mapper on ",_type,_name);
           gRecord[_type][_name]._glmapper = new GLMapper(_type,_name);
@@ -60,9 +60,9 @@ function GLChangePsuedoColor()
 {
   if(!gRecord) return;
   
-  for(_type of ["wireimg-lowres", "wireimg"]) {
+  for(var _type of ["wireimg-lowres", "wireimg"]) {
     if(gRecord[_type]) 
-      for(_name in gRecord[_type]) 
+      for(var _name in gRecord[_type]) 
         if( gRecord[_type][_name]._glmapper) 
           gRecord[_type][_name]._glmapper.need_lut_rebuild = true;
   }

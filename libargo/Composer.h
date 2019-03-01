@@ -25,7 +25,7 @@ public:
   Composer();
   virtual ~Composer();
   
-  virtual void configure(Config_t config, int id=0) { m_config = config; m_id = id; }
+  virtual void configure(Config_t config) { m_config = config;}
   
   // Required: return true if we can satisfy the request.
   // If false, a new composer object will be instantiated to fulfill it.
@@ -35,65 +35,9 @@ public:
 
   // Need only satify this: 
   virtual Output_t satisfy_request(Request_t request);
-  // Check to see if our current event matches the request.
-  // Get the event specified in the request.
-  // Build the _consituent map, including mutexes.
-  // Start a thread pool
-  // For each order in request/pointers:
-  //   new thread (get_or_compose(pointer))
-  // Wait for all threads to end.
-  // Copy data from _consituents to the result.
-  // output[pointer] = get_or_compose(pointer);
-  // The get_or_compose
 
-  // get or compose
-  // virtual Json_t get_or_compose(std::string jsonPointer);
-  // // May block.  May be put into a thread
-  // // Put a read lock on the data pointed to by the jsonPointer, wait until released,
-  // // See if there is data there. If not, upgrade to a write lock. Call compose() on that data.
-  // // Return when data available.
-  //
-  // virtual void compose(std::string jsonPointer, Result_t& result);
-  // // Compose. should ONLY be called from get_or_compose.
-  // // No mutex locking required at this stage: compose the result json object (or array or whatever)
+ 
 
-  // Utility function for finding events in a TTree.
-  // Returns an entry number, with event loaded.
-  int64_t find_entry_in_tree(TTree* inTree, std::string& inSelection, int64_t inStart, int64_t inEnd, std::string& outError);
-  
-  virtual nlohmann::json monitor_data();
-  virtual Output_t       dump_result() { return Output_t(new std::string(m_result.dump())); }
-  
-  // typedef std::string  ConstituentAddress_t;  // Actually a jsonPointer
-  // struct Constituent_t{
-  //   ConstituentAddress_t m_address;
-  //   Json_t             m_data;
-  //   boost::mutex         m_mutex;
-  // };
-
-  // Composer may also need something like std::map<ConsitutentAddress,InputTag> to keep track of things.
-  // typedef std::map<ConstituentAddress_t,Constituent_t> Constituents_t;
-
-  boost::mutex   m_mutex;
-  Request_t      m_request;
-  // Constituents_t m_consistuents;
-  // Json_t         m_manifest;  // empty JSON framework. Do we need this?
-  int            m_id;
-  Config_t       m_config;
-  nlohmann::json m_result;
-  
-
-public:
-  static Output_t Error(const std::string& err) 
-  {
-    nlohmann::json j;
-    j["error"] = err;
-    std::cerr << err << std::endl;
-    return Output_t(new std::string(j.dump()));
-  }
-  
-  virtual std::string form_event_descriptor();
-  std::string m_cur_event_descriptor;
   
 
   // Message passing back to caller  
@@ -120,31 +64,56 @@ public:
   
 protected:
 
-
-
-  OutputCallback_t   m_output_callback;  
-  std::string        m_filename;
-  long long          m_entry;
+  Config_t       m_config;  // The global config - things to be applied to every event, not just the current one.
+  boost::mutex   m_mutex;   // local mutex, maybe useless?
+  Request_t      m_request; // Place to store the request
+  nlohmann::json m_result;  // Place to store all resulting data before transmission.
+  std::string    m_cur_event_descriptor; // Unique string for this event. Usually something like pathname+entry or run|sub|event
+  
+  OutputCallback_t   m_output_callback;   // Link to event you call when you have some data to deliver.
+  std::string        m_filename;          // Current filename, used by form_event_descriptor
+  long long          m_entry;             // Current entry in file, used by form_event_descriptor
 
   float              m_progress_target;
   float              m_progress_so_far;
-  // used by caller:
-  void progress_made(const std::string msg="",float increment=1) {
-    if(m_output_callback) {
-      m_progress_so_far+=increment;
-      float frac = m_progress_so_far/m_progress_target;
-      if(m_output_callback) 
-        m_output_callback(kProgress,
-                          Output_t(new std::string(
-                              nlohmann::json({ { "progress", frac }, {"state", msg}}).dump()
-                          ) )
-                        );
-      
-    }
-  }
+
+  // Utility function for finding events in a TTree.
+  // Returns an entry number, with event loaded.
+  int64_t find_entry_in_tree(TTree* inTree, std::string& inSelection, int64_t inStart, int64_t inEnd, std::string& outError);
+
+  // Utility function for composing some monitoring data.
+  virtual nlohmann::json monitor_data();
+
+  // Utilty function for returning entire assembled event.
+  virtual Output_t       dump_result() { Output_t o(new std::string("{\"record\":")); o->append(m_result.dump()); o->append("}"); return o; }
+  
+  // Utility function to report an error and no other data.
+  static Output_t Error(const std::string& err); // {Error:err} as an Output_t
+
+  static Output_t Done(); // {progress:1, state:"done"} as an Output_t
+
+  // Utility function to create an event_descriptor, should be overriden by functions that don't use m_filename
+  virtual std::string form_event_descriptor();
+
+  // Utility function to provide progress feedback.
+  void progress_made(const std::string msg="",float increment=1); // {progress: m_progress+=increment, state:msg} sent to callback.
+  
+  // Sends a piece off as part of an incremental output.  Wraps in a "piece" object.
   void dispatch_piece(const nlohmann::json& p);
   
   
+  
+  struct piece_t {
+    std::string str;
+    std::string type;
+    std::string name;    
+  };
+  
+  typedef std::list<piece_t> pieces_t;
+  virtual bool parse_pieces(nlohmann::json& request, pieces_t& outPieces); // Return 'true' if a piece of some kind is requested, indicating that an incremental build has been requested.
+  
+  
+  virtual bool dispatch_existing_pieces(pieces_t& ioPieces); // Look at each piece and see if something exists in the m_result that matches. if so, dispatch it.  Return true if everything could be satisfied. If not, return false and ioPieces contains undispatched items.
 };
 
 

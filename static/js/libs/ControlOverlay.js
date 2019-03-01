@@ -8,12 +8,18 @@
 // FIXME: put somewhere useful
 function GetSelectedName(_type)
 {
-  return  $('input[name="ctl-select-'+_type+'"]:checked').val();
+  // Returns name of currently selected version of object _type (i.e. _type=hits, _name=gaushits)
+  // Returns undefined if no such object has been selected, or if it selected but not loaded.
+  var _name = $('input[name="ctl-select-'+_type+'"]:checked').val();
+  if(gRecord && gRecord[_type] && gRecord[_type][_name]) return _name;
+  return undefined;
 }
 
 function GetSelected(_type) 
 {
-  return (((gRecord || {})[_type] || {})[GetSelectedName(_type)]) || [];
+  var _name = GetSelectedName(_type);
+  if(_name) return gRecord[_type][_name];
+  return [];
 }
 
 // Automatic runtime configuration.
@@ -51,7 +57,7 @@ function ControlOverlay( element )
   }
   this.bar_ul = $('.data-product-bar ul',this.element);
   
-  this.bar_ul.on("change","input.product-type",this.OnChangeProductType.bind(this))
+  this.bar_ul.on("change","input.product-type",this.OnChangeProductTypeToggle.bind(this))
   this.bar_ul.on("change","input.product-name",this.OnChangeProductName.bind(this))
 
 
@@ -64,24 +70,24 @@ function ControlOverlay( element )
 ControlOverlay.prototype.NewRecord = function()
 {
   this.bar_ul.empty(); // The rest is taken care of below.
-  this.waiting_for_skeleton = true;
+  this.waiting_for_manifest = true;
 }
 
 
 ControlOverlay.prototype.NewPiece = function(piece)
 {
   // console.log("ControlOverlay::NewPiece()");
-  function simpleName(prod){ return prod.split('_')[1]; }
+  function simpleName(prod){ if(prod.includes('__')) return prod.split('_')[1]; else return prod; }
   function nameToTitle(prod){ var v = prod.split('_'); return "Type: "+v[0] + " Name: " + v[1] + " Process: " + v[3]; };
-  
+  function noColons(prod) {return prod.replace(/:/g,'');}
   // console.warn("ControlOverlay Got a new piece",piece);
   
   // Called when a new piece arrives
-  if(gRecord.skeleton){
-    if(this.waiting_for_skeleton) {
-      this.waiting_for_skeleton = false;
+  if(gRecord.manifest){
+    if(this.waiting_for_manifest) {
+      this.waiting_for_manifest = false;
       this.event_descriptor = gRecord.event_descriptor;
-      // console.log("ControlOverlay: New skeleton",this.event_descriptor,gRecord.event_descriptor);
+      // console.log("ControlOverlay: New manifest",this.event_descriptor,gRecord.event_descriptor);
       this.bar_ul.empty();
       var bar_ul = this.bar_ul;
 
@@ -94,7 +100,7 @@ ControlOverlay.prototype.NewPiece = function(piece)
         var input = $('<input type="checkbox" />')
               .addClass('product-type')
               .addClass('unretrieved')
-              .addClass('saveable auto-save')
+              .addClass('saveable auto-save-on-change')
               .addClass('show-'+_type)
               .data('product-type',_type)
               .attr("id","ctl-show-"+_type)
@@ -103,9 +109,9 @@ ControlOverlay.prototype.NewPiece = function(piece)
         elem.append(label);
         
         var fs = $('<fieldset></fieldset>').addClass("dropdown");
-        for(var _name in gRecord.skeleton[_type]) {
+        for(var _name in gRecord.manifest[_type]) {
           var div = $('<div></div>');
-          var nlabel = $('<label></label>').attr('for','product-'+_name).text(simpleName(_name));
+          var nlabel = $('<label></label>').attr('for','product-'+noColons(_name)).text(simpleName(_name));
             // .addClass('unretrieved')
             // .addClass('product-name')
             // 
@@ -114,10 +120,11 @@ ControlOverlay.prototype.NewPiece = function(piece)
             // // .attr('title',nameToTitle(_name))
             // ;
           var ninput = $('<input type="radio"/>')
-              .attr('id','product-'+_name)
+              .attr('id','product-'+noColons(_name))
               .attr('name','ctl-select-'+_type)
               .addClass('product-name')
               .addClass('unretrieved')
+              .addClass('saveable auto-save-on-change')          
               .attr('value',_name)
               .data('product-name',_name)
               .data('product-type',_type);
@@ -130,17 +137,20 @@ ControlOverlay.prototype.NewPiece = function(piece)
         elem.append(fs);
 
         elem.appendTo(bar_ul).show('slow');
+        // if(_type == "tracks") debugger;
       }
 
       // Default menu order:
       var menus = ['wireimg','hits','tracks','showers','particles','spacepoints','endpoint2d','ophits','oppulses','opflashes'];
       for( t of menus) { 
-        if( t in gRecord.skeleton ) add_type(t);
+        if( t in gRecord.manifest ) add_type(t);
       }
       
-      for( var t in gRecord.skeleton ) {
+      for( var t in gRecord.manifest ) {
         if(!menus.includes(t)) add_type(t);
       }
+      
+      RestoreControlSettings('save',this.bar_ul, true); // This might trigger data retrieval.
       
     }
   } else {
@@ -164,12 +174,9 @@ ControlOverlay.prototype.NewPiece = function(piece)
         // This is a new piece.
         console.log("ControlOverlay: registered new item in the gRecord",_type,_name)
         item.removeClass('unretrieved').removeClass("pending").addClass('retrieved');
-        // $('input',item).removeClass('unretrieved').removeClass("pending").addClass('retrieved');
-        
-        // Is it selected? if so, update everyone accordingly
+        if(GetSelectedName(_type)==_name) gStateMachine.Trigger('change-'+_type); // Make sure an event fires so that views see it's there now.
       }
       
-      // $('input[value="'+_name+'"]',product_type_elem).removeClass('unretrieved').addClass('retrieved');
     }
     
     var n_pending = $("input.product-name.pending",product_type_elem).length;
@@ -185,14 +192,7 @@ ControlOverlay.prototype.NewPiece = function(piece)
       void label.offsetWidth; // allows pulse retriggering see https://codepen.io/chriscoyier/pen/EyRroJ
       label.classList.add("pulse");
     }
-    if(n_new>0 && n_retrieved_before==0) {
-      // We don't have one type selected as a radio box. That ain't good... select one.
-      $('input.retrieved',product_type_elem).first().click();
-      gStateMachine.Trigger('change-'+_type);
-    }
-  }
-  
-  // Glow on/off for activated types.
+  } 
 }
 
 ControlOverlay.prototype.Click = function(a,b,c)
@@ -200,30 +200,54 @@ ControlOverlay.prototype.Click = function(a,b,c)
   console.log("Click",a,b,c);
 }
 
-ControlOverlay.prototype.OnChangeProductType = function(ev)
+ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
 {
   // Toggle this type of thing on/off
   var tgt = $(ev.currentTarget);
   var _type = tgt.data('product-type');
   console.log("OnChangeProductType",_type);
-  // Do we have any products to show?
-  if(!gRecord[_type] || !gRecord[_type][name]) {
-    // We have nothing to toggle on!  Go retrieve something!
-    // Which one? 
-    // FIXME: allow the last thing user looked at, as stored in cookie
-    // Ok, no preference? Go get the first thing.
-    var _name = Object.keys(gRecord.skeleton[_type])[0];
-    if(_name) {
-      var radio = $("input.product-name").filter(function(){return $(this).data('product-name')==_name;});
-      radio.addClass("pending");
-      tgt.addClass("pending");
-    }
-      
-    RequestPiece(_type,Object.keys(gRecord.skeleton[_type])[0]);
+
+  // FIXME better logic:
+  // Do we have one selected and loaded?  use it (Simple on/off toggle)
+  var _name = GetSelectedName(_type);
+  if(_name && gRecord[_type] && gRecord[_type][_name]){ gStateMachine.Trigger('toggle-'+_type); return true; }
+
+  function load_name(_name) {
+    var product_type_input =  $("input.product-name").filter(function(){return $(this).data('product-name')==_name;});
+    product_type_input.prop('selected',true).trigger("change");  
   }
-  var n_retrieved =  $("input.product-name.retrieved").filter(function(){return $(this).data('product-type')==_type;}).length;
+
+  // Selected but not loaded?  This happens if browser remembers the radio choice, but it hasn't been requested yet.
+  _name = $('input[name="ctl-select-'+_type+'"]:checked').val()
+  if(_name) {
+    load_name(_name);
+    return true;
+  }  
   
-  gStateMachine.Trigger('toggle-'+_type);
+  // None selected, but one loaded?  select it  (Shouldn't happen...?)
+  var loaded = Object.keys(gRecord[_type] || {});
+  if(loaded.length>0) {
+    load_name(loaded[0]);
+    return true;    
+  }
+
+  // none selected, none loaded?  Pick one at semi-random, load and select it.
+  var possible = Object.keys((gRecord[_type] || {}).manifest || {});
+  for(var _name of possible) {
+    var select = false;
+    if(  _name.includes("gaushit")
+      || _name.includes("pandoraNu") 
+      || _name.includes("pandoraCosmic") // I LIKE TRAFFIC LIGHTS I LIKE TRAFFIC LIGHTS
+      ) {
+        load_name(_name);
+        return true;            
+      }
+  }
+
+  // Still nothing?  OK, just pick the first goddamn thing in the list and get that.
+  load_name(possible[0]);
+
+  return true;
 }
 
 ControlOverlay.prototype.OnChangeProductName = function(ev)
@@ -242,6 +266,7 @@ ControlOverlay.prototype.OnChangeProductName = function(ev)
     tgt.addClass("pending");
     RequestPiece(_type,_name);
   }
+  return true;
 }
 
 

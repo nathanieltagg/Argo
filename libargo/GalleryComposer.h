@@ -21,17 +21,17 @@ class GalleryComposer : public Composer{
 public:
   GalleryComposer(); 
   virtual ~GalleryComposer(); 
-  virtual void configure(Config_t config, int id=0) ;
+  virtual void configure(Config_t config) ;
   
   virtual bool can_satisfy(Request_t) {return true;};
 
   virtual Output_t satisfy_request(Request_t request);
 
-  // virtual Result_t composeSkeletonPart()
+  // virtual Result_t composeManifestPart()
   
 private:
-  template<typename T> void     composeSkeleton(nlohmann::json& out);
-  void composeSkeleton(nlohmann::json& out);
+  template<typename T> void     composeManifest(nlohmann::json& out);
+  void composeManifest(nlohmann::json& out);
 
   template<typename T> bool composePiece(const std::string& type, const std::string& name, nlohmann::json& out );
 
@@ -41,7 +41,7 @@ private:
     
   // virtual bool event_matches() { return false; };    // locate event in provided coordinates.
   // virtual int load_event() { return 0; };    // locate event in provided coordinates.
-  // virtual int build_skeleton() { return 0; }; // Fill out header. Provide available elements marked with placeholders
+  // virtual int build_manifest() { return 0; }; // Fill out header. Provide available elements marked with placeholders
   
   
 protected:

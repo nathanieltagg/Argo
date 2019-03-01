@@ -2,11 +2,11 @@
 #define FORKEDCOMPOSER_H_1CFABC12
 
 #include "Composer.h"
-
 #include <signal.h>
 #include <stdexcept>
 
-typedef std::function<void(Output_t)> Callback_t;
+
+// This is tempated, so everything goes in the header.
 
 // global is declared ONLY on child fork
 extern Composer* gForkedComposer;
@@ -28,14 +28,14 @@ public:
 
     if(_pid) { 
       // A child process exists. Nuke it.
-      std::cout << "Composer " << m_id << " is destructing; killing process " << _pid << std::endl;
+      std::cout << "Composer " << _pid << " is destructing; killing process " << _pid << std::endl;
       close(_input_pipe[0]);
       close(_output_pipe[0]);
       close(_output_pipe[1]);
       kill(_pid, SIGINT);
     }
     if(_is_child) {
-      std::cout << "Composer " << m_id << " is killed. Closing pipes." << std::endl;
+      std::cout << "Child ForkedComposer dtor. Closing pipes." << std::endl;
       
       close(_input_pipe[0]);
       close(_input_pipe[1]);
@@ -45,8 +45,8 @@ public:
   }
     
     
-  virtual void configure(Config_t config, int id=0) {
-    Composer::configure(config,id);
+  virtual void configure(Config_t config) {
+    Composer::configure(config);
     // Called exactly once.
     // Set up I/O pipes.
     if(pipe(_input_pipe)==-1) throw std::runtime_error("Couldn't open input pipe.");
@@ -66,15 +66,16 @@ public:
       signal ( SIGFPE,  ForkTerminationHandler);
       
       std::string dir = m_config->value("fork_logdir",".");
-      std::string logfilename = dir + "/argo_backend_" + std::to_string(m_id) + ".log";
-      std::string errfilename = dir + "/argo_backend_" + std::to_string(m_id) + ".err";
+      int my_pid = ::getpid();
+      std::string logfilename = dir + "/argo_backend_" + std::to_string(my_pid) + ".log";
+      std::string errfilename = dir + "/argo_backend_" + std::to_string(my_pid) + ".err";
 
       freopen(logfilename.c_str(),"w",stdout);
       freopen(errfilename.c_str(),"w",stderr);
       std::cout << "ForkedComposer child running " << std::endl;
       
       _composer = std::shared_ptr<C>(new C);
-      _composer->configure(m_config,m_id); // Important: our child has the same ID as us.
+      _composer->configure(m_config);
       _composer->set_output_callback([this](OutputType_t t, Output_t o){pass_output(t,o);});
       close(_input_pipe[1]); // No writing to input pipe
       while(true) {

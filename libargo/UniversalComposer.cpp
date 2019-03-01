@@ -97,7 +97,7 @@ Output_t UniversalComposer::satisfy_request(Request_t request)
       }    
     }
   
-    m_composer->configure(m_config,m_id);
+    m_composer->configure(m_config);
     m_composer->set_output_callback(m_output_callback);
     
     Output_t output;

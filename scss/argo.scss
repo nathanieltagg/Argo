@@ -558,6 +558,13 @@ td {
         color: $retrieved_color; //$color_storm_dust_approx;        
     }
     
+    &.pending + .checkmark {
+      background-color: transparent;
+      border-top: 2px solid $unretrieved_color;
+      border-right: 2px solid transparent;
+      animation: spinner .6s linear infinite;
+      
+    }
     &:checked + .checkmark {
       background-color: $checkmark_color;
       

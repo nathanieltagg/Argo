@@ -151,6 +151,7 @@ function attach_stream(ws,req)
       
       // Make a new composer object.
       ws.my_composer = new Composer(composer_config,function(data,datatype) {
+        // This is the do_output callback, called either on progress, piece, or finished.
         console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
         // dont' need this, but debugging:
         var o = JSON.parse(data);

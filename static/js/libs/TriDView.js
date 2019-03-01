@@ -362,7 +362,7 @@ TriDView.prototype.CreateTracks = function()
   for(var itrk=0;itrk<tracks.length;itrk++) {
     var trk = tracks[itrk];
     var hovobj = {obj:trk, type:"track", collection: tracks};    
-    var points = trk.points;
+    var points = trk.points || [];
     for(var i=0;i<points.length-1;i++) {
 
       var curColor = "rgba(89, 169, 28, 1)";

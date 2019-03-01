@@ -25,7 +25,7 @@ function RecieveData(o)
     // $('#main-circleprogress').circleProgress('value', 0);
     // $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
   }else if("record" in o) {
-    console.warn("full record",Object.keys(o.piece));
+    console.warn("full record",Object.keys(o.record));
     gServing = o;
     GotRecord(o);
     // $('#main-circleprogress').circleProgress('value', 0);
@@ -67,7 +67,7 @@ function GotRecord(o)
   
   gRecord = {event_descriptor:o.event_descriptor};
   gStateMachine.Trigger('newRecord');
-  indexArraysIn(o);
+  indexArraysIn(o.record);
   gRecord = o.record;
   gStateMachine.Trigger('preNewPiece'); // Special trigger for those objects that need to fire first.  
   gStateMachine.Trigger('newPiece');

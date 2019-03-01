@@ -91,10 +91,9 @@ GalleryComposer::~GalleryComposer()
     // std::cout << "m_Event:" << ((m_Event)?"set":"unset") << std::endl; 
 }
 
-void GalleryComposer::configure(Config_t config, int id)
+void GalleryComposer::configure(Config_t config)
 {
   m_config = config; 
-  m_id = id; 
   // std::cout << *m_config << std::endl;
   m_CacheStoragePath  = m_config->value("CacheStoragePath", std::string("../datacache"));
   m_CacheStorageUrl   = m_config->value("CacheStorageUrl",  std::string("datacache"));
@@ -1308,8 +1307,8 @@ void GalleryComposer::composeAssociations()
 }
 
 template<typename T>  void     
-GalleryComposer::composeSkeleton(nlohmann::json& out) {
-  std::cout << "composeSkeleton " << boost::core::demangle( typeid(T).name() ) << std::endl;
+GalleryComposer::composeManifest(nlohmann::json& out) {
+  std::cout << "composeManifest " << boost::core::demangle( typeid(T).name() ) << std::endl;
   auto products = findByType< std::vector<T> >(m_Event->getTTree());
   for(auto product: products) {
     // This version simply looks for what might be in the file, based on the names of branches in the tree.
@@ -1329,26 +1328,26 @@ GalleryComposer::composeSkeleton(nlohmann::json& out) {
   }
 }
 
-void GalleryComposer::composeSkeleton(nlohmann::json& out)
+void GalleryComposer::composeManifest(nlohmann::json& out)
 {
   std::cout << "SKELETON" << std::endl;
   // wireimg is special:
-  composeSkeleton< recob::Wire      >(out["wireimg"]);
-  composeSkeleton< raw::RawDigit    >(out["wireimg"]);
+  composeManifest< recob::Wire      >(out["wireimg"]);
+  composeManifest< raw::RawDigit    >(out["wireimg"]);
 
-  composeSkeleton< recob::Hit       >(out["hits"]);
-  composeSkeleton< recob::SpacePoint>(out["spacepoints"]);
-  composeSkeleton< recob::Cluster   >(out["clusters"]);
-  composeSkeleton< recob::Track     >(out["tracks"]);
-  composeSkeleton< recob::Shower    >(out["showers"]);
-  composeSkeleton< recob::EndPoint2D>(out["endpoint2d" ]);
-  composeSkeleton< recob::PFParticle>(out["pfparticles"]);
-  composeSkeleton< recob::OpFlash   >(out["opflashes"  ]);
-  composeSkeleton< recob::OpHit     >(out["ophits"     ]);
-  composeSkeleton< raw::OpDetPulse  >(out["oppulses"]);
-  composeSkeleton< simb::GTruth     >(out["gtruth"]);
-  composeSkeleton< simb::MCTruth    >(out["mctruth"]);
-  composeSkeleton< simb::MCParticle >(out["particles"]);
+  composeManifest< recob::Hit       >(out["hits"]);
+  composeManifest< recob::SpacePoint>(out["spacepoints"]);
+  composeManifest< recob::Cluster   >(out["clusters"]);
+  composeManifest< recob::Track     >(out["tracks"]);
+  composeManifest< recob::Shower    >(out["showers"]);
+  composeManifest< recob::EndPoint2D>(out["endpoint2d" ]);
+  composeManifest< recob::PFParticle>(out["pfparticles"]);
+  composeManifest< recob::OpFlash   >(out["opflashes"  ]);
+  composeManifest< recob::OpHit     >(out["ophits"     ]);
+  composeManifest< raw::OpDetPulse  >(out["oppulses"]);
+  composeManifest< simb::GTruth     >(out["gtruth"]);
+  composeManifest< simb::MCTruth    >(out["mctruth"]);
+  composeManifest< simb::MCParticle >(out["particles"]);
 }
 
 
@@ -1386,19 +1385,6 @@ template<typename T> bool GalleryComposer::composePiece( const std::string& type
   return got;
 }
 
-template<typename Out>
-void split(const std::string &s, char delim, Out result) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        if(item.size()>0) *(result++) = item;
-    }
-}
-std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, std::back_inserter(elems));
-    return elems;
-}
 
 
 /*
@@ -1559,8 +1545,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     m_result["monitor"] = monitor_data();
     dispatch_piece(json({{"monitor",m_result["monitor"]}}));
     
-    composeSkeleton(m_result["skeleton"]);
-    dispatch_piece(json({{"skeleton",m_result["skeleton"]}}));
+    composeManifest(m_result["manifest"]);
+    dispatch_piece(json({{"manifest",m_result["manifest"]}}));
   } // End of !same_event_request block.
 
   
@@ -1570,74 +1556,54 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   //
   // OK, now build anything left in the result.
   //
-    
-  // find if there is 'piece' or 'pieces' in the request
-  json pieces = json::array();
-  if((*request)["pieces"].is_array()) pieces = (*request)["pieces"];
-  if(!(*request)["piece"].is_null()) pieces.push_back((*request)["piece"]);
   
-  ///
-  /// Dispatch requested things.   
-  ///
-  if(pieces.size() >0 ) {
-    // std::cout << "dispatching source" << endl;
-    // dispatch_piece(json({{"source",m_result["source"]}}));
-    // std::cout << "dispatching header" << endl;
-    // dispatch_piece(json({{"header",m_result["header"]}}));
-    // std::cout << "dispatching monitor" << endl;
-    // dispatch_piece(json({{"monitor",m_result["monitor"]}}));
-    // std::cout << "dispatching requested pieces" << endl;
-    // composeSkeleton(m_result["skeleton"]);
-    // dispatch_piece(json({{"skeleton",m_result["skeleton"]}}));
-    std::cout << "dispatching requested pieces" << endl;
-    for( auto& p: pieces ) {
-      if(p.is_string()) {
-        std::vector<std::string> a = split(p.get<std::string>(),'/');
-        if(a.size()>1) {
-          std::string type = a[0];
-          std::string name = a[1];
-          std::cout << "Piece request: composing " << type << " " << name << std::endl;
-          progress_made("Piece "+type+" "+name);
-          json outPiece;
-          if(type=="skeleton"   ) outPiece=json({{"skeleton",m_result["skeleton"]}});
-          if(type=="hits"       ) composePiece<recob::Hit       >( type, name, outPiece[type]  );
-          if(type=="spacepoints") composePiece<recob::SpacePoint>( type, name, outPiece[type]  );
-          if(type=="clusters"   ) composePiece<recob::Cluster   >( type, name, outPiece[type]  );
-          if(type=="tracks"     ) composePiece<recob::Track     >( type, name, outPiece[type]  );
-          if(type=="showers"    ) composePiece<recob::Shower    >( type, name, outPiece[type]  );
-          if(type=="endpoint2d" ) composePiece<recob::EndPoint2D>( type, name, outPiece[type]  );
-          if(type=="pfparticles") composePiece<recob::PFParticle>( type, name, outPiece[type]  );
-          if(type=="opflashes"  ) composePiece<recob::OpFlash   >( type, name, outPiece[type]  );
-          if(type=="ophits"     ) composePiece<recob::OpHit     >( type, name, outPiece[type]  );
-          if(type=="oppulses"   ) composePiece<raw::OpDetPulse  >( type, name, outPiece[type]  );
-    
-          // FIXME: change in MC structure.
-          if(type=="gtruth"   ) composePiece<simb::GTruth    >( type, name, outPiece[type] );
-          if(type=="mctruth"  ) composePiece<simb::MCTruth   >( type, name, outPiece[type] );
-          if(type=="particles") composePiece<simb::MCParticle>( type, name, outPiece[type] );
+  // find if there is 'piece' or 'pieces' in the request
+  pieces_t pieces;
+  bool do_pieces  = parse_pieces(*request,pieces);
+      
 
-          // Note we try looking for both raw::rawDigit and recob::Wire objects. Only one of them will properly match the name and get put in, since the name contains the product class.
-          if(type=="wireimg"       ) composePieceImage<raw::RawDigit     >( type, name, outPiece[type] );
-          if(type=="wireimg"       ) composePieceImage<recob::Wire       >( type, name, outPiece[type] );
-          if(type=="wireimg-lowres") composePieceImage<raw::RawDigit     >( type, name, outPiece[type] );
-          if(type=="wireimg-lowres") composePieceImage<recob::Wire       >( type, name, outPiece[type] );
-          
-          // FIXME: allow for finer-grained associations. Requires thought, though, since names of associations are not names of products. Will need new logic.
-          if(type=="associations") { composeAssociations(); outPiece = json({{"associations",m_result["associations"]}}); }
-          // dispatch it.
-          if(type=="stats") { composeAssociations(); outPiece = json({{"stats",m_stats}}); }
-          dispatch_piece(outPiece);
-        }
-      }        
+  if(do_pieces) {
+    std::cout << "dispatching requested pieces" << endl;
+    bool complete = dispatch_existing_pieces(pieces);
+    if(complete) return Done();
+
+    for( auto& p: pieces ) {
+      std::cout << "Piece request: composing " << p.type << " " << p.name << std::endl;
+      progress_made("Composing "+p.type+" "+p.name);
+      json outPiece;
+      if(p.type=="manifest"   ) outPiece=json({{"manifest",m_result["manifest"]}});
+      if(p.type=="hits"       ) composePiece<recob::Hit       >( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="spacepoints") composePiece<recob::SpacePoint>( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="clusters"   ) composePiece<recob::Cluster   >( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="tracks"     ) composePiece<recob::Track     >( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="showers"    ) composePiece<recob::Shower    >( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="endpoint2d" ) composePiece<recob::EndPoint2D>( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="pfparticles") composePiece<recob::PFParticle>( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="opflashes"  ) composePiece<recob::OpFlash   >( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="ophits"     ) composePiece<recob::OpHit     >( p.type, p.name, outPiece[p.type]  );
+      if(p.type=="oppulses"   ) composePiece<raw::OpDetPulse  >( p.type, p.name, outPiece[p.type]  );
+
+      // FIXME: change in MC structure.
+      if(p.type=="gtruth"   )   composePiece<simb::GTruth    >( p.type, p.name, outPiece[p.type] );
+      if(p.type=="mctruth"  )    composePiece<simb::MCTruth   >( p.type, p.name, outPiece[p.type] );
+      if(p.type=="mcparticles") composePiece<simb::MCParticle>( p.type, p.name, outPiece[p.type] );
+
+      // Note we try looking for both raw::rawDigit and recob::Wire objects. Only one of them will properly match the p.name and get put in, since the p.name contains the product class.
+      if(p.type=="wireimg"       ) composePieceImage<raw::RawDigit     >( p.type, p.name, outPiece[p.type] );
+      if(p.type=="wireimg"       ) composePieceImage<recob::Wire       >( p.type, p.name, outPiece[p.type] );
+      if(p.type=="wireimg-lowres") composePieceImage<raw::RawDigit     >( p.type, p.name, outPiece[p.type] );
+      if(p.type=="wireimg-lowres") composePieceImage<recob::Wire       >( p.type, p.name, outPiece[p.type] );
+    
+      // FIXME: allow for finer-grained associations. Requires thought, though, since p.names of associations are not p.names of products. Will need new logic.
+      if(p.type=="associations") { composeAssociations(); outPiece = json({{"associations",m_result["associations"]}}); }
+      // dispatch it.
+      if(p.type=="stats") { composeAssociations(); outPiece = json({{"stats",m_stats}}); }
+      dispatch_piece(outPiece);
     }
     dispatch_piece(json({{"stats",m_stats}}));
     m_result["stats"] = m_stats;
 
-    // Create a final progress report; send it as our return value.
-    json jdone;
-    jdone["progress"] = 1;
-    jdone["state"] = "Done";
-    return Output_t(new std::string(jdone.dump()));
+    return Done();
   }
   
   // 
@@ -1651,7 +1617,7 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   
   // Wire data.
   // End first so background image conversion tasks can be Ended as we build the rest.
-  progress_made("Composing recob::Wire image");  
+  progress_made("Composing recob::Wire images");  
   composePieceImage< recob::Wire       > ( "cal"       , "*", m_result["cal"       ]  );
 
   progress_made("Composing raw::Digit image");  

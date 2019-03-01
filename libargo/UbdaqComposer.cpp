@@ -41,10 +41,10 @@ UbdaqComposer::UbdaqComposer()
 {
 };
 
-void UbdaqComposer::configure(Config_t config, int id)
+void UbdaqComposer::configure(Config_t config)
 {
   m_config = config; 
-  m_id = id; 
+  // Some important things, with defaults.
   m_CacheStoragePath  = m_config->value("CacheStoragePath", std::string("../datacache"));
   m_CacheStorageUrl   = m_config->value("CacheStorageUrl",  std::string("datacache"));
   m_WorkingSuffix     = m_config->value("WorkingSuffix",    "working");
@@ -71,6 +71,10 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   
   m_request = request;
   m_result["request"] = *request;
+  
+  if(m_cur_event_descriptor.size()>0 && m_result["event_descriptor"] == m_cur_event_descriptor && m_record) return satisfy_request(request,m_record);
+
+
   // See if we can find the record in question.
   if(request->find("filename")==request->end()) {
     return Error("No file requested");
@@ -80,6 +84,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   long long  end   = request->value("entryend",(long long)99999999999);
   // FIXME: we could now allow a JSON option to get a specific event number instead of an entry.
   long long entry = start;
+  
   
   m_options = request->value("options",std::string(""));
   
@@ -126,11 +131,20 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
 {
   m_options = request->value("options",std::string(""));
   m_request = request;
-  
+
   m_record = record;
   if(!m_record) {
     return Error("Bad record!");
   } 
+  
+  pieces_t pieces;
+  bool do_pieces  = parse_pieces(*request,pieces);
+  
+  if(m_cur_event_descriptor.size()>0 && m_result["event_descriptor"] == m_cur_event_descriptor && m_record) {
+    bool complete = dispatch_existing_pieces(pieces);
+    if(complete) return Done();
+  }
+  
     
   std::string id = Form("r%08d_s%04d_e%08d"
                             ,m_record->getGlobalHeader().getRunNumber()    
@@ -152,29 +166,93 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
     m_current_event_url      = m_CacheStorageUrl;
   }
   
+  
+  
+  ///
+  /// Dispatch requested things.   
+  ///
+  
+  bool sn = ( m_record->getTpcSnSEBMap().size()>0 ) ;
+  bool tpc =( m_record->getTPCSEBMap().size()>0 );
+  
+  // Do fast things fast.
   composeHeader();
+
+  m_cur_event_descriptor = form_event_descriptor();
+  m_result["event_descriptor"] = m_cur_event_descriptor;    
+
+  if(do_pieces)  dispatch_piece(json({{"header",m_result["header"]}}));
+
+  try{ composePMTs();   } catch(...) { std::cerr << "Caught exception in composePMTs();" << std::endl; }
+  try{ composeLaser();  } catch(...) { std::cerr << "Caught exception in composeLaser();" << std::endl; }
+  
+  json manifest = json::object();
+  manifest["ophits"] = json::object();
+  if(m_result["ophits"].is_object()) {
+    for (json::iterator it = m_result["ophits"].begin(); it != m_result["ophits"].end(); ++it) {
+      manifest["ophits"][it.key()] = true; 
+    }      
+  }
+  if(m_result["laser"].is_object()) {
+    for (json::iterator it = m_result["laser"].begin(); it != m_result["laser"].end(); ++it) {
+      manifest["laser"][it.key()] = true; 
+    }      
+      }
+  
+  if(sn) {
+    manifest["hits"] = json::object();
+    manifest["hits"]["hits_SNDAQ__libargo"] = true;
+    manifest["wireimg"]["wireimg_SNDAQ__libargo"] = true;
+  }
+  if(tpc) {
+    manifest["hits"] = json::object();
+    manifest["hits"]["hits_DAQ__libargo"] = true;
+    manifest["wireimg"]["wireimg_DAQ__libargo"] = true;
+  }
+
+
+  if(do_pieces)  dispatch_piece(json({{"manifest",manifest}}));
+  if(do_pieces)  dispatch_piece(json({{"source",m_result["source"]}}));
+  if(do_pieces)  dispatch_piece(json({{"ophits",m_result["ophits"]}}));
+  if(do_pieces)  dispatch_piece(json({{"laser",m_result["laser"]}}));
 
   // Start DB lookups.  
   GetSlowMonDB slm(event_time);
   boost::thread slomon_thread(slm);
   // slm();
-  
-  try{ composeTPC();    } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
-  try{ composeTPC_SN(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
-  try{ composePMTs();   } catch(...) { std::cerr << "Caught exception in composePMTs();" << std::endl; }
-  composeLaser();
-  
+
+  if(sn ) try{ composeTPC_SN(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
+  if(tpc) try{ composeTPC();    } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
+
+  if(do_pieces)  dispatch_piece(json({{"hits",m_result["hits"]}}));
+
+
+  composeWireImages(tpc,manifest["wireimg"].begin().key());
+  if(do_pieces)  dispatch_piece(json({{"wireimg-lowres",m_result["wireimg-lowres"]}}));
+  if(do_pieces)  dispatch_piece(json({{"wireimg",m_result["wireimg"]}}));
+
   // Database lookup.
   slomon_thread.join();
   
   json hv; 
   hv = slm.val;
-  m_result["hv"] = hv;  
+  m_result["hv"] = json::object();
+  m_result["hv"]["slomon"] = hv;
+  if(do_pieces)  dispatch_piece(json({{"hv",m_result["hv"]}}));
+
+    
   m_result["stats"] = m_stats;
-  
-  m_result["composer_id"] = m_id;
+  if(do_pieces)   dispatch_piece(json({{"stats",m_result["stats"]}}));
   m_result["monitor"] = monitor_data();
+  
+  if(do_pieces){
+    json jdone;
+    jdone["progress"] = 1;
+    jdone["state"] = "Done";
+    return Output_t(new std::string(jdone.dump()));  
+  }
   return dump_result();
+  
 }
 
 
@@ -373,18 +451,14 @@ void UbdaqComposer::composeTPC()
   if(!gPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
   // The big wire map.
     
-  std::shared_ptr<wiremap_t> wireMap(new wiremap_t(8256));
-  std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(8256));
-  int ntdc = 0;
+  wireMap = std::shared_ptr<wiremap_t>(new wiremap_t(8256));
+  noiseMap = std::shared_ptr<wiremap_t>(new wiremap_t(8256));
   TimeReporter timer("TPC");    
   
   bool superspeed = false;
   if( std::string::npos != m_options.find("_SUPERSPEED_")) superspeed=true;
   
-  int wires_read = 0;
-  json hits;
-  
-  
+  json hits;  
   {
     TimeReporter timer_read("TPCReadDAQ");  
     ThreadPool thread_pool(m_max_threads);
@@ -446,73 +520,13 @@ void UbdaqComposer::composeTPC()
     thread_pool.JoinAll();
     timer_read.addto(m_stats);
   }
-  
-
-  
-  
-  if( std::string::npos != m_options.find("_NORAW_")) {
-    std::cout << "Not doing wire images." << std::endl;
-    reco_list["DAQ"] = json();
-    m_result["raw"] = reco_list;    
-  } else {
-    for(auto it: *wireMap) {
-      if(it) {
-        wires_read++;
-        int nsamp = it->size();
-        if(ntdc<nsamp) ntdc = nsamp;
-      }
-    }
-    if(wires_read == 0) return; // no data.
-    
-    // Ensure uniform length. Can happen due to 0x503f issue.
-    for(auto it: *wireMap) {
-      if(it) it->resize(ntdc,0);
-    }
-    
-    // Now we should have a semi-complete map.
-    fmintdc = 0;
-    fmaxtdc = ntdc;
-    int nwire = wireMap->size();
-    
-    CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
-  
-    if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
-    cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
-    int tilesize = m_request->value("tilesize",2400);
-    std::cout << "Doing tilesize" << tilesize << std::endl;
-    MakeEncodedTileset(     r,
-                            wireMap, 
-                            noiseMap,
-                            nwire,
-                            ntdc,
-                            m_current_event_dir_name,
-                            m_current_event_url,
-                            tilesize, false, m_max_threads);
-
-    reco_list["DAQ"] = r;
-    m_result["raw"] = reco_list;
-    
-    {
-      json r2;
-      TimeReporter lowres_stats("time_to_make_lowres");
-      MakeLowres( r2,
-                     wireMap,
-                     noiseMap,
-                     nwire,
-                     ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_max_threads );
-      json reco_list2;
-      reco_list2["DAQ"] = r2;
-      m_result["raw_lowres"] = reco_list2;
-    }
-    
-  }
 
   // hits.
   cout << "Created " << hits.size() << " hits" << endl;
   cout.flush();
   
   json hits_lists;
-  hits_lists["DAQ"] = hits;
+  hits_lists["hits_DAQ__libargo"] = hits;
   m_result["hits"] = hits_lists;
   
   timer.addto(m_stats);
@@ -607,15 +621,13 @@ void UbdaqComposer::composeTPC_SN()
   if(!gPlexus.is_ok()) cerr << "Plexus not loaded!" << std::endl;
   // The big wire map.
     
-  std::shared_ptr<wiremap_t> wireMap(new wiremap_t(8256));
-  std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(8256)); 
-  int ntdc = 0;
+  wireMap = std::shared_ptr<wiremap_t>(new wiremap_t(8256));
+  noiseMap = std::shared_ptr<wiremap_t>(new wiremap_t(8256));
   TimeReporter timer("TPC");    
   
   bool superspeed = false;
   if( std::string::npos != m_options.find("_SUPERSPEED_")) superspeed=true;
-  
-  int wires_read = 0;
+
   json hits;
   
   // int nsamp_max = 3200;
@@ -672,77 +684,79 @@ void UbdaqComposer::composeTPC_SN()
   }
   
   
-  if( std::string::npos != m_options.find("_NORAW_")) {
-    std::cout << "Not doing wire images." << std::endl;
-    reco_list["SNDAQ"] = json();
-    m_result["raw"] = reco_list;    
-  } else {
-    for(auto it: *wireMap) {
-      if(it) {
-        wires_read++;
-        int nsamp = it->size();
-        if(ntdc<nsamp) ntdc = nsamp;
-      }
-    }
-    if(wires_read == 0) return; // no data.
-    
-    // Ensure uniform length. 
-    for(auto it: *wireMap) {
-      if(it) it->resize(ntdc,0);
-    }
-    for(auto it: *noiseMap) {
-      if(it) it->resize(ntdc,0x7fff);
-    }
-
-    // Now we should have a semi-complete map.
-    fmintdc = 0;
-    fmaxtdc = ntdc;
-    int nwire = wireMap->size();
-    
-    // CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
-  
-    if(wires_read<=0) { cerr << "Got no wires!" << std::endl; return;}
-    cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
-    int tilesize = m_request->value("tilesize",2400);
-    std::cout << "Doing tilesize" << tilesize << std::endl;
-    
-    MakeEncodedTileset(     r,
-                            wireMap, 
-                            noiseMap,
-                            nwire,
-                            ntdc,
-                            m_CacheStoragePath,
-                            m_CacheStorageUrl,
-                            tilesize);
-
-    reco_list["SNDAQ"] = r;
-    m_result["raw"] = reco_list;
-    {
-      json r2;
-      TimeReporter lowres_stats("time_to_make_lowres");
-      MakeLowres( r2,
-                     wireMap,
-                     noiseMap,
-                     nwire,
-                     ntdc, m_CacheStoragePath, m_CacheStorageUrl, tilesize, false );
-      json reco_list2;
-      reco_list2["DAQ"] = r2;
-      m_result["raw_lowres"] = reco_list2;
-    }
-    
-  }
-  
   // hits.
-  cout << "Created " << hits.size() << " hits" << endl;
-  cout.flush();
-  
+  cout << "Created " << hits.size() << " hits" << endl;  
+
   json hits_lists;
-  hits_lists["SNDAQ"] = hits;
+  hits_lists["hits_SNDAQ__libargo"] = hits;
   m_result["hits"] = hits_lists;
   
   timer.addto(m_stats);
 }
 
+void UbdaqComposer::composeWireImages(bool noisefilter, const std::string& name)
+{
+  TimeReporter timer("createImageMaps");    
+  
+  // if( std::string::npos != m_options.find("_NORAW_")) {
+  //   std::cout << "Not doing wire images." << std::endl;
+  //   return;
+  // }
+  
+  int ntdc = 0;
+  int wires_read = 0;
+  if(!wireMap) return; // nodata
+  for(auto it: *wireMap) {
+      if(it) {
+        wires_read++;
+        int nsamp = it->size();
+        if(ntdc<nsamp) ntdc = nsamp;
+      }
+  }
+  if(wires_read == 0) return; // no data.
+    
+  // Ensure uniform length. Can happen due to 0x503f issue.
+  for(auto it: *wireMap) {
+    if(it) it->resize(ntdc,0);
+  }
+  for(auto it: *noiseMap) {
+    if(it) it->resize(ntdc,0x7fff);
+  }
+  // Now we should have a semi-complete map.
+  fmintdc = 0;
+  fmaxtdc = ntdc;
+  int nwire = wireMap->size();
+
+  if(noisefilter) CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
+  
+  cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
+  int tilesize = m_request->value("tilesize",2400);
+  std::cout << "Doing tilesize" << tilesize << std::endl;
+  json r;
+  MakeEncodedTileset(     r,
+                            wireMap, 
+                            noiseMap,
+                            nwire,
+                            ntdc,
+                            m_current_event_dir_name,
+                            m_current_event_url,
+                            tilesize, false, m_max_threads);
+
+  m_result["wireimg"] = json::object();
+  m_result["wireimg"][name] = r;
+    
+  json r2;
+  MakeLowres( r2,
+                 wireMap,
+                 noiseMap,
+                 nwire,
+                 ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_max_threads );
+  m_result["wireimg-lowres"] = json::object();
+  m_result["wireimg-lowres"]["wireimg_DAQ__libargoLowres"] = r2;
+    
+  
+  timer.addto(m_stats);
+}
 
 
 
@@ -971,7 +985,7 @@ void UbdaqComposer::composePMTs()
   json jPMT;
   jPMT["crates"] = jCrates;   
   m_result["PMT"] = jPMT;   
-  timer.addto(m_stats);
+  timer.addto(m_stats);  
 }
 
 void UbdaqComposer::composeLaser()
@@ -1007,6 +1021,17 @@ void UbdaqComposer::composeLaser()
   m_result["laser"] = jlaser;
   
 #endif
+}
+
+std::string UbdaqComposer::form_event_descriptor()
+{
+  std::string s("ubdaq|");
+  s.append(m_result["header"]["run"].dump());
+  s.append("|");
+  s.append(m_result["header"]["subrun"].dump());
+  s.append("|");
+  s.append(m_result["header"]["event"].dump());
+  return s;
 }
 
   

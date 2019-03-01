@@ -379,14 +379,29 @@ $(function() {
 
 
 ////////////////////////////////////////
+// Save control
+////////////////////////////////////////
+function SaveAControl(el,slot) 
+{
+  var input = $(el);
+  var val = input.val();
+  var id = el.id
+  if(input.is(":radio")) {
+    id = input.attr('name');
+    val = el.id;
+  } 
+  if(input.is(":checkbox")) val = input.is(":checked");
+  $.cookie(slot+":"+id,val);
+  console.log("Saved control",id,val);
+}
+  
+
+////////////////////////////////////////
 // Auto-Save
 ////////////////////////////////////////
 $(function(){
-  $('.saveable,.auto-save-on-change').on("click change",function(ev) {
-    val = $(this).val();
-    console.log("auto-save",this.id,val);
-    if($(this).is(":checkbox")) val = $(this).is(":checked");
-    $.cookie("save:"+this.id,val);    
+  $('body').on("click change",'input.saveable.auto-save-on-change',function(ev) {
+    SaveAControl(this,'save');
   });
 })
   
@@ -422,13 +437,10 @@ function SaveSettings( slot ) {
   
   // Save misc. configuration boxes.
   $(".saveable").each(function(){
-    val = $(this).val();
-    if($(this).is(":checkbox")) val = $(this).is(":checked");
-    $.cookie(slot+":"+this.id,val);
-    // console.log("saving ",this.id,val);
+    SaveAControl(this,slot);
   });
 
-  console.log("cookies saved.");
+  // console.log("cookies saved.");
   myGrowl("Window Configuration Saved");
 }
 
@@ -437,37 +449,48 @@ function SaveSettings( slot ) {
 ////////////////////////////////////////
 // Restore
 ////////////////////////////////////////
-function RestoreControlSettings( slot, elements ) {
+function RestoreControlSettings( slot, elements, suppress_change_event ) {
+  // console.log("RestoreControlSettings",slot,elements);
   $(".saveable",elements).each(function(){
-    var val = $.cookie(slot+":"+this.id);
-    if(val!=null){
-      // console.log("restoring:",this.id,val);
-      var changed = false;
-      if($(this).is(':checkbox')){
-
-        if( (val=='true') != $(this).is(':checked')) changed = true;
-        $(this).attr('checked',val=='true');
-
-      } else if($(this).is('select')) {
-        console.log("changing selectbox to ",val);
-        if($("option[value='"+val+"']",this).length!=0) {
-          // Change it only if the option exists.
-          if( val != $(this).val() ) changed = true;
-          $(this).val(val);          
+    var changed = false;
+    if($(this).is(':radio')){
+      val = $.cookie(slot+':'+$(this).attr('name'));
+      if(val == this.id)
+        if(!$(this).is(":checked")) { 
+          $(this).prop("checked",true); changed = true;
+          console.log("Restored control",$(this).attr('name'),val);
+          
         }
-                
-      } else {
-        if( val != $(this).val() ) changed = true;
-        $(this).val(val);
-      } 
+    } else {
+      var val = $.cookie(slot+":"+this.id);    
+      if(val!=null){
+        // console.log("restoring:",this.id,val);
+        if($(this).is(':checkbox')){
 
-      if(changed) $(this).trigger('change'); // Just in case
-     }
+          if( (val=='true') != $(this).is(':checked')) changed = true;
+          $(this).attr('checked',val=='true');
+
+        } else if($(this).is('select')) {
+          // console.log("changing selectbox to ",val);
+          if($("option[value='"+val+"']",this).length!=0) {
+            // Change it only if the option exists.
+            if( val != $(this).val() ) changed = true;
+            $(this).val(val);          
+          }
+        } else {
+          if( val != $(this).val() ) changed = true;
+          $(this).val(val);
+        }       
+      }
+    }
+    
+    if(changed && !suppress_change_event) $(this).trigger('change'); // Just in case
   });
 }
 
-function RestoreSettings( slot ) {
-  console.log("RestoreSettings, slot=",slot);
+function RestoreSettings( slot, context, suppress_change_event ) {
+  // console.log("RestoreSettings, slot=",slot);
+  if(!context) context = $('body');
   // see ideas at http://www.shopdev.co.uk/blog/sortable-lists-using-jquery-ui/
   var hidden_list_str   = $.cookie(slot+":hidden-portlets");
   var unhidden_list_str = $.cookie(slot+":unhidden-portlets");
@@ -476,7 +499,7 @@ function RestoreSettings( slot ) {
   var hidden_list = hidden_list_str.split(',');
   var unhidden_list = unhidden_list_str.split(',');
   
-  $(".portlet").each(function(){
+  $(".portlet",context).each(function(){
     var should_be_hidden = false;
     var this_portlet_is_configured = false;
     if($(this).hasClass('hidden-by-default')) {should_be_hidden=true; this_portlet_is_configured=true;}
@@ -500,7 +523,7 @@ function RestoreSettings( slot ) {
 
    // console.log("RestoreSettings, slot=",slot);
    // The hard part: rebuilding the docks.
-   $(".dock").each(function(){
+   $(".dock",context).each(function(){
      var cval = $.cookie(slot+":dock:"+this.id);
      // console.log("evaluating cookie","dock:"+this.id,cval);
      if(!cval ) return;
@@ -514,7 +537,7 @@ function RestoreSettings( slot ) {
      }
    });
    
-   RestoreControlSettings(slot,$('body'));
+   RestoreControlSettings(slot,context);
 }
 
 ///

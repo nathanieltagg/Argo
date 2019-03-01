@@ -948,7 +948,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     var trk = tracks[i];
     trk._index = i;
     var points = trk.points;
-    if(points.length<2) continue;
+    if(!points || points.length<2) continue;
     // compile points
     var pts = [];
     for(var j=0;j<points.length;j++) {

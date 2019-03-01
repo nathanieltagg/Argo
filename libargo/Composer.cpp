@@ -7,6 +7,9 @@
 #include <TSystem.h>
 #include <TROOT.h>
 
+
+using nlohmann::json;
+
 Composer::Composer() : m_result(nlohmann::json::object())
            , m_progress_target(1)
            , m_progress_so_far(0)
@@ -207,5 +210,108 @@ void Composer::dispatch_piece(const nlohmann::json& p) {
   // }
 }
 
+// Utility function to report an error and no other data.
+Output_t Composer::Error(const std::string& err) // {Error:err} as an Output_t
+{
+  nlohmann::json j;
+  j["error"] = err;
+  std::cerr << err << std::endl;
+  return Output_t(new std::string(j.dump()));
+}
 
 
+Output_t Composer::Done() // {progress:1, state:"done"} as an Output_t
+{
+  
+  nlohmann::json jdone;
+  jdone["progress"] = 1;
+  jdone["state"] = "Done";
+  return Output_t(new std::string(jdone.dump()));
+}
+
+// Utility function to provide progress feedback.
+void Composer::progress_made(const std::string msg,float increment) // {progress: +=increment, state:msg} sent to callback.
+{
+  if(m_output_callback) {
+    m_progress_so_far+=increment;
+    float frac = m_progress_so_far/m_progress_target;
+    if(m_output_callback) 
+      m_output_callback(kProgress,
+                        Output_t(new std::string(
+                            nlohmann::json({ { "progress", frac }, {"state", msg}}).dump()
+                        ) )
+                      );
+    
+  }
+}
+
+
+template<typename Out>
+void split(const std::string &s, char delim, Out result) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        if(item.size()>0) *(result++) = item;
+    }
+}
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, std::back_inserter(elems));
+    return elems;
+}
+
+
+
+bool Composer::parse_pieces(nlohmann::json& request, pieces_t& outPieces)
+{
+  // Return 'true' if a piece of some kind is requested, indicating that an incremental build has been requested.
+  json inpieces = json::array();
+  if( request["pieces"].is_array()) inpieces = (request)["pieces"];
+  if(!request["piece"].is_null())   inpieces.push_back((request)["piece"]);
+  
+  ///
+  /// Parse requested pieces.
+  /// Piece requests should be of form /type/name
+  /// where name can be a wildcard
+  /// This should map to m_result[type][name], or m_result["manifest"][type][name] (or on the client side, gRecord[type][name]) 
+  ///
+  if(inpieces.size() ==0 ) return false;
+  
+  for( auto& p: inpieces ) {
+    if(p.is_string()) {
+      piece_t op;
+      op.str = p.get<std::string>();
+      std::vector<std::string> a = split(op.str,'/');
+      if(a.size()>1) {
+        op.type = a[0];
+        op.name = a[1];
+        outPieces.push_back(op);
+      }
+    }
+  }
+  return true;
+}
+
+bool Composer::dispatch_existing_pieces(pieces_t& ioPieces)
+{
+ // Assume can satisfy everything:
+  bool complete = true;
+  pieces_t::iterator iter = ioPieces.begin();
+  pieces_t::iterator end  = ioPieces.end();
+  
+  while (iter != ioPieces.end())
+  {
+    piece_t& p = *iter;
+    if((m_result.count(p.type)>0) && (m_result[p.type].count(p.name)>0) ) {
+      json outpiece = json::object();
+      outpiece[p.type] = json::object();
+      outpiece[p.type][p.name] = m_result[p.type][p.name];
+      dispatch_piece(outpiece);
+      ioPieces.erase(iter);
+    } else {
+      complete = false;
+      ++iter;
+    }            
+  }
+  return complete;  
+}

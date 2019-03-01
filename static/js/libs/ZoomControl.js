@@ -299,7 +299,7 @@ ZoomControl.prototype.DrawTracks = function()
   for(var i=0;i<tracks.length;i++)
   {
     var trk = tracks[i];
-    var points = trk.points;
+    var points = trk.points ||[];
     if(points.length<2) continue;
     // compile points
     var pts = [];

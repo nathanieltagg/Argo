@@ -96,10 +96,22 @@ Output_t AnalysisTreeComposer::satisfy_request(Request_t request)
   source["selection"] = sel;
   m_result["source"] = source;
 
-  m_result["composer_id"] = m_id;
   m_result["monitor"] = monitor_data();
 
   compose();
+  
+  // create a manifest
+  json manifest = json::object();
+  std::vector<std::string> objs = {"hits","tracks","opflashes"};
+  for(auto type: objs) {
+    if(m_result[type].is_object()) {
+      manifest[type] = json::object();
+      for (json::iterator it2 = m_result[type].begin(); it2 != m_result[type].end(); ++it2) {
+        manifest[type][it2.key()] = true;
+      }      
+    }
+  }
+  m_result["manifest"] = manifest;
   return dump_result();
 }
 

@@ -57,15 +57,20 @@ ComposerWithQueue.prototype.do_end_of_request = function(output)
   this.running  = false;
   if(this.shutting_down) return;
   this.next_request(); // Next in queue if any
-  this.do_output(output);
+  this.do_output(output,0x20);
+  this.do_output("{\"progress\":1, \"state\":\"Done\"}")
 }
-
 
 
 module.exports=ComposerWithQueue;
 
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 /// End of library. Test code follows
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 if (require.main === module) {
@@ -112,7 +117,7 @@ var test1 = function(filename){
       var s = JSON.stringify(doc[i]);
       console.log(i,"\t",s.length,"\t",s.substr(0,1000));
     }
-    console.log("skeleton",doc.skeleton);
+    console.log("manifest",doc.manifest);
     // hack to make it not delete the composer prematurely:
   }
   
