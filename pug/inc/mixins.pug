@@ -1,0 +1,7 @@
+mixin portlet(pid,title,contentstyle)
+  .portlet(id=pid)
+    .portlet-header= title
+    .portlet-content&attributes(attributes)
+      block
+
+

@@ -6,9 +6,7 @@ style(type='text/css').
   .psuedoCutoffLow { width: 15px;}
   .psuedoCutoffHigh {width: 15px;}
   
-.portlet#falsecolorcontrol-port
-  .portlet-header Wire False Color
-  .portlet-content
++portlet('falsecolorcontrol-port','Wire False Color')
     .A-FalseColorControl
       //         <select class="false-color-type saveable" id="false-color-type">
            <option value="1"     selected="selected">Blue-Green</option> 
@@ -300,5 +298,3 @@ style(type='text/css').
     // A-FalseColorControl 
     .wireimg-encoded-progressbar(style='position: relative; text-align:center;')
       .wireimg-encoded-progressbar-text(style='position: absolute; color:black; width:100%')
-  // portlet-content 
-// portlet 

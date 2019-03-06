@@ -1,3 +1,4 @@
+include inc/mixins
 doctype html
 html
   head
@@ -25,49 +26,48 @@ html
       include inc/ControlOverlay
       #content
         #content-top
-          .important-links(style='text-align:center;')
-            a(href='samspider/samspider.cgi') Browse SAM datasets
-            a(href='server/file_browser.cgi') /uboone/ File Browser
-            a(href='http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00') Raw data files
-            br
-            a(href='http://argo-microboone.fnal.gov/live') Almost-live Data (from anywhere)
-            a(href='http://ubdaq-prod-near2.fnal.gov/Argo/live') Live data (FNAL only)
-            br
-          div(style='float:left;')
-            div(style='font-family:Arial,Verdana; font-size: 16pt; text-align:center;') Argo 2.0
-            img(src='images/argo_logo_2.0.png', alt='Argo - the Microboone Web Event Display', style='height:200px;')
-            br
-          div(style='display: block; overflow:hidden; text-align:center;')
-            a(href='help') Help and Hints
-            a.align-left#Print(href='#') Print
-            span.align-right
-              a.linktothis Link to this event
-            br
-            span.align-right
-              a.linkzoom Link to this event with current zoom
-            br
-            span.align-right#email-this-event Email this event
-            br
-            span.align-right#download-this-event Download this event
-          div
-            span(style='width: 5%;') Status:
-            span#status(style='display:inline-block; width: 50%;') Script loading...
-          #event-id-info(style='float:right')
-            | Event:
-            span.event-run
-            | |
-            span.event-subrun
-            | |
-            span.event-event
-            br
-            span.val.event-date unknown
-            span.val.event-time unknown
-            | (
-            span.val.event-age unknown
-            | )
-          include inc/DataSource 
-        // content-top 
-        div(style='clear:both;')
+          //- .important-links(style='text-align:center;')
+          //-   a(href='samspider/samspider.cgi') Browse SAM datasets
+          //-   a(href='server/file_browser.cgi') /uboone/ File Browser
+          //-   a(href='http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00') Raw data files
+          //-   br
+          //-   a(href='http://argo-microboone.fnal.gov/live') Almost-live Data (from anywhere)
+          //-   a(href='http://ubdaq-prod-near2.fnal.gov/Argo/live') Live data (FNAL only)
+          //-   br
+          //- div(style='float:left;')
+          //-   div(style='font-family:Arial,Verdana; font-size: 16pt; text-align:center;') Argo 2.0
+          //-   img(src='images/argo_logo_2.0.png', alt='Argo - the Microboone Web Event Display', style='height:200px;')
+          //-   br
+          //- div(style='display: block; overflow:hidden; text-align:center;')
+          //-   a(href='help') Help and Hints
+          //-   a.align-left#Print(href='#') Print
+          //-   span.align-right
+          //-     a.linktothis Link to this event
+          //-   br
+          //-   span.align-right
+          //-     a.linkzoom Link to this event with current zoom
+          //-   br
+          //-   span.align-right#email-this-event Email this event
+          //-   br
+          //-   span.align-right#download-this-event Download this event
+          //- div
+          //-   span(style='width: 5%;') Status:
+          //-   span#status(style='display:inline-block; width: 50%;') Script loading...
+          //- #event-id-info(style='float:right')
+          //-   | Event:
+          //-   span.event-run
+          //-   | |
+          //-   span.event-subrun
+          //-   | |
+          //-   span.event-event
+          //-   br
+          //-   span.val.event-date unknown
+          //-   span.val.event-time unknown
+          //-   | (
+          //-   span.val.event-age unknown
+          //-   | )
+          //- include inc/DataSource
+        //- div(style='clear:both;')
         #content-right.dock
           include inc/ZoomControl 
           include inc/FalseColorControl 
@@ -83,10 +83,8 @@ html
         #content-main
           #content-wide.dock
             //(#)include virtual="html/WireViewGL.inc" 
-            .portlet#rgbwireview-port
-              .portlet-header RGB View
-              .portlet-content(style='background-color:white; display:none;')
-                .pad.A-RgbWireView(style='width:100%; height:330px')
+            +portlet("rgbwireview-port","RGB View")(style="background-color:white; display:none;")
+              .pad.A-RgbWireView(style='width:100%; height:330px')
             include inc/WireView 
             // include virtual="html/WireViewBig.inc" 
             //include virtual="html/TimeHistogram.inc" 

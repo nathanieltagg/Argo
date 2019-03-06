@@ -16,13 +16,25 @@ $color_eunry_approx: #c39d9d;
 $color_dodger_blue_approx: #2196f3;
 
 
-$unretrieved_color: $color_storm_dust_approx;
-$retrieved_color:   $color_titan_white_approx;
-$hilite_control_color: red;
-$pending_color: #7082ff;
-$checkmark_color: #7082ff;
-$control_overlay_bg_color: $color_woodsmoke_approx;
-$control_overlay_tx_color: $color_titan_white_approx;
+$c1: #17252A;
+$c2: #2B7A78;
+$c3: #3AAfA9;
+$c4: #DEF2F1;
+$c5: #FEFFFF;
+
+$ControlOverlay_height: 85px;
+
+$unretrieved_color: $c1;
+$retrieved_color:   $c5;
+
+$control_overlay_bg_color: $c3;
+$control_overlay_tx_color: $c5;
+$hilite_control_color: $c2;
+$base_control_bg_color: $c2;
+$pending_color: $c4;
+$checkmark_color: $c5;
+
+
 
 //fonts
 $font_0: "Arial";
@@ -94,78 +106,79 @@ body {
   float: right;
   font-size: 1.5em;
 }
-div {
-  &.pad {
-    margin: 0;
-    padding: 0;
-  }
-  &.boxed {
-    border: 1px solid $color_storm_dust_approx;
-    margin-bottom: 5px;
-  }
-  &.event-info {
-    font-size: 0.7em;
-  }
-  &.A-EventInfo {
-    overflow: scroll;
-  }
-  &.spacer {
-  }
-  &.ui-dialog {
-    font-size: 0.9em;
-  }
-  &.A-WireView {
-    height: 400px;
-  }
-  &.A-WireViewGL {
-    height: 400px;
-  }
-  &.A-RgbWireView {
-    height: 400px;
-  }
-  &.A-WireHistogram {
-    height: 100px;
-  }
-  &.A-ZoomControl {
-    height: 100px;
-  }
-  &.A-TimeHistogram {
-    height: 120px;
-  }
-  &.WireInfo-text {
-    height: 55px;
-    overflow: hidden;
-  }
-  &.important-links a {
-    white-space: nowrap;
-    margin: 2px;
-    padding: 4px;
-    border: 1px solid $color_silver_chalice_approx;
-    //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
-    border-radius: 5px;
-    display: inline-block;
-    color: $color_fuscous_gray_approx;
-  }
+
+div.pad {
+  margin: 0;
+  padding: 0;
+  background-color: $c5;    
 }
+div.boxed {
+  border: 1px solid $color_storm_dust_approx;
+  margin-bottom: 5px;
+}
+div.event-info {
+  font-size: 0.7em;
+}
+div.A-EventInfo {
+  overflow: scroll;
+}
+div.spacer {
+}
+div.ui-dialog {
+  font-size: 0.9em;
+}
+div.A-WireView {
+  height: 400px;
+}
+div.A-WireViewGL {
+  height: 400px;
+}
+div.A-RgbWireView {
+  height: 400px;
+}
+div.A-WireHistogram {
+  height: 100px;
+}
+div.A-ZoomControl {
+  height: 100px;
+}
+div.A-TimeHistogram {
+  height: 120px;
+}
+div.WireInfo-text {
+  height: 55px;
+  overflow: hidden;
+}
+div.important-links a {
+  white-space: nowrap;
+  margin: 2px;
+  padding: 4px;
+  border: 1px solid $color_silver_chalice_approx;
+  //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
+  border-radius: 5px;
+  display: inline-block;
+  color: $color_fuscous_gray_approx;
+}
+
 #BigWireView {
   image-rendering: auto;
 }
-span {
-  &.ZoomControl-Info {
-    background-color: $white;
-  }
-  &.keypress-hint {
-    float: right;
-    font-weight: bold;
-    color: $black;
-  }
-  &.scan-input {
-    white-space: nowrap;
-  }
-  &.scan-input-label {
-    width: 30em;
-  }
+
+span.ZoomControl-Info {
+  background-color: $white;
 }
+span.keypress-hint {
+  float: right;
+  font-weight: bold;
+  color: $black;
+}
+span.scan-input {
+  white-space: nowrap;
+}
+span.scan-input-label {
+  width: 30em;
+}
+
 #header {
   width: 650px;
   margin: auto;
@@ -175,7 +188,9 @@ span {
   width: auto;
   margin-left: 20px;
   margin-right: 20px;
+  margin-top: $ControlOverlay_height + 10px;
 }
+
 #content-main {
   width: auto;
   margin-right: 240px;
@@ -340,6 +355,7 @@ td {
 #ctl-color-scale {
   font-size: 0.7em;
 }
+
 .portlet {
   margin: 0 0 1em 0;
   overflow: hidden;
@@ -355,6 +371,7 @@ td {
   }
 }
 .portlet-content {
+  background-color:$c5;
   padding: 0.4em;
   overflow: hidden;
   font-size: 0.8em;
@@ -467,7 +484,7 @@ td {
   background-color: $control_overlay_bg_color;
   color: $control_overlay_tx_color;
   width: 1000px;
-  height: 80px;
+  height: $ControlOverlay_height;
   .event-basefilename {
     font-size: 9px;
     width: 800px;
@@ -496,6 +513,9 @@ td {
         text-decoration: none;
         //Instead of the line below you could use @include transition-duration($duration-1, $duration-2, $duration-3, $duration-4, $duration-5, $duration-6, $duration-7, $duration-8, $duration-9, $duration-10)
         transition-duration: 0.5s;
+        background-color: $base_control_bg_color;
+        border-radius: 3px;
+        
         &:hover {
           background: $red;
           cursor: pointer;
@@ -587,6 +607,9 @@ td {
     width: 6px;
     //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
     border-radius: 50%;
+  }
+  fieldset {
+    border: none;
   }
 }
 @keyframes pulse {

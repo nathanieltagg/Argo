@@ -45,30 +45,84 @@ var app = express();
 httpServer = http.createServer(app);
 
 
-// function samweb()
-// {
-//   // Utility function to call samweb, assuming it's in the current PATH (set up by sam_web_client)
-//   //
-//   //
-//   console.time('samweb');
-//   var sam_args = [...config.sam_arguments,...arguments];
-//   return new Promise(function(resolve,reject) {
-//     spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
-//       if (error) {
-//         // console.log("samweb error",error);
-//         reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
-//       } else {
-//         console.timeEnd('samweb');
-//         resolve(stdout.trim());
-//       }
-//     });
-//   });
-// }
+function samweb()
+{
+  // Utility function to return promise samweb, assuming it's in the current PATH (set up by sam_web_client)
+  //
+  //
+  var sam_args = [...config.sam_arguments,...arguments];
+  return new Promise(function(resolve,reject) {
+    console.time('samweb');
+    spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
+      if (error) {
+        // console.log("samweb error",error);
+        reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
+      } else {
+        console.timeEnd('samweb');
+        resolve(stdout.trim());
+      }
+    });
+  });
+}
+
+function sam_locate_file(filename)
+{
+  return new Promise(function(resolve,reject){
+    samweb("locate-file",filename).then(loc=>{
+      // returned string is enstore:/pnfs/.../dir(stuff)
+      console.log("located "+loc);
+      var m = loc.match(/[^:]*:(.*)\(.*\)/);
+      if(!m) return reject(Error("File not found in SAM"));
+      if(m.length<2) return reject(Error("Could not parse SAM locate-file response "+loc));
+      var mypathname = path.join(m[1],filename);
+      console.log("locate-file looking for",mypathname)
+      
+      if(fs.existsSync(path)) {
+        console.log("locate-file found it's target",mypathname)
+        return resolve(path);
+      } else {
+        return reject(Error("SAM path doesn't exist on this computer:"+mypathname));
+        // FIXME: I could include code here that uses xrootd (xrdcp command) or idfh cp to get the file to the local computer. 
+        // However, those require custom installtion of either VOMS or globus-url-copy, which are a pain to get going on Mac OSX.
+      }
+    });
+  });
+}
+
+function samweb_get_raw_ancestor(filename)
+{
+  return new Promise(function(resolve,reject){
+    samweb('list-files',
+            "isancestorof:(file_name="+filename+") and availability:default and data_tier=raw and file_format=artroot")
+    .then(fn2 => sam_locate_file(fn2), err=>reject(err))
+    .then(loc => resolve(loc), err=>reject(err))
+    .catch(err=>reject(err));
+
+    // samweb('file-lineage','ancestors',filename).then(lineage=>{
+    //   console.log(lineage);
+    //   // split into lines:
+    //   lines = lineage.split("\n");
+    //   lines.reverse(); // last first
+    //   for(l of lines) {
+    //     if(l.includes(".root")) { // We want the root ancestor who has a .root extension. This file SHOULD have raw wires.
+    //       return sam_locate_file(l.trim());
+    //     }
+    //   }
+    // })
+    // .catch(err=>{console.log(err); reject(err)});
+  });
+}
+
 
 // Samweb test.
 // samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
 // . then( (o)=>{console.log(o);}  )
 // . catch();
+
+samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+.then(m=>{console.log('file I want:',m)})
+.catch(err=> console.log(err));
+
 
 // // test file loading
 // // This takes only 12 ms to parse and 6 ms to redole (on mac). That indicates it makes sense for Node to read saved files and then piece them out just
