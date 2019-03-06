@@ -37,7 +37,7 @@ pwd := $(shell pwd)
 
 # CPPFLAGS := -g -I.. -Wno-error-deprecated-declarations
 #CPP := g++44 -std=c++0x
-CPP := g++ -std=c++1y -O0
+CPP := g++ -std=c++17
 LD := $(CPP)
 shlibsuffix=so
 LDFLAGS = -g 
@@ -110,6 +110,8 @@ CPPFLAGS += -I ${CANVAS_INC}
 LIBS     += -L ${CANVAS_LIB} -l canvas
 CPPFLAGS += -I ${LARDATAOBJ_INC}
 LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase
+CPPFLAGS += -I ${LARCOREALG_INC}
+# LIBS     += -L ${LARCOREALG_LIB} -l lardataobj_RecoBase
 CPPFLAGS += -I ${LARCOREOBJ_INC}
 CPPFLAGS += -I ${NUSIMDATA_INC}
 LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
