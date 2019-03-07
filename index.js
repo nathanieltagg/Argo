@@ -77,9 +77,9 @@ function sam_locate_file(filename)
       var mypathname = path.join(m[1],filename);
       console.log("locate-file looking for",mypathname)
       
-      if(fs.existsSync(path)) {
+      if(fs.existsSync(mypathname)) {
         console.log("locate-file found it's target",mypathname)
-        return resolve(path);
+        return resolve(mypathname);
       } else {
         return reject(Error("SAM path doesn't exist on this computer:"+mypathname));
         // FIXME: I could include code here that uses xrootd (xrdcp command) or idfh cp to get the file to the local computer. 

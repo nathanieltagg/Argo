@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <memory>
 
 struct waveform_t : public std::vector<int16_t>
 {
