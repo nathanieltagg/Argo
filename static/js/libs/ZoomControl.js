@@ -264,17 +264,17 @@ ZoomControl.prototype.NewRecord = function()
 {
   // First, see if something has been specified on in the URL hash
   var par = $.deparam.fragment();
-  if(par.t1) {
-    var t1 = parseFloat(par.t1) || 0;
-    var t2 = parseFloat(par.t2) || 9600;    
+  if(par.zoom) {
+    var t1 = parseFloat(par.zoom.t1) || 0;
+    var t2 = parseFloat(par.zoom.t2) || 9600;    
     gZoomRegion.changeTimeRange(t1,t2)
 
-    var wires= parseFloat(par.wires) || 150;
+    var wires= parseFloat(par.zoom.wires) || 150;
     var h = wires/2;
     
-    var plane0 = parseFloat(par.plane0) || gGeo.numWires(0)/2;
-    var plane1 = parseFloat(par.plane1) || gGeo.numWires(1)/2;
-    var plane2 = parseFloat(par.plane2) || gGeo.numWires(2)/2;
+    var plane0 = parseFloat(par.zoom.plane0) || gGeo.numWires(0)/2;
+    var plane1 = parseFloat(par.zoom.plane1) || gGeo.numWires(1)/2;
+    var plane2 = parseFloat(par.zoom.plane2) || gGeo.numWires(2)/2;
     gZoomRegion.plane[0]=[plane0-h,plane0+h];
     gZoomRegion.plane[1]=[plane1-h,plane1+h];
     gZoomRegion.plane[2]=[plane2-h,plane2+h];
@@ -496,8 +496,7 @@ ZoomControl.prototype.Draw = function()
   // hash = hash.replace(/(<([^>]+)>)/ig,"");
   // hash = hash.replace(/\"\'/ig,"");
   
-
-  var phash = $.deparam.fragment();
+  var phash ={};
   phash.t1 = gZoomRegion.tdc[0].toFixed(0);
   phash.t2 = gZoomRegion.tdc[1].toFixed(0);
   phash.wires = (gZoomRegion.plane[2][1]-gZoomRegion.plane[2][0]).toFixed(0);
@@ -509,6 +508,9 @@ ZoomControl.prototype.Draw = function()
   $('a.linkzoom').attr('href',lnk);
   $('.linkzoom-txt').text(lnk);
   $('span.ZoomControl-Info').html(txt);
+  
+  // Better: just add to the hash.  Changes filtered out on the downstream end.
+  $.bbq.pushState({zoom:phash},0);
   
 };
 

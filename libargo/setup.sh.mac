@@ -24,3 +24,5 @@ setup sam_web_client
 
 #This is required by node-gyp to build the argonode patch library correctly:
 export CXX=clang++
+
+./create_environment_scripts.js

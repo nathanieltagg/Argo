@@ -541,7 +541,6 @@ div.portlet {
         border-radius: 3px;
         
         &:hover {
-          background: $red;
           cursor: pointer;
         }
         
@@ -566,7 +565,9 @@ div.portlet {
           
           display: none;
           &:hover {
-            @extend %extend_2;
+            visibility: visible;
+            opacity: 1;
+            display: block;
           }
           div {
             display: block;
@@ -582,7 +583,9 @@ div.portlet {
           }
         }
         &:hover > fieldset {
-          @extend %extend_2;
+          visibility: visible;
+          opacity: 1;
+          display: block;          
         }
       }
     }
@@ -615,7 +618,7 @@ div.portlet {
       
     }
     &:checked + .checkmark {
-      background-color: $checkmark_color;
+      background-color: $checkmark_color !important;
       
     }
     &.pending:checked + .checkmark {
@@ -636,6 +639,7 @@ div.portlet {
     width: 6px;
     //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
     border-radius: 50%;
+    z-index: 1001;
   }
   fieldset {
     border: none;
