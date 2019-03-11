@@ -60,15 +60,14 @@ function samweb()
     console.time('samweb');
     spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
       if (error) {
-        // console.log("samweb error",error);
-        reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
+        return reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
       } else {
         console.timeEnd('samweb');
         lines = stdout.split("\n");  // split newlines
         for(var i=0;i<lines.length;i++){
           lines[i] = lines[i].trim(); // trim each output line of whitespace
         }
-        resolve(lines);
+        return resolve(lines);
       }
     });
   });
@@ -95,7 +94,7 @@ function sam_locate_file(filename)
         // FIXME: I could include code here that uses xrootd (xrdcp command) or idfh cp to get the file to the local computer. 
         // However, those require custom installtion of either VOMS or globus-url-copy, which are a pain to get going on Mac OSX.
       }
-    },  err=>reject(err) );
+    },  err=>{console.log("sam_locate_file fail",err); return reject(new Error("Could not locate-file "+filename))} );
   });
 }
 
@@ -125,9 +124,9 @@ function samweb_get_raw_ancestor(filename)
 
 
 // Samweb tests.
-// samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
-// . then( (o)=>{console.log(o);}  )
-// . catch();
+ samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+. then( (o)=>{console.log(o);}  )
+. catch();
 
 // samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
 // .then(m=>{console.log('file I want:',m)})
@@ -225,7 +224,7 @@ async function resolve_request(event_req)
 
   if(! reqfile.includes("/")) { 
     // We've been asked for a file, but we don't have a full path. This is a job for sam!
-    reqfile = await sam_locate_file(reqfile).catch(err=>{throw err;});
+    reqfile = await sam_locate_file(reqfile).catch(err=>{throw new Error("Could not find file in sam: "+reqfile);});
   }    
     
   if(!fs.existsSync(reqfile)) {
@@ -292,9 +291,9 @@ async function attach_stream(ws,req)
     // See if there is a 'what' flag. If so, need a new event.
     if(newreq.what) {
       resolve_request(newreq).then(
-      (r)=>{ ws.my_composer.request(r);}, // And we're off and running again!  Or this is queued; the plug-in takes care of it.      
-      (err)=>send_error_message
-    )} else {
+        (r)=>{ ws.my_composer.request(r);}) // And we're off and running again!  Or this is queued; the plug-in takes care of it.  
+        .catch(err=>{send_error_message(err.message)}); 
+    } else {
       // Try to do it anyway, this is probably a piece request
       ws.my_composer.request(newreq);
     }
