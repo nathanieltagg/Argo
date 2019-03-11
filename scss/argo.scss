@@ -97,6 +97,10 @@ body {
   font-size: 10pt;
   @extend %extend_1;
 }
+
+body textarea{ user-select: default; }
+body input[type="text"]{ user-select: default; }
+
 #event-id-info {
   margin-left: 30px;
   float: right;
