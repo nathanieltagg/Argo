@@ -224,7 +224,7 @@ async function resolve_request(event_req)
 
   if(! reqfile.includes("/")) { 
     // We've been asked for a file, but we don't have a full path. This is a job for sam!
-    reqfile = await sam_locate_file(reqfile).catch(err=>{throw new Error("Could not find file in sam: "+reqfile);});
+    reqfile = await sam_locate_file(reqfile).catch(err=>{throw err;});
   }    
     
   if(!fs.existsSync(reqfile)) {
