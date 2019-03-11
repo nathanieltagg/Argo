@@ -14,6 +14,7 @@ function DataSource()
   function PushFEHash()
   {
     var newstate={
+      whatkey:    "file",
       filename:   $('#inFilename').val(),
       entry:      0
     };
@@ -24,25 +25,31 @@ function DataSource()
   }
 
 
-  function PushRawRunHash()
+  function PushRunHash()
   {
     $.bbq.pushState({
-      what: 'raw',
-      run:   $('#inRawRun').val(),
-      subrun:$('#inRawSubrun').val(),
-      entry: $('#inRunEntry').val(),
-      //selection: $('#inFeSelection').val()
+      what: 'run',
+      run:   $('#inRun').val(),
+      event: $('#inRunEvent').val(),
+      trig:  $('#inRunTrig').val(),
+      tier:  $('#inRunTier').val(),
+      selection: "EventAuxiliary.id_.event_=="+$('#inRunEvent').val()
     },2);
   }
-  
-  function PushLocalFileHash()
+    
+    
+  function PushSamDimHash()
   {
-    console.log("PushLocalFileHash",$('#inLocalFile'),$('#inLocalFile').get(0).files);
-    $.bbq.pushState({      
-      localFile: ++gLocalFileSeqno
-    },2);
+    var newstate = {
+      what: 'samdim',
+      samdim: $('#inSamDim').val(),
+    }
+    if($('#inSamEntryOrEvent').val()=="Entry") newstate.entry = $('#inSamEntry').val();
+    else newstate.selection="EventAuxiliary.id_.event_=="+$('#inSamEntry').val();
+    $.bbq.pushState( newstate, 2 );
+    
   }
-  
+    
   // Tabs.
   $("div#data-source-tabs").tabs();
   
@@ -51,13 +58,13 @@ function DataSource()
   
   $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
   $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
-  $('#go_fe').button().click(function(){PushFEHash(); return false;});
+  $('#go_fe').click(function(){PushFEHash(); return false;});
 
-  $('#inRawRun')    .keydown(function(e){if (e.keyCode == 13) { PushRawRunHash(); }});
-  $('#inRawSubrun') .keydown(function(e){if (e.keyCode == 13) { PushRawRunHash(); }});
-  $('#inRunEntry')  .keydown(function(e){if (e.keyCode == 13) { PushRawRunHash(); }});
-  $('#go_rawrun').button().click(function(){PushRawRunHash(); return false;});
+  $('#inRun')    .keydown(function(e){if (e.keyCode == 13) { PushRunHash(); }});
+  $('#inRunEvent')  .keydown(function(e){if (e.keyCode == 13) { PushRunHash(); }});
+  $('#go_run').click(function(){PushRawRunHash(); return false;});
 
+  $('#go_samdim').click(function(){PushSamDimHash(); return false;});
 
 
   var self=this;
@@ -81,12 +88,14 @@ DataSource.prototype.NewRecord = function()
 {
   var entry = ((gRecord || {}).source || {}).entry;
   var file = ((gRecord || {}).source || {}).file;
-  $("#inFeEntry").val(entry);
-  if($('#inEntryOrEvent').val()=="Event" && gRecord.header.event) $("#inFeEntry").val(gRecord.header.event);
+  $('.inEntryOrEvent').val("Entry");
+  $('.inEntry').val(entry);
+
   $('#inFilename').val(file);
   
   $(".inRun").val(((gRecord || {}).source || {}).run);
   $(".inSubrun").val(((gRecord || {}).source || {}).subrun);
+  $('.inEvent').val(((gRecord || {}).source || {}).event||-1);
   
   // Title of the window, also used for bookmarking
   if(gRecord.header) {
@@ -121,6 +130,7 @@ DataSource.prototype.NewRecord = function()
    
   $('a.linktothis').attr('href',gUrlToThisEvent);
   $('#email-this-event').html('<a href="mailto:ntagg@otterbein.edu?subject=Argo Bug&body='+escape(gUrlToThisEvent)+'">Email this event (Bug Report)</a>');
+
 };
 
 
@@ -139,7 +149,8 @@ function DoNextEvent()
           }
     });
   } else {
-    $.bbq.pushState({entry: entry+1}, 0); // merge into current hash.
+    console.log("advancing to ",entry+1);    
+    $.bbq.pushState({entry: entry+1}, 0); // merge into current hash.    
   }
 }
 

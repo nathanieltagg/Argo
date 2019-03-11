@@ -60,6 +60,18 @@ function ControlOverlay( element )
   this.bar_ul.on("change","input.product-type",this.OnChangeProductTypeToggle.bind(this))
   this.bar_ul.on("change","input.product-name",this.OnChangeProductName.bind(this))
 
+  $('.progress-status',this.element).on("click",function(){
+    $("#progresslog-modal").show();
+  })
+
+  $('.file-and-entry',this.element).on("click",function(){
+    $("#input-fe").show();
+  });
+
+  $('.event-id-info',this.element).on("click",function(){
+    $("#input-rawrun").show();
+  });
+
 
   gStateMachine.Bind('newRecord',this.NewRecord.bind(this));
   gStateMachine.Bind('newPiece',this.NewPiece.bind(this));
@@ -137,6 +149,8 @@ ControlOverlay.prototype.NewPiece = function(piece)
         elem.append(fs);
 
         elem.appendTo(bar_ul).show('slow');
+        $('#'+_type+'-menu-info').appendTo(fs).show();
+        
         // if(_type == "tracks") debugger;
       }
 
@@ -150,7 +164,11 @@ ControlOverlay.prototype.NewPiece = function(piece)
         if(!menus.includes(t)) add_type(t);
       }
       
-      RestoreControlSettings('save',this.bar_ul, true); // This might trigger data retrieval.
+      RestoreControlSettings('save',this.bar_ul, true); // Sets everything on, off, but fires no change events.
+      
+      // It's now our job to do what is required. This is easy: go fetch anything that has the 'show' flag checked.
+      $('input.product-type:checked').change();
+      
       
     }
   } else {
@@ -169,6 +187,11 @@ ControlOverlay.prototype.NewPiece = function(piece)
     for(var _name in gRecord[_type]) {
       console.log("ControlOverlay: inspecting ",_type,_name);
       var item = $("input.product-name",product_type_elem).filter(function(){return $(this).data('product-name')==_name;});
+      if(item.length==0) {
+        // This wasn't in the manifest!
+        console.error("Recieved data product that wasn't in the manifest");
+        // can prepend it to fs
+      }
       if(!item.hasClass('retrieved')) {
         n_new++;
         // This is a new piece.
@@ -192,7 +215,7 @@ ControlOverlay.prototype.NewPiece = function(piece)
       void label.offsetWidth; // allows pulse retriggering see https://codepen.io/chriscoyier/pen/EyRroJ
       label.classList.add("pulse");
     }
-  } 
+  }
 }
 
 ControlOverlay.prototype.Click = function(a,b,c)
@@ -213,8 +236,10 @@ ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
   if(_name && gRecord[_type] && gRecord[_type][_name]){ gStateMachine.Trigger('toggle-'+_type); return true; }
 
   function load_name(_name) {
+    // if(!_name) debugger;
+    console.log("OnChangeProductTypeToggle is triggering load of type",_type,"product",_name);
     var product_type_input =  $("input.product-name").filter(function(){return $(this).data('product-name')==_name;});
-    product_type_input.prop('selected',true).trigger("change");  
+    product_type_input.prop('checked',true).trigger("change");  
   }
 
   // Selected but not loaded?  This happens if browser remembers the radio choice, but it hasn't been requested yet.
@@ -232,7 +257,7 @@ ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
   }
 
   // none selected, none loaded?  Pick one at semi-random, load and select it.
-  var possible = Object.keys((gRecord[_type] || {}).manifest || {});
+  var possible = Object.keys(((gRecord || {}).manifest || {})[_type]||{});
   for(var _name of possible) {
     var select = false;
     if(  _name.includes("gaushit")
@@ -262,7 +287,7 @@ ControlOverlay.prototype.OnChangeProductName = function(ev)
   if(thing) // it exists
     gStateMachine.Trigger('change-'+_type);
   else {
-    product_type_input.addClass("pending").prop("checked","checked");
+    product_type_input.addClass("pending").prop("checked","checked"); // not no change event!
     tgt.addClass("pending");
     RequestPiece(_type,_name);
   }

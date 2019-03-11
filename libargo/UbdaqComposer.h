@@ -36,6 +36,7 @@ public:
   bool composeHeaderTrigger(nlohmann::json& trig);
   void composeTPC();
   void composeTPC_SN();
+  void composeHits();
   void composePMTs();
   void composeLaser();
 

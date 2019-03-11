@@ -20,26 +20,30 @@ var defaults = {
   datacache: __dirname + "/datacache",
   datacache_max_files: 100,
   datacache_max_age:   3600000, // one hour, in ms
-  sam_arguments :["-e","uboone"]
+  sam_arguments :["-e","uboone"],
 }
+defaults.composer_config = {
+   "forking": false,
+   "CacheStoragePath": defaults.datacache,
+   "CacheStorageUrl": "/datacache",
+   "WorkingSuffix": "event",
+   "CreateSubdirCache": true,
+  "fork_logdir": __dirname+"/logs/",
+  plexus: {
+    tpc_source:"sqlite "+__dirname+"/db/current-plexus.db",
+    pmt_source:"sqlite "+__dirname+"/db/current-plexus.db",
+  }
+}
+var config = require('deepmerge')(defaults,require('./config.js'));
 
-
-var config = defaults;
-
+console.log("config:",config);
 
 // IDEA: can do this right here: process.env.DYLD_LIBRARY_PATH="<stuff>"
 // NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
 
 // My backend instantiation (maps to a ComposerWithQueue object) 
 var Composer = require("argonode");
-var composer_config ={
-  "forking": false,
-  "fork_logs": __dirname + "/logs/",
-  "CacheStoragePath": config.datacache,
-  "CacheStorageUrl": "/datacache",
-  "WorkingSuffix": "event",
-  "CreateSubdirCache": true,
-};
+
 // var samweb_path = process.env.00
 var app = express();
 httpServer = http.createServer(app);
@@ -48,6 +52,7 @@ httpServer = http.createServer(app);
 function samweb()
 {
   // Utility function to return promise samweb, assuming it's in the current PATH (set up by sam_web_client)
+  // Returns array of lines.
   //
   //
   var sam_args = [...config.sam_arguments,...arguments];
@@ -59,7 +64,11 @@ function samweb()
         reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
       } else {
         console.timeEnd('samweb');
-        resolve(stdout.trim());
+        lines = strdout.split("\n");  // split newlines
+        for(var i=0;i<lines.length;i++){
+          lines[i] = lines[i].trim(); // trim each output line of whitespace
+        }
+        resolve(lines);
       }
     });
   });
@@ -68,8 +77,9 @@ function samweb()
 function sam_locate_file(filename)
 {
   return new Promise(function(resolve,reject){
-    samweb("locate-file",filename).then(loc=>{
+    samweb("locate-file",filename).then(locs=>{
       // returned string is enstore:/pnfs/.../dir(stuff)
+      var loc = locs[0] || '';
       console.log("located "+loc);
       var m = loc.match(/[^:]*:(.*)\(.*\)/);
       if(!m) return reject(Error("File not found in SAM"));
@@ -94,7 +104,7 @@ function samweb_get_raw_ancestor(filename)
   return new Promise(function(resolve,reject){
     samweb('list-files',
             "isancestorof:(file_name="+filename+") and availability:default and data_tier=raw and file_format=artroot")
-    .then(fn2 => sam_locate_file(fn2), err=>reject(err))
+    .then(fn2 => sam_locate_file(fn2[0]), err=>reject(err))
     .then(loc => resolve(loc), err=>reject(err))
     .catch(err=>reject(err));
 
@@ -114,14 +124,14 @@ function samweb_get_raw_ancestor(filename)
 }
 
 
-// Samweb test.
+// Samweb tests.
 // samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
 // . then( (o)=>{console.log(o);}  )
 // . catch();
 
-samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
-.then(m=>{console.log('file I want:',m)})
-.catch(err=> console.log(err));
+// samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+// .then(m=>{console.log('file I want:',m)})
+// .catch(err=> console.log(err));
 
 
 // // test file loading
@@ -153,9 +163,97 @@ app.get('/test', function(req,res,next){
 });
 
 
+
+async function resolve_request(event_req)
+{
+  /// Throw error if unable to return request.
+  ///
+  /// Return an object suitable for passing to the Composer, with completely-specified filepath.
+  /// Warning: modifies inReq
+  if(event_req.what=="live") {
+    // Do special live thing.
+  }
+  if(event_req.what=="cached"){
+    // look at prebuild json file
+  }
+
+  if(event_req.what == "run") {
+    // Do special thing to find by run number
+    var run = parseInt(event_req.run);
+    if(!run) throw new Error("Run not specified");
+    var event = parseInt(event_req.event);
+    if(!event) throw new Error("Event not specified");
+    var trigtype = event_req.trig || "outextbnb";
+    var datatier = event_req.tier || "raw";  // e.g. swizzled
+
+    //find the file.
+    var spec = `"data_tier ${datatier} and data_stream ${trigtype} and run_number=${run} and first_event<=${event} and last_event>=${event} minus ub_blinding.blind true"`;
+    var files = [];
+    files = await samweb('list-files',spec);
+    if(files.length<1) throw new Error("No files found matching"+spec);
+    var filename = files[0];
+    console.log("found file",filename);
+    loc = await samweb('locate-file',filename);
+    console.log("location",loc);
+    event_req.filename = loc;
+  }
+
+  if(event_req.what == "samdim") {    
+    // Do special thing to find by sam defintion
+    var samdim = event_req.samdim || "";
+    if(samdim.length==0) throw new Error("No sam dimensions provided");
+    files = await samweb('list-files',samdim);
+    if(files.length<1) throw new Error("No files found matching"+spec);
+    var filename = files[0];
+    console.log("found file",filename);
+    loc = await samweb('locate-file',filename);
+    console.log("location",loc);
+    event_req.filename = loc;
+  }
+
+
+  // Otherwise, we've been asked for a file.
+  event_req.pathglob= "";
+  event_req.selection=  event_req.selection || "1";
+  event_req.entrystart= parseInt(event_req.entry) || 0;
+  event_req.entryend= event_req.entryend || 1000000000;
+  event_req.options= event_req.options || "";
+
+
+  var reqfile = event_req.filename;
+  if(!reqfile) throw new Error("No file specified in request");
+
+  if(! reqfile.includes("/")) { 
+    // We've been asked for a file, but we don't have a full path. This is a job for sam!
+    reqfile = await sam_locate_file(reqfile);
+  }    
+    
+  if(!fs.existsSync(reqfile)) {
+    throw new Error("Cannot find file "+reqfile);
+  }
+  event_req.filename = reqfile;
+
+  // PNFS CHECK
+  if(event_req.filename.startsWith("/pnfs/")) {
+    var pnfs_dotfile = path.join( path.dirname(event_req.filename),  ".(get)("+path.basename(event_req.filename)+")(locality)");
+    var pnfs_status = fs.readFileSync(pnfs_dotfile);
+    console.log("PNFS status of file:",pnfs_status);
+    if(!pnfs_status.includes("ONLINE")) {
+      // Pin it. Tell pnfs to stage the file for 20 min minimum
+      fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(fset)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
+      throw new Error("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
+    }
+  }
+  throw new Error("Problem");
+  // Success, file exists (and if pnfs it's on disk)
+  return event_req;
+
+}
+
+
 // Deal with WS connections.
 app.ws('/ws/stream-event', attach_stream);
-function attach_stream(ws,req)
+async function attach_stream(ws,req)
 {
   console.log("attach stream");
   // Utility function
@@ -167,103 +265,61 @@ function attach_stream(ws,req)
   // ws might be wss or ws
   console.log("ws server hit!",req.query)
 
-  var event_req = req.query;
+  // Make a new composer object, send all output to the ws
+  ws.my_composer = new Composer(config.composer_config,function(data,datatype) {
+      // This is the do_output callback, called either on progress, piece, or finished.
+      console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
+      // dont' need this, but debugging:
+      var o = JSON.parse(data);
+      for(k in o) {        
+        console.log("  ",chalk.red(k.padEnd(10)));
+        if(typeof o[k] == 'object') for(kk in o[k])
+          console.log("    ",chalk.red(kk.padEnd(10)));
+      }
+      try{ ws.send(data); } catch(err) { console.error("Websocket error.",err); }
+  });
   
-  event_req.pathglob= "";
-  event_req.selection=  req.query.selection?(String(req.query.selection)):"1";
-  event_req.entrystart= req.query.entry?parseInt(req.query.entry):0;
-  event_req.entryend= 1000000000;
-  event_req.options= req.query.options || "";
-  if(req.query.filename) event_req.pathglob = decodeURIComponent(req.query.filename);
-  // FIXME raw file lookup req.param.what == 'raw'
-  console.log("pathglob:",req.query.filename,event_req.pathglob);
-  var alive = true;
-  glob(event_req.pathglob,  function (er, files) 
-  {
-    console.log("found files",files);
-    if(files.length==0) {
-      console.log("No files match glob.");
-      send_error_message("Cannot find matching file 11!!11 ("+event_req.pathglob+")");
+  // Declare where messages should go 
+  ws.on("message",function(msg) {
+    console.log(chalk.green("onmessage"),msg);
+    var newreq;
+    try {
+      newreq = JSON.parse(msg);
+    } catch (err) {
+      send_error_message("Bad request"+newreq);
       return;
     }
-    event_req.filename = path.resolve(files[0]);
+    // See if there is a 'what' flag. If so, need a new event.
+    if(newreq.what) {
+      resolve_request(newreq).then(
+      (r)=>{ ws.my_composer.request(r);}, // And we're off and running again!  Or this is queued; the plug-in takes care of it.      
+      (err)=>send_error_message
+    )} else {
+      // Try to do it anyway, this is probably a piece request
+      ws.my_composer.request(newreq);
+    }
     
-    if(fs.existsSync(event_req.filename)) {
-      // PNFS CHECK
-      if(event_req.filename.startsWith("/pnfs/")) {
-        var pnfs_dotfile = path.join( path.dirname(event_req.filename),  ".(get)("+path.basename(event_req.filename)+")(locality)");
-        var pnfs_status = fs.readFileSync(pnfs_dotfile);
-        console.log("PNFS status of file:",pnfs_status);
-        if(!pnfs_status.includes("ONLINE")) {
-          // Pin it. Tell pnfs to stage the file for 20 min minimum
-          fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(fset)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
-          
-          send_error_message("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
-        }
-      }
-      console.log("Constructed request:",event_req);
-      
-      // Make a new composer object.
-      ws.my_composer = new Composer(composer_config,function(data,datatype) {
-        // This is the do_output callback, called either on progress, piece, or finished.
-        console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
-        // dont' need this, but debugging:
-        var o = JSON.parse(data);
-        for(k in o) {        
-          console.log("  ",chalk.red(k.padEnd(10)));
-          if(typeof o[k] == 'object') for(kk in o[k])
-            console.log("    ",chalk.red(kk.padEnd(10)));
-        }
-        try{ ws.send(data); } catch(err) { console.error("Websocket error.",err); }
-      });
-      // Initiate the initial request.
-      ws.my_composer.request(event_req);
+  });
   
-  
-      // Declare where messages should go 
-      ws.on("message",function(msg) {
-        console.log(chalk.green("onmessage"),msg);
-        var newreq;
-        try {
-          newreq = JSON.parse(msg);
-        } catch (err) {
-          var errpacket = JSON.stringify({
-              "error": "Bad request "
-                        +newreq
-              +(err?" ("+err+")":"")
-            });  
-          try{ ws.send(errpacket); } catch(err) { console.error("Websocket error.",err); }        
-                  
-        }
-        console.log(chalk.green(newreq,event_req));
-        
-        // var merge_req = {...newreq,...event_req}
-        console.log(chalk.green("Passing subsequent request"),newreq);
-        ws.my_composer.request(newreq); // And we're off and running again!  Or this is queued; the plug-in takes care of it.
-      });
-      
-      // What to do if client disconnects
-      ws.on("close",function() {
-        console.log(chalk.blue("Socket closed, shutting down"));        
-        ws.my_composer.shutdown(); // Tell it to stop processing queue.
-        delete ws.my_composer; // release it.
-        ws.onmessage = null; // remove listener.
-      });
+  // What to do if client disconnects
+  ws.on("close",function() {
+    console.log(chalk.blue("Socket closed, shutting down"));        
+    ws.my_composer.shutdown(); // Tell it to stop processing queue.
+    delete ws.my_composer; // release it.
+    ws.onmessage = null; // remove listener.
+  });
 
-      return; // Return to event loop.
-
-    } else {
-      // If we got to here, we got a request but were unable to handle it.
-      console.log("Can't open file?");
-      var msg = JSON.stringify({
-          "error": "Unable to open file "
-                    +event_req.filename
-          +(err?" ("+err+")":"")
-        });
-      
-      try{ ws.send(msg); } catch(err) { console.error("Websocket error.",err); }        
-    } // glob callback
-  }); // glob
+  // Initiate the initial request, if specified in URL query
+  if(req.query && Object.keys(req.query).length>0) {
+    // We have an initial request
+    var event_req = Object.assign(req.query); // Shallow copy.
+    try{
+      resolve_request(event_req);
+    } catch(err) {
+      send_error_message(err.message)
+    }
+    ws.my_composer.request(event_req);
+  }
 };
 
 

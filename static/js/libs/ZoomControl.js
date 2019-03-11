@@ -507,6 +507,7 @@ ZoomControl.prototype.Draw = function()
   
   var lnk = window.location.protocol + "//" + window.location.hostname + path + par + "#" + $.param(phash);
   $('a.linkzoom').attr('href',lnk);
+  $('.linkzoom-txt').text(lnk);
   $('span.ZoomControl-Info').html(txt);
   
 };

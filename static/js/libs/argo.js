@@ -134,12 +134,13 @@ function resizePortlet(portlet,oldheight,newheight)
 $(function(){
   
   // style portlets and add icons.
-  var headers = $(".portlet").addClass("ui-widget ui-widget-content ui-corner-all")
-                .find(".portlet-header");
-  headers.addClass("ui-widget-header ui-corner-all");
+  // var headers = $(".portlet").addClass("ui-widget ui-widget-content ui-corner-all")
+  //               .find(".portlet-header");
+  // headers.addClass("ui-widget-header ui-corner-all");
   
   // fullscreen
-  headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
+  // headers.prepend('<span class="ui-icon ui-icon-arrow-4-diag icon-explode"></span>');
+  var headers = $("div.portlet .portlet-header");
   $('.portlet-header .icon-explode').click(function() {      
       var portlet = $(this).parents(".portlet:first")[0];
       console.log("Explode",portlet);  
@@ -189,23 +190,18 @@ $(function(){
       if($('#'+$(this).parents(".portlet:first").attr("id")+"-help-text").length>0)
         $(this).prepend('<span class="ui-icon ui-icon-help"></span>')                             
     });
-    headers.prepend('<span class="ui-icon ui-icon-print"></span>');                       
+    // headers.prepend('<span class="ui-icon ui-icon-print"></span>'); 
   }
 
   // Download icon
-  headers.prepend('<span class="ui-icon ui-icon-circle-arrow-s download_img"></span>');
+  // headers.prepend('<span class="ui-icon ui-icon-circle-arrow-s download_img"></span>');
   
   
   // Expand/collapse icon
   headers.each(function(){
     if($(this).parents(".portlet:first").find(".portlet-content").is(":hidden")) {
-      // console.log($(this).text(),"is hidden");
-      $(this).prepend('<span class="ui-icon ui-icon-plusthick icon-shrink"></span>');
-    } else {
-      // console.log($(this).text(),"is not hidden");
-      $(this).prepend('<span class="ui-icon ui-icon-minusthick icon-shrink"></span>');      
+      $('.icon-shrink',this).removeClass("ui-icon-minusthick").addClass("ui-icon-plusthick");
     }
-    $(this).prepend('<span  class="ui-icon ui-icon-blank " > </span>');
     
   });
 
@@ -597,13 +593,32 @@ $(function(){
   if(par.reload) { delete par.reload; window.location.hash = '#' + $.param(par); }
     
   // Initialize hashchange function.
-  $(window).hashchange( ChangeEvent );
+  $(window).hashchange( HashChanged );
     
   // Do intial trigger on page load.
   console.log("Doing initial hashchange trigger");  
-  ChangeEvent();
+  HashChanged();
 
 });
+
+
+// Modal dialogs  https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal
+$(function(){
+  // When the user clicks on <span> (x), close the modal
+  // Requires modal and contents to exist in DOM before this is called! No JS-build objects.
+  $('.modal-closer').on("click",function() {
+    $(this).parents(".modal").first().toggle();
+  });
+
+  // $('body').on('click','.modal-content',function(ev){
+  //   return false;
+  // })
+
+  // When the user clicks anywhere outside of the model-content (i.e. on the background object), close all modals
+  $('body').on('click','div.modal',function(ev) {
+    if($(ev.target).is("div.modal")) $('div.modal').hide();
+  });
+})
 
 
 // Tooltips.

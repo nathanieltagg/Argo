@@ -1,22 +1,205 @@
+#DebugColor
+  a.c4.tc2.a.linkzoom.linkzoom-txt
+  .c1
+    span.tc1 c1
+    span.tc2 c2
+    span.tc3 c3
+    span.tc4 c4
+    span.tc5 c5
+  .c2 
+    span.tc1 c1
+    span.tc2 c2
+    span.tc3 c3
+    span.tc4 c4
+    span.tc5 c5
+  .c3 
+    span.tc1 c1
+    span.tc2 c2
+    span.tc3 c3
+    span.tc4 c4
+    span.tc5 c5
+  .c4
+    span.tc1 c1
+    span.tc2 c2
+    span.tc3 c3
+    span.tc4 c4
+    span.tc5 c5
+  .c5
+    span.tc1 c1
+    span.tc2 c2
+    span.tc3 c3
+    span.tc4 c4
+    span.tc5 c5
+  
+
 #ControlOverlay
-  .progress-status Page loading...
-  .event-id-info
-    | Event:
-    span.event-run ?
-    | |
-    span.event-subrun ?
-    | |
-    span.event-event ?
-    | | 
-    span.event-date ?
-    | | 
-    span.event-triggernames -
-    span.event-swtriggernames - 
-  .file-and-entry
-    span.event-basefilename loading...
-    span.event-entry ?
-    | &nbsp;of&nbsp;
-    span.event-numEntriesInFile ?
+  div.status-line
+    span.progress-status Connecting...
+    span#status Script loading...
+  div.event-info-line
+    span.event-id-info.clickable(title="Click to locate find an event")
+      | Event:
+      span.event-run ?
+      | |
+      span.event-subrun ?
+      | |
+      span.event-event ?
+
+    span
+      span.event-date -
+      | &nbsp;
+      span.event-age
+    span 
+      | Triggers:&nbsp;
+      span.event-triggernames -
+      | &nbsp;SW Triggers:&nbsp;
+      span.event-swtriggernames - 
+  div
+    span.file-and-entry.clickable(title="Click to select file")
+      span.event-basefilename loading...
+      span.event-entry ?
+      | &nbsp;of&nbsp;
+      span.event-numEntriesInFile ?
+    span.prev-event.clickable(title="Previous Event (keyboard shortcut: p)") &#9668;
+    span.next-event.clickable(title="Next Event (keyboard shortcut: n)") &#9658;
+  
   div.data-product-bar
     | &nbsp;
     ul
+
+  //- These get put in automatically
+  #hits-menu-info.hidden.menu-info
+    hline
+    div (h) toggles hits
+    div (H) changes hit product
+
+  #wireimg-menu-info.hidden.menu-info
+    hline
+    div (w) toggles wire on/off
+    div (W) changes between raw/cal wires
+
+  #tracks-menu-info.hidden.menu-info
+    hline
+    div (t) toggles tracks on/off
+    div (T) changes between track types
+
+  #showers-menu-info.hidden.menu-info
+    hline
+    div (s) toggles showers on/off
+    div (S) changes between shower types
+
+  #showers-menu-info.hidden.menu-info
+    hline
+    div (s) toggles showers on/off
+    div (S) changes between shower types
+
+  #clusters-menu-info.hidden.menu-info
+    hline
+    div (c) toggles clusters on/off
+    div (C) changes between cluster types
+
+  #opflashes-menu-info.hidden.menu-info
+    hline
+    div (F) changes between flash types
+
+
+
++modal("progresslog-modal")
+  div
+    table.progress-log
+
++modal("input-rawrun")
+  div
+    | Clicking the button below will tell ARGO to try to find a file in SAM that has the raw wire data for this event.
+    br
+    label.tbfill Run:
+    span
+      input.tbfill.inRun#inRun(type='text',size='8', name='inRun')
+    label.tbfill Event:
+    input.inEvent#inRunEvent(type='text', size='5', name='inRunEvent', value='0')
+    select#inRunTier.saveable(name='inRunTier')
+      option(value='raw') raw (swizzled)       
+      option(value='crt_swizzled') crt_swizzled         
+      option(value='larlite') larlite              
+      option(value='recolite') recolite             
+      option(value='reconstructed') reconstructed        
+      option(value='root-tuple') root-tuple           
+      option(value='generated') generated            
+      option(value='simulated') simulated            
+      option(value='detector-simulated') detector-simulated   
+      option(value='reconstructed-2d') reconstructed-2d     
+      option(value='reconstructed-3d') reconstructed-3d     
+      option(value='optical-simulated') optical-simulated    
+      option(value='tpc-simulated') tpc-simulated        
+      option(value='overlaid') overlaid             
+      option(value='larcv') larcv                
+      option(value='larcv_wholeview') larcv_wholeview      
+      option(value='larlite_opreco') larlite_opreco       
+      option(value='larlite_reco2d') larlite_reco2d       
+      option(value='larlite_mcinfo') larlite_mcinfo       
+      option(value='larcv_mctruth') larcv_mctruth        
+      option(value='crt') crt                  
+      option(value='larcv_pandora') larcv_pandora        
+      option(value='larlite_pandora') larlite_pandora      
+      option(value='larlite_backtracker') larlite_backtracker  
+     
+    select#inRunTrig.saveable(name='inRunTrig')
+      // These are the file types known to have data. Found with samweb list-values, then list-files . Not all are in 'swizzle' stream though
+      option(value='outextunbiased') extunbiased   
+      option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
+      option(value='outextbnb') extbnb        
+      option(value='outbnbunbiased') bnbunbiased   
+      option(value='outbnb') bnb           
+      option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
+      option(value='outextnumi') extnumi       
+      option(value='outnumiunbiased') numiunbiased  
+      option(value='outnumi') numi          
+      option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
+      // <option value='rawnotpc'         >rawnotpc      </option>
+      option(value='outmucs') mucs          
+      option(value='outnotpc') notpc         
+    
+    input.ui-state-default.ui-corner-all#go_run(type='button', value='Find Event')
+  br
+  br
+  div
+    | Clicking the "Go" button here will tell ARGO to try to find the SAM ancestor of the current file that should hold raw wire info.
+    br
+    | If you understand samweb dimensions, you may attempt to compose your own query here, and ARGO will select the first file found.
+    br
+    label.tbfill SAM dim:
+    input.tbfill.inSamDim#inSamDim(type='text', size='100' name='inSamDim')
+    select.inEntryOrEvent#inSamEntryOrEvent
+      option(value='Entry') Entry
+      option(value='Event') Event
+    input.ui-state-default.inEntry#inSamEntry(type='text', size='5', name='inSamEntry', value='0')
+    
+    input.ui-state-default.ui-corner-all#go_samdim(type='button', value='Find SAM File')
+
+  
+
++modal("input-fe")
+  div
+    | ARGO can read any file on the server, including Larsoft, AnaTree, ubdaq, and LarLite files.
+    br
+    | Specify either a full path to the file, or provide a SAM filename.
+    br
+    label.tbfill Filename:
+    span
+      textarea.tbfill#inFilename(type='text', name='inFilename', value='standard_reco_uboone.root')
+    
+    //- span
+    //-   input.tbfill#inFilename(type='text', name='inFilename', value='standard_reco_uboone.root')
+    
+    span(style='display:none;')
+      label Cut:
+      input.inSelection.ui-state-default#inFeSelection(style='width:200px', type='text', name='inFeSelection', value='1')
+    select.inEntryOrEvent#inEntryOrEvent
+      option(value='Entry') Entry
+      option(value='Event') Event
+    input.ui-state-default#inFeEntry(type='text', size='5', name='inFeEntry', value='0')
+    input.modal-closer.ui-state-default.ui-corner-all#go_fe(type='button', value='Go!') 
+    br
+    a(href='server/file_browser.cgi') or click here to see a file browser
+    
+

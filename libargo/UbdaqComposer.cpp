@@ -201,7 +201,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   
   if(sn) {
     manifest["hits"] = json::object();
-    manifest["hits"]["hits_SNDAQ__libargo"] = true;
+    manifest["hits"]["hits_DAQ__libargo"] = true;
     manifest["wireimg"]["wireimg_SNDAQ__libargo"] = true;
   }
   if(tpc) {
@@ -210,6 +210,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
     manifest["wireimg"]["wireimg_DAQ__libargo"] = true;
   }
 
+  m_result["hints"] = {{ "shift_hit_ticks", 0 }};
 
   if(do_pieces)  dispatch_piece(json({{"manifest",manifest}}));
   if(do_pieces)  dispatch_piece(json({{"source",m_result["source"]}}));
@@ -224,6 +225,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   if(sn ) try{ composeTPC_SN(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
   if(tpc) try{ composeTPC();    } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
 
+  if(tpc) composeHits(); // Works after coherenet noise!
   if(do_pieces)  dispatch_piece(json({{"hits",m_result["hits"]}}));
 
 
@@ -385,53 +387,22 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   waveform_t& waveform = *waveform_ptr;
   waveform.reserve(9600);
   channel_data.decompress(waveform);
-  size_t nsamp = waveform.size();
   
   int wirenum = plek.wirenum();
-  int plane = plek.plane();
-  int planewire = plek.planewire();
   waveform._servicecard = plek._servicecard_id;
   waveform._status = gDeadChannelMap->status(wirenum);
+  waveform._plane = plek.plane();
+  waveform._planewire = plek.planewire();
   
   // // Find the pedestal manually.
   waveform_tools::pedestal_computer pedcomp;
-  for(int i=0;i<nsamp;i++) pedcomp.fill(waveform[i]);
-  int ped = pedcomp.ped();
+  for(const int16_t& x: waveform) pedcomp.fill(x);
+  int16_t ped = pedcomp.ped();
   pedcomp.finish(100); // auto-adjusted rms.
   double rms = pedcomp.pedsig();
-
-  double thresh = ceil(4.0*rms);
   waveform._pedwidth = std::min(rms*2.0,15.0); 
-  double sign = -1;
-  if(plane==2) sign = 1;
+  for(int16_t& x: waveform) x-=ped;
 
-  waveform_tools::peak_finder pf(thresh,sign,3); // last is # of samples required over threshold.
-  for(size_t i =0; i< nsamp; i++) {
-    assert(waveform[i]>=0);
-    assert(waveform[i]<4096);
-    waveform[i] -= ped;
-    assert(waveform[i]>-4096);
-    assert(waveform[i]<4096);
-    pf(waveform[i]);
-  }
-    
-  if(waveform._status <0 || waveform._status>=4) { // It's a good channel, or unlisted in channel map
-    for(auto peak: pf) {
-      json hit;
-      hit["wire"] = planewire;
-      hit["plane"] = plane;
-      hit["q"] = peak.integral;
-      // hit["wirenum"] = wirenum;
-      hit["t"] = peak.tpeak;
-      hit["t1"] = peak.tstart;
-      hit["t2"] = peak.tstop;
-      {
-        // Scope a lock.
-        boost::mutex::scoped_lock lock(sChanMutex);
-        outhits.push_back(hit);
-      }
-    }
-  }
   
   // {
   //   boost::mutex::scoped_lock lock(sChanMutex);
@@ -549,10 +520,10 @@ void unpack_channel_sn(waveform_ptr_t waveform_ptr, waveform_ptr_t noise_ptr,
   noiseform.reserve(3200);
     
   int wirenum = plek.wirenum();
-  int plane = plek.plane();
-  int planewire = plek.planewire();
   waveform._servicecard = plek._servicecard_id;
   waveform._status = gDeadChannelMap->status(wirenum);
+  waveform._plane = plek.plane();
+  waveform._planewire = plek.planewire();
   
   // Go through packets.
   std::vector<int16_t> packet;
@@ -581,8 +552,8 @@ void unpack_channel_sn(waveform_ptr_t waveform_ptr, waveform_ptr_t noise_ptr,
     }
         
     double sign = -1;
-    if(plane==2) sign = 1;
-    double thresh = 8; // close to what is used in regular data.
+    if(waveform._plane==2) sign = 1;
+    int thresh = 8; // close to what is used in regular data.
     waveform_tools::peak_finder pf(thresh,sign,3); // last is # of samples required over threshold.
     for(size_t i =0; i< n; i++) {
       pf(packet[i]-ped); // run through peakfinder
@@ -591,8 +562,8 @@ void unpack_channel_sn(waveform_ptr_t waveform_ptr, waveform_ptr_t noise_ptr,
     if(waveform._status <0 || waveform._status>=4) { // It's a good channel, or unlisted in channel map
       for(auto peak: pf) {
         json hit;
-        hit["wire"] = planewire;
-        hit["plane"] = plane;
+        hit["wire"] = waveform._planewire;
+        hit["plane"] = waveform._plane;
         hit["q"] = peak.integral;
         hit["t"] = tdc+peak.tpeak;
         hit["t1"] = tdc+peak.tstart;
@@ -727,9 +698,9 @@ void UbdaqComposer::composeWireImages(bool noisefilter, const std::string& name)
   fmaxtdc = ntdc;
   int nwire = wireMap->size();
 
+  cout << "Read " << wires_read << " wires, max TDC length " << ntdc << " doing noisefilter: " << (noisefilter?"true":"false") << "\n";
   if(noisefilter) CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
   
-  cout << "Read " << wires_read << " wires, max TDC length " << ntdc << "\n";
   int tilesize = m_request->value("tilesize",2400);
   std::cout << "Doing tilesize" << tilesize << std::endl;
   json r;
@@ -759,6 +730,78 @@ void UbdaqComposer::composeWireImages(bool noisefilter, const std::string& name)
 }
 
 
+
+void UbdaqComposer::composeHits()
+{
+  json hits;
+
+  if(!wireMap) return;
+  waveform_t zeroes;
+  size_t nwire = wireMap->size();
+  for(size_t iwire = 0; iwire<nwire; iwire++) {
+    waveform_ptr_t wptr = (*wireMap)[iwire];
+    waveform_t& waveform = *wptr;
+
+    waveform_ptr_t nptr;
+    if(noiseMap) nptr = (*noiseMap)[iwire];
+    waveform_t& noiseform = zeroes;
+    if(nptr) noiseform=*nptr;
+    
+    // Ensure matching size.  Should really only happen once.
+    noiseform.resize(waveform.size(),0);
+
+    if(waveform._status <0 || waveform._status>=4) { // It's a good channel, or unlisted in channel map
+    
+      // Recompute rms
+      // double s = 0;
+      double ss = 0;
+      double n = waveform.size();
+      
+      waveform_t::const_iterator it1;
+      waveform_t::const_iterator it2;
+      waveform_t::const_iterator end1 = waveform.end();
+      
+      it1 = waveform.begin(); it2= waveform.end();
+      while(it1!=end1) {
+        int16_t x = *it1 - *it2;
+        ss += x*x;
+        it1++; it2++;
+      }
+      double rms = sqrt(ss/(n-1.0));
+  
+      int thresh = ceil(2.5*rms);
+      int sign = -1;
+      if(waveform._plane==2) sign = 1;
+
+      waveform_tools::peak_finder pf(thresh,sign,3); // last is # of samples required over threshold.
+      it1 = waveform.begin(); it2= waveform.end();
+      while(it1!=end1) {
+        int16_t x = *it1 - *it2;
+        pf(x);
+        it1++; it2++;
+      }
+    
+      for(auto peak: pf) {
+        json hit = { {"wire", waveform._planewire}
+                   , {"plane", waveform._plane}
+                   , {"q", peak.integral}
+                   , {"t", peak.tpeak}
+                   , {"t1", peak.tstart}
+                   , {"t2", peak.tstop}
+                  };
+        {
+          // Scope a lock.
+          boost::mutex::scoped_lock lock(sChanMutex);
+          hits.push_back(hit);
+        }
+      }
+    }
+  }
+  
+  
+  
+  m_result["hits"] = {{"hits_DAQ__libargo", hits}};
+}
 
 
 

@@ -13,6 +13,8 @@ struct waveform_t : public std::vector<int16_t>
   int8_t  _pedwidth;
   int16_t  _servicecard;
   int8_t  _status;
+  int8_t  _plane;
+  int  _planewire;
 };
 
 typedef std::shared_ptr<waveform_t> waveform_ptr_t;

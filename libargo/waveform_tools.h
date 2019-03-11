@@ -69,18 +69,18 @@ struct peak
   int tstart;
   int tstop;
   int tpeak;
-  double height;
-  double integral;
+  int height;
+  int integral;
 };
 
 struct peak_finder : public std::vector< peak >
 {
-  peak_finder( double thresh, double sign=1, int minsamp=1 ) : _thresh(thresh), _sign(sign), _minsamp(minsamp),
+  peak_finder( int thresh, int sign=1, int minsamp=1 ) : _thresh(thresh), _sign(sign), _minsamp(minsamp),
     _count(0), _on(false) { };
   
   void operator()(double x) 
   { 
-    double _x = x*_sign;
+    int _x = x*_sign;
     if(_x > _thresh) {
       // we're in a peak
       if(!_on) {
@@ -111,8 +111,8 @@ struct peak_finder : public std::vector< peak >
     }
   }
   
-  double _thresh; // Threshold for accepting a peak
-  double _sign; // Threshold for accepting a peak
+  int _thresh; // Threshold for accepting a peak
+  int _sign; // Threshold for accepting a peak
   int _minsamp; // minimum number of samples above threshold
   int _count;
   bool _on; // currently in a peak?
@@ -120,6 +120,64 @@ struct peak_finder : public std::vector< peak >
 };
 
 
+template<typename T>
+struct peak_finder_with_running_baseline : public std::vector< peak >
+{
+  peak_finder_with_running_baseline( int thresh, int sign=1, int minsamp=1 ) : _thresh(thresh), _sign(sign), _minsamp(minsamp),
+    _count(0), _on(false) { };
+  
+  void init(T x) { _running_median = x;}
+  T median() { return _running_median;}
+  
+  void operator()(T x) 
+  { 
+    // running median.
+    if(!_on) {
+      if(x>_running_median) _running_median++;
+      if(x<_running_median) _running_median--;
+    }
+    int _x = (x-_running_median)*_sign;
+    if(_x > _thresh) {
+      // we're in a peak
+      if(!_on) {
+        // start.
+        _on = true;
+        _cur.tstart = _count;
+        _cur.tpeak  = _count;
+        _cur.height = _x;
+        _cur.integral = _x;
+      } else {
+        // continue
+        _cur.integral += _x;
+        if(_x > _cur.height) _cur.height = _x;
+      }
+    } else {
+      finish(); // save current peak if any
+    }
+    _count++;
+  };
+  
+  void finish() {
+    // Call this when you're done looping.
+    if(_on) {  // finish current peak.
+      _on = false;
+      _cur.tstop = _count;
+      if(_cur.tstop-_cur.tstart >= _minsamp)
+        push_back(_cur);
+    }
+  }
+  
+  T      _running_median;
+  int _thresh; // Threshold for accepting a peak
+  int _sign; // Threshold for accepting a peak
+  int _minsamp; // minimum number of samples above threshold
+  int _count;
+  bool _on; // currently in a peak?
+  peak _cur;
+};
+
+
+  
 ///
 /// Used to find truncated pedestal and RMS of a set of numbers.
 ///

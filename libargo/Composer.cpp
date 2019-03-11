@@ -296,9 +296,7 @@ bool Composer::dispatch_existing_pieces(pieces_t& ioPieces)
 {
  // Assume can satisfy everything:
   bool complete = true;
-  pieces_t::iterator iter = ioPieces.begin();
-  pieces_t::iterator end  = ioPieces.end();
-  
+  pieces_t::iterator iter = ioPieces.begin();  
   while (iter != ioPieces.end())
   {
     piece_t& p = *iter;
@@ -307,7 +305,7 @@ bool Composer::dispatch_existing_pieces(pieces_t& ioPieces)
       outpiece[p.type] = json::object();
       outpiece[p.type][p.name] = m_result[p.type][p.name];
       dispatch_piece(outpiece);
-      ioPieces.erase(iter);
+      iter = ioPieces.erase(iter);
     } else {
       complete = false;
       ++iter;

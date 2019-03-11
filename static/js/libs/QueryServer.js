@@ -58,141 +58,112 @@ var gSocket=0;
 //     this.draw();
 // };
 
-
-function ChangeEvent(  )
+var gLastHashState = {};
+function objectdiff(a,b,ignore) 
 {
+  var ks = [].concat(Object.keys(a)).concat(Object.keys(b));
+  for(var k of ks) {
+    if(ignore.includes(k)) continue;
+    if( (k in a) && (k in b) ) {
+      if( JSON.stringify(a[k])!==JSON.stringify(b[k]) ) return true;
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
+
+function HashChanged(  )
+{
+  // This function is called when the hash is changed. This sometimes results in a change of event.
   var par = $.deparam.fragment(true);
-  console.log("ChangeEvent",par);
+
+  var changed = objectdiff(par,gLastHashState,['zoom']);
+  console.log("HashChange new state",par," old state ",gLastHashState," changed: ",changed);
+  if(!changed) return;
+  gLastHashState = $.extend(true, {}, par);
+  console.log("HashChanged",par);
   
   if(par.reload) {  window.location.reload(); return; };// Force a reload! 
   
   // Clear all selection targets.
   $("input").blur();
-
-  // // User feedback that we are querying
-  // $.blockUI.defaults.themedCSS.top = '25%';
-  // $.blockUI({theme:     true,title:    'Please wait',message:    $('#MOTD')});
   
-  if     ( par.localFile ) ReadLocalFile(par);
-  else if( par.serverfile) QueryServer(par,par.serverfile);
-  else if( par.filename  ) QueryServerStream(par,  "/server/serve_event.cgi");
-  else if( par.what      ) QueryServer(par,  "/server/serve_event.cgi");
-  else if( gPageName == 'live' || par.live ) QueryServer(par,"server/serve_live.cgi");
-  else QueryServer(par,"server/default_event.json");
+  if(par.ajax) QueryServer(par);
+  else         QueryServerStream(par);
+  // if     ( par.localFile ) ReadLocalFile(par);
+  // else if( par.serverfile) QueryServer(par,par.serverfile);
+  // else if( par.filename  ) QueryServerStream(par,  "/server/serve_event.cgi");
+  // else if( par.what      ) QueryServer(par,  "/server/serve_event.cgi");
+  // else if( gPageName == 'live' || par.live ) QueryServer(par,"server/serve_live.cgi");
+  // else QueryServer(par,"server/default_event.json");
 }
 
-// Bleah local file
-// gFileReader = null;
-// function ReadLocalFile( par )
-// {
-//   console.log("ReadLocalFile",par);
-//   var files = $('#inLocalFile').get(0).files;
-//   if(files.length<1) {
-//     console.warn("no local file");
-//     $.unblockUI();
-//     $('#status').attr('class', 'status-error').html("Need to re-select your input file.");
-//     return;
-//   }
-//   var file = files[0];
-//   console.log("reading local file ",file);
-//   gFileReader = new FileReader();
-//   gFileReader.onload = ReadLocalFileSuccess;
-//   gFileReader.readAsText(file);
-// }
-//
-// function ReadLocalFileSuccess()
-// {
-//   var obj;
-//   try {
-//     obj = JSON.parse(gFileReader.result);
-//   } catch (e) {
-//     $.unblockUI();
-//     $('#status').attr('class', 'status-error').html("The file you loaded could not be parsed as json:</br>"+e);
-//     return;
-//   }
-//   console.log("Got it:",obj);
-//   QuerySuccess(obj,null,null);
-// }
 
-
-function QueryServerStream( par, myurl )
+function QueryServerStream( par )
 {
   gTimeStats_StartQuery = performance.now();
-  console.log("QueryServer",par,myurl);
+  console.log("QueryServerStream",par);
   $("input").blur();
   
-  var data = {};
-  var opts = "";
-  if (!$(".show-wireimg").is(":checked")) {
-    opts += "_NORAW__NOCAL_";
-    $('#loading_feedback').html("<i>Not loading RawDigit or Wire data for speed.</i><br/>");
-  } else {
-    $('#loading_feedback').html("<b>Loading RawDigit or Wire data.. may be slower! Uncheck \"Show Wires\" to disable.</b></br/>");
-  }
+  var request = $.extend({},par)
   
+  // Add hidden options.
   var tilesize = 2400;
   if(kMaxTileSize < tilesize) tilesize = kMaxTileSize;
-  opts+= "_tilesize" + tilesize + "_";
-
+  request.tilesize = 2400;
 
   // Default: do file-and-entry read from parameters. Should check for other options first.
-  data = $.extend({},par)
-  if(data.filename) data.filename = encodeURIComponent(par.filename);
-  if(!data.options) data.options = opts;
-  data.pieces = [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
+  request.pieces = [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
     "/ophits/*",
     "/clusters/*",
     "/tracks/*",
     "/associations/*"
   ];
       
-  var param = $.param(data);
-  
   $('#status').attr('class', 'status-transition');
-  $("#status").text("Querying server for event data...");
-  $('.progress-status').text("Connecting to server...");
-  
-  // $('#main-circleprogress').circleProgress('value', 0);
-  // $('#main-circleprogress strong').text('Building');
+  $("#status").text("Connecting to server...");
+  $('.progress-status').text();
   
   
-  console.log("requesting "+myurl+"?"+param);
-  $("#debuglinks").html(
-    "Link to json data: <a href=\""+myurl+"?"+param+"\">"+myurl+"?"+param+"</a>"
-  );
-  $('#download-this-event').html('<a href="'+myurl+'?'+param+'&download">Download this event</a>');
-  
-  // Modify the "URL to the json data file" link with the actual query.
-  $('#inXmlUrl').val(myurl+"?"+param);
-
-  // gLastQueryType = querytype;
   gServerRequestTime = (new Date()).getTime();
+  gStateMachine.Trigger("newRecord");
+  
+  if(!gSocket || gSocket.readyState != WebSocket.OPEN) {
+    // Open the socket.
+    var wsurl = 'ws://'+window.location.host+'/ws/stream-event';
+    console.log("Starting socket calls:",wsurl);
 
-  // Modify the cursor to show we're fetching.
-  // document.body.style.cursor='wait';
-
-  console.log("Starting AJAX calls:",myurl,param);
-
-  var wsurl = 'ws://'+window.location.host+'/ws/stream-event'+'?'+param;
-  gSocket = new WebSocket(wsurl);
-  gSocket.onopen =  function (event) {
-    console.log("opened websocket");
-  };
-  gSocket.onmessage = function(event) {
-    console.log("onmessage",event.timeStamp,event.data.length);
-    try {
-      var o = JSON.parse(event.data);
-    } catch {
-      console.error("onmessage Caught socket issue",event);
-      QueryError(o,"BAD",event);
+    gSocket = new WebSocket(wsurl);    
+    gSocket.onopen =  function (event) {
+      console.log("opened websocket");
+      $('#status').attr('class', 'status-ok');
+      $("#status").text("Connected to server");
+      // Start the request
+      gSocket.send(JSON.stringify(request));    
+    };
+    gSocket.onmessage = function(event) {
+      console.log("onmessage",event.timeStamp,event.data.length);
+      try {
+        var o = JSON.parse(event.data);
+      } catch {
+        console.error("onmessage Caught socket issue",event);
+        QueryError(o,"BAD",event);
+      }
+      RecieveData(o);
+    }  
+    gSocket.onerror = function(event) {
+      console.error("onerror",event);
+      $('#status').attr('class', 'status-error');
+      $("#status").text('Connection broken');
     }
-    RecieveData(o);
-  }  
-  gSocket.onerror = function(event) {
-    console.error("onerror",event);
-    $('#status').attr('class', 'status-error');
-    $("#status").text('Socket error.');
-  }
+  } else {
+    // Socket already ready
+    gSocket.send(JSON.stringify(request));  // Send the request along straight away
+    
+  } 
+  
+  
 }
 
 

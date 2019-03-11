@@ -115,7 +115,7 @@ EventInfo.prototype.NewRecord = function()
     $(".event-date").text(date.toLocaleDateString());
     $(".event-time").text(date.toLocaleTimeString());
 
-    $(".event-age").html(CreateTimeAgoElement(gRecord.header.eventTime));
+    $(".event-age").html("(" + CreateTimeAgoElement(gRecord.header.eventTime)+")");
     
   }
 

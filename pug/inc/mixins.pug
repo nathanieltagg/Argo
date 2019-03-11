@@ -1,7 +1,18 @@
-mixin portlet(pid,title,contentstyle)
+mixin portlet(pid,title,hidden=false)
   .portlet(id=pid)
-    .portlet-header= title
+    .portlet-header
+      span.title=title
+      span.ui-icon.ui-icon-minusthick.icon-shrink        
+      span.ui-icon.ui-icon-circle-arrow-s.download_img
+      span.ui-icon.ui-icon-print
+      span.ui-icon.ui-icon-arrow-4-diag.icon-explode
     .portlet-content&attributes(attributes)
       block
+        
+mixin modal(modalid)
+  div.modal(id=modalid)
+      div.modal-content
+          span.modal-close.modal-closer &times;
+          block
 
 

@@ -7,12 +7,14 @@ $(function(){
 });
 
 
+var gPageStartTime=Date.now();
 
 function RecieveData(o)
 {
   console.warn("RecieveData",Object.keys(o));
   if("progress" in o) {
     $('.progress-status').text(o.state);
+    $('table.progress-log').append("<tr><td>"+((Date.now()-gPageStartTime)/1000).toFixed(1)+" s</td><td>"+o.state+"</td></tr>")
     console.log("onmessage PROGRESS",o);
     // $('#main-circleprogress').circleProgress('value', o.progress*100);
     // $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
