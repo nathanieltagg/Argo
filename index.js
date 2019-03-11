@@ -60,6 +60,9 @@ function samweb()
     console.time('samweb');
     spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
       if (error) {
+        console.log("Samweb call failed:"," samweb "+sam_args.join(' '));
+        console.log(stdout);
+        console.log(stderr);
         return reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
       } else {
         console.timeEnd('samweb');
@@ -94,11 +97,12 @@ function sam_locate_file(filename)
         // FIXME: I could include code here that uses xrootd (xrdcp command) or idfh cp to get the file to the local computer. 
         // However, those require custom installtion of either VOMS or globus-url-copy, which are a pain to get going on Mac OSX.
       }
-    },  err=>{console.log("sam_locate_file fail",err); return reject(new Error("Could not locate-file "+filename))} );
+    },
+    err=>{console.log("sam_locate_file fail",err); return reject(new Error("samweb could not locate-file "+filename))} );
   });
 }
 
-function samweb_get_raw_ancestor(filename)
+function sam_get_raw_ancestor(filename)
 {
   return new Promise(function(resolve,reject){
     samweb('list-files',
@@ -124,14 +128,15 @@ function samweb_get_raw_ancestor(filename)
 
 
 // Samweb tests.
- samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+ // samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
+ sam_locate_file("PhysicsRun-2018_6_24_12_43_59-0017373-00195_20180718T082326_ext_bnb_3_20181127T205047_optfilter_20181201T010640_reco1_postwcct_postdl_20181201T021012_reco2_20181201T021832_slimmed.root")
 . then( (o)=>{console.log(o);}  )
 . catch();
 
 // samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
 // .then(m=>{console.log('file I want:',m)})
 // .catch(err=> console.log(err));
-
+ 
 
 // // test file loading
 // // This takes only 12 ms to parse and 6 ms to redole (on mac). That indicates it makes sense for Node to read saved files and then piece them out just
@@ -224,7 +229,7 @@ async function resolve_request(event_req)
 
   if(! reqfile.includes("/")) { 
     // We've been asked for a file, but we don't have a full path. This is a job for sam!
-    reqfile = await sam_locate_file(reqfile).catch(err=>{throw new Error("Could not find file in sam: "+reqfile);});
+    reqfile = await sam_locate_file(reqfile).catch(err=>{throw err;});
   }    
     
   if(!fs.existsSync(reqfile)) {
@@ -235,7 +240,7 @@ async function resolve_request(event_req)
   // PNFS CHECK
   if(event_req.filename.startsWith("/pnfs/")) {
     var pnfs_dotfile = path.join( path.dirname(event_req.filename),  ".(get)("+path.basename(event_req.filename)+")(locality)");
-    var pnfs_status = fs.readFileSync(pnfs_dotfile);
+    var pnfs_status = String(fs.readFileSync(pnfs_dotfile));
     console.log("PNFS status of file:",pnfs_status);
     if(!pnfs_status.includes("ONLINE")) {
       // Pin it. Tell pnfs to stage the file for 20 min minimum
@@ -243,7 +248,6 @@ async function resolve_request(event_req)
       throw new Error("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
     }
   }
-  throw new Error("Problem");
   // Success, file exists (and if pnfs it's on disk)
   return event_req;
 
