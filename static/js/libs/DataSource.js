@@ -14,7 +14,7 @@ function DataSource()
   function PushFEHash()
   {
     var newstate={
-      whatkey:    "file",
+      what:       "file",
       filename:   $('#inFilename').val(),
       entry:      0
     };

@@ -90,7 +90,7 @@ LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
 # ldpaths  += -Wl,-rpath,${HEP_CONCURRENCY_LIB}
 
 CPPFLAGS += -I ${CANVAS_ROOT_IO_INC}
-LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io -lcanvas_root_io_Dictionaries_wrapped_std_dict
+LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io #-lcanvas_root_io_Dictionaries_wrapped_std_dict
 # ldpaths  += -Wl,-rpath,${CANVAS_ROOT_IO_LIB}
 
 CPPFLAGS += -I ${GALLERY_INC}
@@ -231,22 +231,21 @@ argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
-    # -Wl,--unresolved-symbols=ignore-in-shared-libs
+		#-Wl,--unresolved-symbols=ignore-in-shared-libs
 
 gtest: $(OBJ) tmp/gtest.o Makefile
 	@echo Building executable $@
 	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/gtest.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
-		-lCling    
-    # -Wl,--unresolved-symbols=ignore-in-shared-libs
+		-lCling  -lCore -lTreePlayer  \
+		#-Wl,--unresolved-symbols=ignore-in-shared-libs
 
 config-dumper: $(OBJ) tmp/config_dumper.o Makefile
 	@echo Building executable $@
 	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
-		-Wl,-rpath,@executable_path \
-    # -Wl,--unresolved-symbols=ignore-in-shared-libs
+		-Wl,-rpath,@executable_path -Wl,--unresolved-symbols=ignore-in-shared-libs
 
 # Using the $(ldpaths) variable doesn't actually do the job, 
 # because the libraries are dependent on other libraries, so runtime can't find them unless the environment is set up.

@@ -64,7 +64,7 @@ function samweb()
         reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
       } else {
         console.timeEnd('samweb');
-        lines = strdout.split("\n");  // split newlines
+        lines = stdout.split("\n");  // split newlines
         for(var i=0;i<lines.length;i++){
           lines[i] = lines[i].trim(); // trim each output line of whitespace
         }
@@ -95,7 +95,7 @@ function sam_locate_file(filename)
         // FIXME: I could include code here that uses xrootd (xrdcp command) or idfh cp to get the file to the local computer. 
         // However, those require custom installtion of either VOMS or globus-url-copy, which are a pain to get going on Mac OSX.
       }
-    });
+    },  err=>reject(err) );
   });
 }
 
@@ -225,7 +225,7 @@ async function resolve_request(event_req)
 
   if(! reqfile.includes("/")) { 
     // We've been asked for a file, but we don't have a full path. This is a job for sam!
-    reqfile = await sam_locate_file(reqfile);
+    reqfile = await sam_locate_file(reqfile).catch(err=>{throw err;});
   }    
     
   if(!fs.existsSync(reqfile)) {

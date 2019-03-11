@@ -16,10 +16,10 @@ source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
 # if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
 #export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
-#setup larsoftobj v08_01_01 -q e17:debug
-setup uboonecode v08_05_00 -q e17:debug
-#setup uboonedaq_datatypes v6_22_05a -q e17:debug:offline
-#setup larlite v06_70_00c -q e15:debug
+setup larlite v06_70_00c -q e17:debug
+setup uboonecode v08_08_00 -q e17:debug
 
 # source ../backend/larlite/config/setup.sh
 export PATH=/home/argo/node-v10.15.0-linux-x64/bin:$PATH
+
+node ./create_environment_scripts.js
