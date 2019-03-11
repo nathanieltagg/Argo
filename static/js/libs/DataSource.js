@@ -56,7 +56,8 @@ function DataSource()
   //
   // Bindings for DataSource controls.
   
-  $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
+  $('#inFilename')  .keypress(function(e){if (e.keyCode == 13) { e.preventDefault(); PushFEHash(); }});
+  $('#inFilename')  .keydown(function(e){if (e.keyCode == 13) { e.preventDefault(); PushFEHash(); }});
   $('#inFeEntry')   .keydown(function(e){if (e.keyCode == 13) { PushFEHash(); }});
   $('#go_fe').click(function(){PushFEHash(); return false;});
 
@@ -97,12 +98,17 @@ DataSource.prototype.NewRecord = function()
   $(".inSubrun").val(((gRecord || {}).source || {}).subrun);
   $('.inEvent').val(((gRecord || {}).source || {}).event||-1);
   
+  $('.inSamDimAncestor').val(
+    `isancestorof:A(file_name=${file}) and availability=default and data_tier raw and file_format=artroot minus ub_blinding.blind true`    
+  )
+  
   // Title of the window, also used for bookmarking
   if(gRecord.header) {
     if(gRecord.header.run) {
       window.document.title = "Argo "+ gRecord.header.run + "|"+gRecord.header.subrun+"|"+gRecord.header.event;
     }
   }
+  
   
   if(gUrlToThisEvent) gUrlToLastEvent = gUrlToThisEvent;
   gUrlToThisEvent = window.location;

@@ -88,6 +88,8 @@ function HashChanged(  )
   
   // Clear all selection targets.
   $("input").blur();
+  // close all modals.
+  $("div.modal").hide();
   
   if(par.ajax) QueryServer(par);
   else         QueryServerStream(par);

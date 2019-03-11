@@ -1,4 +1,5 @@
 {
+  "__comment": "This file is auto-generated from create_environment_scripts.js. Make changes there!",
   "verbose": true,
   "ext": "js pug inc dylib so",
   "ignore": [

@@ -129,10 +129,10 @@ function sam_get_raw_ancestor(filename)
 
 // Samweb tests.
  // samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
- sam_locate_file("PhysicsRun-2018_6_24_12_43_59-0017373-00195_20180718T082326_ext_bnb_3_20181127T205047_optfilter_20181201T010640_reco1_postwcct_postdl_20181201T021012_reco2_20181201T021832_slimmed.root")
-. then( (o)=>{console.log(o);}  )
-. catch();
-
+//  sam_locate_file("PhysicsRun-2018_6_24_12_43_59-0017373-00195_20180718T082326_ext_bnb_3_20181127T205047_optfilter_20181201T010640_reco1_postwcct_postdl_20181201T021012_reco2_20181201T021832_slimmed.root")
+// . then( (o)=>{console.log(o);}  )
+// . catch();
+//
 // samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
 // .then(m=>{console.log('file I want:',m)})
 // .catch(err=> console.log(err));
@@ -166,6 +166,17 @@ app.get('/test', function(req,res,next){
   res.send("test");
 });
 
+function readTouch(filename)
+{
+  // Try to read the first byte of a file.  Do absolutely nothing with it - this is just there to pin a pnfs file
+  fs.open(filename,'r',function(err,fd){
+    var buff = Buffer.alloc(10);;
+    fs.read(fd,buff,0,1,null,function(err,bytes,buffer){
+      if(err)   console.log("Got error reading ",filename,err);
+      if(bytes) console.log("Succesfully read data on ",filename);
+    })
+  })
+}
 
 
 async function resolve_request(event_req)
@@ -199,7 +210,7 @@ async function resolve_request(event_req)
     console.log("found file",filename);
     loc = await samweb('locate-file',filename);
     console.log("location",loc);
-    event_req.filename = loc;
+    event_req.filename = loc;    // pass to logic below
   }
 
   if(event_req.what == "samdim") {    
@@ -209,10 +220,12 @@ async function resolve_request(event_req)
     files = await samweb('list-files',samdim);
     if(files.length<1) throw new Error("No files found matching"+spec);
     var filename = files[0];
-    console.log("found file",filename);
-    loc = await samweb('locate-file',filename);
-    console.log("location",loc);
-    event_req.filename = loc;
+    event_req.filename = files[0];    // pass to logic below
+
+    // console.log("samdim found file",filename);
+    // loc = await samweb('locate-file',filename);
+    // console.log("location",loc);
+    // event_req.filename = loc;
   }
 
 
@@ -243,8 +256,10 @@ async function resolve_request(event_req)
     var pnfs_status = String(fs.readFileSync(pnfs_dotfile));
     console.log("PNFS status of file:",pnfs_status);
     if(!pnfs_status.includes("ONLINE")) {
-      // Pin it. Tell pnfs to stage the file for 20 min minimum
-      fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(fset)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
+      // Pin it. Tell pnfs to stage the file for 20 min minimum.  Update: doesn't work because, again, documentation is written only for gurus, not regular folk. 
+      // This gets permission-denied since it's a read-only filesystem (I think)
+      // fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(pin)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
+      readTouch(event_req.filename);
       throw new Error("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
     }
   }
