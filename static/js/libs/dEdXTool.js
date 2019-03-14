@@ -169,7 +169,7 @@ function dEdXTool( element, options  )
   gUserTrack.set_default();
   var self = this;
   
-  gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );  
+  gStateMachine.Bind('newRecord', this.NewRecord.bind(this) );  
   gStateMachine.Bind('userTrackChange', this.Draw.bind(this) );  
   this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
   this.ctl_dedx_width_slider = this.GetBestControl(".dEdX-width-slider");

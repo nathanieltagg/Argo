@@ -46,7 +46,6 @@ function OpFlashHistogram( element  )
   this.blandColorScale = new ColorScaleRGB(220,220,220);
   
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('hoverChange',this,"HoverChange");
   gStateMachine.BindObj('opScaleChange',this,"Draw");
 

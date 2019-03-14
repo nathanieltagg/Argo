@@ -24,11 +24,12 @@ function MCDigraph( element )
   gMCDigraph = this;
    
   // gStateMachine.BindObj("mcChange",this,"Build");
-  gStateMachine.BindObj("recordChange",this,"NewRecord");
-  var self = this;
-  $(this.element).resize( function(ev){ self.NewRecord(); });                                               
-  gStateMachine.BindObj('hoverChange',this,"HoverChanged");
-  
+  gStateMachine.Bind("newRecord",this.NewRecord.bind(this));
+  $(this.element).resize( this.Rebuild.bind(this) );
+  gStateMachine.Bind('hoverChange',this.HoverChanged.bind(this));
+  gStateMachine.Bind('change-mcparticles',this.Rebuild.bind(this));
+  gStateMachine.Bind('change-mctruth',this.Rebuild.bind(this));
+  gStateMachine.Bind('change-gtruth',this.Rebuild.bind(this));
 }
 
 
@@ -64,6 +65,13 @@ MCDigraph.prototype.HoverChanged = function()
 
 MCDigraph.prototype.NewRecord = function() 
 {
+  $(this.element).empty();
+  this.st = null;
+}
+
+MCDigraph.prototype.Rebuild = function() 
+{
+  console.log("MCDigraph::Rebuild");
   $(this.element).empty();
   this.st = null;
   var particles = GetSelected("mcparticles");
@@ -137,7 +145,9 @@ MCDigraph.prototype.NewRecord = function()
   root.name = "MC Truth";
   
   // Add MCTruth nodes to the root node.
-  for(var truthtype in gRecord.mctruth) {
+  // for(var truthtype in gRecord.mctruth) {
+  var truthtype = GetSelectedName("mctruth");
+  if(truthtype){
     var tname = truthtype.split('_')[1]; // Get generator name
     // create a node for each generator class
     var typenode = { id: tname, data: gRecord.mctruth[truthtype], children:[], name: tname };
@@ -146,7 +156,6 @@ MCDigraph.prototype.NewRecord = function()
       var mctruth = gRecord.mctruth[truthtype][imctruth];
       // create a node for each generator
       var mctruthnode = { id: tname+imctruth, data: mctruth, name: tname+" "+imctruth, children:[]};
-      typenode.children.push(mctruthnode);
       
       if(mctruth.neutrino.nu && mctruth.neutrino.nu.fpdgCode) {
         mctruthnode.name = nodeNameFromMCParticle(mctruth.neutrino.nu);
@@ -155,16 +164,42 @@ MCDigraph.prototype.NewRecord = function()
         mctruthnode.name = tname+imctruth + "<br/>" + mctruth.particles.length + " particles";
       }
       
-      var list = gRecord.associations[truthtype][gMCParticlesListName][imctruth];
+      // association list from truthtype/name to mcparticles index i
+      var list = (((gRecord.associations||{})[truthtype]||{})[GetSelectedName("mcparticles")] ||[])[imctruth]||[];
+
+      // If associations bad in some way, just use all particle list
+      if(list.length==0) list = Array(particles.length).fill().map((_, idx) => idx);
       for(var i=0;i<list.length; i++) {
         if(particles[list[i]].fmother==0) {
           mctruthnode.children.push(buildNestedObject(particles[list[i]],list));          
         }
       }
+
+      // Now see if there is a generator node linked.
+      var glist = (((gRecord.associations||{})[truthtype]||{})[GetSelectedName("gtruth")] ||[])[imctruth]||[];
+      console.log(truthtype,imctruth,glist);
+      if(glist.length>0){
+        var gtruth = GetSelected("gtruth")[glist[0]];
+        if(gtruth) {
+          console.log("GOT ASSOCITED GTRUTH");
+          var gnode = { id: 'gtruth'+glist[0], data: gtruth, children:[mctruthnode]};
+          gnode.name= GetParticle(gtruth.fProbePDG)+"&rarr;"+GetParticle(gtruth.ftgtPDG);
+          for(attr in gtruth) {
+            if(attr.startsWith("f"))gnode.name+="<br/>"+attr+ '&nbsp;'+JSON.stringify(gtruth[attr]);
+          }
+          mctruthnode = gnode; // Insert it into the chain before the mctruthnode
+        }
+      }
+      if(glist.length>1) console.error("I dont know why, but this mctruth list is associated with more than one gtruth record.")
+      
+      
+      typenode.children.push(mctruthnode);
       
     }
+    
     root.children.push(typenode);
   }
+  console.log("Tree constructed:",root);
   
   // var inters = gRecord.gtruth[gMCTruthListName];
   // if(inters && inters[0]) {

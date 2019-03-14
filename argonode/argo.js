@@ -7,12 +7,17 @@
  ********************************************************************/
 
 var addon = require('./build/Release/addon');
+var fs = require("fs");
 
+// User code does:
+// c = new ComposerWithQueue(config,output_callback);
+// c.request(request_object)
+// c.shutdown() when done
 function ComposerWithQueue(config, output_callback) 
 {
-  if(!config) config = {};
+  this.config = config || {};
   this.queue = [];
-  this.composer = new addon.Composer(config);
+  this.composer = null;
   this.running = false;
   this.do_output = output_callback;
   this.shutting_down = false;
@@ -43,6 +48,10 @@ ComposerWithQueue.prototype.next_request = function()
     var next = this.queue.shift();
     if(next) {
       this.running = true;
+      if(!this.composer) {
+        if(next.what=='json') this.composer = new StaticComposer(this.config)
+          else                this.composer = new addon.Composer(this.config);
+      }
       this.composer.composeIncremental(next,
         this.do_end_of_request.bind(this),
         this.do_output
@@ -62,7 +71,125 @@ ComposerWithQueue.prototype.do_end_of_request = function(output)
 }
 
 
-module.exports=ComposerWithQueue;
+
+
+// All-javascript composer that can read static files
+// Mimics a Composer object in the C++
+function StaticComposer(config,output_callback)
+{
+  console.log("StaticComposer");
+  this.config = config;
+  this.do_output = output_callback;
+  this.doc = null;
+  this.event_descriptor = null;
+}
+  
+StaticComposer.prototype.dispatch_piece = function(piecename)
+{
+  var a = piecename.split('/');
+  var _type = a[1];
+  var _name = a[2];
+  var p = null;
+  console.log("piece:",piecename,_type,_name);
+  console.log('doc',Object.keys(this.doc));
+  if(this.doc[_type]){
+    if(_name && this.doc[_type][_name]) {
+      p = {}; 
+      p[_type]={};
+      p[_type][_name] = this.doc[_type][_name];    
+    } else {
+      p = {}; 
+      p[_type]=this.doc[_type];
+    }
+  }
+  console.log("piece p",p);
+  if(p) {
+    var out = {event_descriptor:this.event_descriptor, piece:p};
+    console.log("sending piece:",out);
+    this.do_output(JSON.stringify(out));
+  }
+}
+
+function build_manifest(doc)
+{
+  doc.manifest = {};
+  for(var n in doc){
+    if(typeof doc[n] == 'object') {
+      var t = {};
+      var c = 0;
+      for(var m in doc[n]) {
+        if(doc[n][m].length>=0){
+          t[m] =true;
+          c++;
+        }       
+      }
+      if(c>0) doc.manifest[n]=t;
+    }
+  }
+}
+  
+StaticComposer.prototype.composeIncremental = function(req,end_callback,output_callback)
+{
+  this.do_output = output_callback;
+
+  // WE NEED a file to start with.
+  if(!req.filename && !this.doc) { 
+    this.do_output(JSON.stringify({error:"StaticComposer needs a filename"})); return; 
+  }
+  
+  var self = this;
+
+  if(req.filename) {
+    this.do_output(JSON.stringify({progress:0,state:"Looking for file "+req.filename}));
+    fs.readFile(req.filename,(err,data)=>{
+      console.log("readfile came back",err,data);
+      if(err) {
+        end_callback(JSON.stringify({error:"Couldn't read file "+req.filename}));
+        return;
+      } 
+      this.do_output(JSON.stringify({progress:0,state:"Parsing file "+req.filename}));
+      
+      try {
+        this.doc = JSON.parse(data);
+      } catch(err) {
+        return this.do_output(JSON.stringify({error:"Could't parse JSON in file "+req.filename}));      
+      }
+      if(this.doc.record) this.doc = this.doc.record;
+      if(!this.doc.manifest) build_manifest(this.doc);
+      this.event_descriptor = "jsonfile-"+req.filename;
+    
+      // Look for valid pieces.
+      var pieces = req.pieces||[];
+      if(req.piece) pieces.push(req.piece);
+      if(pieces.length==0) {
+        do_output('{"record":'+data+'}');
+        return;
+      }
+      this.dispatch_piece("/header");
+      this.dispatch_piece("/source");
+      this.dispatch_piece("/manifest");
+      this.dispatch_piece("/monitor");
+      for(p of pieces) this.dispatch_piece(p);
+      end_callback(JSON.stringify({progress:1,state:"Done"}));
+    });
+    return; // Wait for callback.
+  } else if(req.event_descriptor == this.event_descriptor && this.doc) {
+    // Look for valid pieces.
+    // Subsequent request.
+    var pieces = req.pieces||[];
+    if(req.piece) pieces.push(req.piece);
+    for(p of pieces) this.dispatch_piece(p);
+    end_callback(JSON.stringify({progress:1,state:"Done"}));
+    return;
+  } 
+  console.error("WTF??",req);
+  end_callback(JSON.stringify({error:"how did StaticComposer end up here?? "+req.filename}));      
+}
+
+
+module.exports.ComposerWithQueue=ComposerWithQueue;
+module.exports.StaticComposer=StaticComposer;
+module.exports.Composer = addon.Composer;
 
 
 

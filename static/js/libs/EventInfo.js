@@ -12,6 +12,7 @@
 gEventInfo = null;
 
 // Constants
+// UBOONE
 var kTriggerNames = ["Beam" // "PMT 0 (Beam)"
                     ,"Cosmic" // "PMT 1 (Cosmic)"
                     ,"PMT 2"
@@ -71,19 +72,24 @@ function EventInfo( element  )
   }
 
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");  
+  
+  gStateMachine.Bind('newRecord',this.NewRecord.bind(this));  
+  gStateMachine.Bind('newPiece',this.NewPiece.bind(this));  
 }
 
 EventInfo.prototype.NewRecord = function()
 {
+  this.newrec = true;
+}
+
+EventInfo.prototype.NewPiece = function()
+{
+  if(!this.newrec || !gRecord.source || !gRecord.manifest || !gRecord.header) return;
+  this.newrec = false;
   // Note that this code will fill all values on the entire page, not just the element given.
   
   // Fill with default values.
   if(this.element) $(".eventinfo .val",this.element).html("?");
-
-  if(!gRecord) {
-    return; // leave defaults    
-  }
 
   if(gRecord.header){
     $(".event-run").text(gRecord.header.run);
@@ -127,6 +133,24 @@ EventInfo.prototype.NewRecord = function()
     if("numEntriesInFile" in gRecord.source) $(".event-numEntriesInFile").text(gRecord.source.numEntriesInFile);
   }
   
+  
+  for(_type of ['wireimg','hits','clusters','tracks','spacepoints','tracks','showers','oppulses','ophits','opflashes']) {
+    var txt = "";
+    if(gRecord.manifest[_type]) {
+      for(_name in gRecord.manifest[_type]) {
+        var count = ((gRecord[_type]||{})[_name] || []).length;
+        if(count==0) count = gRecord.manifest[_type][_name];
+        if(count==true) count = "&#10003;";
+        txt += count +"&nbsp;";
+        txt += _name.replace(/^[^_]*_/,"") + "<br/>"
+      }
+    }
+    if(txt.length==0) txt = "Not present";
+    $(`.event-${_type}-names`).html(txt);
+    console.log(`.event-${_type}-names`,txt);
+  }
+  
+  // Specialty:
   if(gRecord.laser) {
     var txt = "";
     for(i in gRecord.laser) {
@@ -140,47 +164,6 @@ EventInfo.prototype.NewRecord = function()
     }
     $(".event-laser-info").html(txt);
   }
-
-  var t = "";
-  for(i in gRecord.raw) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-raw-wire-names").html(t.length?t:"Not present");
-  
-  t="";
-  for(i in gRecord.cal) { t += i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-cal-wire-names").html(t.length?t:"Not present");
-
-  t="";  
-  for(i in gRecord.hits) { t += gRecord.hits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-hit-names").html(t.length?t:"Not present");
-
-  t="";
-  for(i in gRecord.clusters) { t += gRecord.clusters[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-cluster-names").html(t.length?t:"Not present");
-
-  t="";
-  for(i in gRecord.spacepoints) { t += gRecord.spacepoints[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-spacepoint-names").html(t.length?t:"Not present");
-
-  t="";
-  for(i in gRecord.tracks) { t += gRecord.tracks[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-track-names").html(t.length?t:"Not present");
-  
-  t="";
-  for(i in gRecord.showers) { t += gRecord.showers[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-track-showers").html(t.length?t:"Not present");
-  
-
-  t="";
-  for(i in gRecord.oppulses) { t += gRecord.oppulses[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-oppulse-names").html(t.length?t:"Not present");
-
-  t="";
-  for(i in gRecord.ophits) { t += gRecord.ophits[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-ophit-names").html(t.length?t:"Not present");
-
-  t="";
-  for(i in gRecord.opflashes) { t += gRecord.opflashes[i].length + "&nbsp;" + i.replace(/^[^_]*_/,"") + "<br/>";}
-  $(".event-opflash-names").html(t.length?t:"Not present");
   
   var hv = "unknown";
   if(gRecord.hv && gRecord.hv.avg) {

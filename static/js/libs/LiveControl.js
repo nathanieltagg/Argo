@@ -69,7 +69,7 @@ function LiveControl( element )
       }
   });
 
-  gStateMachine.BindObj("recordChange",this,"NewRecord");
+  gStateMachine.BindObj("newRecord",this,"NewRecord");
 
 
   // keep-up list:

@@ -64,9 +64,9 @@ function HitHistogram( element  )
   this.hist = new Histogram(10,0,5000);  
   
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('hoverChange',this,"HoverChange");
-  gStateMachine.BindObj('hitChange',this,"Draw");
+  gStateMachine.Bind('newRecord',this.ResetAndBuild.bind(this));
+  gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
+  gStateMachine.Bind('hitChange',this.Draw.bind(this));
   
   // this.ctl_show_hits    =  this.GetBestControl(".show-hits");
   this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
@@ -77,14 +77,14 @@ function HitHistogram( element  )
   $(this.ctl_hit_field   ).change(function(ev) { this.blur(); return self.BuildHistogram(); });
   $(this.ctl_cut_max     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
   $(this.ctl_cut_min     ).change(function(ev) { this.blur(); return self.FinishRangeChange(); });
-  gStateMachine.Bind('change-hits',this.BuildHistogram.bind(this));
+  gStateMachine.Bind('change-hits',this.ResetAndBuild.bind(this));
   
   
   this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); });
 }
 
-HitHistogram.prototype.NewRecord = function()
+HitHistogram.prototype.ResetAndBuild = function()
 {
   var sel = $('#ctl-hit-color-scale option:selected').val();
   gHitColorScaler.SetScale(sel);

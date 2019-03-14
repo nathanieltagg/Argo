@@ -42,7 +42,7 @@ console.log("config:",config);
 // NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
 
 // My backend instantiation (maps to a ComposerWithQueue object) 
-var Composer = require("argonode");
+var argo = require("argonode");
 
 // var samweb_path = process.env.00
 var app = express();
@@ -188,7 +188,7 @@ async function resolve_request(event_req)
   if(event_req.what=="live") {
     // Do special live thing.
   }
-  if(event_req.what=="cached"){
+  if(event_req.what=="json"){
     // look at prebuild json file
   }
 
@@ -284,7 +284,7 @@ async function attach_stream(ws,req)
   console.log("ws server hit!",req.query)
 
   // Make a new composer object, send all output to the ws
-  ws.my_composer = new Composer(config.composer_config,function(data,datatype) {
+  ws.my_composer = new argo.ComposerWithQueue(config.composer_config,function(data,datatype) {
       // This is the do_output callback, called either on progress, piece, or finished.
       console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
       // dont' need this, but debugging:
@@ -310,10 +310,13 @@ async function attach_stream(ws,req)
     // See if there is a 'what' flag. If so, need a new event.
     if(newreq.what) {
       resolve_request(newreq).then(
-        (r)=>{ ws.my_composer.request(r);}) // And we're off and running again!  Or this is queued; the plug-in takes care of it.  
+        (r)=>{ 
+          console.log("Request sent to composer:",r);
+          ws.my_composer.request(r);}) // And we're off and running again!  Or this is queued; the plug-in takes care of it.  
         .catch(err=>{send_error_message(err.message)}); 
     } else {
       // Try to do it anyway, this is probably a piece request
+      console.log("No what flag!",newreq);
       ws.my_composer.request(newreq);
     }
     
@@ -336,6 +339,7 @@ async function attach_stream(ws,req)
     } catch(err) {
       send_error_message(err.message)
     }
+    console.log("initial request sent to composer",event_req);
     ws.my_composer.request(event_req);
   }
 };
@@ -349,38 +353,17 @@ app.get("/server/serve_event.cgi",function(req,res,next){
   console.log("serve_event.cgi",req.query);
   var event_req = req.query;
   
-  event_req.pathglob= "";
-  event_req.selection=  req.query.selection?(String(req.query.selection)):"1";
-  event_req.entrystart= req.query.entry?parseInt(req.query.entry):0;
-  event_req.entryend= 1000000000;
-  event_req.options= req.query.options || "";
-  if(req.query.filename) event_req.pathglob = decodeURIComponent(req.query.filename);
-  // FIXME raw file lookup req.param.what == 'raw'
-  console.log("pathglob:",req.query.filename,event_req.pathglob);
-  glob(event_req.pathglob,  function (er, files) {
-    console.log("found files",files);
-    event_req.filename = files[0];
-    if(fs.existsSync(event_req.filename)) {
-      // FIXME PNFS CHECK
-      console.log("Constructed request:",event_req);
-      composerFactory.composeWithProgress(event_req,
-          function(result){
-              console.log("Result complete:",result.length);
-              // var doc = JSON.parse(result);
-              res.setHeader('Content-Type', 'application/json');
-              res.send("{\"record\":"+result+"}");
-              return;
-            },
-            function(progress){
-              console.log("PROGRESS",progress);
-            }
-      );
+  if(event_req.what) {
+    resolve_request(event_req).then(      
+      (request)=>{ 
+        var composer = new argo.Composer(config.composer_config);
+        composer.composeIncremental(request, (result)=>{
+          composer; // make sure it stays alive
+          res.setHeader('Content-Type', 'application/json');
+          res.send(result);          
+        }, console.log);
+      });
     }
-  });
-  clean_datacache();
-  // var errorblock = {'error': "something fucked up"};
-  // res.setHeader('Content-Type', 'application/json');
-  // res.send(JSON.stringify(errorblock));
 });
 
 
@@ -390,6 +373,9 @@ app.set('view engine', 'pug')
 app.set('views','pug');
 app.get('/', function (req, res) {
   res.render('argo', { pagename: 'argo' })
+})
+app.get('/atreides', function (req, res) {
+  res.render('atreides', { pagename: 'atreides' })
 })
 
 

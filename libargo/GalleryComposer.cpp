@@ -23,6 +23,7 @@
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/OpHit.h"
 #include "lardataobj/RecoBase/OpFlash.h"
+#include "lardataobj/RawData/raw.h"   // compression fns are here
 #include "nusimdata/SimulationBase/GTruth.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCFlux.h"
@@ -705,7 +706,14 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
     int wire = rawdigit.Channel();
     if(pedestal<0) pedestal = 0; // Didn't read correctly.
 
-    waveform_ptr_t waveform_ptr = waveform_ptr_t(new waveform_t( rawdigit.ADCs() )); // make a copy
+    
+    waveform_ptr_t waveform_ptr;
+    if(rawdigit.Compression()== raw::kNone) {
+      waveform_ptr = waveform_ptr_t(new waveform_t( rawdigit.ADCs() )); // make a copy
+    } else {
+      waveform_ptr = waveform_ptr_t(new waveform_t( rawdigit.Samples() ));
+      raw::Uncompress(rawdigit.ADCs(),*waveform_ptr,rawdigit.GetPedestal(), rawdigit.Compression());
+    }
     waveform_t& waveform = *waveform_ptr;
     waveform._servicecard = wire/48;
     size_t nsamp = waveform.size();
@@ -725,7 +733,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
 
     if(wireMap->size() <= wire) wireMap->resize(wire+1);
     (*wireMap)[wire] = waveform_ptr;
-    ntdc = std::max(ntdc,rawdigit.NADC());
+    ntdc = std::max(ntdc,waveform_ptr->size());
   }
   
   size_t nwire = wireMap->size();
@@ -755,7 +763,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
                             m_CacheStoragePath,
                             m_CacheStorageUrl,
                             tilesize,
-                            true );
+                            false );
   }
   std::cout << "RAWDIGIT total time:";
   
@@ -1347,7 +1355,7 @@ void GalleryComposer::composeManifest(nlohmann::json& out)
   composeManifest< raw::OpDetPulse  >(out["oppulses"]);
   composeManifest< simb::GTruth     >(out["gtruth"]);
   composeManifest< simb::MCTruth    >(out["mctruth"]);
-  composeManifest< simb::MCParticle >(out["particles"]);
+  composeManifest< simb::MCParticle >(out["mcparticles"]);
 }
 
 
@@ -1584,9 +1592,9 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
       if(p.type=="oppulses"   ) composePiece<raw::OpDetPulse  >( p.type, p.name, outPiece[p.type]  );
 
       // FIXME: change in MC structure.
-      if(p.type=="gtruth"   )   composePiece<simb::GTruth    >( p.type, p.name, outPiece[p.type] );
+      if(p.type=="gtruth"   )    composePiece<simb::GTruth    >( p.type, p.name, outPiece[p.type] );
       if(p.type=="mctruth"  )    composePiece<simb::MCTruth   >( p.type, p.name, outPiece[p.type] );
-      if(p.type=="mcparticles") composePiece<simb::MCParticle>( p.type, p.name, outPiece[p.type] );
+      if(p.type=="mcparticles")  composePiece<simb::MCParticle>( p.type, p.name, outPiece[p.type] );
 
       // Note we try looking for both raw::rawDigit and recob::Wire objects. Only one of them will properly match the p.name and get put in, since the p.name contains the product class.
       if(p.type=="wireimg"       ) composePieceImage<raw::RawDigit     >( p.type, p.name, outPiece[p.type] );
@@ -1617,13 +1625,16 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   
   // Wire data.
   // End first so background image conversion tasks can be Ended as we build the rest.
-  progress_made("Composing recob::Wire images");  
-  composePieceImage< recob::Wire       > ( "cal"       , "*", m_result["cal"       ]  );
+  progress_made("Composing recob::Wire images"); 
+  composePieceImage<recob::Wire       >( "wireimg",        "*", m_result["wireimg"] );
+  composePieceImage<recob::Wire       >( "wireimg-lowres", "*", m_result["wireimg-lowres"] );
+  
+  
 
   progress_made("Composing raw::Digit image");  
-  composePieceImage< raw::RawDigit     > ( "raw"       , "*", m_result["raw"       ]  );
+  composePieceImage<raw::RawDigit     >( "wireimg", "*",        m_result["wireimg"] );
+  composePieceImage<raw::RawDigit     >( "wireimg-lowres", "*", m_result["wireimg-lowres"] );
   
-  // Need to think about concurrency here At the moment it's fine, since there's no threading under the hood.
   composePiece< recob::Hit       > ( "hits"       , "*", m_result["hits"       ]  );
   composePiece< recob::SpacePoint> ( "spacepoints", "*", m_result["spacepoints"]  );
   composePiece< recob::Cluster   > ( "clusters"   , "*", m_result["clusters"   ]  );
@@ -1635,12 +1646,9 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
   composePiece< recob::OpHit     > ( "ophits"     , "*", m_result["ophits"     ]  );
   composePiece< raw::OpDetPulse  > ( "oppulses"   , "*", m_result["oppulses"   ]  );
 
-  json mc;
-  bool got_mc = false;
-  got_mc |= composePiece <simb::GTruth>     ("gtruth"   ,"*", mc["gtruth"   ] );
-  got_mc |= composePiece <simb::MCTruth>    ("mctruth"  ,"*", mc["mctruth"  ] );
-  got_mc |= composePiece <simb::MCParticle> ("mcparticles","*", mc["mcparticles"] );
-  if(got_mc) m_result["mc"] = mc;    
+  composePiece <simb::GTruth>     ("gtruth"   ,"*", m_result["gtruth"   ] );
+  composePiece <simb::MCTruth>    ("mctruth"  ,"*", m_result["mctruth"  ] );
+  composePiece <simb::MCParticle> ("mcparticles","*", m_result["mcparticles"] );
   
   progress_made("Composing associations");  
   composeAssociations();

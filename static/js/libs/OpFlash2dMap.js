@@ -56,13 +56,12 @@ function OpFlash2dMap( element  )
   Pad.call(this, element, settings); // Give settings to Pad contructor.
     
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.Bind('opScaleChange',function(){self.min_v = gOpTimeLimits.min; self.max_v = gOpTimeLimits.max; self.Draw(); });
+  gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
   
   this.opflashes = [];
   this.drawn_flashes = [];
 
-  gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
   this.SetMagnify(true);
   
   this.hist = null;
@@ -260,7 +259,6 @@ function OpFlash2dMapProjection( element  )
 
   this.hist = new Histogram(50,0,24);
   var self= this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpTimeLimits.min,gOpTimeLimits.max); });
   gStateMachine.Bind('change-opflashes', this.NewRecord.bind(this) );
 }

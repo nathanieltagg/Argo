@@ -73,7 +73,6 @@ function GotRecord(o)
   gRecord = o.record;
   gStateMachine.Trigger('preNewPiece'); // Special trigger for those objects that need to fire first.  
   gStateMachine.Trigger('newPiece');
-  gStateMachine.Trigger('recordChange'); // FIXME: Want to remove this
   
 }
 
@@ -102,7 +101,6 @@ function GotPiece(o)
   }
   // gStateMachine.Trigger('newPiece',o.piece); // Add the piece to the trigger call, so that consumers can look to see if they need to change.
   gStateMachine.Trigger('newPiece');
-  gStateMachine.Trigger('recordChange'); // FIXME: Want to remove this
   
   
 }

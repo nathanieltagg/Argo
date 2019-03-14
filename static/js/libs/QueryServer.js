@@ -78,6 +78,7 @@ function HashChanged(  )
   // This function is called when the hash is changed. This sometimes results in a change of event.
   var par = $.deparam.fragment(true);
 
+  // This call tells it to look for differences from the last state, but IGNORING the zoom or other local variables:
   var changed = objectdiff(par,gLastHashState,['zoom']);
   console.log("HashChange new state",par," old state ",gLastHashState," changed: ",changed);
   if(!changed) return;
@@ -85,6 +86,8 @@ function HashChanged(  )
   console.log("HashChanged",par);
   
   if(par.reload) {  window.location.reload(); return; };// Force a reload! 
+  
+  if(!par.what) { $.bbq.pushState({what: 'file'}, 0);     }
   
   // Clear all selection targets.
   $("input").blur();

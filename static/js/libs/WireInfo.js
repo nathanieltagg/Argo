@@ -51,7 +51,7 @@ function WireInfo( element  )
   $(this.ctl_wireimg_type).click(function(ev) { return self.Draw(); });
   
   
-  gStateMachine.Bind('recordChange',this.NewRecord.bind(this));
+  gStateMachine.Bind('newRecord',this.NewRecord.bind(this));
   gStateMachine.Bind("hoverChange", this.Draw.bind(this));
   gStateMachine.Bind("ChangePsuedoColor", this.Draw.bind(this));
 }

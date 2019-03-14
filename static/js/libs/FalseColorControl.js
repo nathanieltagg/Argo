@@ -67,7 +67,7 @@ function FalseColorControl( element  )
   this.final_offset = 0;
   this.MakeHist();
   
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
+  gStateMachine.Bind('newRecord',this.NewRecord.bind(this));
 
   $('.falseColorPlus1' ).click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
   $('.falseColorMinus1').click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(-1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });

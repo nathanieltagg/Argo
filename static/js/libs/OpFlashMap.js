@@ -35,8 +35,8 @@ function OpFlashMap( element  )
   ButtressedPad.call(this, element, settings); // Give settings to Pad contructor.
     
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('opScaleChange',this,"Draw");
+  gStateMachine.Bind('change-opflashes',this.NewRecord.bind(this));
+  gStateMachine.Bind('opScaleChange',this.Draw.bind(this));
   
   this.opflashes = [];
   this.drawn_flashes = [];

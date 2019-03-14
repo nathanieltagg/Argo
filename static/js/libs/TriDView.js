@@ -51,7 +51,7 @@ function TriDView( element, options ){
 
 
   // Data model state.
-  gStateMachine.Bind('recordChange',this.Rebuild.bind(this));
+  gStateMachine.Bind('newRecord',this.Rebuild.bind(this));
   gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
   gStateMachine.Bind('selectChange',this.SelectChange.bind(this));
   gStateMachine.Bind('changeMRIslice',this.Rebuild.bind(this));
@@ -61,19 +61,21 @@ function TriDView( element, options ){
   this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");  
   this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
 
-  $(this.GetBestControl('.show-hits')       ).change(function(ev) { return self.Rebuild(); });
-  $(this.GetBestControl('.show-trid_hits'  )).change(function(ev) { return self.Rebuild(); });
-  $(this.GetBestControl('.show-clusters')   ).change(function(ev) { return self.Rebuild(); });
-  $(this.GetBestControl('.show-spacepoints')).change(function(ev) { return self.Rebuild(); });
-  $(this.GetBestControl('.show-showers')    ).change(function(ev) { return self.Rebuild(); });
-  $(this.GetBestControl('.show-tracks')     ).change(function(ev) { return self.Rebuild(); });
-  $(this.GetBestControl('.show-mcparticles')).change(function(ev) { return self.Rebuild(); });
+  gStateMachine.Bind('toggle-wireimg' ,this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-hits'    ,this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-clusters', this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-showers' ,this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-spacepoints', this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-tracks' , this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-mcparticles,', this.Rebuild.bind(this) );
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Rebuild(); });
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(); });
 
 
   gStateMachine.Bind('change-tracks', this.Rebuild.bind(this,false) );
+  gStateMachine.Bind('change-showers', this.Rebuild.bind(this,false) );
+  gStateMachine.Bind('change-clusters', this.Rebuild.bind(this,false) );
   gStateMachine.Bind('change-spacepoints', this.Rebuild.bind(this,false) );
   gStateMachine.Bind('change-hits', this.Rebuild.bind(this,false) );
   
@@ -119,7 +121,7 @@ TriDView.prototype.HoverChange = function()
 
 TriDView.prototype.Rebuild = function ()
 {
-  // console.debug('TriD::Rebuild()');
+  console.log('TriD.Rebuild()');
 
   this.objects = [];
   

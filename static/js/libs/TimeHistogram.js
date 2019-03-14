@@ -42,7 +42,7 @@ function TimeHistogram( element  )
   this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
     
-  gStateMachine.Bind('recordChange',  this.NewRecord.bind(this) ); 
+  gStateMachine.Bind('change-hits',  this.NewRecord.bind(this) ); 
   gStateMachine.Bind('zoomChange'    ,this.Change.bind(this) );
   gStateMachine.Bind('zoomChangeFast',this.Change.bind(this) );
   gStateMachine.Bind("TimeCutChange" ,this.Change.bind(this) );

@@ -105,7 +105,7 @@ function MRI( element, options )
   
  
  
-  gStateMachine.Bind('recordChange',  this.NewRecord.bind(this));
+  gStateMachine.Bind('change-hits',   this.NewHits.bind(this));
   gStateMachine.Bind('zoomChange',    this.ZoomChange.bind(this));
   gStateMachine.Bind('zoomChangeFast',this.ZoomChange.bind(this));
   gStateMachine.Bind('hoverChange',   this.Draw.bind(this));  
@@ -199,7 +199,7 @@ MRI.prototype.ZoomChange = function()
 
 
 
-MRI.prototype.NewRecord = function()
+MRI.prototype.NewHits = function()
 {
   // Sort by hit start time.
   var inhits = GetSelected("hits");
@@ -461,68 +461,7 @@ MRI.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   this.ctx.lineTo(x1,y1);
   this.ctx.stroke();
   
-  // Draw some wires.
-  // for(var plane=0;plane<3;plane++) {
-  //   switch(plane) {
-  //     case 0:     this.ctx.strokeStyle = "rgb(255,0,0)"; break;
-  //     case 1:     this.ctx.strokeStyle = "rgb(0,255,0)"; break;
-  //     case 2:     this.ctx.strokeStyle = "rgb(0,0,255)"; break;
-  // 
-  //   }
-  //   for(var minmax=0;minmax<2;minmax++) {
-  //     var geowire = gGeo.getWire(plane,gZoomRegion.plane[plane][minmax]);
-  //     this.ctx.lineWidth=0.2;
-  //     this.ctx.beginPath();
-  //     this.ctx.moveTo(this.GetX(geowire.z1), this.GetY(geowire.y1));
-  //     this.ctx.lineTo(this.GetX(geowire.z2), this.GetY(geowire.y2));
-  //     this.ctx.stroke();
-  //   }
-  // }
-  
-  // // Draw the zoom region.
-  // // First, do some semi-transparent boxes.
-  // 
-  // // Clip to the actual view area.
-  // this.ctx.save();
-  // this.ctx.beginPath();
-  // this.ctx.moveTo(x1,y1);
-  // this.ctx.lineTo(x1,y2);
-  // this.ctx.lineTo(x2,y2);
-  // this.ctx.lineTo(x2,y1);
-  // this.ctx.lineTo(x1,y1);
-  // this.ctx.clip();
-  // 
-  // for(var plane=0;plane<3;plane++) {
-  //   switch(plane) {
-  //     case 0:     this.ctx.fillStyle = "rgba(255,0,0,0.5)"; break;
-  //     case 1:     this.ctx.fillStyle = "rgba(0,255,0,0.5)"; break;
-  //     case 2:     this.ctx.fillStyle = "rgba(0,0,255,0.5)"; break;
-  //   }
-  //   var minwire = gGeo.getWire(plane,gZoomRegion.plane[plane][0]);
-  //   var maxwire = gGeo.getWire(plane,gZoomRegion.plane[plane][1]);
-  //   this.ctx.beginPath();
-  //   this.ctx.moveTo(this.GetX(minwire.z1), this.GetY(minwire.y1));
-  //   this.ctx.lineTo(this.GetX(minwire.z2), this.GetY(minwire.y2));
-  // 
-  //   // Fill in corners.
-  //   if(plane==0)
-  //    this.ctx.lineTo(this.GetX(maxwire.z2), this.GetY(minwire.y2));
-  //   if(plane==1)
-  //    this.ctx.lineTo(this.GetX(minwire.z2), this.GetY(maxwire.y2));
-  // 
-  //   this.ctx.lineTo(this.GetX(maxwire.z2), this.GetY(maxwire.y2));
-  //   this.ctx.lineTo(this.GetX(maxwire.z1), this.GetY(maxwire.y1));
-  //   
-  //   // Fill in corners.
-  //   if(plane==0)
-  //    this.ctx.lineTo(this.GetX(minwire.z1), this.GetY(maxwire.y1));
-  //   if(plane==1)
-  //    this.ctx.lineTo(this.GetX(maxwire.z1), this.GetY(minwire.y1));
-  //   
-  //   this.ctx.fill();
-  // }
-  // this.ctx.restore();
-  // 
+
   
   if ($(this.ctl_show_hits).is(":checked")) {
     this.DrawHits(min_u,max_u, min_v, max_v);
@@ -535,9 +474,7 @@ MRI.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   if ($(this.ctl_show_tracks).is(":checked")) {
     this.DrawTracks(min_u,max_u, min_v, max_v);
   }
-  
-  this.DrawMyReco(min_u,max_u, min_v, max_v);
-  // 
+    // 
   // if ($(this.ctl_show_mc).is(":checked")) {
   //   this.DrawMC(min_u,max_u, min_v, max_v, fast);
   // }  
@@ -584,11 +521,6 @@ MRI.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
 
   this.ctx.restore();
   
-  
-  
-  // var txt = Math.round(gZoomRegion.plane[0][0]) + "-" + Math.round(gZoomRegion.plane[0][1]) + "  /  "
-  //         + Math.round(gZoomRegion.plane[1][0]) + "-" + Math.round(gZoomRegion.plane[1][1]) + "  /  "
-  //         + Math.round(gZoomRegion.plane[2][0]) + "-" + Math.round(gZoomRegion.plane[2][1]) ;
   var txt = "";
   txt += "<span style='color: red'  >Plane 0: Wire " + Math.round(gZoomRegion.plane[0][0]) + " to " + Math.round(gZoomRegion.plane[0][1]) + "</span>&nbsp;&nbsp;";
   txt += "<span style='color: green'>Plane 1: Wire " + Math.round(gZoomRegion.plane[1][0]) + " to " + Math.round(gZoomRegion.plane[1][1]) + "</span>&nbsp;&nbsp;";

@@ -24,43 +24,23 @@ function PFDigraph( element )
   gPFDigraph = this;
    
   // gStateMachine.BindObj("mcChange",this,"Build");
-  gStateMachine.BindObj("recordChange",this,"NewRecord");
-  var self = this;
+  gStateMachine.Bind("change-pfparticles",this.NewRecord.bind(this));
   $(this.element).resize( function(ev){ self.NewRecord(); });                                               
   gStateMachine.BindObj('hoverChange',this,"HoverChanged");
  
-  // FIXME
-  // $('#ctl-switch-to-pandora').click(function(){
-  //   console.log("switch to pandora products");
-  //   if(gRecord && self.listname) {
-  //     // Look up what the assocated lists are.
-  //     var others = gRecord.associations[self.listname];
-  //     for(var othername in others) {
-  //       // Dunno if this is cluster or spacepoint or what, but may as well whack em all
-  //       console.warn("switch to ",othername);
-  //       if($('#ctl-TrackLists option[value="'+othername+'"]').length>0)      $('#ctl-TrackLists').val(othername);
-  //       if($('#ctl-SpacepointLists option[value="'+othername+'"]').length>0) $('#ctl-SpacepointLists').val(othername);
-  //       if($('#ctl-ClusterLists option[value="'+othername+'"]').length>0)    $('#ctl-ClusterLists').val(othername);
-  //     }
-  //   }
-  // });
+  $('#ctl-switch-to-pandora').click(function(){
+    console.log("switch to pandora products");
+    var others = gRecord.associations[GetSelectedName("pfparticles")];
+    for(o in others){
+      ChangeSelected("",o);
+    }
+  });
 }
 
 
 PFDigraph.prototype.DoClick = function(node,label) 
 {
   // Look at the current graph, and see which trajectories are selected.
-  // gSelectedTrajectories = [];
- //  $jit.Graph.Util.eachNode(this.st.graph, 
- //    function(node) {
- //      // Run this on every node.
- //      if(node.selected) {
- //        console.log(node.name);
- //        gSelectedTrajectories.push(node.data.ftrackId);
- //      }
- //    }
- //  );
- //  gStateMachine.Trigger("changeSelectedTrajectories");
   ChangeSelection({obj: node.data.particle, type: "pfparticle", collection: gRecord.pfparticles});
 };
 

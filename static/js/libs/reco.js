@@ -26,7 +26,7 @@ function Reco( element )
   $(this.element).siblings(".reco-go-button").click( this.DoReco.bind(this) );
   $(this.element).siblings("#ctl-show-reco").click( this.DoReco.bind(this) );
  
-  gStateMachine.Bind('recordChange',  this.NewRecord.bind(this));
+  gStateMachine.Bind('change-hits',  this.NewRecord.bind(this));
 }
 
 var nd = 0;

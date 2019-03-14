@@ -20,14 +20,15 @@ function MCInfo( element )
   $(".accordion",this.fElement).accordion({
      collapsible: true
   });
-    
-  gStateMachine.BindObj("recordChange",this,"NewRecord");
-
+  gStateMachine.Bind('change-mcparticles',this.Rebuild.bind(this));
+  gStateMachine.Bind('change-mctruth',this.Rebuild.bind(this));
+  gStateMachine.Bind('change-gtruth',this.Rebuild.bind(this));
+  
 }
 
 
   
-MCInfo.prototype.NewRecord = function() 
+MCInfo.prototype.Rebuild = function() 
 {
   // console.debug("MCInfo::Build()");
   $(".accordion",this.fElement).empty();
@@ -42,7 +43,7 @@ MCInfo.prototype.NewRecord = function()
     h += "<div>";
     
     //var incE = parseFloat($('incoming4p',inter).text().split(',')[3])/1000.;
-    var incE = inter.fProbeP4_fE;
+    var incE = (inter.fProbeP4||{}).E || -9999;
     
     h+="<span>" +  incE.toFixed(3)  + " GeV  " + GetParticle(inter.fProbePDG) +"</span><br/>";
 

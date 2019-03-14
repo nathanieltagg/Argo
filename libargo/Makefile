@@ -102,7 +102,7 @@ LIBS     += -L ${CANVAS_LIB} -l canvas
 # ldpaths  += -Wl,-rpath,${CANVAS_LIB}
 
 CPPFLAGS += -I ${LARDATAOBJ_INC}
-LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RecoBase -l lardataobj_Simulation -l lardataobj_AnalysisBase
+LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RawData -l lardataobj_RecoBase -l lardataobj_Simulation -l lardataobj_AnalysisBase
 # ldpaths  += -Wl,-rpath,${LARDATAOBJ_LIB}
 
 CPPFLAGS += -I ${LARCOREALG_INC}

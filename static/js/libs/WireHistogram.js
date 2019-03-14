@@ -45,7 +45,7 @@ function WireHistogram( element  )
   this.ctl_histo_logscale= this.GetBestControl(".ctl-histo-logscale");
   $(this.ctl_histo_logscale).change(function(ev) { self.Draw(); }); 
   
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
+  gStateMachine.BindObj('change-hits',this,"NewRecord");
   gStateMachine.BindObj('zoomChange',this,"Change");
   gStateMachine.BindObj('zoomChangeFast',this,"Change");
 }

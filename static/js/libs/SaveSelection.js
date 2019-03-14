@@ -29,7 +29,7 @@ function SaveSelection( element )
 
   $(this.element).children(".saveselection-go-button").click( this.Do.bind(this) );
  
-  gStateMachine.Bind('recordChange',  this.NewRecord.bind(this));
+  gStateMachine.Bind('change-hits',  this.NewRecord.bind(this));
 }
 
 

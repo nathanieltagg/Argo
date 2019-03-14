@@ -78,15 +78,22 @@ function DataSource()
   $('button.next-event').button().click(DoNextEvent);
   $('button.prev-event').button().click(DoPrevEvent);
   
-  
-  gStateMachine.BindObj('recordChange',this,"NewRecord");  
+  gStateMachine.Bind('newRecord',this.NewRecord.bind(this));  
+  gStateMachine.Bind('newPiece',this.NewPiece.bind(this));  
 }
-
-
 
 
 DataSource.prototype.NewRecord = function()
 {
+  this.newrec = true;
+}
+
+
+DataSource.prototype.NewPiece = function()
+{
+  // We only care about new events source and header.
+  if(!this.newrec || !gRecord.source || !gRecord.header) return;
+  this.newrec = false;
   var entry = ((gRecord || {}).source || {}).entry;
   var file = ((gRecord || {}).source || {}).file;
   $('.inEntryOrEvent').val("Entry");

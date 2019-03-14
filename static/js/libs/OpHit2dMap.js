@@ -48,8 +48,8 @@ function OpHit2dMap( element  )
   Pad.call(this, element, settings); // Give settings to Pad contructor.
     
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
-  gStateMachine.BindObj('hoverChange',this,"HoverChange");
+  gStateMachine.Bind('change-ophits',this.NewRecord.bind(this));
+  gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
   gStateMachine.Bind('opScaleChange',function(){self.min_v = gOpTimeLimits.min; self.max_v = gOpTimeLimits.max; self.Draw(); });
   
   this.ophits = [];
@@ -209,7 +209,6 @@ function OpHit2dMapProjection( element  )
   var self = this;
   this.hist = new Histogram(50,0,24);
   
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.Bind('opScaleChange',function(){self.ChangeRange(gOpTimeLimits.min,gOpTimeLimits.max); });
   gStateMachine.Bind('change-ophits', this.NewRecord.bind(this) );
   

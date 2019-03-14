@@ -35,7 +35,6 @@ function OpHitMap( element  )
   ButtressedPad.call(this, element, settings); // Give settings to Pad contructor.
     
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('opScaleChange',this,"Draw");
   
   this.ophits = [];

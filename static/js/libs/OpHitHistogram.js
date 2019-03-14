@@ -72,7 +72,6 @@ function OpHitHistogram( element  )
   this.blandColorScale = new ColorScaleRGB(220,220,220);
   
   var self=this;
-  gStateMachine.BindObj('recordChange',this,"NewRecord");
   gStateMachine.BindObj('hoverChange',this,"HoverChange");
   gStateMachine.BindObj('opScaleChange',this,"Draw");
   this.input = "ophits"; 
@@ -200,9 +199,8 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
       // new histogram 
       this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
       
-      var listname = GetSelectedName("ophits");     
-      if(this.input == "ophits" && gRecord.ophits && gRecord.ophits[listname] && gRecord.ophits[listname].length) {
-        var ophits = gRecord.ophits[listname];
+      var ophits = GetSelected("ophits"); 
+      if(this.input == "ophits"  && ophits.length>0) {
         console.log("one pmt hist", ophits.length,gHoverState.obj);
         
         for(i=0;i<ophits.length;i++) {

@@ -22,6 +22,15 @@ function GetSelected(_type)
   return [];
 }
 
+function ChangeSelected(_type,_name)
+{
+  // Note I don't bother with type b/c it should never overlap...
+  // var product_name_input =  $("input.product-name").filter(function(){return ($(this).data('product-type')==_type)&&($(this).data('product-name')==_name);});
+  var product_name_input =  $("input.product-name").filter(function(){return ($(this).data('product-name')==_name);});
+  product_name_input.prop("checked","checked").trigger("change");
+}
+
+
 // Automatic runtime configuration.
 $(function(){
   $('#ControlOverlay').each(function(){
@@ -67,6 +76,9 @@ function ControlOverlay( element )
   $('.file-and-entry',this.element).on("click",function(){
     $("#input-fe").show();
   });
+
+  $('.next-event',this.element).click(DoNextEvent);
+  $('.prev-event',this.element).click(DoPrevEvent);
 
   $('.event-id-info',this.element).on("click",function(){
     $("#input-rawrun").show();
@@ -274,6 +286,9 @@ ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
 
   return true;
 }
+
+
+
 
 ControlOverlay.prototype.OnChangeProductName = function(ev)
 {
