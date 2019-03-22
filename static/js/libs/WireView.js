@@ -49,6 +49,8 @@ function WireView( element, options )
   
   // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
   
+  
+  // For uboone, this is simply in wirenum/tdc space, one pixel width for wire, one pixel height for tdc tick.
   var settings = {
     nlayers: 1,
     plane: 0, // default, override this
@@ -1491,6 +1493,7 @@ WireView.prototype.DrawPmts = function()
       var ophit = ophits[i];
       
       var det = gGeo.opDets.OpDetByChannel(ophit.opDetChan);
+      if(!det) continue;
       var u = gGeo.yzToWire(this.plane,det.y, det.z) - this.wire_shift[this.plane];
       
       if(u<this.min_u || u>this.max_u) continue;

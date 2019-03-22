@@ -407,19 +407,20 @@ void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out
 template<>
 void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h, const std::string&)
 {
-  int wire = hit.WireID().Wire;
-  int plane = hit.WireID().Plane;
+  const auto& wid = hit.WireID();
   double q  = hit.Integral();
   double t  = hit.PeakTime();
   double t1 = hit.StartTick();
   double t2 = hit.EndTick();
+  
 
-  h["wire"] =   wire;
-  h["plane"] =  plane;
-  h["q"] =      jsontool::fixed(q,0)     ;
-  h["t"] =      jsontool::fixed(t,1)     ;
-  h["t1"] =     jsontool::fixed(t1,1)    ;
-  h["t2"] =     jsontool::fixed(t2,1)    ;
+  h["wire"] =   wid.Wire;
+  h["plane"] =  wid.Plane;
+  if(hit.WireID().)
+  h["q"] =      jsontool::fixed(hit.Integral(),0)     ;
+  h["t"] =      jsontool::fixed(hit.PeakTime(),1)     ;
+  h["t1"] =     jsontool::fixed(hit.StartTick(),1)    ;
+  h["t2"] =     jsontool::fixed(hit.EndTick(),1)    ;
 } 
 
 
