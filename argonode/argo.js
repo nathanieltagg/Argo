@@ -9,66 +9,8 @@
 var addon = require('./build/Release/addon');
 var fs = require("fs");
 
-// User code does:
-// c = new ComposerWithQueue(config,output_callback);
-// c.request(request_object)
-// c.shutdown() when done
-function ComposerWithQueue(config, output_callback) 
-{
-  this.config = config || {};
-  this.queue = [];
-  this.composer = null;
-  this.running = false;
-  this.do_output = output_callback;
-  this.shutting_down = false;
-}
+var gSafety = []; // Don't delete things in this queue!
 
-ComposerWithQueue.prototype.shutdown = function()
-{
-  this.queue = [];
-  // Unbind response functions.
-  this.do_output = null;
-  this.do_end_of_request = null;
-  this.composer = null;
-  this.shutting_down = true;
-}
-
-
-ComposerWithQueue.prototype.request = function(req)
-{
-  if(this.shutting_down) return;
-  this.queue.push(req);
-  this.next_request(); // run it idle.
-}
-
-ComposerWithQueue.prototype.next_request = function()
-{
-  if(this.shutting_down) return;
-  if(!this.running) {
-    var next = this.queue.shift();
-    if(next) {
-      this.running = true;
-      if(!this.composer) {
-        if(next.what=='json') this.composer = new StaticComposer(this.config)
-          else                this.composer = new addon.Composer(this.config);
-      }
-      this.composer.composeIncremental(next,
-        this.do_end_of_request.bind(this),
-        this.do_output
-      );
-    }
-  }
-}
-
-
-ComposerWithQueue.prototype.do_end_of_request = function(output)
-{
-  this.running  = false;
-  if(this.shutting_down) return;
-  this.next_request(); // Next in queue if any
-  this.do_output(output,0x20);
-  this.do_output("{\"progress\":1, \"state\":\"Done\"}")
-}
 
 
 
@@ -185,6 +127,77 @@ StaticComposer.prototype.composeIncremental = function(req,end_callback,output_c
   console.error("WTF??",req);
   end_callback(JSON.stringify({error:"how did StaticComposer end up here?? "+req.filename}));      
 }
+
+
+////
+
+// User code does:
+// c = new ComposerWithQueue(config,output_callback);
+// c.request(request_object)
+// c.shutdown() when done
+function ComposerWithQueue(config, output_callback) 
+{
+  this.config = config || {};
+  this.queue = [];
+  this.composer = null;
+  this.running = false;
+  this.do_output = output_callback;
+  this.shutting_down = false;
+}
+
+ComposerWithQueue.prototype.shutdown = function()
+{
+  this.queue = [];
+  // Unbind response functions.
+  this.do_output = null;
+  this.do_end_of_request = null;
+  this.composer = null;
+  this.shutting_down = true;
+}
+
+
+ComposerWithQueue.prototype.request = function(req)
+{
+  if(this.shutting_down) return;
+  gSafety.push(this);
+  this.queue.push(req);
+  this.next_request(); // run it idle.
+}
+
+ComposerWithQueue.prototype.next_request = function()
+{
+  if(this.shutting_down) return;
+  if(!this.running) {
+    var next = this.queue.shift();
+    if(next) {
+      this.running = true;
+      if(!this.composer) {
+        if(next.what=='json') this.composer = new StaticComposer(this.config)
+          else                this.composer = new addon.Composer(this.config);
+      }
+      this.composer.composeIncremental(next,
+        this.do_end_of_request.bind(this),
+        this.do_output
+      );
+    }
+  }
+}
+
+
+ComposerWithQueue.prototype.do_end_of_request = function(output)
+{
+  this.running  = false;
+  if(this.shutting_down) return;
+  this.next_request(); // Next in queue if any
+  this.do_output(output,0x20);
+  this.do_output("{\"progress\":1, \"state\":\"Done\"}");
+  // remove from safety list
+  var index = gSafety.indexOf(this);
+  if (index !== -1) gSafety.splice(index, 1);
+}
+
+
+
 
 
 module.exports.ComposerWithQueue=ComposerWithQueue;

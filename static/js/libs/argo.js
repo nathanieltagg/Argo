@@ -597,6 +597,7 @@ $(function(){
     
   // Do intial trigger on page load.
   console.log("Doing initial hashchange trigger");  
+  
   HashChanged();
 
 });

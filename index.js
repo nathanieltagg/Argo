@@ -190,6 +190,7 @@ async function resolve_request(event_req)
   }
   if(event_req.what=="json"){
     // look at prebuild json file
+    if(!event_req.filename) event_req.filename=__dirname+"/static/default_event.json";
   }
 
   if(event_req.what == "run") {
@@ -283,19 +284,21 @@ async function attach_stream(ws,req)
   // ws might be wss or ws
   console.log("ws server hit!",req.query)
 
+  function send_data(data,datatype) {
+    // This is the do_output callback, called either on progress, piece, or finished.
+    console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
+    // dont' need this, but debugging:
+    var o = JSON.parse(data);
+    for(k in o) {        
+      console.log("  ",chalk.red(k.padEnd(10)));
+      if(typeof o[k] == 'object') for(kk in o[k])
+        console.log("    ",chalk.red(kk.padEnd(10)));
+    }
+    try{ ws.send(data); } catch(err) { console.error("Websocket error.",err); }
+  }
+
   // Make a new composer object, send all output to the ws
-  ws.my_composer = new argo.ComposerWithQueue(config.composer_config,function(data,datatype) {
-      // This is the do_output callback, called either on progress, piece, or finished.
-      console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
-      // dont' need this, but debugging:
-      var o = JSON.parse(data);
-      for(k in o) {        
-        console.log("  ",chalk.red(k.padEnd(10)));
-        if(typeof o[k] == 'object') for(kk in o[k])
-          console.log("    ",chalk.red(kk.padEnd(10)));
-      }
-      try{ ws.send(data); } catch(err) { console.error("Websocket error.",err); }
-  });
+  ws.my_composer = new argo.ComposerWithQueue(config.composer_config,send_data);
   
   // Declare where messages should go 
   ws.on("message",function(msg) {
@@ -314,9 +317,8 @@ async function attach_stream(ws,req)
           console.log("Request sent to composer:",r);
           ws.my_composer.request(r);}) // And we're off and running again!  Or this is queued; the plug-in takes care of it.  
         .catch(err=>{send_error_message(err.message)}); 
-    } else {
-      // Try to do it anyway, this is probably a piece request
-      console.log("No what flag!",newreq);
+    } else if(newreq.event_descriptor) {
+      // This is an update request for more data.
       ws.my_composer.request(newreq);
     }
     
@@ -330,18 +332,19 @@ async function attach_stream(ws,req)
     ws.onmessage = null; // remove listener.
   });
 
-  // Initiate the initial request, if specified in URL query
-  if(req.query && Object.keys(req.query).length>0) {
-    // We have an initial request
-    var event_req = Object.assign(req.query); // Shallow copy.
-    try{
-      resolve_request(event_req);
-    } catch(err) {
-      send_error_message(err.message)
-    }
-    console.log("initial request sent to composer",event_req);
-    ws.my_composer.request(event_req);
-  }
+  // this code resolves a URL-based query (?file=blah&what=file)
+  // This is superceded by a message event.
+  // if(req.query && Object.keys(req.squery).length>0) {
+  //   // We have an initial request
+  //   var event_req = Object.assign(req.query); // Shallow copy.
+  //   try{
+  //     resolve_request(event_req);
+  //   } catch(err) {
+  //     send_error_message(err.message)
+  //   }
+  //   console.log("initial request sent to composer",event_req);
+  //   ws.my_composer.request(event_req);
+  // }
 };
 
 

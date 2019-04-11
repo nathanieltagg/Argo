@@ -58,7 +58,7 @@ var gSocket=0;
 //     this.draw();
 // };
 
-var gLastHashState = {};
+var gLastHashState = {default: true};
 function objectdiff(a,b,ignore) 
 {
   var ks = [].concat(Object.keys(a)).concat(Object.keys(b));
@@ -134,13 +134,14 @@ function QueryServerStream( par )
   gServerRequestTime = (new Date()).getTime();
   gStateMachine.Trigger("newRecord");
   
-  if(!gSocket || gSocket.readyState != WebSocket.OPEN) {
+  if(!gSocket) {
     // Open the socket.
     var wsurl = 'ws://'+window.location.host+'/ws/stream-event';
     console.log("Starting socket calls:",wsurl);
 
     gSocket = new WebSocket(wsurl);    
     gSocket.onopen =  function (event) {
+      if (gSocket.readyState !== 1) {console.error("Websocket Not ready! THIS IS STUPID"); return;}
       console.log("opened websocket");
       $('#status').attr('class', 'status-ok');
       $("#status").text("Connected to server");
@@ -156,16 +157,16 @@ function QueryServerStream( par )
         QueryError(o,"BAD",event);
       }
       RecieveData(o);
-    }  
+    };  
     gSocket.onerror = function(event) {
       console.error("onerror",event);
       $('#status').attr('class', 'status-error');
       $("#status").text('Connection broken');
-    }
+    };
   } else {
-    // Socket already ready
-    gSocket.send(JSON.stringify(request));  // Send the request along straight away
-    
+    // Socket already read
+    if (gSocket.readyState !== 1) gSocket.onopen =  ()=>{gSocket.send(JSON.stringify(request));}
+    else gSocket.send(JSON.stringify(request));  // Send the request along straight away    
   } 
   
   

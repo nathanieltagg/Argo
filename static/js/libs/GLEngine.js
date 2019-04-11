@@ -117,6 +117,7 @@ function GLMapper(_type,_name) // "raw" or "cal"
   
   // Space to hold textures.
   this.tile_textures = [];
+  this.tile_3textures = [];
 
   this.SetupGLAndCanvas(10,10);
   
@@ -218,6 +219,7 @@ GLMapper.prototype.StartLoad = function()
   // FIXME Could explicitly delete images and textures - might improve GPU memory, but not required.
   this.tile_images = [];
   this.tile_textures = [];
+  this.tile_3textures = [];
   
   console.time("GLMapper.StartLoad",this._type,this._name);
   var self = this;
@@ -251,6 +253,7 @@ GLMapper.prototype.StartLoad = function()
     var row = this.tile_urls[irow];
     var imagerow = [];
     var texturerow = [];
+    var threetexturerow =[];
     for(var icol=0;icol<row.length;icol++) {
       this.num_images_needed++
       
@@ -273,6 +276,7 @@ GLMapper.prototype.StartLoad = function()
     }
     this.tile_images.push(imagerow);
     this.tile_textures.push(texturerow);
+    this.tile_3textures.push(threetexturerow);
   }
   
 }
@@ -312,7 +316,13 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   var elem = this.tile_urls[jrow][jcol];
   var img = this.tile_images[jrow][jcol];
   var tex = this.tile_textures[jrow][jcol];
-
+  this.tile_3textures[jrow][jcol] = new THREE.Texture(img);
+  this.tile_3textures[jrow][jcol].magFilter = THREE.NearestFilter;
+  this.tile_3textures[jrow][jcol].minFilter = THREE.NearestFilter;
+  this.tile_3textures[jrow][jcol].wrapS     = THREE.ClampToEdgeWrapping;
+  this.tile_3textures[jrow][jcol].wrapT     = THREE.ClampToEdgeWrapping;
+  
+  this.tile_3textures[jrow][jcol].needsUpdate = true;
   // Load the texture...
   
   this.gl.activeTexture(this.gl.TEXTURE0); // Set active unit

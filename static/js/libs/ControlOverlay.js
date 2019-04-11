@@ -226,6 +226,8 @@ ControlOverlay.prototype.NewPiece = function(piece)
       label.classList.remove("pulse");
       void label.offsetWidth; // allows pulse retriggering see https://codepen.io/chriscoyier/pen/EyRroJ
       label.classList.add("pulse");
+      // Make sure listeners are notified there's a new one!
+      gStateMachine.Trigger("toggle-"+_type);
     }
   }
 }

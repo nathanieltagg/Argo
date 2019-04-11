@@ -55,7 +55,7 @@ html
               each f in files[ext] 
                   tr
                     td.filename
-                      a(href=targetlink+'#filename='+f.pathname)=f.filename 
+                      a(href=targetlink+'#what=file&filename='+f.pathname)=f.filename 
                     td(data-sort=f.mtime).date=f.modified
                     td(data-sort=f.sizedata).size=f.size
       -}

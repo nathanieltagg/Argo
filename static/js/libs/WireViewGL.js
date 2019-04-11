@@ -1,3 +1,4 @@
+"use strict";
 //
 // Code for the ARgo Event Display
 // Author: Nathaniel Tagg ntagg@otterbein.edu
@@ -19,6 +20,7 @@
 //
 /*jshint laxcomma:true */
 
+var gWireViewGL = null;
 
 $(function(){
   $('div.A-WireViewGL').each(function(){
@@ -37,10 +39,11 @@ function PadThree(element, options )
   var defaults = {
     create_2dcontext : false,
     
-    min_u: 0,
-    max_u: 100,
-    min_v: 0,
-    max_v: 1000,
+    // Look at region in 2d space.*
+    min_u: -50,
+    max_u: 1100,
+    min_v: -10,
+    max_v: 300,
     margin_bottom : 40,
     margin_top    : 5,
     margin_right  : 5,
@@ -56,45 +59,67 @@ function PadThree(element, options )
   this.Resize();
   // Create the Three.js renderer, add it to our div
   this.renderer = new THREE.WebGLRenderer();
+  this.renderer.setPixelRatio( window.devicePixelRatio );
+
   this.renderer.setSize(this.width,this.height);
   this.element.appendChild( this.renderer.domElement );
   this.canvas=this.renderer.domElement;
 
   // Create a new Three.js scene
   this.scene = new THREE.Scene();
-	    // Create a camera and add it to the scene
+  // Create a camera and add it to the scene
 
-        // this.camera = new THREE.PerspectiveCamera( 45, this.canvas.offsetWidth / this.canvas.offsetHeight, 1, 4000 );
-        // this.camera.position.set( 0, 0, 3.3333 );
-        var du = (this.min_u-this.max_u);
-        var dv = (this.min_v-this.max_v);
-        // this.camera = new THREE.OrthographicCamera( this.min_u-(, this.width, 0, this.height, -10,10);
-        
-        this.scene.add( this.camera );
+  // this.camera = new THREE.PerspectiveCamera( 45, this.canvas.offsetWidth / this.canvas.offsetHeight, 1, 4000 );
+  // this.camera.position.set( 0, 0, 3.3333 );
+  var du = (this.max_u-this.min_u);
+  var dv = (this.max_v-this.min_v);
+  var cx = this.min_u + du/2;
+  var cy = this.min_v + dv/2;
+  // this.camera = new THREE.OrthographicCamera( this.min_u-(, this.width, 0, this.height, -10,10);
 
-        // // Now, create a rectangle and add it to the scene
-        // this.geometry = new THREE.PlaneGeometry(1, 1);
-        // this.mesh = new THREE.Mesh( this.geometry, new THREE.MeshBasicMaterial( ) );
-        // this.scene.add( this.mesh );
-        // // Render it
+  this.scene.add( this.camera );
 
-        var geometry = new THREE.BoxGeometry( 1, 2, 2 );
-        var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-        var cube = new THREE.Mesh( geometry, material );
-        // this.scene.add( cube );
+  // // Now, create a rectangle and add it to the scene
+  // this.geometry = new THREE.PlaneGeometry(1, 1);
+  // this.mesh = new THREE.Mesh( this.geometry, new THREE.MeshBasicMaterial( ) );
+  // this.scene.add( this.mesh );
+  // // Render it
 
-      var material = new THREE.LineBasicMaterial({ color: 0xffffff });
-      var geometry = new THREE.Geometry();      
-      // geometry.vertices.push(new THREE.Vector3(this.GetX(this.min_u),this.GetY(this.min_v),0));
-      // geometry.vertices.push(new THREE.Vector3(this.GetX(this.min_u),this.GetY(this.max_v),0));
-      // this.scene.add( new THREE.Line(geometry, material) );
-      // geometry = new THREE.Geometry();
-      // geometry.vertices.push(new THREE.Vector3(this.GetX(this.min_u),this.GetY(this.min_v),0));
-      // geometry.vertices.push(new THREE.Vector3(this.GetX(this.max_u),this.GetY(this.min_v),0));
-      // this.scene.add( new THREE.Line(geometry, material) );
-        
-	    this.renderer.render( this.scene, this.camera );
-      console.error("RENDER");
+  // var geometry = new THREE.BoxGeometry( 100, 100, 2. );
+  // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+  // var cube = new THREE.Mesh( geometry, material );
+  // this.scene.add( cube );
+
+  var lines;
+  {
+    var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
+    var geometry = new THREE.Geometry();      
+    geometry.vertices.push(new THREE.Vector3(this.min_u,0,0));
+    geometry.vertices.push(new THREE.Vector3(this.max_u,0,0));
+    geometry.vertices.push(new THREE.Vector3(0,this.min_v,0));
+    geometry.vertices.push(new THREE.Vector3(0,this.max_v,0));
+    lines = new THREE.Line(geometry, material) ;
+    this.scene.add( lines );
+    
+  }
+  // this.scene.remove(lines);
+  
+  this.geometry = new THREE.PlaneGeometry( 720, 720, 1 ); // Someday FIXME: use PlaneBufferGeometry, harder to use but better
+  this.material = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
+  this.mplane = new THREE.Mesh( this.geometry, this.material );
+  this.mplane.position.x = cx;
+  this.mplane.position.y = cy;
+  this.mplane.position.z = 1.0;
+  // this.scene.add( this.mplane );
+  
+  
+  this.renderer.render( this.scene, this.camera );
+  
+  gStateMachine.Bind('toggle-wireimg', this.Draw.bind(this,false) ); 
+  
+  
+  
+  
 }
 
 
@@ -121,436 +146,232 @@ PadThree.prototype.Resize = function()
     $(this.canvas).css('height', height );
   }
 
-  this.origin_x = this.margin_left;
-  this.origin_y = height - this.margin_bottom;
+  var span_u = this.max_u - this.min_u;
+  var center_v = 0.5*(this.min_v + this.max_v);
+  // Ensure aspect ratio. Use horizontal coordinate as scale; map vertical to match.
+  var span_v = span_u / width * height;
+  this.min_v = center_v - span_v/2;
+  this.max_v = center_v + span_v/2;
 
-  this.span_x = width-this.margin_right -this.origin_x;
-  this.span_y = this.origin_y-this.margin_top;
-
-  // Protect against the crazy.
-  if(this.span_x < 10) this.span_x = 10;
-  if(this.span_y < 10) this.span_y = 10;
-
-  if(!this.camera) this.camera = new THREE.OrthographicCamera( -1,1,-1,1,-100,100);
+  this.camera = new THREE.OrthographicCamera( this.min_u,this.max_u, // frustrum box, left, right
+                                              this.max_v,this.min_v, // top. bottom. Yes, backwards
+                                              0.1,2000); // min, max distance from camera objects will be rendered. Min is zero.
+  this.camera.position.z=1000;
 
 
 }
 
 
 
-
-
-
-
-
-
-
-
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-// PadGL.prototype.Resize = function()
-// {
-//   // Set this object and canvas properties.
-//
-//   var width = this.width;
-//   var height = this.height;
-//   if( !$(this.element).is(":hidden") ) {
-//     width = $(this.element).width();
-//     height = $(this.element).height();
-//     // console.log("Resize",this,width,height);
-//   }
-//   this.width = width;
-//   this.height = height;
-//
-//   this.padPixelScaling = 1;
-//   if(window.devicePixelRatio > 1) {
-//     // Retina display! Cool!
-//     this.padPixelScaling = window.devicePixelRatio;
-//   }
-//
-//   this.canvas.width = width;
-//   this.canvas.height = height;
-//   this.canvas.setAttribute('width', width *  this.padPixelScaling);
-//   this.canvas.setAttribute('height', height *  this.padPixelScaling);
-//   $(this.canvas).css('width', width );
-//   $(this.canvas).css('height', height );
-//
-//
-//   this.origin_x = this.margin_left;
-//   this.origin_y = height - this.margin_bottom;
-//
-//   this.span_x = width-this.margin_right -this.origin_x;
-//   this.span_y = this.origin_y-this.margin_top;
-//
-//   // Protect against the crazy.
-//   if(this.span_x < 10) this.span_x = 10;
-//   if(this.span_y < 10) this.span_y = 10;
-//
-//   if(this.gl) this.gl.viewport(0,0,this.width,this.height);
-//
-// }
-//
-//
-// // Subclass of Pad.
-// PadGL.prototype = new Pad();
-//
-// function PadGL(element, options )
-// {
-//   if(!element) return;
-//   var defaults = {
-//     create_2dcontext : false,
-//     program_shaders: {
-//       program1: {
-//                 //vertex: 'vertex-shader-1',
-//                 vertex: '2d-vertex-shader',
-//                 fragment:'fragment-shader-1'}
-//     }
-//   }
-//   $.extend(true,defaults,options);
-//   Pad.call(this, element, defaults); // Give settings to ABoundObject contructor.
-//
-//   this.gl = this.canvas.getContext('webgl',{ alpha: false, antialias: false,  depth: false })
-//           || this.canvas.getContext('webgl')
-//           || this.canvas.getContext('experimental-webgl');
-//   if(!this.gl) {
-//     console.error("Lost GL context somewhere.");
-//     window.alert("WebGL not enabled?  If using Safari, you can turn it on in Preferences / Security");
-//     return;
-//   }
-//
-//   this.Resize(); // also initializes viewport.
-//
-//   // Add debugging.
-//   // function logGLCall(functionName, args) {
-//   //    console.log("gl." + functionName + "(" +
-//   //       WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");
-//   // }
-//   //
-//   // Uncomment this line for debugging.
-//   //this.gl = WebGLDebugUtils.makeDebugContext(this.gl, undefined, logGLCall);
-//
-//   // Create shaders.  Go through the program_shaders list and create from the included shaders.inc file
-//   this.programs = {};
-//   for(progname in this.program_shaders) {
-//     var program = this.gl.createProgram();
-//     this.gl.attachShader(program, this.create_shader(this.program_shaders[progname].vertex) );
-//     this.gl.attachShader(program, this.create_shader(this.program_shaders[progname].fragment) );
-//     this.gl.linkProgram(program);
-//     // Check the link status
-//
-//     var linked = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
-//     if (!linked) {
-//          // something went wrong with the link
-//          lastError = this.gl.getProgramInfoLog(program);
-//          console.error("Error in program linking:" + lastError);
-//          console.break();
-//          this.gl.deleteProgram(program);
-//          continue;
-//     }
-//     this.programs[progname] = program;
-//     // In case there's only one, set it.
-//     this.program = program;
-//     this.gl.useProgram(this.program);
-//   }
-//
-//   // get pointers to the shader params
-//   var shaderVertexPositionAttribute = this.gl.getAttribLocation(this.program, "vertexPos");
-//   this.gl.enableVertexAttribArray(shaderVertexPositionAttribute);
-//
-//   var shaderProjectionMatrixUniform = this.gl.getUniformLocation(this.program, "projectionMatrix");
-//   var shaderModelViewMatrixUniform =this.gl.getUniformLocation(this.program, "modelViewMatrix");
-//
-//
-//   var modelViewMatrix = new Float32Array(
-//            [1, 0, 0, 0,
-//             0, 1, 0, 0,
-//             0, 0, 1, 0,
-//             0, 0, -3.333, 1]);
-//
-//   // The projection matrix (for a 45 degree field of view)
-//   var projectionMatrix = new Float32Array(
-//            [2.41421, 0, 0, 0,
-//             0, 2.41421, 0, 0,
-//             0, 0, -1.002002, -1,
-//             0, 0, -0.2002002, 0]);
-//
-//   function createSquare(gl) {
-//            var vertexBuffer;
-//             vertexBuffer =gl.createBuffer();
-//            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-//            var verts = [
-//                 .5,  .5,  0.0,
-//                -.5,  .5,  0.0,
-//                 .5, -.5,  0.0,
-//                -.5, -.5,  0.0
-//            ];
-//            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts),gl.STATIC_DRAW);
-//            var square = {buffer:vertexBuffer, vertSize:3, nVerts:4, primtype:gl.TRIANGLE_STRIP};
-//            return square;
-//   }
-//
-//   var obj = createSquare(this.gl);
-//
-//   // draw:
-//   // clear the background (with black)
-//   console.error("clearing");
-//   this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-//   this.gl.clear(gl.COLOR_BUFFER_BIT);
-//   // set the vertex buffer to be drawn
-//   this.gl.bindBuffer(gl.ARRAY_BUFFER, obj.buffer);
-//   // set the shader to use
-//   this.gl.useProgram(this.program);
-//   // connect up the shader parameters: vertex position and projection/model matrices
-//   this.gl.vertexAttribPointer(shaderVertexPositionAttribute, obj.vertSize,this.gl.FLOAT, false, 0, 0);
-//   this.gl.uniformMatrix4fv(shaderProjectionMatrixUniform, false, projectionMatrix);
-//   this.gl.uniformMatrix4fv(shaderModelViewMatrixUniform, false, modelViewMatrix);
-//   // draw the object
-//   this.gl.drawArrays(obj.primtype, 0, obj.nVerts);
-// }
-//
-// PadGL.prototype.create_shader = function( scriptId  )
-// {
-//   var shaderSource = "";
-//   var shaderType;
-//   var shaderScript = document.getElementById(scriptId);
-//   if (!shaderScript) {
-//     throw("*** Error: unknown script element" + scriptId);
-//   }
-//
-//   shaderSource = shaderScript.text;
-//   if (shaderScript.type == "x-shader/x-vertex") {
-//     shaderType = this.gl.VERTEX_SHADER;
-//   } else if (shaderScript.type == "x-shader/x-fragment") {
-//     shaderType = this.gl.FRAGMENT_SHADER;
-//   } else if (shaderType != this.gl.VERTEX_SHADER && shaderType != this.gl.FRAGMENT_SHADER) {
-//     throw("*** Error: unknown shader type");
-//     return null;
-//   }
-//
-//    // Create the shader object
-//    var shader = this.gl.createShader(shaderType);
-//
-//    // Load the shader source
-//    this.gl.shaderSource(shader, shaderSource);
-//
-//    // Compile the shader
-//    this.gl.compileShader(shader);
-//
-//    // Check the compile status
-//    var compiled = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
-//
-//    if (!compiled) {
-//      // Something went wrong during compilation; get the error
-//      lastError = this.gl.getShaderInfoLog(shader);
-//      console.error("*** Error compiling shader ",shader, ":" ,lastError);
-//      this.gl.deleteShader(shader);
-//      return null;
-//    }
-//
-//    return shader;
-// }
-//
-// PadGL.prototype.Resize = function()
-// {
-//   // Set this object and canvas properties.
-//
-//   var width = this.width;
-//   var height = this.height;
-//   if( !$(this.element).is(":hidden") ) {
-//     width = $(this.element).width();
-//     height = $(this.element).height();
-//     // console.log("Resize",this,width,height);
-//   }
-//   this.width = width;
-//   this.height = height;
-//
-//   this.padPixelScaling = 1;
-//   if(window.devicePixelRatio > 1) {
-//     // Retina display! Cool!
-//     this.padPixelScaling = window.devicePixelRatio;
-//   }
-//
-//   this.canvas.width = width;
-//   this.canvas.height = height;
-//   this.canvas.setAttribute('width', width *  this.padPixelScaling);
-//   this.canvas.setAttribute('height', height *  this.padPixelScaling);
-//   $(this.canvas).css('width', width );
-//   $(this.canvas).css('height', height );
-//
-//
-//   this.origin_x = this.margin_left;
-//   this.origin_y = height - this.margin_bottom;
-//
-//   this.span_x = width-this.margin_right -this.origin_x;
-//   this.span_y = this.origin_y-this.margin_top;
-//
-//   // Protect against the crazy.
-//   if(this.span_x < 10) this.span_x = 10;
-//   if(this.span_y < 10) this.span_y = 10;
-//
-//   if(this.gl) this.gl.viewport(0,0,this.width,this.height);
-//
-// }
-//
-// PadGL.prototype.Clear = function()
-// {
-//   //console.log("PadGL.Clear()");
-// };
-//
-// PadGL.prototype.DrawFrame = function()
-// {}
-//
-//
-//
-// //////////////////////////////////////////////////////////////////////
-//
-// WireViewGL.prototype = new PadGL();
-//
-//
-// function WireViewGL( element, options )
-// {
-//   if(!element) {
-//     return;
-//   }
-//
-//   var settings = {
-//     nlayers: 1,
-//     plane: 0, // default, override this
-//     margin_bottom : 40,
-//     margin_top    : 5,
-//     margin_right  : 5,
-//     margin_left   : 30,
-//     xlabel : "Wire",
-//     ylabel : "TDC",
-//     zooming: true, // set false to lock view on starting coordinates
-//     tick_pixels_x: 50,
-//     tick_pixels_y: 30,
-//     tick_label_font: "10px serif",
-//     show_image:   false, // can be false, 'raw', or 'cal'
-//     show_hits:    false,
-//     show_mc:      true,
-//     track_color: "rgba(89, 169, 28, 1)",
-//     wire_shift: [0,0,0], // for RGB mode
-//   };
-//   $.extend(true,settings,options);  // Change default settings by provided qualities.
-//   PadGL.call(this, element, settings); // Give settings to Pad contructor.
-//   // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
-//
-//   if(this.zooming) {
-//     this.mouse_scale_max_u = true;
-//     this.mouse_scale_min_u = true;
-//     this.mouse_scale_max_v = true;
-//     this.mouse_scale_min_v = true;
-//     this.mouse_pan_u       = true;
-//     this.mouse_pan_v       = true;
-//   }
-//
-//   var self = this;
-//   this.SetMagnify(true);
-//   this.fShiftSelecting = false;
-//   this.fShiftRect = {};
-//   this.hasContent = false;
-//
-//   this.loaded_wireimg = false;
-//   this.loaded_thumbnail = false;
-//   $(this.canvas).css('image-rendering','pixelated');
-//
-//
-//   // gStateMachine.Bind('recordChange', this.NewRecord.bind(this) );
-// //   gStateMachine.Bind('TimeCutChange',this.Draw.bind(this) );
-// //   gStateMachine.Bind('hoverChange',  this.HoverChange.bind(this) );
-// //   gStateMachine.Bind('selectChange', this.Draw.bind(this) );
-// //   gStateMachine.Bind('hitChange',    this.TrimHits.bind(this) );
-// //   gStateMachine.Bind('timeCutChange',this.TrimHits.bind(this) );
-// //
-//   // gStateMachine.BindObj("colorWireMapsChanged",this,"Draw"); // Callback when wire image loads
-//   // if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
-//   // if(this.zooming) gStateMachine.BindObj('zoomChangeFast',this,"DrawFast");
-//
-//   this.ctl_show_hits    =  this.GetBestControl(".show-hits");
-//   this.ctl_hit_field    =  this.GetBestControl(".hit-hist-field");
-//   this.ctl_show_wireimg =  this.GetBestControl(".show-wireimg");
-//   this.ctl_show_clus    =  this.GetBestControl(".show-clusters");
-//   this.ctl_show_endpoint=  this.GetBestControl(".show-endpoint2d");
-//   this.ctl_show_spoints =  this.GetBestControl(".show-spacepoints");
-//   this.ctl_show_tracks  =  this.GetBestControl(".show-tracks");
-//   this.ctl_track_shift  =  this.GetBestControl(".track-shift-window");
-//   this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
-//   this.ctl_show_showers =  this.GetBestControl(".show-showers");
-//   this.ctl_show_mc      =  this.GetBestControl(".show-mc");
-//   this.ctl_show_mc_neutrals =  this.GetBestControl(".show-mc-neutrals");
-//   this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
-//   this.ctl_show_reco =  this.GetBestControl(".show-reco");
-//   this.ctl_wireimg_type =  this.GetBestControl("[name=show-wireimg-type]");
-//   this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
-//   this.ctl_lock_aspect_ratio    =  GetLocalControl(this.element,".ctl-lock-aspect-ratio");
-//
-//
-//   $(this.ctl_show_hits   ).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_clus)   .change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_endpoint).change(function(ev) { return self.Draw(false); });
-//
-//   $(this.ctl_show_spoints).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_tracks) .change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_showers).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_track_shift) .change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_track_shift_value) .change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_mc     ).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_mc_neutrals ).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_show_reco ).change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_wireimg_type).click(function(ev)  { return self.NewRecord(); });
-//   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
-//   $(this.GetBestControl(),".show-reco")     .change(function(ev) { return self.Draw(false); });
-//   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(false); });
-//   $(this.ctl_lock_aspect_ratio). change(function(ev) {
-//       // Force the zoom system to acknowledge the change, by making a null zoom.
-//       // MOre trickery
-//       if($(this).is(":checked")) {
-//         gZoomRegion.wireview_aspect_ratio = (self.span_y)/(self.span_x);
-//         console.log("Setting new aspect ratio",gZoomRegion.wireview_aspect_ratio,"pixels");
-//         gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
-//         gStateMachine.Trigger("zoomChange");
-//       }
-//       $('.ctl-lock-aspect-ratio').not(this).attr("checked",false);
-//   });
-//
-//   // $('#ctl-shift-hits')      .change(this.TrimHits.bind(this));
-//   // $('#ctl-shift-hits-value').change(this.TrimHits.bind(this));
-//
-//   // Flip planes control (for big wireview
-//   this.ctl_plane = GetLocalControl(this.element,"[name=wireview-select]");
-//   this.ctl_plane.click(function(ev) {
-//     self.plane = parseInt( $(self.ctl_plane).filter(":checked").val() );
-//     // console.warn("changing plane",self,$(this.ctl_plane).filter(":checked").val(),self.plane);
-//
-//     return self.NewRecord();
-//   });
-//
-//
-// }
-//
-// WireViewGL.prototype.MagnifierDraw = function(arg)
-// {}
-//
-// WireViewGL.prototype.NewRecord = function(arg)
-// {}
-//
-//
-//
-//
-
+PadThree.prototype.Draw = function(fast)
+{
+  if ($(this.GetBestControl(".show-wireimg")).is(":checked")) {
+    this.DrawImage(this.min_u, this.max_u, this.min_v, this.max_v, fast);
+  }
   
+}
+
+
+PadThree.prototype.build_image_blocks = function(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,x2,y1,y2)
+{
+  console.warn("build_image_blocks",...arguments);
+  this.kz_image = 1.2;
+  this.wireimg_group = new THREE.Group();
+  
+  var tdc_scale = (y2-y1)/(tdc_end-tdc_start);
+  var chan_scale = (x2-x1) /(chan_end-chan_start);
+  
+  for(var irow=0;irow<mapper.tile_3textures.length;irow++) {
+    for(var icol=0;icol<mapper.tile_3textures[irow].length;icol++) {
+      
+    var elem = mapper.tile_urls[irow][icol];
+    // elem coordinates are rotated, right? 
+    if(elem.x + elem.width < tdc_start) continue;
+    if(elem.y + elem.height < chan_start) continue;
+    if(elem.x > tdc_end) continue;
+    if(elem.y > chan_end) continue;
+    
+    var input_texture = mapper.tile_3textures[irow][icol];
+    input_texture.needsUpdate = true;
+    
+    // which are the samples this texture will provide to us?
+    var t_chan_start = Math.max(elem.y, chan_start);
+    var t_chan_end   = Math.min(elem.y+elem.height, chan_end);
+    var t_tdc_start  = Math.max(elem.x, tdc_start);
+    var t_tdc_end    = Math.min(elem.x+elem.width, tdc_end);
+
+    // create geometry scaled to these positions.
+    var t_span_x = chan_scale * (t_chan_end-t_chan_start);
+    var t_span_y =  tdc_scale * (t_tdc_end-t_tdc_start);
+    var t_x1 =  x1 + chan_scale * (t_chan_start-chan_start);
+    var t_x2 =  x1 + chan_scale * (t_chan_end  -chan_start);
+    var t_y1 =  y1 +  tdc_scale * (t_tdc_start-tdc_start);
+    var t_y2 =  y1 +  tdc_scale * (t_tdc_end  -tdc_start);
+    var geometry = new THREE.PlaneGeometry( t_span_x, t_span_y, this.kz_image);
+    
+     // Someday FIXME: use PlaneBufferGeometry, harder to use but better
+  
+    
+    // var material = new THREE.MeshBasicMaterial( { color: 0xff0000 + 0x10*irow + 0x1000*icol,side: THREE.DoubleSide });
+    // if(irow==2&&icol==0){
+      var material = new THREE.ShaderMaterial( {
+        vertexShader: document.getElementById('three-vertex-shader').textContent,
+        fragmentShader: document.getElementById('three-fragment-shader').textContent,
+        // fragmentShader: document.getElementById('stupidfill').textContent,
+        uniforms: {
+          inputtexture: { type: "t", value: input_texture },
+          maptexture:   { type: "t", value: this.lut_texture },
+          do_noise_reject:     { value: 0 },
+          do_bad_channel_flag: { value: 0 },
+          do_smear:            { value: 0 },
+          do_edge_finder:      { value: 0 },
+
+          texture_size:        new THREE.Uniform(new THREE.Vector2(input_texture.image.height,input_texture.image.width)),
+          crop_start:          new THREE.Uniform(new THREE.Vector2(t_chan_start-elem.y, t_tdc_start - elem.x)),
+          crop_end:            new THREE.Uniform(new THREE.Vector2(t_chan_end  -elem.y, t_tdc_end   - elem.x))
+        }
+      });
+      console.log("create segment elem:     ",elem);
+      console.log("create segment 3d coords:",t_x1,t_x2,t_y1,t_y2);
+      console.log("create segment wires    :",t_chan_start, t_chan_end);
+      console.log("create segment tdcs     :",t_tdc_start,t_tdc_end);
+      console.log(material);
+    // }
+    var obj = new THREE.Mesh( geometry, material );
+    obj.position.x = 0.5*(t_x1+t_x2);
+    obj.position.y = 0.5*(t_y2+t_y1);
+    obj.position.z = this.kz_image;
+    
+    
+    // FIXME: when clearing event, dispose of all geometries, materials, and textures.
+    this.wireimg_group.add( obj );
+  }
+  this.scene.add(this.wireimg_group);
+}
+    
+}
+
+
+PadThree.prototype.DrawImage = function(minu,maxu,minv,maxv)
+{
+  console.warn("DRAWIMAGE");
+  // this.show_image = $(this.ctl_wireimg_type).filter(":checked").val();  // 'cal' or 'raw'
+
+  var mapper = null;
+
+  var wname = GetSelectedName("wireimg");
+  var wireimg = (((gRecord || {})["wireimg"]        || {})[wname] || {});
+  var wlowres = (((gRecord || {})["wireimg-lowres"] || {})[wname] || {});
+  if      (wireimg._glmapper && wireimg._glmapper.loaded) {mapper = wireimg._glmapper; }
+  else if (wlowres._glmapper && wlowres._glmapper.loaded) {mapper = wlowres._glmapper; }
+  console.log(mapper,wireimg._glmapper,wlowres._glmapper);
+
+  if(!mapper) return;
+
+  var nwires = gGeo.numWires(this.plane);
+  var ntdc = mapper.total_width;
+  var x1 = 0;
+  var x2 = gGeo.wire_pitch * nwires;  // trans coordinate.
+  var y1 = 0;
+  var y2 = gGeo.drift_cm_per_tick * ntdc;
+  
+  this.build_LUT_texture();
+
+  this.build_image_blocks(mapper,
+                          gGeo.channelOfWire(this.plane,0),
+                          gGeo.channelOfWire(this.plane,nwires),
+                          0,ntdc,
+                          x1,x2,y1,y2);
+
+  this.renderer.render( this.scene, this.camera );
+  // this.build_LUT_texture();
+  // this.mapper = mapper;
+  // this.input_texture = mapper.tile_3textures[0][0];
+  // // this.material = new THREE.MeshBasicMaterial( { map: input_texture });
+  // this.input_texture.rotation = Math.PI/4; // no effect!  Must be acted on by the shader, I guess.
+  // this.input_texture.updateMatrix ();
+  //   this.input_texture.needsUpdate = true;
+  //
+  // // NOtes - this draws the entire texture to the box, making the bounds meet.
+  //
+  //
+  // this.material = new THREE.ShaderMaterial( {
+  //   vertexShader: document.getElementById('three-vertex-shader').textContent,
+  //   fragmentShader: document.getElementById('three-fragment-shader').textContent,
+  //   // fragmentShader: document.getElementById('stupidfill').textContent,
+  //   uniforms: {
+  //     u_resolution: { value: new THREE.Vector2(2000,2000) }, // How many wires and tdc ticks in this box??
+  //     inputtexture: { type: "t", value: this.input_texture },
+  //     maptexture:   { type: "t", value: this.lut_texture },
+  //     do_noise_reject:     { value: 0 },
+  //     do_bad_channel_flag: { value: 0 },
+  //     do_smear:            { value: 0 },
+  //     do_edge_finder:      { value: 0 },
+  //
+  //     texture_size:        new THREE.Uniform(new THREE.Vector2(this.input_texture.image.height,this.input_texture.image.width)),
+  //     crop_start:          new THREE.Uniform(new THREE.Vector2(0, 1200)),
+  //     crop_end:            new THREE.Uniform(new THREE.Vector2(1200, 2400))
+  //   }
+  // })
+  // this.mplane.material = this.material;
+  //
+  // var light = new THREE.PointLight( 0xffffff );
+  // light.position.set(100, 200, 10000);
+  // light.lookAt( new THREE.Vector3( 1000, 100, 0 ) );
+  // this.scene.add( light );
+  //
+  // this.renderer.render( this.scene, this.camera );
+  
+}
+
+
+
+
+PadThree.prototype.build_LUT_texture = function( ) 
+{ 
+  
+  // Creates an OpenGl texture, returns the texture ID.
+  // This version builds a 2d 256x256 texture.
+  // Colors go top-to-bottom (most sigificant changes) and left-to-right (least significant)
+  // This forms a full 256x256 lookup table usable by the shader.
+  // Note that range of values accessible is only -4096 to 4096, (-0x1000 to 0x1000), so only needs 0x2000 values out of 0x10000 pixels
+  // in a 256x256 image. So, only fills 1/8 of image space. Need to push it up 
+  // I _think_ that this would work with smaller resolution, but color changes at small ADC value wont' be visable.
+  if(!this.lut_texture_canvas) this.lut_texture_canvas = document.createElement("canvas");
+  var canvas = this.lut_texture_canvas;
+  canvas.width  = 256;
+  canvas.height = 256;
+  var start_x = -0x1000-0x80;
+  var stop_x =   0x1000-0x80;
+  var pixels = 0x2000; // Total pixels possible from -4096 to 4096
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'orange';
+  ctx.fillRect(0,0,256,256);
+  var imgData=ctx.createImageData(256,32); // 256*16 = 8192 = 0x2000 possible values.
+  var len = imgData.data.length;
+  for (var i=0;i<len;i+=4) {
+    var x = start_x + (i/4.)*(stop_x-start_x)/pixels; 
+    var color = gWirePseudoColor.interpolate(x);      
+    imgData.data[i+0]= color.r;
+    imgData.data[i+1]= color.g;
+    imgData.data[i+2]= color.b;
+    imgData.data[i+3]= color.a;
+  }
+  // ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.
+  ctx.putImageData(imgData,0,111); // Shift up 7/16ths to center it correctly.  
+  // For some reason, the LUT area is shifted one pixel relative to the raw opengl implementation.
+
+
+  // Create or update.
+  if(!this.lut_texture){
+      this.lut_texture = new THREE.Texture(this.lut_texture_canvas);
+      this.lut_texture.magFilter = THREE.NearestFilter;
+      this.lut_texture.minFilter = THREE.NearestFilter;
+      this.lut_texture.wrapS     = THREE.ClampToEdgeWrapping;
+      this.lut_texture.wrapT     = THREE.ClampToEdgeWrapping;
+    }
+  this.lut_texture.needsUpdate = true;  
+}
+
+
   

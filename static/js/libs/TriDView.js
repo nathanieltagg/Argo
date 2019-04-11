@@ -62,12 +62,12 @@ function TriDView( element, options ){
   this.ctl_mc_move_tzero    =  this.GetBestControl(".ctl-mc-move-tzero");
 
   gStateMachine.Bind('toggle-wireimg' ,this.Rebuild.bind(this) );
-  gStateMachine.Bind('toggle-hits'    ,this.Rebuild.bind(this) );
+  // gStateMachine.Bind('toggle-hits'    ,this.Rebuild.bind(this) );
   gStateMachine.Bind('toggle-clusters', this.Rebuild.bind(this) );
   gStateMachine.Bind('toggle-showers' ,this.Rebuild.bind(this) );
   gStateMachine.Bind('toggle-spacepoints', this.Rebuild.bind(this) );
   gStateMachine.Bind('toggle-tracks' , this.Rebuild.bind(this) );
-  gStateMachine.Bind('toggle-mcparticles,', this.Rebuild.bind(this) );
+  gStateMachine.Bind('toggle-mcparticles', this.Rebuild.bind(this) );
   $(this.ctl_show_mc_neutrals).change(function(ev) { return self.Rebuild(); });
   $(this.ctl_mc_move_tzero ).change(function(ev) { return self.Rebuild(); });
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(); });
@@ -91,7 +91,7 @@ TriDView.prototype.SelectChange = function()
 
 TriDView.prototype.HoverChange = function()
 {
-  this.Draw(); return;
+  // this.Draw(); return;
   // Only need a redraw if the over change affected something we care about.
   switch(gHoverState.type) {
     // Turning this off: it's too nasty.
@@ -128,8 +128,8 @@ TriDView.prototype.Rebuild = function ()
   this.CreateFrame();
   if(!gRecord) return;
 
-  if ($(this.GetBestControl(".show-hits")).is(":checked") &&
-      $(this.GetBestControl(".show-trid-hits")).is(":checked") ) this.CreateHits();
+  // if ($(this.GetBestControl(".show-hits")).is(":checked") &&
+  //     $(this.GetBestControl(".show-trid-hits")).is(":checked") ) this.CreateHits();
   if ($(this.GetBestControl(".show-clusters")).is(":checked"))    this.CreateClusters();
   if ($(this.GetBestControl(".show-spacepoints")).is(":checked")) this.CreateSpacepoints();
   if ($(this.GetBestControl(".show-tracks") ).is(":checked")) this.CreateTracks();

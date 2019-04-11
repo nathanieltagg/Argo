@@ -509,9 +509,18 @@ ZoomControl.prototype.Draw = function()
   $('.linkzoom-txt').text(lnk);
   $('span.ZoomControl-Info').html(txt);
   
-  // Better: just add to the hash.  Changes filtered out on the downstream end.
-  $.bbq.pushState({zoom:phash},0);
+  // Change the hash to reflect the new zoom, so that the current link can
+  // be copy-pasta'ed
   
+  // However, this call pollutes the browser history:
+  // $.bbq.pushState({zoom:phash},0);
+
+  // This code is looted from the BBQ stuff, and does the same job, except using the
+  // location.replace() call.
+  var newstate = $.extend( {}, $.deparam.fragment(), {zoom:phash} ); // merge
+  var newhash = $.param.sorted(newstate); // stringify
+  newhash = newhash.replace($.param.fragment.noEscape,decodeURIComponent); // Escape
+  location.replace("#"+newhash); // change hash, triggers hashchange
 };
 
 ZoomControl.prototype.DoMouse = function(ev)

@@ -416,7 +416,7 @@ void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h, co
 
   h["wire"] =   wid.Wire;
   h["plane"] =  wid.Plane;
-  if(hit.WireID().)
+  // if(hit.WireID().) 
   h["q"] =      jsontool::fixed(hit.Integral(),0)     ;
   h["t"] =      jsontool::fixed(hit.PeakTime(),1)     ;
   h["t1"] =     jsontool::fixed(hit.StartTick(),1)    ;
@@ -580,6 +580,18 @@ void GalleryComposer::composeObject(const recob::OpHit& hit, json& jobj, const s
   jobj["fastToTotal"   ] = hit.FastToTotal();
 }
 
+template<>
+void GalleryComposer::composeObject(const recob::EndPoint2D& endpoint, json& jobj, const std::string&)
+{
+  
+  jobj["q"        ] = endpoint.Charge();
+  jobj["view"     ] = endpoint.View();
+  jobj["plane"    ] = endpoint.WireID().Plane;
+  jobj["wire"     ] = endpoint.WireID().Wire;
+  jobj["t"        ] = endpoint.DriftTime();
+  jobj["strength" ] = endpoint.Strength();
+
+}
 
 /////
 //// Images

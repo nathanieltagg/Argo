@@ -1,4 +1,5 @@
 "use strict";
+/*jshint laxcomma:true */
 //
 // Code for the ARgo Event Display
 // Author: Nathaniel Tagg ntagg@otterbein.edu
@@ -14,23 +15,21 @@
 ///
 
 
-//
-// 'Main' scripts for argo.html
-// Used to be in 'head', but it was too unwieldly.
-//
-/*jshint laxcomma:true */
+// This variant of WireSpatialView uses spacial coordinates, not wire number and tick number for the UV coordinate system.
+
+
 
 // Subclass of Pad.
-WireView.prototype = new Pad();
+WireSpatialView.prototype = new Pad();
 
-var gWireViews = [];
+var gWireSpatialViews = [];
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
 $(function(){
-  $('div.A-WireView').each(function(){
-    var o = new WireView(this);
-    gWireViews.push(o);
-    // console.log("Creating WireView ",o);
+  $('div.A-WireSpatialView').each(function(){
+    var o = new WireSpatialView(this);
+    gWireSpatialViews.push(o);
+    // console.log("Creating WireSpatialView ",o);
   });  
   $('.bigwireview-select').buttonset();
 });
@@ -38,7 +37,7 @@ $(function(){
 
 
 
-function WireView( element, options )
+function WireSpatialView( element, options )
 {
   if(!element) {
     return;
@@ -47,7 +46,7 @@ function WireView( element, options )
     return;
   }
   
-  // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
+  // console.warn("WireSpatialView created with element:",$(element).css("height"),$(element).height());
   
   
   // For uboone, this is simply in wirenum/tdc space, one pixel width for wire, one pixel height for tdc tick.
@@ -58,8 +57,8 @@ function WireView( element, options )
     margin_top    : 5,
     margin_right  : 5,
     margin_left   : 34,
-    xlabel : "Wire",
-    ylabel : "TDC",
+    xlabel : "Wires (cm)",
+    ylabel : "Drift (cm)",
     zooming: true, // set false to lock view on starting coordinates
     tick_pixels_x: 50,
     tick_pixels_y: 30,
@@ -72,7 +71,7 @@ function WireView( element, options )
   };
   $.extend(true,settings,options);  // Change default settings by provided qualities.
   Pad.call(this, element, settings); // Give settings to Pad contructor.
-  // console.warn("WireView created with element:",$(element).css("height"),$(element).height());
+  // console.warn("WireSpatialView created with element:",$(element).css("height"),$(element).height());
 
   if(this.zooming) {
     this.mouse_scale_max_u = true;
@@ -146,6 +145,7 @@ function WireView( element, options )
   gStateMachine.Bind('toggle-spacepoints', this.Draw.bind(this,false) ); 
   gStateMachine.Bind('toggle-tracks', this.Draw.bind(this,false) ); 
   gStateMachine.Bind('toggle-showers', this.Draw.bind(this,false) ); 
+  gStateMachine.Bind('toggle-mcparticles', this.Draw.bind(this,false) ); 
 
   $(this.ctl_show_wireimg).change(function(ev) { return self.Draw(false); });
   $(this.ctl_show_clus)   .change(function(ev) { return self.Draw(false); });
@@ -191,10 +191,10 @@ function WireView( element, options )
   });
 }
 
-WireView.prototype.HoverChange = function()
+WireSpatialView.prototype.HoverChange = function()
 {
   // Only need a redraw if the over change affected something we care about.
-  // console.warn("WireView checking hoverchange",gHoverState.type,gLastHoverState.type);
+  // console.warn("WireSpatialView checking hoverchange",gHoverState.type,gLastHoverState.type);
   switch(gHoverState.type) {
     case "hit": 
     case "endpoint2d": 
@@ -217,14 +217,14 @@ WireView.prototype.HoverChange = function()
   }
 };
 
-WireView.prototype.Resize = function()
+WireSpatialView.prototype.Resize = function()
 {
   Pad.prototype.Resize.call(this);
   gZoomRegion.wireview_aspect_ratio = this.span_y/this.span_x;
 };
 
 
-WireView.prototype.NewRecord = function()
+WireSpatialView.prototype.NewRecord = function()
 {
   //
   // called on new record available.
@@ -234,13 +234,13 @@ WireView.prototype.NewRecord = function()
 }
 
 
-WireView.prototype.NewPiece = function()
+WireSpatialView.prototype.NewPiece = function()
 {
    // FIXME not sure how to handle. Still. 
    this.ntdc = 9600;
  };
 
-WireView.prototype.RebuildHits = function()
+WireSpatialView.prototype.RebuildHits = function()
 {
   this.myHits = [];
   this.visHits = [];
@@ -255,7 +255,7 @@ WireView.prototype.RebuildHits = function()
 };
 
 
-WireView.prototype.TrimHits = function()
+WireSpatialView.prototype.TrimHits = function()
 {
   // Called when a cut is changed; go through data and trim visible hit list.
 
@@ -273,10 +273,10 @@ WireView.prototype.TrimHits = function()
     if(c>gHitCut.max) { continue;}
     
     var vishit = {hit:h,
-      u:h.wire,  // horizontal coord
-      v:h.t + offset_hit_time,     // vertical coord
-      v1:h.t1 + offset_hit_time,
-      v2:h.t2 + offset_hit_time,
+      u:this.WireToU(h.wire),  // horizontal coord
+      v:this.TdcToV(h.t + offset_hit_time),     // vertical coord
+      v1:this.TdcToV(h.t1 + offset_hit_time),
+      v2:this.TdcToV(h.t2 + offset_hit_time),
       c: c    // Color coord
     };
     this.visHits.push(vishit);
@@ -285,35 +285,66 @@ WireView.prototype.TrimHits = function()
   this.Draw();
 };
 
+WireSpatialView.prototype.WireToU = function(wire)
+{
+  // Take the logical wire-in-plane, translate to U coordinate
+  // For microboone:
+  return wire*(gGeo.wire_pitch);
+  // For other, need offset by tdc/plane
+}
+
+WireSpatialView.prototype.TdcToV = function(tdc)
+{
+  // Take the logical wire-in-plane, translate to U coordinate
+  // For microboone:
+  return tdc*gGeo.drift_cm_per_tick;
+  // For other, need offset by tdc/plane
+}
+
+WireSpatialView.prototype.UtoWire = function(u)
+{
+  // Take the logical wire-in-plane, translate to U coordinate
+  // For microboone:
+  return u/gGeo.wire_pitch;
+  // For other, need offset by tdc/plane
+}
+
+WireSpatialView.prototype.VtoTdc = function(v)
+{
+  // Take the logical wire-in-plane, translate to U coordinate
+  // For microboone:
+  return v/gGeo.drift_cm_per_tick;
+  // For other, need offset by tdc/plane
+}
 
 
 
-WireView.prototype.DrawFast = function()
+WireSpatialView.prototype.DrawFast = function()
 {
   this.Draw(true);
 };
 
 
-WireView.prototype.MagnifierDraw = function(fast)
+WireSpatialView.prototype.MagnifierDraw = function(fast)
 {
   // Reset bounds if appropriate
   if(this.zooming) {
-    this.min_v = gZoomRegion.tdc[0];
-    this.max_v = gZoomRegion.tdc[1];
-    this.min_u = gZoomRegion.plane[this.plane][0];
-    this.max_u = gZoomRegion.plane[this.plane][1];
+    this.min_v = this.TdcToV(gZoomRegion.tdc[0]);
+    this.max_v = this.TdcToV(gZoomRegion.tdc[1]);
+    this.min_u = this.WireToU(gZoomRegion.plane[this.plane][0]);
+    this.max_u = this.WireToU(gZoomRegion.plane[this.plane][1]);
   } else {
     this.min_v = 0;
-    this.max_v = 3200;
+    this.max_v = this.TdcToV(3200);
     this.min_u = 0;
-    this.max_u = gGeo.numWires(this.plane);
+    this.max_u = this.WireToU(gGeo.numWires(this.plane));
   }
   
   this.Clear();
   Pad.prototype.MagnifierDraw.call(this,fast);
 }
 
-WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 {
   this.Clear();
   
@@ -370,7 +401,6 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
     if(this.fShiftSelecting) {
       this.DrawShiftRect();
     }
-    this.DrawMyReco(min_u,max_u, min_v, max_v, fast);
     
   }
 
@@ -382,8 +412,8 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
                           this.GetX(0) - this.origin_x, this.span_y);
 
-    if(max_u > nwires) {
-      var xmax = this.GetX(nwires);
+    if(max_u > this.WireToU(nwires)) {
+      var xmax = this.GetX(this.WireToU(nwires));
       this.ctx.fillRect( xmax , this.origin_y-this.span_y, 
                         this.span_x /*too much*/, this.span_y);
     }
@@ -393,9 +423,9 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
                         this.span_x, this.span_y /*too much*/);
     }
 
-    if(max_v > this.ntdc) { 
+    if(max_v > this.TdcToV(this.ntdc)) { 
       this.ctx.fillRect( this.origin_x , this.origin_y-this.span_y, 
-                        this.span_x, this.GetY(this.ntdc)-(this.origin_y-this.span_y));
+                        this.span_x, this.GetY(this.TdcToV(this.ntdc))-(this.origin_y-this.span_y));
     }
     
     
@@ -418,7 +448,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
 };
 
 
-WireView.prototype.DrawWatermark = function()
+WireSpatialView.prototype.DrawWatermark = function()
 {
   var img = $('img#watermark_logo').get(0);
   if(img.complete) {
@@ -432,7 +462,7 @@ WireView.prototype.DrawWatermark = function()
   
 }
 
-WireView.prototype.DrawScale = function()
+WireSpatialView.prototype.DrawScale = function()
 {
   // Horizontal:
   
@@ -443,10 +473,9 @@ WireView.prototype.DrawScale = function()
   var x1 = x2-pix_span;
   var u1 = this.GetU(x1);
   
-  // Hardcoded wire pitch.
-  var metric_w = (u2-u1) * 0.3; // 20% of pad wide, find in mm.
+  var metric_w = (u2-u1) ; // 20% of pad wide, find in cm
   var lasttick = this.GetGoodTicks(0,metric_w,2,false).slice(-1).pop();  // trick to find a nice round number of cm. Retrives last entry in a list of good tick marks
-  var w = lasttick/0.3; // Length of marker line in wires
+  var w = lasttick; // Length of marker line in cm
   
   u1 = u2-w;
   var x1 = this.GetX(u1);
@@ -491,11 +520,10 @@ WireView.prototype.DrawScale = function()
 
 
   // Vertical:
-  // Translate width in wires to width in TDC.
-  var d_tdc = w*0.3/gGeo.drift_cm_per_tick;
+  var d_vert = w;
   var x = x2;
   var y1 = y;
-  var y2 = this.GetY(v-d_tdc);
+  var y2 = this.GetY(v-d_vert);
   // console.warn("vertical scale:",y2-y1);
 
   // this.ctx.beginPath();
@@ -519,7 +547,7 @@ WireView.prototype.DrawScale = function()
 };
 
 
-WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 {
   var do_thumbnail = (fast);
   console.time("DrawImage");
@@ -551,12 +579,12 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   
   
   if(max_u<min_u) max_u = min_u; // Trap weird error
-  var min_tdc     = Math.max(0,min_v);
-  var max_tdc     = Math.min(mapper.total_width*scale_x, max_v);  
-  var min_wire    = Math.max(min_u,0);
-  var max_wire    = Math.min(max_u,gGeo.numWires(this.plane));
-  var min_channel = gGeo.channelOfWire(this.plane, min_wire);
-  var max_channel = gGeo.channelOfWire(this.plane, max_wire);
+  var min_tdc     = Math.max(0,this.VtoTdc(min_v));
+  var max_tdc     = Math.min(mapper.total_width*scale_x, this.VtoTdc(max_v));  
+  var min_wire    = Math.max(this.UtoWire(min_u),0);
+  var max_wire    = Math.min(this.UtoWire(max_u),gGeo.numWires(this.plane));
+  var min_channel = gGeo.channelOfWire(this.plane, min_wire); // DUNEFIXME: need tdc or something
+  var max_channel = gGeo.channelOfWire(this.plane, max_wire); // ditto
   
   // These are pixel coordinates in the 'giant map' of all wires, all tdcs.
   // Source w and h are true number of tdc spanned and true number of wires spanned respectively
@@ -570,10 +598,10 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // console.warn("Copy source coords:",source_x,source_y,source_w,source_h);
   // Find position and height of destination in screen coordinates. Note we'll 
   // have to rotate these for final picture insertion.
-  var dest_x = (this.GetX(min_wire));
-  var dest_w = (this.GetX(max_wire) - dest_x);
-  var dest_y = (this.GetY(min_tdc));
-  var dest_h = (dest_y - this.GetY(max_tdc));
+  var dest_x = (this.GetX(this.WireToU(min_wire)));
+  var dest_w = (this.GetX(this.WireToU(max_wire)) - dest_x);
+  var dest_y = (this.GetY(this.TdcToV(min_tdc)));
+  var dest_h = (dest_y - this.GetY(this.TdcToV(max_tdc)));
   
   // The number of pixels we want is likely smaller than the true span in the giant map space.
   // When using magnifying glass, we want moar pixels
@@ -644,12 +672,8 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
 };
 
 
-WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
+WireSpatialView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 {
-  // Temp:
-  this.cellWidth = this.span_x/this.num_u;
-  this.cellHeight = this.span_y/this.num_v;
-  
   // console.warn("DrawHits",this.plane,min_u,max_u,min_v,max_v, gHoverState.obj);
   this.fShiftRect.u1 = this.GetU(this.fShiftRect.x1);
   this.fShiftRect.u2 = this.GetU(this.fShiftRect.x2);
@@ -661,8 +685,6 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   
   // Draw the circle where hits can be summed.
   var sumRadius =  parseFloat($('#ctl-hitsum-circle-size').val()); // cm
-  var sumRadiusU =  sumRadius / gGeo.wire_pitch;
-  var sumRadiusV =  sumRadius / gGeo.drift_cm_per_tick;
   var doHitSum = ($('#ctl-hitsum-circle').is(':checked'));
   var track_assn = [];
   var trackname = GetSelectedName("tracks"); 
@@ -677,10 +699,11 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   
     this.ctx.beginPath();
     
-    var wire_width_in_pixels = this.GetX(1) - this.GetX(0);
-    var draw_hit_radius = sumRadius / gGeo.wire_pitch * wire_width_in_pixels;
+    var wire_width_in_pixels = this.GetX(gGeo.wire_pitch)-this.GetX(0);
+    var draw_hit_radius_x = this.GetX(sumRadius) - this.GetX(0);
+    var draw_hit_radius_y = this.GetY(0) - this.GetY(sumRadius);
     
-    this.ctx.arc(this.fMousePos.x,this.fMousePos.y, draw_hit_radius+1, 0,1.9999*Math.PI,false);
+    this.ctx.ellipse(this.fMousePos.x,this.fMousePos.y, draw_hit_radius_x+1, draw_hit_radius_y+1,0, 0,1.9999*Math.PI,false);
     this.ctx.stroke();
     this.ctx.restore();
   }
@@ -710,7 +733,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     if(doHitSum){
       var delu = u - this.fMousePos.u;
       var delv = v - this.fMousePos.v;
-      if(delu*delu/(sumRadiusU*sumRadiusU) + delv*delv/(sumRadiusV*sumRadiusV) < 1) {
+      if(delu*delu/(sumRadius*sumRadius) + delv*delv/(sumRadius*sumRadius) < 1) {
         c="255,165,0"; // Draw orange.
         
         if(this.magnifying==false) {
@@ -762,7 +785,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       this.ctx.strokeStyle = "black";
       var w = 1.5;
       this.ctx.lineWidth = w;
-      this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);          
+      this.ctx.strokeRect(x-w,y-w,dx+2*w,dy+2*w);         
       
     }
     
@@ -770,8 +793,8 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
       // put the marker on.
       console.log('hitsum',hitsum);
       var offset = getAbsolutePosition(this.element);
-      var x = this.GetX(this.fMousePos.u + sumRadiusU ) + offset.x;
-      var y = this.GetY(this.fMousePos.v - sumRadiusV ) + offset.y;
+      var x = this.GetX(this.fMousePos.u + sumRadius ) + offset.x;
+      var y = this.GetY(this.fMousePos.v - sumRadius ) + offset.y;
       var txt = "";
       if(hitsum_n>0) txt = "<table>"
         + "<tr><td>" + hitsum_n  +"</td><td>hits</td></tr>"
@@ -789,7 +812,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     }
 };
 
-WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
 {
   var clusters = GetSelected("clusters");
   if(clusters.length==0) return;
@@ -827,7 +850,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       var hid = chits[ihit];
       var h = hits[hid];
       if(h.plane == this.plane) {
-        points.push( [ this.GetX(h.wire), this.GetY(h.t + offset_hit_time ) ] );        
+        points.push( [ this.GetX(this.WireToU(h.wire)), this.GetY(this.TdcToV(h.t + offset_hit_time) ) ] );        
       } else {
         continue clusterLoop;  // Give up on this cluster; go to the next one.
       }
@@ -858,7 +881,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
   }
 };
 
-WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 {
   if(!gRecord.endpoint2d) return;
   if(!gRecord.endpoint2d.length) return;
@@ -868,8 +891,8 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
       pt._index = i;
       if(pt.plane != this.plane) continue;
       
-      var u = pt.wire;
-      var v = pt.t;
+      var u = this.WireToU(pt.wire);
+      var v = this.TpcToV(pt.t);
       var x = this.GetX(u);
       var y = this.GetY(v);
       var r = 6;
@@ -892,7 +915,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
 
 
 
-WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
 {
   var sps = GetSelected("spacepoints");
   this.ctx.save();
@@ -902,8 +925,8 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.fillStyle = "rgba(0, 150, 150, 1)";
     this.ctx.strokeStyle = "rgba(0, 150, 150, 1)";
     this.ctx.lineWidth = 1;
-    var u = gGeo.yzToWire(this.plane,sp.xyz[1],sp.xyz[2]);
-    var v = gGeo.getTDCofX(this.plane,sp.xyz[0]); // FIXME: Only true for beam MC events!
+    var u = gGeo.yzToTransverse(this.plane,sp.xyz[1],sp.xyz[2]);
+    var v = sp.xyz[0];// FIXME: Only true for beam MC events!
     var ru = 1; // one wire.
     // if(i<5) console.warn("spacepoint plane",this.plane,u,v,ru);
     var x = this.GetX(u);
@@ -931,7 +954,7 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.restore();
 };
 
-WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 {
   var tracklistname = GetSelectedName("tracks");
   if(!tracklistname) return;
@@ -939,8 +962,8 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   this.offset_track_ticks = 0;
   if(this.ctl_track_shift.prop("checked")) this.offset_track_ticks = parseInt(this.ctl_track_shift_value.val());
 
-  var bezier = tracklistname.match(/bezier/)!==null;
-  if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }
+  // var bezier = tracklistname.match(/bezier/)!==null;
+  // if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }
   var tracks = gRecord.tracks[tracklistname];
   if(!tracks) return;
 
@@ -953,18 +976,19 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
     if(!points || points.length<2) continue;
     // compile points
     var pts = [];
+    var lastx = -1e9, lasty=-1e9;
     for(var j=0;j<points.length;j++) {
-      // Fixme: bezier
-      var u = gGeo.yzToWire(this.plane,points[j].y, points[j].z) - this.wire_shift[this.plane];
-      var v = gGeo.getTDCofX(this.plane,points[j].x) + this.offset_track_ticks; // Move it off by 1 frame
-      if(u<min_u) continue;
-      if(u>max_u) continue;
-      if(v<min_v) continue;
-      if(v>max_v) continue;
+      var u = gGeo.yzToTransverse(this.plane,points[j].y, points[j].z) - this.wire_shift[this.plane];
+      var v = points[j].x + this.TdcToV(this.offset_track_ticks); 
+      // if(u<min_u) continue;
+      // if(u>max_u) continue;
+      // if(v<min_v) continue;
+      // if(v>max_v) continue;
       var coords = [this.GetX(u), this.GetY(v)];
+      if(Math.abs(coords[0]-lastx) < 2 && Math.abs(coords[1]-lasty) < 2) continue;
       pts.push(coords);      
     }
-    if(pts.length<=0) continue;
+    if(pts.length<=2) continue;
     this.ctx.strokeStyle = this.track_color;
     this.ctx.lineWidth = 2;
     
@@ -1017,7 +1041,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
   this.ctx.restore();
 };
 
-WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
 {
   var showerlistname = GetSelectedName("showers");
   var showers = GetSelected("showers");
@@ -1101,7 +1125,7 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
         var c = new ColorScaleIndexed(i+3).GetColor();
         this.ctx.fillStyle = "rgb("+c+")";
         var r = Math.sqrt(pts[ipt].q)/10;
-        this.ctx.arc(this.GetX(pts[ipt].wire),this.GetY(pts[ipt].t), r, 0,1.99*Math.PI) ;
+        this.ctx.arc(this.GetX(this.WireToU(pts[ipt].wire)),this.GetY(this.TdcToV(pts[ipt].t)), r, 0,1.99*Math.PI) ;
         this.ctx.fill();
       }
     }
@@ -1110,11 +1134,11 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
 
     // Draw the vector
     
-    var u1 = gGeo.yzToWire(this.plane,  shw.start.y, shw.start.z);
-    var v1 = gGeo.getTDCofX(this.plane,shw.start.x) + this.offset_track_ticks;
-    var u2 = gGeo.yzToWire(this.plane, shw.Length * shw.dir.y + shw.start.y, 
-                                       shw.Length * shw.dir.z + shw.start.z);
-    var v2 = gGeo.getTDCofX(this.plane,shw.Length * shw.dir.x + shw.start.x) + this.offset_track_ticks;
+    var u1 = gGeo.yzToTransverse(this.plane,  shw.start.y, shw.start.z);
+    var v1 = shw.start.x + this.TdcToU(this.offset_track_ticks);
+    var u2 = gGeo.yzToTransverse(this.plane, shw.Length * shw.dir.y + shw.start.y, 
+                                             shw.Length * shw.dir.z + shw.start.z);
+    var v2 = shw.Length * shw.dir.x + shw.start.x + this.TdcToU(this.offset_track_ticks);
     
     var x1 = this.GetX(u1);
     var y1 = this.GetY(v1);
@@ -1169,184 +1193,17 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
 
 
 
-WireView.prototype.DetectorXyzToScreenXY = function(x,y,z)
+WireSpatialView.prototype.DetectorXyzToScreenXY = function(x,y,z)
 {
     return [
-      this.GetX( gGeo.yzToWire( this.plane,y,z) ),
-      this.GetY( gGeo.getTDCofX(this.plane,x ) + this.offset_track_ticks) 
+      this.GetX( gGeo.yzToTransverse( this.plane,y,z) ),
+      this.GetY( this.plane,x + this.TdcToV(this.offset_track_ticks) )
       ];
 }
 
-WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast) 
-{
-  var tracks = GetSelected("tracks");
-  if(!tracks) return;
-  
-  // Email exchange with Ben Jones, August 14 2013
-  // So, let's see. , given points and directions (p0,v0), (p1,v1)....(pn,vn), we have this set of points:
-  // 
-  // start          p0 - v0
-  // midpoint       p0
-  // control point  p0 + a v0   where a =  |p1-p0|/(4|v0|) * Sign((p1-p0).v0)
-  // control point  p1 + b v1   where b = -|p1-p0|/(4|v1|) * Sign((p1-p0).v1)
-  // midpoint       p1
-  // control point  p1 + a v1   where a =  |p2-p1|/(4|v1|) * Sign((p2-p1).v1)
-  // control point  p2 + b v2   where b = -|p2-p1|/(4|v2|) * Sign((p2-p1).v2)
-  // midpoint       p2
-  // ...
-  // midpoint       pn
-  // end            pn + vn
-  
-  
-  // console.warn("DrawBezierTracks");
-  this.ctx.save();
 
-  function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-  // Return an x,y screen coords tuple
-  
-  for(var i=0;i<tracks.length;i++)
-  {
-    var trk = tracks[i];
-    var points = trk.points;
-    if(points.length<2) continue;
-    // compile points
-    var segments = [];
-    
 
-    
-    // First, record xyz control and endpoint positions in detector coords.
-    // start point.
-    var pt = points[0];
-    var s = {
-      p0: this.DetectorXyzToScreenXY(pt.x - pt.vx, 
-                                pt.y - pt.vy,
-                                pt.z - pt.vz),
-      p1: this.DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
-    };
-    s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
-    s.c1 = s.p1;
-    segments.push(s);
-
-    // Every pair of points 0..n-1 has two control points attached.
-    for(var j=0;j<points.length-1;j++) {
-      var p0 = points[j];
-      var p1 = points[j+1];
-      var dp = [p1.x-p0.x,p1.y-p0.y, p1.z-p0.z];
-      var dp_ = Math.sqrt(dp[0]*dp[0]+dp[1]*dp[1]+dp[2]*dp[2]);
-      var v0_ = Math.sqrt(p0.vx+p0.vx + p0.vy*p0.vy + p0.vz*p0.vz);
-      var signa= sign(dp[0]*p0.vx + dp[1]*p0.vy + dp[2]*p0.vz);
-      var scale_a = 0;
-      if(signa) scale_a = dp_/(4*v0_) * signa;  // Protect against zero-length v0
-      
-      var v1_ = Math.sqrt(p1.vx+p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
-      var signb= sign(dp[0]*p1.vx + dp[1]*p1.vy + dp[2]*p1.vz);
-      var scale_b = 0;
-      if(signb) scale_b = dp_/(4*v1_) * signb; // protect against zero-length v1
-
-      // console.log(dp_,"v0",v0_,signa,scale_a,"v1",v1_,signb,scale_b);
-      segments.push({
-        p0: this.DetectorXyzToScreenXY(p0.x,p0.y,p0.z),
-        p1: this.DetectorXyzToScreenXY(p1.x,p1.y,p1.z),
-        c0: this.DetectorXyzToScreenXY(p0.x + scale_a*p0.vx,
-                                       p0.y + scale_a*p0.vy,
-                                       p0.z + scale_a*p0.vz
-                                     ),
-        c1: this.DetectorXyzToScreenXY(p1.x - scale_b*p1.vx,
-                                       p1.y - scale_b*p1.vy,
-                                       p1.z - scale_b*p1.vz
-                                     ),
-      });
-    }
-    
-    // Last point
-    pt = points[points.length-1];
-    s = {
-      p0: this.DetectorXyzToScreenXY(pt.x,pt.y,pt.z),
-      p1: this.DetectorXyzToScreenXY(pt.x + pt.vx, 
-                                     pt.y + pt.vy,
-                                     pt.z + pt.vz)
-    };
-    s.c0 = s.p0; // Clever hack: I'm pretty sure a bezier curve with control points on the endpoints is a line.
-    s.c1 = s.p1;
-    segments.push(s);
-    
-    this.ctx.strokeStyle = "rgba(89, 169, 28, 1)";
-    this.ctx.lineWidth = 2;
-    
-    // Draw underlay
-    // Draw underlay for a selected track.
-    if(gSelectState.obj && (gSelectState.obj == trk)){      
-
-      this.ctx.lineWidth = 5;
-      this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
-      this.ctx.beginPath();
-      this.ctx.moveTo(segments[0].p0[0],segments[0].p0[1]);
-      for(j=0;j<segments.length;j++) {
-        s = segments[j];
-        this.ctx.bezierCurveTo( s.c0[0],s.c0[1],
-                                s.c1[0],s.c1[1],
-                                s.p1[0],s.p1[1]);
-      }
-      this.ctx.stroke();
-      this.ctx.lineWidth =2;
-      this.ctx.strokeStyle = "rgba(255,20,20,1)";
-      
-      if(this.fMouseInContentArea) {
-        var offset = getAbsolutePosition(this.canvas);
-        var lastpt = segments[segments.length-1].p1;
-        SetOverlayPosition(offset.x + lastpt[0], offset.y + lastpt[1]);  
-      }
-      
-    }
-  
-    if(gHoverState.obj && (gHoverState.obj == trk)){ // hovering
-      this.ctx.strokeStyle = "rgba(255,20,20,1)";
-    }
-        
-    // Draw it.
-    this.ctx.beginPath();
-    this.ctx.moveTo(segments[0].p0[0],segments[0].p0[1]);
-    for(j=0;j<segments.length;j++) {
-      s = segments[j];
-      this.ctx.bezierCurveTo( s.c0[0],s.c0[1],
-                              s.c1[0],s.c1[1],
-                              s.p1[0],s.p1[1]);
-    }
-    this.ctx.stroke();
-    
-    // make circles at the nodes.
-    this.ctx.fillStyle = this.ctx.strokeStyle;
-    for(j=0;j<segments.length-1;j++) {
-      this.ctx.fillStyle = "rgba(89, 169, 28, 1)";
-      this.ctx.beginPath();
-      this.ctx.arc(segments[j].p0[0],segments[j].p0[1],1.5,0,1.99*Math.PI,false);
-      this.ctx.fill();
-      this.ctx.beginPath();
-      this.ctx.arc(segments[j].p1[0],segments[j].p1[1],1.5,0,1.99*Math.PI,false);
-      this.ctx.fill();
-      this.ctx.fillStyle = "rgba(166,95,89,0.54)";
-      this.ctx.beginPath();
-      this.ctx.arc(segments[j].c0[0],segments[j].c0[1],1.5,0,1.99*Math.PI,false);
-      this.ctx.fill();
-      this.ctx.beginPath();
-      this.ctx.arc(segments[j].c1[0],segments[j].c1[1],1.5,0,1.99*Math.PI,false);
-      this.ctx.fill();
-
-    }
-    // console.warn("Bezier:",segments);
-
-    // for mouseovering
-    for(j=0;j<segments.length-1;j++) {
-       this.mouseable.push({type:"track", 
-                            coords: [[segments[j].p0[0],segments[j].p0[1]], [segments[j].p1[0],segments[j].p1[1]]],
-                            r:2.0, obj: trk});
-     }
-  }
-  this.ctx.restore();
-  
-};
-
-WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 {  
   var particles = GetSelected("mcparticles");
   if(particles.length==0) return;
@@ -1362,17 +1219,17 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
 
     // compile points
     var pts = [];
-    var t0 = 3200;
+    var t0 = 3200; // FIXME only good for microboone MC
     if(move_t0 && p.trajectory.length>0) t0 = 3200+ p.trajectory[0].t/500.0; // 500 ns per tick.
     
     for(var j=0;j<p.trajectory.length;j++) {
       var point = p.trajectory[j];
       // Convert particle X coordinate to TDC value.
-      var tdc = gGeo.getTDCofX(this.plane,point.x) + t0;
+      var v = point.x + this.TdcToV(t0);
       // Convert YZ into wire number.
-      var wire = gGeo.yzToWire(this.plane,point.y,point.z);
-      var x = this.GetX(wire);
-      var y = this.GetY(tdc);
+      var u = gGeo.yzToTransverse(this.plane,point.y,point.z);
+      var x = this.GetX(u);
+      var y = this.GetY(v);
       // This clips out track segments.
       // if(x>=0 && x<this.width && y>=0 && y<=this.height)
       pts.push([x,y]);
@@ -1435,7 +1292,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
   }
 };
 
-WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 {
   // Drawing the dEdX path.
   if(!gUserTrack) return;
@@ -1452,8 +1309,8 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 
     // draw handles.
     if(gHoverState.obj == pt) this.ctx.strokeStyle = "FF0000";
-    var x = this.GetX(pt[this.plane]);
-    var y = this.GetY(pt.tdc);
+    var x = this.GetX(this.WireToU(pt[this.plane]));
+    var y = this.GetY(this.TdcToV(pt.tdc));
     this.ctx.beginPath();
     this.ctx.arc(x,y,r,0,Math.PI*1.99,false);
     this.ctx.closePath();
@@ -1482,125 +1339,71 @@ WireView.prototype.DrawdEdXPath = function(min_u,max_u,min_v,max_v,fast)
 };
 
 
-WireView.prototype.DrawPmts = function()
+WireSpatialView.prototype.DrawPmts = function()
 {
-    var ophits = GetSelected("ophits")
-    
-    this.ctx.save();    
-    ophits.sort(function(a,b){return a[gOpMode.hitVariable]>b[gOpMode.hitVariable]; });    
-    for(var i=0;i<ophits.length;i++) {
-      // find projection position of PMT in horizontal position for this view.
-      var ophit = ophits[i];
-      
-      var det = gGeo.opDets.OpDetByChannel(ophit.opDetChan);
-      if(!det) continue;
-      var u = gGeo.yzToWire(this.plane,det.y, det.z) - this.wire_shift[this.plane];
-      
-      if(u<this.min_u || u>this.max_u) continue;
-      // viewport coordinates
-      var x=this.GetX(u);
-      var dx=this.GetX(u+15.2) - x;
-      var y=this.height;
-      x += det.y/20;
-      
-      // Timing.
-      // is this PMT consistent with ANY time in this view, or ALL times in this view?
-      var t1 = (this.min_v-3200)/2; // 2 MHz ticks - convert to  us
-      var t2 = (this.max_v-3200)/2;
-      var td = 128.175*2 / gGeo.drift_cm_per_tick /2; // Drift time
-      var tpmt = ophit.peakTime*1e-3; // us
-      var could_any = ((tpmt < t2) && (tpmt>t1-td));
-      var could_all = ((tpmt < t1) && (tpmt>t2-td));
-
-      // color
-      var w = ophit[gOpMode.hitVariable]*gOpMode.hitVariableScale;
-      if(w<10) continue;
-      if(w<gOpMode.cut.min) continue;
-      if(w>gOpMode.cut.max) continue;
-      var c = gOpColorScaler.GetColor(w);
-      // console.log(tpmt,t1,t2,td);
-      
-
-      // console.log("wirehit",det.y,det.z,this.wire_shift[this.plane],gGeo.yzToWire(det.y, det.z),u,x,y);
-      this.ctx.strokeStyle="black";
-      var alpha = 0.1
-      if(could_any) alpha = 0.5;
-      if(could_all) alpha = 0.9;
-      this.ctx.fillStyle = "rgba(" + c + "," + alpha + ")";
-      // console.log("dx",dx);
-      this.ctx.beginPath();
-      this.ctx.moveTo(x,y);
-      this.ctx.lineTo(x-dx,y-10);
-      this.ctx.arcTo(x,y-14, x+dx,y-10, 20);
-      this.ctx.lineTo(x+dx,y-10);
-      this.ctx.lineTo(x,y);
-      this.ctx.closePath();
-      if(could_all) this.ctx.stroke();
-      this.ctx.fill();
-      
-      //this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,hov);
-    }
-    this.ctx.restore();
+    // var ophits = GetSelected("ophits")
+    //
+    // this.ctx.save();
+    // ophits.sort(function(a,b){return a[gOpMode.hitVariable]>b[gOpMode.hitVariable]; });
+    // for(var i=0;i<ophits.length;i++) {
+    //   // find projection position of PMT in horizontal position for this view.
+    //   var ophit = ophits[i];
+    //
+    //   var det = gGeo.opDets.OpDetByChannel(ophit.opDetChan);
+    //   if(!det) continue;
+    //   var u = gGeo.yzToWire(this.plane,det.y, det.z) - this.wire_shift[this.plane];
+    //
+    //   if(u<this.min_u || u>this.max_u) continue;
+    //   // viewport coordinates
+    //   var x=this.GetX(u);
+    //   var dx=this.GetX(u+15.2) - x;
+    //   var y=this.height;
+    //   x += det.y/20;
+    //
+    //   // Timing.
+    //   // is this PMT consistent with ANY time in this view, or ALL times in this view?
+    //   var t1 = (this.min_v-3200)/2; // 2 MHz ticks - convert to  us
+    //   var t2 = (this.max_v-3200)/2;
+    //   var td = 128.175*2 / gGeo.drift_cm_per_tick /2; // Drift time
+    //   var tpmt = ophit.peakTime*1e-3; // us
+    //   var could_any = ((tpmt < t2) && (tpmt>t1-td));
+    //   var could_all = ((tpmt < t1) && (tpmt>t2-td));
+    //
+    //   // color
+    //   var w = ophit[gOpMode.hitVariable]*gOpMode.hitVariableScale;
+    //   if(w<10) continue;
+    //   if(w<gOpMode.cut.min) continue;
+    //   if(w>gOpMode.cut.max) continue;
+    //   var c = gOpColorScaler.GetColor(w);
+    //   // console.log(tpmt,t1,t2,td);
+    //
+    //
+    //   // console.log("wirehit",det.y,det.z,this.wire_shift[this.plane],gGeo.yzToWire(det.y, det.z),u,x,y);
+    //   this.ctx.strokeStyle="black";
+    //   var alpha = 0.1
+    //   if(could_any) alpha = 0.5;
+    //   if(could_all) alpha = 0.9;
+    //   this.ctx.fillStyle = "rgba(" + c + "," + alpha + ")";
+    //   // console.log("dx",dx);
+    //   this.ctx.beginPath();
+    //   this.ctx.moveTo(x,y);
+    //   this.ctx.lineTo(x-dx,y-10);
+    //   this.ctx.arcTo(x,y-14, x+dx,y-10, 20);
+    //   this.ctx.lineTo(x+dx,y-10);
+    //   this.ctx.lineTo(x,y);
+    //   this.ctx.closePath();
+    //   if(could_all) this.ctx.stroke();
+    //   this.ctx.fill();
+    //
+    //   //this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,hov);
+    // }
+    // this.ctx.restore();
 }
 
 
-WireView.prototype.DrawMyReco = function(min_u,max_u,min_v,max_v,fast)
-{
-  // Drawing the dEdX path.
-  if (typeof gReco === 'undefined') return;
-  if(!gReco) return;
-  if(!gReco.matches) return;
-  
-  if (! ($("#ctl-show-reco").is(":checked")))  return;
 
 
-  this.ctx.save();
-  this.ctx.fillStyle = "rgba(0,92,0,0.5)";
-  this.ctx.strokeStyle = "rgb(0,92,0)";
-  var i;
-  
-  if(gReco.houghlines && this.plane==2)
-    for(i=0;i<gReco.houghlines.length;i++)
-    {      
-      var line =gReco.houghlines[i];
-      this.ctx.beginPath();
-      this.ctx.moveTo( this.GetX(line[0][0]), this.GetY(line[0][1]) );
-      for(var j = 1; j<line.length; j++) {
-        this.ctx.lineTo( this.GetX(line[j][0]), this.GetY(line[j][1]) );
-      }
-      this.ctx.stroke();
-    }
-  
-  this.ctx.restore();
-
-
-  this.ctx.save();
-  this.ctx.fillStyle = "rgba(0,92,0,0.5)";
-  this.ctx.strokeStyle = "rgb(0,92,0)";
-  
-  for(i=0;i<gReco.matches.length;i++)
-  {
-    var pt =gReco.matches[i];
-
-    // Convert particle X coordinate to TDC value.
-
-    // Convert YZ into wire number.
-    var wire = gGeo.yzToWire(this.plane,pt.y,pt.z);
-    var x = this.GetX(wire);
-    var y = this.GetY(pt.t + gGeo.getTDCofX(this.plane,0));
-    var r = 2;
-    this.ctx.beginPath();
-    this.ctx.arc(x,y,r,0,Math.PI*1.99,false);
-    this.ctx.closePath();
-    this.ctx.fill();
-    this.ctx.stroke();
-  }
-  
-  this.ctx.restore();
-
-};
-
-WireView.prototype.DrawShiftRect = function(min_u,max_u,min_v,max_v,fast)
+WireSpatialView.prototype.DrawShiftRect = function(min_u,max_u,min_v,max_v,fast)
 {
   this.ctx.strokeStyle = "black";
   this.ctx.lineWidth = 1;
@@ -1622,7 +1425,7 @@ WireView.prototype.DrawShiftRect = function(min_u,max_u,min_v,max_v,fast)
 ////////////////////////////////////////////////////////////////////////////////////////
 
 
-WireView.prototype.DoMouse = function(ev)
+WireSpatialView.prototype.DoMouse = function(ev)
 {
   ///
   /// Called by ::Pad for any mouse event that might be relevant,
@@ -1706,7 +1509,7 @@ WireView.prototype.DoMouse = function(ev)
   }  
 };
 
-WireView.prototype.MouseChangedUV = function( new_limits, finished ) 
+WireSpatialView.prototype.MouseChangedUV = function( new_limits, finished ) 
 {
   // Override this function to do things when the limits change.
   // example newlimits = { min_v: 90, max_v: 45  } means u coordinates haven't changed, but min and max have
@@ -1717,14 +1520,14 @@ WireView.prototype.MouseChangedUV = function( new_limits, finished )
     var maxv = this.max_v;
     if('min_v' in new_limits) minv = new_limits.min_v;
     if('max_v' in new_limits) maxv = new_limits.max_v;
-    gZoomRegion.changeTimeRange(minv,maxv);
+    gZoomRegion.changeTimeRange(this.VtoTdc(minv),this.VtoTdc(maxv));
   }
   if('min_u' in new_limits || 'max_u' in new_limits) {
     var minu = this.min_u;
     var maxu = this.max_u;
     if('min_u' in new_limits) minu = new_limits.min_u;
     if('max_u' in new_limits) maxu = new_limits.max_u;
-    gZoomRegion.setLimits(this.plane,minu,maxu);
+    gZoomRegion.setLimits(this.plane,this.UtoWire(minu),this.UtoWire(maxu));
   }
   if(finished) {
     gStateMachine.Trigger("zoomChange");
@@ -1735,7 +1538,7 @@ WireView.prototype.MouseChangedUV = function( new_limits, finished )
 }
 
 
-WireView.prototype.FindMouseableMatch = function() 
+WireSpatialView.prototype.FindMouseableMatch = function() 
 {
 
   for(var i =this.mouseable.length-1 ; i>=0; i--) {
@@ -1765,7 +1568,7 @@ WireView.prototype.FindMouseableMatch = function()
 };
 
 
-WireView.prototype.DoMouseWheel = function(ev,dist)
+WireSpatialView.prototype.DoMouseWheel = function(ev,dist)
 {
   // Zoom in/out around the mouse.
   if(!ev.ctrlKey) {return true;}
@@ -1782,8 +1585,8 @@ WireView.prototype.DoMouseWheel = function(ev,dist)
     var new_v_min = this.fMousePos.v*(1.0-scale) + this.min_v*scale;
     var new_v_max = (this.max_v-this.min_v)*scale + new_v_min;
     
-    gZoomRegion.setLimits(this.plane,new_u_min, new_u_max);
-    gZoomRegion.changeTimeRange(new_v_min, new_v_max);
+    gZoomRegion.setLimits(this.plane,this.UtoWire(new_u_min), this.UtoWire(new_u_max));
+    gZoomRegion.changeTimeRange(this.VtoTdc(new_v_min), this.VtoTdc(new_v_max));
     
     // console.warn("DoMouseWheel",this.fMousePos.u,ev,dist,this.min_u,new_u_min,this.max_u,new_u_max);
     gStateMachine.Trigger("zoomChange"); 
