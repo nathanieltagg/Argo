@@ -46,12 +46,15 @@ function ThreePad(element, options )
   $.extend(true,defaults,options);
   ABoundObject.call(this, element, defaults); // Give settings to ABoundObject contructor.
     
+  $(element).addClass("threepad");
   // Initial sizing.
   this.width  = $(this.element).width();
   this.height = $(this.element).height();
   
   // Create the Three.js renderer, add it to our div
-  this.renderer = new THREE.WebGLRenderer();
+  this.renderer = new THREE.WebGLRenderer({
+    preserveDrawingBuffer: true 
+  });
   this.renderer.setSize(this.width,this.height);
   this.renderer.setPixelRatio( window.devicePixelRatio );
   this.element.appendChild( this.renderer.domElement );

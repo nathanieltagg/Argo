@@ -83,6 +83,7 @@ function ABoundObject(element, options)
     $.extend(true,this,element_settings); // Change default settings by provided overrides.  
   }
   $(this.element).on("remove."+this.mynamespace, this.Remove.bind(this) ); 
+  $(this.element).data('BoundObject',this);
   
 }
 

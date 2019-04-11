@@ -227,33 +227,39 @@ $(function(){
             //   link.href = dt;
             //   console.log("attempted to download",dt);
             // });
-            html2canvas(portlet, {
-              onrendered: function(canvas) {
-                var dt = canvas.toDataURL('image/png'); 
-                /* Change MIME type to trick the browser to downlaod the file instead of displaying it */
-                dt = dt.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                /* In addition to <a>'s "download" attribute, you can define HTTP-style headers */
-                dt = dt.replace(/^data:application\/octet-stream/, 'data:application/octet-stream;headers=Content-Disposition%3A%20attachment%3B%20filename=Canvas.png');
+            $('.threepad',portlet).each(function(){
+              console.log("found threepad",this);
+              var boundobject = $(this).data("BoundObject");
+              console.log("bound object is",boundobject);
+              if(boundobject.Render) boundobject.Render();
+            })
+            html2canvas(portlet[0]).then(
+              function(canvas) {
+                              var dt = canvas.toDataURL('image/png'); 
+                              /* Change MIME type to trick the browser to downlaod the file instead of displaying it */
+                              dt = dt.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                              /* In addition to <a>'s "download" attribute, you can define HTTP-style headers */
+                              dt = dt.replace(/^data:application\/octet-stream/, 'data:application/octet-stream;headers=Content-Disposition%3A%20attachment%3B%20filename=Canvas.png');
 
-                // Gotta give it time to render, with user feedback.
+                              // Gotta give it time to render, with user feedback.
 
-                var dialog = document.createElement('div');
-                $(dialog).id = 'download_dialog';
-                $(dialog).append("<br/><a download='om.png' href='#'>Click to download</a>");
-                $('a',dialog).prepend(canvas);
-                $(dialog).dialog( { width: portlet.width()+50, height: portlet.height()+100 });
-                $('a',dialog).get(0).href = dt;
+                              var dialog = document.createElement('div');
+                              $(dialog).id = 'download_dialog';
+                              $(dialog).append("<br/><a download='om.png' href='#'>Click to download</a>");
+                              $('a',dialog).prepend(canvas);
+                              $(dialog).dialog( { width: portlet.width()+50, height: portlet.height()+100 });
+                              $('a',dialog).get(0).href = dt;
   
-                var filename = ($('.portlet-header',portlet).text()||$('a.portlet-header',portlet).text()) + ".png";
-                console.log(portlet,filename);
-                $('a',dialog).get(0).download = filename;
-                // $(dialog).dialog('close');
-                // $('#everything').append("<a class='thedownload' download='foo.png'>link</a>");
-                 $('a',dialog).click(function() {
-                          $(dialog).dialog( "close" );
-                        });
-              }
-            });
+                              var filename = ($('.portlet-header',portlet).text()||$('a.portlet-header',portlet).text()) + ".png";
+                              console.log(portlet,filename);
+                              $('a',dialog).get(0).download = filename;
+                              // $(dialog).dialog('close');
+                              // $('#everything').append("<a class='thedownload' download='foo.png'>link</a>");
+                               $('a',dialog).click(function() {
+                                        $(dialog).dialog( "close" );
+                                      });
+                            }
+            );
             return false;
           }
        );
