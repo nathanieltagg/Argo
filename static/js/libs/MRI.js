@@ -82,7 +82,7 @@ function MRI( element, options )
   }
   function continueNudge() {
     move_grip(self.last_nudge);
-    self.nudge_timeout=setTimeout(continueNudge,100); 
+    // self.nudge_timeout=setTimeout(continueNudge,100);  // temporarily taken out - this seems to be causing all sorts of issues in Chrome
   }
   var nudge_timeout = 0;
   this.nudge_right = $(this.GetBestControl(".mri-slider-grip-size-nudge-right"));

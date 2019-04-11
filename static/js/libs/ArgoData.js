@@ -92,6 +92,14 @@ function GotPiece(o)
   }
   indexArraysIn(o.piece);
     
+  // add a json pointer to objects up to the depth level.
+  console.log("pointerindex",o.piece); 
+  console.time("pointerindex"); 
+    function doi(obj,p) { if(obj) obj._pointer=p; } 
+    jsonpointer.walk(o.piece,doi,null,3); 
+  console.timeEnd("pointerindex"); 
+
+  
   for(n1 in o.piece) {
     gRecord[n1] = gRecord[n1] || {}
     for(n2 in o.piece[n1]) {

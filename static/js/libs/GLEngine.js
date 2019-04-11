@@ -16,7 +16,6 @@ $(function(){
   // }
   //
   gStateMachine.Bind('newPiece',CreateGLMappers);
-
   gStateMachine.Bind('ChangePsuedoColor',GLChangePsuedoColor);
   
 });
@@ -260,7 +259,14 @@ GLMapper.prototype.StartLoad = function()
       var elem = this.tile_urls[irow][icol];
       var image_url = elem.url;
       var img = new Image();
-      
+
+      var threetex = new THREE.Texture(img);
+      threetex.magFilter = THREE.NearestFilter;
+      threetex.minFilter = THREE.NearestFilter;
+      threetex.wrapS     = THREE.ClampToEdgeWrapping;
+      threetex.wrapT     = THREE.ClampToEdgeWrapping;
+      threetexturerow.push(threetex);
+
       imagerow.push(img);
       texturerow.push(this.gl.createTexture());
       (function(){  // Make a closure to copy the values of irow and icol
@@ -316,12 +322,13 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   var elem = this.tile_urls[jrow][jcol];
   var img = this.tile_images[jrow][jcol];
   var tex = this.tile_textures[jrow][jcol];
-  this.tile_3textures[jrow][jcol] = new THREE.Texture(img);
-  this.tile_3textures[jrow][jcol].magFilter = THREE.NearestFilter;
-  this.tile_3textures[jrow][jcol].minFilter = THREE.NearestFilter;
-  this.tile_3textures[jrow][jcol].wrapS     = THREE.ClampToEdgeWrapping;
-  this.tile_3textures[jrow][jcol].wrapT     = THREE.ClampToEdgeWrapping;
   
+  // this.tile_3textures[jrow][jcol].magFilter = THREE.NearestFilter;
+  // this.tile_3textures[jrow][jcol].minFilter = THREE.NearestFilter;
+  // this.tile_3textures[jrow][jcol].wrapS     = THREE.ClampToEdgeWrapping;
+  // this.tile_3textures[jrow][jcol].wrapT     = THREE.ClampToEdgeWrapping;
+  
+
   this.tile_3textures[jrow][jcol].needsUpdate = true;
   // Load the texture...
   

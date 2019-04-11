@@ -202,18 +202,20 @@ function FalseColorControl( element  )
     console.warn("changing to default scheme",nm);
     forceTab(nm);
   });
-  
+  this.build_LUT_texture()
 }
 
 FalseColorControl.prototype.ControlAdjusted = function()
 {
   // Comment this code out if you dont' want views changing on every adjustment of a control.
+  this.build_LUT_texture();
   gStateMachine.Trigger('ChangePsuedoColor');  // Set all LUT to dirty
   gStateMachine.Trigger('colorWireMapsChanged'); // Redraw all views.
 }
 
 FalseColorControl.prototype.TriggerViewChange = function()
 {
+  this.build_LUT_texture();
   gStateMachine.Trigger('ChangePsuedoColor');  // Set all LUT to dirty
   gStateMachine.Trigger('colorWireMapsChanged'); // Redraw all views.
 }
@@ -422,6 +424,55 @@ FalseColorControl.prototype.DoMouse = function( ev )
 
   return false; // Handled.
 }; 
+
+FalseColorControl.prototype.build_LUT_texture = function( ) 
+{ 
+  
+  // Creates an OpenGl texture, returns the texture ID.
+  // This version builds a 2d 256x256 texture.
+  // Colors go top-to-bottom (most sigificant changes) and left-to-right (least significant)
+  // This forms a full 256x256 lookup table usable by the shader.
+  // Note that range of values accessible is only -4096 to 4096, (-0x1000 to 0x1000), so only needs 0x2000 values out of 0x10000 pixels
+  // in a 256x256 image. So, only fills 1/8 of image space. Need to push it up 
+  // I _think_ that this would work with smaller resolution, but color changes at small ADC value wont' be visable.
+  if(!this.lut_texture_canvas) this.lut_texture_canvas = document.createElement("canvas");
+  var canvas = this.lut_texture_canvas;
+  canvas.width  = 256;
+  canvas.height = 256;
+  var start_x = -0x1000-0x80;
+  var stop_x =   0x1000-0x80;
+  var pixels = 0x2000; // Total pixels possible from -4096 to 4096
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'orange';
+  ctx.fillRect(0,0,256,256);
+  var imgData=ctx.createImageData(256,32); // 256*16 = 8192 = 0x2000 possible values.
+  var len = imgData.data.length;
+  for (var i=0;i<len;i+=4) {
+    var x = start_x + (i/4.)*(stop_x-start_x)/pixels; 
+    var color = gWirePseudoColor.interpolate(x);      
+    imgData.data[i+0]= color.r;
+    imgData.data[i+1]= color.g;
+    imgData.data[i+2]= color.b;
+    imgData.data[i+3]= color.a;
+  }
+  // ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.
+  ctx.putImageData(imgData,0,111); // Shift up 7/16ths to center it correctly.  
+  // For some reason, the LUT area is shifted one pixel relative to the raw opengl implementation.
+
+
+  // Create or update.
+  if(!this.lut_texture){
+      this.lut_texture = new THREE.Texture(this.lut_texture_canvas);
+      this.lut_texture.magFilter = THREE.NearestFilter;
+      this.lut_texture.minFilter = THREE.NearestFilter;
+      this.lut_texture.wrapS     = THREE.ClampToEdgeWrapping;
+      this.lut_texture.wrapT     = THREE.ClampToEdgeWrapping;
+    }
+  this.lut_texture.needsUpdate = true;  
+}
+
+
+
 
 
 
