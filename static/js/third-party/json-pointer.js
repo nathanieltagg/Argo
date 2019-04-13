@@ -1,5 +1,7 @@
 'use strict';
 
+// Taken from the json-pointer npm library, adapted by NJT
+
 function forEach (obj, fn, ctx) {
     if (Object.prototype.toString.call(fn) !== '[object Function]') {
         throw new TypeError('iterator must be a function');
@@ -171,10 +173,9 @@ jsonpointer.walk = function walk (obj, iterator, descend, maxdepth) {
     (function next (cur,depth) {
         forEach(cur, function (value, key) {
             refTokens.push(String(key));
+            iterator(value, jsonpointer.compile(refTokens));
             if (descend(value,depth+1)) {
                 next(value,depth+1);
-            } else {
-                iterator(value, jsonpointer.compile(refTokens));
             }
             refTokens.pop();
         });

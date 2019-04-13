@@ -134,6 +134,7 @@ ControlOverlay.prototype.NewPiece = function(piece)
         
         var fs = $('<fieldset></fieldset>').addClass("dropdown");
         for(var _name in gRecord.manifest[_type]) {
+          if(_name.startsWith('_')) continue; // skip my index properites.          
           var div = $('<div></div>');
           var nlabel = $('<label></label>').attr('for','product-'+noColons(_name)).text(simpleName(_name));
             // .addClass('unretrieved')
@@ -173,6 +174,7 @@ ControlOverlay.prototype.NewPiece = function(piece)
       }
       
       for( var t in gRecord.manifest ) {
+        if(t.startsWith('_')) continue; // skip my index properites.        
         if(!menus.includes(t)) add_type(t);
       }
       
@@ -189,6 +191,8 @@ ControlOverlay.prototype.NewPiece = function(piece)
   
   // Now look at the actual content. Look for new things by seeing if they've already been marked as retrieved.
   for(var _type in gRecord) {
+    if(_type.startsWith('_')) continue; // skip my index properites.
+    
     var product_type_elem =  $("li.product-type").filter(function(){return $(this).data('product-type')==_type;});
     var product_type_input = $("input.product-type",product_type_elem);
     if(product_type_elem.length==0) continue;
@@ -197,6 +201,8 @@ ControlOverlay.prototype.NewPiece = function(piece)
     var n_retrieved_before = $("input.product-name.retrieved",product_type_elem).length;
     
     for(var _name in gRecord[_type]) {
+      if(_name.startsWith('_')) continue; // skip my index properites.
+      
       console.log("ControlOverlay: inspecting ",_type,_name);
       var item = $("input.product-name",product_type_elem).filter(function(){return $(this).data('product-name')==_name;});
       if(item.length==0) {

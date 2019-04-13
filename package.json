@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "argonode": "file:argonode",
+    "browserify-middleware": "^8.1.1",
     "chalk": "^2.4.2",
     "compression": "^1.7.3",
     "cookie-parser": "^1.4.3",
@@ -30,6 +31,8 @@
     "nodemon": "^1.18.10",
     "pug": "^2.0.3",
     "ssi": "^0.3.0",
+    "three": "^0.103.0",
+    "three-line-2d": "^1.1.6",
     "ws": "^6.1.4"
   }
 }

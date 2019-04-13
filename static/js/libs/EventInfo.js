@@ -154,6 +154,7 @@ EventInfo.prototype.NewPiece = function()
   if(gRecord.laser) {
     var txt = "";
     for(i in gRecord.laser) {
+      if(i.startsWith('_')) continue; // skip my index properites.              
       var data = gRecord.laser[i];
       txt += "<h4 class='laser-info'>Laser " + i + ":</h4>";
       txt += "<table class='laser-info'>";

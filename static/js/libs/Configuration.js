@@ -41,6 +41,7 @@ $(function(){
     var hv = parseFloat($('#ctl-high-voltage').val()) || 128.0;
     gGeo.SetHV(hv);
     gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
+    gStateMachine.Trigger("driftChange");    
     gStateMachine.Trigger("zoomChange");    
   });
   

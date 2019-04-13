@@ -98,6 +98,7 @@ function cycle_new_dropdown(_type) {
 ///
 /// Code that sets up keyboard key equivalents.
 ///
+
 $(function() {
 
   $(window).keypress(function(event){
@@ -269,12 +270,16 @@ $(function() {
             
     case 80:
         // console.log("P:",event);
-        DoPrint(gPortletHover);
+        // DoPrint(gPortletHover);
+        DownloadImage(gPortletHover);
         break;
         
     case 76:
         // shift-L: print everything.
+      if(gCurrentPortlet) DownloadImage(gCurrentPortlet);
+      // console.warn("shiftL",event,document.elementFromPoint(event.originalEvent);
         return DoPrint($('body'),true);
+        
         
     default:
         return true;

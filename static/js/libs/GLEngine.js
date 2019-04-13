@@ -46,6 +46,7 @@ function CreateGLMappers()
   for(var _type of ["wireimg-lowres", "wireimg"]) {
     if(gRecord[_type]) 
       for(var _name in gRecord[_type]) {
+        if(_name.startsWith('_')) continue; // skip my index properites.
         if(! gRecord[_type][_name]._glmapper) {
           console.warn("Create GL mapper on ",_type,_name);
           gRecord[_type][_name]._glmapper = new GLMapper(_type,_name);

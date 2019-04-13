@@ -521,7 +521,8 @@ Pad.prototype.DrawFrame = function()
     this.ctx.font = this.label_font;
     this.ctx.textAlign = 'right';
 
-    if(this.xlabel && $('#ctl-show-labels').is(':checked')) {
+    var show_labels = document.getElementById("ctl-show-labels").checked;
+    if(this.xlabel &&  show_labels) {
       this.ctx.save();
       this.ctx.translate(this.width-this.margin_right, this.height);
       this.ctx.textBaseline = 'bottom';
@@ -532,7 +533,7 @@ Pad.prototype.DrawFrame = function()
       this.ctx.restore();
     }
     
-    if(this.ylabel && $('#ctl-show-labels').is(':checked')) {
+    if(this.ylabel && show_labels) {
       this.ctx.save();
       this.ctx.translate(0,this.margin_top);      
       this.ctx.rotate(-90*3.1416/180);
@@ -548,6 +549,7 @@ Pad.prototype.DrawFrame = function()
     var tickLen = 8;
     var ticks, nt, i;
     
+    var show_tick_labels = document.getElementById('ctl-show-tick-labels').checked;
     if(this.draw_ticks_x || this.draw_tick_labels_x || this.draw_grid_x)
     {
       // Do the X-axis.
@@ -565,7 +567,7 @@ Pad.prototype.DrawFrame = function()
           this.ctx.fillStyle = "rgba(100,100,100,0.5)";
           this.ctx.fillRect(x,this.origin_y-this.span_y,0.5,this.span_y);          
         }
-        if($('#ctl-show-tick-labels').is(':checked')) {
+        if(show_tick_labels) {
           if(this.draw_ticks_x) {
             this.ctx.fillStyle = "rgba(0,0,0,1.0)";
             this.ctx.fillRect(x,this.origin_y,1,tickLen);
@@ -598,7 +600,7 @@ Pad.prototype.DrawFrame = function()
       for( i=0;i<nt;i++) {
         var ftick = ticks[i];
         var y = this.GetY(ftick);
-        if($('#ctl-show-tick-labels').is(':checked')) {
+        if(show_tick_labels) {
           if(this.draw_ticks_y) {
             this.ctx.fillStyle = "rgba(0,0,0,1.0)";
             this.ctx.fillRect(this.origin_x-tickLen,y,tickLen,1);

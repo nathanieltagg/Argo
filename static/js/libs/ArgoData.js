@@ -137,6 +137,7 @@ function AutoFitHitTrackOffsets()
   var max_all_tdc = -1e99;
   if(gRecord.hits) {
     for( hitname in gRecord.hits ) {
+      if(hitname.startsWith('_')) continue; // skip my index properites.
       for(var i=0;i<gRecord.hits[hitname].length; i++) {
         var hit = gRecord.hits[hitname][i];
         if(hit.t>max_all_tdc) max_all_tdc = hit.t;
@@ -154,6 +155,7 @@ function AutoFitHitTrackOffsets()
   var offsets = [];
   if(gRecord.tracks && gRecord.associations) {
     for( trkname in gRecord.tracks ) {
+      if(trkname.startsWith('_')) continue; // skip my index properites.
       console.warn(trkname);
       if( gRecord.associations[trkname]) {
         var types = Object.keys(gRecord.associations[trkname]);

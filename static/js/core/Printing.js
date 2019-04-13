@@ -7,6 +7,47 @@
 // you're free to modify and use it as you like.
 //
 
+// Download .png of a portlet
+function DownloadImage(portlet) {
+  // Three.js elements need to be rendered IN THE SAME EVENT as the html2canvas uses to get the data.
+  // So, we'll locate any threepad's controller, and tell it to render.
+  $('.threepad',portlet).each(function(){
+    console.log("found threepad",this);
+    var boundobject = $(this).data("BoundObject");
+    console.log("bound object is",boundobject);
+    if(boundobject.Render) boundobject.Render();
+  });
+  
+  // ok, convert to a canvas
+  html2canvas(portlet).then(
+    function(canvas) {
+                    var dt = canvas.toDataURL('image/png'); 
+                    /* Change MIME type to trick the browser to downlaod the file instead of displaying it */
+                    dt = dt.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                    /* In addition to <a>'s "download" attribute, you can define HTTP-style headers */
+                    dt = dt.replace(/^data:application\/octet-stream/, 'data:application/octet-stream;headers=Content-Disposition%3A%20attachment%3B%20filename=Canvas.png');
+
+                    // Gotta give it time to render, with user feedback.
+
+                    var dialog = document.createElement('div');
+                    $(dialog).id = 'download_dialog';
+                    $(dialog).append("<br/><a download='argo.png' href='#'>Click to download</a>");
+                    $('a',dialog).prepend(canvas);
+                    $(dialog).dialog( { width: $(portlet).width()+50, height: $(portlet).height()+100 });
+                    $('a',dialog).get(0).href = dt;
+
+                    var filename = ($('.portlet-header',portlet).text()||$('a.portlet-header',portlet).text()) + ".png";
+                    console.log(portlet,filename);
+                    $('a',dialog).get(0).download = filename;
+                     $('a',dialog).click(function() {
+                              $(dialog).dialog( "close" );
+                            });
+                  }
+  );
+  return false;
+}
+
+
 //
 // Printing
 //

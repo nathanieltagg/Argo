@@ -396,6 +396,11 @@ app.use('/css',compileSass({
 app.use('/css',express.static(__dirname + '/scss'));
 
 
+// Browserify middleware.
+var browserify = require('browserify-middleware');
+app.use('/js',browserify(__dirname + '/client'))
+
+
 // static files.
 app.use(express.static(__dirname + '/static'));
 

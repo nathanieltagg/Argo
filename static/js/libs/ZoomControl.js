@@ -303,10 +303,13 @@ ZoomControl.prototype.DrawTracks = function()
     if(points.length<2) continue;
     // compile points
     var pts = [];
+    var lastx = -1e9, lasty=-1e9;
     for(var j=0;j<points.length;j++) {
       // Fixme: bezier
       var x = this.GetX(points[j].z);
       var y = this.GetY(points[j].y);
+      if(Math.abs(x-lastx)+ Math.abs(y-lasty)<1) continue;
+      lastx = x; lasty=y;
       pts.push([x,y]);
     }
     
