@@ -840,7 +840,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
     
     this.mouseable.push({ obj: clus, type: "cluster", coords: poly });
     
-    cs = new ColorScaleIndexed(i+1);    
+    var cs = new ColorScaleIndexed(i+1);    
     this.ctx.fillStyle = "rgba("+cs.GetColor()+", 0.5)";
     this.ctx.beginPath();
     this.ctx.moveTo(poly[poly.length-1][0],poly[poly.length-1][1]);

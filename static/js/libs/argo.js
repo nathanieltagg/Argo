@@ -558,7 +558,7 @@ $(function(){
   // Remove the override code, if present, to stop infinite reloads.
   var par = $.deparam.fragment(true);
   if(par.reload) { delete par.reload; window.location.hash = '#' + $.param(par); }
-    
+  if(!(par.what)&&!(par.filename)) { par.what = "json"; location.replace('#' + $.param(par)); } // default event.
   // Initialize hashchange function.
   $(window).hashchange( HashChanged );
     

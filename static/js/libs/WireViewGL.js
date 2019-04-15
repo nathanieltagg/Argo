@@ -86,30 +86,17 @@ function WireViewGL(element, options )
   
   gStateMachine.Bind('zoomChange', this.Render.bind(this) );
   
-  // Common Textures:
-  // MeshLine. Ugh.
-  // if(!this.track_material) this.track_material = new MeshLineMaterial(
-  //   { resolution:this.resolution, // cute!
-  //     lineWidth:0.1,
-  //     color: 0x00ff00,
-  //     // sizeAttenuation:1,
-  //     // near:this.camera.near, far: this.camera.far
-  //   });
-  //   this.track_material.resolution.value = this.resolution;  // does this work? No?
-  // 
-  this.frame_line_material = new MeshLineMaterial({ resolution:this.resolution, 
-        lineWidth:0.01, color: 0xed6a5a,
-     // sizeAttenuation:1, near:this.camera.near, far: this.camera.far
-  });
+  gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
+  gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
   
-  // if(!this.track_material) this.track_material = new THREE.LineMaterial(
-  //   { resolution:this.resolution, // cute!
-  //     linewidth:3,
-  //     color: 0x00ff00,
-  //     dashed: false
-  //   });
-    // cleverness: make it track with the screen resolution: 
-    // this.track_material.resolution.value = this.resolution;
+  this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
+  this.track_material.resolution= this.resolution; // resolution of the viewport
+
+  this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} );
+  this.track_material_hover.resolution= this.resolution; // resolution of the viewport
+
+  this.track_material_selected = new THREE.LineMaterial( { color: 0xffffff, linewidth: 4, dashed: false} );
+  this.track_material_selected.resolution= this.resolution; // resolution of the viewport
   
 }
 
@@ -124,19 +111,64 @@ WireViewGL.prototype.UpdateResolution = function()
     this.track_material.resolution = this.resolution;
     this.track_material.needsUpdate = true;
   }
+  if(this.track_material_hover) {
+    this.track_material_hover.resolution = this.resolution;
+    this.track_material_hover.needsUpdate = true;
+  }
+  if(this.track_material_selected) {
+    this.track_material_selected.resolution = this.resolution;
+    this.track_material_selected.needsUpdate = true;
+  }
+  
+  
   if(this.frame_line_material) {
     this.frame_line_material.setValues({resolution: this.resolution});
     this.frame_line_material.needsUpdate = true;
   }
 }
 
+WireViewGL.prototype.HoverAndSelectionChange = function() 
+{
+  // This ordering ensures we get it right
+
+  // Dehighlight the last hover object.
+  var name = ((gLastHoverState.obj)||{})._pointer;
+  if(name && name.length>0) {
+    var obj = this.scene.getObjectByName(name);
+    if(obj && obj.userdata && obj.userdata.default_material)
+      obj.material = obj.userdata.default_material;
+  }
+  // Dehighlight the last selected object.
+  name = ((gLastSelectState.obj)||{})._pointer;
+  if(name && name.length>0) {
+    var obj = this.scene.getObjectByName(name);
+    if(obj && obj.userdata && obj.userdata.default_material)
+      obj.material = obj.userdata.default_material;
+  }
+
+  // Highlight the hovered object.
+  name = ((gHoverState.obj)||{})._pointer;
+  if(name && name.length>0) {
+    var obj = this.scene.getObjectByName(name);
+    if(obj && obj.userdata && obj.userdata.hover_material)
+      obj.material = obj.userdata.hover_material;
+  }
+  
+  // Highlight the selected object.
+  name = ((gSelectState.obj)||{})._pointer;
+  if(name && name.length>0) {
+    var obj = this.scene.getObjectByName(name);
+    if(obj && obj.userdata && obj.userdata.selected_material)
+      obj.material = obj.userdata.selected_material;
+  }
+  
+  this.Render();
+}
+
 
 
 WireViewGL.prototype.CreateFrame = function()
 {
-  console.warn("create frame")
-
-
   {
     var lines;
     // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
@@ -203,7 +235,6 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
   // tdc_start, tdc_end are the range of TDC values we want to show
   // x1,x2 are x positions of first and last channel respecitvely
   // y1,y2 are y positions of the first and last tdc respectively
-  console.warn("build_image_blocks",...arguments);
   var wireimg_group = new THREE.Group();
   wireimg_group.name=GetSelectedName("wireimg");
   
@@ -262,11 +293,11 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
         },
         visible: true
       });
-      console.log("create segment elem:     ",elem);
-      console.log("create segment 3d coords:",t_x1,t_x2,t_y1,t_y2);
-      console.log("create segment wires    :",t_chan_start, t_chan_end);
-      console.log("create segment tdcs     :",t_tdc_start,t_tdc_end);
-      console.log(material);
+      // console.log("create segment elem:     ",elem);
+      // console.log("create segment 3d coords:",t_x1,t_x2,t_y1,t_y2);
+      // console.log("create segment wires    :",t_chan_start, t_chan_end);
+      // console.log("create segment tdcs     :",t_tdc_start,t_tdc_end);
+      // console.log(material);
 
       var obj = new THREE.Mesh( geometry, material );
       // Don't name it: we never want to hoverchange on it.
@@ -324,10 +355,15 @@ WireViewGL.prototype.CreateTracks = function()
     }
   }
 
+  // this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
+  // this.track_material.resolution= this.resolution; // resolution of the viewport
+  //
+  // this.track_material_hover = new THREE.LineMaterial( { color: 0x00ffff, linewidth: 4, dashed: false} );
+  // this.track_material_hover.resolution= this.resolution; // resolution of the viewport
+  //
+  // this.track_material_selected = new THREE.LineMaterial( { color: 0xffffff, linewidth: 4, dashed: false} );
+  // this.track_material_selected.resolution= this.resolution; // resolution of the viewport
 
-
-  this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
-  this.track_material.resolution= this.resolution; // resolution of the viewport
 
   var tracks = GetSelected("tracks");
   if(tracks.length==0) return;
@@ -349,15 +385,15 @@ WireViewGL.prototype.CreateTracks = function()
     var points = trk.points;
     // var vertices = []; // long list of 3-vectors
     var data = []; // long list of coordinates, no vectoring
-    var path = [];
-    var geo = new THREE.Geometry();
+    // var path = [];
+    // var geo = new THREE.Geometry();
     for(var j=0;j<points.length;j++) {
       var u = gGeo.yzToTransverse(this.plane,points[j].y, points[j].z);
       var v = points[j].x; // add offset later.
-     data.push(u,v,0);
-     // vertices.push(new THREE.Vector3(u,v,0));
-     path.push([u,v])
-     geo.vertices.push(new THREE.Vector3(u,v,0));
+      data.push(u,v,0);
+      // vertices.push(new THREE.Vector3(u,v,0));
+      // path.push([u,v])
+      // geo.vertices.push(new THREE.Vector3(u,v,0));
     }
   
     // // Bog-standard GLINES builtin Works, but only draws 1-pixel lines.
@@ -382,7 +418,13 @@ WireViewGL.prototype.CreateTracks = function()
 //     matLine.resolution= this.resolution; // resolution of the viewport
     var geometry = new THREE.LineGeometry();
     geometry.setPositions(data);
+    geometry.raycast_fast = true; // Just take the first segment hit when raycasting.
     var threeobj = new THREE.Line2(geometry, this.track_material);
+    threeobj.userdata = {
+      default_material: this.track_material,
+      hover_material:   this.track_material_hover,
+      selected_material:   this.track_material_selected,
+    }
 		threeobj.scale.set( 1, 1, 1 );
     // threeobj.raycast = THREE.Line.raycast;
     threeobj.computeLineDistances(); //???
@@ -406,7 +448,7 @@ WireViewGL.prototype.CreateTracks = function()
 
 WireViewGL.prototype.UpdateVisibilities = function()
 {
-  console.log("WireViewGL::UpdateVisibilities");
+  // console.log("WireViewGL::UpdateVisibilities");
   // Call when a toggle is flipped.
   var self = this;
   function setVis(threeObj,ctlSelector) {    
@@ -477,12 +519,13 @@ WireViewGL.prototype.DoMouse = function(ev)
   if(this.fMouseInContentArea) {
     var match =  {obj: null, type:"wire"};
     
-    if(!this.raycaster) this.raycaster = new THREE.Raycaster();
-  	this.raycaster.linePrecision=1;
+  	this.raycaster.linePrecision=3;
   	this.raycaster.setFromCamera( this.fMousePosNorm, this.camera );
+    this.raycast_layers = new THREE.Layers; // set to valid layers.
     var intersects = this.raycaster.intersectObjects(this.scene.children,true);
     for(var i=0;i<intersects.length;i++) {
       var intersect = intersects[i];
+      if(!intersect.object.layers.test(this.raycast_layers)) continue; // ignore the magnifier
       if(intersect.object.name){
         var path = jsonpointer.parse(intersect.object.name);
         var product = jsonpointer.get(gRecord,path);
@@ -495,7 +538,6 @@ WireViewGL.prototype.DoMouse = function(ev)
         }
       }
     }
-    if(intersects.length==0) console.log("no intersect", this.fMousePosNorm);
   
     match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u/gGeo.wire_pitch); // FIXME more more complex...
     match.sample  = this.fMousePos.v/gGeo.drift_cm_per_tick;

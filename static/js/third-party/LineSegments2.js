@@ -11,7 +11,6 @@ THREE.LineSegments2 = function ( geometry, material ) {
 
 	this.geometry = geometry !== undefined ? geometry : new THREE.LineSegmentsGeometry();
 	this.material = material !== undefined ? material : new THREE.LineMaterial( { color: Math.random() * 0xffffff } );
-  this.raycast_to_segment = false; // False if you don't care which segment is cast.
 };
 
 THREE.LineSegments2.prototype = Object.assign( Object.create( THREE.Mesh.prototype ), {
@@ -62,7 +61,6 @@ THREE.LineSegments2.prototype = Object.assign( Object.create( THREE.Mesh.prototy
 
 	}, 
   
-  // NJT added:
 	raycast: ( function () {
 
 		var inverseMatrix = new THREE.Matrix4();
@@ -84,7 +82,6 @@ THREE.LineSegments2.prototype = Object.assign( Object.create( THREE.Mesh.prototy
 			sphere.radius += precision;
 
 			if ( raycaster.ray.intersectsSphere( sphere ) === false ) return;
-			//
 
 			inverseMatrix.getInverse( matrixWorld );
 			ray.copy( raycaster.ray ).applyMatrix4( inverseMatrix );
@@ -96,9 +93,8 @@ THREE.LineSegments2.prototype = Object.assign( Object.create( THREE.Mesh.prototy
 			var vEnd = new THREE.Vector3();
 			var interSegment = new THREE.Vector3();
 			var interRay = new THREE.Vector3();
-			var step = ( this && this.isLineSegments ) ? 2 : 1;
 
-      // Always a LineSegments2 geometry, which stores positions NOT in the positions attribute NJT
+      // Currently, the geometry is lways a LineSegments2 geometry, which uses the instanceStart/instanceEnd to store segment locations
       var starts = geometry.attributes.instanceStart;
       var ends   = geometry.attributes.instanceEnd;
       
@@ -126,7 +122,7 @@ THREE.LineSegments2.prototype = Object.assign( Object.create( THREE.Mesh.prototy
           faceIndex: null,
           object: this
         } );
-        if(!this.raycast_to_segment) return; // NJT - I'm perfectly happy just picking the object, I don't need to know the coordinates.
+        if(this.raycast_fast) return; // Hidden feature: setting geometry.raycast_fast=true means it won't match to every segment, just the first segment it happens to find. If you just want to find if it matches any part of this line, this is faster. Default remains to match to all segments that might satisfy the raycast match.
           
       }
 		};

@@ -435,17 +435,21 @@ FalseColorControl.prototype.build_LUT_texture = function( )
   // Note that range of values accessible is only -4096 to 4096, (-0x1000 to 0x1000), so only needs 0x2000 values out of 0x10000 pixels
   // in a 256x256 image. So, only fills 1/8 of image space. Need to push it up 
   // I _think_ that this would work with smaller resolution, but color changes at small ADC value wont' be visable.
-  if(!this.lut_texture_canvas) this.lut_texture_canvas = document.createElement("canvas");
+  if(!this.lut_texture_canvas) {
+    this.lut_texture_canvas = document.createElement("canvas");
+    this.lut_texture_canvas.width  = 256;
+    this.lut_texture_canvas.height = 256;
+  }  
   var canvas = this.lut_texture_canvas;
-  canvas.width  = 256;
-  canvas.height = 256;
-  var start_x = -0x1000-0x80;
-  var stop_x =   0x1000-0x80;
+  var start_x = -0x1000+0x80;
+  var stop_x =   0x1000+0x80;
   var pixels = 0x2000; // Total pixels possible from -4096 to 4096
   var ctx = canvas.getContext('2d');
   ctx.fillStyle = 'orange';
   ctx.fillRect(0,0,256,256);
-  var imgData=ctx.createImageData(256,32); // 256*16 = 8192 = 0x2000 possible values.
+  ctx.fillStyle = 'purple';
+  ctx.fillRect(0,128,256,256);
+  var imgData=ctx.createImageData(256,32); // 256*32 = 8192 = 0x2000 possible values.
   var len = imgData.data.length;
   for (var i=0;i<len;i+=4) {
     var x = start_x + (i/4.)*(stop_x-start_x)/pixels; 
@@ -456,7 +460,7 @@ FalseColorControl.prototype.build_LUT_texture = function( )
     imgData.data[i+3]= color.a;
   }
   // ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.
-  ctx.putImageData(imgData,0,111); // Shift up 7/16ths to center it correctly.  
+  ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.  
   // For some reason, the LUT area is shifted one pixel relative to the raw opengl implementation.
 
 

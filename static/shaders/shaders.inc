@@ -125,12 +125,11 @@ void main() {
 
   if(b==0xff && do_bad_channel_flag==0) { g=0x80; r=0x80; } // dead channel - zero it out.
 
-
-  vec2 lookup_coords = vec2( (float(g)+0.5)/256.0 , (float(r)+0.5)/256.0 );
+  vec2 lookup_coords = vec2( (float(g)-0.5)/255.0 , (float(r)-0.5)/255.0 );
   gl_FragColor = texture2D(maptexture, lookup_coords);
   
 
-  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=0.;} // dead channel - black out.
+  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=0.;} // dead channel - black, no opacity.
   
 
     

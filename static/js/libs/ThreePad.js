@@ -82,16 +82,20 @@ function ThreePad(element, options )
 
 
   // Create a magnifying glass object.
+  this.camera.layers.enable(0); // default layer
+  this.camera.layers.enable(30); // layer 30 contains the magnifying glass.
   // var pix_radius = parseFloat($('#ctl-magnifier-size').val());  // FIXME adjustable size.
   // var geo_radius = (this.max_u-this.min_u)/this.width*pix_radius;
 
   this.magnifying_glass = new THREE.Group();  
+  this.magnifying_glass.layers.set(30);
   this.magnifying_glass.name = "MagnifyingGlass";
 
   // Set radius as 1. Scale up when drawing in Render().
   var geometry = new THREE.CircleGeometry( 1, 32 /*segments*/ ); // Note that this is in world coordinates!
   var lens_material  = new THREE.MeshBasicMaterial( {map: gMagnifierTexture.texture });
   var lens = new THREE.Mesh( geometry, lens_material );
+  lens.layers.set(30);
   lens.name="lens";
   this.magnifying_glass.add(lens);
 
@@ -105,14 +109,15 @@ function ThreePad(element, options )
   var rim_geo = new THREE.CircleGeometry(1,32);
   rim_geo.vertices.shift();
   var rimmat = new THREE.LineBasicMaterial( { linewidth:3,color: 0x0000FF, opacity: 1.0} );
-  var rim = new THREE.LineLoop( rim_geo, rimmat )
+  var rim = new THREE.LineLoop( rim_geo, rimmat );
+  rim.layers.set(30);
   rim.name="rim";
   this.magnifying_glass.add( rim );
   
 
   // this.magnifying_glass = new THREE.Mesh( geometry, material );
   this.magnifying_glass.position.z=999; // mus  t be on TOP
-  this.magnifying_glass.visible=false;
+  // this.magnifying_glass.visible=false;
   this.scene.add( this.magnifying_glass );
   
   // Create the magnifier camera.
@@ -120,6 +125,9 @@ function ThreePad(element, options )
   this.magnifier_camera.name="MagnifierCamera";
   this.scene.add(this.magnifier_camera);
 
+
+  // Object picking via raycaster.
+  this.raycaster = new THREE.Raycaster();
 
   // Resizing.
   var self = this;
@@ -155,7 +163,7 @@ ThreePad.prototype.UpdateResolution = function(){} // used by class - change all
 ThreePad.prototype.Resize = function()
 {
   // Set this object and canvas properties.
-  console.warn("ThreePad Resize");
+  // console.warn("ThreePad Resize");
   var width = this.width;
   var height = this.height;
   if( !$(this.element).is(":hidden") ) {
@@ -205,10 +213,22 @@ ThreePad.prototype.Resize = function()
     }
      
   }
-  console.warn("ThreePad",this.width,this.height);
+  // console.warn("ThreePad",this.width,this.height);
 }
 
-
+ThreePad.prototype.MoveCamera = function(minu,maxu,minv,maxv)
+{
+  this.min_u = minu;
+  this.max_u = maxu;
+  this.min_v = minv;
+  this.max_v = maxv;
+  this.camera.left = this.min_u;
+  this.camera.right= this.max_u;
+  this.camera.bottom=this.min_v;
+  this.camera.top   = this.max_v;
+  this.camera.updateProjectionMatrix();
+}
+  
 
 ThreePad.prototype.CreateFrame = function(){}
 
@@ -304,7 +324,7 @@ ThreePad.prototype.MouseCallBack = function(ev,scrollDist)
   // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);
 
 
-  if(this.dirty) this.Draw();
+  if(this.dirty) this.Render();
   // console.profileEnd();
   return bubble;
 };
@@ -313,9 +333,9 @@ ThreePad.prototype.Render = function(fast)
 {
   console.time("ThreePad.Render()");
   if(this.fMouseInContentArea && this.fMagnifierOn && ($('#ctl-magnifying-glass').is(':checked'))) {
-    // find
+    this.magnifying_glass.visible = true;
 
-    this.magnifying_glass.visible = false; // turn off the magnifying glass.
+    //this.magnifying_glass.visible = false; // turn off the magnifying glass. // handled by layers
     // Set the camera.
     this.magnifier_camera.position.x = this.fMousePos.u;
     this.magnifier_camera.position.y = this.fMousePos.v;
@@ -351,16 +371,16 @@ ThreePad.prototype.Render = function(fast)
     this.resolution.set(this.width,this.height);
     this.UpdateResolution();
     
-    this.magnifying_glass.visible = true; // turn on the magnifying glass for the final render
+    // this.magnifying_glass.visible = true; // turn on the magnifying glass for the final render
     
   } else {
-    this.magnifying_glass.visible = false; // turn off the magnifying glass.      
+    this.magnifying_glass.visible = false; // turn off the magnifying glass.
   }
   // The normal render.
   console.time("mainrender");
   this.renderer.render( this.scene, this.camera );   
   console.timeEnd("mainrender");
-  this.magnifying_glass.visible = false; // turn off the magnifying glass following render.
+  // this.magnifying_glass.visible = false; // turn off the magnifying glass following render.
 
   console.timeEnd("ThreePad.Render()");
 

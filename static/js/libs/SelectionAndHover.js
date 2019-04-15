@@ -30,6 +30,7 @@ var gHoverState = new Datum();
 var gLastHoverState = new Datum();
 
 var gSelectState = new Datum();
+var gLastSelectState = new Datum();
 
 
 function ChangeHover( datum )
@@ -38,7 +39,7 @@ function ChangeHover( datum )
   
   if(gHoverState.obj!=datum.obj) {
     gLastHoverState = $.extend({},gHoverState);  // make copy
-    gHoverState = $.extend({},datum);     // make copy
+    gHoverState = datum;     // make copy
 
     console.log("HoverChange:",datum);
     gStateMachine.Trigger("hoverChange");
@@ -68,8 +69,10 @@ function ChangeSelection( datum )
   if(!datum.obj) { ClearSelection(); return; }
   if(datum.obj && datum.obj==gSelectState.obj) {
     // Untoggle.
+    gLastSelectState = gSelectState;
     gSelectState = new Datum();
   } else {
+    gLastSelectState = gSelectState;
     gSelectState = $.extend({},datum);
     console.warn("Selecting new object",gSelectState.obj,gSelectState.type," gHover is ",gHoverState.type);
   }
