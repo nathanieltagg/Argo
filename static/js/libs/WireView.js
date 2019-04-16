@@ -1765,17 +1765,21 @@ WireView.prototype.FindMouseableMatch = function()
 };
 
 
-WireView.prototype.DoMouseWheel = function(ev,dist)
+WireView.prototype.DoMouseWheel = function(ev)
 {
   // Zoom in/out around the mouse.
   if(!ev.ctrlKey) {return true;}
   if(this.fMouseInContentArea) {
-    var frac_x = (this.fMousePos.x - this.origin_x) / this.span_x;
-    var frac_y = (this.origin_y - this.fMousePos.y ) / this.span_y;
-
-    var scale = 1 ;
-    if(dist<0) scale = 1.05;
-    if(dist>0) scale = 0.95;
+    var delta = ev.originalEvent.deltaY; // jquery event wrapper
+    if(ev.originalEvent.deltaMode==0x01) delta*=10; // DOM_DELTA_LINE
+    if(ev.originalEvent.deltaMode==0x02) delta*=20; // DOM_DELTA_PAGE
+    
+    var scale = 1;
+    if(delta<-250) delta = -250;
+    if(delta>250) delta = 250;
+    if(delta<0) scale = 1+delta/500.;
+    if(delta>0) scale = 1/(1-delta/500.); // make is symmetrical
+    
     var new_u_min = this.fMousePos.u*(1.0-scale) + this.min_u*scale;
     var new_u_max = (this.max_u-this.min_u)*scale + new_u_min;
 

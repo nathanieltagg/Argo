@@ -223,7 +223,7 @@ function Pad( element, options )
     $(this.element).on('mouseout.'  +this.NameSpace, fn);
     $(window)      .on('mousemove.' +this.NameSpace, fn);
     $(window)      .on('mouseup.'   +this.NameSpace, fn);
-    $(this.element).on('mousewheel.'+this.NameSpace, function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
+    $(this.element).on('wheel.'+this.NameSpace, function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
   }
 
   $(this.element).on('touchstart.'+this.NameSpace, fn);
@@ -311,7 +311,7 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
   // console.profile(profname);
 
   var bubble = true;
-  if(ev.type === 'mousewheel') bubble=this.DoMouseWheel(ev,scrollDist);
+  if(ev.type === 'wheel') bubble=this.DoMouseWheel(ev);
   else                         bubble = this.DoMouse(ev); // User callback.  User must set dirty=true to do a draw.
   // console.warn("Pad::MouseCallBack",ev,this.fMouseInContentArea,this.dirty);
 
@@ -548,7 +548,7 @@ Pad.prototype.DrawFrame = function()
 
     var tickLen = 8;
     var ticks, nt, i;
-    
+        
     var show_tick_labels = document.getElementById('ctl-show-tick-labels').checked;
     if(this.draw_ticks_x || this.draw_tick_labels_x || this.draw_grid_x)
     {

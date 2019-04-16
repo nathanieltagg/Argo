@@ -51,6 +51,9 @@ function WireViewGL(element, options )
     margin_left   : 30,
     fMagnifierOn: true,
     
+   
+    
+    
   }
   $.extend(true,defaults,options);
   ThreePad.call(this, element, defaults); // Give settings to ABoundObject contructor.
@@ -60,7 +63,6 @@ function WireViewGL(element, options )
   this.kz_tracks = 3.0;
   
 
-  this.CreateFrame();  
   this.renderer.render( this.scene, this.camera );
   
   // simple visibility toggling.
@@ -84,13 +86,15 @@ function WireViewGL(element, options )
   gStateMachine.Bind('change-tracks', this.CreateTracks.bind(this,false) );
   
   
-  gStateMachine.Bind('zoomChange', this.Render.bind(this) );
+  gStateMachine.Bind('zoomChange', this.ZoomChange.bind(this,false) );
+  gStateMachine.Bind('zoomChangeFast', this.ZoomChange.bind(this,true) );
   
   gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
   gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
   
   this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
   this.track_material.resolution= this.resolution; // resolution of the viewport
+
 
   this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} );
   this.track_material_hover.resolution= this.resolution; // resolution of the viewport
@@ -100,7 +104,42 @@ function WireViewGL(element, options )
   
 }
 
+WireViewGL.prototype.ZoomChange = function(fast) 
+{
+  var newlimits = {
+    minv: gZoomRegion.tdc[0] * gGeo.drift_cm_per_tick, // FIXME stupid geometry
+    maxv: gZoomRegion.tdc[1] * gGeo.drift_cm_per_tick,
+    minu: gZoomRegion.plane[this.plane][0] * gGeo.wire_pitch,// FIXME stupid geometry
+    maxu: gZoomRegion.plane[this.plane][1] * gGeo.wire_pitch,
+  };
+  // Call the default:
+  ThreePad.prototype.SetWorldCoordsForFrame.call(this,newlimits);
+  this.dirty = true;
+  this.overlay_dirty = true;
+  this.Render();
+}
 
+WireViewGL.prototype.SetWorldCoordsForFrame = function(new_limits,finished)
+{
+  var limits = $.extend({},this.GetWorldCoordsForFrame(),new_limits);
+  // Don't change view, instead emit a zoom change event, which echos back to the above.
+  if('minv' in new_limits || 'maxv' in new_limits){
+    gZoomRegion.changeTimeRange(limits.minv / gGeo.drift_cm_per_tick// FIXME stupid geometry
+                               ,limits.maxv / gGeo.drift_cm_per_tick);
+  }
+  if('minu' in new_limits || 'maxu' in new_limits) {
+    gZoomRegion.setLimits(this.plane
+                        , limits.minu / gGeo.wire_pitch// FIXME stupid geometry
+                        , limits.maxu / gGeo.wire_pitch);
+  }
+  if(finished) {
+    gStateMachine.Trigger("zoomChange");
+  } else {
+    gStateMachine.Trigger("zoomChangeFast");
+    // this.Draw();
+  }
+
+}
 
 WireViewGL.prototype.UpdateResolution = function() 
 {
@@ -162,63 +201,63 @@ WireViewGL.prototype.HoverAndSelectionChange = function()
       obj.material = obj.userdata.selected_material;
   }
   
-  this.Render();
+  // this.Render();
 }
 
 
-
-WireViewGL.prototype.CreateFrame = function()
-{
-  {
-    var lines;
-    // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
-    var geometry = new THREE.Geometry();      
-    geometry.vertices.push(new THREE.Vector3(this.min_u,0,0));
-    geometry.vertices.push(new THREE.Vector3(this.max_u,0,0));
-    var mlines = new MeshLine();
-    mlines.setGeometry(geometry);
-    lines = new THREE.Mesh(mlines.geometry, this.frame_line_material);
-    lines.name = "FrameLine1";
-    this.scene.add( lines );  
-  }
-  {
-    var lines;
-    // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
-    var geometry = new THREE.Geometry();      
-    geometry.vertices.push(new THREE.Vector3(0,this.min_v,0));
-    geometry.vertices.push(new THREE.Vector3(0,this.max_v,0));
-    var mlines = new MeshLine();
-    mlines.setGeometry(geometry);
-    lines.name = "FrameLine2";
-    lines = new THREE.Mesh(mlines.geometry, this.frame_line_material);
-    
-    this.scene.add( lines );  
-  }
-  
-  var du = (this.max_u-this.min_u);
-  var dv = (this.max_v-this.min_v);
-  var cx = this.min_u + du/2;
-  var cy = this.min_v + dv/2;
-  
-  this.geometry = new THREE.PlaneGeometry( 720, 720, 1 ); 
-  this.material = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
-  this.mplane = new THREE.Mesh( this.geometry, this.material );
-  this.mplane.position.x = cx;
-  this.mplane.position.y = cy;
-  this.mplane.position.z = 1.0;
-  // this.scene.add( this.mplane );
-  
-  
-  // var geometry = new THREE.CircleGeometry( 5, 32 );
-  // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
-  // this.circle = new THREE.Mesh( geometry, material );
-  // this.circle.position.x=0;
-  // this.circle.position.y=0;
-  // this.circle.position.z=10;
-  // this.scene.add( this.circle );
-}
-
-
+//
+// WireViewGL.prototype.CreateFrame = function()
+// {
+//   {
+//     var lines;
+//     // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
+//     var geometry = new THREE.Geometry();
+//     geometry.vertices.push(new THREE.Vector3(this.min_u,0,0));
+//     geometry.vertices.push(new THREE.Vector3(this.max_u,0,0));
+//     var mlines = new MeshLine();
+//     mlines.setGeometry(geometry);
+//     lines = new THREE.Mesh(mlines.geometry, this.frame_line_material);
+//     lines.name = "FrameLine1";
+//     this.scene.add( lines );
+//   }
+//   {
+//     var lines;
+//     // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
+//     var geometry = new THREE.Geometry();
+//     geometry.vertices.push(new THREE.Vector3(0,this.min_v,0));
+//     geometry.vertices.push(new THREE.Vector3(0,this.max_v,0));
+//     var mlines = new MeshLine();
+//     mlines.setGeometry(geometry);
+//     lines.name = "FrameLine2";
+//     lines = new THREE.Mesh(mlines.geometry, this.frame_line_material);
+//
+//     this.scene.add( lines );
+//   }
+//
+//   var du = (this.max_u-this.min_u);
+//   var dv = (this.max_v-this.min_v);
+//   var cx = this.min_u + du/2;
+//   var cy = this.min_v + dv/2;
+//
+//   this.geometry = new THREE.PlaneGeometry( 720, 720, 1 );
+//   this.material = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
+//   this.mplane = new THREE.Mesh( this.geometry, this.material );
+//   this.mplane.position.x = cx;
+//   this.mplane.position.y = cy;
+//   this.mplane.position.z = 1.0;
+//   // this.scene.add( this.mplane );
+//
+//
+//   // var geometry = new THREE.CircleGeometry( 5, 32 );
+//   // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+//   // this.circle = new THREE.Mesh( geometry, material );
+//   // this.circle.position.x=0;
+//   // this.circle.position.y=0;
+//   // this.circle.position.z=10;
+//   // this.scene.add( this.circle );
+// }
+//
+//
 
 
 
@@ -503,7 +542,10 @@ WireViewGL.prototype.CreateWireimg = function()
 
 
 
-WireViewGL.prototype.DoMouseWheel = function(ev,scrollDist) {};
+WireViewGL.prototype.DoMouseWheel = function(ev) {
+    return ThreePad.prototype.DoMouseWheel.call(this,ev);
+};
+
 WireViewGL.prototype.DoMouse = function(ev)
 {
   //  // pseudo-cursor.
@@ -512,85 +554,58 @@ WireViewGL.prototype.DoMouse = function(ev)
   //   this.circle.position.y = this.fMousePos.v;
   //   this.renderer.render(this.scene, this.camera);  console.warn("RENDER");
   // }
-
-  this.dirty = false;
+  // Deal with other controls
+  var retval =  ThreePad.prototype.DoMouse.call(this,ev);
 
   // Object picking for hover or selection
   if(this.fMouseInContentArea) {
     var match =  {obj: null, type:"wire"};
     
   	this.raycaster.linePrecision=3;
-  	this.raycaster.setFromCamera( this.fMousePosNorm, this.camera );
+    this.fMousePos.norm  = new THREE.Vector3(this.fMousePos.x/this.width*2-1, 1-2*this.fMousePos.y/this.height, 1);
+  	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
     this.raycast_layers = new THREE.Layers; // set to valid layers.
     var intersects = this.raycaster.intersectObjects(this.scene.children,true);
     for(var i=0;i<intersects.length;i++) {
       var intersect = intersects[i];
       if(!intersect.object.layers.test(this.raycast_layers)) continue; // ignore the magnifier
-      if(intersect.object.name){
-        var path = jsonpointer.parse(intersect.object.name);
+      var ptr = intersect.object.name;
+      if(ptr && ptr.startsWith('/')){
+        var path = jsonpointer.parse(ptr);
         var product = jsonpointer.get(gRecord,path);
         if(product) {
           var type = 'blah';
           switch(path[0]) {
             case 'tracks': type="track"; break;
           }
-          match =  {obj:product, type:type, pointer:intersect.object.name}
+          
+          match =  {obj:product, type:type, pointer:ptr};
+          // canvas pixel coordinates:
+
+          var pt = intersect.point.clone();
+          pt.project(this.camera);
+          
+          match.canvas_coords = new THREE.Vector2(pt.x*this.width/2+this.width/2, 
+                                                  -pt.y*this.height/2+this.height/2)
+          // console.warn("pick:",match);
         }
       }
     }
   
-    match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.u/gGeo.wire_pitch); // FIXME more more complex...
-    match.sample  = this.fMousePos.v/gGeo.drift_cm_per_tick;
+    match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.world.x/gGeo.wire_pitch); // FIXME uboone specific dune multitpcs.
+    match.sample  = this.fMousePos.world.y/gGeo.drift_cm_per_tick;
     if(!match.obj) match.obj = match.channel + "|" + match.sample;
     ChangeHover(match); // match might be null.
-    this.dirty =true;
+    if(ev.type=="click") { // Click, but not on just ordinary wire
+      var offset = getAbsolutePosition(this.viewport);      
+      if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x, match.canvas_coords.y + offset.y);
+      ChangeSelection(match);
+    }
   }
-  
-  if(this.dirty) this.Render();
+
+  return retval;
+  // if(this.dirty) this.Render(); // done by caller
 }
 
 
 
-
-// How do I maintain the mapping from gRecord to threeObj and back?
-
-// Picking/raycasting: get the threeObj->gRecord obj.  (use jsonpointer?)
-// selected object: use jsonpointer to get to object.  Selection/hover can send both obj and the pointer!
-
-// Each kind of data product can change in one of several ways:
-// TYPE-change:  new data product ready, maybe replacing an older data product.
-//      -> Dispose old object(s)
-//      -> Create objects and save into scene
-//      -> render
-// TYPE-toggle: turn visibility on/off. Shouldn't happen unless there's already change event. render.
-// Controls that effect type: change the geom paramters, render 
-
-// Hover or selection...
-  // if there is a current hilite, change it back to it's original material
-  // find the object corresponding to the pointer
-  // 
-// NewRecord - delete all products.
-
-
-function HiliteObject()
-{
-  // quick little object that keeps track of which object is hilihgted
-  this.threeobj = null;
-  this.lastmat  = null;
-}
-HiliteObject.prototype.change = function(threeobj,hilite_material)
-{
-  // Fixme: work with groups
-  if(this.threeobj) {
-    if(this.threeobj === threeobj) return; // no-op
-    this.threeobj.material = this.lastmat;
-  }
-  this.threeobj = threeobj;
-  if(this.threeobj) {
-    this.lastmat  = threeobj.material;
-    this.threeobj.material = this.lastmat;    
-  } else {
-    this.lastmat = null;
-  }
-}
-  

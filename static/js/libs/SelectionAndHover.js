@@ -318,7 +318,7 @@ function ComposeTrackInfo(s)
     if(hitname) {
       var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
       var hitlist = gRecord.hits[hitname];
-      if(hitlist) {
+      if(hitlist && hitids) {
         h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
         h += "<tr><th>TDC:</th><th>ADC</th></tr>";
         for(var i=0;i<hitids.length;i++) { 
