@@ -516,6 +516,7 @@ void GalleryComposer::composeObject(const recob::Shower& shower, json& jshw, con
 
   jshw["bestPlane"] = shower.best_plane() ;
   jshw["Length"] =  shower.Length() ;
+  jshw["OpenAngle"] = shower.OpenAngle();
 
   jshw["totalEnergy"] = json(shower.Energy()); // Implicit Conversion from vector<double> to json
   jshw["dEdx"] = json(shower.dEdx()); // ditto

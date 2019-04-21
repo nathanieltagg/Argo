@@ -51,7 +51,7 @@ function WireViewGL(element, options )
     margin_left   : 30,
     fMagnifierOn: true,
     
-   
+    draw_box : false,
     draw_grid_x:false,  // These don't work with magnifier!!!11!!
     draw_grid_y:false,  // 
 
@@ -89,8 +89,8 @@ function WireViewGL(element, options )
   
   // Changes to data products  
   gStateMachine.Bind('change-wireimg', this.CreateWireimg.bind(this,false) );  
-  gStateMachine.Bind('change-tracks', this.CreateTracks.bind(this,false) );
-  gStateMachine.Bind('change-hits', this.CreateTracks.bind(this,false) );
+  gStateMachine.Bind('change-tracks',  this.CreateTracks.bind(this,false) );
+  gStateMachine.Bind('change-hits',    this.CreateTracks.bind(this,false) );
   
   
   gStateMachine.Bind('zoomChange', this.ZoomChange.bind(this,false) );
@@ -115,8 +115,14 @@ function WireViewGL(element, options )
   
   // spacepoints
   gStateMachine.Bind('change-spacepoints', this.CreateSpacepoints.bind(this) );  
-  gStateMachine.Bind('toggle-spacepoints',        this.UpdateVisibilities.bind(this) );  
+  gStateMachine.Bind('toggle-spacepoints', this.UpdateVisibilities.bind(this) );  
+  $(this.ctl_track_shift)       .change( this.UpdateSpacepoints.bind(this) );
   
+  // showers
+  gStateMachine.Bind('change-showers', this.CreateShowers.bind(this,false) );
+  gStateMachine.Bind('toggle-showers', this.UpdateVisibilities.bind(this,false) );
+  $(this.ctl_track_shift)       .change( this.UpdateShowers.bind(this) );
+ 
   // mc
   gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
   gStateMachine.Bind('driftChange',        this.UpdateMC.bind(this) );  
@@ -355,27 +361,7 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
   this.Render();
 }
 
-WireViewGL.prototype.UpdateTracks = function(fast)
-{
-  // Changes properties of all displayed tracks.
-  
-  this.offset_track = 0;
-  if(this.ctl_track_shift.is(":checked")) 
-    this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
 
-  if(this.track_group)
-    for(var obj of this.track_group.children) {
-      var pointer = obj.name;
-      var trk = jsonpointer.get(gRecord,pointer);
-      obj.position.y = this.offset_track; // shift by the offset.     
-
-      obj.updateMatrix();
-    }
-  this.UpdateVisibilities();
-  this.dirty=true;
-  this.Render();
-  
-}
 
 
 WireViewGL.prototype.CreateTracks = function()
@@ -392,10 +378,6 @@ WireViewGL.prototype.CreateTracks = function()
 
   this.track_group = new THREE.Group();
   this.track_group.name = tracks._pointer; // jsonpointer
-
-  this.offset_track = 0;
-  if(this.ctl_track_shift.is(":checked")) 
-    this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
 
   // var bezier = tracklistname.match(/bezier/)!==null;
   // if(bezier) { return this.DrawBezierTracks(min_u,max_u,min_v,max_v,fast); }
@@ -454,8 +436,6 @@ WireViewGL.prototype.CreateTracks = function()
     
     // Make it findable again.
     threeobj.name = trk._pointer;    
-    // Set timing property correctly
-    threeobj.position.y = this.offset_track; // shift by the offset. 
     threeobj.position.z = 10; // level of tracks.
     // threeobj.matrixAutoUpdate=false; // Don't auto-compute each time. I'll tell you when your coords change
     threeobj.updateMatrix();     // Oh, they changed.
@@ -463,9 +443,22 @@ WireViewGL.prototype.CreateTracks = function()
   }
 
   this.scene.add(this.track_group);
+  this.UpdateTracks();
+}
+
+WireViewGL.prototype.UpdateTracks = function(fast)
+{
+  // Changes properties of all displayed tracks.
+  
+  this.offset_track = 0;
+  if(this.ctl_track_shift.is(":checked")) 
+    this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
+
+  if(this.track_group)
+    this.track_group.position.y = this.offset_track;
   this.UpdateVisibilities();
   this.dirty=true;
-  this.Render();
+  this.Render();  
 }
 
 
@@ -486,6 +479,7 @@ WireViewGL.prototype.UpdateVisibilities = function()
   setVis(this.endpoint2d_group  ,   ".show-endpoint2d");
   setVis(this.mc_group  ,   ".show-mcparticles");
   setVis(this.spacepoints_group  ,   ".show-spacepoints");
+  setVis(this.showers_group  ,   ".show-showers");
   this.dirty=true;
   this.Render();
 }
@@ -957,8 +951,20 @@ WireViewGL.prototype.CreateSpacepoints = function()
   this.spacepoints_group.position.z = 40; 
   
   this.scene.add( this.spacepoints_group );   
+  this.UpdateSpacepoints();
 };
+WireViewGL.prototype.UpdateSpacepoints = function()
+{
+  this.offset_track = 0;
+  if(this.ctl_track_shift.is(":checked")) 
+    this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
 
+  if(this.spacepoints_group)
+    this.spacepoints_group.position.y = this.offset_track;
+  this.UpdateVisibilities();
+  this.dirty=true;
+  this.Render();
+}
 WireViewGL.prototype.HoverAndSelectionChange_Spacepoints = function()
 {
   // Draw or remove  highlight points.
@@ -987,6 +993,66 @@ WireViewGL.prototype.HoverAndSelectionChange_Spacepoints = function()
 ///////////////////////////
 // Showers
 ///////////////////////////
+WireViewGL.prototype.CreateShowers = function()
+{  
+  if(this.showers_group) {
+    scene.remove(this.showers_group);
+    for(thing of this.showers_group.children) thing.geometry.dispose(); // delete old ones.
+  }
+  this.shower_material = new THREE.MeshBasicMaterial( { color: 0xff00ff, transparent: true, opacity: 0.5});
+  this.shower_hover_material =  new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
+  this.shower_select_material = new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
+  var showers = GetSelected("showers");
+  if(!showers.length) return;
+  
+  this.showers_group = new THREE.Group();
+  this.showers_group.name = "showers";
+  
+  for(var shw of showers) {
+    var u = gGeo.yzToTransverse(this.plane,shw.start.y,shw.start.z);
+    var v = shw.start.x;
+    var angle = shw.openangle || 20./180*Math.PI/2;
+    var Length = shw.Length || 100;
+    var dir = new THREE.Vector2(gGeo.yzToTransverse(this.plane,shw.dir.y,shw.dir.z),shw.dir.x);
+    var d1 = dir.clone().rotateAround({x:0,y:0},angle);
+    var d2 = dir.clone().rotateAround({x:0,y:0},-angle);
+    dir.setLength(Length);
+    d1.setLength(Length*0.8);
+    d2.setLength(Length*0.8);
+    console.log('shower', dir, d1, d2);
+    var shape = new THREE.Shape();
+    shape.moveTo(u,v);
+    shape.lineTo(u+d1.x,  v+d1.y);
+    shape.lineTo(u+dir.x, v+dir.y);
+    shape.lineTo(u+d2.x,  v+d2.y);
+    shape.lineTo(u,v);
+    var geo = new THREE.ShapeBufferGeometry(shape);
+    var obj = new THREE.Mesh(geo,this.shower_material);
+    obj.name = shw._pointer;
+    obj.userData = {
+      default_material:this.shower_material, 
+      hover_material:  this.shower_hover_material,
+      select_material: this.shower_select_material,      
+    }
+    this.showers_group.add(obj);
+  }
+  this.showers_group.name = "showers";
+  this.showers_group.position.z = 51;
+  this.scene.add(this.showers_group);
+  this.UpdateShowers();
+}
+WireViewGL.prototype.UpdateShowers = function()
+{
+  this.offset_track = 0;
+  if(this.ctl_track_shift.is(":checked")) 
+    this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
+
+  if(this.showers_group)
+    this.showers_group.position.y = this.offset_track;
+  this.UpdateVisibilities();
+  this.dirty=true;
+  this.Render();
+}
 
 ///////////////////////////
 // MC
@@ -1001,7 +1067,7 @@ WireViewGL.prototype.CreateMC = function()
   this.mc_group.name = "mc";
   // 
   var particles = GetSelected("mcparticles");
-  if(particles.length==0) return;
+  if(!particles.length) return;
   
   // this.mc_material
   // this.mc_neutral_material

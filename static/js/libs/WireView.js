@@ -1063,6 +1063,7 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
     if(hitlist && hitassn && !shw._hpts[this.plane] ) {    
       shw._hpts[this.plane] = [];
       for(var ihit=0;ihit<hitassn[shw._index].length;ihit++){
+        if(!hit) continue;
         var hit = hitlist[ hitassn[shw._index][ihit] ];
         if(hit.plane == this.plane) {
           shw._hpts[this.plane].push(hit);
