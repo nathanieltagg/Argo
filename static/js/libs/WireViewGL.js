@@ -20,11 +20,11 @@
 //
 /*jshint laxcomma:true */
 
-var gWireViewGL = null;
+var gWireViewGL = [];
 
 $(function(){
   $('div.A-WireViewGL').each(function(){
-     gWireViewGL = new WireViewGL(this);
+    gWireViewGL.push(new WireViewGL(this));
   });  
 });
 
@@ -52,9 +52,12 @@ function WireViewGL(element, options )
     fMagnifierOn: true,
     
    
-    
-    
-  }
+    draw_grid_x:false,  // These don't work with magnifier!!!11!!
+    draw_grid_y:false,  // 
+
+    xlabel : "Transverse position (cm)",
+    ylabel : "Drift Time (cm)",    
+  }  
   $.extend(true,defaults,options);
   ThreePad.call(this, element, defaults); // Give settings to ABoundObject contructor.
 
@@ -62,8 +65,10 @@ function WireViewGL(element, options )
   this.kz_image = 1.2;
   this.kz_tracks = 3.0;
   
-
+  this.renderer.setClearColor( 0xffffff,1);
   this.renderer.render( this.scene, this.camera );
+  
+  
   
   // simple visibility toggling.
   gStateMachine.Bind('toggle-wireimg',       this.UpdateVisibilities.bind(this) ); 
@@ -79,11 +84,13 @@ function WireViewGL(element, options )
   $(this.ctl_track_shift_value) .change( this.UpdateTracks.bind(this) );
   gStateMachine.Bind('driftChange', this.UpdateWireimg.bind(this) );  // REbuild since geometry is shot.
   gStateMachine.Bind('driftChange', this.UpdateTracks.bind(this) );  // REbuild since geometry is shot.
+  gStateMachine.Bind('driftChange', this.UpdateHits.bind(this) );  // REbuild since geometry is shot.
 
   
   // Changes to data products  
   gStateMachine.Bind('change-wireimg', this.CreateWireimg.bind(this,false) );  
   gStateMachine.Bind('change-tracks', this.CreateTracks.bind(this,false) );
+  gStateMachine.Bind('change-hits', this.CreateTracks.bind(this,false) );
   
   
   gStateMachine.Bind('zoomChange', this.ZoomChange.bind(this,false) );
@@ -92,25 +99,60 @@ function WireViewGL(element, options )
   gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
   gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
   
-  this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
-  this.track_material.resolution= this.resolution; // resolution of the viewport
-
-
-  this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} );
-  this.track_material_hover.resolution= this.resolution; // resolution of the viewport
-
-  this.track_material_selected = new THREE.LineMaterial( { color: 0xffffff, linewidth: 4, dashed: false} );
-  this.track_material_selected.resolution= this.resolution; // resolution of the viewport
+  // hits
+  gStateMachine.Bind('change-hits', this.CreateHits.bind(this) );  
+  gStateMachine.Bind('hitChange',    this.CreateHits.bind(this) ); // Could be improved: change vertex colors instead of recreation
+  $('#ctl-shift-hits')      .change(this.UpdateHits.bind(this));
+  $('#ctl-shift-hits-value').change(this.UpdateHits.bind(this));
+  gStateMachine.Bind('toggle-hits',          this.UpdateVisibilities.bind(this) ); 
   
+  // clusters
+  gStateMachine.Bind('change-clusters', this.CreateClusters.bind(this) );  
+  gStateMachine.Bind('newPiece'       , this.CreateClusters.bind(this,true) );  // Need this because associations might come late...
+  $('#ctl-shift-hits')      .change(this.UpdateClusters.bind(this));
+  $('#ctl-shift-hits-value').change(this.UpdateClusters.bind(this));
+  gStateMachine.Bind('toggle-clusters',this.UpdateVisibilities.bind(this) ); 
+  
+  
+  // mc
+  gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
+  gStateMachine.Bind('driftChange',        this.UpdateMC.bind(this) );  
+  this.GetBestControl(".show-mc-neutrals") .change(this.UpdateMC.bind(this) );
+  this.GetBestControl(".ctl-mc-move-tzero").change(this.UpdateMC.bind(this) );
+  gStateMachine.Bind('toggle-mcparticles',this.UpdateVisibilities.bind(this) ); 
+  
+  this.line_materials = [
+    this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} ),
+    this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
+    this.track_material_selected = new THREE.LineMaterial( { color: 0xffffff, linewidth: 4, dashed: false} ),
+    this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
+
+    this.mc_material          = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: false} ),
+    this.mc_neutral_material  = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: true} ),
+    this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
+    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),
+      
+  ]; // need update.
+
+  for(var mat of this.line_materials) mat.resolution = this.resolution;
 }
+
+
+// Two sets of coordinates used: XYZ world coordinates (or UVZ), and wire/tdc.
+WireViewGL.prototype.UtoWire = function(u) { return (u+gGeo.transversePlaneOffset(this.plane))/gGeo.wire_pitch; } 
+WireViewGL.prototype.WireToU = function(w) { return w*gGeo.wire_pitch - gGeo.transversePlaneOffset(this.plane); } 
+WireViewGL.prototype.VtoTdc  = function(v) { return v/gGeo.drift_cm_per_tick; } 
+WireViewGL.prototype.TdcToV  = function(t) { return t*gGeo.drift_cm_per_tick; } 
+
+
 
 WireViewGL.prototype.ZoomChange = function(fast) 
 {
   var newlimits = {
-    minv: gZoomRegion.tdc[0] * gGeo.drift_cm_per_tick, // FIXME stupid geometry
-    maxv: gZoomRegion.tdc[1] * gGeo.drift_cm_per_tick,
-    minu: gZoomRegion.plane[this.plane][0] * gGeo.wire_pitch,// FIXME stupid geometry
-    maxu: gZoomRegion.plane[this.plane][1] * gGeo.wire_pitch,
+    minu: this.WireToU(gZoomRegion.plane[this.plane][0] ),
+    maxu: this.WireToU(gZoomRegion.plane[this.plane][1] ),
+    minv: this.TdcToV(gZoomRegion.tdc[0]),
+    maxv: this.TdcToV(gZoomRegion.tdc[1]),
   };
   // Call the default:
   ThreePad.prototype.SetWorldCoordsForFrame.call(this,newlimits);
@@ -123,15 +165,18 @@ WireViewGL.prototype.SetWorldCoordsForFrame = function(new_limits,finished)
 {
   var limits = $.extend({},this.GetWorldCoordsForFrame(),new_limits);
   // Don't change view, instead emit a zoom change event, which echos back to the above.
-  if('minv' in new_limits || 'maxv' in new_limits){
-    gZoomRegion.changeTimeRange(limits.minv / gGeo.drift_cm_per_tick// FIXME stupid geometry
-                               ,limits.maxv / gGeo.drift_cm_per_tick);
-  }
   if('minu' in new_limits || 'maxu' in new_limits) {
     gZoomRegion.setLimits(this.plane
-                        , limits.minu / gGeo.wire_pitch// FIXME stupid geometry
-                        , limits.maxu / gGeo.wire_pitch);
+                        , this.UtoWire(limits.minu)
+                        , this.UtoWire(limits.maxu)
+    );
   }
+  if('minv' in new_limits || 'maxv' in new_limits){
+    gZoomRegion.changeTimeRange(this.VtoTdc(limits.minv)
+                               ,this.VtoTdc(limits.maxv)
+    );
+  }
+  
   if(finished) {
     gStateMachine.Trigger("zoomChange");
   } else {
@@ -144,120 +189,53 @@ WireViewGL.prototype.SetWorldCoordsForFrame = function(new_limits,finished)
 WireViewGL.prototype.UpdateResolution = function() 
 {
   // Materials with a resolution uniform need updating:
-  if(this.track_material) {
-    // console.log("Update resolution: is it the same?", (this.track_material.resolution.x == this.resolution.x)&&(this.track_material.resolution.y == this.resolution.y) );
-    // line is wider if this is in.
-    this.track_material.resolution = this.resolution;
-    this.track_material.needsUpdate = true;
-  }
-  if(this.track_material_hover) {
-    this.track_material_hover.resolution = this.resolution;
-    this.track_material_hover.needsUpdate = true;
-  }
-  if(this.track_material_selected) {
-    this.track_material_selected.resolution = this.resolution;
-    this.track_material_selected.needsUpdate = true;
-  }
-  
-  
-  if(this.frame_line_material) {
-    this.frame_line_material.setValues({resolution: this.resolution});
-    this.frame_line_material.needsUpdate = true;
-  }
+  for(var mat of this.line_materials||[]) {mat.resolution = this.resolution; mat.needsUpdate = true;}; 
 }
 
 WireViewGL.prototype.HoverAndSelectionChange = function() 
 {
+  // Hits are not independent objects. 
+  if(gLastHoverState.type=='hit'||gHoverState.type=='hit'||gLastSelectState.type=="hit"||gSelectState.type=="hit")
+    this.HoverAndSelectionChange_Hits();
+
+
   // This ordering ensures we get it right
 
   // Dehighlight the last hover object.
   var name = ((gLastHoverState.obj)||{})._pointer;
   if(name && name.length>0) {
     var obj = this.scene.getObjectByName(name);
-    if(obj && obj.userdata && obj.userdata.default_material)
-      obj.material = obj.userdata.default_material;
+    if(obj && obj.userData && obj.userData.default_material)
+      obj.material = obj.userData.default_material;
   }
   // Dehighlight the last selected object.
   name = ((gLastSelectState.obj)||{})._pointer;
   if(name && name.length>0) {
     var obj = this.scene.getObjectByName(name);
-    if(obj && obj.userdata && obj.userdata.default_material)
-      obj.material = obj.userdata.default_material;
+    if(obj && obj.userData && obj.userData.default_material)
+      obj.material = obj.userData.default_material;
   }
 
   // Highlight the hovered object.
   name = ((gHoverState.obj)||{})._pointer;
   if(name && name.length>0) {
     var obj = this.scene.getObjectByName(name);
-    if(obj && obj.userdata && obj.userdata.hover_material)
-      obj.material = obj.userdata.hover_material;
+    if(obj && obj.userData && obj.userData.hover_material)
+      obj.material = obj.userData.hover_material;
   }
   
   // Highlight the selected object.
   name = ((gSelectState.obj)||{})._pointer;
   if(name && name.length>0) {
     var obj = this.scene.getObjectByName(name);
-    if(obj && obj.userdata && obj.userdata.selected_material)
-      obj.material = obj.userdata.selected_material;
+    if(obj && obj.userData && obj.userData.select_material)
+      obj.material = obj.userData.select_material;
   }
+  
+  this.dirty=true;
   
   // this.Render();
 }
-
-
-//
-// WireViewGL.prototype.CreateFrame = function()
-// {
-//   {
-//     var lines;
-//     // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
-//     var geometry = new THREE.Geometry();
-//     geometry.vertices.push(new THREE.Vector3(this.min_u,0,0));
-//     geometry.vertices.push(new THREE.Vector3(this.max_u,0,0));
-//     var mlines = new MeshLine();
-//     mlines.setGeometry(geometry);
-//     lines = new THREE.Mesh(mlines.geometry, this.frame_line_material);
-//     lines.name = "FrameLine1";
-//     this.scene.add( lines );
-//   }
-//   {
-//     var lines;
-//     // var material = new THREE.LineBasicMaterial({ linewidth:40, color: 0x00ffff });
-//     var geometry = new THREE.Geometry();
-//     geometry.vertices.push(new THREE.Vector3(0,this.min_v,0));
-//     geometry.vertices.push(new THREE.Vector3(0,this.max_v,0));
-//     var mlines = new MeshLine();
-//     mlines.setGeometry(geometry);
-//     lines.name = "FrameLine2";
-//     lines = new THREE.Mesh(mlines.geometry, this.frame_line_material);
-//
-//     this.scene.add( lines );
-//   }
-//
-//   var du = (this.max_u-this.min_u);
-//   var dv = (this.max_v-this.min_v);
-//   var cx = this.min_u + du/2;
-//   var cy = this.min_v + dv/2;
-//
-//   this.geometry = new THREE.PlaneGeometry( 720, 720, 1 );
-//   this.material = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
-//   this.mplane = new THREE.Mesh( this.geometry, this.material );
-//   this.mplane.position.x = cx;
-//   this.mplane.position.y = cy;
-//   this.mplane.position.z = 1.0;
-//   // this.scene.add( this.mplane );
-//
-//
-//   // var geometry = new THREE.CircleGeometry( 5, 32 );
-//   // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
-//   // this.circle = new THREE.Mesh( geometry, material );
-//   // this.circle.position.x=0;
-//   // this.circle.position.y=0;
-//   // this.circle.position.z=10;
-//   // this.scene.add( this.circle );
-// }
-//
-//
 
 
 
@@ -341,7 +319,7 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
       var obj = new THREE.Mesh( geometry, material );
       // Don't name it: we never want to hoverchange on it.
       // obj.name=  wireimg_group.name+"("+irow+","+icol+")";
-      obj.position.x = 0.5*(t_x1+t_x2);
+      obj.position.x = 0.5*(t_x1+t_x2) - gGeo.transversePlaneOffset(this.plane);
       obj.position.y = 0.5*(t_y2+t_y1);
     
     
@@ -360,6 +338,7 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
   this.wireimg_group.scale.y =  gGeo.drift_cm_per_tick;
 
   this.UpdateVisibilities();
+  this.dirty=true;
   this.Render();
 }
 
@@ -380,6 +359,7 @@ WireViewGL.prototype.UpdateTracks = function(fast)
       obj.updateMatrix();
     }
   this.UpdateVisibilities();
+  this.dirty=true;
   this.Render();
   
 }
@@ -393,16 +373,6 @@ WireViewGL.prototype.CreateTracks = function()
       if(obj.geometry) obj.geometry.dispose();
     }
   }
-
-  // this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
-  // this.track_material.resolution= this.resolution; // resolution of the viewport
-  //
-  // this.track_material_hover = new THREE.LineMaterial( { color: 0x00ffff, linewidth: 4, dashed: false} );
-  // this.track_material_hover.resolution= this.resolution; // resolution of the viewport
-  //
-  // this.track_material_selected = new THREE.LineMaterial( { color: 0xffffff, linewidth: 4, dashed: false} );
-  // this.track_material_selected.resolution= this.resolution; // resolution of the viewport
-
 
   var tracks = GetSelected("tracks");
   if(tracks.length==0) return;
@@ -454,20 +424,20 @@ WireViewGL.prototype.CreateTracks = function()
 
     // From https://threejs.org/examples/webgl_lines_fat.html example:
     // var matLine = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} );
-//     matLine.resolution= this.resolution; // resolution of the viewport
+    //     matLine.resolution= this.resolution; // resolution of the viewport
     var geometry = new THREE.LineGeometry();
     geometry.setPositions(data);
     geometry.raycast_fast = true; // Just take the first segment hit when raycasting.
     var threeobj = new THREE.Line2(geometry, this.track_material);
-    threeobj.userdata = {
+    threeobj.userData = {
       default_material: this.track_material,
       hover_material:   this.track_material_hover,
-      selected_material:   this.track_material_selected,
+      select_material:   this.track_material_selected,
     }
 		threeobj.scale.set( 1, 1, 1 );
     // threeobj.raycast = THREE.Line.raycast;
     threeobj.computeLineDistances(); //???
-    
+    threeobj.raycast_fast = true;
     
     // Make it findable again.
     threeobj.name = trk._pointer;    
@@ -481,6 +451,7 @@ WireViewGL.prototype.CreateTracks = function()
 
   this.scene.add(this.track_group);
   this.UpdateVisibilities();
+  this.dirty=true;
   this.Render();
 }
 
@@ -497,7 +468,11 @@ WireViewGL.prototype.UpdateVisibilities = function()
   }
   setVis(this.wireimg_group, ".show-wireimg");
   setVis(this.track_group,   ".show-tracks");
-  
+  setVis(this.hit_group  ,   ".show-hits");
+  setVis(this.cluster_group  ,   ".show-clusters");
+  setVis(this.endpoint2d_group  ,   ".show-endpoint2d");
+  setVis(this.mc_group  ,   ".show-mcparticles");
+  this.dirty=true;
   this.Render();
 }
 
@@ -561,22 +536,33 @@ WireViewGL.prototype.DoMouse = function(ev)
   if(this.fMouseInContentArea) {
     var match =  {obj: null, type:"wire"};
     
-  	this.raycaster.linePrecision=3;
+  	this.raycaster.linePrecision=4;
     this.fMousePos.norm  = new THREE.Vector3(this.fMousePos.x/this.width*2-1, 1-2*this.fMousePos.y/this.height, 1);
   	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
-    this.raycast_layers = new THREE.Layers; // set to valid layers.
+    // this.raycast_layers = new THREE.Layers; // set to valid layers. Not required, but leaving
     var intersects = this.raycaster.intersectObjects(this.scene.children,true);
+    console.log("intersects:",intersects.length,intersects);
     for(var i=0;i<intersects.length;i++) {
       var intersect = intersects[i];
-      if(!intersect.object.layers.test(this.raycast_layers)) continue; // ignore the magnifier
-      var ptr = intersect.object.name;
+      var obj = intersect.object;
+      // if(!obj.layers.test(this.raycast_layers)) continue; // ignore the magnifier. Obsolete; magnifier removed already
+      var ptr = obj.name;
+      console.log("pick candidate:",obj,ptr);
       if(ptr && ptr.startsWith('/')){
         var path = jsonpointer.parse(ptr);
+        // If I put a product_indices array in the object, use it to further specify the json path to the product.
+        // See hit creator.
+        if(obj.userData && obj.userData.product_indices) {
+          var index = obj.userData.product_indices[intersect.faceIndex];
+          ptr+="/"+index;
+          path.push(index);
+        }
         var product = jsonpointer.get(gRecord,path);
         if(product) {
-          var type = 'blah';
+          var type = path[0];
           switch(path[0]) {
             case 'tracks': type="track"; break;
+            case 'hits': type="hit"; break;
           }
           
           match =  {obj:product, type:type, pointer:ptr};
@@ -588,12 +574,14 @@ WireViewGL.prototype.DoMouse = function(ev)
           match.canvas_coords = new THREE.Vector2(pt.x*this.width/2+this.width/2, 
                                                   -pt.y*this.height/2+this.height/2)
           // console.warn("pick:",match);
+          break; // We found the best one.
         }
       }
     }
   
-    match.channel = gGeo.channelOfWire(this.plane,this.fMousePos.world.x/gGeo.wire_pitch); // FIXME uboone specific dune multitpcs.
-    match.sample  = this.fMousePos.world.y/gGeo.drift_cm_per_tick;
+    var wire = this.UtoWire(this.fMousePos.world.x);
+    if(wire>=0 && wire< gGeo.numWires(this.plane)) (match.channel = gGeo.channelOfWire(this.plane,wire));
+    match.sample  = this.VtoTdc(this.fMousePos.world.y);
     if(!match.obj) match.obj = match.channel + "|" + match.sample;
     ChangeHover(match); // match might be null.
     if(ev.type=="click") { // Click, but not on just ordinary wire
@@ -607,5 +595,418 @@ WireViewGL.prototype.DoMouse = function(ev)
   // if(this.dirty) this.Render(); // done by caller
 }
 
+
+////////////////////////////////////////
+// Hits
+////////////////////////////////////////
+
+WireViewGL.prototype.CreateHits = function()
+{
+  if(this.hit_meshes){
+    // dispose old hits object:
+    this.hit_group.remove(this.hit_meshes);
+    this.hit_meshes.geometry.dispose();
+    this.hit_meshes.material.dispose();
+  }
+
+  if(!this.hit_group) {
+    this.hit_group = new THREE.Group();
+    this.hit_group.name = "hit_group";    
+  }
+  
+  var hits = GetSelected("hits");
+  if(!hits.length) return;
+
+  this.hit_material = new THREE.MeshBasicMaterial( {
+      color: 0xFFFFFF,
+        side: THREE.DoubleSide, vertexColors: THREE.VertexColors
+  } );
+
+  var field = $(this.GetBestControl(".hit-hist-field")).val();
+
+  var vertices = [];
+  var normals  = [];
+  var indices  = [];
+  var colors   = [];
+  var product_indices = []; // One per face, to hold a the hit index
+  var nvertices = 0;
+  function addhit(ihit,u1,u2,v1,v2,colorvals) {
+    // if(plane==2) console.log("addhit",...arguments);
+    vertices.push( u1, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+    vertices.push( u2, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+    vertices.push( u1, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+    vertices.push( u2, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+    indices.push( nvertices+0, nvertices+2, nvertices+1, nvertices+2, nvertices+3, nvertices+1 );  
+    product_indices.push(ihit,ihit);
+    nvertices += 4;
+  }
+  
+  for(var i=0;i<hits.length;i++){
+    var hit = hits[i];
+    if(hit.plane != this.plane) continue;
+    // hit object is in U,tdc space, needs scaling
+    var u = this.WireToU(hit.wire);
+    var halfwidth = gGeo.wire_pitch/2;
+    var q = hit[field]; // The value being plotted for charge. 
+    // if(q<gHitCut.min) { continue;}
+    // if(q>gHitCut.max) { continue;}
+    var c = gHitColorScaler.GetColorValues(q);
+    var cc = [c[0]/255,c[1]/255,c[2]/255];
+    // cc = [1,1,1];
+    
+    addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
+  }
+  
+  var geo = new THREE.BufferGeometry();
+  // console.log("hit buffer geom with",indices,vertices,normals,colors);
+  geo.setIndex(indices);
+  geo.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+  geo.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+  geo.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+  this.hit_meshes = new THREE.Mesh(geo,this.hit_material);
+  // this.hit_group.position.x = - gGeo.transversePlaneOffset(this.plane);
+  this.hit_meshes.position.z = 10;
+  this.hit_meshes.name = hits._pointer;
+  this.hit_meshes.userData = {
+    product_indices:  product_indices,
+    default_material: this.hit_material,
+    hover_material:   new THREE.MeshBasicMaterial( {color: 0xff0000} ),
+    select_material:  new THREE.MeshBasicMaterial( {color: 0xff0000} )
+  }
+  this.hit_group.add(this.hit_meshes);
+  this.hit_group.scale.y =  gGeo.drift_cm_per_tick;
+  
+  this.scene.add(this.hit_group);
+  this.UpdateHits();
+}
+
+WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
+{
+  // Draw a highlight box around the hit.
+  if(!this.hit_hover_box) {
+    var geometry = new THREE.LineGeometry();
+    geometry.setPositions([-1,-1,0, -1,1,0, 1,1,0, 1,-1,0, -1,-1,0]);
+    this.hit_hover_box = new THREE.Mesh(geometry,this.highlight_line_material);
+    this.hit_group.add(this.hit_hover_box);
+
+    this.hit_select_box = new THREE.Mesh(geometry,this.highlight_line_material);
+    this.hit_group.add(this.hit_select_box);
+  }
+
+  var hit = gHoverState.obj;
+  if(gHoverState.type=='hit' && hit.plane == this.plane) {
+    this.hit_hover_box.visible = true;
+    this.hit_hover_box.position.x = this.WireToU(hit.wire);    
+    this.hit_hover_box.position.y = (hit.t1+hit.t2)*0.5;    
+    this.hit_hover_box.position.z = 20;
+    this.hit_hover_box.scale.x = gGeo.wire_pitch;
+    this.hit_hover_box.scale.y = (hit.t2-hit.t1)*0.5;
+  } else {
+    this.hit_hover_box.visible = false;
+  }
+  
+  var hit = gSelectState.obj;
+  if(gSelectState.type=='hit' && hit.plane == this.plane) {
+    this.hit_select_box.visible = true;
+    this.hit_select_box.position.x = this.WireToU(hit.wire);    
+    this.hit_select_box.position.y = (hit.t1+hit.t2)*0.5;    
+    this.hit_select_box.position.z = 20;
+    this.hit_select_box.scale.x = gGeo.wire_pitch;
+    this.hit_select_box.scale.y = (hit.t2-hit.t1)*0.5;    
+  } else {
+    this.hit_select_box.visible = false;
+  }
+}
+
+
+WireViewGL.prototype.UpdateHits = function()
+{
+  if(!this.hit_group) return;
+  this.hit_group.scale.y =  gGeo.drift_cm_per_tick;  
+  var offset_hit_time = 0;
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );  
+  this.hit_group.position.y =  offset_hit_time*gGeo.drift_cm_per_tick;  
+}
+  
+
+
+
+////////////////////////////////////////
+// Clusters
+////////////////////////////////////////
+
+WireViewGL.prototype.CreateClusters = function(lazy)
+{
+  if(this.cluster_group) {
+    this.scene.remove(this.cluster_group);
+    // FIXME: dispose
+  }
+
+  // Ensure we have data.
+  var clusters = GetSelected("clusters");
+  var clustername = GetSelectedName("clusters");
+  if(!clusters.length) return;
+
+  // Find the hits that are associated with this cluster.
+  // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
+  if(!gRecord.associations) {console.error("Can't find associations"); return; }
+  var assns = gRecord.associations[clustername];
+  var hitname = null;
+  for(var name in assns) {
+    if( (/^recob::Hits/).test(name) ) { 
+      // its a hit list! This is what we want.
+      hitname = name; break;
+    }
+  }
+  if(!hitname) return;
+  var hitassn = assns[hitname];
+  var hits = gRecord.hits[hitname];
+  if(!hits) return;
+
+  if(lazy && this.cluster_group && this.cluster_group.name == clusters._pointer) {
+    console.warn("not bothering to recreate.")
+  }
+
+  this.cluster_group = new THREE.Group();
+  this.cluster_group.name = clusters._pointer;    
+  
+  this.cluster_hover_material  =  new THREE.MeshBasicMaterial({color:0xFFFF00});
+  this.cluster_select_material =  new THREE.MeshBasicMaterial({color:0xFFFF00});
+  
+  
+  this.clusterHulls = [];
+  clusterLoop:
+  for(var i = 0; i<clusters.length;i++) {
+    var clus = clusters[i];
+    clus._index = i;
+
+    var chits = hitassn[i]; // Look up in the association table
+    var points = [];
+    for(var ihit=0;ihit<chits.length;ihit++) {
+      var hid = chits[ihit];
+      var h = hits[hid];
+      if(h.plane == this.plane) {
+        points.push( [ this.WireToU(h.wire), h.t ] );        
+      } else {
+        continue clusterLoop;  // Give up on this cluster; go to the next one.
+      }
+    }
+    var hull = GeoUtils.convexHull(points);
+    var poly = [];
+    var vertices = [];
+    var shape = new THREE.Shape();
+    shape.moveTo( hull[hull.length-1][0][0], hull[hull.length-1][0][1]);
+    for(var ihull=0;ihull<hull.length;ihull++) {
+      var u = hull[ihull][0][0];
+      var v = hull[ihull][0][1];
+      shape.lineTo(u,v);
+    }
+    var rgb = (new ColorScaleIndexed(i+1)).GetColorValues();
+    var hex = rgb[0]<<16 + rgb[1]<<8 + rgb[2];
+    
+    var geo = new THREE.ShapeBufferGeometry(shape);
+    var mat = new THREE.MeshBasicMaterial({color:hex});
+    var mesh = new THREE.Mesh(geo,mat);
+    mesh.name = clus._pointer;
+    mesh.userData = {
+      hover_material  : this.cluster_hover_material,
+      select_material : this.cluster_select_material,
+    }
+    this.cluster_group.add(mesh);    
+  }
+
+
+  this.scene.add(this.cluster_group);
+  this.UpdateClusters();
+  this.UpdateVisibilities();
+}
+
+WireViewGL.prototype.UpdateClusters = function()
+{
+  if(!this.cluster_group) return this.CreateClusters();
+  this.cluster_group.scale.y =  gGeo.drift_cm_per_tick;  
+  var offset_hit_time = 0;
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );  
+  this.cluster_group.position.y =  offset_hit_time*gGeo.drift_cm_per_tick;  
+}
+  
+  
+  
+///////////////////////////
+// Endpoint 2d  FIXME UNTESTED
+//////////////////////////
+
+
+WireViewGL.prototype.CreateEndpoint2d = function()
+{
+  this.endpoint2d_material =  this.endpoint2d_material || new THREE.MeshBasicMaterial({color: 0xff8c00});
+  this.endpoint2d_hover_material =  this.endpoint2d_hover_material || new THREE.MeshBasicMaterial({color: 0xff0000});
+  this.endpoint2d_select_material = this.endpoint2d_select_material || new THREE.MeshBasicMaterial({color: 0xff0000});
+
+  var endpoints = GetSelected("endpoint2d");
+  if(!endpoints.length) return;
+
+  if(this.endpoint2d_group) {
+    this.scene.remove(this.endpoint2d_group);
+    // FIXME dispose geometry
+  }
+  this.endpoint2d_group = new THREE.Group();
+
+  for(var i=0;i<endpoints.length;i++) {
+      var pt = endpoints[i];
+      pt._index = i;
+      if(pt.plane != this.plane) continue;
+      
+      var u = this.WireToU(pt.wire);
+      var v = pt.t;
+      var r = 5; // cm
+      
+      var geo = new THREE.CircleBufferGeometry(r);
+      var mesh = new THREE.Mesh(geo,this.endpoint2d_material);
+      mesh.position.x = u;
+      mesh.position.y = v;
+      mesh.position.z = 12;
+      
+      mesh.name = pt._pointer;
+      mesh.userData = {
+        hover_material  : this.endpoint2d_hover_material,
+        select_material : this.endpoint2d_select_material,
+      }
+      this.endpoint2d_group.add(mesh);          
+  }
+
+  this.scene.add(this.endpoint2d_group);
+  this.UpdateEndpoint2d();
+  this.UpdateVisibilities();
+};
+
+WireViewGL.prototype.UpdateEndpoint2d = function()
+{
+  if(!this.endpoint2d_group) return;
+  this.endpoint2d_group.scale.y =  gGeo.drift_cm_per_tick;  
+  var offset_hit_time = 0;
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );  
+  this.endpoint2d_group.position.y =  offset_hit_time*gGeo.drift_cm_per_tick;  
+}
+
+
+///////////////////////////
+// Spacepoints
+///////////////////////////
+
+///////////////////////////
+// Showers
+///////////////////////////
+
+///////////////////////////
+// MC
+///////////////////////////
+WireViewGL.prototype.CreateMC = function()
+{  
+  if(this.mc_group) {
+    this.scene.remove(this.mc_group);
+    for(thing of this.mc_group.children) thing.geometry.dispose(); // delete old ones.
+  }
+  this.mc_group = new THREE.Group();
+  this.mc_group.name = "mc";
+  // 
+  var particles = GetSelected("mcparticles");
+  if(particles.length==0) return;
+  
+  // this.mc_material
+  // this.mc_neutral_material
+  // this.mc_hover_material
+  // this.mc_select_material
+
+  // Deal with these in Update. 
+  var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
+  var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
+  if(move_t0) console.warn('moving mc t0');
+  
+  // console.warn("Drawing MC",particles.length);
+  var nparticles = particles.length;
+  // if(nparticles>10) nparticles=10;
+  for(var i=0;i<nparticles;i++)
+  {
+    var p= particles[i];
+    if(!p.trajectory || p.trajectory.length<2) continue;
+    
+    // compile points
+    var pts = [];
+    // var t0 = 3200;
+    // if(move_t0 && p.trajectory.length>0) t0 = 3200+ p.trajectory[0].t/500.0; // 500 ns per tick.
+    var lastu = 1e99; var lastv = 1e99
+    for(var j=0;j<p.trajectory.length-1;j++) {
+      var point = p.trajectory[j];
+      var u = gGeo.yzToTransverse(this.plane,point.y,point.z);
+      var v = point.x;
+      var d = (u-lastu)*(u-lastu) + (v-lastv)*(v-lastv);
+      if(d>gGeo.wire_pitch*gGeo.wire_pitch)
+        pts.push(u,point.x,0); 
+    }
+    var point = p.trajectory[p.trajectory.length-1];
+    pts.push(gGeo.yzToTransverse(this.plane,point.y,point.z),point.x,0); // Push the last point
+    
+    var pdg = Math.abs(p.fpdgCode);
+    var neutral = (pdg == 22 || pdg == 2112 || pdg == 12 || pdg == 14 || pdg == 16);
+    if(neutral) continue;
+    var mat = (neutral) ? this.mc_material : this.mc_neutral_material; 
+    
+    var geometry = new THREE.LineGeometry();
+    geometry.setPositions(pts);
+    geometry.raycast_fast = true; // Just take the first segment hit when raycasting.
+    var threeobj = new THREE.Line2(geometry, mat);
+    threeobj.userData = {
+      default_material: mat,
+      hover_material:   this.mc_hover_material,
+      select_material: this.mc_select_material,
+      neutral: neutral,
+      t: p.trajectory[0].t
+    }    
+    // Make it findable again.
+    threeobj.name = p._pointer;    
+    threeobj.raycast_fast = true;
+    // Set timing property correctly
+    threeobj.position.y = this.offset_track; // shift by the offset. 
+    threeobj.position.z = 20; // level of mc.
+    // threeobj.matrixAutoUpdate=false; // Don't auto-compute each time. I'll tell you when your coords change
+    threeobj.updateMatrix();     // Oh, they changed.
+    this.mc_group.add(threeobj);
+  }
+  var yshift = 3200*gGeo.drift_cm_per_tick;
+  this.mc_group.position.y = yshift
+  
+  this.scene.add(this.mc_group);
+  this.UpdateMC();
+  this.UpdateVisibilities();
+  this.dirty=true;
+  this.Render();
+    
+};
+
+WireViewGL.prototype.UpdateMC = function()
+{
+  if(!this.mc_group) return;
+  var show_neutrals = this.GetBestControl(".show-mc-neutrals").checked;
+  var move_t0 =       this.GetBestControl(".ctl-mc-move-tzero").checked;
+
+  if(show_neutrals) this.mc_neutral_material.opacity = 0;
+  else              this.mc_neutral_material.opacity = 1;
+  this.mc_neutral_material.needsUpdate = true;
+  
+  var yshift = 3200*gGeo.drift_cm_per_tick;
+  for(var obj of this.mc_group.children) {
+    // Shift by this particles's t0. Note that it's 500 ns per tick, and t is in ns
+    obj.position.y = (move_t0) ? (gGeo.drift_cm_per_tick*obj.userData.t/500) : 0
+    if(obj.userData.neutral) 
+      obj.visible = show_neutrals;
+  }
+}
+
+
+
+///////////////////////////
+// UserTrack (DrawdEdXPath)
+///////////////////////////
 
 

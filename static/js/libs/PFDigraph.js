@@ -25,7 +25,7 @@ function PFDigraph( element )
    
   // gStateMachine.BindObj("mcChange",this,"Build");
   gStateMachine.Bind("change-pfparticles",this.NewRecord.bind(this));
-  $(this.element).resize( function(ev){ self.NewRecord(); });                                               
+  $(this.element).resize( function(ev){ this.NewRecord.bind(this); });                                               
   gStateMachine.BindObj('hoverChange',this,"HoverChanged");
  
   $('#ctl-switch-to-pandora').click(function(){

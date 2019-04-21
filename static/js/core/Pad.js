@@ -710,7 +710,8 @@ Pad.prototype.MagnifierDraw = function(arg)
   this.mag_scale = 1.0;
   this.magnifying = false;
   this.DrawOne(this.min_u, this.max_u, this.min_v, this.max_v, arg);
-  if((this.fMouseInContentArea) && ($('#ctl-magnifying-glass').is(':checked')) )
+  var ctl_glass = document.getElementById("ctl-magnifying-glass").checked;
+  if((this.fMouseInContentArea) && ctl_glass )
   {
     if(this.fMousePos.x < this.origin_x) return;
     if(this.fMousePos.y > this.origin_y) return;

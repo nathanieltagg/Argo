@@ -115,7 +115,6 @@ function WireView( element, options )
   gStateMachine.Bind('hoverChange',  this.HoverChange.bind(this) );
   gStateMachine.Bind('selectChange', this.Draw.bind(this) );
   gStateMachine.Bind('hitChange',    this.TrimHits.bind(this) );
-  gStateMachine.Bind('timeCutChange',this.TrimHits.bind(this) );
   
   gStateMachine.BindObj("colorWireMapsChanged",this,"Draw"); // Callback when wire image loads
   if(this.zooming) gStateMachine.BindObj('zoomChange',this,"Draw");
@@ -240,6 +239,7 @@ WireView.prototype.NewPiece = function()
    this.ntdc = 9600;
  };
 
+
 WireView.prototype.RebuildHits = function()
 {
   this.myHits = [];
@@ -249,10 +249,14 @@ WireView.prototype.RebuildHits = function()
   var hits = GetSelected("hits");
   // Go through gHits, and find hits that match our view.
   for(var i=0;i<hits.length;i++) {
-    if(hits[i].plane == this.plane) this.myHits.push(hits[i]);
+    if(hits[i].plane == this.plane) 
+    {
+      this.myHits.push(hits[i]);
+    }
   }
   this.TrimHits();
-};
+  
+ };
 
 
 WireView.prototype.TrimHits = function()
@@ -358,7 +362,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
       this.DrawShowers(min_u,max_u, min_v, max_v, fast);
     }
 
-    if ($(this.ctl_show_mc).is(":checked")) {
+    if  ($(this.GetBestControl(".show-mcparticles")).is(":checked")) {
       this.DrawMC(min_u,max_u, min_v, max_v, fast);
     }  
 
@@ -411,7 +415,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   
   // Remove clipping region, then:
   this.DrawPmts();
-
+  
   // this.ClearOverlays();
   // this.ctxs[1].fillStyle="green";
   // this.ctxs[1].fillRect(0,0,100,100);
@@ -705,8 +709,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
     if(dx<1.5) dx = 1.5;  //exaggerate
     if(dy<1.5) dy = 1.5; 
     c = gHitColorScaler.GetColor(h.c);
-
-
+    
     if(doHitSum){
       var delu = u - this.fMousePos.u;
       var delv = v - this.fMousePos.v;
@@ -739,7 +742,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
   }
   
   if(hoverVisHit) {
-    // console.warn("hoverhit!",hoverVisHit);
+     console.warn("hoverhit!",hoverVisHit);
       h = hoverVisHit;
       u = h.u;
       v = h.v;         

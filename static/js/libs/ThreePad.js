@@ -88,8 +88,9 @@ function ThreePad(element, options )
     mouse_pan_u        : true,
     mouse_pan_v        : true,
     
-    overlay_background_color: 'rgba(255,255,255,0.75)'
+    overlay_background_color: 'rgba(255,255,255,0.9)',
     
+    animate: false
   }
   $.extend(true,defaults,options);
   ABoundObject.call(this, element, defaults); // Give settings to ABoundObject contructor.
@@ -144,6 +145,12 @@ function ThreePad(element, options )
   // Object picking via raycaster.
   this.raycaster = new THREE.Raycaster();
   
+  if(this.animate) {
+    // Render is a no-op. Instead, we animate!
+    this.AnimationRender();
+  }
+  else this.Render = this.DoRender;
+  
   // Resizing.
   var self = this;
   $(this.element).resize(function(ev){
@@ -171,6 +178,13 @@ function ThreePad(element, options )
   $(this.element).on('touchout.'  +this.NameSpace, fn);
 }
 
+ThreePad.prototype.AnimationRender = function()
+{
+  requestAnimationFrame(this.AnimationRender.bind(this));
+  // if(this.dirty)
+     this.DoRender();
+}
+
 ThreePad.prototype.CreateMagnifyingGlass = function()
 {
   // Create a magnifying glass object.
@@ -189,16 +203,9 @@ ThreePad.prototype.CreateMagnifyingGlass = function()
   lens.name="lens";
   this.magnifying_glass.add(lens);
 
-
-  // var rim_geo = new THREE.Geometry();
-  // for (var i = 0; i <= segmentCount; i++) {
-  //     var theta = (i / segmentCount) * Math.PI * 2;
-  //     rim_geo.vertices.push(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
-  // }
-
   var rim_geo = new THREE.CircleGeometry(1,32);
   rim_geo.vertices.shift();
-  var rimmat = new THREE.LineBasicMaterial( { linewidth:3,color: 0x0000FF, opacity: 1.0} );
+  var rimmat = new THREE.LineBasicMaterial( { linewidth:3,color: 0x000000, opacity: 1.0} );
   var rim = new THREE.LineLoop( rim_geo, rimmat );
   rim.layers.set(30);
   rim.name="rim";
@@ -208,7 +215,7 @@ ThreePad.prototype.CreateMagnifyingGlass = function()
   // this.magnifying_glass = new THREE.Mesh( geometry, material );
   this.magnifying_glass.position.z=999; // mus  t be on TOP
   // this.magnifying_glass.visible=false;
-  this.scene.add( this.magnifying_glass );
+  // this.scene.add( this.magnifying_glass );
   
   // Create the magnifier camera.
   this.magnifier_camera = new THREE.OrthographicCamera(-1,1,1,-1,0,2000);
@@ -331,7 +338,7 @@ function BoundedPlaneBufferGeometry(x1,x2,y1,y2)
 	// build geometry
 	b.setIndex( indices );
 	b.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-	//b.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+	b.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 	b.addAttribute( 'uv', new THREE.Float32BufferAttribute( uvs, 2 ) );
   
   return b;
@@ -589,14 +596,15 @@ ThreePad.prototype.CameraChanged = function(newframe, finished) {
 }
 
   
-
-
 ThreePad.prototype.Render = function()
+{}
+
+
+ThreePad.prototype.DoRender = function()
 {
   // console.time("ThreePad.Render()");
   if(this.fMouseInContentArea && this.fMagnifierOn && ($('#ctl-magnifying-glass').is(':checked')))  {
-    this.magnifying_glass.visible = true; // Turn it on (affects main camera only, b/c layers)
-
+    
     //this.magnifying_glass.visible = false; // turn off the magnifying glass. // handled by layers
     // Set the camera.
     
@@ -636,9 +644,10 @@ ThreePad.prototype.Render = function()
     this.resolution.set(this.width,this.height);
     this.UpdateResolution();
     
-    // this.magnifying_glass.visible = true; // turn on the magnifying glass for the final render
+    // Add to scene for main render
+    this.scene.add(this.magnifying_glass);
   } else {
-    this.magnifying_glass.visible = false; // turn off the magnifying glass.
+   
   }
   // The normal render.
   // console.time("mainrender");
@@ -647,6 +656,7 @@ ThreePad.prototype.Render = function()
   // console.timeEnd("mainrender");
   // this.magnifying_glass.visible = false; // turn off the magnifying glass following render.
 
+  this.scene.remove(this.magnifying_glass); // remove it if it's still there.
   // console.timeEnd("ThreePad.Render()");
   if(this.overlay_dirty) this.DrawOverlay();
 }
@@ -658,12 +668,10 @@ ThreePad.prototype.Render = function()
 ThreePad.prototype.GetX = function(u)
 {
   return (this.WorldToScreen({x:u,y:0})).x;  
-  return (u-this.camera.position.x+this.camera.left)/(this.camera.right-this.camera.left)*this.width;    
 }
 ThreePad.prototype.GetY = function(v)
 {
   return (this.WorldToScreen({x:0,y:v})).y  
-  return this.height - (v-this.camera.position.y+this.camera.bottom)/(this.camera.top-this.camera.bottom)*this.height;
 }
 
 

@@ -192,6 +192,8 @@ function FalseColorControl( element  )
   function forceTab(id) {
     var index = $('a[href="#'+id+'"]',self.top_element).parent().index();
     $(self.top_element).tabs('option', 'active', index);
+    self.build_LUT_texture();
+    self.Draw();
   }
   // Set up initial tab.
   forceTab("falsecolor-Rainbow");
@@ -202,7 +204,6 @@ function FalseColorControl( element  )
     console.warn("changing to default scheme",nm);
     forceTab(nm);
   });
-  this.build_LUT_texture()
 }
 
 FalseColorControl.prototype.ControlAdjusted = function()

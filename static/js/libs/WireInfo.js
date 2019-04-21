@@ -62,20 +62,20 @@ WireInfo.prototype.NewRecord = function()
 };
 
 
-function getEncodedPngVal(imgdata, x)
+function getEncodedPngVal(data, x)
 {
   var i = Math.floor(x);
-  var r = imgdata.data[i*4];
-  var g = imgdata.data[i*4+1];
+  var r = data[i*4];
+  var g = data[i*4+1];
   // var b = imgdata.data[i*4+2];
   return (r*256 + g) - 0x8080;
 }
 
 
-function getEncodedPngValNoise(imgdata, x)
+function getEncodedPngValNoise(data, x)
 {
   var i = Math.floor(x);
-  var b = imgdata.data[i*4+2];
+  var b = data[i*4+2];
   if(b>=0xff) return 0; // This indicates dead zone, usually around a recob::Wire ROI deadzone or a SN deadzone
   
   return b - 0x80;
@@ -92,9 +92,12 @@ function getEncodedExtraData(imgdata)
 }
 
 
+
+
+// this version uses the giant offscreen ctx provided by the TiledImageCanvas
 WireInfo.prototype.GetWireDataHistograms = function( offScreenCtx, channel, tdc, n)
 {
-  console.log("GetWireDataHistogram",channel,tdc,n);
+  // console.log("GetWireDataHistogram",channel,tdc,n);
   if(isNaN(channel)) return;
   if(isNaN(tdc)) return;
   var y = channel;
@@ -105,16 +108,18 @@ WireInfo.prototype.GetWireDataHistograms = function( offScreenCtx, channel, tdc,
   if(x2>width) {x1 = width - n;}
   var x2 = x1 + n;
 
-  var retval = getEncodedExtraData(imgdata);
+  // var retval = getEncodedExtraData(imgdata.data);
+  retval = {};
   retval.raw=          new Histogram(n,x1,x2);
   retval.noise=        new Histogram(n,x1,x2); 
   retval.noiseremoved= new Histogram(n,x1,x2);
 
   // Pull a single horizontal line from the png.
   var imgdata = offScreenCtx.getImageData(x1,y,x2-x1,1);
+  // console.log("imgData ",imgdata.data);
   for(var i=0;i<x2-x1;i++) {
-    var d = getEncodedPngVal(imgdata,i);
-    var s = getEncodedPngValNoise(imgdata,i);
+    var d = getEncodedPngVal(imgdata.data,i);
+    var s = getEncodedPngValNoise(imgdata.data,i);
     retval.raw.SetBinContent(i,d);
     retval.noise.SetBinContent(i,s);
     retval.noiseremoved.SetBinContent(i,d-s);
@@ -122,6 +127,128 @@ WireInfo.prototype.GetWireDataHistograms = function( offScreenCtx, channel, tdc,
   return retval;
   
 };
+
+
+// This version uses giant imgdata prestored in the mapper. Fast, but has a big memory hit I think.
+WireInfo.prototype.GetWireDataHistograms2 = function( mapper, channel, tdc, n)
+{
+  // console.log("GetWireDataHistogram",channel,tdc,n);
+  if(isNaN(channel)) return;
+  if(isNaN(tdc)) return;
+  var y = channel;
+  var x1 = Math.round(tdc - n/2);
+  var x2 = x1+n;
+  
+  var imgdata1 = [];
+  var imgdata2 = [];
+  for(var irow=0;irow<mapper.tile_urls.length;irow++) {
+    for(var icol=0;icol<mapper.tile_urls[irow].length;icol++) {
+      var elem = mapper.tile_urls[irow][icol];
+      var data = mapper.tile_rawdata[irow][icol];
+      if( !(data) ) continue;
+      console.log(x1,y,elem);
+      if(y>=elem.y && y<elem.y+elem.height) {
+        if(x1 >= elem.x && x1 < elem.x + elem.width) {
+          // Start in this image.
+          var n1 = Math.min(n, elem.width+elem.x-x1);
+          var istart = 4*(y-elem.y)*data.width + 4*(x1-elem.x);
+          var istop = istart + n1*4;
+          console.log("found start",x1,x2,y,elem,istart,istop)
+          imgdata1 = data.data.slice(istart,istop);
+        }
+        if(x2 >= elem.x && x2 < elem.x + elem.width && x1 < elem.x) {
+          // second half in this image. start on left side, fill remaining
+          var istart = 4*(y-elem.y); 
+          var istop = istart + (x2-elem.x)*4;
+          imgdata2 = data.data.slice(istart,istop);
+        }
+      }
+      
+    }
+  }
+  var data = new Uint8ClampedArray(imgdata1.length + imgdata2.length);
+  data.set(imgdata1);
+  data.set(imgdata2, imgdata1.length);
+  // var data = imgdata1.concat(imgdata2);
+  // console.log("rawdata ",data);
+  
+  // var retval = getEncodedExtraData(imgdata);
+  var retval = {};
+  retval.raw=          new Histogram(n,x1,x2);
+  retval.noise=        new Histogram(n,x1,x2); 
+  retval.noiseremoved= new Histogram(n,x1,x2);
+
+  // Pull a single horizontal line from the png.
+  for(var i=0;i<data.length;i++) {
+    var d = getEncodedPngVal(data,i);
+    var s = getEncodedPngValNoise(data,i);
+    retval.raw.SetBinContent(i,d);
+    retval.noise.SetBinContent(i,s);
+    retval.noiseremoved.SetBinContent(i,d-s);
+  }
+  return retval;
+  
+};
+
+// This version uses giant imgdata prestored in the mapper. Fast, but has a big memory hit I think.
+WireInfo.prototype.GetWireDataHistograms3 = function( mapper, channel, tdc, n)
+{
+  // console.log("GetWireDataHistogram",channel,tdc,n);
+  if(isNaN(channel)) return;
+  if(isNaN(tdc)) return;
+  var y = channel;
+  var x1 = Math.round(tdc - n/2);
+  var x2 = x1+n;
+  
+  var imgdata1 = [];
+  var imgdata2 = [];
+  for(var irow=0;irow<mapper.tile_urls.length;irow++) {
+    for(var icol=0;icol<mapper.tile_urls[irow].length;icol++) {
+      var elem = mapper.tile_urls[irow][icol];
+      var canvas = mapper.tile_canvases[irow][icol];
+      if( !(canvas) ) continue;
+      if(y>=elem.y && y<elem.y+elem.height) {
+        if(x1 >= elem.x && x1 < elem.x + elem.width) {
+          // Start in this image.
+          var n1 = Math.min(n, elem.width+elem.x-x1);
+          var id = canvas.getContext('2d',{willReadFrequently:true})
+                          .getImageData(x1-elem.x,y-elem.y,n1,1);
+          if(id) imgdata1=id.data;
+        }
+        if(x2 >= elem.x && x2 < elem.x + elem.width && x1 < elem.x) {
+          // second half in this image. start on left side, fill remaining
+          var id = canvas.getContext('2d',{willReadFrequently:true})
+                          .getImageData(0,y-elem.y,x2-elem.x,1);
+          if(id) imgdata2=id.data;
+        }
+      }
+      
+    }
+  }
+  // console.log("rawdata ",imgdata1,imgdata2);
+  var data = new Uint8ClampedArray(imgdata1.length + imgdata2.length);
+  data.set(imgdata1);
+  data.set(imgdata2, imgdata1.length);
+  // var data = imgdata1.concat(imgdata2);
+  
+  // var retval = getEncodedExtraData(imgdata);
+  var retval = {};
+  retval.raw=          new Histogram(n,x1,x2);
+  retval.noise=        new Histogram(n,x1,x2); 
+  retval.noiseremoved= new Histogram(n,x1,x2);
+
+  // Pull a single horizontal line from the png.
+  for(var i=0;i<data.length;i++) {
+    var d = getEncodedPngVal(data,i);
+    var s = getEncodedPngValNoise(data,i);
+    retval.raw.SetBinContent(i,d);
+    retval.noise.SetBinContent(i,s);
+    retval.noiseremoved.SetBinContent(i,d-s);
+  }
+  return retval;
+  
+};
+
 
 WireInfo.prototype.Draw = function()
 {
@@ -166,24 +293,41 @@ WireInfo.prototype.Draw = function()
   
   
   if(!showgraph) return;
+  
+  
   // Pull a single horizontal line from the png into the histogram
-  var offscreenCtx;
   var show_image = $(this.ctl_wireimg_type).filter(":checked").val();
   var image_name = GetSelectedName("wireimg");
-  var tiled_canvas = (((gRecord || {}).wireimg || {})[image_name] || {})._tiled_canvas || {};
-  if( tiled_canvas.loaded ) {
-    offscreenCtx = tiled_canvas.ctx;
-    if(image_name.includes("recob::Wire")) this.graph.ylabel="Deconvoluted ADC";    
-    if(image_name.includes("raw::RawDigit")) this.graph.ylabel="Raw ADC";    
-  } else return;
 
-  this.graph.hists = [];
-  this.graph.colorscales = [];
-  var maxwire = gGeo.numWires(plane);
-  this.graph.max_v = -1e9;
-  this.graph.min_v =  1e9;
+  // var offscreenCtx;
+  // var tiled_canvas = (((gRecord || {}).wireimg || {})[image_name] || {})._tiled_canvas || {};
+  // if( tiled_canvas.loaded ) {
+  //   offscreenCtx = tiled_canvas.ctx;
+  //   if(image_name.includes("recob::Wire")) this.graph.ylabel="Deconvoluted ADC";
+  //   if(image_name.includes("raw::RawDigit")) this.graph.ylabel="Raw ADC";
+  // } else return;
+  //
+  // this.graph.hists = [];
+  // this.graph.colorscales = [];
+  // var maxwire = gGeo.numWires(plane);
+  // this.graph.max_v = -1e9;
+  // this.graph.min_v =  1e9;
+  //
+  // this.graph_data = this.GetWireDataHistograms(offscreenCtx,chan,tdc,100);
   
-  this.graph_data = this.GetWireDataHistograms(offscreenCtx,chan,tdc,100)
+
+  var mapper = null;
+
+  var wname = GetSelectedName("wireimg");
+  var wireimg = (((gRecord || {})["wireimg"]        || {})[wname] || {});
+  var wlowres = (((gRecord || {})["wireimg-lowres"] || {})[wname] || {});
+  if      (wireimg._glmapper) {mapper = wireimg._glmapper; }
+  else if (wlowres._glmapper) {mapper = wlowres._glmapper; }
+
+  if(!mapper) return;
+  this.graph_data = this.GetWireDataHistograms3(mapper,chan,tdc,100);
+  
+
 
   if($('#ctl-gl-edge-finder').is(":checked")) {
     for(var i=0;i<this.graph_data.noiseremoved.n;i++) {

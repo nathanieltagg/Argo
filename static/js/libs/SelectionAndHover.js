@@ -34,13 +34,15 @@ var gLastSelectState = new Datum();
 
 
 function ChangeHover( datum )
-{
+{  
   if(!datum) {ClearHover(); return;}
   
   if(gHoverState.obj!=datum.obj) {
+    
     gLastHoverState = $.extend({},gHoverState);  // make copy
+    
     gHoverState = datum;     // make copy
-
+    
     console.log("HoverChange:",datum);
     gStateMachine.Trigger("hoverChange");
   }
@@ -433,14 +435,17 @@ HoverInfo.prototype.Draw = function ()
       if(!assn.length) continue;
       h+= other + " [";
       var ln = assn.length;
-      if(ln>12) ln == 10;
-      for(var k=0;k<ln;k++) {
-        var txt = assn[k];
-        var link = "selectByDescription('"+other+"',"+txt+");";
-        h+= "<span class='onclickfn' onclick=\"" + link +"\">" + txt + "</span> ";
-        // h+= txt + " ";
+      if(ln>5) {
+        h += ln + " objects;"
+      } else {
+        for(var k=0;k<ln;k++) {
+          var txt = assn[k];
+          var link = "selectByDescription('"+other+"',"+txt+");";
+          h+= "<span class='onclickfn' onclick=\"" + link +"\">" + txt + "</span> ";
+          // h+= txt + " ";
+        }
+        if(ln<assn.length) h+= " ..."+ (assn.length-ln) + " more..." ;          
       }
-      if(ln<assn.length) h+= " ..."+ (assn.length-ln) + " more..." ;
       h+= "]</br>";
     }
   }

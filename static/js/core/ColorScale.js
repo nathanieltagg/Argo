@@ -38,7 +38,13 @@ function ColorScale( )
 
 ColorScale.prototype.GetColor = function(i)
 {
-  return "0,0,0";
+  return this.GetColorValues(i).join(','); //Stringify.
+};
+
+
+ColorScale.prototype.GetColorValues = function(i)
+{
+  return [0,0,0];
 };
 
 ColorScale.prototype.GetSelectedColor = function(x)
@@ -71,11 +77,16 @@ ColorScaleRGB.prototype = new ColorScale();
 ColorScaleRGB.prototype.constructor = ColorScaleRGB;
 function ColorScaleRGB( r,g,b ) {
   ColorScale.call(this);
+  this.rgb = [r,g,b];
   this.color = String(parseInt(r)+","+parseInt(g)+","+parseInt(b));
 }
 ColorScaleRGB.prototype.GetColor = function(x)
 {
     return this.color;
+};
+ColorScaleRGB.prototype.GetColorValues = function(x)
+{
+    return this.rbg;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -88,23 +99,25 @@ ColorScaleIndexed.prototype.constructor = ColorScaleIndexed;
 function ColorScaleIndexed( n ) 
 {
   ColorScale.call(this);
-  if(n===0) 
-    this.color = "0,0,0";
-  else if(n===1)
-    this.color = "255,0,0";  
-  else if(n===2)
-     this.color = "0,255,0"; 
-  else if(n===3)
-    this.color = "0,0,255";  
-  else {
+  if(n===0) {
+    this.rgb = [0,0,0];
+  }else if(n===1){
+    this.rgb = [255,0,0];
+  }else if(n===2){
+    this.rgb = [0,255,0];
+  }else if(n===3){
+    this.rgb = [0,0,255];
+  }else {
       var s = new ColorScaleRedBlue();
-      this.color = s.GetColor((n-3)/10);
+      this.rgb = s.GetColorValues((n-3)/10);
   }
+  this.color = this.rgb.join(',');
 }
-ColorScaleIndexed.prototype.GetColor = function(x)
+
+ColorScaleIndexed.prototype.GetColorValues = function(x)
 {
-    return this.color;
-};
+  return this.rgb;
+}
 
   
 
@@ -120,8 +133,7 @@ function ColorScaleRedBlue()
 {
   ColorScale.call(this);  
 }
-
-ColorScaleRedBlue.prototype.GetColor = function(y) 
+ColorScaleRedBlue.prototype.GetColorValues = function(y) 
 {
   var s,l,h,xx,yy,r,b,g;
   // saturation, lightness, hue:
@@ -134,9 +146,9 @@ ColorScaleRedBlue.prototype.GetColor = function(y)
   r = 255*hToC(xx, yy, h + 1 / 3);
   g = 255*hToC(xx, yy, h);
   b = 255*hToC(xx, yy, h - 1 / 3);
-  
-  return String(parseInt(r)+","+parseInt(g)+","+parseInt(b));
-};
+  return [parseInt(r),parseInt(g),parseInt(b)];
+}
+
 ColorScaleRedBlue.prototype.GetHoverColor = function(x)
 {
   return "50,50,50";
@@ -164,16 +176,8 @@ function ColorScaleBrownPurple()
   
 }
 
-ColorScaleBrownPurple.prototype.GetColor = function(y) 
+ColorScaleBrownPurple.prototype.GetColorValues = function(y) 
 {
-  // function interp(inx,x,y) {
-  //   for(var i=1;i<x.length;i++) {
-  //     if(inx >= x[i-1]) {
-  //       return (inx-x[i-1])/(x[i]-x[i-1])*(y[i]-y[i-1])+y[i-1];
-  //     }
-  //   }
-  // }
-
   var d,r,g,b,i;
 
   for(i=1;i<this.bp_stops.length;i++) {
@@ -184,9 +188,13 @@ ColorScaleBrownPurple.prototype.GetColor = function(y)
       b = this.bp_b[i-1] + d*(this.bp_b[i]-this.bp_b[i-1]);
     }
   }
-   return String(parseInt(r*255)+","+parseInt(g*255)+","+parseInt(b*255)); 
+  return [parseInt(r*255),parseInt(g*255),parseInt(b*255)];
    //my version return String(parseInt(b*200)+","+parseInt(r*200)+","+parseInt(g*200)); 
 };
+
+
+
+
 ColorScaleBrownPurple.prototype.GetHoverColor = function(x)
 {
   return "0,0,255";
@@ -221,7 +229,7 @@ function PhilipColorScale()
   
 }
 
-PhilipColorScale.prototype.GetColor = function(y) 
+PhilipColorScale.prototype.GetColorValues = function(y) 
 {
   function interp(inx,x,y) {
     for(var i=1;i<x.length;i++) {
@@ -241,8 +249,10 @@ PhilipColorScale.prototype.GetColor = function(y)
       b = this.bp_b[i-1] + d*(this.bp_b[i]-this.bp_b[i-1]);
     }
   }
-     return String(parseInt(r*250)+","+parseInt(g*250)+","+parseInt(b*250)); 
+  return [parseInt(r*250),parseInt(g*250),parseInt(b*250)]; 
 };
+
+
 PhilipColorScale.prototype.GetHoverColor = function(x)
 {
   return "0,0,255";
@@ -271,11 +281,11 @@ function ColorScaleGray()
 {
   ColorScale.call(this);
 }
-
-ColorScaleGray.prototype.GetColor = function(y) 
+ColorScaleGray.prototype.GetColorValues = function(y) 
 {
   var v = (1-y)*0.9;
-  return String(parseInt(v*255)+","+parseInt(v*255)+","+parseInt(v*255)); 
+  
+  return [parseInt(v*255),parseInt(v*255),parseInt(v*255)]; 
 };
 ColorScaleGray.prototype.GetHoverColor = function(x)
 {
@@ -303,7 +313,7 @@ function CurtColorScale()
   
 }
 
-CurtColorScale.prototype.GetColor = function(y) 
+CurtColorScale.prototype.GetColorValues = function(y) 
 {
   function interp(inx,x,y) {
     for(var i=1;i<x.length;i++) {
@@ -323,8 +333,7 @@ CurtColorScale.prototype.GetColor = function(y)
       b = this.bp_b[i-1] + d*(this.bp_b[i]-this.bp_b[i-1]);
     }
   }
-   return String(parseInt(r*255)+","+parseInt(g*255)+","+parseInt(b*255)); 
-   //my version return String(parseInt(b*200)+","+parseInt(r*200)+","+parseInt(g*200)); 
+  return [parseInt(r*255),parseInt(g*255),parseInt(b*255)];
 };
 CurtColorScale.prototype.GetHoverColor = function(x)
 {
@@ -341,22 +350,23 @@ CurtColorScale.prototype.GetSelectedColor = function(x)
 // HueColorScale
 // Just use hsv
 /////////////////////////////////////////////////////////////////////////////////
-HueColorScale.prototype = new ColorScale();
+HueColorScale.prototype = Object.create(ColorScale.prototype);
+HueColorScale.prototype.constructor = HueColorScale;
+
 function HueColorScale(brightness,phase)
 {
   this.brightness = (brightness===null)?0.95:brightness;
   this.phase =      (phase===null)?0.15:phase;
 }
 
-HueColorScale.prototype.GetColor = function(y) 
+HueColorScale.prototype.GetColorValues = function(y) 
 {
   var h = (y+this.phase)%1.0;
   var s = 0.9;
   var v = this.brightness;
   
   var rgb = hsvToRgb(h,s,v);
-  var st= Math.round(rgb[0])+","+Math.round(rgb[1])+","+Math.round(rgb[2]);
-  return st;
+  return [ Math.round(rgb[0]), Math.round(rgb[1]), Math.round(rgb[2])];
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -375,7 +385,7 @@ function BetterHueColorScale(brightness)
   ];
 }
 
-BetterHueColorScale.prototype.GetColor = function(y) 
+BetterHueColorScale.prototype.GetColorValues = function(y) 
 {
   y+=0.5;
   var row = y*(this.hsv_stops.length);
@@ -388,9 +398,7 @@ BetterHueColorScale.prototype.GetColor = function(y)
   var s = c1[1] + (c2[1]-c1[1])*drow;
   var l = this.brightness; //c1[2] + (c2[2]-c1[2])*drow;
   var rgb = hsvToRgb(h,s,l);
-  var st= Math.round(rgb[0])+","+Math.round(rgb[1])+","+Math.round(rgb[2]);
-  // console.log('betterhue',y,row,h,s,l,st);
-  return st;
+  return [Math.round(rgb[0]),Math.round(rgb[1]),Math.round(rgb[2])];
 };
 
 
@@ -422,14 +430,17 @@ ColorScaler.prototype.SetScale = function(sel)
   }
 };
 
-ColorScaler.prototype.GetColor = function(x) { 
+ColorScaler.prototype.GetColorValues = function(x) { 
   var y;
   if(x < this.min) y=0;
   else if(x >= this.max) y = 1;
   else y = (x-this.min)/(this.max-this.min);
-  return this.colorScale.GetColor(y); 
-};
+  return this.colorScale.GetColorValues(y);
+}
 
+ColorScaler.prototype.GetColor = function(x) {
+  return this.GetColorValues(x).join(',');
+}
 ColorScaler.prototype.GetSelectedColor = function(x) { 
   return this.colorScale.GetSelectedColor(x); 
 };

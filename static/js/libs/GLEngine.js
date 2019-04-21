@@ -220,6 +220,8 @@ GLMapper.prototype.StartLoad = function()
   this.tile_images = [];
   this.tile_textures = [];
   this.tile_3textures = [];
+  this.tile_rawdata = [];
+  this.tile_canvases = [];
   
   console.time("GLMapper.StartLoad",this._type,this._name);
   var self = this;
@@ -254,6 +256,8 @@ GLMapper.prototype.StartLoad = function()
     var imagerow = [];
     var texturerow = [];
     var threetexturerow =[];
+    var datarow = [];
+    var canvasrow  = [];
     for(var icol=0;icol<row.length;icol++) {
       this.num_images_needed++
       
@@ -267,7 +271,10 @@ GLMapper.prototype.StartLoad = function()
       threetex.wrapS     = THREE.ClampToEdgeWrapping;
       threetex.wrapT     = THREE.ClampToEdgeWrapping;
       threetexturerow.push(threetex);
-
+      
+      datarow.push(null);
+      canvasrow.push(document.createElement('canvas'));
+      
       imagerow.push(img);
       texturerow.push(this.gl.createTexture());
       (function(){  // Make a closure to copy the values of irow and icol
@@ -284,6 +291,8 @@ GLMapper.prototype.StartLoad = function()
     this.tile_images.push(imagerow);
     this.tile_textures.push(texturerow);
     this.tile_3textures.push(threetexturerow);
+    this.tile_rawdata.push(datarow);
+    this.tile_canvases.push(canvasrow);
   }
   
 }
@@ -323,16 +332,21 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
   var elem = this.tile_urls[jrow][jcol];
   var img = this.tile_images[jrow][jcol];
   var tex = this.tile_textures[jrow][jcol];
-  
-  // this.tile_3textures[jrow][jcol].magFilter = THREE.NearestFilter;
-  // this.tile_3textures[jrow][jcol].minFilter = THREE.NearestFilter;
-  // this.tile_3textures[jrow][jcol].wrapS     = THREE.ClampToEdgeWrapping;
-  // this.tile_3textures[jrow][jcol].wrapT     = THREE.ClampToEdgeWrapping;
-  
-
+  var canvas = this.tile_canvases[jrow][jcol];
+    
+  // This is all we need in three.js, which is cool:
   this.tile_3textures[jrow][jcol].needsUpdate = true;
-  // Load the texture...
+
+  // This code pre-loads all raw binary waveform data into arrays. Not sure this is worth it.
+
+  canvas.width = elem.width;
+  canvas.height = elem.height;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(img,0,0);
+  // this.tile_rawdata[jrow][jcol] = ctx.getImageData(0,0,elem.width,elem.height);
+  // this.tile_canvases[jrow][jcol] = null; // delete canvas after done.
   
+  // Load the texture...  
   this.gl.activeTexture(this.gl.TEXTURE0); // Set active unit
   this.gl.bindTexture(this.gl.TEXTURE_2D,tex); // bind our texture to the unit.
   

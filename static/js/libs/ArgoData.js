@@ -99,17 +99,19 @@ function GotPiece(o)
     jsonpointer.walk(o.piece,doi,null,3); 
   console.timeEnd("pointerindex"); 
 
-  
+  // Problem: if we request the same piece twice, we should get identical data.
+  // However, any existing object references will now all be stale! 
+  // Two solutions: either only use object jsonpointer, OR disallow overcopy.
   for(n1 in o.piece) {
     gRecord[n1] = gRecord[n1] || {}
     for(n2 in o.piece[n1]) {
       console.log("GotPiece",n1,n2);
-      gRecord[n1][n2] = o.piece[n1][n2];
+      if(!gRecord[n1][n2]) // disallow overcopy
+        gRecord[n1][n2] = o.piece[n1][n2];
     }
   }
   // gStateMachine.Trigger('newPiece',o.piece); // Add the piece to the trigger call, so that consumers can look to see if they need to change.
-  gStateMachine.Trigger('newPiece');
-  
+  gStateMachine.Trigger('newPiece');  
   
 }
 
