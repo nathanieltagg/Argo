@@ -113,6 +113,9 @@ function WireViewGL(element, options )
   $('#ctl-shift-hits-value').change(this.UpdateClusters.bind(this));
   gStateMachine.Bind('toggle-clusters',this.UpdateVisibilities.bind(this) ); 
   
+  // spacepoints
+  gStateMachine.Bind('change-spacepoints', this.CreateSpacepoints.bind(this) );  
+  gStateMachine.Bind('toggle-spacepoints',        this.UpdateVisibilities.bind(this) );  
   
   // mc
   gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
@@ -130,11 +133,18 @@ function WireViewGL(element, options )
     this.mc_material          = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: false} ),
     this.mc_neutral_material  = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: true} ),
     this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
-    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),
-      
-  ]; // need update.
-
+    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),      
+  ]; 
+  // Line materials all need to know the window size.
   for(var mat of this.line_materials) mat.resolution = this.resolution;
+
+
+  this.point_materials = [
+    this.spacepoint_material = new THREE.PointsMaterial( { size:2, color: 0x009696 } ),
+    this.spacepoint_hover_material = new THREE.PointsMaterial( { size:3, color: 0xff0000 } ),
+    this.spacepoint_select_material = new THREE.PointsMaterial( { size:3, color: 0xffff00 } ),    
+  ];
+
 }
 
 
@@ -197,6 +207,9 @@ WireViewGL.prototype.HoverAndSelectionChange = function()
   // Hits are not independent objects. 
   if(gLastHoverState.type=='hit'||gHoverState.type=='hit'||gLastSelectState.type=="hit"||gSelectState.type=="hit")
     this.HoverAndSelectionChange_Hits();
+
+  if(gLastHoverState.type=='spacepoints'||gHoverState.type=='spacepoints'||gLastSelectState.type=="spacepoints"||gSelectState.type=="spacepoints")
+    this.HoverAndSelectionChange_Spacepoints();
 
 
   // This ordering ensures we get it right
@@ -472,6 +485,7 @@ WireViewGL.prototype.UpdateVisibilities = function()
   setVis(this.cluster_group  ,   ".show-clusters");
   setVis(this.endpoint2d_group  ,   ".show-endpoint2d");
   setVis(this.mc_group  ,   ".show-mcparticles");
+  setVis(this.spacepoints_group  ,   ".show-spacepoints");
   this.dirty=true;
   this.Render();
 }
@@ -551,9 +565,11 @@ WireViewGL.prototype.DoMouse = function(ev)
       if(ptr && ptr.startsWith('/')){
         var path = jsonpointer.parse(ptr);
         // If I put a product_indices array in the object, use it to further specify the json path to the product.
-        // See hit creator.
+        // See hit creator and spacepoint creator
         if(obj.userData && obj.userData.product_indices) {
-          var index = obj.userData.product_indices[intersect.faceIndex];
+          var index = null;
+          if(intersect.faceIndex) index = obj.userData.product_indices[intersect.faceIndex];
+          if(intersect.index )    index = obj.userData.product_indices[intersect.index];
           ptr+="/"+index;
           path.push(index);
         }
@@ -893,6 +909,80 @@ WireViewGL.prototype.UpdateEndpoint2d = function()
 ///////////////////////////
 // Spacepoints
 ///////////////////////////
+WireViewGL.prototype.CreateSpacepoints = function()
+{
+  var sps = GetSelected("spacepoints");
+  if(!sps.length) return;
+  if(this.spacepoints_group) {
+    this.scene.remove(this.spacepoints_group);
+    for(thing of this.spacepoints_group.children) thing.geometry.dispose(); // delete old ones.
+  }
+  
+  this.spacepoints_group = new THREE.Group();
+
+
+  var positions=[];
+  var product_indices = []; // One per face, to hold a the hit index
+  for(var i = 0; i<sps.length;i++) {
+    var sp = sps[i];
+    var u = gGeo.yzToTransverse(this.plane,sp.xyz[1],sp.xyz[2]);
+    var v = sp.xyz[0];
+    positions.push(u,v,0);
+    product_indices.push(i);
+  }
+  var geometry = new THREE.BufferGeometry();
+  geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+  geometry.computeBoundingSphere();
+  var points = new THREE.Points( geometry, this.spacepoint_material );
+  points.name=sps._pointer;
+  points.userData = {
+    product_indices: product_indices
+  };
+  this.spacepoints_group.add(points);
+
+  // overlay for selections.
+  positions = [0,0,0];
+  geometry = new THREE.BufferGeometry();
+  geometry.addAttribute('position',  new THREE.Float32BufferAttribute( positions, 3 ));
+  this.spacepoint_hover_threeobj  = new THREE.Points(geometry, this.spacepoint_hover_material );
+  this.spacepoint_select_threeobj = new THREE.Points(geometry, this.spacepoint_select_material );
+  this.spacepoint_hover_threeobj.visible=false;
+  this.spacepoint_select_threeobj.visible=false;
+  this.spacepoint_hover_threeobj.position.z=1;
+  this.spacepoint_select_threeobj.position.z=2;
+  
+  this.spacepoints_group.add(this.spacepoint_hover_threeobj);
+  this.spacepoints_group.add(this.spacepoint_select_threeobj);
+  
+  this.spacepoints_group.position.z = 40; 
+  
+  this.scene.add( this.spacepoints_group );   
+};
+
+WireViewGL.prototype.HoverAndSelectionChange_Spacepoints = function()
+{
+  // Draw or remove  highlight points.
+  
+  var sp = gHoverState.obj;
+  if(gHoverState.type=='spacepoints' ) {
+    this.spacepoint_hover_threeobj.visible=true;
+    this.spacepoint_hover_threeobj.position.x = gGeo.yzToTransverse(this.plane,sp.xyz[1],sp.xyz[2]);
+    this.spacepoint_hover_threeobj.position.y = sp.xyz[0];    
+  } else {
+    this.spacepoint_hover_threeobj.visible = false;
+  }
+  
+  sp = gSelectState.obj;
+  if(gSelectState.type=='spacepoints' ) {
+    this.spacepoint_select_threeobj.visible=true;
+    this.spacepoint_select_threeobj.position.x = gGeo.yzToTransverse(this.plane,sp.xyz[1],sp.xyz[2]);
+    this.spacepoint_select_threeobj.position.y = sp.xyz[0];    
+  } else {
+    this.spacepoint_select_threeobj.visible = false;
+  }
+}
+
+
 
 ///////////////////////////
 // Showers
