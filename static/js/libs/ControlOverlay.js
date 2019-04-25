@@ -61,7 +61,6 @@ function ControlOverlay( element )
   var element_settings_obj={};
   if(element_settings) {
     eval( "var element_settings_obj = { " + element_settings + '};'); // override from 'settings' attribute of html object.
-    // console.log(element_settings, element_settings_obj);
     $.extend(true,this,element_settings_obj); // Change default settings by provided overrides.
   }
   this.bar_ul = $('.data-product-bar ul',this.element);
@@ -100,23 +99,19 @@ ControlOverlay.prototype.NewRecord = function()
 
 ControlOverlay.prototype.NewPiece = function(piece)
 {
-  // console.log("ControlOverlay::NewPiece()");
   function simpleName(prod){ if(prod.includes('__')) return prod.split('_')[1]; else return prod; }
   function nameToTitle(prod){ var v = prod.split('_'); return "Type: "+v[0] + " Name: " + v[1] + " Process: " + v[3]; };
   function noColons(prod) {return prod.replace(/:/g,'');}
-  // console.warn("ControlOverlay Got a new piece",piece);
   
   // Called when a new piece arrives
   if(gRecord.manifest){
     if(this.waiting_for_manifest) {
       this.waiting_for_manifest = false;
       this.event_descriptor = gRecord.event_descriptor;
-      // console.log("ControlOverlay: New manifest",this.event_descriptor,gRecord.event_descriptor);
       this.bar_ul.empty();
       var bar_ul = this.bar_ul;
 
       function add_type(_type) {
-        console.log(_type);
         var elem = $('<li></li>').data("product-type",_type).addClass("product-type").hide();
 
         // var label = $('<label><label>').addClass('unretrieved').addClass('product-type').text(_type).data('product-type',_type); // move all labels to input.
@@ -186,7 +181,6 @@ ControlOverlay.prototype.NewPiece = function(piece)
       
     }
   } else {
-    console.log("No Skeleton");
   }
   
   // Now look at the actual content. Look for new things by seeing if they've already been marked as retrieved.
@@ -203,7 +197,6 @@ ControlOverlay.prototype.NewPiece = function(piece)
     for(var _name in gRecord[_type]) {
       if(_name.startsWith('_')) continue; // skip my index properites.
       
-      console.log("ControlOverlay: inspecting ",_type,_name);
       var item = $("input.product-name",product_type_elem).filter(function(){return $(this).data('product-name')==_name;});
       if(item.length==0) {
         // This wasn't in the manifest!
@@ -213,7 +206,6 @@ ControlOverlay.prototype.NewPiece = function(piece)
       if(!item.hasClass('retrieved')) {
         n_new++;
         // This is a new piece.
-        console.log("ControlOverlay: registered new item in the gRecord",_type,_name)
         item.removeClass('unretrieved').removeClass("pending").addClass('retrieved');
         if(GetSelectedName(_type)==_name) gStateMachine.Trigger('change-'+_type); // Make sure an event fires so that views see it's there now.
       }
@@ -221,7 +213,6 @@ ControlOverlay.prototype.NewPiece = function(piece)
     }
     
     var n_pending = $("input.product-name.pending",product_type_elem).length;
-    console.warn("pending check",_type,n_pending);
     if(n_pending == 0) product_type_input.removeClass("pending");
     if(n_new>0) {
       // Turn on the product label.
@@ -240,7 +231,6 @@ ControlOverlay.prototype.NewPiece = function(piece)
 
 ControlOverlay.prototype.Click = function(a,b,c)
 {
-  console.log("Click",a,b,c);
 }
 
 ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
@@ -248,7 +238,6 @@ ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
   // Toggle this type of thing on/off
   var tgt = $(ev.currentTarget);
   var _type = tgt.data('product-type');
-  console.log("OnChangeProductType",_type);
 
   // FIXME better logic:
   // Do we have one selected and loaded?  use it (Simple on/off toggle)
@@ -257,7 +246,6 @@ ControlOverlay.prototype.OnChangeProductTypeToggle = function(ev)
 
   function load_name(_name) {
     // if(!_name) debugger;
-    console.log("OnChangeProductTypeToggle is triggering load of type",_type,"product",_name);
     var product_type_input =  $("input.product-name").filter(function(){return $(this).data('product-name')==_name;});
     product_type_input.prop('checked',true).trigger("change");  
   }

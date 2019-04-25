@@ -395,7 +395,6 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 
 GLMapper.prototype.build_LUT_texture = function( ) 
 { 
-  
   // Creates an OpenGl texture, returns the texture ID.
   // This version builds a 2d 256x256 texture.
   // Colors go top-to-bottom (most sigificant changes) and left-to-right (least significant)

@@ -240,7 +240,7 @@ FalseColorControl.prototype.NewRecord = function()
   gWireColorPedestalWidthCut  = parseFloat($('input.psuedoPedWidthCutoff',this.top_element).val());
   
   this.Draw();
-  // gGLEngine.build_LUT_canvas(this.cs,-4066,4096,$('.checkCanvas').get(0));
+  this.build_LUT_texture();
 };
 
 
@@ -308,7 +308,6 @@ FalseColorControl.prototype.MakeHist = function( )
 FalseColorControl.prototype.Draw = function( )
 {
   // this.log_y = $(this.ctl_histo_logscale).is(":checked");
-  
   this.Clear();
   this.DrawFrame();
   
@@ -428,7 +427,6 @@ FalseColorControl.prototype.DoMouse = function( ev )
 
 FalseColorControl.prototype.build_LUT_texture = function( ) 
 { 
-  
   // Creates an OpenGl texture, returns the texture ID.
   // This version builds a 2d 256x256 texture.
   // Colors go top-to-bottom (most sigificant changes) and left-to-right (least significant)
@@ -458,7 +456,7 @@ FalseColorControl.prototype.build_LUT_texture = function( )
     imgData.data[i+0]= color.r;
     imgData.data[i+1]= color.g;
     imgData.data[i+2]= color.b;
-    imgData.data[i+3]= color.a;
+    imgData.data[i+3]= color.a*255;
   }
   // ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.
   ctx.putImageData(imgData,0,112); // Shift up 7/16ths to center it correctly.  

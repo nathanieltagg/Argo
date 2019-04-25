@@ -49,6 +49,8 @@ function ZoomRegion() {
     if(low === undefined) low = 0;
     if(high === undefined) high = 9600;
     this.tdc=[low,high];
+    if(isNaN(this.tdc[0]) || isNaN(this.tdc[1])) debugger;
+    
     if($('.ctl-lock-aspect-ratio:checked').length>0) {
       
       var newWireWidth = (high-low) / (gGeo.fTdcWirePitch * this.wireview_aspect_ratio);    
@@ -99,6 +101,7 @@ function ZoomRegion() {
       var centerTdc = (this.tdc[0] + this.tdc[1])/2;
       this.tdc[0] = centerTdc - newTDCHalfWidth;
       this.tdc[1] = centerTdc + newTDCHalfWidth;    
+      if(isNaN(this.tdc[0]) || isNaN(this.tdc[1])) debugger;
     }
   };
   

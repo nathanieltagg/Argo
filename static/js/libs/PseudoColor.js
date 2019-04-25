@@ -83,17 +83,24 @@ PseudoColor.prototype.ColorDialToColor = function( colorDial )
 PseudoColor.prototype.ColorDialToCtxColor = function( colorDial )
 {
   var c = this.ColorDialToColor(colorDial);
-  return "rgb("+
+  return "rgba("+
                         parseInt(c.r)+","+
                         parseInt(c.g)+","+
-                        parseInt(c.b)+")";
+                        parseInt(c.b)+","+
+                        (c.a || 1.0)+")";
 }
 
 PseudoColor.prototype.interpolate = function(x) {
   var dial = this.AdcToColorDial(x);
   var c = this.ColorDialToColor(dial);
   c.x = x;
-  c.a = 255.0;
+  // trial:
+  if(Math.abs(x)<20) c.a = 0;
+    // c.r = c.g = c.b = 255;
+  // var trans = Math.abs(x)/20;
+     // c.a = Math.min(trans,1.0);
+  
+  c.a = ('a' in c) ? c.a : 1.0;
   return c;
 };
 
@@ -118,7 +125,8 @@ function PsuedoRainbow( )
 PsuedoRainbow.prototype.ColorDialToColor = function( colorDial )
 {
   var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
-  return this.HSVtoRGB(hue,this.saturation,1.0);  
+  var rgb = this.HSVtoRGB(hue,this.saturation,1.0);  
+  return rgb;
 }
 
 ///////////////////////////////////////////

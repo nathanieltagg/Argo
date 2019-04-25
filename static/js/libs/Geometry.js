@@ -93,11 +93,35 @@ OpDetGeo.prototype.pathYZ = function(ctx, type)
 
 
 
+function TpcGeo()
+{
+  this.xrange = [0,256.35];
+  this.yrange = [-116.5,116.5];
+  this.zrange = [0,1036.8];
+}
+
+TpcGeo.prototype.getCenter = function()
+{
+  this.xcenter = this.xcenter || (this.xrange[0]+this.xrange[1])/2;
+  this.ycenter = this.ycenter || (this.yrange[0]+this.yrange[1])/2;
+  this.zcenter = this.zcenter || (this.zrange[0]+this.zrange[1])/2;
+  return [this.xcenter, this.ycenter, this.zcenter];
+}
+TpcGeo.prototype.getWidths = function()
+{
+  this.xwidth = this.xwidth || (this.xrange[1]-this.xrange[0]);
+  this.ywidth = this.ywidth || (this.yrange[1]-this.yrange[0]);
+  this.zwidth = this.zwidth || (this.zrange[1]-this.zrange[0]);
+  return [this.xwidth, this.ywidth, this.zwidth];
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 
 function Geometry()
 {
+  // Most important things:
+  this.wire_pitch = 0.3; // 3mm/wire = 0.3 cm per wire.
   this.kU = [kcos60, -ksin60];
   this.kV = [kcos60,  ksin60];
 
@@ -113,11 +137,14 @@ function Geometry()
 
   // X distance from origin of wire planes 0,1,2.
   this.wirePlaneX = [0,0.270,0.521];
+  this.tpc = new TpcGeo();
   
-  this.wire_pitch = 0.3; // 3mm/wire = 0.3 cm per wire.
 }
 
-
+Geometry.prototype.getTpc = function(itpc)
+{
+  return this.tpc;
+}
 
 Geometry.prototype.wireCrossing = function(geoWire1,geoWire2)
 {
@@ -400,7 +427,7 @@ Geometry.prototype.SetHV = function(hv, temperature)
     this.drift_cm_per_tick = vd/2.0;  // 2.0 Mhz per tick
     
     // (0.3 cm/wire) / (0.081 cm/tdc)
-    this.fTdcWirePitch = 0.3/ this.drift_cm_per_tick; // tdc per wire.
+    this.fTdcWirePitch = this.wire_pitch/ this.drift_cm_per_tick; // tdc per wire.
     
 };
 

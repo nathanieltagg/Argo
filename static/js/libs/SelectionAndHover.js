@@ -60,9 +60,9 @@ function ClearHover()
 
 function ClearSelection( )
 {
-  var old = (gSelectState.obj != null); 
+  gLastSelectState = $.extend({},gSelectState);
   gSelectState = new Datum();
-  if(old) gStateMachine.Trigger("selectChange");
+  gStateMachine.Trigger("selectChange");
   
 }
 
@@ -71,7 +71,7 @@ function ChangeSelection( datum )
   if(!datum.obj) { ClearSelection(); return; }
   if(datum.obj && datum.obj==gSelectState.obj) {
     // Untoggle.
-    gLastSelectState = gSelectState;
+    gLastSelectState = $.extend({},gSelectState);
     gSelectState = new Datum();
   } else {
     gLastSelectState = gSelectState;

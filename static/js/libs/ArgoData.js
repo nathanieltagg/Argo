@@ -11,23 +11,22 @@ var gPageStartTime=Date.now();
 
 function RecieveData(o)
 {
-  console.warn("RecieveData",Object.keys(o));
   if("progress" in o) {
     $('.progress-status').text(o.state);
     $('table.progress-log').append("<tr><td>"+((Date.now()-gPageStartTime)/1000).toFixed(1)+" s</td><td>"+o.state+"</td></tr>")
-    console.log("onmessage PROGRESS",o);
+    // console.log("onmessage PROGRESS",o);
     // $('#main-circleprogress').circleProgress('value', o.progress*100);
     // $('#main-circleprogress strong').html(o.state+"<br/>"+parseInt(o.progress*100)+'%');
     
   }
   else if("piece" in o) {
-    console.warn("piece with components",Object.keys(o.piece));
+    // console.warn("piece with components",Object.keys(o.piece));
     gServing = o;
     GotPiece(o);
     // $('#main-circleprogress').circleProgress('value', 0);
     // $('#main-circleprogress strong').html("Moving data over network"+"<br/>"+0+'%');
   }else if("record" in o) {
-    console.warn("full record",Object.keys(o.record));
+    // console.warn("full record",Object.keys(o.record));
     gServing = o;
     GotRecord(o);
     // $('#main-circleprogress').circleProgress('value', 0);
@@ -80,12 +79,11 @@ function GotPiece(o)
 {
   // NB Oliver Steele pattern for nested objects
   // const name = ((user || {}).personalInfo || {}).name;
-  console.log("GotPiece",o);
   if(!o.event_descriptor) console.error("No event description in piece",o);
   if(!o.piece) console.error("No piece in piece!");
   gRecord = gRecord || {};
   if(gRecord.event_descriptor != o.event_descriptor) {
-    console.warn("New event seen!",gRecord,o);
+    // console.warn("New event seen!",gRecord,o);
     gRecord = {event_descriptor:o.event_descriptor};
     gStateMachine.Trigger('newRecord');
     
@@ -93,11 +91,8 @@ function GotPiece(o)
   indexArraysIn(o.piece);
     
   // add a json pointer to objects up to the depth level.
-  console.log("pointerindex",o.piece); 
-  console.time("pointerindex"); 
     function doi(obj,p) { if(obj) obj._pointer=p; } 
     jsonpointer.walk(o.piece,doi,null,3); 
-  console.timeEnd("pointerindex"); 
 
   // Problem: if we request the same piece twice, we should get identical data.
   // However, any existing object references will now all be stale! 
@@ -105,7 +100,6 @@ function GotPiece(o)
   for(n1 in o.piece) {
     gRecord[n1] = gRecord[n1] || {}
     for(n2 in o.piece[n1]) {
-      console.log("GotPiece",n1,n2);
       if(!gRecord[n1][n2]) // disallow overcopy
         gRecord[n1][n2] = o.piece[n1][n2];
     }
@@ -131,8 +125,6 @@ function SetHV()
 function AutoFitHitTrackOffsets()
 {
   // attempt to figure out the high voltage setting, and hit/track offsets from the data.
-  console.warn('AutoFitHitTrackOffsets');
-
   console.time("AutoFitHitTrackOffsets");
   
   // Requires hits
@@ -158,7 +150,6 @@ function AutoFitHitTrackOffsets()
   if(gRecord.tracks && gRecord.associations) {
     for( trkname in gRecord.tracks ) {
       if(trkname.startsWith('_')) continue; // skip my index properites.
-      console.warn(trkname);
       if( gRecord.associations[trkname]) {
         var types = Object.keys(gRecord.associations[trkname]);
         var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
@@ -170,7 +161,6 @@ function AutoFitHitTrackOffsets()
             if(hit.t>max_all_tdc) max_all_tdc = hit.t;
           }
           
-          console.warn(hitname);
           for(var itrk = 0; itrk<gRecord.tracks[trkname].length; itrk++) {
             trk = gRecord.tracks[trkname][itrk];
             var min_x = 1e99;

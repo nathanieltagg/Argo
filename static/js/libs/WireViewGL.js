@@ -1,6 +1,6 @@
 "use strict";
 //
-// Code for the ARgo Event Display
+// Code for the Argo Event Display
 // Author: Nathaniel Tagg ntagg@otterbein.edu
 // 
 // Licence: this code is free for non-commertial use. Note other licences may apply to 3rd-party code.
@@ -8,17 +8,14 @@
 // you're free to modify and use it as you like.
 //
 
-///
-/// Boilerplate:  Javascript utilities for MINERvA event display, codenamed "Argo"
-/// Nathaniel Tagg  - NTagg@otterbein.edu - June 2009
-///
-
-
 //
 // 'Main' scripts for argo.html
 // Used to be in 'head', but it was too unwieldly.
 //
 /*jshint laxcomma:true */
+
+
+// To do: Shift-select
 
 var gWireViewGL = [];
 
@@ -72,25 +69,23 @@ function WireViewGL(element, options )
   
   // simple visibility toggling.
   gStateMachine.Bind('toggle-wireimg',       this.UpdateVisibilities.bind(this) ); 
-  gStateMachine.Bind('toggle-tracks',        this.UpdateVisibilities.bind(this) ); 
+  gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) ); 
   
 
   // updates to things:
-  gStateMachine.Bind('change-wireimg',       this.UpdateWireimg.bind(this,false) ); 
-  gStateMachine.Bind('colorWireMapsChanged', this.UpdateWireimg.bind(this,false) ); 
+  // Tracks
   this.ctl_track_shift        =  this.GetBestControl(".track-shift-window");
   this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
+  gStateMachine.Bind('change-tracks',  this.CreateTracks.bind(this,false) );
   $(this.ctl_track_shift)       .change( this.UpdateTracks.bind(this) );
   $(this.ctl_track_shift_value) .change( this.UpdateTracks.bind(this) );
-  gStateMachine.Bind('driftChange', this.UpdateWireimg.bind(this) );  // REbuild since geometry is shot.
   gStateMachine.Bind('driftChange', this.UpdateTracks.bind(this) );  // REbuild since geometry is shot.
-  gStateMachine.Bind('driftChange', this.UpdateHits.bind(this) );  // REbuild since geometry is shot.
-
+  gStateMachine.Bind('toggle-tracks', this.UpdateVisibilities.bind(this) );  
   
-  // Changes to data products  
-  gStateMachine.Bind('change-wireimg', this.CreateWireimg.bind(this,false) );  
-  gStateMachine.Bind('change-tracks',  this.CreateTracks.bind(this,false) );
-  gStateMachine.Bind('change-hits',    this.CreateTracks.bind(this,false) );
+  gStateMachine.Bind('change-wireimg',       this.CreateWireimg.bind(this,false) ); 
+  gStateMachine.Bind('colorWireMapsChanged', this.UpdateWireimg.bind(this,false) ); 
+  gStateMachine.Bind('driftChange', this.UpdateWireimg.bind(this) );  // REbuild since geometry is shot.
+  
   
   
   gStateMachine.Bind('zoomChange', this.ZoomChange.bind(this,false) );
@@ -101,10 +96,11 @@ function WireViewGL(element, options )
   
   // hits
   gStateMachine.Bind('change-hits', this.CreateHits.bind(this) );  
+  gStateMachine.Bind('toggle-hits',          this.UpdateVisibilities.bind(this) ); 
   gStateMachine.Bind('hitChange',    this.CreateHits.bind(this) ); // Could be improved: change vertex colors instead of recreation
+  gStateMachine.Bind('driftChange', this.UpdateHits.bind(this) );  // REbuild since geometry is shot.
   $('#ctl-shift-hits')      .change(this.UpdateHits.bind(this));
   $('#ctl-shift-hits-value').change(this.UpdateHits.bind(this));
-  gStateMachine.Bind('toggle-hits',          this.UpdateVisibilities.bind(this) ); 
   
   // clusters
   gStateMachine.Bind('change-clusters', this.CreateClusters.bind(this) );  
@@ -130,6 +126,12 @@ function WireViewGL(element, options )
   this.GetBestControl(".ctl-mc-move-tzero").change(this.UpdateMC.bind(this) );
   gStateMachine.Bind('toggle-mcparticles',this.UpdateVisibilities.bind(this) ); 
   
+  // usertrack
+  this.ctl_dedx_path          =  this.GetBestControl(".dEdX-Path");  
+  $(this.ctl_dedx_path).change( this.UpdateUserTrack.bind(this) );
+  gStateMachine.Bind('userTrackChange',  this.UpdateUserTrack.bind(this) );
+  
+  
   this.line_materials = [
     this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} ),
     this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
@@ -139,7 +141,9 @@ function WireViewGL(element, options )
     this.mc_material          = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: false} ),
     this.mc_neutral_material  = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: true} ),
     this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
-    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),      
+    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),  
+    this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
+        
   ]; 
   // Line materials all need to know the window size.
   for(var mat of this.line_materials) mat.resolution = this.resolution;
@@ -148,11 +152,11 @@ function WireViewGL(element, options )
   this.point_materials = [
     this.spacepoint_material = new THREE.PointsMaterial( { size:2, color: 0x009696 } ),
     this.spacepoint_hover_material = new THREE.PointsMaterial( { size:3, color: 0xff0000 } ),
-    this.spacepoint_select_material = new THREE.PointsMaterial( { size:3, color: 0xffff00 } ),    
+    this.spacepoint_select_material = new THREE.PointsMaterial( { size:3, color: 0xffff00 } ), 
+       
   ];
 
 }
-
 
 // Two sets of coordinates used: XYZ world coordinates (or UVZ), and wire/tdc.
 WireViewGL.prototype.UtoWire = function(u) { return (u+gGeo.transversePlaneOffset(this.plane))/gGeo.wire_pitch; } 
@@ -329,11 +333,6 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
         },
         visible: true
       });
-      // console.log("create segment elem:     ",elem);
-      // console.log("create segment 3d coords:",t_x1,t_x2,t_y1,t_y2);
-      // console.log("create segment wires    :",t_chan_start, t_chan_end);
-      // console.log("create segment tdcs     :",t_tdc_start,t_tdc_end);
-      // console.log(material);
 
       var obj = new THREE.Mesh( geometry, material );
       // Don't name it: we never want to hoverchange on it.
@@ -464,7 +463,6 @@ WireViewGL.prototype.UpdateTracks = function(fast)
 
 WireViewGL.prototype.UpdateVisibilities = function()
 {
-  // console.log("WireViewGL::UpdateVisibilities");
   // Call when a toggle is flipped.
   var self = this;
   function setVis(threeObj,ctlSelector) {    
@@ -480,6 +478,8 @@ WireViewGL.prototype.UpdateVisibilities = function()
   setVis(this.mc_group  ,   ".show-mcparticles");
   setVis(this.spacepoints_group  ,   ".show-spacepoints");
   setVis(this.showers_group  ,   ".show-showers");
+  setVis(this.user_track_group  ,   ".dEdX-Path");
+
   this.dirty=true;
   this.Render();
 }
@@ -507,7 +507,7 @@ WireViewGL.prototype.CreateWireimg = function()
   var y2 = ntdc; //gGeo.drift_cm_per_tick * ntdc; // Set it to the wire height, then scale below!
   
 
-  console.time("build_image_blocks");
+  // console.time("build_image_blocks");
   this.wireimg_group = this.create_image_meshgroup(mapper,
                           gGeo.channelOfWire(this.plane,0),
                           gGeo.channelOfWire(this.plane,nwires),
@@ -516,7 +516,7 @@ WireViewGL.prototype.CreateWireimg = function()
   this.wireimg_group.scale.y =  gGeo.drift_cm_per_tick;
   this.wireimg_group.position.z = this.kz_image;
   this.scene.add(this.wireimg_group);
-  console.timeEnd("build_image_blocks");
+  // console.timeEnd("build_image_blocks");
 }
 
 
@@ -538,71 +538,109 @@ WireViewGL.prototype.DoMouse = function(ev)
   //   this.renderer.render(this.scene, this.camera);  console.warn("RENDER");
   // }
   // Deal with other controls
-  var retval =  ThreePad.prototype.DoMouse.call(this,ev);
-
-  // Object picking for hover or selection
-  if(this.fMouseInContentArea) {
-    var match =  {obj: null, type:"wire"};
-    
-  	this.raycaster.linePrecision=4;
-    this.fMousePos.norm  = new THREE.Vector3(this.fMousePos.x/this.width*2-1, 1-2*this.fMousePos.y/this.height, 1);
-  	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
-    // this.raycast_layers = new THREE.Layers; // set to valid layers. Not required, but leaving
-    var intersects = this.raycaster.intersectObjects(this.scene.children,true);
-    console.log("intersects:",intersects.length,intersects);
-    for(var i=0;i<intersects.length;i++) {
-      var intersect = intersects[i];
-      var obj = intersect.object;
-      // if(!obj.layers.test(this.raycast_layers)) continue; // ignore the magnifier. Obsolete; magnifier removed already
-      var ptr = obj.name;
-      console.log("pick candidate:",obj,ptr);
-      if(ptr && ptr.startsWith('/')){
-        var path = jsonpointer.parse(ptr);
-        // If I put a product_indices array in the object, use it to further specify the json path to the product.
-        // See hit creator and spacepoint creator
-        if(obj.userData && obj.userData.product_indices) {
-          var index = null;
-          if(intersect.faceIndex) index = obj.userData.product_indices[intersect.faceIndex];
-          if(intersect.index )    index = obj.userData.product_indices[intersect.index];
-          ptr+="/"+index;
-          path.push(index);
-        }
-        var product = jsonpointer.get(gRecord,path);
-        if(product) {
-          var type = path[0];
-          switch(path[0]) {
-            case 'tracks': type="track"; break;
-            case 'hits': type="hit"; break;
-          }
-          
-          match =  {obj:product, type:type, pointer:ptr};
-          // canvas pixel coordinates:
-
-          var pt = intersect.point.clone();
-          pt.project(this.camera);
-          
-          match.canvas_coords = new THREE.Vector2(pt.x*this.width/2+this.width/2, 
-                                                  -pt.y*this.height/2+this.height/2)
-          // console.warn("pick:",match);
-          break; // We found the best one.
-        }
-      }
+  if(ev.type === 'mouseup') {
+    if( this.fObjectDragging ) {
+      if(this.fObjectDragging == "UserTrack") gStateMachine.Trigger("userTrackChange");
+      this.fObjectDragging = false;
+      this.UpdateUserTrack();
+      this.dirty=true;
+      
     }
+  }
+  var retval = true;
+  if(!ev.shiftKey && !this.fObjectDragging ) retval =  ThreePad.prototype.DoMouse.call(this,ev);
   
-    var wire = this.UtoWire(this.fMousePos.world.x);
-    if(wire>=0 && wire< gGeo.numWires(this.plane)) (match.channel = gGeo.channelOfWire(this.plane,wire));
-    match.sample  = this.VtoTdc(this.fMousePos.world.y);
-    if(!match.obj) match.obj = match.channel + "|" + match.sample;
-    ChangeHover(match); // match might be null.
-    if(ev.type=="click") { // Click, but not on just ordinary wire
-      var offset = getAbsolutePosition(this.viewport);      
-      if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x, match.canvas_coords.y + offset.y);
-      ChangeSelection(match);
+  // ev.originalEvent.preventDefault();
+  
+  if(this.fObjectDragging) {
+    if(this.fObjectDragging=="UserTrack") {
+      var newWire = this.UtoWire(this.fMousePos.world.x);
+      var newTdc  = this.VtoTdc(this.fMousePos.world.y);
+      // console.warn("DRAG TO", newWire,newTdc);
+      this.fObjectDragged.set_view(this.plane,newWire,newTdc);
+      this.UpdateUserTrack();
+      this.dirty=true;
+    }
+  } else {
+
+
+
+    // Object picking for hover or selection
+    if(this.fMouseInContentArea) {
+    
+    
+      var match =  {obj: null, type:"wire"};
+    
+    	this.raycaster.linePrecision=4;
+      this.fMousePos.norm  = new THREE.Vector3(this.fMousePos.x/this.width*2-1, 1-2*this.fMousePos.y/this.height, 1);
+    	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
+      // this.raycast_layers = new THREE.Layers; // set to valid layers. Not required, but leaving
+      var intersects = this.raycaster.intersectObjects(this.scene.children,true);
+      // console.log("intersects:",intersects.length,intersects);
+      for(var i=0;i<intersects.length;i++) {
+        var intersect = intersects[i];
+        var obj = intersect.object;
+        // if(!obj.layers.test(this.raycast_layers)) continue; // ignore the magnifier. Obsolete; magnifier removed already
+        var ptr = obj.name;
+        // console.log("pick candidate:",obj,ptr);
+        if(ptr && ptr.startsWith('/')){
+          var path = jsonpointer.parse(ptr);
+          // If I put a product_indices array in the object, use it to further specify the json path to the product.
+          // See hit creator and spacepoint creator
+          if(obj.userData && obj.userData.product_indices) {
+            var index = null;
+            if(intersect.faceIndex) index = obj.userData.product_indices[intersect.faceIndex];
+            if(intersect.index )    index = obj.userData.product_indices[intersect.index];
+            ptr+="/"+index;
+            path.push(index);
+          }
+          var product = jsonpointer.get(gRecord,path);
+          if(product) {
+            var type = path[0];
+            switch(path[0]) {
+              case 'tracks': type="track"; break;
+              case 'hits': type="hit"; break;
+            }
+          
+            match =  {obj:product, type:type, pointer:ptr};
+            // canvas pixel coordinates:
+
+            var pt = intersect.point.clone();
+            pt.project(this.camera);
+          
+            match.canvas_coords = new THREE.Vector2(pt.x*this.width/2+this.width/2, 
+                                                    -pt.y*this.height/2+this.height/2)
+            // console.warn("pick:",match);
+            break; // We found the best one.
+          }
+        }
+        if(ptr && ptr.startsWith("usertrackhandle")) {
+          var j = parseInt(ptr.split(' ')[1]);
+          match = { type: "UserTrack", obj: gUserTrack.points[j] };
+          this.fObjectDragged = gUserTrack.points[j];
+          if(ev.type=="mousedown"){
+            this.fObjectDragging = "UserTrack";
+            // console.warn("START DRAG");
+          } 
+          break;
+        }
+      
+      }
+  
+      var wire = this.UtoWire(this.fMousePos.world.x);
+      if(wire>=0 && wire< gGeo.numWires(this.plane)) (match.channel = gGeo.channelOfWire(this.plane,wire));
+      match.sample  = this.VtoTdc(this.fMousePos.world.y);
+      if(!match.obj) match.obj = match.channel + "|" + match.sample;
+      ChangeHover(match); // match might be null.
+      if(ev.type=="click") { // Click, but not on just ordinary wire
+        var offset = getAbsolutePosition(this.viewport);      
+        if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x, match.canvas_coords.y + offset.y);
+        ChangeSelection(match);
+      }
     }
   }
 
   return retval;
-  // if(this.dirty) this.Render(); // done by caller
 }
 
 
@@ -773,9 +811,9 @@ WireViewGL.prototype.CreateClusters = function(lazy)
   var hits = gRecord.hits[hitname];
   if(!hits) return;
 
-  if(lazy && this.cluster_group && this.cluster_group.name == clusters._pointer) {
-    console.warn("not bothering to recreate.")
-  }
+  // if(lazy && this.cluster_group && this.cluster_group.name == clusters._pointer) {
+  //   console.warn("not bothering to recreate.")
+  // }
 
   this.cluster_group = new THREE.Group();
   this.cluster_group.name = clusters._pointer;    
@@ -909,7 +947,7 @@ WireViewGL.prototype.CreateSpacepoints = function()
   if(!sps.length) return;
   if(this.spacepoints_group) {
     this.scene.remove(this.spacepoints_group);
-    for(thing of this.spacepoints_group.children) thing.geometry.dispose(); // delete old ones.
+    for(var thing of this.spacepoints_group.children) thing.geometry.dispose(); // delete old ones.
   }
   
   this.spacepoints_group = new THREE.Group();
@@ -996,8 +1034,8 @@ WireViewGL.prototype.HoverAndSelectionChange_Spacepoints = function()
 WireViewGL.prototype.CreateShowers = function()
 {  
   if(this.showers_group) {
-    scene.remove(this.showers_group);
-    for(thing of this.showers_group.children) thing.geometry.dispose(); // delete old ones.
+    this.scene.remove(this.showers_group);
+    for(var thing of this.showers_group.children) thing.geometry.dispose(); // delete old ones.
   }
   this.shower_material = new THREE.MeshBasicMaterial( { color: 0xff00ff, transparent: true, opacity: 0.5});
   this.shower_hover_material =  new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
@@ -1019,7 +1057,7 @@ WireViewGL.prototype.CreateShowers = function()
     dir.setLength(Length);
     d1.setLength(Length*0.8);
     d2.setLength(Length*0.8);
-    console.log('shower', dir, d1, d2);
+    // console.log('shower', dir, d1, d2);
     var shape = new THREE.Shape();
     shape.moveTo(u,v);
     shape.lineTo(u+d1.x,  v+d1.y);
@@ -1041,6 +1079,7 @@ WireViewGL.prototype.CreateShowers = function()
   this.scene.add(this.showers_group);
   this.UpdateShowers();
 }
+
 WireViewGL.prototype.UpdateShowers = function()
 {
   this.offset_track = 0;
@@ -1061,7 +1100,7 @@ WireViewGL.prototype.CreateMC = function()
 {  
   if(this.mc_group) {
     this.scene.remove(this.mc_group);
-    for(thing of this.mc_group.children) thing.geometry.dispose(); // delete old ones.
+    for(var thing of this.mc_group.children) thing.geometry.dispose(); // delete old ones.
   }
   this.mc_group = new THREE.Group();
   this.mc_group.name = "mc";
@@ -1077,7 +1116,7 @@ WireViewGL.prototype.CreateMC = function()
   // Deal with these in Update. 
   var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
   var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
-  if(move_t0) console.warn('moving mc t0');
+  // if(move_t0) console.warn('moving mc t0');
   
   // console.warn("Drawing MC",particles.length);
   var nparticles = particles.length;
@@ -1165,4 +1204,93 @@ WireViewGL.prototype.UpdateMC = function()
 // UserTrack (DrawdEdXPath)
 ///////////////////////////
 
+WireViewGL.prototype.UpdateUserTrack = function()
+{
+  if(!gUserTrack) return;
+  if(!gUserTrack.points.length) return;
+
+
+  if(!this.user_track_group || gUserTrack.points.length*2-1 != this.user_track_group.children.length) {
+    // rebuild.
+    if(this.user_track_group){
+      this.scene.remove(this.user_track_group);
+      for(var thing in this.user_track_group) thing.geometry.dispose();
+    }
+    this.user_track_group = new THREE.Group();
+    this.user_track_group.name="usertrack";
+    this.user_track_handle_material = this.user_track_handle_material || new THREE.MeshBasicMaterial( { color: 0x00ff00, transparent: true,opacity: 0.7} );
+    this.user_track_joiner_material = this.user_track_joiner_material || new THREE.MeshBasicMaterial( { color: 0xff0000, transparent: true,opacity: 0.3} );
+
+    var circle_geometry = new THREE.CircleBufferGeometry( 1, 32 );
+    var rim_geometry = new THREE.LineGeometry();
+    var rim_coord = [];  
+    for(var i=0;i<32;i++) rim_coord.push(Math.cos(Math.PI*2*i/31),Math.sin(Math.PI*2*i/31), 0);
+    rim_geometry.setPositions(rim_coord);
+
+
+    for(var i=0;i<gUserTrack.points.length;i++)
+    {
+      // create handles
+      var handle = new THREE.Mesh( circle_geometry, this.user_track_handle_material );
+      handle.name = "usertrackhandle "+i;
+
+      var rim = new THREE.Line2(rim_geometry, this.user_track_rim_material );      
+      rim.position.z=0.1;
+      handle.add( rim );
+      
+      this.user_track_group.add( handle );
+      
+      // Create colored region between handles.
+      if(i!=gUserTrack.points.length-1) {
+        var geo = new THREE.BufferGeometry( );
+        var normals  = [0,0,1,0,0,1,0,0,1,0,0,1];
+        var vertices = [0,0,0,0,0,0,0,0,0,0,0,0];
+        geo.setIndex( [ 0,2,1,2,3,1 ]);
+        geo.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+        geo.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );        
+        var joiner = new THREE.Mesh(geo, this.user_track_joiner_material);
+        joiner.name = "usertrackjoiner "+i;
+        this.user_track_group.add( joiner );
+      }      
+    }
+    this.user_track_group.position.z = 100;
+    this.scene.add(this.user_track_group);
+  }
+  
+  // Set handle positions
+  for(var i=0;i<gUserTrack.points.length;i++) {
+    var pt = gUserTrack.points[i];
+    var handle = this.user_track_group.getObjectByName( "usertrackhandle "+i);
+    handle.position.x = this.WireToU(pt[this.plane]);
+    handle.position.y = this.TdcToV(pt.tdc);
+    // console.log(handle.position.y,handle, )
+    var size = 1.5; // cm this.TdcToV(pt.tdc + pt.r)-this.TdcToV(pt.tdc);
+    handle.scale.y = size*this.width/this.height;
+    handle.scale.x = size;
+    // console.log("handle",i,pt,handle,handle.position.x ,handle.position.y)
+  }
+
+  // Set joiner positions
+  for(var i=0;i<gUserTrack.points.length-1;i++) {
+    var a = gUserTrack.points[i];
+    var b = gUserTrack.points[i+1];
+    var joiner = this.user_track_group.getObjectByName( "usertrackjoiner "+i);
+    // build a parallelogram
+    var geo = joiner.geometry
+    var pos = geo.getAttribute( 'position' );
+    var u1 = this.WireToU(a[this.plane]);
+    var u2 = this.WireToU(b[this.plane]);
+    pos.setXY(0, u1, this.TdcToV(a.tdc+pt.r) );
+    pos.setXY(1, u2, this.TdcToV(b.tdc+pt.r) );
+    pos.setXY(2, u1, this.TdcToV(a.tdc-pt.r) );
+    pos.setXY(3, u2, this.TdcToV(b.tdc-pt.r) );
+    geo.setIndex( [ 0,2,1,2,3,1 ]);
+    pos.needsUpdate = true;
+    geo.needsUpdate = true;
+  }
+  this.dirty = true;
+  this.UpdateVisibilities();
+  this.Render();
+  
+}
 

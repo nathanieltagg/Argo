@@ -75,11 +75,11 @@ UserTrackPoint.prototype.set_view = function (plane, wire, tdc)
   var xing = gGeo.wireCrossing(gw1,gw2);
   var thirdplane = 0;
   while(thirdplane==plane || thirdplane== lastplane) thirdplane++;
-  console.warn(plane,wire);
-  console.warn(lastplane, this[lastplane]);
-  console.warn(gw2,xing);
+  // console.warn(plane,wire);
+  // console.warn(lastplane, this[lastplane]);
+  // console.warn(gw2,xing);
   var newwire = gGeo.yzToWire(thirdplane,xing.y,xing.z);
-  console.warn(thirdplane,newwire);
+  // console.warn(thirdplane,newwire);
   this[plane] = wire;
   this[thirdplane] = newwire;
   
@@ -123,7 +123,7 @@ UserTrack.prototype.get_costheta_z = function(wire)
   var dx = xyz[1].x - xyz[0].x;
   var dy = xyz[1].y - xyz[0].y;
   var dz = xyz[1].z - xyz[0].z;  
-  console.warn("Getting XYZ of usertrack",xyz[0],xyz[1]);
+  // console.warn("Getting XYZ of usertrack",xyz[0],xyz[1]);
   var cosz = dz/Math.sqrt(dx*dx + dy*dy + dz*dz);
   return cosz;
 }
@@ -214,12 +214,12 @@ dEdXTool.prototype.Draw = function()
   this.starts = [];
 
   var nsegments = gUserTrack.points.length-1;
-  console.warn("nsegments",nsegments);
+  // console.warn("nsegments",nsegments);
   for(var p=0;p<3;p++) {
     var w2 = Math.ceil(gUserTrack.points[nsegments][p])-1;
     var w1 = Math.ceil(gUserTrack.points[0][p]);
     var nbins = Math.abs(w2-w1);
-    console.warn("binning:", w1,w2, nbins);
+    // console.warn("binning:", w1,w2, nbins);
     this.hists[p] = new Histogram(nbins,w1,w2);
     this.starts[p] = gUserTrack.points[0][p];
   }
@@ -251,7 +251,7 @@ dEdXTool.prototype.Draw = function()
       n++;
     }
   }
-  console.warn("Built dEdX map, ",n,"hits match");
+  // console.warn("Built dEdX map, ",n,"hits match");
 
   var hist = this.hists[2]; // Just do induction plane for now.
   
@@ -447,7 +447,7 @@ dEdXTool.prototype.DrawReferenceCurves = function()
   this.ctx.fill();
   
   var y_avg = (this.ProtonCurve(1,cosz,true) + this.ProtonCurve(1,cosz,false))/2;
-  console.warn("Proton",y_avg);
+  // console.warn("Proton",y_avg);
   this.ctx.fillText("Proton",this.GetX(this.max_u), this.GetY(y_avg));
   
 }

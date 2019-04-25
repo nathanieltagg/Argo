@@ -80,7 +80,6 @@ StateMachine.prototype.SimplifyQueue = function( callstack )
     var add = 1;
     for(var j=0;j<m;j++) {
       if(this.eventQueue[i].trigType===newlist[j].trigType) add = 0;
-      // console.warn("removing from statemachine queue:",this.eventQueue[i]);
     }
     newlist.push(this.eventQueue[i]);
     if(add>0) {}

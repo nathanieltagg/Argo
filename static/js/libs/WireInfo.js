@@ -197,6 +197,7 @@ WireInfo.prototype.GetWireDataHistograms3 = function( mapper, channel, tdc, n)
   if(isNaN(channel)) return;
   if(isNaN(tdc)) return;
   var y = channel;
+  if(x1<0) x1=0;
   var x1 = Math.round(tdc - n/2);
   var x2 = x1+n;
   
@@ -232,13 +233,14 @@ WireInfo.prototype.GetWireDataHistograms3 = function( mapper, channel, tdc, n)
   // var data = imgdata1.concat(imgdata2);
   
   // var retval = getEncodedExtraData(imgdata);
+  var n = data.length/4;
   var retval = {};
   retval.raw=          new Histogram(n,x1,x2);
   retval.noise=        new Histogram(n,x1,x2); 
   retval.noiseremoved= new Histogram(n,x1,x2);
 
   // Pull a single horizontal line from the png.
-  for(var i=0;i<data.length;i++) {
+  for(var i=0;i<n;i++) {
     var d = getEncodedPngVal(data,i);
     var s = getEncodedPngValNoise(data,i);
     retval.raw.SetBinContent(i,d);
@@ -326,8 +328,6 @@ WireInfo.prototype.Draw = function()
 
   if(!mapper) return;
   this.graph_data = this.GetWireDataHistograms3(mapper,chan,tdc,100);
-  
-
 
   if($('#ctl-gl-edge-finder').is(":checked")) {
     for(var i=0;i<this.graph_data.noiseremoved.n;i++) {
