@@ -15,7 +15,7 @@ function DataSource()
   {
     var newstate={
       what:       "file",
-      filename:   $('#inFilename').val(),
+      filename:   $('#inFilename').val().replace(/\n/g,''),
       entry:      0
     };
     if($('#inEntryOrEvent').val()=="Entry") newstate.entry = $('#inFeEntry').val();
