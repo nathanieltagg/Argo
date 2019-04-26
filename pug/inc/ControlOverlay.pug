@@ -115,49 +115,60 @@
     label.tbfill Run:
     span
       input.tbfill.inRun#inRun(type='text',size='8', name='inRun')
+    label.tbfill Subrun:
+    span
+      input.tbfill.inRun#inSubRun(type='text',size='8', name='inSubRun')
     label.tbfill Event:
     input.inEvent#inRunEvent(type='text', size='5', name='inRunEvent', value='0')
-    select#inRunTier.saveable(name='inRunTier')
-      option(value='raw') raw (swizzled)       
-      option(value='crt_swizzled') crt_swizzled         
-      option(value='larlite') larlite              
-      option(value='recolite') recolite             
-      option(value='reconstructed') reconstructed        
-      option(value='root-tuple') root-tuple           
-      option(value='generated') generated            
-      option(value='simulated') simulated            
-      option(value='detector-simulated') detector-simulated   
-      option(value='reconstructed-2d') reconstructed-2d     
-      option(value='reconstructed-3d') reconstructed-3d     
-      option(value='optical-simulated') optical-simulated    
-      option(value='tpc-simulated') tpc-simulated        
-      option(value='overlaid') overlaid             
-      option(value='larcv') larcv                
-      option(value='larcv_wholeview') larcv_wholeview      
-      option(value='larlite_opreco') larlite_opreco       
-      option(value='larlite_reco2d') larlite_reco2d       
-      option(value='larlite_mcinfo') larlite_mcinfo       
-      option(value='larcv_mctruth') larcv_mctruth        
-      option(value='crt') crt                  
-      option(value='larcv_pandora') larcv_pandora        
-      option(value='larlite_pandora') larlite_pandora      
-      option(value='larlite_backtracker') larlite_backtracker  
+    //- select#inRunTier.saveable(name='inRunTier')
+    //-   option(value='raw') raw (swizzled)
+    //-   option(value='crt_swizzled') crt_swizzled
+    //-   option(value='larlite') larlite
+    //-   option(value='recolite') recolite
+    //-   option(value='reconstructed') reconstructed
+    //-   option(value='root-tuple') root-tuple
+    //-   option(value='generated') generated
+    //-   option(value='simulated') simulated
+    //-   option(value='detector-simulated') detector-simulated
+    //-   option(value='reconstructed-2d') reconstructed-2d
+    //-   option(value='reconstructed-3d') reconstructed-3d
+    //-   option(value='optical-simulated') optical-simulated
+    //-   option(value='tpc-simulated') tpc-simulated
+    //-   option(value='overlaid') overlaid
+    //-   option(value='larcv') larcv
+    //-   option(value='larcv_wholeview') larcv_wholeview
+    //-   option(value='larlite_opreco') larlite_opreco
+    //-   option(value='larlite_reco2d') larlite_reco2d
+    //-   option(value='larlite_mcinfo') larlite_mcinfo
+    //-   option(value='larcv_mctruth') larcv_mctruth
+    //-   option(value='crt') crt
+    //-   option(value='larcv_pandora') larcv_pandora
+    //-   option(value='larlite_pandora') larlite_pandora
+    //-   option(value='larlite_backtracker') larlite_backtracker
      
-    select#inRunTrig.saveable(name='inRunTrig')
-      // These are the file types known to have data. Found with samweb list-values, then list-files . Not all are in 'swizzle' stream though
-      option(value='outextunbiased') extunbiased   
-      option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
-      option(value='outextbnb') extbnb        
-      option(value='outbnbunbiased') bnbunbiased   
-      option(value='outbnb') bnb           
-      option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
-      option(value='outextnumi') extnumi       
-      option(value='outnumiunbiased') numiunbiased  
-      option(value='outnumi') numi          
-      option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
-      // <option value='rawnotpc'         >rawnotpc      </option>
-      option(value='outmucs') mucs          
-      option(value='outnotpc') notpc         
+    //- select#inRunTrig.saveable(name='inRunTrig')
+    //-   // These are the file types known to have data. Found with samweb list-values, then list-files . Not all are in 'swizzle' stream though
+    //-   option(value='outextunbiased') extunbiased
+    //-   option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
+    //-   option(value='outextbnb') extbnb
+    //-   option(value='outbnbunbiased') bnbunbiased
+    //-   option(value='outbnb') bnb
+    //-   option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
+    //-   option(value='outextnumi') extnumi
+    //-   option(value='outnumiunbiased') numiunbiased
+    //-   option(value='outnumi') numi
+    //-   option(value='' disabled='disabled') &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;
+    //-   // <option value='rawnotpc'         >rawnotpc      </option>
+    //-   option(value='outmucs') mucs
+    //-   option(value='outnotpc') notpc
+    
+    input#inRunFilenameIncludes.saveable(list="inRunFilenameIncludes-list",name='inRunFilenameIncludes')
+    datalist#inRunFilenameIncludes-list
+      option(value="_bnb_")
+      option(value="_ext_bnb_")
+      option(value="_ext_unbiased_")
+      option(value="_cali_")      
+      option(value="_numi_")
     
     input.ui-state-default.ui-corner-all#go_run(type='button', value='Find Event')
   br

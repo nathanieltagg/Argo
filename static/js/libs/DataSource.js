@@ -30,10 +30,13 @@ function DataSource()
     $.bbq.pushState({
       what: 'run',
       run:   $('#inRun').val(),
+      subrun:$('#inSubRun').val(),
       event: $('#inRunEvent').val(),
-      trig:  $('#inRunTrig').val(),
-      tier:  $('#inRunTier').val(),
-      selection: "EventAuxiliary.id_.event_=="+$('#inRunEvent').val()
+      // trig:  $('#inRunTrig').val(),
+      // tier:  $('#inRunTier').val(),
+      nameinc: $('#inRunFilenameIncludes').val(),
+      selection: "EventAuxiliary.id_.subRun_.run_.run_=="+$('#inRun').val()
+              +"&&EventAuxiliary.id_.run_EventAuxiliary.id_.event_=="+$('#inRunEvent').val()
     },2);
   }
     

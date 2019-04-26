@@ -199,21 +199,42 @@ async function resolve_request(event_req)
     // Do special thing to find by run number
     var run = parseInt(event_req.run);
     if(!run) throw new Error("Run not specified");
+    var subrun = (event_req.subrun) ? "." + parseInt(event_req.subrun) : "";
+    var spec = `file_format artroot and run_number=${run}${subrun}`;
+    
     var event = parseInt(event_req.event);
-    if(!event) throw new Error("Event not specified");
-    var trigtype = event_req.trig || "outbnb";
-    var datatier = event_req.tier || "raw";  // e.g. swizzled
+    if(!event) throw new Error("Event not specified"); // require.
+    spec += ` and first_event<=${event} and last_event>=${event} `;
 
-    //find the file.
-    var spec = `data_tier ${datatier} and data_stream ${trigtype} and run_number=${run} and first_event>=${event} and last_event<=${event} minus ub_blinding.blind true`;
+    if(event_req.nameinc) spec += " and file_name like %" + event_req.nameinc + "%";
+    
+    // not used at present:
+    if(event_req.trig) spec += "(data_stream ${trigtype} or ub_project.stage ${trigtype})"
+
+    // var datatier = event_req.tier || "raw";  // e.g. swizzled
+    spec += ` and (data_tier raw or ub_project.stage merge)`;
+    //
+    // //find the file.
+    // var notblind = "minus ub_blinding.blind true";
+    // var spec = `data_tier ${datatier} and (data_stream ${trigtype} or ub_project.stage ${trigtype}) and run_number=${run}.${subrun} and first_event<=${event} and last_event>=${event} and file_format artroot `;
     var files = [];
     console.log("trying spec:",spec);
     files = await samweb('list-files',spec);
-    if(files.length<1) throw new Error("No files found matching"+spec);
-    if(files[0].length<1) throw new Error("No files found matching"+spec);
+    if(files.length<1) throw new Error("No files found matching "+spec);
+    if(files[0].length<1) throw new Error("No files found matching "+spec);
     console.log("files:",files);
-    var filename = files[0];
-    console.log("found file",filename);
+    
+    // remove empty entries
+    var files2 = files.filter(function (el) {
+      return el.length>0;
+    });
+    console.log("files2:",files2);
+    
+    // Find shortest remaining filename.
+    const shorter = (left, right) => left.length <= right.length ? left : right
+    var filename = files2.reduce(shorter);
+    
+    console.log("trying file",filename);
     loc = await samweb('locate-file',filename);
     console.log("location",loc);
     // if it's an array, get the first one
