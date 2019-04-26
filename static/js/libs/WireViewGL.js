@@ -65,11 +65,17 @@ function WireViewGL(element, options )
   this.renderer.setClearColor( 0xffffff,1);
   this.renderer.render( this.scene, this.camera );
   
+  // Events and triggers:
   
-  
-  // simple visibility toggling.
+  // Wireimg
+  gStateMachine.Bind('change-wireimg',       this.CreateWireimg.bind(this,false) ); 
+  gStateMachine.Bind('colorWireMapsChanged', this.UpdateWireimg.bind(this,false) ); 
+  gStateMachine.Bind('driftChange',          this.UpdateWireimg.bind(this) );  // REbuild since geometry is shot.  
   gStateMachine.Bind('toggle-wireimg',       this.UpdateVisibilities.bind(this) ); 
-  gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) ); 
+  $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
+  $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
+  $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
+  gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) );  // Re-render, but this doesn't require anything more.
   
 
   // updates to things:
@@ -82,15 +88,11 @@ function WireViewGL(element, options )
   gStateMachine.Bind('driftChange', this.UpdateTracks.bind(this) );  // REbuild since geometry is shot.
   gStateMachine.Bind('toggle-tracks', this.UpdateVisibilities.bind(this) );  
   
-  gStateMachine.Bind('change-wireimg',       this.CreateWireimg.bind(this,false) ); 
-  gStateMachine.Bind('colorWireMapsChanged', this.UpdateWireimg.bind(this,false) ); 
-  gStateMachine.Bind('driftChange', this.UpdateWireimg.bind(this) );  // REbuild since geometry is shot.
-  
-  
-  
+  // Zoom change
   gStateMachine.Bind('zoomChange', this.ZoomChange.bind(this,false) );
   gStateMachine.Bind('zoomChangeFast', this.ZoomChange.bind(this,true) );
   
+  // Hover and selection
   gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
   gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
   
@@ -132,6 +134,8 @@ function WireViewGL(element, options )
   gStateMachine.Bind('userTrackChange',  this.UpdateUserTrack.bind(this) );
   
   
+  // ----------
+  // Materials.
   this.line_materials = [
     this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} ),
     this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
@@ -316,7 +320,7 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
     // var material = new THREE.MeshBasicMaterial( { color: 0xff0000 + 0x10*irow + 0x1000*icol,side: THREE.DoubleSide });
       var wireframe = new THREE.MeshBasicMaterial( {wireframe: true,visible: true} );
       var material = new THREE.ShaderMaterial( {
-        vertexShader: document.getElementById('three-vertex-shader').textContent,
+        vertexShader:   document.getElementById('three-vertex-shader').textContent,
         fragmentShader: document.getElementById('three-fragment-shader').textContent,
         // fragmentShader: document.getElementById('stupidfill').textContent,
         uniforms: {
@@ -329,9 +333,11 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
 
           texture_size:        new THREE.Uniform(new THREE.Vector2(elem.height,elem.width)),
           crop_start:          new THREE.Uniform(new THREE.Vector2(t_chan_start-elem.y, t_tdc_start - elem.x)),
-          crop_end:            new THREE.Uniform(new THREE.Vector2(t_chan_end  -elem.y, t_tdc_end   - elem.x))
+          crop_end:            new THREE.Uniform(new THREE.Vector2(t_chan_end  -elem.y, t_tdc_end   - elem.x)),
         },
-        visible: true
+        visible: true,
+        transparent: true
+        
       });
 
       var obj = new THREE.Mesh( geometry, material );
@@ -348,12 +354,71 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
   return wireimg_group; //this.scene.add(this.wireimg_group);    
 }
 
+
+WireViewGL.prototype.CreateWireimg = function()
+{
+  if(this.wireimg_group) {
+    this.scene.remove(this.wireimg_group); // FIXME dispose too
+    for(var thing of this.wireimg_group.children){
+       thing.material.dispose();
+       thing.geometry.dispose();
+     }
+  }
+  var mapper = null;
+
+  var wname = GetSelectedName("wireimg");
+  var wireimg = (((gRecord || {})["wireimg"]        || {})[wname] || {});
+  var wlowres = (((gRecord || {})["wireimg-lowres"] || {})[wname] || {});
+  if      (wireimg._glmapper) {mapper = wireimg._glmapper; }
+  else if (wlowres._glmapper) {mapper = wlowres._glmapper; }
+  
+  if(!mapper) return;
+
+  var nwires = gGeo.numWires(this.plane);
+  var ntdc = mapper.total_width;
+
+  // This puts the wire image into the xy plane with units of cm in each direction.  But no reason it couldn't be wire/tdc coordinates, which get transformed later
+  var x1 = 0;
+  var x2 = gGeo.wire_pitch * nwires;  // trans coordinate.
+  var y1 = 0;
+  var y2 = ntdc; //gGeo.drift_cm_per_tick * ntdc; // Set it to the wire height, then scale below!
+  
+
+  // console.time("build_image_blocks");
+  this.wireimg_group = this.create_image_meshgroup(mapper,
+                          gGeo.channelOfWire(this.plane,0),
+                          gGeo.channelOfWire(this.plane,nwires),
+                          0,ntdc,
+                          x1,x2,y1,y2);
+  this.wireimg_group.scale.y =  gGeo.drift_cm_per_tick;
+  this.wireimg_group.position.z = this.kz_image;
+  this.scene.add(this.wireimg_group);
+  this.UpdateWireimg();
+  // console.timeEnd("build_image_blocks");
+}
+
+
 WireViewGL.prototype.UpdateWireimg = function(fast)
 {
   // Create it if data doesn't exist.
   if(!this.wireimg_group) this.CreateWireimg(); 
   if(!this.wireimg_group) return;
   this.wireimg_group.scale.y =  gGeo.drift_cm_per_tick;
+
+  var do_filter        = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
+  var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
+  var edge_finder      = $('#ctl-gl-edge-finder').is(":checked") ? 1:0;
+  var do_smear = 0;
+  
+  for(var mesh of this.wireimg_group.children) {
+    var mat = mesh.material;
+    mat.uniforms.do_noise_reject    .value= do_filter;
+    mat.uniforms.do_bad_channel_flag.value= bad_channel_flag;
+    mat.uniforms.do_smear           .value= edge_finder;
+    mat.uniforms.do_edge_finder     .value= do_smear;
+    mat.needsUpdate = true;
+  }
+
 
   this.UpdateVisibilities();
   this.dirty=true;
@@ -482,41 +547,6 @@ WireViewGL.prototype.UpdateVisibilities = function()
 
   this.dirty=true;
   this.Render();
-}
-
-WireViewGL.prototype.CreateWireimg = function()
-{
-  if(this.wireimg_group) this.scene.remove(this.wireimg_group); // FIXME dispose too
-  var mapper = null;
-
-  var wname = GetSelectedName("wireimg");
-  var wireimg = (((gRecord || {})["wireimg"]        || {})[wname] || {});
-  var wlowres = (((gRecord || {})["wireimg-lowres"] || {})[wname] || {});
-  if      (wireimg._glmapper) {mapper = wireimg._glmapper; }
-  else if (wlowres._glmapper) {mapper = wlowres._glmapper; }
-  
-  if(!mapper) return;
-
-  var nwires = gGeo.numWires(this.plane);
-  var ntdc = mapper.total_width;
-
-  // This puts the wire image into the xy plane with units of cm in each direction.  But no reason it couldn't be wire/tdc coordinates, which get transformed later
-  var x1 = 0;
-  var x2 = gGeo.wire_pitch * nwires;  // trans coordinate.
-  var y1 = 0;
-  var y2 = ntdc; //gGeo.drift_cm_per_tick * ntdc; // Set it to the wire height, then scale below!
-  
-
-  // console.time("build_image_blocks");
-  this.wireimg_group = this.create_image_meshgroup(mapper,
-                          gGeo.channelOfWire(this.plane,0),
-                          gGeo.channelOfWire(this.plane,nwires),
-                          0,ntdc,
-                          x1,x2,y1,y2);
-  this.wireimg_group.scale.y =  gGeo.drift_cm_per_tick;
-  this.wireimg_group.position.z = this.kz_image;
-  this.scene.add(this.wireimg_group);
-  // console.timeEnd("build_image_blocks");
 }
 
 
@@ -787,7 +817,7 @@ WireViewGL.prototype.CreateClusters = function(lazy)
 {
   if(this.cluster_group) {
     this.scene.remove(this.cluster_group);
-    // FIXME: dispose
+    for(var thing of this.cluster_group.children) thing.geometry.dispose();
   }
 
   // Ensure we have data.
@@ -797,7 +827,11 @@ WireViewGL.prototype.CreateClusters = function(lazy)
 
   // Find the hits that are associated with this cluster.
   // gRecord.associations.<clustername>.<hitname>[clusid] = [array of hit indices]
-  if(!gRecord.associations) {console.error("Can't find associations"); return; }
+  if(!gRecord.associations) {
+    // console.error("Can't find associations lusters",clusters.length);
+    // We have to wait for the associations to show up.
+    return;
+  }
   var assns = gRecord.associations[clustername];
   var hitname = null;
   for(var name in assns) {
@@ -1214,7 +1248,7 @@ WireViewGL.prototype.UpdateUserTrack = function()
     // rebuild.
     if(this.user_track_group){
       this.scene.remove(this.user_track_group);
-      for(var thing in this.user_track_group) thing.geometry.dispose();
+      for(var thing of this.user_track_group.children) thing.geometry.dispose();
     }
     this.user_track_group = new THREE.Group();
     this.user_track_group.name="usertrack";

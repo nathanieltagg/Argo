@@ -87,7 +87,7 @@ PseudoColor.prototype.ColorDialToCtxColor = function( colorDial )
                         parseInt(c.r)+","+
                         parseInt(c.g)+","+
                         parseInt(c.b)+","+
-                        (c.a || 1.0)+")";
+                        (('a' in c) ? c.a : 1.0)+")";
 }
 
 PseudoColor.prototype.interpolate = function(x) {
@@ -95,10 +95,7 @@ PseudoColor.prototype.interpolate = function(x) {
   var c = this.ColorDialToColor(dial);
   c.x = x;
   // trial:
-  //  if(Math.abs(x)<20) c.a = 0;
-    // c.r = c.g = c.b = 255;
-  // var trans = Math.abs(x)/20;
-     // c.a = Math.min(trans,1.0);
+    // if(Math.abs(x)<20) c.a = x*x/(20*20.); // this works pretty well.
   
   c.a = ('a' in c) ? c.a : 1.0;
   return c;
