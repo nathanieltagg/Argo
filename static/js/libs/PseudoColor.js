@@ -95,7 +95,7 @@ PseudoColor.prototype.interpolate = function(x) {
   var c = this.ColorDialToColor(dial);
   c.x = x;
   // trial:
-  if(Math.abs(x)<20) c.a = 0;
+  //  if(Math.abs(x)<20) c.a = 0;
     // c.r = c.g = c.b = 255;
   // var trans = Math.abs(x)/20;
      // c.a = Math.min(trans,1.0);
