@@ -70,6 +70,8 @@ function samweb()
         for(var i=0;i<lines.length;i++){
           lines[i] = lines[i].trim(); // trim each output line of whitespace
         }
+        console.log("samweb command: $ samweb "+sam_args.join('**') );
+        console.log("result: ",lines);
         return resolve(lines);
       }
     });
@@ -199,19 +201,29 @@ async function resolve_request(event_req)
     if(!run) throw new Error("Run not specified");
     var event = parseInt(event_req.event);
     if(!event) throw new Error("Event not specified");
-    var trigtype = event_req.trig || "outextbnb";
+    var trigtype = event_req.trig || "outbnb";
     var datatier = event_req.tier || "raw";  // e.g. swizzled
 
     //find the file.
-    var spec = `"data_tier ${datatier} and data_stream ${trigtype} and run_number=${run} and first_event<=${event} and last_event>=${event} minus ub_blinding.blind true"`;
+    var spec = `data_tier ${datatier} and data_stream ${trigtype} and run_number=${run} and first_event>=${event} and last_event<=${event} minus ub_blinding.blind true`;
     var files = [];
+    console.log("trying spec:",spec);
     files = await samweb('list-files',spec);
     if(files.length<1) throw new Error("No files found matching"+spec);
+    if(files[0].length<1) throw new Error("No files found matching"+spec);
+    console.log("files:",files);
     var filename = files[0];
     console.log("found file",filename);
     loc = await samweb('locate-file',filename);
     console.log("location",loc);
-    event_req.filename = loc;    // pass to logic below
+    // if it's an array, get the first one
+    if(Array.isArray(loc)) loc = loc[0];
+    // strip off the stuff in parenths
+    loc = loc.replace(/\s*\(.*?\)\s*/g, '');
+    loc = loc.replace('enstore:', '');
+    console.log("Trimmed location:",loc);
+    event_req.filename = loc+'/'+filename;    // pass to logic below
+    console.log("final loc:",event_req.filename)
   }
 
   if(event_req.what == "samdim") {    

@@ -63,7 +63,7 @@ function DataSource()
 
   $('#inRun')    .keydown(function(e){if (e.keyCode == 13) { PushRunHash(); }});
   $('#inRunEvent')  .keydown(function(e){if (e.keyCode == 13) { PushRunHash(); }});
-  $('#go_run').click(function(){PushRawRunHash(); return false;});
+  $('#go_run').click(function(){PushRunHash(); return false;});
 
   $('#go_samdim').click(function(){PushSamDimHash(); return false;});
 

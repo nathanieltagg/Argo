@@ -4,10 +4,10 @@ ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 # needed the first time to get clang++ setup as the apache user.
 # not needed if using ups
 # check if xcode has been setup already:
-xcode-select -p > /dev/null 2>&1
-if [ $? -ne 0 ] ; then
-  xcode-select --install
-fi
+#xcode-select -p > /dev/null 2>&1
+#if [ $? -ne 0 ] ; then
+#  xcode-select --install
+#fi
 
 # Set up your main larsoft directory.
 # source /Users/larsoft/setup
@@ -17,7 +17,7 @@ source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
 #export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
 setup larlite v06_70_00c -q e17:debug
-setup uboonecode v08_08_00 -q e17:debug
+setup uboonecode v08_15_01 -q e17:debug
 
 # source ../backend/larlite/config/setup.sh
 export PATH=/home/argo/node-v10.15.0-linux-x64/bin:$PATH
