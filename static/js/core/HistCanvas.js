@@ -105,7 +105,7 @@ function HistCanvas( element, options )
 
 HistCanvas.prototype.Resize = function()
 {
-  console.log("HistCanvas::Resize",this);
+  // console.log("HistCanvas::Resize",this);
   Pad.prototype.Resize.call(this);
   // console.warn("Resizing, rotate_90 = ", this.rotate_90, this.);
   
@@ -119,7 +119,7 @@ HistCanvas.prototype.ResetDefaultRange = function()
 
 HistCanvas.prototype.Draw = function()
 {
-  console.log("HistCanvas::Draw",this);
+  // console.log("HistCanvas::Draw",this);
   this.ctx.save();
 
 

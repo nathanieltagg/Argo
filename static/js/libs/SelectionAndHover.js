@@ -126,8 +126,8 @@ function DrawObjectInfo()
   var state = gSelectState;
 
   switch(state.type) {
-    case "mcparticle": h=ComposeMCParticleInfo(state); break;
-    case "track": h=ComposeTrackInfo(state); break;
+    case "mcparticles": h=ComposeMCParticleInfo(state); break;
+    case "tracks": h=ComposeTrackInfo(state); break;
     case "UserTrack": h="User Track"; break;
     
     default:
@@ -404,8 +404,8 @@ HoverInfo.prototype.Draw = function ()
     h += "<h3>Hover: " + state.type + "</h3>";
   
   switch(state.type) {
-    case "mcparticle": h+=ComposeMCParticleInfo(state); break;
-    case "track": h+=ComposeTrackInfo(state); break;
+    case "mcparticles": h+=ComposeMCParticleInfo(state); break;
+    case "tracks": h+=ComposeTrackInfo(state); break;
     case "wire": h+=ComposeWireInfo(state); break;
     
     default:

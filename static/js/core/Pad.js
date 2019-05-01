@@ -342,7 +342,7 @@ Pad.prototype.Resize = function()
     this.padPixelScaling = window.devicePixelRatio;
   }
 
-  console.log("Resize",$(this.element),width,height);
+  // console.log("Resize",$(this.element),width,height);
   for(var i=0;i<this.nlayers;i++) {
   
     this.layers[i].width = width;

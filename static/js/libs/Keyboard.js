@@ -213,10 +213,11 @@ $(function() {
         return false;
         
       case 109: // 'm'
-        $('#ctl-show-mc').click().checkbox_announce("Monte Carlo Tracks:");
+        $('#ctl-show-mcparticles').click().checkbox_announce("Monte Carlo Particles:");
         return false;
+        
       case 77: // 'M'
-        $('#ctl-show-mc-neutrals').click().checkbox_announce("MC Neutral Particles:");
+        $('#ctl-show-mc-neutrals').click().checkbox_announce("Show MC Neutral Particles:");
         return false;
         
       case 122: // 'z'

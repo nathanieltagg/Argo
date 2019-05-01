@@ -32,8 +32,9 @@ function UserTrackPoint()
 UserTrackPoint.prototype.set_to_zoom_center = function ()
 {
   // use the current zoom to suggest point coordinates.
-  var zoomCenter = gZoomRegion.getCenter();
-  var tdc = (gZoomRegion.tdc[0] + gZoomRegion.tdc[1])/2;
+  var zoomCenter = gZoomRegion.getCenterWires();
+  var tdc        = gZoomRegion.getCenterTdc(2);
+  // var tdc = (gZoomRegion.tdc[0] + gZoomRegion.tdc[1])/2;
   this[0] = zoomCenter[0];
   this[1] = zoomCenter[1];
   this[2] = zoomCenter[2];
@@ -103,7 +104,7 @@ UserTrack.prototype.set_default = function()
   var a = new UserTrackPoint();
   var b = new UserTrackPoint();
   // Width of Y-view:
-  var y_width = gZoomRegion.plane[2][1] - gZoomRegion.plane[2][0];
+  var y_width = gZoomRegion.getWidth();
   b.set_view_zoomhint(2, a[2]+y_width/3, a.tdc);
   this.points = [a,b];
 }

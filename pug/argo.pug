@@ -6,7 +6,7 @@ html
     title Argo
     //(#)include virtual="basetag.inc"
     // My little icon in the link url 
-    link(rel='icon', type='image/png', href='images/ArgoIcon')
+    link(rel='icon', type='image/png', href='images/ArgoIcon.png')
     // Activate some overrides to basic configuration. 
     //#set var="PageStyle" value="standard" 
     script(type='text/javascript') 
@@ -84,7 +84,7 @@ html
           #content-wide.dock
             include inc/WireViewGL            
             +portlet("rgbwireview-port","RGB View")(style="background-color:white; display:none;")
-              .pad.A-RgbWireView(style='width:100%; height:330px')
+              //- .pad.A-RgbWireView(style='width:100%; height:330px')
             include inc/WireView 
             // include virtual="html/WireViewBig.inc" 
             //include virtual="html/TimeHistogram.inc" 

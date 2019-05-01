@@ -139,13 +139,13 @@ function WireViewGL(element, options )
   this.line_materials = [
     this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} ),
     this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
-    this.track_material_selected = new THREE.LineMaterial( { color: 0xffffff, linewidth: 4, dashed: false} ),
+    this.track_material_selected = new THREE.LineMaterial( { color: 0xfffff0, linewidth: 4, dashed: false} ),
     this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
 
     this.mc_material          = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: false} ),
     this.mc_neutral_material  = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: true} ),
     this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
-    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),  
+    this.mc_select_material   = new THREE.LineMaterial( { color: 0xfffff0, linewidth: 3, dashed: false}  ),  
     this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
         
   ]; 
@@ -172,13 +172,21 @@ WireViewGL.prototype.TdcToV  = function(t) { return t*gGeo.drift_cm_per_tick; }
 
 WireViewGL.prototype.ZoomChange = function(fast) 
 {
+  
+  var urange = gZoomRegion.getTransverseRange(this.plane);
+  var vrange = gZoomRegion.getXRange(this.span_y/this.span_x);
   var newlimits = {
-    minu: this.WireToU(gZoomRegion.plane[this.plane][0] ),
-    maxu: this.WireToU(gZoomRegion.plane[this.plane][1] ),
-    minv: this.TdcToV(gZoomRegion.tdc[0]),
-    maxv: this.TdcToV(gZoomRegion.tdc[1]),
+    minu: urange[0],
+    maxu: urange[1],
+    minv: vrange[0],
+    maxv: vrange[1],
   };
-  // Call the default:
+  if(isNaN(newlimits.minu)) debugger;
+  if(isNaN(newlimits.maxu)) debugger;
+  if(isNaN(newlimits.minv)) debugger;
+  if(isNaN(newlimits.maxv)) debugger;
+  
+  // Call the default (not the function below!!)
   ThreePad.prototype.SetWorldCoordsForFrame.call(this,newlimits);
   this.dirty = true;
   this.overlay_dirty = true;
@@ -190,15 +198,10 @@ WireViewGL.prototype.SetWorldCoordsForFrame = function(new_limits,finished)
   var limits = $.extend({},this.GetWorldCoordsForFrame(),new_limits);
   // Don't change view, instead emit a zoom change event, which echos back to the above.
   if('minu' in new_limits || 'maxu' in new_limits) {
-    gZoomRegion.setLimits(this.plane
-                        , this.UtoWire(limits.minu)
-                        , this.UtoWire(limits.maxu)
-    );
+    gZoomRegion.setTransverseRange(this.plane, limits.minu, limits.maxu);
   }
   if('minv' in new_limits || 'maxv' in new_limits){
-    gZoomRegion.changeTimeRange(this.VtoTdc(limits.minv)
-                               ,this.VtoTdc(limits.maxv)
-    );
+    gZoomRegion.setXRange(limits.minv,limits.maxv,this.span_y/this.span_x);
   }
   
   if(finished) {
@@ -544,7 +547,6 @@ WireViewGL.prototype.UpdateVisibilities = function()
   setVis(this.spacepoints_group  ,   ".show-spacepoints");
   setVis(this.showers_group  ,   ".show-showers");
   setVis(this.user_track_group  ,   ".dEdX-Path");
-
   this.dirty=true;
   this.Render();
 }
@@ -601,7 +603,7 @@ WireViewGL.prototype.DoMouse = function(ev)
     
       var match =  {obj: null, type:"wire"};
     
-    	this.raycaster.linePrecision=4;
+    	this.raycaster.linePrecision=1;
       this.fMousePos.norm  = new THREE.Vector3(this.fMousePos.x/this.width*2-1, 1-2*this.fMousePos.y/this.height, 1);
     	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
       // this.raycast_layers = new THREE.Layers; // set to valid layers. Not required, but leaving
@@ -627,10 +629,10 @@ WireViewGL.prototype.DoMouse = function(ev)
           var product = jsonpointer.get(gRecord,path);
           if(product) {
             var type = path[0];
-            switch(path[0]) {
-              case 'tracks': type="track"; break;
-              case 'hits': type="hit"; break;
-            }
+            // switch(path[0]) {
+            //   case 'tracks': type="track"; break;
+            //   case 'hits': type="hit"; break;
+            // }
           
             match =  {obj:product, type:type, pointer:ptr};
             // canvas pixel coordinates:
@@ -1159,19 +1161,20 @@ WireViewGL.prototype.CreateMC = function()
   {
     var p= particles[i];
     if(!p.trajectory || p.trajectory.length<2) continue;
-    
+    if(p.trajectory[0].E - p.fmass < 0.001) continue; // Less than 1 MeV particles go less than 1 wire width.
     // compile points
     var pts = [];
     // var t0 = 3200;
     // if(move_t0 && p.trajectory.length>0) t0 = 3200+ p.trajectory[0].t/500.0; // 500 ns per tick.
-    var lastu = 1e99; var lastv = 1e99
+    var lastu = 1e99; var lastv = 1e99;
     for(var j=0;j<p.trajectory.length-1;j++) {
       var point = p.trajectory[j];
       var u = gGeo.yzToTransverse(this.plane,point.y,point.z);
       var v = point.x;
-      var d = (u-lastu)*(u-lastu) + (v-lastv)*(v-lastv);
-      if(d>gGeo.wire_pitch*gGeo.wire_pitch)
-        pts.push(u,point.x,0); 
+      // Not that relevant.
+      // var d = (u-lastu)*(u-lastu) + (v-lastv)*(v-lastv);
+      // if(d>gGeo.wire_pitch*gGeo.wire_pitch)
+      pts.push(u,point.x,0); 
     }
     var point = p.trajectory[p.trajectory.length-1];
     pts.push(gGeo.yzToTransverse(this.plane,point.y,point.z),point.x,0); // Push the last point
@@ -1198,7 +1201,7 @@ WireViewGL.prototype.CreateMC = function()
     // Set timing property correctly
     threeobj.position.y = this.offset_track; // shift by the offset. 
     threeobj.position.z = 20; // level of mc.
-    // threeobj.matrixAutoUpdate=false; // Don't auto-compute each time. I'll tell you when your coords change
+    threeobj.matrixAutoUpdate=false; // Don't auto-compute each time. I'll tell you when your coords change
     threeobj.updateMatrix();     // Oh, they changed.
     this.mc_group.add(threeobj);
   }
@@ -1227,6 +1230,7 @@ WireViewGL.prototype.UpdateMC = function()
   for(var obj of this.mc_group.children) {
     // Shift by this particles's t0. Note that it's 500 ns per tick, and t is in ns
     obj.position.y = (move_t0) ? (gGeo.drift_cm_per_tick*obj.userData.t/500) : 0
+    obj.updateMatrix();     // Oh, they changed.
     if(obj.userData.neutral) 
       obj.visible = show_neutrals;
   }

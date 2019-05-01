@@ -22,6 +22,10 @@ script(type="text/javascript", src="/js/third-party/jit.js")
 script(type="text/javascript", src="/js/third-party/circle-progress.js")
 script(type="text/javascript", src="/js/third-party/html2canvas.js")
 script(type="text/javascript", src="/js/third-party/spectrum.js")
+
+// THREE.js is the API wrapping opengl
+script(type="text/javascript", src="/js/third-party/three.js")
+
 // colorpicker 
 link(rel="stylesheet", href="css/spectrum.css")
 // for creating animated gifs. 
@@ -60,6 +64,7 @@ script(type="text/javascript", src="/js/libs/WireView.js")
 script(type="text/javascript", src="/js/libs/WireSpatialView.js")
 script(type="text/javascript", src="/js/libs/RgbWireView.js")
 script(type="text/javascript", src="/js/libs/WireInfo.js")
+script(type="text/javascript", src="/js/libs/ZoomRegion.js")
 script(type="text/javascript", src="/js/libs/ZoomControl.js")
 script(type="text/javascript", src="/js/libs/MCInfo.js")
 script(type="text/javascript", src="/js/libs/MCDigraph.js")
@@ -71,7 +76,7 @@ script(type="text/javascript", src="/js/libs/OpHit2dMap.js")
 script(type="text/javascript", src="/js/libs/OpFlashHistogram.js")
 script(type="text/javascript", src="/js/libs/OpFlashMap.js")
 script(type="text/javascript", src="/js/libs/OpFlash2dMap.js")
-script(type="text/javascript", src="/js/libs/MRI.js")
+//- script(type="text/javascript", src="/js/libs/MRI.js") // remove until fixed.
 script(type="text/javascript", src="/js/libs/dEdXTool.js")
 script(type="text/javascript", src="/js/libs/ArgoDreamyScan.js")
 script(type="text/javascript", src="/js/libs/SaveSelection.js")
@@ -83,8 +88,6 @@ script(type="text/javascript", src="/js/libs/LiveControl.js")
 // Installed via browserify.. will this work?
 //- <script src="/js/my.js"></script>
 
-// THREE.js is the API wrapping opengl
-script(type="text/javascript", src="/js/third-party/three.js")
 
 // Addons to three.js
 script(type="text/javascript", src="/js/third-party/THREE.MeshLine.js")

@@ -119,7 +119,8 @@ function QueryServerStream( par )
   request.tilesize = 2400;
 
   // Default: do file-and-entry read from parameters. Should check for other options first.
-  request.pieces = [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
+  
+  request.pieces = request.pieces || [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
     "/ophits/*",
     "/clusters/*",
     "/tracks/*",
@@ -149,7 +150,7 @@ function QueryServerStream( par )
       gSocket.send(JSON.stringify(request));    
     };
     gSocket.onmessage = function(event) {
-      console.log("onmessage",event.timeStamp,event.data.length);
+      // console.log("onmessage",event.timeStamp,event.data.length);
       try {
         var o = JSON.parse(event.data);
       } catch {
@@ -187,7 +188,14 @@ function RequestPiece( _type, _name ) // call with piece address, or type,name
     if(!gRecord.hits) request.pieces.push("/hits/*");
   }
                 
-  
+  if(gSocket.readyState != WebSocket.OPEN) {
+    console.warn("Socket not open. Attempting reconnect to server");
+    $('#status').attr('class', 'status-warn');
+    $("#status").text('Attempting reconnect to server');
+    var par = $.deparam.fragment(true);
+    par.pieces = [piece];
+    QueryServerStream(par);
+  }
   try {
     console.log("RequestPiece",request);
     gSocket.send(JSON.stringify(request));
@@ -200,6 +208,12 @@ function RequestPiece( _type, _name ) // call with piece address, or type,name
     // FIXME;
     // Attempt reconnect
     console.error("Attempting reconnect to server");
+    $('#status').attr('class', 'status-warn');
+    $("#status").text('Attempting reconnect to server');
+    var par = $.deparam.fragment(true);
+    par.pieces = [piece];    
+    QueryServerStream(par);
+    
   } 
 }
 

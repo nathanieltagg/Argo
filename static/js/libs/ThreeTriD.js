@@ -97,9 +97,6 @@ function ThreeTriD(element, options )
 	this.orbit_controls.maxPolarAngle = Math.PI ;
   
 
-
-  this
-
   // this.DrawOverlay();
   // this.overlay_dirty = true;
   // Object picking via raycaster.
