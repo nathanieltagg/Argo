@@ -139,7 +139,10 @@ function WireViewGL(element, options )
   this.line_materials = [
     this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} ),
     this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
-    this.track_material_selected = new THREE.LineMaterial( { color: 0xfffff0, linewidth: 4, dashed: false} ),
+
+    this.selected_material_1 = new THREE.LineMaterial( { color: 0x000000, linewidth: 2, dashed: false} ),
+    this.selected_material_2 = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
+
     this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
 
     this.mc_material          = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: false} ),
@@ -149,6 +152,9 @@ function WireViewGL(element, options )
     this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
         
   ]; 
+  this.track_material_selected = [this.selected_material_1, this.selected_material_2];
+  this.mc_select_material      = [this.selected_material_1, this.selected_material_2];
+  
   // Line materials all need to know the window size.
   for(var mat of this.line_materials) mat.resolution = this.resolution;
 
@@ -603,7 +609,9 @@ WireViewGL.prototype.DoMouse = function(ev)
     
       var match =  {obj: null, type:"wire"};
     
-    	this.raycaster.linePrecision=1;
+      // How close do we want to match?  Let's say 5 pixels.
+      var xspan = 5*(this.camera.right-this.camera.left)/this.span_x
+    	this.raycaster.linePrecision=xspan;
       this.fMousePos.norm  = new THREE.Vector3(this.fMousePos.x/this.width*2-1, 1-2*this.fMousePos.y/this.height, 1);
     	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
       // this.raycast_layers = new THREE.Layers; // set to valid layers. Not required, but leaving
@@ -628,12 +636,7 @@ WireViewGL.prototype.DoMouse = function(ev)
           }
           var product = jsonpointer.get(gRecord,path);
           if(product) {
-            var type = path[0];
-            // switch(path[0]) {
-            //   case 'tracks': type="track"; break;
-            //   case 'hits': type="hit"; break;
-            // }
-          
+            var type = path[0];          
             match =  {obj:product, type:type, pointer:ptr};
             // canvas pixel coordinates:
 
@@ -1151,7 +1154,7 @@ WireViewGL.prototype.CreateMC = function()
 
   // Deal with these in Update. 
   var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
-  var move_t0 =  $(this.ctl_mc_move_tzero).is(":checked");
+  var move_t0       = $(this.ctl_mc_move_tzero).is(":checked");
   // if(move_t0) console.warn('moving mc t0');
   
   // console.warn("Drawing MC",particles.length);
@@ -1229,7 +1232,7 @@ WireViewGL.prototype.UpdateMC = function()
   var yshift = 3200*gGeo.drift_cm_per_tick;
   for(var obj of this.mc_group.children) {
     // Shift by this particles's t0. Note that it's 500 ns per tick, and t is in ns
-    obj.position.y = (move_t0) ? (gGeo.drift_cm_per_tick*obj.userData.t/500) : 0
+    obj.position.y = yshift + ( (move_t0) ? (gGeo.drift_cm_per_tick*(obj.userData.t/500)) : 0 );
     obj.updateMatrix();     // Oh, they changed.
     if(obj.userData.neutral) 
       obj.visible = show_neutrals;

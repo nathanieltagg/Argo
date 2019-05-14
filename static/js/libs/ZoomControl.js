@@ -172,17 +172,15 @@ ZoomControl.prototype.NewRecord = function()
     var tpc = gGeo.getTpc(0);
     
     var center = tpc.getCenter().splice(0);
-    if(par.zoom.center) {
-      if('x' in par.zoom.center) center[0] = parseFloat(par.zoom.center.x);
-      if('y' in par.zoom.center) center[1] = parseFloat(par.zoom.center.y);
-      if('z' in par.zoom.center) center[2] = parseFloat(par.zoom.center.z);
-    }
+    if('x' in par.zoom) center[0] = parseFloat(par.zoom.x);
+    if('y' in par.zoom) center[1] = parseFloat(par.zoom.y);
+    if('z' in par.zoom) center[2] = parseFloat(par.zoom.z);
     gZoomRegion.setCenter(...center);
 
     var width = tpc.getWidths()[2];
     if(par.zoom.width) width = parseFloat(par.zoom.width);
     gZoomRegion.setWidth(width);
-        
+    console.warn("setting zoom to hash");
     gStateMachine.Trigger("zoomChange");
   } else {
     this.FullZoom();    
@@ -407,11 +405,12 @@ ZoomControl.prototype.Draw = function()
   // hash = hash.replace(/(<([^>]+)>)/ig,"");
   // hash = hash.replace(/\"\'/ig,"");
   
-  var phash ={};
   var center = gZoomRegion.getCenter();
-  phash.center = {x: center.x.toFixed(1), y: center.y.toFixed(1), x: center.z.toFixed(1)};
-  phash.width  = gZoomRegion.getWidth().toFixed(1);
-  // phash.aspect = gZoomRegion.getAspect();
+  phash = {x: parseInt(center.x),
+           y: parseInt(center.y),
+           z: parseInt(center.z),
+           width: parseInt(gZoomRegion.getWidth()) };
+    // phash.aspect = gZoomRegion.getAspect();
   
   var lnk = window.location.protocol + "//" + window.location.hostname + path + par + "#" + $.param(phash);
   $('a.linkzoom').attr('href',lnk);
@@ -425,11 +424,11 @@ ZoomControl.prototype.Draw = function()
   // $.bbq.pushState({zoom:phash},0);
 
   // This code is looted from the BBQ stuff, and does the same job, except using the
-  // location.replace() call.
+  // location.replace() call, without polluting browser history.
   var newstate = $.extend( {}, $.deparam.fragment(), {zoom:phash} ); // merge
   var newhash = $.param.sorted(newstate); // stringify
   newhash = newhash.replace($.param.fragment.noEscape,decodeURIComponent); // Escape
-  location.replace("#"+newhash); // change hash, triggers hashchange
+  location.replace("#"+newhash); // change hash, doesn't trigger hashchange
 };
 
 ZoomControl.prototype.DoMouse = function(ev)

@@ -292,6 +292,17 @@ ThreeTriD.prototype.CreateFrame = function()
    	}
   );
   */
+  
+  var loader = new THREE.GDMLLoader();
+  var scope = this;
+  loader.load( "microboonev12.gdml" ,
+    function( grp ) {
+      scope.gdml = grp;
+      scope.gdml.scale.set(1000,1000,1000);
+      scope.frame_group.add(scope.gdml);
+      scope.Render();
+    }
+  );
 }
 
 ThreeTriD.prototype.UpdateFrame = function()
@@ -415,12 +426,7 @@ ThreeTriD.prototype.DoMouse = function(ev) {
         }
         var product = jsonpointer.get(gRecord,path);
         if(product) {
-          var type = path[0];
-          switch(path[0]) {
-            case 'tracks': type="track"; break;
-            case 'hits': type="hit"; break;
-          }
-        
+          var type = path[0];        
           match =  {obj:product, type:type, pointer:ptr};
           // canvas pixel coordinates:
 

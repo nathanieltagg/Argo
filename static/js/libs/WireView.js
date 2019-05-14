@@ -185,22 +185,22 @@ WireView.prototype.HoverChange = function()
   // Only need a redraw if the over change affected something we care about.
   // console.warn("WireView checking hoverchange",gHoverState.type,gLastHoverState.type);
   switch(gHoverState.type) {
-    case "hit": 
-    case "endpoint2d": 
-    case "cluster":
-    case "spacepoint":
-    case "track":
-    case "mcparticle":
+    case "hits": 
+    case "endpoints2d": 
+    case "clusters":
+    case "spacepoints":
+    case "tracks":
+    case "mcparticles":
       this.Draw(); return;
     default: break;
   }
   switch(gLastHoverState.type) {
-    case "hit": 
-    case "endpoint2d": 
-    case "cluster":
-    case "spacepoint":
-    case "track":
-    case "mcparticle":
+    case "hits": 
+    case "endpoints2d": 
+    case "clusters":
+    case "spacepoints":
+    case "tracks":
+    case "mcparticles":
       this.Draw(); return;
     default: break;  
   }
@@ -730,7 +730,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
   
     if(gHoverState.obj == h.hit) hoverVisHit = h;
-    this.mouseable.push({type:"hit", coords:[[x,y],[x,y+dy]], r:dx, obj: h.hit});
+    this.mouseable.push({type:"hits", coords:[[x,y],[x,y+dy]], r:dx, obj: h.hit});
   }
   
   if(hoverVisHit) {
@@ -833,7 +833,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       poly.push(hull[ihull][0]);
     }
     
-    this.mouseable.push({ obj: clus, type: "cluster", coords: poly });
+    this.mouseable.push({ obj: clus, type: "clusters", coords: poly });
     
     var cs = new ColorScaleIndexed(i+1);    
     this.ctx.fillStyle = "rgba("+cs.GetColor()+", 0.5)";
@@ -873,7 +873,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.arc(x,y,r,0,1.99*Math.PI);
       this.ctx.closePath();
       this.ctx.fill();
-      this.mouseable.push({type:"endpoint2d", coords:[[x,y]], r:r, obj: pt});
+      this.mouseable.push({type:"endpoints2d", coords:[[x,y]], r:r, obj: pt});
 
       if(gHoverState.obj == pt) {
         console.warn("Endpoint selected",gHoverState.obj);
@@ -919,7 +919,7 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.stroke();
     
     
-    this.mouseable.push({type:"sp", coords:[[x,y]], r:ru, obj: sp});
+    this.mouseable.push({type:"spacepoints", coords:[[x,y]], r:ru, obj: sp});
     
     
   }
@@ -1001,7 +1001,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 
     // for mouseovering
     for(j=1;j<pts.length;j++) 
-      this.mouseable.push({type:"track", 
+      this.mouseable.push({type:"tracks", 
                           coords: [[pts[j-1][0],pts[j-1][1]],
                                    [pts[j][0]  ,pts[j][1]  ] 
                                   ], 
@@ -1152,7 +1152,7 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
     
 
     // for mouseovering
-      this.mouseable.push({type:"shower", 
+      this.mouseable.push({type:"showers", 
                     coords: [[x1,y1],
                              [x2,y2] 
                             ], 
@@ -1333,7 +1333,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
 
     // for mouseovering
     for(j=0;j<segments.length-1;j++) {
-       this.mouseable.push({type:"track", 
+       this.mouseable.push({type:"tracks", 
                             coords: [[segments[j].p0[0],segments[j].p0[1]], [segments[j].p1[0],segments[j].p1[1]]],
                             r:2.0, obj: trk});
      }
@@ -1423,7 +1423,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     
     // for mouseovering
     for(j=1;j<pts.length;j++) 
-      this.mouseable.push({type:"mcparticle",
+      this.mouseable.push({type:"mcparticles",
                            coords: [[pts[j-1][0],pts[j-1][1]], [pts[j][0],pts[j][1]] ],
                            r:this.ctx.lineWidth, obj: p});
   
