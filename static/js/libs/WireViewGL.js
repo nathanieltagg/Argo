@@ -169,8 +169,8 @@ function WireViewGL(element, options )
 }
 
 // Two sets of coordinates used: XYZ world coordinates (or UVZ), and wire/tdc.
-WireViewGL.prototype.UtoWire = function(u) { return (u+gGeo.transversePlaneOffset(this.plane))/gGeo.wire_pitch; } 
-WireViewGL.prototype.WireToU = function(w) { return w*gGeo.wire_pitch - gGeo.transversePlaneOffset(this.plane); } 
+WireViewGL.prototype.UtoWire = function(u) { return gGeo.transverseToWire(0,,this.view,u); } // FIXME TPC NUMBER
+WireViewGL.prototype.WireToU = function(w) { return gGeo3.wireToTransverse(0,this.view,w); } // FIXME TPC NUMBER
 WireViewGL.prototype.VtoTdc  = function(v) { return v/gGeo.drift_cm_per_tick; } 
 WireViewGL.prototype.TdcToV  = function(t) { return t*gGeo.drift_cm_per_tick; } 
 

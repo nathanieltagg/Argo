@@ -143,9 +143,6 @@ function Geometry()
   ); // sets this.drift_cm_per_tick
 
 
-  // X distance from origin of wire planes 0,1,2.
-  this.wirePlaneX = [0,0.270,0.521];
-  this.tpc = new TpcGeo();
   
 }
 
