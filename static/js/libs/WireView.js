@@ -327,7 +327,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.mouseable = [];
   if(gRecord) {
     if  ($(this.GetBestControl(".show-wireimg")).is(":checked")) {
-      this.DrawImage(min_u, max_u, min_v, max_v, fast);
+      // this.DrawImage(min_u, max_u, min_v, max_v, fast);
     }
 
     if  ($(this.GetBestControl(".show-clusters")).is(":checked")) {

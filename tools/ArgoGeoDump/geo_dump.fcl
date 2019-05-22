@@ -1,0 +1,59 @@
+# addnoise_findprim_daqsimanas.fcl
+
+# Read in (presumably noise-free) waveforms, add noise and pedestals,
+# then find trigger primitives on the (now noisy) waveforms, and save
+# the trigger primitives (as "Hits") to an output TTree.
+
+# Any number of trigger primitive finders can be run: useful for
+# running the same finder with multiple parameter settings, for
+# example. The output of each trigger primitive finder should be
+# connected to a DaqSimAna analyzer
+
+
+#include "services_dune.fcl"
+#include "my_channelstatus_pdsp.fcl"
+
+process_name: PrimSim
+
+services: @local::protodune_services
+services.ChannelStatusService: @local::pdsp_channel_status
+services.TFileService: { fileName: "geodump.root" }
+services.TimeTracker:       {}
+services.MemoryTracker:         { } # default is one
+services.RandomNumberGenerator: {} #ART native random number generator
+// services.FileCatalogMetadata:  @local::art_file_catalog_mc
+services.NuRandomService:       @local::per_event_NuRandomService  # seedservice.fcl
+services.message:              @local::dune_message_services_prod
+#source is now a root file
+source: {
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create
+}
+
+# Define and configure some modules to do work on each event.
+# First modules are defined; they are scheduled later.
+# Modules are grouped by type.
+physics: {
+   producers: {
+   }
+   
+   analyzers: {
+     argogeodump: { module_type: "ArgoGeoDumper" }
+     
+   }
+
+   reco: [
+         ]
+   ana: [
+         argogeodump ]
+         
+
+   trigger_paths: [reco] 
+   end_paths: [ ana ] 
+}
+
+
+
+
+
+

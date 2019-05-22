@@ -119,6 +119,7 @@ function SetHV()
   }
   var hv = parseFloat($('#ctl-high-voltage').val()) || 128.0;
   gGeo.SetHV(hv);
+  gGeo3.SetHV(hv);
   
 }
 
@@ -198,7 +199,7 @@ function AutoFitHitTrackOffsets()
             }
             // t = mx + b
             // t1 = m x1 + b
-            console.log("slope = ",slope, 'hv gives',1./gGeo.drift_cm_per_tick);
+            console.log("slope = ",slope, 'hv gives',1./gGeo3.getDriftCmPerTick(0)); // fixme tpc
             console.log("offset = ",offset,"tdc");
           }
         }
@@ -213,7 +214,7 @@ function AutoFitHitTrackOffsets()
     var medslope = slopes[parseInt(slopes.length/2)];
     var medoffset = offsets[parseInt(offsets.length/2)];
     console.log("medians:",medslope,medoffset);
-    gGeo.drift_cm_per_tick = 1.0/medslope;  
+    gGeo3.setDriftCmPerTick = 1.0/medslope;  
     $('#ctl-track-shift-value').val(parseInt($('#ctl-shift-hits-value').val())+parseInt(medoffset));
   }
   console.timeEnd("AutoFitHitTrackOffsets");

@@ -1,0 +1,349 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"I",
+				"I"
+			],
+			[
+				"if",
+				"interesting_defintions"
+			],
+			[
+				"DCa",
+				"DCACHE_STATUS_FILE"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 107.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: List Packages"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 485.0
+	},
+	"console":
+	{
+		"height": 204.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe013ee18cced0ef93d5f746d80ef60'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"view.sel()[1]",
+			"view.sel()[0]",
+			"view.sel().length",
+			"view.sel().count()",
+			"view.sel().describe()",
+			"view.sel()",
+			"view.sel",
+			"view.self",
+			"view",
+			"self.view.sel()",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/tagg/Sites/Argo"
+	],
+	"file_history":
+	[
+		"/Users/tagg/Sites/Argo/static/js/libs/Geometry3.js",
+		"/Users/tagg/Sites/Argo/pug/inc/libraries.pug",
+		"/Users/tagg/trigprim/srcs/otterstudent/ArgoGeoDump/ArgoGeoDumper_module.cc",
+		"/Users/tagg/trigprim/test (original).js",
+		"/Users/tagg/trigprim/geo.json",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-bi5noe/main.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-5xtixl/waveform_tools.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-le5t5j/ps2000aCon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-_0ktfl/muon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-9uaeu1/PicoScope.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-34iifq/muon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-pqvmne/PicoScope.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-pi779g/test.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-5zs3vi/Event.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-427cps/muon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-zy3yik/Makefile",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-88uvot/main.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-bvgij6/muon.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-p943nc/mypico.cc",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-4g_uyp/mypico.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-q15jvb/mypico.cc",
+		"/Volumes/Stuff/dupseek",
+		"/Users/tagg/Desktop/metadata.json",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-is4m6p/blah",
+		"/Users/tagg/Sites/Argo/backend/live.config.json",
+		"/Users/tagg/blah.json",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
+		"/Users/tagg/Downloads/credentials.json",
+		"/Users/tagg/Sites/bengame/labs_phaser_io_assets/demoscene/budbrain.json",
+		"/Users/tagg/Sites/Otternet2/node/otternet.js",
+		"/Users/tagg/Sites/Argo/blah.json",
+		"/Users/tagg/Sites/Argo/backend/out.json",
+		"/Users/larsoft/larevt/v06_13_00/source/larevt/CalData/CalWire_module.cc",
+		"/Users/tagg/Google Drive Otterbein/Physics Department Stuff/3 Credit Hour Conversion Documents/physics_flow.dot",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-8fnqq5/MCDigraph.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-83cs8r/PmtMap.js",
+		"/Volumes/web/phpldapadmin/lib/functions.php",
+		"/Volumes/web/phpldapadmin/pax_global_header",
+		"/Volumes/NTagg/index.html",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/uboone_data_internals.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_CardDataCreatorHelperClass.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_EventRecord.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_TPC_SN_CardHeader_v6.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_MarkedRawCardData.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_TPC_SN_CardHeader_v6.",
+		"/Users/tagg/lar/srcs/nathanielcode/michelsearch/TupleEntry.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/michelsearch/TupleEntry.h",
+		"/Users/tagg/lar/srcs/nathanielcode/michelsearch/MichelSearch_module.cc",
+		"/Users/tagg/Sites/Argo/libs/Keyboard.js",
+		"/Users/tagg/Sites/Argo/libs/FalseColorControl.js",
+		"/Users/tagg/Sites/Argo/shaders/shaders.inc",
+		"/Users/tagg/Sites/Argo/libs/GLEngine.js",
+		"/Users/tagg/Sites/Argo/libs/WireInfo.js",
+		"/Users/tagg/Sites/Argo/html/FalseColorControl.inc",
+		"/Users/tagg/lar/my.fcl",
+		"/Users/tagg/Sites/Argo/server/tmp.h",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/TupleEntry.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/TupleEntry.h",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/classes_def.xml",
+		"/Users/tagg/lar/srcs/uboonecode/uboone/Utilities/ArgoUrl.h",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/FlashStuff_module.cc",
+		"/Users/tagg/OMTortoise/example_send_mail.sh",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/ArgoUrl.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/ArgoUrl.h",
+		"/Users/tagg/lar/srcs/uboonecode/uboone/Utilities/ArgoUrl.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/ArgoUrl.cpp",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/nathaniel_option_key.py",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Control.system-ca-bundle",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Package",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/doflashes.fcl",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-tenbbb/my.fcl",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-mehj6h/my.fcl",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-p2un5m/FlashStuff_module.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-j96h9u/OpFlash2dMap.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-xyy0iw/OpHit2dMap.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-fc0ypr/OpHit2dMap.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-igwmex/OpHit2dMap.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-dgt6uu/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-_4o4ri/create_list.py",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-sosczm/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-bzopz1/RecordComposer.cpp",
+		"/Users/tagg/Desktop/Argo/Readme.txt",
+		"/Users/tagg/lar/mysetup",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-l3c9iw/extract.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-yyxoy2/pmt_hv.js",
+		"/Volumes/FastDisk/larsoft/blah",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-8r4zrr/interesting_defintions.html",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-rzt35b/samspider.css",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-42r79u/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-dj0k78/argo.html",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-hlohbf/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-zmrnqc/interesting_defintions.html",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-r7ld1z/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-s355bm/samspider.css",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-wmiu22/rebuild-definitions-list.txt",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-0bygq3/samspider.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-m6dpwk/interesting_defintions.html",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-3gihub/interesting_defintions.html",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-m7g1sl/samdef_organizer.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-wy890p/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-j28t06/samspider.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-j02e2w/samspider.cgi",
+		"/Users/tagg/Sites/Argo/samspider/samspider.cgi",
+		"/Users/tagg/Sites/Argo/samspider/samspider.css",
+		"/Users/tagg/samspider/samspider.cgi",
+		"/Users/tagg/samspider/samdef_organizer.cc",
+		"/Users/tagg/samspider/readme",
+		"/Users/tagg/samspider/search_for.py",
+		"/Users/tagg/samspider/samdef_organizer.py",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-gz1y1q/ArgoServerTools.pm",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-xi6z5u/serve_event.cgi",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-rq2i9g/project.xml",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-fmrr3i/env.txt",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-chd2pe/OmHistCanvas.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-owm461/GLEngine.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-m_vssn/blah.json",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-ob597v/JsonElement.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-_norwv/blah.json",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-8p1bhn/ComposeResult.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-ux3f7y/OmHistCanvas.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-iqjpwz/HistCanvas.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-bmnc34/JsonElement.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-du9q9e/ComposeResult.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-j442m2/JsonElement.cpp"
+	],
+	"find":
+	{
+		"height": 24.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.sftp":
+	{
+		"height": 100.0
+	},
+	"pinned_build_system": "",
+	"project": "Argo.sublime-project",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 243.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

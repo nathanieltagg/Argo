@@ -257,22 +257,25 @@ WireInfo.prototype.Draw = function()
   $(this.txt_element).html('');
   var h = "";
   var showgraph = false;
-  var tdc =0;
-  var chan=0;
-  var wire = 0;
-  var plane = 0;
-  if(("channel" in gHoverState) && ("sample" in gHoverState)) {
-    tdc = Math.max(Math.floor(gHoverState.sample),0);
-    chan = Math.floor(gHoverState.channel);
-    var planewire = gGeo.wireOfChannel(chan);
-    wire = planewire.wire;
-    plane = planewire.plane;
+  var tdc = -1;
+  var chan = -1;
+  var plane = -1;
+  var view = -1;
+  var tpc = -1;
+  var wire = -1;
+  if(gHoverState.channel !== undefined) {
+    var tdc = gHoverState.sample;
+    var chan= gHoverState.channel;
+    var plane = gHoverState.plane;
+    var view = gHoverState.view;
+    var tpc = gHoverState.tpc;
+    var wire = gHoverState.wire;
     showgraph = true;
   }
 
   h += "Channel: " +  chan + '<br/>';
-  h += "Plane: " + plane + "  Wire: " +  wire + '<br/>';
-  h += "TDC: " +tdc + '<br/>';
+  h += "TPC:" + tpc + " View: " + view + " Plane: " + plane + "  Wire: " +  wire + ' Transverse:' + gHoverState.trans + ' cm <br/>';
+  h += "x: " + parseFloat(gHoverState.x).toFixed(1) + " cm  TDC: " + parseFloat(tdc).toFixed(1) + '<br/>';
   if(GetSelected("wireimg").pedestals)
     h+="Pedestal:" + GetSelected("wireimg").pedestals[chan] + '<br/>';
 

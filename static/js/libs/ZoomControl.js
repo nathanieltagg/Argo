@@ -62,6 +62,19 @@ function ZoomControl( element, options )
   this.ctl_zoom_full    =  this.GetBestControl(".zoom-full");
   this.ctl_dedx_path    =  this.GetBestControl(".dEdX-Path");
 
+  this.ctl_time_offset_slider = $('div#time-offset-slider');
+  this.ctl_time_offset_text   = $('input#time-offset-text');
+
+  $(this.ctl_time_offset_slider).slider({
+    min:0, max:9600, step: 1, value:gZoomRegion.getTimeOffset(),
+    slide: function(e,ui){ $("input#time-offset-text").val(ui.value).change(); }
+  });
+  $(this.ctl_time_offset_text).change(function(){
+    gZoomRegion.setTimeOffset(parseFloat($(this).val()));
+    gStateMachine.Trigger("zoomChange");    
+  });
+
+
   $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
   $(this.ctl_zoom_full  ).click(function(ev) { return self.FullZoom(); }); 
   gStateMachine.Bind('change-tracks', this.Draw.bind(this,false) );
@@ -72,9 +85,14 @@ function ZoomControl( element, options )
   gStateMachine.BindObj('newPiece',this,"NewPiece");
   gStateMachine.BindObj('zoomChange',this,"Draw");
   gStateMachine.BindObj('zoomChangeFast',this,"Draw");
-  gStateMachine.BindObj('hoverChange',this,"Draw");  
+  gStateMachine.BindObj('hoverChange',this,"HoverChange");  
   gStateMachine.BindObj('selectChange',this,"Draw");
   
+}
+
+ZoomControl.prototype.HoverChange = function()
+{
+  if(gHoverState.type=="tracks" || gLastHoverState=="tracks") this.Draw();
 }
 
 

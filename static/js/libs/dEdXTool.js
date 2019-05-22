@@ -25,7 +25,7 @@ function UserTrackPoint()
   this[2] = 0;
   this.tdc = 0;
   this.r = 10;
-  this.lasttouch = [0,1]; // Last two unique planes touched by user, [older, recent]
+  this.lasttouch = [0,1]; // Last two unique views touched by user, [older, recent]
   this.set_to_zoom_center();
 }
 
@@ -41,14 +41,14 @@ UserTrackPoint.prototype.set_to_zoom_center = function ()
   this.tdc= tdc;
 };
 
-UserTrackPoint.prototype.set_view_zoomhint = function (plane, wire, tdc)
+UserTrackPoint.prototype.set_view_zoomhint = function (view, wire, tdc)
 {
   // Move this point, using the global view as the hint.
   // Easiest: adjust the other two views to match this one.
   this.tdc = tdc;
-  var deltaWire = wire - this[plane];
+  var deltaWire = wire - this[view];
   var dwire = [0,0,0];
-  switch(plane) {
+  switch(view) {
     case 0: dwire = [ deltaWire        ,-deltaWire*kcos60, deltaWire*kcos60 ]; break;
     case 1: dwire = [-deltaWire*kcos60 , deltaWire       , deltaWire*kcos60 ]; break;
     case 2: dwire = [ deltaWire*kcos60 , deltaWire*kcos60, deltaWire        ]; break;
@@ -59,7 +59,7 @@ UserTrackPoint.prototype.set_view_zoomhint = function (plane, wire, tdc)
   this[2] += dwire[2];  
 };
 
-UserTrackPoint.prototype.set_view = function (plane, wire, tdc)
+UserTrackPoint.prototype.set_view = function (view, wire, tdc)
 {
   // Move the view to suggest the zoom point.
   
@@ -68,25 +68,25 @@ UserTrackPoint.prototype.set_view = function (plane, wire, tdc)
 
   // Attempt to keep this view consistent with the last view we worked in.
   // Find wire crossing point for this wire and the last touched.
-  var lastplane = this.lasttouch[1];
-  if(lastplane == plane) lastplane = this.lasttouch[0];
+  var lastview = this.lasttouch[1];
+  if(lastview == view) lastview = this.lasttouch[0];
 
-  var gw1 = gGeo.getWire(plane,wire);
-  var gw2 = gGeo.getWire(lastplane, this[lastplane]);
+  var gw1 = gGeo.getWire(view,wire);
+  var gw2 = gGeo.getWire(lastview, this[lastview]);
   var xing = gGeo.wireCrossing(gw1,gw2);
-  var thirdplane = 0;
-  while(thirdplane==plane || thirdplane== lastplane) thirdplane++;
-  // console.warn(plane,wire);
-  // console.warn(lastplane, this[lastplane]);
+  var thirdview = 0;
+  while(thirdview==view || thirdview== lastview) thirdview++;
+  // console.warn(view,wire);
+  // console.warn(lastview, this[lastview]);
   // console.warn(gw2,xing);
-  var newwire = gGeo.yzToWire(thirdplane,xing.y,xing.z);
-  // console.warn(thirdplane,newwire);
-  this[plane] = wire;
-  this[thirdplane] = newwire;
+  var newwire = gGeo.yzToWire(thirdview,xing.y,xing.z);
+  // console.warn(thirdview,newwire);
+  this[view] = wire;
+  this[thirdview] = newwire;
   
-  if(this.lasttouch[1] != plane) {
+  if(this.lasttouch[1] != view) {
     this.lasttouch[0] = this.lasttouch[1];
-    this.lasttouch[1] = plane;
+    this.lasttouch[1] = view;
   }
 }
 
@@ -158,7 +158,7 @@ function dEdXTool( element, options  )
     margin_right : 10,
     margin_top : 10,
     xlabel : "Wire Num",
-    ylabel : "Hit Charge (Collection Plane)",
+    ylabel : "Hit Charge (Collection view)",
     label_font : "10px sans-serif",    
   };
   // override defaults with options.
@@ -229,7 +229,7 @@ dEdXTool.prototype.Draw = function()
   // Go through gHits, and find hits that match our view.
   for(var i=0;i<hits.length;i++) {
     var h = hits[i];
-    var p = h.plane;
+    var p = h.view;
     var w = h.wire;
     // See if hit falls on a segment.
     for(var s=0;s<nsegments;s++) {
@@ -254,7 +254,7 @@ dEdXTool.prototype.Draw = function()
   }
   // console.warn("Built dEdX map, ",n,"hits match");
 
-  var hist = this.hists[2]; // Just do induction plane for now.
+  var hist = this.hists[2]; // Just do induction view for now.
   
   this.min_u = hist.min; // Minimum value shown on x-axis  FIXME - make adjustable.
   this.max_u = hist.max; // Maximum value shown on y-axis
@@ -375,7 +375,7 @@ dEdXTool.prototype.ProtonCurve = function(x,cosz,top)
 
 dEdXTool.prototype.DrawReferenceCurves = function()
 {
-  var hist = this.hists[2]; // Just do induction plane for now.
+  var hist = this.hists[2]; // Just do induction view for now.
   
   // Estimate theta from the track.
   var cosz = gUserTrack.get_costheta_z(hist.GetX(0)); // FIXME: do per-wire or per-segment

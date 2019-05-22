@@ -48,7 +48,7 @@ RgbWireView.prototype.MagnifierDraw = function(fast)
     this.min_v = 0;
     this.max_v = 3200;
     this.min_u = 0;
-    this.max_u = gGeo.numWires(2);
+    this.max_u = gGeo3.numWires(0,2);
   }
   
   this.Clear();

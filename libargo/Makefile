@@ -321,6 +321,15 @@ testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
 
 
+# this works, but is SLOWWWWWW to get the gdml file
+# CPPFLAGS += -I ${ART_INC}
+# LIBS     += -L ${ART_LIB} -l art_Framework_IO_Root -l art_Framework_IO_RootVersion -l art_Framework_IO_Root_RootDB
+
+# LIBS     += -L ${FHICLCPP_LIB} -l fhiclcpp
+# my_config_dumper: tmp/config_dumper.o
+# 	$(CPP) $(LDFLAGS) tmp/config_dumper.o $(LIBS) -o $@
+
+
 # This is a brute-force copy. This is now obsolete, since instead have these files committed to the argo repository.
 # UBOONEDAQ_FILES =DaqFile.cpp Plexus.cpp Plexus_hardcoded.h  Client.cpp DispatcherMessage.cpp KvpSet.cpp Logging.cpp ConvertDispatcherToEventRecord.cpp #Timer.cpp
 # UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h
