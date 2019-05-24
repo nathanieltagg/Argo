@@ -168,13 +168,15 @@ GLMapper.prototype.StartLoad = function()
       var image_url = elem.url;
       var img = new Image();
 
+      console.log('creating texture');
+
       var threetex = new THREE.Texture(img);
       threetex.magFilter = THREE.NearestFilter;
       threetex.minFilter = THREE.NearestFilter;
       threetex.wrapS     = THREE.ClampToEdgeWrapping;
       threetex.wrapT     = THREE.ClampToEdgeWrapping;
       threetexturerow.push(threetex);
-      
+      console.log('finished texture');
       datarow.push(null);
       canvasrow.push(document.createElement('canvas'));
       

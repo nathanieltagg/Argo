@@ -22,6 +22,7 @@
 #include "UniversalComposer.h"
 
 #include <signal.h>
+#include <sys/stat.h>
 #include <algorithm>
 #include <string>
 #include <boost/program_options.hpp>
@@ -42,6 +43,9 @@ int main(int argc, char **argv)
   Long64_t entryend = 1000000000;
   std::string jsonfilename = "out.json";  
   std::string path = "../";
+  std::string imagepath = "../datacache";
+  std::string imageurl = "datacache";
+
   
   namespace po = boost::program_options;
   using std::string;
@@ -55,6 +59,8 @@ int main(int argc, char **argv)
      ( "end" ,          po::value<int>(),     "Entryend (default 1000000000)")
      ( "output,j",      po::value<string>(), "JSON output file (default out.json)" )
      ( "path,p",        po::value<string>(), "Path to ARGO hierarchy (db,datacache,etc) " )
+     ( "imagepath",     po::value<string>(), "Name of directory to install images (default ../datacache) " )
+     ( "imageurl ",     po::value<string>(), "Name of url to install images (default datacache)" )
        
              ;
   
@@ -94,11 +100,19 @@ int main(int argc, char **argv)
   if (vm.count("path")) {
     path = vm["path"].as<string>();
   }
+  if (vm.count("imagepath")) {
+    imagepath = vm["imagepath"].as<string>();
+  }
+  if (vm.count("imageurl")) {
+    imageurl = vm["imageurl"].as<string>();
+  }
+
 
 
   Config_t configuration(new nlohmann::json);
-  (*configuration)["CacheStoragePath"] = "../datacache";
-  (*configuration)["CacheStorageUrl"]  = "datacache";
+  ::mkdir(imagepath.c_str(), 0755); // don't check for success; path may already exist.
+  (*configuration)["CacheStoragePath"] = imagepath;
+  (*configuration)["CacheStorageUrl"]  = imageurl;
   (*configuration)["plexus"] = { {"tpc_source", std::string("sqlite ").append(path).append("db/current-plexus.db")}
                                , {"pmt_source", std::string("sqlite ").append(path).append("db/current-plexus.db")}
                                };

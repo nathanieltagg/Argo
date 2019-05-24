@@ -897,19 +897,34 @@ WireViewGL.prototype.CreateHits = function()
   
   for(var i=0;i<hits.length;i++){
     var hit = hits[i];
-    // if(!_hit.wires) _hit.wires = gGeo3.channelToWires()... // need to put this in soon
-    if(hit.plane != this.plane) continue;
-    // hit object is in U,tdc space, needs scaling
-    var u = gGeo3.wireToTransverse(0,this.view,hit.wire); // FIXME TPC number
-    var halfwidth = gGeo3.wire_pitch(0,this.view)/2; // FIXME TPC number
-    var q = hit[field]; // The value being plotted for charge. 
-    // if(q<gHitCut.min) { continue;}
-    // if(q>gHitCut.max) { continue;}
-    var c = gHitColorScaler.GetColorValues(q);
-    var cc = [c[0]/255,c[1]/255,c[2]/255];
-    // cc = [1,1,1];
+    var tpc = hit.tpc || 0;
+    if(hit.Ch) {
+      // new version.
+      if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
+      for(var w of hit._wires) {
+        if(w.view==this.view) {
+          var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
+          var halfwidth = gGeo3.wire_pitch(tpc,this.view)/2; // FIXME TPC number
+          var q = hit[field]; // The value being plotted for charge. 
+          var c = gHitColorScaler.GetColorValues(q);
+          var cc = [c[0]/255,c[1]/255,c[2]/255];
+          addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
+        }
+      }
+    } else {
+      // old version.
+      if(hit.plane != this.plane) continue;
+      // // hit object is in U,tdc space, needs scaling
+      var u = gGeo3.wireToTransverse(0,this.view,hit.wire); 
+      var halfwidth = gGeo3.wire_pitch(0,this.view)/2; 
+      var q = hit[field]; // The value being plotted for charge. 
+      var c = gHitColorScaler.GetColorValues(q);
+      var cc = [c[0]/255,c[1]/255,c[2]/255];
+      addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
+
+    }
+
     
-    addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
   }
   
   var geo = new THREE.BufferGeometry();
