@@ -288,8 +288,10 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
 
       
       for(int k=0;k<ntdc;k++) {
-        int iadc = waveform[k+m_tdcStart] + zeroadc;
+        unsigned int isample = k+m_tdcStart;
+        int iadc = waveform[isample] + zeroadc;
         // iadc = (k+m_tdcStart - 4800)/2 + 0x8000; // Testing only :generates a linear slope map
+        // iadc = zeroadc + isample/10; // Testing only: Linear map, 10 pixels per value.
         encodeddata[k*3]   = 0xFF&(iadc>>8);  // high 8 bits (really 5)
         encodeddata[k*3+1] = iadc&0xFF;       // low 8 bits
         int inoise = noisewaveform[k+m_tdcStart];

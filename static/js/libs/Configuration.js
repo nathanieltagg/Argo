@@ -62,8 +62,7 @@ $(function(){
   gStateMachine.Bind("newPiece",function(){
     var hints = (gRecord||{}).hints||{};
     if("shift_hit_ticks" in hints) $('#ctl-shift-hits').val(hints.shift_hit_ticks.value);
-
-  })
+    });
   
   
 });

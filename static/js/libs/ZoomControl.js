@@ -74,20 +74,63 @@ function ZoomControl( element, options )
     gStateMachine.Trigger("zoomChange");    
   });
 
-
+  $('input.zoommode').change( this.ChangeMode.bind(this) );
+  this.ChangeMode();
+  
   $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
   $(this.ctl_zoom_full  ).click(function(ev) { return self.FullZoom(); }); 
   gStateMachine.Bind('change-tracks', this.Draw.bind(this,false) );
   gStateMachine.Bind('change-spacepoints', this.Draw.bind(this,false) );
  
  
-  gStateMachine.BindObj('newRecord',this,"NewRecord");
-  gStateMachine.BindObj('newPiece',this,"NewPiece");
-  gStateMachine.BindObj('zoomChange',this,"Draw");
-  gStateMachine.BindObj('zoomChangeFast',this,"Draw");
-  gStateMachine.BindObj('hoverChange',this,"HoverChange");  
-  gStateMachine.BindObj('selectChange',this,"Draw");
+  gStateMachine.Bind('newRecord',this.NewRecord.bind(this));
+  gStateMachine.Bind('newPiece',this.NewPiece.bind(this));
+  gStateMachine.Bind('zoomChange',this.Draw.bind(this));
+  gStateMachine.Bind('zoomChangeFast',this.Draw.bind(this));
+  gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));  
+  gStateMachine.Bind('selectChange',this.Draw.bind(this));
+  gStateMachine.Bind('zoomChange',this.ChangeHash.bind(this));
+  gStateMachine.Bind('zoomChangeFast',this.ChangeHash.bind(this));
   
+}
+
+ZoomControl.prototype.ChangeHash = function()
+{
+
+  // Sanitize the hash to prevent someone from putting a script in there.
+  // hash = hash.replace(/(<([^>]+)>)/ig,"");
+  // hash = hash.replace(/\"\'/ig,"");
+  var split1 = window.location.href.split('#');
+  var hash = split1[1] || "";
+  var split2 = split1[0].split('?');
+  var par = split2[1] || "";
+  var path = window.location.pathname;  
+
+  var center = gZoomRegion.getCenter();
+  phash = {x: parseInt(center.x),
+           y: parseInt(center.y),
+           z: parseInt(center.z),
+           width: parseInt(gZoomRegion.getWidth()) };
+    // phash.aspect = gZoomRegion.getAspect();
+  
+  var lnk = window.location.protocol + "//" + window.location.hostname + path + par + "#" + $.param(phash);
+  $('a.linkzoom').attr('href',lnk);
+  $('.linkzoom-txt').text(lnk);
+  
+  // Change the hash to reflect the new zoom, so that the current link can
+  // be copy-pasta'ed
+  
+  // However, this call pollutes the browser history:
+  // $.bbq.pushState({zoom:phash},0);
+
+  // This code is looted from the BBQ stuff, and does the same job, except using the
+  // location.replace() call, without polluting browser history.
+  var newstate = $.extend( {}, $.deparam.fragment(), {zoom:phash} ); // merge
+  var newhash = $.param.sorted(newstate); // stringify
+  newhash = newhash.replace($.param.fragment.noEscape,decodeURIComponent); // Escape
+  console.log("new zoom hash",newhash,phash);
+  location.replace("#"+newhash); // change hash, doesn't trigger hashchange
+
 }
 
 ZoomControl.prototype.HoverChange = function()
@@ -95,6 +138,13 @@ ZoomControl.prototype.HoverChange = function()
   if(gHoverState.type=="tracks" || gLastHoverState=="tracks") this.Draw();
 }
 
+
+ZoomControl.prototype.ChangeMode = function()
+{
+  var mode = $('input.zoommode:checked').val();
+  gZoomRegion.setMode(mode);
+  gStateMachine.Trigger('changeViewMode');
+}
 
 ZoomControl.prototype.AutoZoom = function()
 {
@@ -412,41 +462,8 @@ ZoomControl.prototype.Draw = function()
            "<span style='color: blue' >"+Math.round(this.fMousedWires[2])+'</span> ';
   }
   txt += "<br/>";
-
-  var split1 = window.location.href.split('#');
-  var hash = split1[1] || "";
-  var split2 = split1[0].split('?');
-  var par = split2[1] || "";
-  var path = window.location.pathname;  
-
-  // Sanitize the hash to prevent someone from putting a script in there.
-  // hash = hash.replace(/(<([^>]+)>)/ig,"");
-  // hash = hash.replace(/\"\'/ig,"");
-  
-  var center = gZoomRegion.getCenter();
-  phash = {x: parseInt(center.x),
-           y: parseInt(center.y),
-           z: parseInt(center.z),
-           width: parseInt(gZoomRegion.getWidth()) };
-    // phash.aspect = gZoomRegion.getAspect();
-  
-  var lnk = window.location.protocol + "//" + window.location.hostname + path + par + "#" + $.param(phash);
-  $('a.linkzoom').attr('href',lnk);
-  $('.linkzoom-txt').text(lnk);
   $('span.ZoomControl-Info').html(txt);
-  
-  // Change the hash to reflect the new zoom, so that the current link can
-  // be copy-pasta'ed
-  
-  // However, this call pollutes the browser history:
-  // $.bbq.pushState({zoom:phash},0);
 
-  // This code is looted from the BBQ stuff, and does the same job, except using the
-  // location.replace() call, without polluting browser history.
-  var newstate = $.extend( {}, $.deparam.fragment(), {zoom:phash} ); // merge
-  var newhash = $.param.sorted(newstate); // stringify
-  newhash = newhash.replace($.param.fragment.noEscape,decodeURIComponent); // Escape
-  location.replace("#"+newhash); // change hash, doesn't trigger hashchange
 };
 
 ZoomControl.prototype.DoMouse = function(ev)

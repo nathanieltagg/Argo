@@ -208,7 +208,8 @@ WireInfo.prototype.GetWireDataHistograms3 = function( mapper, channel, tdc, n)
       var elem = mapper.tile_urls[irow][icol];
       var canvas = mapper.tile_canvases[irow][icol];
       if( !(canvas) ) continue;
-      if(y>=elem.y && y<elem.y+elem.height) {
+      if( canvas.width < 2) continue;
+       if(y>=elem.y && y<elem.y+elem.height) {
         if(x1 >= elem.x && x1 < elem.x + elem.width) {
           // Start in this image.
           var n1 = Math.min(n, elem.width+elem.x-x1);
@@ -216,7 +217,7 @@ WireInfo.prototype.GetWireDataHistograms3 = function( mapper, channel, tdc, n)
                           .getImageData(x1-elem.x,y-elem.y,n1,1);
           if(id) imgdata1=id.data;
         }
-        if(x2 >= elem.x && x2 < elem.x + elem.width && x1 < elem.x) {
+        if(x2 > elem.x && x1 < elem.x) {
           // second half in this image. start on left side, fill remaining
           var id = canvas.getContext('2d',{willReadFrequently:true})
                           .getImageData(0,y-elem.y,x2-elem.x,1);

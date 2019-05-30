@@ -41,6 +41,7 @@
 #include "DeadChannelMap.h"
 #include "CoherentNoiseFilter.h"
 #include "ReadLarsoftConfig.h"
+#include "Plexus.h"
 
 #include "boost/thread/thread.hpp"
 #include "boost/thread/mutex.hpp"
@@ -577,7 +578,10 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
     out["error"] = "No entries";
     return;
   }
-  
+  if(!gDeadChannelMap->ok()) gDeadChannelMap->RebuildFromTimestamp(m_event_time/1000.);
+  if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"db/dead_channels.txt"));
+  if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(nchannels));
   std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nchannels));
   size_t ntdc = v[0].NSignal();
@@ -652,6 +656,18 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
     out["error"] = "No entries";
     return;
   }
+  if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"../db/dead_channels.txt"));
+  if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+  json plexus_config = m_config->value("plexus",json::object());
+  gov::fnal::uboone::online::Plexus plex;
+  plex.assignSources(
+    plexus_config.value("tpc_source","sqlite db/current-plexus.db"),
+    plexus_config.value("pmt_source","sqlite db/current-plexus.db"),
+    plexus_config.value("tpc_source_fallback",""),
+    plexus_config.value("pmt_source_fallback","")
+  );  
+  if(m_event_time>0) plex.rebuild(m_event_time/1000.);
+
 
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(v.size()));
 
@@ -670,7 +686,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
       raw::Uncompress(rawdigit.ADCs(),*waveform_ptr,rawdigit.GetPedestal(), rawdigit.Compression());
     }
     waveform_t& waveform = *waveform_ptr;
-    waveform._servicecard = wire/48;
+    waveform._servicecard = plex.get_wirenum(wire).servicecard_id();
     size_t nsamp = waveform.size();
 
     // Find the pedestal manually.

@@ -28,9 +28,11 @@ void main() {
 
 <script id="three-vertex-shader" type="x-shader/x-fragment">
   varying vec2 vUv;
+  varying vec3 vPosition;
 
    void main() {
        vUv = uv;
+       vPosition = position;
        gl_Position = projectionMatrix *
            modelViewMatrix *
            vec4(position,1.0);
@@ -78,12 +80,17 @@ uniform float chan_end;
 uniform float tdc_start;
 uniform float tdc_end;
 
+uniform float trans_low_cut;
+uniform float trans_high_cut;
+uniform float trans_fade_width;
+
 uniform int    flip;
 
 // uniform vec2 crop_start; // x,y of start crop region in (wire,tdc) i.e. rotated
 // uniform vec2 crop_end;   // x,y of stop crop region in (wire,tdc) i.e. rotated
 
 varying vec2  vUv;
+varying vec3  vPosition;
 
 void main() {
   // vUv is the normalized U,V coordinate in the object which nominally
@@ -93,7 +100,7 @@ void main() {
   vec2 uv_final;
 
   // wire coordinate (x in source texture, y in UV coordinate system used by the polygon)
-  float wire = (vUv.x*(chan_end-chan_start) + chan_start);
+  float wire = mix(chan_start,chan_end,vUv.x); //(vUv.x*(chan_end-chan_start) + chan_start);   // x*end (1-x)*start
   uv_final.y = 1.-(wire-texture_start_chan)/texture_size_chan;
 
   // tdc coordinate for this pixel
@@ -104,6 +111,7 @@ void main() {
   // find which texture
   vec4 inc;
   if(tdc < texture0_start_tdc) {
+    // Scrolling the t0 past the limits of the data
     inc = vec4(1.,1.,0.,0.);  // 
     gl_FragColor.a=0.;
     return;
@@ -133,15 +141,15 @@ void main() {
     inc = texture2D(texture5, uv_final);
 
   } else {
-    // Shouldn't happen...?
+    // Scroll past limits of data
     gl_FragColor.a=0.;
     return;
   }
-      // uv_final.y =  (tdc-texture0_start_tdc) / texture0_size_tdc ;
 
-    // inc = texture2D(texture0, uv_final);
-
-  // inc = texture2D(texture0, vUv);
+  // Now I want to see if I'm in a 'fade-out' region.
+  // smoothstep is a builtin that makes a nice transition from 0 to 1
+  float fade = smoothstep(trans_low_cut-trans_fade_width, trans_low_cut+trans_fade_width, vPosition.x)
+             * (1.-smoothstep(trans_high_cut-trans_fade_width, trans_high_cut+trans_fade_width, vPosition.x));
 
 
   // vec2 uv_texture;
@@ -160,10 +168,15 @@ void main() {
 
 
   
-  // // This DOES work and should give the correct ADC value in integers
-  int g = int(inc.g*256.0);
-  int r = int(inc.r*256.0);
-  int b = int(inc.b*256.0);
+  // Note that full-value is 1.0, so need to multiply to 255 to get a proper integer address.
+  int g = int(inc.g*255.0);
+  int r = int(inc.r*255.0);
+  int b = int(inc.b*255.0);
+
+  if(g==256) {
+     gl_FragColor.r = 1.0; gl_FragColor.g = 0.0; gl_FragColor.b=0.0; gl_FragColor.a=1.0;
+     return;
+  }
   
   // Subtract the noise which is stored in the blue channel.
   if(do_noise_reject>0 && b<0xff) {
@@ -172,13 +185,16 @@ void main() {
     if(g>255) { r+=1; g-=256;}
   }
 
+  // Dead channels.
   if(b==0xff && do_bad_channel_flag==0) { g=0x80; r=0x80; } // dead channel - zero it out.
 
-  vec2 lookup_coords = vec2( (float(g)-0.5)/255.0 , (float(r)-0.5)/255.0 );
+  // Ok, we have our final value of the ADC for this pixel coded as GR; look that shit up in the lookup table.
+  vec2 lookup_coords = vec2( (float(g)+0.5)/256.0 , (float(256-r)+0.5)/256.0 );
   gl_FragColor = texture2D(maptexture, lookup_coords);
-  
+  gl_FragColor.a *= fade;
+  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=1.;} // dead channel - black, no opacity.
 
-  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=0.;} // dead channel - black, no opacity.
+ 
 } 
 
 </script>

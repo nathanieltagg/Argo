@@ -346,6 +346,25 @@ Geometry3 = function (data)
      
     }
 
+    this.findTransCut = function(tpc,lowhigh,view,y) 
+    {
+      // find the value for the trans coordinate which cuts on the y coordinate (center of the view).  See notes 5/24/2019
+      // tpc = tpc integer
+      // lowhigh = -1 or 1 for left edge or right edge
+      // view = view projection
+      // y = cut height.
+      // I understand the math to generalize to any view, but this should do.
+      var r = this.data.tpcs[tpc].center[2];
+      r += lowhigh*this.data.tpcs[tpc].halfwidths[2];
+      // if(view==2) return r; // not really required, although marginally faster for that case
+      var vtrans = this.data.basis.transverse_vectors[view];
+      var valong = this.data.basis.along_vectors[view];
+      var t = (y*valong[2] - r*valong[1])/(vtrans[1]*valong[2] - vtrans[2]*valong[1]);
+      return t;
+    }
+
+
+
     // Finish initialization
     this.init();
 

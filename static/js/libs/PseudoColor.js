@@ -59,7 +59,7 @@ PseudoColor.prototype.ColorDialToAdc = function( colorDial )
   // colors change evenly from 0-1 on colordial.
   // adc can legally be -4096 to 4096.
   var adc = Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
+  // if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
   return adc;
 }
 
@@ -67,9 +67,9 @@ PseudoColor.prototype.AdcToColorDial = function( adc, no_truncate)
 {
   // adc can legally be -4096 to 4096.
   // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) { 
-    if(no_truncate) {} else return 0; // truncate
-  }
+  // if(adc > this.cutoffLow && adc < this.cutoffHigh) { 
+  //   if(no_truncate) {} else return 0; // truncate
+  // }
   return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
 }
 

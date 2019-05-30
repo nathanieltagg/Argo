@@ -345,10 +345,12 @@ void UbdaqComposer::composeHeader()
     plexus_config.value("tpc_source_fallback",""),
     plexus_config.value("pmt_source_fallback","")
   );  
-  gDeadChannelMap->Rebuild();
   
   event_time = getTime(m_record,header)/1000.;
   if(event_time>0) gPlexus.rebuild(event_time);
+  if(!gDeadChannelMap->ok()) gDeadChannelMap->RebuildFromTimestamp(event_time);
+  if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"db/dead_channels.txt"));
+  if(!gDeadChannelMap->ok()) m_result["warning"].push_back("Could not initialize dead channel map");
 
   header["run"           ] = m_record->getGlobalHeader().getRunNumber()    ;
   header["subrun"        ] = m_record->getGlobalHeader().getSubrunNumber() ;

@@ -80,6 +80,9 @@ CPPFLAGS += -I ${POSTGRESQL_INC}
 LIBS     += -L ${POSTGRESQL_LIBRARIES} -lpq
 # ldpaths  += -Wl,-rpath,${POSTGRESQL_LIBRARIES}
 
+#curl:
+LIBS += -lcurl
+
 ### Products added via ups
 CPPFLAGS += -I ${BOOST_INC}
 LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options

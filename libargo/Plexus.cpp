@@ -119,6 +119,7 @@ bool Plexus::rebuild(double event_time, double query_time)
   
   if(need_rebuild) {
     m_ccc_to_plek.clear();
+    m_wirenum_to_plek.clear();
     
     // Build from source.  fall back to 'fallback' source, or fall back to hardcoded if that fails.
     bool tpc_ok =      buildTpc(event_time,query_time,m_tpc_source)
@@ -619,6 +620,12 @@ const Plexus::Plek& Plexus::get(int crate, int card, int channel)
   return m_nullplek;
 }
 
+const Plexus::Plek& Plexus::get_wirenum(int wirenum) {
+   MapType_t::iterator it = m_wirenum_to_plek.find(wirenum);
+  if(it!=m_wirenum_to_plek.end()) return it->second;
+  return m_nullplek;
+}
+
 void Plexus::insert(Plek& p)
 {
   MapType_t::key_type iccc = ccc(p.crate(),p.card(),p.channel());  
@@ -628,6 +635,7 @@ void Plexus::insert(Plek& p)
     logError << "First: " << m_ccc_to_plek[iccc].to_string();
     logError << "Second:" << p.to_string();
   }
+  m_wirenum_to_plek.insert(MapType_t::value_type(p.wirenum(),p));
 }
 
 void Plexus::fixPlek(Plek& p)

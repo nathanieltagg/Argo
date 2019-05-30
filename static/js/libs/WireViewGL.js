@@ -373,6 +373,9 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
             tdc_start:  { value: tdc_start },
             tdc_end:    { value: tdc_end  },
             flip:       { type: "i", value: flip?1:0 },
+            trans_fade_width: {value: 10.}, 
+            trans_low_cut:    {value: -1e9},
+            trans_high_cut:   {value:  1e9},
          };
 
 
@@ -546,6 +549,8 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
       // var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
       // var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+
+      // change tdc offset.
       var gtpc = gGeo3.getTpc(tpc);
       var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
       var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
@@ -557,6 +562,10 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       mat.uniforms.tdc_start.value = tdc_start;
       mat.uniforms.tdc_end.value = tdc_end;
 
+      // Change transverse cut
+      
+
+      // trigger channels
       mat.uniforms.do_noise_reject    .value= do_filter;
       mat.uniforms.do_bad_channel_flag.value= bad_channel_flag;
 

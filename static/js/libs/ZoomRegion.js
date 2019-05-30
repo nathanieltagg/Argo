@@ -27,6 +27,12 @@ function ZoomRegion() {
   var _aspect = 1.0;                      // Warping of current aspect ratio from true. width/height, 
                                           // so height = _width/_aspect
 
+  var _mode = "crop";
+
+  this.setMode = function(mode) { _mode = mode; }
+  this.cropMode = function() { return _mode=='crop'; }
+  this.fullMode = function() { return _mode=='full'; }
+
   var _time_offset = 0;
   this.getTimeOffset = function()  { return _time_offset }
   this.setTimeOffset = function(t0) { _time_offset = t0; };
