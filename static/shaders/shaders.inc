@@ -186,13 +186,13 @@ void main() {
   }
 
   // Dead channels.
-  if(b==0xff && do_bad_channel_flag==0) { g=0x80; r=0x80; } // dead channel - zero it out.
+  if(b>=0xff && do_bad_channel_flag==0) { g=0x80; r=0x80; } // dead channel - zero it out.
 
   // Ok, we have our final value of the ADC for this pixel coded as GR; look that shit up in the lookup table.
   vec2 lookup_coords = vec2( (float(g)+0.5)/256.0 , (float(256-r)+0.5)/256.0 );
   gl_FragColor = texture2D(maptexture, lookup_coords);
   gl_FragColor.a *= fade;
-  if(b==0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=1.;} // dead channel - black, no opacity.
+  if(b>=0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=1.;} // dead channel - black, no opacity.
 
  
 } 

@@ -94,6 +94,8 @@ void MakeEncodedTileset(nlohmann::json& r,
                         bool fill_empty_space,
                         size_t max_threads)
 {
+
+  std::shared_ptr<wireimg_histogram_t> histogram(new wireimg_histogram_t);
   {
     TimeReporter timer_tiles("time_to_make_tiles");
     // create tiles.
@@ -108,7 +110,9 @@ void MakeEncodedTileset(nlohmann::json& r,
     
     typedef std::vector<EncodedTileMaker> row_t;
     typedef std::vector<row_t> table_t;
-    
+    for(size_t i=0;i<histogram->size();i++) {
+      (*histogram)[i]=0;
+    } 
     table_t table;
     if(tilesize<=0) tilesize=2400;
     int rows = ceil((float)nwire/(float)tilesize);
@@ -125,7 +129,7 @@ void MakeEncodedTileset(nlohmann::json& r,
         int y2 = y1+tilesize;
         if(y2>ntdc) y2=ntdc;
         std::cout << "tile" << x1 << " " << x2 << " " << y1 << " " << y2 << std::endl;
-        row.push_back(EncodedTileMaker(wireMap, noiseWireMap, x1,x2, y1,y2, path, url,fill_empty_space));
+        row.push_back(EncodedTileMaker(wireMap, noiseWireMap, x1,x2, y1,y2, path, url,fill_empty_space, histogram));
       }
       table.push_back(row);
     }
@@ -162,6 +166,13 @@ void MakeEncodedTileset(nlohmann::json& r,
   // make stats.
   {
     TimeReporter timer_stats("time_to_make_histograms");
+    TH1F outhist("outhist","outhist",histogram->size(),-0x1000,0x1000);
+    for(int i=0;i<histogram->size();i++) {
+      outhist.SetBinContent(i+1,(*histogram)[i]);
+    }
+    r.emplace("histogram",TH1ToHistogram(&outhist));
+
+    /*
     TH1D timeProfile("timeProfile","timeProfile",ntdc/25,0,ntdc);
     std::vector<TH1*> planeProfile;
     std::vector<Double_t> timeProfileData(ntdc+2,0);
@@ -212,6 +223,7 @@ void MakeEncodedTileset(nlohmann::json& r,
     delete planeProfile[0];
     delete planeProfile[1];
     delete planeProfile[2];
+    */
 
     timer_stats.addto(r);
     
@@ -238,7 +250,8 @@ EncodedTileMaker::EncodedTileMaker(
                   int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
                   const std::string& outDir,
                   const std::string& outUrl,
-                  bool fill_empty_space )
+                  bool fill_empty_space,
+                  std::shared_ptr< wireimg_histogram_t > histogram  )
   : m_wireMap(wireMap) 
   , m_noiseWireMap(noiseWireMap)
   , m_wireStart(wireStart)
@@ -247,7 +260,8 @@ EncodedTileMaker::EncodedTileMaker(
   , m_tdcEnd(tdcEnd)
   , m_outDir(outDir)
   , m_outUrl(outUrl)
-  , m_fill_empty_space(fill_empty_space)  
+  , m_fill_empty_space(fill_empty_space)
+  , m_histogram( histogram )
 {
   // // Pick an output filename
   // char* buffer = new char[m_outDir.length()+20];
@@ -271,6 +285,15 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
 
   const int zeroadc =  0x8080;
 
+  bool do_histogram = bool(m_histogram);
+  float hist_a, hist_b;
+  int   hist_size;
+  if(do_histogram) {
+    hist_a = m_histogram->size()/2;
+    hist_b = float(m_histogram->size()/2)/float(0x1000); // maximum likely swing
+    hist_size= m_histogram->size();
+  }
+
   for(int wire=m_wireStart;wire<m_wireEnd;wire++) 
   {
     // waveform_t& waveform = blank;
@@ -289,7 +312,8 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
       
       for(int k=0;k<ntdc;k++) {
         unsigned int isample = k+m_tdcStart;
-        int iadc = waveform[isample] + zeroadc;
+        int value = waveform[isample];
+        int iadc = value + zeroadc;
         // iadc = (k+m_tdcStart - 4800)/2 + 0x8000; // Testing only :generates a linear slope map
         // iadc = zeroadc + isample/10; // Testing only: Linear map, 10 pixels per value.
         encodeddata[k*3]   = 0xFF&(iadc>>8);  // high 8 bits (really 5)
@@ -300,6 +324,20 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
         if(outnoise > 0xfe) outnoise = 0xfe;
         if(inoise == 0x7fff) outnoise = 0xff; // marker for dead ROI
         if(waveform._status >=0 && waveform._status<4) outnoise=0xff;
+        else {
+          if(do_histogram) {
+            int bin = floor( ((float)value)*hist_b + hist_a );
+            if(bin<0) {
+              std::cout << "UNDERFLOW: value"  << value << " bin " << bin << " ped " << waveform._ped << std::endl;
+              bin =0;
+            }
+            if(bin>=hist_size) {
+              std::cout << "OVERFLOW:  value"  << value << " bin " << bin << " ped " << waveform._ped << std::endl;
+              bin =hist_size-1;
+            }
+            (*m_histogram)[bin].fetch_add(1,std::memory_order_relaxed);
+          }
+        }
         encodeddata[k*3+2] = outnoise&0xff;
       }
     } else {

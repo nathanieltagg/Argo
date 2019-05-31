@@ -608,6 +608,8 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
        (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
       }
     }
+    waveform_ptr->_ped = 0;
+
     // Waveform storage.
     if(wireMap->size() <= channel) wireMap->resize(channel+1);
     if(noiseMap->size() <= channel) noiseMap->resize(channel+1);
@@ -700,6 +702,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
     for(size_t i =0; i< nsamp; i++) {
       waveform[i] -= ped;
     }
+    waveform._ped = ped;
     waveform._status = gDeadChannelMap->status(wire);
 
     if(wireMap->size() <= wire) wireMap->resize(wire+1);

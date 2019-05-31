@@ -110,7 +110,8 @@ ZoomControl.prototype.ChangeHash = function()
   phash = {x: parseInt(center.x),
            y: parseInt(center.y),
            z: parseInt(center.z),
-           width: parseInt(gZoomRegion.getWidth()) };
+           width: parseInt(gZoomRegion.getWidth()),
+           t: parseInt(gZoomRegion.getTimeOffset()) };
     // phash.aspect = gZoomRegion.getAspect();
   
   var lnk = window.location.protocol + "//" + window.location.hostname + path + par + "#" + $.param(phash);
@@ -240,14 +241,20 @@ ZoomControl.prototype.NewRecord = function()
     var tpc = gGeo.getTpc(0);
     
     var center = tpc.getCenter().splice(0);
+    var t = parseFloat(this.ctl_time_offset_text.val());
+    var width = tpc.getWidths()[2];
     if('x' in par.zoom) center[0] = parseFloat(par.zoom.x);
     if('y' in par.zoom) center[1] = parseFloat(par.zoom.y);
     if('z' in par.zoom) center[2] = parseFloat(par.zoom.z);
-    gZoomRegion.setCenter(...center);
-
-    var width = tpc.getWidths()[2];
+    if('t' in par.zoom) t = parseFloat(par.zoom.t);
     if(par.zoom.width) width = parseFloat(par.zoom.width);
+
+    gZoomRegion.setCenter(...center);
+    gZoomRegion.setTimeOffset(t);
+    this.ctl_time_offset_text.val(t);
+    this.ctl_time_offset_slider.slider( "option", "value", t );
     gZoomRegion.setWidth(width);
+    
     console.warn("setting zoom to hash");
     gStateMachine.Trigger("zoomChange");
   } else {
