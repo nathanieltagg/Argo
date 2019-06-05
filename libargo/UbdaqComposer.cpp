@@ -400,7 +400,7 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   waveform_tools::pedestal_computer pedcomp;
   for(const int16_t& x: waveform) pedcomp.fill(x);
   int16_t ped = pedcomp.ped();
-  waveform.ped = ped;
+  waveform._ped = ped;
   pedcomp.finish(100); // auto-adjusted rms.
   double rms = pedcomp.pedsig();
   waveform._pedwidth = std::min(rms*2.0,15.0); 

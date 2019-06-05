@@ -164,6 +164,11 @@ function QueryServerStream( par )
       $('#status').attr('class', 'status-error');
       $("#status").text('Connection broken');
     };
+    gSocket.onclose = function(event) {
+      console.error("onclose",event);
+      $('#status').attr('class', 'status-error');
+      $("#status").text('Connection broken');
+    };
   } else {
     // Socket already read
     if (gSocket.readyState !== 1) gSocket.onopen =  ()=>{gSocket.send(JSON.stringify(request));}

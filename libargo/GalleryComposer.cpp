@@ -314,23 +314,24 @@ void GalleryComposer::composeHeaderData()
 
 void GalleryComposer::composeHints()
 {
-  TimeReporter ttt("hints");
+  // Takes 30 SECONDS on dune files. Unacceptable.
+  // TimeReporter ttt("hints");
 
-  // lock everything.
-  mutex::scoped_lock b(m_gallery_mutex); 
-  mutex::scoped_lock g(global_gallery_mutex);
-  // Try to get config options.
-  json request = 
-     " { \"shift_hit_ticks\": {\"conditions\": [{ \"key\": \"module_type\", \"value\": \"RawDigitFilterUBooNE\"}], \"parameter\": \"NumTicksToDropFront\" } "
-     " , \"gdml\":            {\"conditions\": [{ \"key\": \"service_type\", \"value\": \"Geometry\"}], \"parameter\": \"GDML\" } "
-     " } "_json;
+  // // lock everything.
+  // mutex::scoped_lock b(m_gallery_mutex); 
+  // mutex::scoped_lock g(global_gallery_mutex);
+  // // Try to get config options.
+  // json request = 
+  //    " { \"shift_hit_ticks\": {\"conditions\": [{ \"key\": \"module_type\", \"value\": \"RawDigitFilterUBooNE\"}], \"parameter\": \"NumTicksToDropFront\" } "
+  //    " , \"gdml\":            {\"conditions\": [{ \"key\": \"service_type\", \"value\": \"Geometry\"}], \"parameter\": \"GDML\" } "
+  //    " } "_json;
 
-  ReadLarsoftConfig(m_Event->getTFile(),request);
-  {
-    mutex::scoped_lock lck(m_output_mutex);
-    m_result["hints"] = request;
-}
-  ttt.addto(m_stats);
+  // ReadLarsoftConfig(m_Event->getTFile(),request);
+  // {
+  //   mutex::scoped_lock lck(m_output_mutex);
+  //   m_result["hints"] = request;
+  // }
+  // ttt.addto(m_stats);
 
 }
 
@@ -578,9 +579,14 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
     out["error"] = "No entries";
     return;
   }
-  if(!gDeadChannelMap->ok()) gDeadChannelMap->RebuildFromTimestamp(m_event_time/1000.);
-  if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"db/dead_channels.txt"));
-  if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+
+  bool is_uboone = (nchannels>8000 && nchannels<8456);
+
+  if(is_uboone) {
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->RebuildFromTimestamp(m_event_time/1000.);
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"db/dead_channels.txt"));
+    if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+  }
 
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(nchannels));
   std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nchannels));
@@ -615,7 +621,7 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
     if(noiseMap->size() <= channel) noiseMap->resize(channel+1);
     (*wireMap)[channel] = waveform_ptr;
     (*noiseMap)[channel] = noiseform_ptr;
-    waveform_ptr->_status = gDeadChannelMap->status(channel);
+    if(is_uboone) waveform_ptr->_status = gDeadChannelMap->status(channel);
   }
 
   // Now we should have a semi-complete map.
@@ -658,17 +664,21 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
     out["error"] = "No entries";
     return;
   }
-  if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"../db/dead_channels.txt"));
-  if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
-  json plexus_config = m_config->value("plexus",json::object());
+  bool is_uboone = (nchannels>8000 && nchannels<8456);
+
   gov::fnal::uboone::online::Plexus plex;
-  plex.assignSources(
-    plexus_config.value("tpc_source","sqlite db/current-plexus.db"),
-    plexus_config.value("pmt_source","sqlite db/current-plexus.db"),
-    plexus_config.value("tpc_source_fallback",""),
-    plexus_config.value("pmt_source_fallback","")
-  );  
-  if(m_event_time>0) plex.rebuild(m_event_time/1000.);
+  if(is_uboone) {
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"../db/dead_channels.txt"));
+    if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+    json plexus_config = m_config->value("plexus",json::object());
+    plex.assignSources(
+      plexus_config.value("tpc_source","sqlite db/current-plexus.db"),
+      plexus_config.value("pmt_source","sqlite db/current-plexus.db"),
+      plexus_config.value("tpc_source_fallback",""),
+      plexus_config.value("pmt_source_fallback","")
+    );  
+    if(m_event_time>0) plex.rebuild(m_event_time/1000.);    
+  }
 
 
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(v.size()));
@@ -688,7 +698,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
       raw::Uncompress(rawdigit.ADCs(),*waveform_ptr,rawdigit.GetPedestal(), rawdigit.Compression());
     }
     waveform_t& waveform = *waveform_ptr;
-    waveform._servicecard = plex.get_wirenum(wire).servicecard_id();
+    if(is_uboone) waveform._servicecard = plex.get_wirenum(wire).servicecard_id();
     size_t nsamp = waveform.size();
 
     // Find the pedestal manually.
@@ -703,7 +713,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
       waveform[i] -= ped;
     }
     waveform._ped = ped;
-    waveform._status = gDeadChannelMap->status(wire);
+    if(is_uboone) waveform._status = gDeadChannelMap->status(wire);
 
     if(wireMap->size() <= wire) wireMap->resize(wire+1);
     (*wireMap)[wire] = waveform_ptr;
@@ -713,7 +723,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
   size_t nwire = wireMap->size();
   std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nwire));
 
-  CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
+  if(is_uboone) CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
 
   std::cout << "RAWDIGIT time to assemble data for image-building:";
   tr.report();

@@ -10,6 +10,7 @@
 #include "cetlib/exempt_ptr.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/ParameterSetRegistry.h"
+#include "fhiclcpp/ParameterSetWalker.h"
 #include "fhiclcpp/make_ParameterSet.h"
 
 #include "boost/program_options.hpp"
@@ -174,6 +175,102 @@ bool ReadLarsoftConfig_check(const ParameterSet& ps, nlohmann::json& conditions)
   // passed all tests.
   return true;
 }  
+
+
+
+using nlohmann::json;
+
+class JsonWalker: public fhicl::ParameterSetWalker
+{
+public:
+  nlohmann::json top;
+  std::vector<nlohmann::json*> stack;
+  nlohmann::json* jcur;
+  JsonWalker() : top(json::object()) {jcur = &top;};
+
+  virtual void enter_table(key_t const& k, any_t const&) {
+    std::cout << "Start table " << k << std::endl;
+    stack.push_back(jcur);
+    if(jcur->is_array()) {
+      jcur->push_back(json::object());
+      jcur = &(jcur->back());
+    } else {
+      (*jcur)[k] = json::object();
+      jcur = &((*jcur)[k]);
+    }
+  }
+  virtual void exit_table(key_t const& k, any_t const& a) {
+    std::cout << "End table "  << std::endl;
+    jcur = stack.back();
+    stack.pop_back();
+  }
+   virtual void enter_sequence(key_t const& k, any_t const&) {
+    std::cout << "Start sequence " << k << std::endl;
+    stack.push_back(jcur);
+    if(jcur->is_array()) {
+      jcur->push_back(json::array());
+      jcur = &(jcur->back());
+    } else {
+      (*jcur)[k] = json::array();
+      jcur = &((*jcur)[k]);
+    }
+  }
+  virtual void exit_sequence(key_t const& k, any_t const& a) {
+    std::cout << "End sequence " << k << std::endl;
+    jcur = stack.back();
+    stack.pop_back();
+  }
+  virtual void atom(key_t const& k, any_t const& a) {
+    auto val =  boost::any_cast<std::string>(a);
+    if(val.size() > 100) val = "...yadda yadda...";
+    std::cout << "atom " << k << " -> " << val << std::endl;
+    std::cout << jcur->dump(2) << std::endl;
+    if(jcur->is_array()) {
+      jcur->push_back(val);
+    } else {
+      (*jcur)[k] = val;
+    }
+  }
+
+};
+
+void ReadLarsoftConfigAsJson(TFile* file) 
+{
+  ///
+  /// requests is of format
+  /// requests: {
+  ///      'shift_ticks': {conditions': [{ 'key': 'module_type', value: 'RawDigitFilterUBooNE'}], 'parameter': 'NumTicksToDropFront' } 
+  ///  } 
+  /// each request object gets a 'value'.
+
+  // needs to be completely mutex locked! no other process allowed to run, since this idiot code uses a fucking singleton
+  if(!file) return;
+  // file->Print();
+  boost::mutex::scoped_lock(g_larsoft_fcl_mutex);
+
+  static bool initialized = false;
+  if(!initialized) {
+      tkeyvfs_init();
+      initialized = true;
+  }
+  if(!file) return;
+  std::ofstream devnull("");
+  if (!read_all_parameter_sets(*file, devnull)) {
+    return; 
+  }
+  
+  auto const& collection = fhicl::ParameterSetRegistry::get();
+
+  json jout;
+  for (auto const& pr : collection) {
+      auto const& ps = pr.second;
+      JsonWalker jwalker;
+      ps.walk(jwalker);
+      jout.push_back(jwalker.top);
+  }
+  std::cout << jout.dump(2) << std::endl;
+
+}
 
 void ReadLarsoftConfig(TFile* file, nlohmann::json& requests)
 {

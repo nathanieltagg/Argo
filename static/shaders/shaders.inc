@@ -32,7 +32,8 @@ void main() {
 
    void main() {
        vUv = uv;
-       vPosition = position;
+       vPosition = (modelMatrix *
+           vec4(position,1.0)).xyz;
        gl_Position = projectionMatrix *
            modelViewMatrix *
            vec4(position,1.0);
@@ -149,7 +150,7 @@ void main() {
   // Now I want to see if I'm in a 'fade-out' region.
   // smoothstep is a builtin that makes a nice transition from 0 to 1
   float fade = smoothstep(trans_low_cut-trans_fade_width, trans_low_cut+trans_fade_width, vPosition.x)
-             * (1.-smoothstep(trans_high_cut-trans_fade_width, trans_high_cut+trans_fade_width, vPosition.x));
+              * (1.-smoothstep(trans_high_cut-trans_fade_width, trans_high_cut+trans_fade_width, vPosition.x));
 
 
   // vec2 uv_texture;

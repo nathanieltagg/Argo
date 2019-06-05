@@ -96,12 +96,12 @@ Geometry3 = function (data)
 
     this.getXofTDC = function(tpc,view,tdc) {
       var tpcdata = this.data.tpcs[tpc];
-      return -1*tdc*tpcdata.drift_dir*this.drift_cm_per_tick - tpcdata.views[view].x;
+      return -1*tdc*tpcdata.drift_dir*this.drift_cm_per_tick + tpcdata.views[view].x;
     };
 
     this.getTDCofX = function(tpc,view,x) {
        var tpcdata = this.data.tpcs[tpc];
-       return -1.*(x + tpcdata.views[view].x) / this.drift_cm_per_tick / tpcdata.drift_dir;
+       return -1.*(x - tpcdata.views[view].x) / this.drift_cm_per_tick / tpcdata.drift_dir;
     };
 
 
@@ -363,6 +363,23 @@ Geometry3 = function (data)
       return t;
     }
 
+    this.findTransCuts = function(tpc,view,y) 
+    {
+      // find the value for the trans coordinate which cuts on the y coordinate (center of the view).  See notes 5/24/2019
+      // tpc = tpc integer
+      // lowhigh = -1 or 1 for left edge or right edge
+      // view = view projection
+      // y = cut height.
+      // I understand the math to generalize to any view, but this should do.
+      var r = this.data.tpcs[tpc].center[2];
+      var dr = this.data.tpcs[tpc].halfwidths[2];
+      // if(view==2) return r; // not really required, although marginally faster for that case
+      var vtrans = this.data.basis.transverse_vectors[view];
+      var valong = this.data.basis.along_vectors[view];
+      return [ (y*valong[2] - (r-dr)*valong[1])/(vtrans[1]*valong[2] - vtrans[2]*valong[1])
+             , (y*valong[2] - (r+dr)*valong[1])/(vtrans[1]*valong[2] - vtrans[2]*valong[1])
+             ];
+    }
 
 
     // Finish initialization
@@ -371,8 +388,8 @@ Geometry3 = function (data)
 }
 
 
-var gGeo3 = new Geometry3(geodata_uboone);
-
+// var gGeo3 = new Geometry3(geodata_uboone);
+var gGeo3 = new Geometry3(geodata_protodune);
 
 ///////////////////////////////////////// Unit tests.
 

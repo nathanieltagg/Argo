@@ -78,6 +78,8 @@ function WireViewGL(element, options )
   $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
   $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
   $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
+  $('input.zoommode:checked')         .on("change", this.UpdateWireimg.bind(this) );
+
   gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) );  // Re-render, but this doesn't require anything more.
   
 
@@ -279,48 +281,48 @@ WireViewGL.prototype.CreateFrame = function()
 {
   this.frame_group = new THREE.Group();
 
-  // var material = new THREE.MeshBasicMaterial({ color: 0xff00000, side: THREE.DoubleSide });
- for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
+ //  // var material = new THREE.MeshBasicMaterial({ color: 0xff00000, side: THREE.DoubleSide });
+ // for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
 
-    // Fixme: need to trim the time so I don't overlap times in different projections
-    var isection =0;
-    for(var section of gGeo3.data.tpcs[tpc].views[this.view].sections) {
-      let texture = new THREE.TextTexture({
-        fontFamily: '"Times New Roman", Times, serif',
-        fontSize: 100,
-        text: [
-          '',
-          'TPC ',+tpc,
-          'Section ',+(isection++),
-          ''
-        ].join('\n'),
-        fillStyle: "#000"
-      });
-      var color = 0x000000;
-      if(Math.floor(tpc/4) == 0) color = 0xff0000;        
-      if(Math.floor(tpc/4) == 1) color = 0x00ff00;
-      if(Math.floor(tpc/4) == 3) color = 0x0000ff;
-      let material = new THREE.MeshBasicMaterial({   color:color, transparent:true, opacity: 0.2 });
+ //    // Fixme: need to trim the time so I don't overlap times in different projections
+ //    var isection =0;
+ //    for(var section of gGeo3.data.tpcs[tpc].views[this.view].sections) {
+ //      let texture = new THREE.TextTexture({
+ //        fontFamily: '"Times New Roman", Times, serif',
+ //        fontSize: 100,
+ //        text: [
+ //          '',
+ //          'TPC ',+tpc,
+ //          'Section ',+(isection++),
+ //          ''
+ //        ].join('\n'),
+ //        fillStyle: "#000"
+ //      });
+ //      var color = 0x000000;
+ //      if(Math.floor(tpc/4) == 0) color = 0xff0000;        
+ //      if(Math.floor(tpc/4) == 1) color = 0x00ff00;
+ //      if(Math.floor(tpc/4) == 3) color = 0x0000ff;
+ //      let material = new THREE.MeshBasicMaterial({   color:color, transparent:true, opacity: 0.2 });
 
 
-      var u1 = section[0].trans;
-      var u2 = section[1].trans;
-      // vertical
-      var v1 = gGeo3.data.tpcs[tpc].center[0] - gGeo3.data.tpcs[tpc].halfwidths[0];
-      var v2 = gGeo3.data.tpcs[tpc].center[0] + gGeo3.data.tpcs[tpc].halfwidths[0];
-      console.warn("FRAME",tpc,this.view,' -> ',u1,u2,v1,v2)
+ //      var u1 = section[0].trans;
+ //      var u2 = section[1].trans;
+ //      // vertical
+ //      var v1 = gGeo3.data.tpcs[tpc].center[0] - gGeo3.data.tpcs[tpc].halfwidths[0];
+ //      var v2 = gGeo3.data.tpcs[tpc].center[0] + gGeo3.data.tpcs[tpc].halfwidths[0];
+ //      console.warn("FRAME",tpc,this.view,' -> ',u1,u2,v1,v2)
 
-      var geometry = new THREE.PlaneGeometry( Math.abs(u2-u1), v2-v1 );
-      var mesh = new THREE.Mesh(geometry,material);
-      mesh.position.x = (u1+u2)/2;
-      mesh.position.y = (v1+v2)/2;
-      mesh.position.z = tpc;
+ //      var geometry = new THREE.PlaneGeometry( Math.abs(u2-u1), v2-v1 );
+ //      var mesh = new THREE.Mesh(geometry,material);
+ //      mesh.position.x = (u1+u2)/2;
+ //      mesh.position.y = (v1+v2)/2;
+ //      mesh.position.z = tpc;
 
-      this.frame_group.add(mesh);
-    }
+ //      this.frame_group.add(mesh);
+ //    }
 
-  }     
-  // this.scene.add(this.frame_group)
+ //  }     
+ //  this.scene.add(this.frame_group);
 }
 
 
@@ -450,6 +452,7 @@ WireViewGL.prototype.CreateWireimg = function()
   
   if(!mapper) return;
   this.wireimg_group = new THREE.Group();
+  this.max_tdc = mapper.total_width*mapper.scale_x;
 
   for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
     var nwires = gGeo3.numWires(tpc,this.view);
@@ -476,8 +479,10 @@ WireViewGL.prototype.CreateWireimg = function()
 
       // Attempt for DUNE:
       var gtpc = gGeo3.getTpc(tpc);
-      var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-      var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+      // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
+      // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+      var v1 =  gtpc.views[this.view].x; // position of wires
+      var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
       var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
       var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
 
@@ -494,7 +499,7 @@ WireViewGL.prototype.CreateWireimg = function()
                         flip,
                         userData); // y coord (time) in viewer space
       // this.wireimg_group.scale.y =  gGeo3.getDriftCmPerTick(0); // fixme tpc number
-    console.log("wireimg ",tpc,this.view, u1,u2,v1,v2);
+      console.log("wireimg ",tpc,this.view, u1,u2,v1,v2);
 
       this.wireimg_group.add(tpc_group);
     }
@@ -537,6 +542,8 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
   var edge_finder      = $('#ctl-gl-edge-finder').is(":checked") ? 1:0;
   var do_smear = 0;
   
+  var zoommode = $('input.zoommode:checked').val();
+  var center_y = gZoomRegion.getCenter().y;
 
   for(var tpcgroup of this.wireimg_group.children) {
 
@@ -560,10 +567,33 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
 
       mat.uniforms.tdc_start.value = tdc_start;
-      mat.uniforms.tdc_end.value = tdc_end;
+      mat.uniforms.tdc_end.value   = tdc_end;
 
       // Change transverse cut
-      
+      if(zoommode == "crop") {
+        // Drift crop:
+        var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
+        var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value = tdc_start;
+        mat.uniforms.tdc_end.value = tdc_end;
+
+        // Transverse crop:
+        var [u1,u2] = gGeo3.findTransCuts(tpc,this.view, center_y);
+        mat.uniforms.trans_fade_width.value = 2;
+        mat.uniforms.trans_low_cut.value  = u1;
+        mat.uniforms.trans_high_cut.value = u2;
+        console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
+      } 
+      else if(zoommode == "full" ) {
+        mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
+
+        mat.uniforms.trans_low_cut.value = -1e9;
+        mat.uniforms.trans_high_cut.value = 1e9;
+
+      } else {
+        console.error("WFT?")
+      }
 
       // trigger channels
       mat.uniforms.do_noise_reject    .value= do_filter;
@@ -818,8 +848,18 @@ WireViewGL.prototype.DoMouse = function(ev)
       // locate which tpc the mouse is likely in.
       var trans = this.fMousePos.world.x;
       var x     = this.fMousePos.world.y;
+
+      // If TPC is ambiguous, use 3d coordinates of the view.
+      if (!Number.isInteger(match_tpc)) {
+        // Start at the center, move trans distance.
+        var trans_vector = gGeo3.data.basis.transverse_vectors[this.view];
+        var along_vector = gGeo3.data.basis.along_vectors[this.view];
+        var y = gZoomRegion.getCenter().y * along_vector[1]+ trans*trans_vector[1];
+        var z = gZoomRegion.getCenter().z * along_vector[2]+ trans*trans_vector[2];
+        match_tpc = gGeo3.xyzToTpc(x,y,z);
+      }
       var wireref;
-      match_tpc = 0;
+      //match_tpc = 0;
       if(match_tpc>=0) {
         wireref = { tpc: match_tpc };
         wireref.wire   = gGeo3.transverseToWire(match_tpc,this.view,trans);
