@@ -4,6 +4,7 @@
 #include "gallery/Event.h"
 
 #include <TH1D.h>
+#include <TLeaf.h>
 
 // Data objects
 #include "canvas/Persistency/Provenance/EventAuxiliary.h"
@@ -314,6 +315,36 @@ void GalleryComposer::composeHeaderData()
 
 void GalleryComposer::composeHints()
 {
+  // Ok, try a hack.
+  m_result["hints"] = json();
+  size_t num_channels = 0;
+  auto products = findByType< vector<raw::RawDigit> >(m_Event->getTTree());
+  for(auto product: products) {
+      std::string leafname = product.first + "obj_";
+      TLeaf* f = m_Event->getTTree()->GetLeaf(leafname.c_str());
+      if(!f) continue;
+      num_channels = f->GetNdata();
+      break;
+  }
+  if(num_channels>0) {
+    m_result["hints"]["channel_count"] = num_channels;
+    return;
+  }
+
+  products = findByType< vector<recob::Wire> >(m_Event->getTTree());
+  for(auto product: products) {
+      std::string leafname = product.first + "obj_";
+      TLeaf* f = m_Event->getTTree()->GetLeaf(leafname.c_str());
+      if(!f) continue;
+      num_channels = f->GetNdata();
+      break;
+  }    
+  if(num_channels>0) {
+    m_result["hints"]["goodwire_count"] = num_channels;
+    return;
+  }
+
+
   // Takes 30 SECONDS on dune files. Unacceptable.
   // TimeReporter ttt("hints");
 

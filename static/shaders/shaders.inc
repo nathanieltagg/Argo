@@ -96,7 +96,7 @@ varying vec3  vPosition;
 void main() {
   // vUv is the normalized U,V coordinate in the object which nominally
   // maps to inputtexture(u,v).  However, we're going to manipulate it:
-  
+
   // invert the UV texture coordinates so that time is vertical.
   vec2 uv_final;
 
@@ -113,8 +113,7 @@ void main() {
   vec4 inc;
   if(tdc < texture0_start_tdc) {
     // Scrolling the t0 past the limits of the data
-    inc = vec4(1.,1.,0.,0.);  // 
-    gl_FragColor.a=0.;
+    gl_FragColor = vec4(0.0, 1.0, 0.0, 0.0);
     return;
 
   } else if(tdc< (texture0_start_tdc + texture0_size_tdc)) {
@@ -143,7 +142,9 @@ void main() {
 
   } else {
     // Scroll past limits of data
-    gl_FragColor.a=0.;
+
+    // gl_FragColor = vec4(0,0,0,0);
+    gl_FragColor = vec4(0,1,0,0);
     return;
   }
 
@@ -151,6 +152,8 @@ void main() {
   // smoothstep is a builtin that makes a nice transition from 0 to 1
   float fade = smoothstep(trans_low_cut-trans_fade_width, trans_low_cut+trans_fade_width, vPosition.x)
               * (1.-smoothstep(trans_high_cut-trans_fade_width, trans_high_cut+trans_fade_width, vPosition.x));
+
+
 
 
   // vec2 uv_texture;
@@ -174,10 +177,11 @@ void main() {
   int r = int(inc.r*255.0);
   int b = int(inc.b*255.0);
 
-  if(g==256) {
-     gl_FragColor.r = 1.0; gl_FragColor.g = 0.0; gl_FragColor.b=0.0; gl_FragColor.a=1.0;
-     return;
-  }
+  // if(g==256) {
+  //    // Shouldn't happen!
+  //    gl_FragColor = vec4(1,0,0,0);
+  //    return;
+  // }
   
   // Subtract the noise which is stored in the blue channel.
   if(do_noise_reject>0 && b<0xff) {
@@ -191,8 +195,12 @@ void main() {
 
   // Ok, we have our final value of the ADC for this pixel coded as GR; look that shit up in the lookup table.
   vec2 lookup_coords = vec2( (float(g)+0.5)/256.0 , (float(256-r)+0.5)/256.0 );
+  
   gl_FragColor = texture2D(maptexture, lookup_coords);
-  gl_FragColor.a *= fade;
+  gl_FragColor.a *= fade;  // make edges transparent
+  // gl_FragColor = mix( vec4(1,0,0,1), vec4(0,1,0,1) , fade ); // Red instead of transparent
+
+
   if(b>=0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=1.;} // dead channel - black, no opacity.
 
  

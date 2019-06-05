@@ -498,6 +498,7 @@ WireViewGL.prototype.CreateWireimg = function()
                         v1,v2,
                         flip,
                         userData); // y coord (time) in viewer space
+      tpc_group.userData.tpc_group = tpc;
       // this.wireimg_group.scale.y =  gGeo3.getDriftCmPerTick(0); // fixme tpc number
       console.log("wireimg ",tpc,this.view, u1,u2,v1,v2);
 
@@ -582,7 +583,7 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
         mat.uniforms.trans_fade_width.value = 2;
         mat.uniforms.trans_low_cut.value  = u1;
         mat.uniforms.trans_high_cut.value = u2;
-        console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
+        // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
       } 
       else if(zoommode == "full" ) {
         mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();

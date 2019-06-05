@@ -238,6 +238,7 @@ Geometry3 = function (data)
     this.XTransverseToTpcWire = function(view,x,trans)
     {
       // Here I want to know which TPC we're in if we're looking at a specific view, drift-distance coordinate, and wire-like position.
+      // The problem is that this is ambiguous: several TPCs will overlap in induction views in DUNE-like geometry
       var candidates = [];
       for(tpc of this.data.tpcs) {
         // console.log('x check',tpc.tpc,x,tpc.center[0],tpc.halfwidths[0], x-tpc.center[0]);
@@ -387,9 +388,9 @@ Geometry3 = function (data)
 
 }
 
-
-// var gGeo3 = new Geometry3(geodata_uboone);
-var gGeo3 = new Geometry3(geodata_protodune);
+var gGeo3;
+if(gDetector=="protodune") gGeo3 = new Geometry3(geodata_protodune);
+else                       gGeo3 = new Geometry3(geodata_uboone);
 
 ///////////////////////////////////////// Unit tests.
 
