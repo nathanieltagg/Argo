@@ -46,6 +46,7 @@ private:
   
 protected:
   void  composeHeaderData(); // Does several things.
+  void  composeHints(); // look at larsoft configuration
 
   // Does everything!
   template<typename T>

@@ -164,7 +164,7 @@ OpHitMap.prototype.Draw = function()
     if(w>gOpMode.cut.max) continue;
     if(oh.opDetChan<0) continue; // Bad channel number
     
-    det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
+    det = gGeo3.OpDetByChannel(oh.opDetChan);
     if(!det) { 
       console.warn("Couldn't find optical detector geometry for hit",oh);
       continue;
@@ -176,7 +176,7 @@ OpHitMap.prototype.Draw = function()
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.translate(x,y);
     this.ctx.scale(scale,scale);
-    gGeo.opDets.pathYZ(this.ctx,det.type);
+    gGeo3.opDetPathYZ(this.ctx,det.type);
     // this.ctx.beginPath();
     // this.ctx.arc(0,0,this.pmtRadius,0,Math.PI*1.999,false);
     this.ctx.scale(1,1);
@@ -187,7 +187,7 @@ OpHitMap.prototype.Draw = function()
   
   // Draw PMTs
   
-  var dets = gGeo.opDets.opticalDetectors;
+  var dets = gGeo3.opticalDetectors;
   this.ctx.strokeStyle = "black";
   for(i=0;i<dets.length;i++){
     det = dets[i];
@@ -199,7 +199,7 @@ OpHitMap.prototype.Draw = function()
     this.ctx.fillStyle = "rgb(" + c + ")";
     this.ctx.translate(x,y);
     this.ctx.scale(scale,scale);
-    gGeo.opDets.pathYZ(this.ctx,det.type)
+    gGeo3.opDetPathYZ(this.ctx,det.type)
     // this.ctx.beginPath();
     // this.ctx.arc(0,0,this.pmtRadius,0,Math.PI*1.999,false);
     this.ctx.restore();
@@ -221,7 +221,7 @@ OpHitMap.prototype.DoMouse = function(ev)
   
   if(! this.fMouseInContentArea) return true; // keep bubbling, this isnt' for us.
 
-  var dets = gGeo.opDets.opticalDetectors;
+  var dets = gGeo3.opticalDetectors;
   var hoverdet = null;
   var i, det, dx,dy,d2, dr2;
   for(i=0;i<dets.length;i++){
@@ -232,7 +232,7 @@ OpHitMap.prototype.DoMouse = function(ev)
     if(d2<r2) hoverdet = det;
   }
   if(hoverdet){
-     ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
+     ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo3.opticalDetectors});
   } else {
     var hoverflash = null;
     for(i=0;i<this.drawn_flashes.length;i++) {

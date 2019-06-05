@@ -71,12 +71,12 @@ function FalseColorControl( element  )
 
   $('.falseColorPlus1' ).click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
   $('.falseColorMinus1').click(function(){ self.ChangeRange(gWirePseudoColor.AdcToColorDial(-1)-gWirePseudoColor.AdcToColorDial(0)); self.FinishRangeChange(); });
-  $('input.psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
-  $('input.psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
-  $('input.psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
-  $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});
-  $('input.psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
-  $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val());  this.blur(); self.Draw(); self.FinishRangeChange();});
+  $('input.psuedoDialOffset').change(function(){gWirePseudoColor.dialOffset = parseFloat($(this).val()); gWirePseudoColor.Recompute(); this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoAdcScale')  .change(function(){gWirePseudoColor.adcScale   = parseFloat($(this).val()); gWirePseudoColor.Recompute(); this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoDialScale') .change(function(){gWirePseudoColor.dialScale  = parseFloat($(this).val()); gWirePseudoColor.Recompute(); this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoSaturation').change(function(){gWirePseudoColor.saturation = parseFloat($(this).val()); gWirePseudoColor.Recompute(); this.blur(); self.Draw(); self.ControlAdjusted();});
+  $('input.psuedoCutoffLow') .change(function(){gWirePseudoColor.cutoffLow  = parseFloat($(this).val()); gWirePseudoColor.Recompute(); this.blur(); self.Draw(); self.FinishRangeChange();});
+  $('input.psuedoCutoffHigh').change(function(){gWirePseudoColor.cutoffHigh = parseFloat($(this).val()); gWirePseudoColor.Recompute(); this.blur(); self.Draw(); self.FinishRangeChange();});
 
   $('input.psuedoPedWidthCutoff').change(function(){gWireColorPedestalWidthCut = parseFloat($(this).val());  this.blur(); self.Draw(); self.ControlAdjusted();});;
 
@@ -99,8 +99,8 @@ function FalseColorControl( element  )
     var p = $(this).parent();    
     $(this).slider({
     value: $('input.psuedoAdcScale',p).val(),
-    min: 0.5,
-    max: 300,
+    min: 20,
+    max: 1000,
     step: 1,
     slide: function(ev,ui) { $('input.psuedoAdcScale',p).val(ui.value).trigger('change'); return true;},
     stop:  function(ev,ui) { $('input.psuedoAdcScale',p).val(ui.value).trigger('change'); self.FinishRangeChange();}
@@ -232,6 +232,7 @@ FalseColorControl.prototype.NewRecord = function()
   gWirePseudoColor.saturation = parseFloat($('input.psuedoSaturation',this.currentTabDiv).val() );
   gWirePseudoColor.cutoffLow  = parseFloat($('input.psuedoCutoffLow',this.currentTabDiv).val());
   gWirePseudoColor.cutoffHigh = parseFloat($('input.psuedoCutoffHigh',this.currentTabDiv).val());
+  gWirePseudoColor.Recompute();
   $('input.psuedo-color',this.currentTabDiv).each(function(){
     var index = parseInt($(this).attr('data-index'));
     gWirePseudoColor.color_table[index] = $(this).spectrum("get").toRgb();        
@@ -287,8 +288,11 @@ FalseColorControl.prototype.ChangeScheme = function(event,ui)
 
 FalseColorControl.prototype.MakeHist = function( )
 {
-  var c1 = gWirePseudoColor.AdcToColorDial(-4096);
-  var c2 = gWirePseudoColor.AdcToColorDial( 4096);
+
+  // var c1 = gWirePseudoColor.AdcToColorDial(-4096);
+  // var c2 = gWirePseudoColor.AdcToColorDial( 4096);
+  var c1 = gWirePseudoColor.AdcToColorDial(-0x1000);
+  var c2 = gWirePseudoColor.AdcToColorDial( 0x1000);
   var n = Math.floor((this.canvas.width)/2);
   this.hist = CreateGoodHistogram(n,c1,c2);
   for(var i =0;i<this.hist.n;i++) {
@@ -331,7 +335,7 @@ FalseColorControl.prototype.Draw = function( )
   
   this.DrawHists();
 
-  var lines=[-500,-50,-20,-5,0,5,20,50,500];
+  var lines=[-500,-200,-100,-50,-20,-5,0,5,20,50,100,200,500];
   var sx_last = -1e9;
   for(var i =0;i<lines.length;i++) {
     var u = gWirePseudoColor.AdcToColorDial(lines[i],true); // True signals no truncation.

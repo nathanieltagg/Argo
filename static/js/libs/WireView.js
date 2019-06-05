@@ -166,17 +166,7 @@ function WireView( element, options )
   $(this.ctl_dedx_path)     .change(function(ev) { return self.Draw(false); });
   $(this.GetBestControl(),".show-reco")     .change(function(ev) { return self.Draw(false); });
   $('#ctl-show-watermark'). change(function(ev) { return self.Draw(false); });
-  $(this.ctl_lock_aspect_ratio). change(function(ev) { 
-      // Force the zoom system to acknowledge the change, by making a null zoom.
-      // MOre trickery
-      if($(this).is(":checked")) {
-        gZoomRegion.wireview_aspect_ratio = (self.span_y)/(self.span_x);
-        console.log("Setting new aspect ratio",gZoomRegion.wireview_aspect_ratio,"pixels");
-        gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
-        gStateMachine.Trigger("zoomChange");
-      }
-      $('.ctl-lock-aspect-ratio').not(this).attr("checked",false);
-  });
+
 
   $('#ctl-shift-hits')      .change(this.TrimHits.bind(this));
   $('#ctl-shift-hits-value').change(this.TrimHits.bind(this));
@@ -195,22 +185,22 @@ WireView.prototype.HoverChange = function()
   // Only need a redraw if the over change affected something we care about.
   // console.warn("WireView checking hoverchange",gHoverState.type,gLastHoverState.type);
   switch(gHoverState.type) {
-    case "hit": 
-    case "endpoint2d": 
-    case "cluster":
-    case "spacepoint":
-    case "track":
-    case "mcparticle":
+    case "hits": 
+    case "endpoints2d": 
+    case "clusters":
+    case "spacepoints":
+    case "tracks":
+    case "mcparticles":
       this.Draw(); return;
     default: break;
   }
   switch(gLastHoverState.type) {
-    case "hit": 
-    case "endpoint2d": 
-    case "cluster":
-    case "spacepoint":
-    case "track":
-    case "mcparticle":
+    case "hits": 
+    case "endpoints2d": 
+    case "clusters":
+    case "spacepoints":
+    case "tracks":
+    case "mcparticles":
       this.Draw(); return;
     default: break;  
   }
@@ -219,7 +209,7 @@ WireView.prototype.HoverChange = function()
 WireView.prototype.Resize = function()
 {
   Pad.prototype.Resize.call(this);
-  gZoomRegion.wireview_aspect_ratio = this.span_y/this.span_x;
+  // gZoomRegion.wireview_aspect_ratio = this.span_y/this.span_x;
 };
 
 
@@ -302,10 +292,12 @@ WireView.prototype.MagnifierDraw = function(fast)
 {
   // Reset bounds if appropriate
   if(this.zooming) {
-    this.min_v = gZoomRegion.tdc[0];
-    this.max_v = gZoomRegion.tdc[1];
-    this.min_u = gZoomRegion.plane[this.plane][0];
-    this.max_u = gZoomRegion.plane[this.plane][1];
+    var u = gZoomRegion.getWireRange(this.plane);
+    var v = gZoomRegion.getTdcRange(this.plane,this.span_y/this.span_x);
+    this.min_u = u[0];
+    this.max_u = u[1];
+    this.min_v = v[0];
+    this.max_v = v[1];
   } else {
     this.min_v = 0;
     this.max_v = 3200;
@@ -335,7 +327,7 @@ WireView.prototype.DrawOne = function(min_u,max_u,min_v,max_v,fast)
   this.mouseable = [];
   if(gRecord) {
     if  ($(this.GetBestControl(".show-wireimg")).is(":checked")) {
-      this.DrawImage(min_u, max_u, min_v, max_v, fast);
+      // this.DrawImage(min_u, max_u, min_v, max_v, fast);
     }
 
     if  ($(this.GetBestControl(".show-clusters")).is(":checked")) {
@@ -549,7 +541,7 @@ WireView.prototype.DrawImage = function(min_u,max_u,min_v,max_v,fast)
   // }
   // if(!mapper || !mapper.loaded) return;
 
-  if(!mapper) return;
+  if(!mapper) { console.timeEnd("DrawImage");  return;}
   var scale_x = mapper.scale_x || 1;
   var scale_y = mapper.scale_y || 1;
   
@@ -738,7 +730,7 @@ WireView.prototype.DrawHits = function(min_u, max_u, min_v, max_v)
 
   
     if(gHoverState.obj == h.hit) hoverVisHit = h;
-    this.mouseable.push({type:"hit", coords:[[x,y],[x,y+dy]], r:dx, obj: h.hit});
+    this.mouseable.push({type:"hits", coords:[[x,y],[x,y+dy]], r:dx, obj: h.hit});
   }
   
   if(hoverVisHit) {
@@ -841,7 +833,7 @@ WireView.prototype.DrawClusters = function(min_u,max_u,min_v,max_v,fast)
       poly.push(hull[ihull][0]);
     }
     
-    this.mouseable.push({ obj: clus, type: "cluster", coords: poly });
+    this.mouseable.push({ obj: clus, type: "clusters", coords: poly });
     
     var cs = new ColorScaleIndexed(i+1);    
     this.ctx.fillStyle = "rgba("+cs.GetColor()+", 0.5)";
@@ -881,7 +873,7 @@ WireView.prototype.DrawEndpoint2d = function(min_u,max_u,min_v,max_v,fast)
       this.ctx.arc(x,y,r,0,1.99*Math.PI);
       this.ctx.closePath();
       this.ctx.fill();
-      this.mouseable.push({type:"endpoint2d", coords:[[x,y]], r:r, obj: pt});
+      this.mouseable.push({type:"endpoints2d", coords:[[x,y]], r:r, obj: pt});
 
       if(gHoverState.obj == pt) {
         console.warn("Endpoint selected",gHoverState.obj);
@@ -927,7 +919,7 @@ WireView.prototype.DrawSpacepoints = function(min_u,max_u,min_v,max_v,fast)
     this.ctx.stroke();
     
     
-    this.mouseable.push({type:"sp", coords:[[x,y]], r:ru, obj: sp});
+    this.mouseable.push({type:"spacepoints", coords:[[x,y]], r:ru, obj: sp});
     
     
   }
@@ -1009,7 +1001,7 @@ WireView.prototype.DrawTracks = function(min_u,max_u,min_v,max_v,fast)
 
     // for mouseovering
     for(j=1;j<pts.length;j++) 
-      this.mouseable.push({type:"track", 
+      this.mouseable.push({type:"tracks", 
                           coords: [[pts[j-1][0],pts[j-1][1]],
                                    [pts[j][0]  ,pts[j][1]  ] 
                                   ], 
@@ -1160,7 +1152,7 @@ WireView.prototype.DrawShowers = function(min_u,max_u,min_v,max_v,fast)
     
 
     // for mouseovering
-      this.mouseable.push({type:"shower", 
+      this.mouseable.push({type:"showers", 
                     coords: [[x1,y1],
                              [x2,y2] 
                             ], 
@@ -1341,7 +1333,7 @@ WireView.prototype.DrawBezierTracks = function(min_u,max_u,max_v,fast)
 
     // for mouseovering
     for(j=0;j<segments.length-1;j++) {
-       this.mouseable.push({type:"track", 
+       this.mouseable.push({type:"tracks", 
                             coords: [[segments[j].p0[0],segments[j].p0[1]], [segments[j].p1[0],segments[j].p1[1]]],
                             r:2.0, obj: trk});
      }
@@ -1431,7 +1423,7 @@ WireView.prototype.DrawMC = function(min_u,max_u,min_v,max_v,fast)
     
     // for mouseovering
     for(j=1;j<pts.length;j++) 
-      this.mouseable.push({type:"mcparticle",
+      this.mouseable.push({type:"mcparticles",
                            coords: [[pts[j-1][0],pts[j-1][1]], [pts[j][0],pts[j][1]] ],
                            r:this.ctx.lineWidth, obj: p});
   
@@ -1721,14 +1713,14 @@ WireView.prototype.MouseChangedUV = function( new_limits, finished )
     var maxv = this.max_v;
     if('min_v' in new_limits) minv = new_limits.min_v;
     if('max_v' in new_limits) maxv = new_limits.max_v;
-    gZoomRegion.changeTimeRange(minv,maxv);
+    gZoomRegion.setTdcRange(this.plane,minv,maxv,this.span_y/this.span_x);
   }
   if('min_u' in new_limits || 'max_u' in new_limits) {
     var minu = this.min_u;
     var maxu = this.max_u;
     if('min_u' in new_limits) minu = new_limits.min_u;
     if('max_u' in new_limits) maxu = new_limits.max_u;
-    gZoomRegion.setLimits(this.plane,minu,maxu);
+    gZoomRegion.setWireRange(this.plane,minu,maxu);
   }
   if(finished) {
     gStateMachine.Trigger("zoomChange");
@@ -1790,8 +1782,8 @@ WireView.prototype.DoMouseWheel = function(ev)
     var new_v_min = this.fMousePos.v*(1.0-scale) + this.min_v*scale;
     var new_v_max = (this.max_v-this.min_v)*scale + new_v_min;
     
-    gZoomRegion.setLimits(this.plane,new_u_min, new_u_max);
-    gZoomRegion.changeTimeRange(new_v_min, new_v_max);
+    gZoomRegion.setWireRange(this.plane,new_u_min, new_u_max);
+    gZoomRegion.setTdcRange(new_v_min, new_v_max, this.span_y/this.span_x);
     
     // console.warn("DoMouseWheel",this.fMousePos.u,ev,dist,this.min_u,new_u_min,this.max_u,new_u_max);
     gStateMachine.Trigger("zoomChange"); 

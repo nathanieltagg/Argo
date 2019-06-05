@@ -126,10 +126,30 @@ function DrawObjectInfo()
   var state = gSelectState;
 
   switch(state.type) {
-    case "mcparticle": h=ComposeMCParticleInfo(state); break;
-    case "track": h=ComposeTrackInfo(state); break;
+    case "mcparticles": h=ComposeMCParticleInfo(state); break;
+    case "tracks": h=ComposeTrackInfo(state); break;
     case "UserTrack": h="User Track"; break;
-    
+    case "hits":
+    case "clusters":
+    case "showers":
+    case "endpoints2d":
+    case "opflashes":
+    case "pfparticles":
+    case "spacepoints":
+      h = "<h3>Selected:" + state.type + "</h3>";
+      h += "<table class='.hoverinfo'>";
+      var a = "<tr><td class='hoverinfo-key'>";
+      var b = "</td><td class='hoverinfo-val'>";
+      var c = "</td></tr>";
+      for(var k in state.obj) {
+        if( Object.prototype.toString.call( state.obj[k] ) === '[object Array]' ) {
+          h+= a + k + b + state.obj[k].length + " items" + c;
+        } else {
+          h+= a + k + b + state.obj[k] + c;
+        }
+      }
+      h+= "</table>";
+
     default:
       // don't draw anything
       txt = "<span class='track_id'>No Object Selected</span><br/>";
@@ -404,8 +424,8 @@ HoverInfo.prototype.Draw = function ()
     h += "<h3>Hover: " + state.type + "</h3>";
   
   switch(state.type) {
-    case "mcparticle": h+=ComposeMCParticleInfo(state); break;
-    case "track": h+=ComposeTrackInfo(state); break;
+    case "mcparticles": h+=ComposeMCParticleInfo(state); break;
+    case "tracks": h+=ComposeTrackInfo(state); break;
     case "wire": h+=ComposeWireInfo(state); break;
     
     default:

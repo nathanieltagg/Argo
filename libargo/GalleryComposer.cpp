@@ -4,6 +4,7 @@
 #include "gallery/Event.h"
 
 #include <TH1D.h>
+#include <TLeaf.h>
 
 // Data objects
 #include "canvas/Persistency/Provenance/EventAuxiliary.h"
@@ -40,6 +41,8 @@
 #include "waveform_tools.h"
 #include "DeadChannelMap.h"
 #include "CoherentNoiseFilter.h"
+#include "ReadLarsoftConfig.h"
+#include "Plexus.h"
 
 #include "boost/thread/thread.hpp"
 #include "boost/thread/mutex.hpp"
@@ -310,86 +313,58 @@ void GalleryComposer::composeHeaderData()
   ttt.addto(m_stats);
 }
 
+void GalleryComposer::composeHints()
+{
+  // Ok, try a hack.
+  m_result["hints"] = json();
+  size_t num_channels = 0;
+  auto products = findByType< vector<raw::RawDigit> >(m_Event->getTTree());
+  for(auto product: products) {
+      std::string leafname = product.first + "obj_";
+      TLeaf* f = m_Event->getTTree()->GetLeaf(leafname.c_str());
+      if(!f) continue;
+      num_channels = f->GetNdata();
+      break;
+  }
+  if(num_channels>0) {
+    m_result["hints"]["channel_count"] = num_channels;
+    return;
+  }
+
+  products = findByType< vector<recob::Wire> >(m_Event->getTTree());
+  for(auto product: products) {
+      std::string leafname = product.first + "obj_";
+      TLeaf* f = m_Event->getTTree()->GetLeaf(leafname.c_str());
+      if(!f) continue;
+      num_channels = f->GetNdata();
+      break;
+  }    
+  if(num_channels>0) {
+    m_result["hints"]["goodwire_count"] = num_channels;
+    return;
+  }
 
 
+  // Takes 30 SECONDS on dune files. Unacceptable.
+  // TimeReporter ttt("hints");
 
-// void GalleryComposer::composeHits()
-// {
-//   ///
-//   /// Obsolete: hit histograms are burdensome and awkward in new system, and don't really buy me anything since
-//   /// I stopped using them ages ago. The ZoomControl still references them, but I think I'm better off doing p
-//   typedef vector<recob::Hit> current_type_t;
-//   auto products = findByType<current_type_t>(m_Event->getTTree());
-//   TimeReporter toptimer("hits");
-//
-//   json reco_list;
-//   json hist_list;
-//   for(auto product: products) {
-//     // std::cout << "Looking at " << boost::core::demangle( typeid(current_type_t).name() )  <<" object " << product.first << std::endl;
-//     TimeReporter timer(product.first);
-//
-//     gallery::Handle< current_type_t > handle;
-//     {mutex::scoped_lock b(m_gallery_mutex);       mutex::scoped_lock g(global_gallery_mutex);   m_Event->getByLabel(product.second,handle);}
-//     if(!handle.isValid()) {
-//       std::cerr << "No data!" << std::endl;
-//       continue;
-//     }
-//
-//     json arr(json::array());
-//     // Hit histograms.
-//     TH1D timeProfile("timeProfile","timeProfile",960,0,9600);
-//     std::vector<TH1*> planeProfile;
-//     planeProfile.push_back(new TH1D("planeProfile0","planeProfile0",218,0,2398));
-//     planeProfile.push_back(new TH1D("planeProfile1","planeProfile1",218,0,2398));
-//     planeProfile.push_back(new TH1D("planeProfile2","planeProfile2",432,0,3456));
-//
-//     for(const recob::Hit& hit: * handle) {
-//       json h;
-//       int wire = hit.WireID().Wire;
-//       int plane = hit.WireID().Plane;
-//       double q  = hit.Integral();
-//       double t  = hit.PeakTime();
-//       double t1 = hit.StartTick();
-//       double t2 = hit.EndTick();
-//
-//       if(plane==2)timeProfile.Fill(t,q);
-//       if(plane>=0 && plane<3) planeProfile[plane]->Fill(wire,q);
-//
-//       h["wire"] =   wire;
-//       h["plane"] =  plane;
-//       h["q"] =        jsontool::fixed(q,0)     ;
-//       h["t"] =        jsontool::fixed(t,1)     ;
-//       h["t1"] =       jsontool::fixed(t1,1)    ;
-//       h["t2"] =       jsontool::fixed(t2,1)    ;
-//       arr.push_back(h);
-//     }
-//
-//     reco_list[stripdots(product.first)] = arr;
-//
-//     json hists;
-//     hists["timeHist"] = TH1ToHistogram(&timeProfile);
-//     json jPlaneHists = json::array();
-//     jPlaneHists.push_back(TH1ToHistogram(planeProfile[0]));
-//     jPlaneHists.push_back(TH1ToHistogram(planeProfile[1]));
-//     jPlaneHists.push_back(TH1ToHistogram(planeProfile[2]));
-//     hists["planeHists"] = jPlaneHists;
-//
-//     delete planeProfile[0];
-//     delete planeProfile[1];
-//     delete planeProfile[2];
-//     hist_list[stripdots(product.first)] = hists;
-//     //timer.addto(m_stats);
-//   }
-//   {
-//     mutex::scoped_lock lck(m_output_mutex);
-//
-//     toptimer.addto(m_stats);
-//
-//     m_result["hits"] = reco_list;
-//     m_result["hit_hists"] = hist_list;
-//   }
-//   // std::cout << "Hits finishing" << std::endl;
-// }
+  // // lock everything.
+  // mutex::scoped_lock b(m_gallery_mutex); 
+  // mutex::scoped_lock g(global_gallery_mutex);
+  // // Try to get config options.
+  // json request = 
+  //    " { \"shift_hit_ticks\": {\"conditions\": [{ \"key\": \"module_type\", \"value\": \"RawDigitFilterUBooNE\"}], \"parameter\": \"NumTicksToDropFront\" } "
+  //    " , \"gdml\":            {\"conditions\": [{ \"key\": \"service_type\", \"value\": \"Geometry\"}], \"parameter\": \"GDML\" } "
+  //    " } "_json;
+
+  // ReadLarsoftConfig(m_Event->getTFile(),request);
+  // {
+  //   mutex::scoped_lock lck(m_output_mutex);
+  //   m_result["hints"] = request;
+  // }
+  // ttt.addto(m_stats);
+
+}
 
 
 // default template for vectors:
@@ -408,12 +383,10 @@ template<>
 void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h, const std::string&)
 {
   const auto& wid = hit.WireID();
-  double q  = hit.Integral();
-  double t  = hit.PeakTime();
-  double t1 = hit.StartTick();
-  double t2 = hit.EndTick();
   
-
+  h["Ch"] =     hit.Channel();
+  if(wid.Cryostat>0) h["cry"] =    wid.Cryostat;
+  if(wid.TPC>0)      h["tpc"] =    wid.TPC;
   h["wire"] =   wid.Wire;
   h["plane"] =  wid.Plane;
   // if(hit.WireID().) 
@@ -588,6 +561,7 @@ void GalleryComposer::composeObject(const recob::EndPoint2D& endpoint, json& job
   jobj["q"        ] = endpoint.Charge();
   jobj["view"     ] = endpoint.View();
   jobj["plane"    ] = endpoint.WireID().Plane;
+  jobj["tpc"      ] = endpoint.WireID().TPC;
   jobj["wire"     ] = endpoint.WireID().Wire;
   jobj["t"        ] = endpoint.DriftTime();
   jobj["strength" ] = endpoint.Strength();
@@ -636,7 +610,15 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
     out["error"] = "No entries";
     return;
   }
-  
+
+  bool is_uboone = (nchannels>8000 && nchannels<8456);
+
+  if(is_uboone) {
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->RebuildFromTimestamp(m_event_time/1000.);
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"db/dead_channels.txt"));
+    if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+  }
+
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(nchannels));
   std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nchannels));
   size_t ntdc = v[0].NSignal();
@@ -663,12 +645,14 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
        (*waveform_ptr)[i] = (ROI[i]-subtract_pedestal)*amplify;  // Convert float->int
       }
     }
+    waveform_ptr->_ped = 0;
+
     // Waveform storage.
     if(wireMap->size() <= channel) wireMap->resize(channel+1);
     if(noiseMap->size() <= channel) noiseMap->resize(channel+1);
     (*wireMap)[channel] = waveform_ptr;
     (*noiseMap)[channel] = noiseform_ptr;
-    waveform_ptr->_status = gDeadChannelMap->status(channel);
+    if(is_uboone) waveform_ptr->_status = gDeadChannelMap->status(channel);
   }
 
   // Now we should have a semi-complete map.
@@ -711,6 +695,22 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
     out["error"] = "No entries";
     return;
   }
+  bool is_uboone = (nchannels>8000 && nchannels<8456);
+
+  gov::fnal::uboone::online::Plexus plex;
+  if(is_uboone) {
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"../db/dead_channels.txt"));
+    if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
+    json plexus_config = m_config->value("plexus",json::object());
+    plex.assignSources(
+      plexus_config.value("tpc_source","sqlite db/current-plexus.db"),
+      plexus_config.value("pmt_source","sqlite db/current-plexus.db"),
+      plexus_config.value("tpc_source_fallback",""),
+      plexus_config.value("pmt_source_fallback","")
+    );  
+    if(m_event_time>0) plex.rebuild(m_event_time/1000.);    
+  }
+
 
   std::shared_ptr<wiremap_t> wireMap(new wiremap_t(v.size()));
 
@@ -729,7 +729,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
       raw::Uncompress(rawdigit.ADCs(),*waveform_ptr,rawdigit.GetPedestal(), rawdigit.Compression());
     }
     waveform_t& waveform = *waveform_ptr;
-    waveform._servicecard = wire/48;
+    if(is_uboone) waveform._servicecard = plex.get_wirenum(wire).servicecard_id();
     size_t nsamp = waveform.size();
 
     // Find the pedestal manually.
@@ -743,7 +743,8 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
     for(size_t i =0; i< nsamp; i++) {
       waveform[i] -= ped;
     }
-    waveform._status = gDeadChannelMap->status(wire);
+    waveform._ped = ped;
+    if(is_uboone) waveform._status = gDeadChannelMap->status(wire);
 
     if(wireMap->size() <= wire) wireMap->resize(wire+1);
     (*wireMap)[wire] = waveform_ptr;
@@ -753,7 +754,7 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
   size_t nwire = wireMap->size();
   std::shared_ptr<wiremap_t> noiseMap(new wiremap_t(nwire));
 
-  CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
+  if(is_uboone) CoherentNoiseFilter(wireMap,noiseMap,nwire,ntdc);
 
   std::cout << "RAWDIGIT time to assemble data for image-building:";
   tr.report();
@@ -1409,59 +1410,6 @@ template<typename T> bool GalleryComposer::composePiece( const std::string& type
 
 
 
-/*
-// This all works, but connecting it to the data products requires getting even more stuff from the 
-#include "tkeyvfs.h"
-#include <sqlite3.h>
-
-static int callback(void *data, int argc, char **argv, char **azColName){
-   int i;
-   fprintf(stderr, "%s: ", (const char*)data);
-   
-   for(i = 0; i<argc; i++){
-      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-   }
-   
-   printf("\n");
-   return 0;
-}
-
-void test_parameter_set_retriveal(TFile* f)
-{  
-  TFile* f = m_Event->getTFile();
-  sqlite3* db =0;
-  
-  tkeyvfs_open_v2("RootFileDB",&db,SQLITE_OPEN_READWRITE,f);
-  if(db) {
-    const char* data = "Callback function called";
-    char *zErrMsg = 0;
-    
-    std::cout << "got database!" << std::endl;
-    std::string exec_string = "SELECT name FROM sqlite_master  WHERE type='table' ORDER BY name;"; 
-    int rc = sqlite3_exec(db, exec_string.c_str(), callback, (void*)data, &zErrMsg);
-    if( rc != SQLITE_OK ) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
-        sqlite3_free(zErrMsg);
-     } else {
-        fprintf(stdout, "Operation done successfully\n");
-     }
-     exec_string = "SELECT * FROM ParameterSets;";
-     rc = sqlite3_exec(db, exec_string.c_str(), callback, (void*)data, &zErrMsg);
-       if( rc != SQLITE_OK ) {
-           fprintf(stderr, "SQL error: %s\n", zErrMsg);
-           fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
-           sqlite3_free(zErrMsg);
-        } else {
-           fprintf(stdout, "Operation done successfully\n");
-        }
-
-
-    sqlite3_close(db);
-    
-  }
-}
-*/
 
 Output_t GalleryComposer::satisfy_request(Request_t request)
 {
@@ -1544,6 +1492,9 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     m_cur_event_descriptor = form_event_descriptor();
     m_result["event_descriptor"] = m_cur_event_descriptor;    
 
+    composeHints();
+    dispatch_piece(json({{"hints",m_result["hints"]}}));
+
     // NB - dispatch_piece is cheap and meaningless if there is no listener!    
     // Source object for this event.
     json source;
@@ -1557,7 +1508,6 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
     m_result["source"] = source;
     dispatch_piece(json({{"source",m_result["source"]}}));
   
-
     // if a new event, we need to send header stuff.
     // Every time (it's cheap)
     progress_made("Composing header");

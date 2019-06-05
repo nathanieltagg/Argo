@@ -1,4 +1,5 @@
 include inc/mixins
+
 doctype html
 html
   head
@@ -6,21 +7,20 @@ html
     title Argo
     //(#)include virtual="basetag.inc"
     // My little icon in the link url 
-    link(rel='icon', type='image/png', href='images/ArgoIcon')
+    link(rel='icon', type='image/png', href='/images/ArgoIcon.png')
     // Activate some overrides to basic configuration. 
     //#set var="PageStyle" value="standard" 
-    script(type='text/javascript') 
-      |gPageName="#{pagename}";
+    block headerscript
+      script(type='text/javascript') 
+          |gPageName="#{pagename}";
+          |gDetector="uboone";
     // Main CSS sheet for basic layout, custom mods. 
     //- link(rel='stylesheet', href='css/argo.css', type='text/css', media='all')
-    link(rel='stylesheet', href='css/argo.scss', type='text/css', media='all')
-    link(rel='stylesheet', href='css/selected-object-info.css', type='text/css', media='all')
-    link(rel='stylesheet', href='css/local.css', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
     // Javascript libraries and code. 
     include inc/libraries 
-    //(#)include virtual="libraries.cgi" 
     include ../static/shaders/shaders.inc
-    // (#)include virtual="shaders/shaders_padgl.inc" 
   body
     #everything
       include inc/ControlOverlay
@@ -84,7 +84,7 @@ html
           #content-wide.dock
             include inc/WireViewGL            
             +portlet("rgbwireview-port","RGB View")(style="background-color:white; display:none;")
-              .pad.A-RgbWireView(style='width:100%; height:330px')
+              //- .pad.A-RgbWireView(style='width:100%; height:330px')
             include inc/WireView 
             // include virtual="html/WireViewBig.inc" 
             //include virtual="html/TimeHistogram.inc" 
@@ -118,5 +118,5 @@ html
         p#warning-dialog-message
       include inc/SelectionInfoOverlay 
       |  
-      img#watermark_logo(style='display:none;', src='images/uboone_logo_1.png')
+      img#watermark_logo(style='display:none;', src='/images/uboone_logo_1.png')
     // Everything 

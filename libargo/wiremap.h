@@ -10,6 +10,7 @@ struct waveform_t : public std::vector<int16_t>
   waveform_t(size_t n=0, int16_t def=0) : std::vector<int16_t>(n,def)  {_pedwidth=0; _servicecard=-1; _status=4;}
   waveform_t(const waveform_t& other) : std::vector<int16_t>(other)  {_pedwidth=other._pedwidth; _servicecard = other._servicecard;  _status = other._status;}
   waveform_t(const std::vector<int16_t>& other) : std::vector<int16_t>(other)  {_pedwidth=0; _servicecard=-1; _status=4;}
+  int16_t _ped;
   int8_t  _pedwidth;
   int16_t  _servicecard;
   int8_t  _status;

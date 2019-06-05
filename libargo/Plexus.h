@@ -87,6 +87,8 @@ public:
 
   bool is_ok() const { return m_ok; }; 
   const Plek& get(int crate, int card, int channel);
+  const Plek& get_wirenum(int wirenum); // larsoft "raw" channel id
+
 
 protected:
   bool buildTpc(double event_time, double query_time, const std::string& source);
@@ -107,6 +109,8 @@ protected:
 
   typedef std::map<int,Plek> MapType_t;
   MapType_t   m_ccc_to_plek;
+  MapType_t   m_wirenum_to_plek;
+
   bool        m_ok = false;
 
   double  m_validity_start;

@@ -80,6 +80,9 @@ CPPFLAGS += -I ${POSTGRESQL_INC}
 LIBS     += -L ${POSTGRESQL_LIBRARIES} -lpq
 # ldpaths  += -Wl,-rpath,${POSTGRESQL_LIBRARIES}
 
+#curl:
+LIBS += -lcurl
+
 ### Products added via ups
 CPPFLAGS += -I ${BOOST_INC}
 LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
@@ -141,6 +144,12 @@ CPPFLAGS += -I ${ROOT_INC}
 CPPFLAGS += -I ${SQLITE_INC}
 LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 # ldpaths  += -Wl,-rpath,${SQLITE_LIB}
+
+
+# Needed to look the provenance / configuration history for hints.
+CPPFLAGS += -I ${ART_INC}
+LIBS     += -L ${ART_LIB} -l art_Framework_IO_Root -l art_Framework_IO_RootVersion -l art_Framework_IO_Root_RootDB
+LIBS     += -L ${FHICLCPP_LIB} -l fhiclcpp
 
 
 CPPFLAGS += -DGALLERY
@@ -280,13 +289,13 @@ argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
 argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
 	$(CPP) $(LDFLAGS) \
 	 $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
-  # -Wl,-rpath,@loader_path/deps/root/lib \
-  # -Wl,-rpath,@loader_path/deps/boost/lib \
-  # -Wl,-rpath,@loader_path/../../deps/root/lib\
-  # -Wl,-rpath,@loader_path/../../deps/root/lib\
-  # -Wl,-rpath,@loader_path/../../deps/root/lib\
-  # -Wl,-rpath,@loader_path/root/lib\
-  # -Wl,-rpath,@loader_path/boost/lib\
+	# -Wl,-rpath,@loader_path/deps/root/lib \
+	# -Wl,-rpath,@loader_path/deps/boost/lib \
+	# -Wl,-rpath,@loader_path/../../deps/root/lib\
+	# -Wl,-rpath,@loader_path/../../deps/root/lib\
+	# -Wl,-rpath,@loader_path/../../deps/root/lib\
+	# -Wl,-rpath,@loader_path/root/lib\
+	# -Wl,-rpath,@loader_path/boost/lib\
 
 
 libflags = 
@@ -299,26 +308,33 @@ endif
 $(libargo): $(OBJ) tmp/Cint.o Makefile
 	#$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib $(libflags) 
-  # $(ldpaths)
+	# $(ldpaths)
 
 
 ifeq ($(UNAME),Darwin)
-  LIBTOOL=libtool -static
+ LIBTOOL=libtool -static
 else 
-  LIBTOOL=ar -cvq
+ LIBTOOL=ar -cvq
 endif
 
 libargo-backend.a: $(OBJ) tmp/Cint.o Makefile
 	$(LIBTOOL) $(filter %.o,$^) -o $@ 
-  
 
 notify-live.cgi:  notify_live.cc
 	/usr/bin/g++ $^ -o $@  
-  
 
 testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
+
+
+my_config_dumper: tmp/config_dumper.o
+	$(CPP) $(LDFLAGS) tmp/config_dumper.o tmp/Timer.o $(LIBS) -o $@
+
+test_read_config: $(OBJ) tmp/test_read_config.o 
+	# $(CPP) $(LDFLAGS) tmp/test_read_config.o tmp/Timer.o tmp/ReadLarsoftConfig.o $(LIBS) -o $@
+	$(CPP) $(LDFLAGS) \
+	  $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
 # This is a brute-force copy. This is now obsolete, since instead have these files committed to the argo repository.

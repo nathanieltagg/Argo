@@ -11,6 +11,8 @@
 
 void        wireOfChannel(int channel, int& plane, int& wire);
 
+typedef std::array<std::atomic<unsigned long>, 512> wireimg_histogram_t;
+
 
 class EncodedTileMaker
 {
@@ -20,7 +22,8 @@ public:
                     int wireStart, int wireEnd, size_t tdcStart, size_t tdcEnd,
                     const std::string& outDir,
                     const std::string& outUrl,
-                    bool fill_empty_space );
+                    bool fill_empty_space,  
+                    std::shared_ptr< wireimg_histogram_t > histogram = {});
 
   void process();
   
@@ -34,6 +37,7 @@ public:
     return j;
   }
 
+
   std::shared_ptr<wiremap_t> m_wireMap;
   std::shared_ptr<wiremap_t> m_noiseWireMap;
   int m_wireStart;
@@ -46,7 +50,9 @@ public:
   std::string m_temp_pathname;
   std::string m_final_pathname;
   bool m_fill_empty_space;
+  std::shared_ptr< wireimg_histogram_t > m_histogram;
   static int s_compression;
+
   
 };
 

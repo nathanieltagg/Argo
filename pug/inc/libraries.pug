@@ -1,8 +1,7 @@
 // This library lets me use text functions for non-html5-compliant browsers, using the closest-thing-to-native you can get. 
 // General-purpose javascript library to help cross-platform compatibility and other issues. see http://jquery.com 
-link(href="css/custom-1/jquery-ui.min.css", rel="stylesheet")
-// <script src="/js/third-party/jquery-1.9.0.js"></script> 
-// <script src="/js/third-party/jquery-ui-1.10.0.custom.js"></script> 
+
+link(href="/css/custom-1/jquery-ui.min.css", rel="stylesheet")
 script(src="/js/third-party/jquery-2.1.0.min.js")
 script(src="/js/third-party/jquery-ui.min.js")
 // IE detection 
@@ -22,8 +21,12 @@ script(type="text/javascript", src="/js/third-party/jit.js")
 script(type="text/javascript", src="/js/third-party/circle-progress.js")
 script(type="text/javascript", src="/js/third-party/html2canvas.js")
 script(type="text/javascript", src="/js/third-party/spectrum.js")
+
+// THREE.js is the API wrapping opengl
+script(type="text/javascript", src="/js/third-party/three.js")
+
 // colorpicker 
-link(rel="stylesheet", href="css/spectrum.css")
+link(rel="stylesheet", href="/css/spectrum.css")
 // for creating animated gifs. 
 script(type="text/javascript", src="/js/third-party/LZWEncoder.js")
 script(type="text/javascript", src="/js/third-party/NeuQuant.js")
@@ -48,6 +51,9 @@ script(type="text/javascript", src="/js/core/TimeLogger.js")
 // My classes for doing histograming and other displays
 //- script(type="text/javascript", src="/js/libs/TiledImageCanvas.js")
 script(type="text/javascript", src="/js/libs/Geometry.js")
+script(type="text/javascript", src="/js/libs/geodata_uboone.js")
+script(type="text/javascript", src="/js/libs/geodata_protodune.js")
+script(type="text/javascript", src="/js/libs/Geometry3.js")
 script(type="text/javascript", src="/js/libs/Configuration.js")
 script(type="text/javascript", src="/js/libs/DataSource.js")
 script(type="text/javascript", src="/js/libs/Keyboard.js")
@@ -60,6 +66,7 @@ script(type="text/javascript", src="/js/libs/WireView.js")
 script(type="text/javascript", src="/js/libs/WireSpatialView.js")
 script(type="text/javascript", src="/js/libs/RgbWireView.js")
 script(type="text/javascript", src="/js/libs/WireInfo.js")
+script(type="text/javascript", src="/js/libs/ZoomRegion.js")
 script(type="text/javascript", src="/js/libs/ZoomControl.js")
 script(type="text/javascript", src="/js/libs/MCInfo.js")
 script(type="text/javascript", src="/js/libs/MCDigraph.js")
@@ -71,7 +78,7 @@ script(type="text/javascript", src="/js/libs/OpHit2dMap.js")
 script(type="text/javascript", src="/js/libs/OpFlashHistogram.js")
 script(type="text/javascript", src="/js/libs/OpFlashMap.js")
 script(type="text/javascript", src="/js/libs/OpFlash2dMap.js")
-script(type="text/javascript", src="/js/libs/MRI.js")
+//- script(type="text/javascript", src="/js/libs/MRI.js") // remove until fixed.
 script(type="text/javascript", src="/js/libs/dEdXTool.js")
 script(type="text/javascript", src="/js/libs/ArgoDreamyScan.js")
 script(type="text/javascript", src="/js/libs/SaveSelection.js")
@@ -80,32 +87,23 @@ script(type="text/javascript", src="/js/libs/FalseColorControl.js")
 script(type="text/javascript", src="/js/libs/GLEngine.js")
 script(type="text/javascript", src="/js/libs/LiveControl.js")
 
-// Installed via browserify.. will this work?
+// Installed via browserify... if I want to go that way.
 //- <script src="/js/my.js"></script>
 
-// THREE.js is the API wrapping opengl
-script(type="text/javascript", src="/js/third-party/three.js")
-
-// Addons to three.js
-script(type="text/javascript", src="/js/third-party/THREE.MeshLine.js")
 // From three.js examples:
-<script src='/js/third-party/LineSegmentsGeometry.js'></script>
-<script src='/js/third-party/LineGeometry.js'></script>
-<script src='/js/third-party/WireframeGeometry2.js'></script>
-<script src='/js/third-party/LineMaterial.js'></script>
-<script src='/js/third-party/LineSegments2.js'></script>
-<script src='/js/third-party/Line2.js'></script>
-<script src='/js/third-party/Wireframe.js'></script>
-<script src='/js/libs/SmarterLineMaterial.js'></script>
-
 script(type="text/javascript", src="/js/third-party/LineSegmentsGeometry.js")
 script(type="text/javascript", src="/js/third-party/LineGeometry.js")
+script(type="text/javascript", src='/js/third-party/Wireframe.js')
+script(type="text/javascript", src='/js/third-party/WireframeGeometry2.js')
 script(type="text/javascript", src="/js/third-party/LineMaterial.js")
 script(type="text/javascript", src="/js/third-party/LineSegments2.js")
 script(type="text/javascript", src="/js/third-party/Line2.js")
+script(type="text/javascript", src="https://unpkg.com/three.texttexture")
+
 script(type="text/javascript", src="/js/third-party/OrbitControls.js")
 script(type="text/javascript", src="/js/third-party/GLTFLoader.js")
- 
+script(type="text/javascript", src="/js/third-party/GDMLLoader.js") 
+script(type="text/javascript", src='/js/libs/PerspectiveLineMaterial.js')
 
 
 script(type="text/javascript", src="/js/third-party/json-pointer.js")

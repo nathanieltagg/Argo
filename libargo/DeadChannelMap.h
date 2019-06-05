@@ -3,11 +3,13 @@
 
 #include <string>
 #include <map>
+#include <istream>
 
 class DeadChannelMap {
 public:
   DeadChannelMap();
   bool Rebuild(const std::string& filename = "../db/dead_channels.txt");
+  bool RebuildFromTimestamp(double ts);
 
   // 0: Disconnected
   // 1: Dead
@@ -30,10 +32,15 @@ public:
     return it->second;
   }
   bool ok() const { return _ok; }
+
+  private:
+  bool Read(std::istream& in);
   
   typedef std::map<int,int> dcmap_t;
   dcmap_t _map;
   bool _ok;
+
+
 };
 
 extern DeadChannelMap* gDeadChannelMap;

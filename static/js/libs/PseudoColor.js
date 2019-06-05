@@ -1,7 +1,4 @@
-//
-// Spline interpolation code
-// and a spline color interpreter.
-//
+
 
 
 // For the GL engine, it must satisfy interpolate(x), which gives an rgba color
@@ -14,6 +11,102 @@
 // tangent curve to map nonlinearly, so that very large and very small ADC values
 // are de-exaggerated.
 
+
+// Utility:
+var createInterpolant = function(xs, ys) {
+  //
+  // Spline interpolation code
+  // and a spline color interpreter.
+  //
+  var i, length = xs.length;
+  
+  // Deal with length issues
+  if (length != ys.length) { throw 'Need an equal count of xs and ys.'; }
+  if (length === 0) { return function(x) { return 0; }; }
+  if (length === 1) {
+    // Impl: Precomputing the result prevents problems if ys is mutated later and allows garbage collection of ys
+    // Impl: Unary plus properly converts values to numbers
+    var result = +ys[0];
+    return function(x) { return result; };
+  }
+  
+  // Rearrange xs and ys so that xs is sorted
+  var indexes = [];
+  for (i = 0; i < length; i++) { indexes.push(i); }
+  indexes.sort(function(a, b) { return xs[a] < xs[b] ? -1 : 1; });
+  var oldXs = xs, oldYs = ys;
+  // Impl: Creating new arrays also prevents problems if the input arrays are mutated later
+  xs = []; ys = [];
+  // Impl: Unary plus properly converts values to numbers
+  for (i = 0; i < length; i++) { xs.push(+oldXs[indexes[i]]); ys.push(+oldYs[indexes[i]]); }
+  
+  // Get consecutive differences and slopes
+  var dys = [], dxs = [], ms = [];
+  for (i = 0; i < length - 1; i++) {
+    var dx = xs[i + 1] - xs[i], dy = ys[i + 1] - ys[i];
+    dxs.push(dx); dys.push(dy); ms.push(dy/dx);
+  }
+  
+  // Get degree-1 coefficients
+  var c1s = [ms[0]];
+  for (i = 0; i < dxs.length - 1; i++) {
+    var m = ms[i], mNext = ms[i + 1];
+    if (m*mNext <= 0) {
+      c1s.push(0);
+    } else {
+      var dx_ = dxs[i], dxNext = dxs[i + 1], common = dx_ + dxNext;
+      c1s.push(3*common/((common + dxNext)/m + (common + dx_)/mNext));
+    }
+  }
+  c1s.push(ms[ms.length - 1]);
+  
+  // Get degree-2 and degree-3 coefficients
+  var c2s = [], c3s = [];
+  for (i = 0; i < c1s.length - 1; i++) {
+    var c1 = c1s[i], m_ = ms[i], invDx = 1/dxs[i], common_ = c1 + c1s[i + 1] - m_ - m_;
+    c2s.push((m_ - c1 - common_)*invDx); c3s.push(common_*invDx*invDx);
+  }
+  
+  // Return interpolant function
+  var f = function(x) {
+              // The rightmost point in the dataset should give an exact result
+              var i = xs.length - 1;              
+              // Search for the interval x is in, returning the corresponding y if x is one of the original xs
+              var low = 0, mid, high = c3s.length - 1;
+              while (low <= high) {
+                mid = Math.floor(0.5*(low + high));
+                var xHere = xs[mid];
+                if (xHere < x) { low = mid + 1; }
+                else if (xHere > x) { high = mid - 1; }
+                else { return ys[mid]; }
+              }
+              i = Math.max(0, high);
+              
+              // Interpolate
+              var diff = x - xs[i], diffSq = diff*diff;
+              return ys[i] + c1s[i]*diff + c2s[i]*diffSq + c3s[i]*diff*diffSq;
+            };
+  var invf = function(y) {
+                // fixme: this is clumsy; it iterates to find the exact solution.
+                // Better would be something that finds the exact solution, like https://math.vanderbilt.edu/schectex/courses/cubic/
+                // but the problem with that method is that it requires doing complex math to find even one root.
+                // So, we have to do a search.
+
+                var low=-4096;
+                var high=4096;
+                var y1,y2,mid;
+                while(high-low>2) {
+                  var mid = (low+high)/2;
+                  var midy =    f(mid);
+                  if(y >= midy) low=mid;
+                  else        high=mid;
+                }
+                return mid;
+              };
+  
+  return {apply: f, invert: invf};
+};
+
 function PseudoColor()
 {
   this.adcScale = 20; // Rollover point - below this, color is pretty linear with ADC
@@ -22,7 +115,8 @@ function PseudoColor()
   this.saturation = 0.9;
   this.cutoffLow = 0;
   this.cutoffHigh = 0;
-  this.color_table = []
+  this.color_table = [];
+  this.Recompute();
 } 
 
 // Utility function.
@@ -53,30 +147,60 @@ PseudoColor.prototype.HSVtoRGB = function(h, s, v)
 };
 
 
+PseudoColor.prototype.Recompute = function( )
+{
+  // called when parameters change.
+  this.spline = createInterpolant([-4096,-this.adcScale,this.adcScale,4096],[-1,-0.85,0.85,1]);
+}
+
+
 PseudoColor.prototype.ColorDialToAdc = function( colorDial )
 {
   // colorDial is a number -1 to 1, where 0 is the mid point (0adc)
   // colors change evenly from 0-1 on colordial.
   // adc can legally be -4096 to 4096.
-  var adc = Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
-  return adc;
+
+  // Arctan:
+  // var adc = Math.tan((colorDial)*Math.PI/2.)*this.adcScale;
+
+  // mirrored logscale:
+  // if(colorDial>0) return  (Math.exp( colorDial*Math.log(2100/this.adcScale+1))-1.0)*this.adcScale;
+  // else            return -(Math.exp(-colorDial*Math.log(2100/this.adcScale+1))-1.0)*this.adcScale;
+
+  // Simple linear scale:
+  // return colorDial*4096;
+
+  // if(adc > this.cutoffLow && adc < this.cutoffHigh) return 0;
+
+  return this.spline.invert(colorDial);
 }
 
 PseudoColor.prototype.AdcToColorDial = function( adc, no_truncate)
 {
   // adc can legally be -4096 to 4096.
   // colorDial is a -1 to +1 number, where 0.5 is the mid point (0adc)
-  if(adc > this.cutoffLow && adc < this.cutoffHigh) { 
-    if(no_truncate) {} else return 0; // truncate
-  }
-  return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
+  // if(adc > this.cutoffLow && adc < this.cutoffHigh) { 
+  //   if(no_truncate) {} else return 0; // truncate
+  // }
+  //
+  // Arctan:
+  // return Math.atan((adc)/this.adcScale) / (Math.PI/2.);
+
+  // Simple linear scale:
+  // return adc/4096;
+
+  // mirrored logscale:
+  // var x = Math.min(2100, Math.max(-2100, adc ));
+  // if(adc>0)  return  Math.log( adc/this.adcScale+1)/Math.log(2100/this.adcScale+1);
+  // else       return -Math.log(-adc/this.adcScale+1)/Math.log(2100/this.adcScale+1);
+  return this.spline.apply(adc);
+
 }
 
 
 PseudoColor.prototype.ColorDialToColor = function( colorDial )
 {
-  var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + 1.0)%1.0;
+  var hue = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1 + 1.0)%1.0;
   return this.HSVtoRGB(hue,this.saturation,1.0);  
 }
 
@@ -87,7 +211,7 @@ PseudoColor.prototype.ColorDialToCtxColor = function( colorDial )
                         parseInt(c.r)+","+
                         parseInt(c.g)+","+
                         parseInt(c.b)+","+
-                        (c.a || 1.0)+")";
+                        (('a' in c) ? c.a : 1.0)+")";
 }
 
 PseudoColor.prototype.interpolate = function(x) {
@@ -95,10 +219,7 @@ PseudoColor.prototype.interpolate = function(x) {
   var c = this.ColorDialToColor(dial);
   c.x = x;
   // trial:
-  //  if(Math.abs(x)<20) c.a = 0;
-    // c.r = c.g = c.b = 255;
-  // var trans = Math.abs(x)/20;
-     // c.a = Math.min(trans,1.0);
+    // if(Math.abs(x)<20) c.a = x*x/(20*20.); // this works pretty well.
   
   c.a = ('a' in c) ? c.a : 1.0;
   return c;
@@ -124,7 +245,7 @@ function PsuedoRainbow( )
 
 PsuedoRainbow.prototype.ColorDialToColor = function( colorDial )
 {
-  var hue = (((colorDial+this.dialOffset)*(-this.dialScale))%1 + (this.hueOffset%1) + 1.0)%1.0;
+  var hue = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1 + (this.hueOffset%1) + 1.0)%1.0;
   var rgb = this.HSVtoRGB(hue,this.saturation,1.0);  
   return rgb;
 }
@@ -140,8 +261,7 @@ function PsuedoGrayscale( )
 }
 PsuedoGrayscale.prototype.ColorDialToColor = function( colorDial )
 {
-  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
-  
+  var norm = (((colorDial*(-this.dialScale)+0.5-this.dialOffset*Math.sign(this.dialScale)))%1 + 1.0)%1.0;
   return { 
     r: norm*255,
     g: norm*255,
@@ -167,7 +287,7 @@ function PsuedoLOCS( )
 
 PsuedoLOCS.prototype.ColorDialToColor = function( colorDial )
 {
-  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  var norm = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1  + 1.5)%1.0;
   var entry = Math.floor(norm*255);
   
   return { 
@@ -191,7 +311,7 @@ function PsuedoBrightness( )
 
 PsuedoBrightness.prototype.ColorDialToColor = function( colorDial )
 {
-  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  var norm = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1  + 1.5)%1.0;
   return this.HSVtoRGB(this.saturation, // actually hue
                         0.9, // stay fully saturated
                         Math.sqrt(norm));
@@ -215,7 +335,7 @@ function PsuedoBlackbody( )
 
 PsuedoBlackbody.prototype.ColorDialToColor = function( colorDial )
 {
-  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  var norm = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1  + 1.5)%1.0;
   var entry = Math.floor(norm*this.color_table.length);
   
   return { 
@@ -252,7 +372,7 @@ function PsuedoRootRainbow( )
 
 PsuedoRootRainbow.prototype.ColorDialToColor = function( colorDial )
 {
-  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  var norm = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1  + 1.5)%1.0;
 
   var j = 0;
   while(this.stops[j]<=norm) j++;
@@ -298,7 +418,7 @@ function PsuedoInterpolator( n )
 
 PsuedoInterpolator.prototype.ColorDialToColor = function( colorDial )
 {
-  var norm = (((colorDial+this.dialOffset)*(-this.dialScale))%1  + 1.5)%1.0;
+  var norm = (((colorDial*(-this.dialScale)-this.dialOffset*Math.sign(this.dialScale)))%1  + 1.5)%1.0;
   var x = norm*(this.color_table.length);
   var i1 = Math.floor(x);
   var i2 = i1+1;

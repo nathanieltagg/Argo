@@ -1,6 +1,11 @@
 
-// Automatic runtime configuration.
-// I should probably abstract this another level for a desktop-like build...
+///
+/// This stuff is deprecated!
+/// Need to rebuild it all using world-coordinate geometry and THREE.js
+/// The existing code is just too slow to update, and no one really uses it.
+/// Consider incorporating into the TriD view with special projection or something!
+///
+
 
 var gMRI = null;
 
@@ -505,12 +510,15 @@ MRI.prototype.DrawOne = function(min_u,max_u,min_v,max_v)
   if(max_u > detBoxYZ.u2) {
     var xmax = this.GetX(detBoxYZ.u2);
     this.ctx.fillRect( xmax , this.origin_y-this.span_y, 
-                      this.span_x /*too much*/, this.span_y);
+                      this.span_x // too much
+                      , this.span_y);
   }
 
   if(min_v < detBoxYZ.v1) {
     this.ctx.fillRect( this.origin_x  , this.GetY(detBoxYZ.v1), 
-                      this.span_x, this.span_y /*too much*/);
+                      this.span_x, 
+                      this.span_y // too much 
+                      );
   }
 
   if(max_v > detBoxYZ.v2) { // FIXME: Should be number of samples.!
@@ -662,3 +670,4 @@ MRI.prototype.DoMouse = function(ev)
   } 
   
 };
+

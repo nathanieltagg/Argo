@@ -108,7 +108,7 @@ OpHit2dMap.prototype.DrawOne = function()
     if(w>gOpMode.cut.max) continue;
     if(oh.opDetChan<0) continue; // Bad channel number
     
-    // det = gGeo.opDets.OpDetByChannel(oh.opDetChan);
+    // det = gGeo3.OpDetByChannel(oh.opDetChan);
     // if(!det) {
     //   console.warn("Couldn't find optical detector geometry for hit",oh);
     //   continue;
@@ -119,7 +119,7 @@ OpHit2dMap.prototype.DrawOne = function()
     c = gOpColorScaler.GetColor(w);
 
     this.ctx.fillStyle= "rgba(" + c + ",0.5)";
-    if(gHoverState.obj == gGeo.opDets.opticalDetectors[oh.opDetChan%100]) {
+    if(gHoverState.obj == gGeo3.opticalDetectors[oh.opDetChan%100]) {
       this.ctx.fillStyle= "rgba(" + c + ",1)";
       
     }
@@ -138,10 +138,10 @@ OpHit2dMap.prototype.DoMouse = function(ev)
     var hoverdet = null;
     var opdet = Math.floor( this.fMousePos.u);
     if(opdet>=0 && opdet<this.max_u &&  this.fMousePos.v >= this.min_v) {
-      var hoverdet = gGeo.opDets.opticalDetectors[opdet];
+      var hoverdet = gGeo3.opticalDetectors[opdet];
     }
     if(hoverdet) {
-      ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
+      ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo3.opticalDetectors});
     } else {
       ClearHover();      
     }

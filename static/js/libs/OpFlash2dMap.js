@@ -167,27 +167,28 @@ OpFlash2dMap.prototype.DoMouse = function(ev)
     }
     if(hoverflash) {
       ChangeHover({obj: hoverflash, type: "opflash", collection: gRecord.opflashes});
-      if(ev.type=="click") {
-        // zoom to area this flash might be good:
-        var tf = hoverflash.time;
-        // The event could be at this time, or come up to one detector-width later.
-        var t1 = tf * 2; // 2 TDC = 1 us
-        var dx = 128.175*2;  // detector width in cm
-        var t2 = t1+dx/gGeo.drift_cm_per_tick;
-          
-        var dz = hoverflash.zWidth;
-        if(dz<100) dz = 100;
-        var z1 = hoverflash.zCenter - dz;
-        var z2 = hoverflash.zCenter + dz;
-        var w1 = gGeo.yzToWire(2,0,z1);
-        var w2 = gGeo.yzToWire(2,0,z2);
+      // FIXME not sure if this makes sense anyway.
+      // if(ev.type=="click") {
+      //   // zoom to area this flash might be good:
+      //   var tf = hoverflash.time;
+      //   // The event could be at this time, or come up to one detector-width later.
+      //   var t1 = tf * 2; // 2 TDC = 1 us
+      //   var dx = 128.175*2;  // detector width in cm
+      //   var t2 = t1+dx/gGeo3.getDriftCmPerTick(0); // fixme tpc number?
+           
+      //   var dz = hoverflash.zWidth;
+      //   if(dz<100) dz = 100;
+      //   var z1 = hoverflash.zCenter - dz;
+      //   var z2 = hoverflash.zCenter + dz;
+      //   var w1 = gGeo.yzToWire(2,0,z1);
+      //   var w2 = gGeo.yzToWire(2,0,z2);
 
-        console.warn("Attempting to zoom to flash",hoverflash,"in TPC at tdc=",t1,t2,"wire=",(w2+w1)*0.5);
-        gZoomRegion.setLimits(2,w1,w2);
-        gZoomRegion.changeTimeRange(t1,t2);
-        gStateMachine.Trigger("zoomChange");
+      //   console.warn("Attempting to zoom to flash",hoverflash,"in TPC at tdc=",t1,t2,"wire=",(w2+w1)*0.5);
+      //   gZoomRegion.setLimits(2,w1,w2);
+      //   gZoomRegion.changeTimeRange(t1,t2);
+      //   gStateMachine.Trigger("zoomChange");
                
-      }
+      // }
     } else {
       ClearHover();
     }

@@ -71,7 +71,7 @@ WireHistogram.prototype.NewRecord = function()
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
     this.bound_u_min = 0;
-    this.bound_u_max = gGeo.numWires(this.plane);
+    this.bound_u_max = gGeo.numWires(0,this.plane); // fixme tpc number
     
   } 
   else  if(gRecord[this.show_image] && gRecord[this.show_image][gCurName[this.show_image]]) {    
@@ -80,9 +80,9 @@ WireHistogram.prototype.NewRecord = function()
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
     this.bound_u_min = 0;
-    this.bound_u_max = gGeo.numWires(this.plane);
+    this.bound_u_max = gGeo.numWires(0, this.plane); // fixme tpc number
   } else {
-    this.hist = new Histogram(gGeo.numWires(this.plane),0,gGeo.numWires(this.plane));
+    this.hist = new Histogram(gGeo.numWires(0,this.plane),0,gGeo.numWires(0,this.plane)); // fixme tpc number
     this.SetHist(this.hist,new ColorScaleIndexed(0));
     this.ResetToHist(this.hist);
   }

@@ -190,29 +190,29 @@ TriDView.prototype.CreateFrame = function()
   // this.AddLine(-44.865, y_crt0, 778.075 ,  -44.865, y_crt0, 258.725,  3, curColor);
 
   // MRI slice
-  if(gMRI && gMRI.has_been_adjusted){
-    var mri_t = gMRI.t[0];
-    var mri_x = gGeo.getXofTDC(0,mri_t);
-    this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
-    this.AddLine( mri_x, dy,  0 ,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
-    this.AddLine( mri_x ,-dy, 0,   mri_x , dy, 0,   3, "rgba(255,50,50,0.5)");
-    this.AddLine( mri_x ,-dy, dz,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+  // if(gMRI && gMRI.has_been_adjusted){
+  //   var mri_t = gMRI.t[0];
+  //   var mri_x = gGeo3.getXofTDC(0,0,mri_t);
+  //   this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
+  //   this.AddLine( mri_x, dy,  0 ,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+  //   this.AddLine( mri_x ,-dy, 0,   mri_x , dy, 0,   3, "rgba(255,50,50,0.5)");
+  //   this.AddLine( mri_x ,-dy, dz,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
     
-    mri_t = gMRI.t[1];
-    mri_x = gGeo.getXofTDC(0,mri_t);
-    this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
-    this.AddLine( mri_x, dy,  0 ,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
-    this.AddLine( mri_x ,-dy, 0,   mri_x , dy, 0,   3, "rgba(255,50,50,0.5)");
-    this.AddLine( mri_x ,-dy, dz,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+  //   mri_t = gMRI.t[1];
+  //   mri_x = gGeo3.getXofTDC(0,0,mri_t);
+  //   this.AddLine( mri_x,-dy,  0 ,  mri_x ,-dy, dz,  3, "rgba(255,50,50,0.5)");
+  //   this.AddLine( mri_x, dy,  0 ,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
+  //   this.AddLine( mri_x ,-dy, 0,   mri_x , dy, 0,   3, "rgba(255,50,50,0.5)");
+  //   this.AddLine( mri_x ,-dy, dz,  mri_x , dy, dz,  3, "rgba(255,50,50,0.5)");
   
-  }
+  // }
   
   // Optical detectors.
-  var dets = gGeo.opDets.opticalDetectors;
+  var dets = gGeo3.opticalDetectors;
   this.ctx.strokeStyle = "black";
   for(var i=0;i<dets.length;i++){
     var det = dets[i];
-    var hov = {obj: det, type: "opdet", collection: gGeo.opDets.opticalDetectors};
+    var hov = {obj: det, type: "opdet", collection: gGeo3.opticalDetectors};
 
     this.AddArcYZ(det.x,det.y,det.z,15.2,20,0,Math.PI*2,1,curColor,hov);
   }
@@ -309,23 +309,6 @@ TriDView.prototype.CreateCrtHits = function()
       console.log("crttrack",crttrack);
 	  }
   }
-  //
-  // var cs = new ColorScaler();
-  // cs.max = 2000;
-  //
-  // for(var i=0;i<hits.length;i++) {
-  //   var h = hits[i];
-  //   var hovobj = {obj:h, type:"hit", collection: hits};
-  //
-  //   if(h.t1 > gZoomRegion.tdc[1]) continue;
-  //   if(h.t2 < gZoomRegion.tdc[0]) continue;
-  //   var gwire = gGeo.getWire(h.plane,h.wire);
-  //   var c = cs.GetColor(h.q);
-  //   var color = "rgba(" + c + ",0.2)";
-  //   var x = gGeo.getXofTDC(h.plane,h.t);
-  //   // if(h.view<2) continue;
-  //   this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);
-  // }
 };
 
 
@@ -342,10 +325,10 @@ TriDView.prototype.CreateHits = function()
 
     if(h.t1 > gZoomRegion.tdc[1]) continue;
     if(h.t2 < gZoomRegion.tdc[0]) continue;
-    var gwire = gGeo.getWire(h.plane,h.wire);
+    var gwire = gGeo3.getWire(0,h.plane,h.wire); // fixme tpc number
     var c = cs.GetColor(h.q);
     var color = "rgba(" + c + ",0.2)";
-    var x = gGeo.getXofTDC(h.plane,h.t);
+    var x = gGeo3.getXofTDC(0, h.plane,h.t); // fixme tpc number
     // if(h.view<2) continue;
     this.AddLine(x, gwire.y1, gwire.z1, x, gwire.y2, gwire.z2, 2, color, hovobj);
     console.log("hit",h);    
@@ -424,7 +407,7 @@ TriDView.prototype.CreateMC = function()
     var t0 = p.trajectory[0].t;
     // if(t>1.6e6 || t<-1000) continue; // Ignore out-of-time particles
     var dx_from_t0 = 0;
-    if(move_t0) dx_from_t0 =  gGeo.getXofTDC(0,t0/500.0);
+    if(move_t0) dx_from_t0 =  gGeo3.getXofTDC(0,0,t0/500.0); // fixme tpc number
     
     // console.log("TriDView::CreateMC particle at time ",t0, p.trajectory.length);
     var hovobj = {obj:p, type:"mcparticle", collection: particles};

@@ -124,6 +124,14 @@ function Geometry()
   this.wire_pitch = 0.3; // 3mm/wire = 0.3 cm per wire.
   this.kU = [kcos60, -ksin60];
   this.kV = [kcos60,  ksin60];
+  this.u_vector = new THREE.Vector3(0,-ksin60,kcos60);
+  this.v_vector = new THREE.Vector3(0, ksin60,kcos60);
+  
+  this.transverse_vectors = [
+    this.u_vector,
+    this.v_vector,
+    new THREE.Vector3(0,0,1)
+  ];
 
   this.opDets = new OpDetGeo();
 
@@ -134,11 +142,9 @@ function Geometry()
       87      // lAr temperature, Kelvin
   ); // sets this.drift_cm_per_tick
 
-
   // X distance from origin of wire planes 0,1,2.
   this.wirePlaneX = [0,0.270,0.521];
   this.tpc = new TpcGeo();
-  
 }
 
 Geometry.prototype.getTpc = function(itpc)
@@ -314,6 +320,7 @@ Geometry.prototype.yzToTransverse = function(plane,y,z)
   }
 }
 
+
 var _transverse_plane_offset = [337.50194*0.3, 332.16920*0.3, -1.16434*0.3]
 
 
@@ -326,6 +333,12 @@ Geometry.prototype.transvserseToWire = function(plane,trans)
   //   case 2: return -1.16434+trans*(3.33333);
   // }
 }
+
+Geometry.prototype.wireToTransverse = function(plane,wire)
+{
+  return wire/3.333333 -_transverse_plane_offset[plane];
+}
+
 
 Geometry.prototype.transversePlaneOffset = function(plane)
 {

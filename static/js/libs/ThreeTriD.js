@@ -97,9 +97,6 @@ function ThreeTriD(element, options )
 	this.orbit_controls.maxPolarAngle = Math.PI ;
   
 
-
-  this
-
   // this.DrawOverlay();
   // this.overlay_dirty = true;
   // Object picking via raycaster.
@@ -166,10 +163,10 @@ function ThreeTriD(element, options )
   
   
   this.line_materials = [
-    this.frameline_material     = new THREE.SmarterLineMaterial( { color: 0x000000, worldlinewidth: 5, maxlinewidth:30, minlinewidth:0.1, dashed: false} ),
-    this.track_material         = new THREE.SmarterLineMaterial( { color: 0x00aa00, worldlinewidth: 0.3, minlinewidth: 0.8, maxlinewidth: 3, dashed: false} ),
-    this.track_material_hover   = new THREE.SmarterLineMaterial( { color: 0x008800, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
-    this.track_material_selected= new THREE.SmarterLineMaterial( { color: 0x000000, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
+    this.frameline_material     = new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 5, maxlinewidth:30, minlinewidth:0.1, dashed: false} ),
+    this.track_material         = new THREE.PerspectiveLineMaterial( { color: 0x00aa00, worldlinewidth: 0.3, minlinewidth: 0.8, maxlinewidth: 3, dashed: false} ),
+    this.track_material_hover   = new THREE.PerspectiveLineMaterial( { color: 0x008800, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
+    this.track_material_selected= new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
     this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
 
     this.mc_material          = new THREE.LineMaterial( { color: 0x0000, linewidth: 1, dashed: false} ),
@@ -208,41 +205,49 @@ ThreeTriD.prototype.AnimationRender = function()
 ThreeTriD.prototype.CreateFrame = function()
 {
   this.frame_group = new THREE.Group();
-  var tpc = gGeo.getTpc(0);
+  /*
+  for(var gtpc of gGeo3.data.tpcs) {
+     var tpc = gGeo.getTpc(0);
 
   
-  function makeBoxOutlineGeo(x1,x2,y1,y2,z1,z2)
-  {
-    var geo = new THREE.LineSegmentsGeometry;
-    var positions = [
-      x1,y1,z1, x2,y1,z1,//udownstream end
-      x2,y1,z1, x2,y2,z1,
-      x2,y2,z1, x1,y2,z1,
-      x1,y2,z1, x1,y1,z1,
-      
-      x1,y1,z2, x2,y1,z2, //upstream end
-      x2,y1,z2, x2,y2,z2,
-      x2,y2,z2, x1,y2,z2,
-      x1,y2,z2, x1,y1,z2,
-      
-      x1,y1,z1, x1,y1,z2,
-      x1,y2,z1, x1,y2,z2,
-      x2,y2,z1, x2,y2,z2,
-      x2,y1,z1, x2,y1,z2,
-    ]
-    geo.setPositions(positions);
-    return geo;
-  }
-  
-  var geo = makeBoxOutlineGeo(...tpc.xrange,...tpc.yrange,...tpc.zrange);
-  var box = new THREE.Line2(geo, this.frameline_material);
-  this.orbit_controls.target.set(...tpc.getCenter());
-  this.orbit_controls.update();
-  this.frame_group.add(box);
-  
+    function makeBoxOutlineGeo(x1,x2,y1,y2,z1,z2)
+    {
+      var geo = new THREE.LineSegmentsGeometry;
+      var positions = [
+        x1,y1,z1, x2,y1,z1,//udownstream end
+        x2,y1,z1, x2,y2,z1,
+        x2,y2,z1, x1,y2,z1,
+        x1,y2,z1, x1,y1,z1,
+        
+        x1,y1,z2, x2,y1,z2, //upstream end
+        x2,y1,z2, x2,y2,z2,
+        x2,y2,z2, x1,y2,z2,
+        x1,y2,z2, x1,y1,z2,
+        
+        x1,y1,z1, x1,y1,z2,
+        x1,y2,z1, x1,y2,z2,
+        x2,y2,z1, x2,y2,z2,
+        x2,y1,z1, x2,y1,z2,
+      ]
+      geo.setPositions(positions);
+      return geo;
+    }
+    
+    var geo = makeBoxOutlineGeo(gtpc.center[0]-gtpc.halfwidths[0], gtpc.center[0]+gtpc.halfwidths[0],
+                                gtpc.center[1]-gtpc.halfwidths[1], gtpc.center[1]+gtpc.halfwidths[1],
+                                gtpc.center[2]-gtpc.halfwidths[2], gtpc.center[2]+gtpc.halfwidths[2]);
+    var box = new THREE.Line2(geo, this.frameline_material);
+    this.orbit_controls.target.set(...tpc.getCenter());
+    this.orbit_controls.update();
+    this.frame_group.add(box);
+    
+    
+  } // end tpc loop
+ 
+
   var pmtgeo = new THREE.CircleBufferGeometry(15.2, 32);
   var pmtmat = new THREE.MeshBasicMaterial( { color: 0x0000ff, transparent: true, opacity: 0.2, side: THREE.DoubleSide  });
-  var dets = gGeo.opDets.opticalDetectors;
+  var dets = gGeo3.opticalDetectors;
   var q = new THREE.Quaternion();
   q.setFromAxisAngle( new THREE.Vector3( 0, 1, 0  ), Math.PI / 2 );
   
@@ -254,47 +259,43 @@ ThreeTriD.prototype.CreateFrame = function()
     pmt.name = "opdet " + i;
     this.frame_group.add(pmt);     // FIXME need hover selection.
 
-    // var hov = {obj: det, type: "opdet", collection: gGeo.opDets.opticalDetectors};
+    // var hov = {obj: det, type: "opdet", collection: gGeo3.opticalDetectors};
   }
   
   var scalecubegeo = new THREE.BoxBufferGeometry(5,5,5);
   var mat = new THREE.MeshBasicMaterial( { color: 0x00ff00 });
   var scalecube    = new THREE.Mesh(scalecubegeo,mat );
   this.frame_group.add(scalecube);
-  
-  this.scene.add(this.frame_group);
-  
-  /*
-  var loader = new THREE.GLTFLoader();
-  var scope = this;
-  loader.load(
-     "TPC_display.glb",
-     function ( gltf ) {
-       scope.tpc_group = new THREE.Group();
-              for(var obj of gltf.scene.children) scope.tpc_group.add(obj);
 
-       scope.tpc_group.name = "TPC";
-       scope.tpc_group.scale.set(25,25,25);
-       scope.tpc_group.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),-Math.PI/2);
-       scope.tpc_group.position.z=gGeo.getTpc(0).getCenter()[2];
-       // scope.tpc_group.position.x = 700;
-       scope.scene.add( scope.tpc_group )
-        
-     },
-   	// called while loading is progressing
-   	function ( xhr ) {
-
-   		console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-
-   	},
-   	// called when loading has errors
-   	function ( error ) {
-
-   		console.error( error );
-
-   	}
-  );
   */
+  
+  // // a light
+  // var light = new THREE.HemisphereLight(0xfffff0, 0x101020, 1.25);
+  // light.position.set(157, 400, 125);
+  // this.scene.add(light);
+
+  // //cool but not working right yet  
+  // this.gdmlloader = new THREE.GDMLLoader();
+  // this.gdmlloader.top_volume_name = "volCryostat";
+  // this.gdmlloader.materials = 
+  // {
+  //   Vacuum: null,
+  //   LAr:null,
+  //   Air:null,
+  //   Ar:null
+  // }
+  // var scope = this;
+  // this.gdmlloader.load( "microboonev12.gdml" ,
+  //   function( grp ) {
+  //     scope.gdml = grp;
+  //     scope.gdml.scale.set(1,1,1);
+  //     scope.frame_group.add(scope.gdml);
+  //     scope.Render();
+  //   }
+  // );
+
+  this.scene.add(this.frame_group);
+
 }
 
 ThreeTriD.prototype.UpdateFrame = function()
@@ -398,12 +399,14 @@ ThreeTriD.prototype.DoMouse = function(ev) {
   	this.raycaster.setFromCamera( this.fMousePos.norm, this.camera );
     // this.raycast_layers = new THREE.Layers; // set to valid layers. Not required, but leaving
     var intersects = this.raycaster.intersectObjects(this.scene.children,true);
+    var firstname = null;
     // console.log("intersects:",intersects.length,intersects);
     for(var i=0;i<intersects.length;i++) {
       var intersect = intersects[i];
       var obj = intersect.object;
       // if(!obj.layers.test(this.raycast_layers)) continue; // ignore the magnifier. Obsolete; magnifier removed already
       var ptr = obj.name;
+      if(obj.name && firstname==null) firstname = obj.name;
       // console.log("pick candidate:",obj,ptr);
       if(ptr && ptr.startsWith('/')){
         var path = jsonpointer.parse(ptr);
@@ -418,12 +421,7 @@ ThreeTriD.prototype.DoMouse = function(ev) {
         }
         var product = jsonpointer.get(gRecord,path);
         if(product) {
-          var type = path[0];
-          switch(path[0]) {
-            case 'tracks': type="track"; break;
-            case 'hits': type="hit"; break;
-          }
-        
+          var type = path[0];        
           match =  {obj:product, type:type, pointer:ptr};
           // canvas pixel coordinates:
 
@@ -438,6 +436,8 @@ ThreeTriD.prototype.DoMouse = function(ev) {
       }
     
     }
+    $('.mouseover-text',this.element).html(firstname||'');
+    // console.log("mouseover:",firstname)
 
     ChangeHover(match); // match might be null.
     if(ev.type=="click") { // Click, but not on just ordinary wire
@@ -700,8 +700,6 @@ ThreeTriD.prototype.CreateShowers = function()
   this.showers_group.name = "showers";
   
   for(var shw of showers) {
-    var u = gGeo.yzToTransverse(this.plane,shw.start.y,shw.start.z);
-    var v = shw.start.x;
     var angle = shw.openangle || 20./180*Math.PI/2;
     var Length = shw.Length || 100;
     
@@ -732,12 +730,6 @@ ThreeTriD.prototype.CreateShowers = function()
 
 ThreeTriD.prototype.UpdateShowers = function()
 {
-  // this.offset_track = 0;
-  // if(this.ctl_track_shift.is(":checked"))
-  //   this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
-  //
-  // if(this.showers_group)
-  //   this.showers_group.position.y = this.offset_track;
   this.UpdateVisibilities();
   this.dirty=true;
   this.Render();
@@ -763,8 +755,6 @@ ThreeTriD.prototype.CreateSpacepoints = function()
   var product_indices = []; // One per face, to hold a the hit index
   for(var i = 0; i<sps.length;i++) {
     var sp = sps[i];
-    var u = gGeo.yzToTransverse(this.plane,sp.xyz[1],sp.xyz[2]);
-    var v = sp.xyz[0];
     positions.push(...sp.xyz);
     product_indices.push(i);
   }
@@ -798,12 +788,6 @@ ThreeTriD.prototype.CreateSpacepoints = function()
 };
 ThreeTriD.prototype.UpdateSpacepoints = function()
 {
-  // this.offset_track = 0;
-  // if(this.ctl_track_shift.is(":checked"))
-  //   this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo.drift_cm_per_tick; // convert to position.
-  //
-  // if(this.spacepoints_group)
-  //   this.spacepoints_group.position.y = this.offset_track;
   this.UpdateVisibilities();
   this.dirty=true;
   this.Render();

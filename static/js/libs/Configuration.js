@@ -40,7 +40,8 @@ $(function(){
   function SetHV(){
     var hv = parseFloat($('#ctl-high-voltage').val()) || 70;
     gGeo.SetHV(hv);
-    gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
+    gGeo3.setHV(hv);
+    // gZoomRegion.setLimits(2,gZoomRegion.plane[2][0],gZoomRegion.plane[2][1]);
     gStateMachine.Trigger("driftChange");    
     gStateMachine.Trigger("zoomChange");    
   }
@@ -48,6 +49,7 @@ $(function(){
   // set the hv right now, before we even start.
   var hv = parseFloat($('#ctl-high-voltage').val()) || 70; 
   gGeo.SetHV(hv);
+  gGeo3.setHV(hv)
   
 
   // prevent controls from capturing the keyboard events.  Remove focus if gathereed.
@@ -59,8 +61,8 @@ $(function(){
 
   gStateMachine.Bind("newPiece",function(){
     var hints = (gRecord||{}).hints||{};
-    if("shift_hit_ticks" in hints) $('#ctl-shift-hits').val(hints.shift_hit_ticks);
-  })
+    if("shift_hit_ticks" in hints) $('#ctl-shift-hits').val(hints.shift_hit_ticks.value);
+    });
   
   
 });

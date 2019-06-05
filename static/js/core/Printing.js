@@ -11,7 +11,7 @@
 function DownloadImage(portlet) {
   // Three.js elements need to be rendered IN THE SAME EVENT as the html2canvas uses to get the data.
   // So, we'll locate any threepad's controller, and tell it to render.
-  $('.threepad',portlet).each(function(){
+  $(':data(BoundObject)',portlet).each(function(){
     console.log("found threepad",this);
     var boundobject = $(this).data("BoundObject");
     console.log("bound object is",boundobject);

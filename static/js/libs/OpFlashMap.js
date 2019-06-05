@@ -102,6 +102,7 @@ OpFlashMap.prototype.Draw = function()
       w0 = flash.wireWidths[0];
       w1 = flash.wireWidths[1];
       w2 = flash.wireWidths[2];
+      wyz = gGeo3.transverseToYZ(w0*0.3,w1*0.3);
             
       c = gOpFlashColorScaler.GetColor(t);
       if(gHoverState.obj == flash) c = "0,0,0";
@@ -110,14 +111,14 @@ OpFlashMap.prototype.Draw = function()
       this.ctx.strokeStyle="rgba("+c+",1)";
       this.ctx.lineWidth = 2;
       this.ctx.moveTo(x,y);
-      this.ctx.lineTo(this.GetX(flash.zCenter + gGeo.kU[0]*w0*0.3), this.GetY(flash.yCenter + gGeo.kU[1]*w0*0.3));
+      this.ctx.lineTo(this.GetX(flash.zCenter + wyz.z), this.GetY(flash.yCenter +  wyz+y));
       this.ctx.moveTo(x,y);
-      this.ctx.lineTo(this.GetX(flash.zCenter - gGeo.kU[0]*w0*0.3), this.GetY(flash.yCenter - gGeo.kU[1]*w0*0.3));
+      this.ctx.lineTo(this.GetX(flash.zCenter - wyz.z), this.GetY(flash.yCenter - wyz+y));
 
       this.ctx.moveTo(x,y);
-      this.ctx.lineTo(this.GetX(flash.zCenter + gGeo.kV[0]*w1*0.3), this.GetY(flash.yCenter + gGeo.kV[1]*w1*0.3));
+      this.ctx.lineTo(this.GetX(flash.zCenter + wyz.z), this.GetY(flash.yCenter + wyz.y));
       this.ctx.moveTo(x,y);
-      this.ctx.lineTo(this.GetX(flash.zCenter - gGeo.kV[0]*w1*0.3), this.GetY(flash.yCenter - gGeo.kV[1]*w1*0.3));
+      this.ctx.lineTo(this.GetX(flash.zCenter - wyz.z), this.GetY(flash.yCenter - wyz.z));
 
       this.ctx.moveTo(x,y);
       this.ctx.lineTo(this.GetX(flash.zCenter + w2*0.3), this.GetY(flash.yCenter));
@@ -155,7 +156,7 @@ OpFlashMap.prototype.Draw = function()
   scale = this.span_x/(this.max_u-this.min_u); 
   // Draw PMTs
   
-  var dets = gGeo.opDets.opticalDetectors;
+  var dets = gGeo3.opticalDetectors;
   this.ctx.strokeStyle = "black";
   for(i=0;i<dets.length;i++){
     det = dets[i];
@@ -166,7 +167,7 @@ OpFlashMap.prototype.Draw = function()
     this.ctx.save();
     this.ctx.translate(x,y);
     this.ctx.scale(scale,scale);
-    gGeo.opDets.pathYZ(this.ctx,det.type)
+    gGeo3.opDetPathYZ(this.ctx,det.type)
     this.ctx.restore();
     this.ctx.stroke();
   }
@@ -185,7 +186,7 @@ OpFlashMap.prototype.DoMouse = function(ev)
   
   if(! this.fMouseInContentArea) return true; // keep bubbling, this isnt' for us.
 
-  var dets = gGeo.opDets.opticalDetectors;
+  var dets = gGeo3.opticalDetectors;
   var hoverdet = null;
   var i, det, dx,dy,d2, dr2;
   for(i=0;i<dets.length;i++){
@@ -196,7 +197,7 @@ OpFlashMap.prototype.DoMouse = function(ev)
     if(d2<r2) hoverdet = det;
   }
   if(hoverdet){
-     ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo.opDets.opticalDetectors});
+     ChangeHover({obj: hoverdet, type: "opdet", collection: gGeo3.opticalDetectors});
   } else {
     var hoverflash = null;
     for(i=0;i<this.drawn_flashes.length;i++) {

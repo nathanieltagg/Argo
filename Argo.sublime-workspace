@@ -1,0 +1,517 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"get",
+				"getTimeOffset"
+			],
+			[
+				"v",
+				"v"
+			],
+			[
+				"I",
+				"I"
+			],
+			[
+				"if",
+				"interesting_defintions"
+			],
+			[
+				"DCa",
+				"DCACHE_STATUS_FILE"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 107.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: List Packages"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 485.0
+	},
+	"console":
+	{
+		"height": 204.0,
+		"history":
+		[
+			"sublime.log_commands(True)",
+			"sublime.log_input(True)",
+			"Run:sublime.log_input(True)",
+			"Run:sublime.log_input(True) ",
+			"Run:sublime.log_input(True) sublime.log_commands(True)",
+			"import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe013ee18cced0ef93d5f746d80ef60'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"view.sel()[1]",
+			"view.sel()[0]",
+			"view.sel().length",
+			"view.sel().count()",
+			"view.sel().describe()",
+			"view.sel()",
+			"view.sel",
+			"view.self",
+			"view",
+			"self.view.sel()",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/tagg/Sites/Argo",
+		"/Users/tagg/Sites/Argo/client",
+		"/Users/tagg/Sites/Argo/libargo",
+		"/Users/tagg/Sites/Argo/pug",
+		"/Users/tagg/Sites/Argo/pug/inc",
+		"/Users/tagg/Sites/Argo/static",
+		"/Users/tagg/Sites/Argo/static/js",
+		"/Users/tagg/Sites/Argo/static/js/core",
+		"/Users/tagg/Sites/Argo/static/js/libs",
+		"/Users/tagg/Sites/Argo/static/shaders"
+	],
+	"file_history":
+	[
+		"/Users/tagg/Sites/Argo/static/shaders/shaders_padgl.inc",
+		"/Users/tagg/Sites/Argo/pug/inc/TridView.pug",
+		"/Users/tagg/Sites/Argo/pug/argo.pug",
+		"/Users/tagg/Sites/Argo/static/js/libs/ThreeTriD.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/Geometry3.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/Configuration.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/GLEngine.js",
+		"/Users/tagg/Sites/Argo/libargo/Makefile",
+		"/Users/tagg/Sites/Argo/libargo/ReadLarsoftConfig.cpp",
+		"/Users/tagg/Sites/Argo/libargo/ReadLarsoftConfig.h",
+		"/Users/tagg/Sites/Argo/static/js/libs/WireViewGL.js",
+		"/Users/tagg/Sites/Argo/libargo/argo-run-one.cc",
+		"/Users/tagg/Sites/Argo/libargo/global.cpp",
+		"/Users/tagg/Sites/Argo/libargo/test_read_config.cc",
+		"/Users/tagg/Sites/Argo/libargo/GalleryComposer.cpp",
+		"/Users/tagg/Sites/Argo/libargo/test_read_config",
+		"/Users/tagg/Sites/Argo/libargo/argo-run-one",
+		"/Users/tagg/Sites/Argo/libargo/GalleryComposer.h",
+		"/Users/tagg/Sites/Argo/static/js/libs/WireInfo.js",
+		"/Users/tagg/Sites/Argo/static/shaders/shaders.inc",
+		"/Users/tagg/Sites/Argo/pug/inc/ZoomControl.pug",
+		"/Users/tagg/Sites/Argo/static/js/libs/ZoomControl.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/SelectionAndHover.js",
+		"/Users/tagg/Sites/Argo/libargo/argo-live-backend.cc",
+		"/Users/tagg/Sites/Argo/static/js/libs/ZoomRegion.js",
+		"/Users/tagg/Sites/Argo/libargo/config_dumper.cc",
+		"/Users/tagg/Sites/Argo/.git/COMMIT_EDITMSG",
+		"/Users/tagg/Sites/Argo/static/js/libs/WireView.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/Geometry.js",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/syntax_fold.sublime-settings",
+		"/Users/tagg/Sites/Argo/static/js/core/Printing.js",
+		"/Users/tagg/Sites/Argo/pug/inc/libraries.pug",
+		"/Users/tagg/Sites/Argo/static/js/libs/MRI.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/OpFlash2dMap.js",
+		"/Users/tagg/Sites/Argo/Argo.sublime-project",
+		"/Users/tagg/Sites/Argo/static/microboonev12.gdml",
+		"/Users/tagg/Sites/Argo/static/protodune_v5.gdml",
+		"/Users/tagg/Sites/Argo/pug/inc/WireViewGL.pug",
+		"/Users/tagg/Sites/Argo/static/js/libs/ThreePad.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/ArgoData.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/WireHistogram.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/TriDView.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/RgbWireView.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/OpHitMap.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/OpHit2dMap.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/OpFlashMap.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/ControlOverlay.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/Associations.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/DataSource.js",
+		"/Users/tagg/Sites/Argo/static/js/libs/dEdXTool.js",
+		"/Users/tagg/trigprim/srcs/otterstudent/ArgoGeoDump/ArgoGeoDumper_module.cc",
+		"/Users/tagg/trigprim/test (original).js",
+		"/Users/tagg/trigprim/geo.json",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-bi5noe/main.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-5xtixl/waveform_tools.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-le5t5j/ps2000aCon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-_0ktfl/muon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-9uaeu1/PicoScope.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-34iifq/muon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-pqvmne/PicoScope.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-pi779g/test.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-5zs3vi/Event.h",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-427cps/muon.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-zy3yik/Makefile",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-88uvot/main.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-bvgij6/muon.cpp",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-p943nc/mypico.cc",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-4g_uyp/mypico.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-q15jvb/mypico.cc",
+		"/Volumes/Stuff/dupseek",
+		"/Users/tagg/Desktop/metadata.json",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-is4m6p/blah",
+		"/Users/tagg/Sites/Argo/backend/live.config.json",
+		"/Users/tagg/blah.json",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
+		"/Users/tagg/Downloads/credentials.json",
+		"/Users/tagg/Sites/bengame/labs_phaser_io_assets/demoscene/budbrain.json",
+		"/Users/tagg/Sites/Otternet2/node/otternet.js",
+		"/Users/tagg/Sites/Argo/blah.json",
+		"/Users/tagg/Sites/Argo/backend/out.json",
+		"/Users/larsoft/larevt/v06_13_00/source/larevt/CalData/CalWire_module.cc",
+		"/Users/tagg/Google Drive Otterbein/Physics Department Stuff/3 Credit Hour Conversion Documents/physics_flow.dot",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-8fnqq5/MCDigraph.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-83cs8r/PmtMap.js",
+		"/Volumes/web/phpldapadmin/lib/functions.php",
+		"/Volumes/web/phpldapadmin/pax_global_header",
+		"/Volumes/NTagg/index.html",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/uboone_data_internals.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_CardDataCreatorHelperClass.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_EventRecord.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_TPC_SN_CardHeader_v6.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_MarkedRawCardData.h",
+		"/Users/tagg/ubdaq/uboonedaq-datatypes/projects/datatypes/ub_TPC_SN_CardHeader_v6.",
+		"/Users/tagg/lar/srcs/nathanielcode/michelsearch/TupleEntry.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/michelsearch/TupleEntry.h",
+		"/Users/tagg/lar/srcs/nathanielcode/michelsearch/MichelSearch_module.cc",
+		"/Users/tagg/Sites/Argo/libs/Keyboard.js",
+		"/Users/tagg/Sites/Argo/libs/FalseColorControl.js",
+		"/Users/tagg/Sites/Argo/shaders/shaders.inc",
+		"/Users/tagg/Sites/Argo/libs/GLEngine.js",
+		"/Users/tagg/Sites/Argo/libs/WireInfo.js",
+		"/Users/tagg/Sites/Argo/html/FalseColorControl.inc",
+		"/Users/tagg/lar/my.fcl",
+		"/Users/tagg/Sites/Argo/server/tmp.h",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/TupleEntry.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/TupleEntry.h",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/classes_def.xml",
+		"/Users/tagg/lar/srcs/uboonecode/uboone/Utilities/ArgoUrl.h",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/FlashStuff_module.cc",
+		"/Users/tagg/OMTortoise/example_send_mail.sh",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/ArgoUrl.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/ArgoUrl.h",
+		"/Users/tagg/lar/srcs/uboonecode/uboone/Utilities/ArgoUrl.cxx",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/ArgoUrl.cpp",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/nathaniel_option_key.py",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Control.system-ca-bundle",
+		"/Users/tagg/Library/Application Support/Sublime Text 3/Packages/User/Package",
+		"/Users/tagg/lar/srcs/nathanielcode/flashstuff/doflashes.fcl",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-tenbbb/my.fcl",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-mehj6h/my.fcl",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-p2un5m/FlashStuff_module.cc",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-j96h9u/OpFlash2dMap.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-xyy0iw/OpHit2dMap.js",
+		"/var/folders/6j/pv2yk3_14t77883_6b3jnq780000gy/T/rsub-fc0ypr/OpHit2dMap.js"
+	],
+	"find":
+	{
+		"height": 37.0
+	},
+	"find_in_files":
+	{
+		"height": 95.0,
+		"where_history":
+		[
+			"/Users/tagg/Sites/Argo/static/js/libs"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"meta",
+			"m_Event",
+			"satisfy",
+			"composeHints",
+			"argo-run",
+			"argo-run-one",
+			"satisfy",
+			"Event",
+			"imagepath",
+			"channelTowires",
+			"gGeo",
+			"WireID",
+			"m_Event",
+			"WireID",
+			"hint",
+			"hing",
+			"m_Event",
+			"hint",
+			"TFile",
+			"file",
+			"OBJ",
+			"hints",
+			"composeHeader",
+			"tkeyvfs",
+			"ParameterSetRegistry",
+			"print_pset",
+			"errors",
+			"print_psets",
+			"dump_",
+			"read_all_parameter",
+			"tdc",
+			"DoMouse",
+			"flip",
+			"wireimg_group",
+			"tdc",
+			"do_bad_channel",
+			"uniforms",
+			"tdc_start",
+			"HoverMaterial",
+			"shift-hit",
+			"shift_hit",
+			"shiift",
+			"zoomchange",
+			"\"wireimg\"",
+			"HoverAnd",
+			"\"wireimg",
+			"HoverAnd",
+			"wireimg",
+			"HoverAnd",
+			"hit",
+			"Select",
+			"hit",
+			"\"hit\"",
+			"this.plane",
+			"wireimg",
+			"flip",
+			"start_tdc",
+			"tdc_end",
+			"start_tdc",
+			"tdc_end",
+			"UpdateWire",
+			"zoomChange",
+			"start_tdc",
+			"tdc_start",
+			"console",
+			"dedx_path",
+			"tdc_start",
+			"flip",
+			"wireimg",
+			"texture",
+			"GDML",
+			"texture",
+			"tile_textures",
+			"center",
+			"wireimg_group",
+			"material",
+			"volFrame",
+			"ThreePad",
+			"volCryostat",
+			"PMTVolume",
+			"\"PMT",
+			"\"volTPC\"",
+			"volTPC",
+			"this.group",
+			"TPC",
+			"DetEnclosure0",
+			"CryostatUnion1",
+			"Cryostat",
+			"CryostatTube",
+			"CryostatUnion",
+			"VertBar",
+			"volume ",
+			"volume",
+			"union",
+			"entity",
+			"physvol",
+			"expression",
+			"quantity",
+			"volDetEnclosure",
+			"volWorld",
+			"frameline",
+			"Smarter",
+			"Hover",
+			"BasicMesh",
+			"wireimg",
+			"Buffer",
+			"CreateFrame",
+			"Frame",
+			"fMousePos",
+			"gGeo",
+			"Plane",
+			"wireimg",
+			"DoMouse",
+			"userdata",
+			"tpc",
+			"DoMouse",
+			"CreateWireimg",
+			"gGeo",
+			"getX",
+			"gGeo\\.",
+			"reco",
+			"gGeo",
+			"u",
+			"gGeo\\.",
+			"gGeo",
+			"drift",
+			"MRI",
+			"gGeo\\."
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"view"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.sftp":
+	{
+		"height": 100.0
+	},
+	"pinned_build_system": "",
+	"project": "Argo.sublime-project",
+	"replace":
+	{
+		"height": 66.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Gallery",
+				"libargo/GalleryComposer.cpp"
+			],
+			[
+				"WireView",
+				"pug/inc/WireViewGL.pug"
+			],
+			[
+				"ThreePad.js",
+				"static/js/libs/ThreePad.js"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 243.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
