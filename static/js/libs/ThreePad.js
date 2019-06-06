@@ -27,7 +27,6 @@
 // Notes: This is actually pretty sensitive. High resolution is not better, because some types of lines (the THREE.js default GL.LINES) will render razor-thin and now show up.
 // This definately screws things up (not sure what the worst offenders are:) { wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping, depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter}
 
-var gMagnifierTexture = new THREE.WebGLRenderTarget( 128, 128 );
 
 
 // Subclass of ABoundObject.
@@ -106,7 +105,9 @@ function ThreePad(element, options )
   this.renderer = new THREE.WebGLRenderer();
   this.renderer.setSize(this.width,this.height);
   this.resolution = new THREE.Vector2(this.width,this.height);
-  
+  this.magnifierTexture = new THREE.WebGLRenderTarget( 128, 128 );
+
+
   this.renderer.setPixelRatio( window.devicePixelRatio );
   this.element.appendChild( this.renderer.domElement );
   this.viewport=this.renderer.domElement;
@@ -197,7 +198,7 @@ ThreePad.prototype.CreateMagnifyingGlass = function()
 
   // Set radius as 1. Scale up when drawing in Render().
   var geometry = new THREE.CircleGeometry( 1, 32 /*segments*/ ); // Note that this is in world coordinates!
-  var lens_material  = new THREE.MeshBasicMaterial( {map: gMagnifierTexture.texture });
+  var lens_material  = new THREE.MeshBasicMaterial( {map: this.magnifierTexture.texture });
   var lens = new THREE.Mesh( geometry, lens_material );
   lens.layers.set(30);
   lens.name="lens";
@@ -633,8 +634,8 @@ ThreePad.prototype.DoRender = function()
     // Ensure textures have got the correct resolution at this scale:
     this.resolution.set(2*pix_radius,2*pix_radius);
     this.UpdateResolution();
-    this.renderer.setRenderTarget(gMagnifierTexture);
-    // this.renderer.setPixelRatio( 1 );
+    this.renderer.setRenderTarget(this.magnifierTexture);
+    // // this.renderer.setPixelRatio( 1 );
     
     this.renderer.render(this.scene, this.magnifier_camera); // render
     this.renderer.setRenderTarget(null);

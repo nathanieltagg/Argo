@@ -121,9 +121,6 @@ function QueryServerStream( par )
   // Default: do file-and-entry read from parameters. Should check for other options first.
   
   request.pieces = request.pieces || [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
-    "/ophits/*",
-    "/clusters/*",
-    "/tracks/*",
     "/associations/*"
   ];
       

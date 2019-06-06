@@ -154,6 +154,7 @@ GLMapper.prototype.StartLoad = function()
   $('.wireimg-encoded-progressbar-text').text("Loading wire data...");  
   $("div.wireimg-encoded-progressbar").progressbar();
   $("div.wireimg-encoded-progressbar").progressbar("option",{value:false});
+  var dummyimg = $("img#onepixel")[0];
   
   for(var irow=0;irow<this.tile_urls.length;irow++) {
     var row = this.tile_urls[irow];
@@ -170,7 +171,7 @@ GLMapper.prototype.StartLoad = function()
 
       console.log('creating texture');
 
-      var threetex = new THREE.Texture(img);
+      var threetex = new THREE.Texture(dummyimg);
       threetex.magFilter = THREE.NearestFilter;
       threetex.minFilter = THREE.NearestFilter;
       threetex.wrapS     = THREE.ClampToEdgeWrapping;
@@ -237,7 +238,10 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
     
   // This is all we need in three.js, which is cool:
   var tex = (this.tile_3textures[jrow][jcol]);
-  if(tex) tex.needsUpdate = true;
+  if(tex) {
+    tex.image = img;
+    tex.needsUpdate = true;
+  }
 
   // This code pre-loads all raw binary waveform data into arrays. Not sure this is worth it.
 

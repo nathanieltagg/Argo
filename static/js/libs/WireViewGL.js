@@ -194,6 +194,7 @@ WireViewGL.prototype.ZoomChange = function(fast)
   ThreePad.prototype.SetWorldCoordsForFrame.call(this,newlimits);
   // update for time offsets
   this.UpdateWireimg();
+  this.UpdateHits();
 
   this.dirty = true;
   this.overlay_dirty = true;
@@ -229,7 +230,7 @@ WireViewGL.prototype.UpdateResolution = function()
 WireViewGL.prototype.HoverAndSelectionChange = function() 
 {
   // Hits are not independent objects. 
-  if(gLastHoverState.type=='hit'||gHoverState.type=='hit'||gLastSelectState.type=="hit"||gSelectState.type=="hit")
+  if(gLastHoverState.type=='hits'||gHoverState.type=='hits'||gLastSelectState.type=="hits"||gSelectState.type=="hits")
     this.HoverAndSelectionChange_Hits();
 
   if(gLastHoverState.type=='spacepoints'||gHoverState.type=='spacepoints'||gLastSelectState.type=="spacepoints"||gSelectState.type=="spacepoints")
@@ -342,22 +343,22 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
   
   console.log('create_image_meshgroup arguments',...arguments)
 
-  var tdc_scale = (y2-y1)/(tdc_end-tdc_start);     console.log('tdc_scale',tdc_scale);
-  var chan_scale = (x2-x1) /(chan_end-chan_start); console.log('chan_scale',chan_scale);
+  var tdc_scale = (y2-y1)/(tdc_end-tdc_start);     //console.log('tdc_scale',tdc_scale);
+  var chan_scale = (x2-x1) /(chan_end-chan_start); //console.log('chan_scale',chan_scale);
   
   for(var irow=0;irow<mapper.tile_3textures.length;irow++) {
     // Do we need this row?
     var elem = mapper.tile_urls[irow][0];
     if(elem.y + elem.height <= chan_start) continue;
     if(elem.y >= chan_end) continue;
-    console.log('mapper row',irow,elem);
+    // console.log('mapper row',irow,elem);
     
     // which are the samples this texture will provide to us?
-    var t_chan_start = Math.max(elem.y, chan_start);            console.log('t_chan_start',t_chan_start);
-    var t_chan_end   = Math.min(elem.y+elem.height, chan_end);  console.log('t_chan_end',t_chan_end);
+    var t_chan_start = Math.max(elem.y, chan_start);            //console.log('t_chan_start',t_chan_start);
+    var t_chan_end   = Math.min(elem.y+elem.height, chan_end);  //console.log('t_chan_end',t_chan_end);
     
-    var t_x1 =  x1 + chan_scale * (t_chan_start-chan_start); console.log('t_x1',t_x1);
-    var t_x2 =  x1 + chan_scale * (t_chan_end  -chan_start); console.log('t_x2',t_x2);
+    var t_x1 =  x1 + chan_scale * (t_chan_start-chan_start); //console.log('t_x1',t_x1);
+    var t_x2 =  x1 + chan_scale * (t_chan_end  -chan_start); //console.log('t_x2',t_x2);
     var t_span_x = chan_scale * (t_chan_end-t_chan_start);
 
     var geometry = new THREE.PlaneGeometry( t_span_x, y2-y1 );
@@ -385,7 +386,7 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
     for(var icol=0;icol<mapper.tile_3textures[irow].length;icol++) {
       var elem = mapper.tile_urls[irow][icol];
       var key = "texture"  + (icol).toString();
-      console.log("mapper column",icol,"elem",elem,"key",key);
+      //console.log("mapper column",icol,"elem",elem,"key",key);
 
       var input_texture = mapper.tile_3textures[irow][icol];
       input_texture.needsUpdate = true;
@@ -395,14 +396,15 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
       uniforms[key+"_size_tdc"] = {value: elem.width};
     }
 
+    // null out the others.
     for(var iccol=mapper.tile_3textures[irow].length;icol<=5;icol++){
       var key = "texture"  + (icol).toString();
       uniforms[key] = { type: "t", value: null }
-      uniforms[key+"_start_tdc"] = {value: -100 };
-      uniforms[key+"_size_tdc"] = {value: 0};
+      uniforms[key+"_start_tdc"] = {value: -1e9 };
+      uniforms[key+"_size_tdc"]  = {value: -1e9};
     }
 
-    console.log('uniform',uniforms);
+    //console.log('uniform',uniforms);
 
     var material = new THREE.ShaderMaterial( {
       vertexShader:   document.getElementById('three-vertex-shader').textContent,
@@ -417,7 +419,7 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
     var obj = new THREE.Mesh( geometry, material );
     obj.position.x = (t_x1+t_x2)/2;
     obj.position.y = (y1+y2)/2;
-    console.log("created wireimg with ",t_span_x,y2-y1,t_x1,t_x2,obj.position.x,obj.position.y);
+    //console.log("created wireimg with ",t_span_x,y2-y1,t_x1,t_x2,obj.position.x,obj.position.y);
     if(!flip) {
         // Just turn it upside down.
         // obj.rotation.x = Math.PI;
@@ -434,6 +436,7 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
 
 WireViewGL.prototype.CreateWireimg = function()
 {
+  console.log("WireViewGL CreateWireimg");
   if(this.wireimg_group) {
     this.scene.remove(this.wireimg_group); 
      for(var grp of this.wireimg_group.children)
@@ -468,7 +471,7 @@ WireViewGL.prototype.CreateWireimg = function()
       // horizontal (wire number/ transverse) = x on screen
       var u1 = section[0].trans - pitch/2; // Ensure pixes are centered on the wire.
       var u2 = section[1].trans - pitch/2;
-      console.log("Creating wireimg tpc",tpc,"view",this.view,"trans",u1," to ",u2,section);
+      //console.log("Creating wireimg tpc",tpc,"view",this.view,"trans",u1," to ",u2,section);
 
       // vertical
       // whole time view, correct for microboone:
@@ -500,7 +503,7 @@ WireViewGL.prototype.CreateWireimg = function()
                         userData); // y coord (time) in viewer space
       tpc_group.userData.tpc_group = tpc;
       // this.wireimg_group.scale.y =  gGeo3.getDriftCmPerTick(0); // fixme tpc number
-      console.log("wireimg ",tpc,this.view, u1,u2,v1,v2);
+      //console.log("wireimg ",tpc,this.view, u1,u2,v1,v2);
 
       this.wireimg_group.add(tpc_group);
     }
@@ -567,6 +570,7 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
       var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
 
+      console.log("view",this.view,"tdc_start",tdc_start,"tdc_end",tdc_end);
       mat.uniforms.tdc_start.value = tdc_start;
       mat.uniforms.tdc_end.value   = tdc_end;
 
@@ -579,11 +583,16 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
         mat.uniforms.tdc_end.value = tdc_end;
 
         // Transverse crop:
-        var [u1,u2] = gGeo3.findTransCuts(tpc,this.view, center_y);
-        mat.uniforms.trans_fade_width.value = 2;
-        mat.uniforms.trans_low_cut.value  = u1;
-        mat.uniforms.trans_high_cut.value = u2;
-        // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
+        if(gGeo3.numTpcs()>1) {
+          var [u1,u2] = gGeo3.findTransCuts(tpc,this.view, center_y);
+          mat.uniforms.trans_fade_width.value = 2;
+          mat.uniforms.trans_low_cut.value  = u1;
+          mat.uniforms.trans_high_cut.value = u2;
+          // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
+        } else {
+          mat.uniforms.trans_low_cut.value = -1e9;
+          mat.uniforms.trans_high_cut.value = 1e9;
+        }
       } 
       else if(zoommode == "full" ) {
         mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
@@ -904,20 +913,23 @@ WireViewGL.prototype.DoMouse = function(ev)
 // Hits
 ////////////////////////////////////////
 
+
+
 WireViewGL.prototype.CreateHits = function()
 {
-  if(this.hit_meshes){
-    // dispose old hits object:
-    this.hit_group.remove(this.hit_meshes);
-    this.hit_meshes.geometry.dispose();
-    this.hit_meshes.material.dispose();
-  }
 
   if(!this.hit_group) {
     this.hit_group = new THREE.Group();
     this.hit_group.name = "hit_group";    
+    this.scene.add(this.hit_group);
   }
-  
+  for(var mesh of this.hit_group.children) {
+    // dispose old hits object:
+    this.hit_group.remove(mesh);
+    mesh.geometry.dispose();
+    mesh.material.dispose();      
+  }
+
   var hits = GetSelected("hits");
   if(!hits.length) return;
 
@@ -928,79 +940,80 @@ WireViewGL.prototype.CreateHits = function()
 
   var field = $(this.GetBestControl(".hit-hist-field")).val();
 
-  var vertices = [];
-  var normals  = [];
-  var indices  = [];
-  var colors   = [];
-  var product_indices = []; // One per face, to hold a the hit index
-  var nvertices = 0;
-  function addhit(ihit,u1,u2,v1,v2,colorvals) {
-    // if(plane==2) console.log("addhit",...arguments);
-    vertices.push( u1, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
-    vertices.push( u2, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
-    vertices.push( u1, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
-    vertices.push( u2, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
-    indices.push( nvertices+0, nvertices+2, nvertices+1, nvertices+2, nvertices+3, nvertices+1 );  
-    product_indices.push(ihit,ihit);
-    nvertices += 4;
-  }
-  
-  for(var i=0;i<hits.length;i++){
-    var hit = hits[i];
-    var tpc = hit.tpc || 0;
-    if(hit.Ch) {
-      // new version.
-      if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
-      for(var w of hit._wires) {
-        if(w.view==this.view) {
-          var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
-          var halfwidth = gGeo3.wire_pitch(tpc,this.view)/2; // FIXME TPC number
-          var q = hit[field]; // The value being plotted for charge. 
-          var c = gHitColorScaler.GetColorValues(q);
-          var cc = [c[0]/255,c[1]/255,c[2]/255];
-          addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
-        }
-      }
-    } else {
-      // old version.
-      if(hit.plane != this.plane) continue;
-      // // hit object is in U,tdc space, needs scaling
-      var u = gGeo3.wireToTransverse(0,this.view,hit.wire); 
-      var halfwidth = gGeo3.wire_pitch(0,this.view)/2; 
-      var q = hit[field]; // The value being plotted for charge. 
-      var c = gHitColorScaler.GetColorValues(q);
-      var cc = [c[0]/255,c[1]/255,c[2]/255];
-      addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
-
+  for(var tpc = 0; tpc< gGeo3.numTpcs(); tpc++) {
+    var vertices = [];
+    var normals  = [];
+    var indices  = [];
+    var colors   = [];
+    var product_indices = []; // One per face, to hold a the hit index
+    var nvertices = 0;
+    function addhit(ihit,u1,u2,v1,v2,colorvals) {
+      // if(plane==2) console.log("addhit",...arguments);
+      vertices.push( u1, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+      vertices.push( u2, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+      vertices.push( u1, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+      vertices.push( u2, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+      indices.push( nvertices+0, nvertices+2, nvertices+1, nvertices+2, nvertices+3, nvertices+1 );  
+      product_indices.push(ihit,ihit);
+      nvertices += 4;
     }
 
+    var halfwidth = gGeo3.wire_pitch(tpc,this.view)/2; // FIXME TPC number
     
+    for(var i=0;i<hits.length;i++){
+      var hit = hits[i];
+      var hittpc = hit.tpc || 0;
+      if(hittpc!=tpc) continue;
+      if(hit.Ch) {
+        // new version.
+        if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
+        for(var w of hit._wires) {
+          if(w.view==this.view) {
+            var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
+            var q = hit[field]; // The value being plotted for charge. 
+            var c = gHitColorScaler.GetColorValues(q);
+            var cc = [c[0]/255,c[1]/255,c[2]/255];
+            addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
+          }
+        }
+      } else {
+        // old version.
+        if(hit.plane != this.plane) continue;
+        // // hit object is in U,tdc space, needs scaling
+        var u = gGeo3.wireToTransverse(tpc,this.view,hit.wire); 
+        var q = hit[field]; // The value being plotted for charge. 
+        var c = gHitColorScaler.GetColorValues(q);
+        var cc = [c[0]/255,c[1]/255,c[2]/255];
+        addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
+      }
+
+      
+    }
+    
+    var geo = new THREE.BufferGeometry();
+    // console.log("hit buffer geom with",indices,vertices,normals,colors);
+    geo.setIndex(indices);
+    geo.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+    geo.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+    geo.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+    var mesh = new THREE.Mesh(geo,this.hit_material);
+    mesh.position.z = 10;
+    mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc);
+    mesh.name = hits._pointer;
+    mesh.userData = {
+      product_indices:  product_indices,
+      default_material: this.hit_material,
+      tpc: tpc,
+    }
+    this.hit_group.add(mesh);
   }
-  
-  var geo = new THREE.BufferGeometry();
-  // console.log("hit buffer geom with",indices,vertices,normals,colors);
-  geo.setIndex(indices);
-  geo.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-  geo.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-  geo.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-  this.hit_meshes = new THREE.Mesh(geo,this.hit_material);
-  this.hit_meshes.position.z = 10;
-  this.hit_meshes.name = hits._pointer;
-  this.hit_meshes.userData = {
-    product_indices:  product_indices,
-    default_material: this.hit_material,
-    hover_material:   new THREE.MeshBasicMaterial( {color: 0xff0000} ),
-    select_material:  new THREE.MeshBasicMaterial( {color: 0xff0000} )
-  }
-  this.hit_group.add(this.hit_meshes);
-  this.hit_group.scale.y =  gGeo3.getDriftCmPerTick(0); // fixme tpc number
-  
-  this.scene.add(this.hit_group);
+
   this.UpdateHits();
 }
 
 WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
 {
+  console.log("HoverAndSelectionChange_Hits");
   // Draw a highlight box around the hit.
   if(!this.hit_hover_box) {
     var geometry = new THREE.LineGeometry();
@@ -1013,25 +1026,77 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
   }
 
   var hit = gHoverState.obj;
-  if(gHoverState.type=='hit' && hit.plane == this.plane) {
-    this.hit_hover_box.visible = true;
-    this.hit_hover_box.position.x = gGeo3.wireToTransverse(0,this.view,hit.wire); // Fixme TPC number   
-    this.hit_hover_box.position.y = (hit.t1+hit.t2)*0.5;    
-    this.hit_hover_box.position.z = 20;
-    this.hit_hover_box.scale.x = gGeo3.wire_pitch(0,this.view); // fixme tpc number
-    this.hit_hover_box.scale.y = (hit.t2-hit.t1)*0.5;
+  if(gHoverState.type=='hits') {
+    var tpc = hit.tpc || 0;
+    var vertices = [];
+    if(hit.Ch) {
+        if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
+        for(var w of hit._wires) {
+          if(w.view==this.view) {
+            var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
+            var h = gGeo3.wire_pitch(tpc,this.view)/2;
+            vertices.push(u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0); 
+          }       
+        }
+    } else {
+      var u = gGeo3.wireToTransverse(tpc,this.view,hit.wire); 
+      var h = gGeo3.wire_pitch(tpc,this.view)/2; 
+      vertices = [u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0];
+    } 
+    console.log("hover hit box ",vertices);
+    if(vertices.length>0) {
+      var geometry = new THREE.LineGeometry();
+
+      geometry.setPositions(vertices);
+      this.hit_hover_box.geometry.dispose();
+      this.hit_hover_box.geometry = geometry;
+
+      var offset_hit_time = -gZoomRegion.getTimeOffset();
+      if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
+      this.hit_hover_box.scale.y =  gGeo3.getDriftCmPerTick(tpc); // Fixme tpc number  
+      this.hit_hover_box.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * this.hit_hover_box.scale.y; 
+      this.hit_hover_box.position.z = 20;
+      this.hit_hover_box.visible = true;
+    }
+
   } else {
     this.hit_hover_box.visible = false;
   }
   
   var hit = gSelectState.obj;
-  if(gSelectState.type=='hit' && hit.plane == this.plane) {
-    this.hit_select_box.visible = true;
-    this.hit_select_box.position.x = gGeo3.wireToTransverse(0,this.view,hit.wire);  // fixme TPC number   
-    this.hit_select_box.position.y = (hit.t1+hit.t2)*0.5;    
-    this.hit_select_box.position.z = 20;
-    this.hit_select_box.scale.x = gGeo3.wire_pitch(0,this.view); // fixme TPC number
-    this.hit_select_box.scale.y = (hit.t2-hit.t1)*0.5;    
+  if(gSelectState.type=='hits' ) { // fixme use channel number.
+    var tpc = hit.tpc || 0;
+    var vertices = [];
+    if(hit.Ch) {
+        if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
+        for(var w of hit._wires) {
+          if(w.view==this.view) {
+            var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
+            var h = gGeo3.wire_pitch(tpc,this.view)/2;
+            vertices.push(u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0); 
+          }       
+        }
+    } else {
+      var u = gGeo3.wireToTransverse(tpc,this.view,hit.wire); 
+      var h = gGeo3.wire_pitch(tpc,this.view)/2; 
+      vertices = [u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0];
+    } 
+    console.log("hover hit box ",vertices);
+    if(vertices.length>0) {
+      var geometry = new THREE.LineGeometry();
+
+      geometry.setPositions(vertices);
+      this.hit_select_box.geometry.dispose();
+      this.hit_select_box.geometry = geometry;
+
+      var offset_hit_time = -gZoomRegion.getTimeOffset();
+      if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
+      this.hit_select_box.scale.y =  gGeo3.getDriftCmPerTick(tpc); // Fixme tpc number  
+      this.hit_select_box.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * this.hit_hover_box.scale.y; 
+      this.hit_select_box.position.z = 20;
+      this.hit_select_box.visible = true;
+    }
+
   } else {
     this.hit_select_box.visible = false;
   }
@@ -1041,10 +1106,14 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
 WireViewGL.prototype.UpdateHits = function()
 {
   if(!this.hit_group) return;
-  this.hit_group.scale.y =  gGeo3.getDriftCmPerTick(0); // Fixme tpc number  
-  var offset_hit_time = 0;
-  if($('#ctl-shift-hits').is(":checked")) offset_hit_time = parseFloat( $('#ctl-shift-hits-value').val() );  
-  this.hit_group.position.y =  offset_hit_time*gGeo3.getDriftCmPerTick(0); // fixme tpc number  
+  var offset_hit_time = -gZoomRegion.getTimeOffset();
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
+
+  for(var mesh of this.hit_group.children) {
+    var tpc = mesh.userData.tpc || 0;
+    mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc); // Fixme tpc number  
+    mesh.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * mesh.scale.y; 
+  }
   this.dirty =true;
   this.Render();
 }

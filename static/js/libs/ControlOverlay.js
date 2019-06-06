@@ -165,10 +165,11 @@ ControlOverlay.prototype.NewPiece = function(piece)
       // Default menu order:
       var menus = ['wireimg','hits','tracks','showers','particles','spacepoints','endpoint2d','ophits','oppulses','opflashes'];
       for( t of menus) { 
-        if( t in gRecord.manifest ) add_type(t);
+        if( gRecord.manifest[t] ) add_type(t);
       }
       
       for( var t in gRecord.manifest ) {
+        if(! gRecord.manifest[t]) continue;
         if(t.startsWith('_')) continue; // skip my index properites.        
         if(!menus.includes(t)) add_type(t);
       }

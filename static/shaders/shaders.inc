@@ -67,9 +67,9 @@ uniform float     texture3_size_tdc;
 uniform sampler2D texture4;
 uniform float     texture4_start_tdc;
 uniform float     texture4_size_tdc;
-uniform sampler2D texture5;
-uniform float     texture5_start_tdc;
-uniform float     texture5_size_tdc;
+// uniform sampler2D texture5;
+// uniform float     texture5_start_tdc;
+// uniform float     texture5_size_tdc;
 
 uniform sampler2D maptexture;
 uniform int   do_noise_reject;
@@ -136,15 +136,15 @@ void main() {
     uv_final.x = (tdc-texture4_start_tdc) / texture4_size_tdc ;
     inc = texture2D(texture4, uv_final);
 
-  } else if(tdc< (texture5_start_tdc + texture5_size_tdc)) {
-    uv_final.x = (tdc-texture5_start_tdc) / texture5_size_tdc ;
-    inc = texture2D(texture5, uv_final);
+  // } else if(tdc< (texture5_start_tdc + texture5_size_tdc)) {
+  //   uv_final.x = (tdc-texture5_start_tdc) / texture5_size_tdc ;
+  //   inc = texture2D(texture5, uv_final);
 
   } else {
     // Scroll past limits of data
 
-    // gl_FragColor = vec4(0,0,0,0);
-    gl_FragColor = vec4(0,1,0,0);
+    gl_FragColor = vec4(0,0,0,0);
+    //gl_FragColor = vec4(1,0,0,1);
     return;
   }
 

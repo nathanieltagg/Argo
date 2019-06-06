@@ -54,6 +54,8 @@ Geometry3 = function (data)
 
 
     // Basics.
+    this.numTpcs = function() { return this.data.tpcs.length; }
+    
     this.getTpc = function(tpc) {
       return this.data.tpcs[tpc];
     }
