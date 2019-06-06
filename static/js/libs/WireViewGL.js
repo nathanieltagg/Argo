@@ -937,12 +937,18 @@ WireViewGL.prototype.CreateHits = function()
   //        new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 100 ),
   // ];
 
-  this.hit_material = this.hit_material || new THREE.MeshBasicMaterial( {
+  if(this.hit_materials) {
+    for(var m of this.hit_materials) m.dispose();
+  }
+  this.hit_materials = [];
+
+  for(var tpc = 0;tpc<gGeo3.numTpcs();tpc++) {
+    this.hit_materials[tpc] = new THREE.MeshBasicMaterial( {
       color: 0xFFFFFF,
       side: THREE.DoubleSide, 
-      vertexColors: THREE.VertexColors,
-      clippingPlanes: this.clippingPlanes
-  } );
+      vertexColors: THREE.VertexColors
+    } );
+  }
 
   var field = $(this.GetBestControl(".hit-hist-field")).val();
 
@@ -1002,13 +1008,13 @@ WireViewGL.prototype.CreateHits = function()
     geo.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
     geo.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
     geo.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-    var mesh = new THREE.Mesh(geo,this.hit_material);
+    var mesh = new THREE.Mesh(geo,this.hit_materials[tpc]);
     mesh.position.z = 10;
     mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc);
     mesh.name = hits._pointer;
     mesh.userData = {
       product_indices:  product_indices,
-      default_material: this.hit_material,
+      default_material: this.hit_materials[tpc],
       tpc: tpc,
     }
     this.hit_group.add(mesh);
@@ -1016,6 +1022,38 @@ WireViewGL.prototype.CreateHits = function()
 
   this.UpdateHits();
 }
+
+WireViewGL.prototype.UpdateHits = function()
+{
+  var zoommode = $('input.zoommode:checked').val();
+  for(var tpc=0; tpc<(this.hit_materials||[]).length; tpc++) {    
+    // Update clipping planes.
+    if(zoommode="crop") {
+      var gtpc = gGeo3.getTpc(tpc);
+      this.hit_materials[tpc].clippingPlanes = [
+                  new THREE.Plane( new THREE.Vector3( 0, 1, 0), -(gtpc.center[0]-gtpc.halfwidths[0]) ),  // detector x coordiate, view y
+                  new THREE.Plane( new THREE.Vector3( 0,-1,0), (gtpc.center[0]+gtpc.halfwidths[0]) ), 
+              ];
+
+    } else {
+      this.hit_materials.clippingPlanes = null;
+    }
+
+  }
+  if(!this.hit_group) return;
+  var offset_hit_time = -gZoomRegion.getTimeOffset();
+  if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
+
+  for(var mesh of this.hit_group.children) {
+    var tpc = mesh.userData.tpc || 0;
+    gtpc = gGeo3.getTpc(tpc);
+    mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc)*-1*gtpc.drift_dir; // Fixme tpc number  
+    mesh.position.y =  offset_hit_time * mesh.scale.y + gtpc.views[this.view].x; 
+  }
+  this.dirty =true;
+  this.Render();
+}
+
 
 WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
 {
@@ -1109,21 +1147,7 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
 }
 
 
-WireViewGL.prototype.UpdateHits = function()
-{
-  if(!this.hit_group) return;
-  var offset_hit_time = -gZoomRegion.getTimeOffset();
-  if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
 
-  for(var mesh of this.hit_group.children) {
-    var tpc = mesh.userData.tpc || 0;
-    mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc); // Fixme tpc number  
-    mesh.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * mesh.scale.y; 
-  }
-  this.dirty =true;
-  this.Render();
-}
-  
 
 
 
