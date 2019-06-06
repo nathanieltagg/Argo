@@ -109,6 +109,7 @@ function ThreePad(element, options )
 
 
   this.renderer.setPixelRatio( window.devicePixelRatio );
+  this.renderer.localClippingEnabled = true;
   this.element.appendChild( this.renderer.domElement );
   this.viewport=this.renderer.domElement;
   $(this.viewport).attr("style","position: absolute; left: 0; top: 0; z-index: 0;");

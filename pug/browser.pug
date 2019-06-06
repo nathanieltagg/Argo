@@ -34,10 +34,10 @@ html
   body
     h2 File Browser
 
-    -var totpath = '/';
+    -var totpath = '';
     -for(var part of path.split('/')) {
       -totpath += part;
-      a(href="/browser"+totpath)=part
+      a(href=baseUrl+totpath)=part
       -totpath += '/'
       span /
     -}
@@ -63,4 +63,4 @@ html
     h3 Subdirectories:
     each f in files.dirs
       table.filetable
-        a(href='/browser'+f.pathname)=f.filename
+        a(href=baseUrl+f.pathname)=f.filename

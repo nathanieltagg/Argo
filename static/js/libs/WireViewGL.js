@@ -932,10 +932,16 @@ WireViewGL.prototype.CreateHits = function()
 
   var hits = GetSelected("hits");
   if(!hits.length) return;
+  // this.clippingPlanes = [
+  //        new THREE.Plane( new THREE.Vector3( -1, 0, 0 ), 100 ),
+  //        new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 100 ),
+  // ];
 
-  this.hit_material = new THREE.MeshBasicMaterial( {
+  this.hit_material = this.hit_material || new THREE.MeshBasicMaterial( {
       color: 0xFFFFFF,
-        side: THREE.DoubleSide, vertexColors: THREE.VertexColors
+      side: THREE.DoubleSide, 
+      vertexColors: THREE.VertexColors,
+      clippingPlanes: this.clippingPlanes
   } );
 
   var field = $(this.GetBestControl(".hit-hist-field")).val();

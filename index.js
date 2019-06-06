@@ -407,12 +407,6 @@ app.get("/server/serve_event.cgi",function(req,res,next){
 var pug = require('pug');
 app.set('view engine', 'pug')
 app.set('views','pug');
-app.get('/', function (req, res) {
-  res.render('argo', { pagename: 'argo' })
-})
-app.get('/atreides', function (req, res) {
-  res.render('atreides', { pagename: 'atreides' })
-})
 
 
 
@@ -478,10 +472,46 @@ clean_datacache();
 
 console.log("dirname is ",__dirname);
 
+///// MIcroboone specific:
 // File browser
 var browser = require("./browser.js");
-app.use("/browser/",browser.router);
-app.use("/server/file_browser.cgi",browser.router);
+var argo_browser = new browser({
+    targetlink:  "/",
+    extensions: {
+                '.ubdaq':"Raw UBDAQ files",
+                '.root':"Root files (Can read AnalysisTuple OR Larsoft OR Larlite files)"
+                },
+    default_path: __dirname,
+    allowed_paths: ['/home','/Users','/pnfs','/uboone/data','/uboone/app'],
+
+});
+app.use("/browser/",argo_browser.router);
+app.use("/server/file_browser.cgi",argo_browser.router);
+
+
+///// Protodune specific:
+var atreides_browser = new browser({
+    targetlink:  "/atreides/",
+    extensions: {
+                '.root':"Root files (Can read Larsoft OR Larlite files)"
+                },
+    default_path: __dirname,
+    allowed_paths: ['/home','/Users','/pnfs','/dune/data','/dune/app'],
+
+});
+app.use("/atreides/browser/",atreides_browser.router);
+app.use("/atreides/server/file_browser.cgi",atreides_browser.router);
+
+
+// At end:
+app.get('/', function (req, res) {
+  res.render('argo', { pagename: 'argo' })
+})
+
+app.get('/atreides', function (req, res) {
+  res.render('atreides', { pagename: 'atreides' })
+})
+
 
 process.send = process.send || function () {}; // in case there's no prcoess manager
 httpServer.listen(4590); // looks a little like 'argo'
