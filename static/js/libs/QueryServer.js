@@ -134,6 +134,7 @@ function QueryServerStream( par )
   if(!gSocket) {
     // Open the socket.
     var wsurl = 'ws://'+window.location.host+'/ws/stream-event';
+    if(window.location.protocol="https:") wsurl = 'wss://'+window.location.host+'/wss/stream-event';
     console.log("Starting socket calls:",wsurl);
 
     gSocket = new WebSocket(wsurl);    
