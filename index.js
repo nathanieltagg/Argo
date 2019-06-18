@@ -476,6 +476,7 @@ console.log("dirname is ",__dirname);
 ///// MIcroboone specific:
 // File browser
 var browser = require("./browser.js");
+
 var argo_browser = new browser({
     targetlink:  "/",
     extensions: {

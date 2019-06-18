@@ -34,6 +34,7 @@ var pm2 = {
 
 
 var obj = { DYLD_LIBRARY_PATH :""
+          , DYLD_FALLBACK_LIBRARY_PATH: ""
           , LD_LIBRARY_PATH   :""
           , ROOT_INCLUDE_PATH :""
           , PYTHONPATH        :""
@@ -45,11 +46,17 @@ nodemon.env = {};
 for(v in obj) {
   nodemon.env[v] = process.env[v]; // get current variable.  
 }
+nodemon.env["DYLD_LIBRARY_PATH"] = "";
+nodemon.env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
+
 fs.writeFileSync("nodemon.json",JSON.stringify(nodemon,null,2));
 
 for(v in obj) {
   pm2.apps[0].env[v] = process.env[v]; // get current variable.  
 }
+pm2.apps[0].env["DYLD_LIBRARY_PATH"] = "";
+pm2.apps[0].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
+
 fs.writeFileSync("environment.json",JSON.stringify(pm2,null,2));
 
           

@@ -2,7 +2,8 @@
 	"folders":
 	[
 		{
-			"path": "."
+			"path": "/home/tagg/Sites/Argo",
+			"folder_exclude_patterns": [ "*.o", "*.dylib", "*.so" ]
 		}
 	]
 }
