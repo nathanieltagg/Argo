@@ -121,7 +121,6 @@ function QueryServerStream( par )
   // Default: do file-and-entry read from parameters. Should check for other options first.
   
   request.pieces = request.pieces || [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
-    "/associations/*"
   ];
       
   $('#status').attr('class', 'status-transition');
@@ -135,6 +134,7 @@ function QueryServerStream( par )
   if(!gSocket) {
     // Open the socket.
     var wsurl = 'ws://'+window.location.host+'/ws/stream-event';
+    if(window.location.protocol="https:") wsurl = 'wss://'+window.location.host+'/wss/stream-event';
     console.log("Starting socket calls:",wsurl);
 
     gSocket = new WebSocket(wsurl);    
@@ -176,8 +176,10 @@ function QueryServerStream( par )
 }
 
 
+
 function RequestPiece( _type, _name ) // call with piece address, or type,name
 {
+  console.warn("RequestPiece",_type,_name);
   var piece = "/"+_type+"/"+_name;
   
   var request = {
@@ -185,10 +187,26 @@ function RequestPiece( _type, _name ) // call with piece address, or type,name
                 pieces: [piece]};
 
   // Some things shouldn't be loaded alone. For example:
-  if(_name == "clusters" || _name=="_showers") {
-    if(!gRecord.associations) request.pieces.push("/associations/"+_name);
+  if(_type == "clusters") {
+    request.pieces.push("/associations/clusters/hits/"+_name);
     if(!gRecord.hits) request.pieces.push("/hits/*");
   }
+
+  if(_type == "tracks" ) {
+    request.pieces.push("/associations/tracks/hits/"+_name);
+    // if(!gRecord.hits) request.pieces.push("/hits/*");
+  }
+  
+  if(_type.startsWith("mc")) {
+    request.pieces.push("/associations/mctruth/mcparticles/"+_name);
+    request.pieces.push("/associations/mctruth/gtruth/"+_name);
+    if(!gRecord.mctruth) request.pieces.push("/mctruth/*");
+    if(!gRecord.mcparticles) request.pieces.push("/mcparticles/*");
+    if(!gRecord.gtruth)      request.pieces.push("/gtruth/*");
+  }
+
+
+  console.warn("actual pieces requested:",request.pieces);
                 
   if(gSocket.readyState != WebSocket.OPEN) {
     console.warn("Socket not open. Attempting reconnect to server");

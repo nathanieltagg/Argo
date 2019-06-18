@@ -336,17 +336,18 @@ function ComposeTrackInfo(s)
   if(gRecord.associations && gRecord.associations[trk._owner]) {
     // find an associated hit collection
     var types = Object.keys(gRecord.associations[trk._owner]);
-    var hitname = types.find(function(name){return name.match(/recob::Hits_/);});
+    var hitname = types.find(function(name){return name.match(/^recob::Hits_/);});
     if(hitname) {
-      var hitids  = gRecord.associations[trk._owner][hitname][trk._index];
+      var hitids  = gRecord.associations[trk._owner][hitname][trk._idx];
       var hitlist = gRecord.hits[hitname];
       if(hitlist && hitids) {
         h+= a + "All Track Info" + b + "<div class='supertiny'><table>";
-        h += "<tr><th>TDC:</th><th>ADC</th></tr>";
+        h += "<tr><th>TDC</th><th>ADC</th></tr>";
         for(var i=0;i<hitids.length;i++) { 
           var hit = hitlist[hitids[i]];
-          if(h.plane==2)
+          if(hit.plane==2) {
             h+= "<tr><td>" + hit.t + "</td><td>" + hit.q + "</td></tr>";
+          }
         }
         h+="</table></div>"
         h+= c;  
@@ -434,6 +435,7 @@ HoverInfo.prototype.Draw = function ()
       var b = "</td><td class='hoverinfo-val'>";
       var c = "</td></tr>";  
       for(var k in state.obj) {
+        if(k.startsWith['_']) continue;
         if( Object.prototype.toString.call( state.obj[k] ) === '[object Array]' ) {
           h+= a + k + b + state.obj[k].length + " items" + c;
         } else {
@@ -450,6 +452,7 @@ HoverInfo.prototype.Draw = function ()
   var idx = state.obj._idx;
   if(list_name && (idx !== undefined) && gRecord && gRecord.associations&& gRecord.associations[list_name]) {
     for(var other in gRecord.associations[list_name]) {
+      if(other.startsWith('_')) continue;
       var assn = gRecord.associations[list_name][other][idx];
       if(!assn) continue;
       if(!assn.length) continue;

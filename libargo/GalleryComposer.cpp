@@ -1203,8 +1203,6 @@ void GalleryComposer::composeAssociation()
 }
 
 
-
-
   // Some wonky stuff to help me do template combinatorics. See:https://stackoverflow.com/a/44298335/2596881
 template <class T> struct tag { };
 template <class... Ts> struct type_list { };
@@ -1328,6 +1326,170 @@ void GalleryComposer::composeAssociations()
     
   }
 }
+
+
+////////////////////////////////////////////////
+// Associations by piece
+
+
+
+// template <typename A> 
+// bool GalleryComposer::composeAssociationFromToMatch<A,A>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&)
+// {
+//   return false;
+// }
+
+// don't allow specific combinations:
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Hit, recob::Hit>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::SpacePoint, recob::SpacePoint>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Cluster, recob::Cluster>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Shower, recob::Shower>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::EndPoint2D, recob::EndPoint2D>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Track, recob::Track>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::PFParticle, recob::PFParticle>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::OpFlash, recob::OpFlash>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::OpHit, recob::OpHit>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<raw::OpDetPulse, raw::OpDetPulse>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<simb::GTruth, simb::GTruth>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCTruth, simb::MCTruth>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCParticle, simb::MCParticle>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+
+template<typename A, typename B>
+bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, nlohmann::json& out)
+{
+  // Get a specific association given product names.
+  // Assumption: the first item in each association represents them all
+  typedef art::Assns<A,B> assn_t;
+
+  bool retval = false;
+  std::cout << "GalleryComposer::composeAssociationFromToMatch() " << typeid(A).name() << " " << typeid(B).name() << std::endl;
+  for(auto product: findByType<assn_t>(m_Event->getTTree())) {
+   gallery::Handle< assn_t > assnhandle;
+    {mutex::scoped_lock b(m_gallery_mutex); mutex::scoped_lock g(global_gallery_mutex);  m_Event->getByLabel(product.second,assnhandle);}
+
+    // Make a one-shot helper.
+    GalleryAssociationHelper assnhelper;
+
+    if(assnhandle->size()>0) {
+      // Get the first association and see if it correctly matches the things we're looking for:
+      const auto& firstpair = assnhandle->at(0);
+
+      art::BranchDescription const& desc1 = m_Event->getProductDescription(firstpair.first.id());
+      std::string name1 = stripdots(desc1.branchName());
+      
+      if((aname == name1) || (aname == "*") ) {
+        art::BranchDescription const& desc2 = m_Event->getProductDescription(firstpair.second.id());
+        std::string name2 = stripdots(desc2.branchName());
+
+        if((bname == name2) || (bname == "*")) {
+
+          // Match!
+          // Add a->b and b->a.  Do seperately in order to keep the cached iterators efficient.
+          for(const auto& assnpair: *assnhandle) {
+            assnhelper.add( assnpair.first.id(), assnpair.first.key(), assnpair.second.id(), assnpair.second.key());
+          }
+          assnhelper.output(*m_Event,out);
+          // assnhelper->output(m_Event,m_result["associations"]); // Needed?
+          retval = true;
+        }
+      }
+
+    }
+
+  }
+  return retval;
+}
+
+
+template<typename A, typename B>
+bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, nlohmann::json& out)
+{
+  std::string aname = "*";
+  if(req.size()>3) aname = req[3];
+
+  std::string bname = "*";
+  if(req.size()>4) bname = req[4];
+
+  // Try both ways.
+  bool retval = false;
+  retval = retval || composeAssociationFromToMatch<A,B>(aname, bname, req, out);
+  retval = retval || composeAssociationFromToMatch<A,B>(bname, aname, req, out);
+  return retval;
+}
+
+template<typename A>
+bool GalleryComposer::composeAssociationFrom(Composer::piece_t& req, nlohmann::json& out)
+{
+  if(req.size()<2 || req[2] == "*") {
+    // No second type specified, so send them all.
+    bool retval = false;
+    retval = retval || composeAssociationFromTo<A,recob::Hit        >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::SpacePoint >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::Cluster    >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::Track      >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::Shower     >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::EndPoint2D >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::PFParticle >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::OpFlash    >( req, out  );
+    retval = retval || composeAssociationFromTo<A,recob::OpHit      >( req, out  );
+    retval = retval || composeAssociationFromTo<A,raw::OpDetPulse   >( req, out  );
+    retval = retval || composeAssociationFromTo<A,simb::GTruth      >( req, out  );
+    retval = retval || composeAssociationFromTo<A,simb::MCTruth     >( req, out  );
+    retval = retval || composeAssociationFromTo<A,simb::MCParticle  >( req, out  );
+    return retval;
+  }
+  std::string btype = req[2];
+  if(btype == "hits"       ) return composeAssociationFromTo<A,recob::Hit       >( req, out  );
+  if(btype == "spacepoints") return composeAssociationFromTo<A,recob::SpacePoint>( req, out  );
+  if(btype == "clusters"   ) return composeAssociationFromTo<A,recob::Cluster   >( req, out  );
+  if(btype == "tracks"     ) return composeAssociationFromTo<A,recob::Track     >( req, out  );
+  if(btype == "showers"    ) return composeAssociationFromTo<A,recob::Shower    >( req, out  );
+  if(btype == "endpoint2d" ) return composeAssociationFromTo<A,recob::EndPoint2D>( req, out  );
+  if(btype == "pfparticles") return composeAssociationFromTo<A,recob::PFParticle>( req, out  );
+  if(btype == "opflashes"  ) return composeAssociationFromTo<A,recob::OpFlash   >( req, out  );
+  if(btype == "ophits"     ) return composeAssociationFromTo<A,recob::OpHit     >( req, out  );
+  if(btype == "oppulses"   ) return composeAssociationFromTo<A,raw::OpDetPulse  >( req, out  );
+  if(btype == "gtruth"     ) return composeAssociationFromTo<A,simb::GTruth     >( req, out  );
+  if(btype == "mctruth"    ) return composeAssociationFromTo<A,simb::MCTruth    >( req, out  );
+  if(btype == "mcparticles") return composeAssociationFromTo<A,simb::MCParticle >( req, out  );
+  return false;
+}
+
+bool GalleryComposer::composeAssociation(Composer::piece_t& req, nlohmann::json& out)
+{
+  // Association pieces are requested slightly differently than others:
+  // /associations/hits/tracks/HitName/TrackName
+  // returned is:
+  // /associations/LongHitName/LongTrackName
+  //
+  // If one of the request types is missing or *, it's assumed the user wants everything that matches.
+  if(req.size()<2 || req[1] == "*") {
+      composeAssociations(); 
+      out = m_result["associations"]; 
+      return true;
+  }
+  // we have at least a typename
+  std::string atype = req[1];
+ 
+  if(atype == "hits"       ) return composeAssociationFrom<recob::Hit       >( req, out  );
+  if(atype == "spacepoints") return composeAssociationFrom<recob::SpacePoint>( req, out  );
+  if(atype == "clusters"   ) return composeAssociationFrom<recob::Cluster   >( req, out  );
+  if(atype == "tracks"     ) return composeAssociationFrom<recob::Track     >( req, out  );
+  if(atype == "showers"    ) return composeAssociationFrom<recob::Shower    >( req, out  );
+  if(atype == "endpoint2d" ) return composeAssociationFrom<recob::EndPoint2D>( req, out  );
+  if(atype == "pfparticles") return composeAssociationFrom<recob::PFParticle>( req, out  );
+  if(atype == "opflashes"  ) return composeAssociationFrom<recob::OpFlash   >( req, out  );
+  if(atype == "ophits"     ) return composeAssociationFrom<recob::OpHit     >( req, out  );
+  if(atype == "oppulses"   ) return composeAssociationFrom<raw::OpDetPulse  >( req, out  );
+  if(atype == "gtruth"     ) return composeAssociationFrom<simb::GTruth     >( req, out  );
+  if(atype == "mctruth"    ) return composeAssociationFrom<simb::MCTruth    >( req, out  );
+  if(atype == "mcparticles") return composeAssociationFrom<simb::MCParticle >( req, out  );
+  return false;
+  
+}
+
+
+
 
 template<typename T>  void     
 GalleryComposer::composeManifest(nlohmann::json& out) {
@@ -1555,7 +1717,6 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
       if(p.type=="ophits"     ) composePiece<recob::OpHit     >( p.type, p.name, outPiece[p.type]  );
       if(p.type=="oppulses"   ) composePiece<raw::OpDetPulse  >( p.type, p.name, outPiece[p.type]  );
 
-      // FIXME: change in MC structure.
       if(p.type=="gtruth"   )    composePiece<simb::GTruth    >( p.type, p.name, outPiece[p.type] );
       if(p.type=="mctruth"  )    composePiece<simb::MCTruth   >( p.type, p.name, outPiece[p.type] );
       if(p.type=="mcparticles")  composePiece<simb::MCParticle>( p.type, p.name, outPiece[p.type] );
@@ -1566,8 +1727,8 @@ Output_t GalleryComposer::satisfy_request(Request_t request)
       if(p.type=="wireimg-lowres") composePieceImage<raw::RawDigit     >( p.type, p.name, outPiece[p.type] );
       if(p.type=="wireimg-lowres") composePieceImage<recob::Wire       >( p.type, p.name, outPiece[p.type] );
     
-      // FIXME: allow for finer-grained associations. Requires thought, though, since p.names of associations are not p.names of products. Will need new logic.
-      if(p.type=="associations") { composeAssociations(); outPiece = json({{"associations",m_result["associations"]}}); }
+      if(p.type=="associations") composeAssociation(p, outPiece["associations"]);
+
       // dispatch it.
       if(p.type=="stats") { composeAssociations(); outPiece = json({{"stats",m_stats}}); }
       dispatch_piece(outPiece);

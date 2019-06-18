@@ -26,6 +26,10 @@ div.supertiny {
   font-size: 0.1em;
   overflow: hidden;
   background-color: black;
+  user-select: none;
+}
+div.supertiny table{
+  user-select:all;
 }
 div.floating { postion: absolute; zIndex: 999;}
 

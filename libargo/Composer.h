@@ -103,10 +103,11 @@ protected:
   
   
   
-  struct piece_t {
-    std::string str;
-    std::string type;
-    std::string name;    
+  class piece_t : public std::vector<std::string> {
+    public:
+      std::string str;
+      std::string type;
+      std::string name;
   };
   
   typedef std::list<piece_t> pieces_t;
