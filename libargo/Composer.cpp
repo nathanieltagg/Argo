@@ -246,19 +246,19 @@ void Composer::progress_made(const std::string msg,float increment) // {progress
 }
 
 
-template<typename Out>
-void split(const std::string &s, char delim, Out result) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        if(item.size()>0) *(result++) = item;
-    }
-}
-std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, std::back_inserter(elems));
-    return elems;
-}
+// template<typename Out>
+// void split(const std::string &s, char delim, Out result) {
+//     std::stringstream ss(s);
+//     std::string item;
+//     while (std::getline(ss, item, delim)) {
+//         if(item.size()>0) *(result++) = item;
+//     }
+// }
+// std::vector<std::string> split(const std::string &s, char delim) {
+//     std::vector<std::string> elems;
+//     split(s, delim, std::back_inserter(elems));
+//     return elems;
+// }
 
 
 
@@ -281,10 +281,15 @@ bool Composer::parse_pieces(nlohmann::json& request, pieces_t& outPieces)
     if(p.is_string()) {
       piece_t op;
       op.str = p.get<std::string>();
-      std::vector<std::string> a = split(op.str,'/');
-      if(a.size()>1) {
-        op.type = a[0];
-        op.name = a[1];
+      std::stringstream ss(op.str);
+      std::string item;
+      while (std::getline(ss, item, '/')) {
+        if(item.size()>0) op.push_back(item);
+      }
+      // std::vector<std::string> a = split(op.str,'/');
+      if(op.size()>1) {
+        op.type = op[0];
+        op.name = op[1];
         outPieces.push_back(op);
       }
     }
