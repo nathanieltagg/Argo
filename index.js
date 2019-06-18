@@ -305,6 +305,7 @@ async function resolve_request(event_req)
 
 // Deal with WS connections.
 app.ws('/ws/stream-event', attach_stream);
+app.ws('/wss/stream-event', attach_stream);
 async function attach_stream(ws,req)
 {
   console.log("attach stream");
