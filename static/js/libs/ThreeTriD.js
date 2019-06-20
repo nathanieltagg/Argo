@@ -205,7 +205,7 @@ ThreeTriD.prototype.AnimationRender = function()
 ThreeTriD.prototype.CreateFrame = function()
 {
   this.frame_group = new THREE.Group();
-  /*
+  
   for(var gtpc of gGeo3.data.tpcs) {
      var tpc = gGeo.getTpc(0);
 
@@ -267,7 +267,6 @@ ThreeTriD.prototype.CreateFrame = function()
   var scalecube    = new THREE.Mesh(scalecubegeo,mat );
   this.frame_group.add(scalecube);
 
-  */
   
   // // a light
   // var light = new THREE.HemisphereLight(0xfffff0, 0x101020, 1.25);
