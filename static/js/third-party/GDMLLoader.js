@@ -1,11 +1,6 @@
 /**
- * nathanieltagg http://www.otterbein.edu/Faculty/NTagg
- *
- * Original author tpmccauley / http://cern.ch/mccauley
+ * @author tpmccauley / http://cern.ch/mccauley
  * https://github.com/tpmccauley/gdml-loader
- *
- * This ALMOST works.  The problem is that volumes are not embedded. MicroBooNE geometry clips inner volumes with outer ones,
- * but that doesn't work here because THREE.js isn't really CSG.
 */
 
  THREE.GDMLLoader = function() {
@@ -18,24 +13,11 @@
 
   constructor: THREE.GDMLLoader,
 
-
   group: new THREE.Group(),
   defines: {},
   geometries: {},
-  volume_nodes: {}, // references to xml nodes
-  volumes: {},      // the actual mesh objects
-  materials: {}, // to be provided by caller. keyname is materialref, value is a valid MeshPhongMaterial
-                       // If key value is null, that object is not added. If value not present, it gets the default material
-  top_volume_name: null,
-  default_material: new THREE.MeshPhongMaterial({
-        color:0x110011,
-        transparent:true,
-        opacity:0.5,
-        wireframe:false,
-        side: THREE.DoubleSide,
-
-      }),
-
+  refs: {},
+  meshes: [],
 
   load: function ( url, onLoad, onProgress, onError ) {
 
@@ -51,93 +33,54 @@
 
   },
 
-  parse: function ( text  ) {
+  parse: function ( text ) {
 
     GDML = new DOMParser().parseFromString( text, 'text/xml' );
-    // make it visible for debugging
-    this.GDML = GDML;
 
-    // bookmarks.  Lookup table to find volume nodes.
-    this.structure = GDML.querySelector('structure');
-    for(var node of this.structure.childNodes) {
-      if(node.nodeName == 'volume'){
-        var name = node.getAttribute('name');
-        if(name) this.volume_nodes[name] = node;
-      }
-    }
     this.parseDefines();
     this.parseSolids();
-    // this.parseVolumes();
-    // this.parsePhysVols();
+    this.parseVolumes();
+    this.parsePhysVols();
     this.parseSetup();
-    this.group.name="GDML"
+
     return this.group;
 
   },
 
   parseSetup: function() {
 
-    // If the top volume name is given, let's just start with that. Otherwise, look for the world volume.
+    var setup = GDML.querySelectorAll('setup');
+    var worlds = setup[0].childNodes;
 
-    // top displacement.
-    var startPosition = new THREE.Vector3(0,0,0);
-    var startRotation = new THREE.Vector3(0,0,0);
+    for ( var i = 0; i < worlds.length; i++ ) {
 
-    if(!this.top_volume_name) {
-      var setup = GDML.querySelectorAll('setup');
-      var worlds = setup[0].childNodes;
+      var nodeName = worlds[i].nodeName;
+      var node = worlds[i];
 
-      // add all worlds to the group.
-      for ( var i = 0; i < worlds.length; i++ ) {
+      if ( nodeName === 'world' ) {
 
-        var nodeName = worlds[i].nodeName;
-        var node = worlds[i];
+        var volumeref = node.getAttribute('ref');
+        var solidref = this.refs[volumeref];
 
-        if ( nodeName === 'world' ) {
+        var geometry = this.geometries[solidref];
+        var material = new THREE.MeshBasicMaterial({
+          color:0xcccccc,
+          wireframe:false,
+          transparent:true,
+          opacity:0.5
+        });
 
-          var volumeref = node.getAttribute('ref');
-          var volumenode = this.volume_nodes[volumeref];
-          if(!volumenode) throw "Can't find volume node " + volumeref;
-          // Do the work!
-          this.group.add(
-            this.parse_volume(volumenode,this.group,startPosition,startRotation)
-          );
-        }
+        var mesh = new THREE.Mesh(geometry, material);
+        mesh.name = nodeName;
+        mesh.visible = true;
+
+        mesh.position.set(0.0, 0.0, 0.0);
+        this.group.add(mesh);
+
       }
 
-    } else {
-      // Build from the specified volume.
-
-      var volumenode = this.volume_nodes[this.top_volume_name];
-      this.group.add( this.parse_volume(volumenode,this.group,startPosition,startRotation) )
     }
 
-  },
-
-  lunits: function(node) {
-    // take default unit as cm and radians
-    var u = node.getAttribute('lunit');
-    if(u===null) u = node.getAttribute("units");
-    if(u===null) return 1;
-    switch(u) {
-      case "m":  return 100.0;
-      case "cm": return 1.0;
-      case "mm": return 0.1;
-      default: console.warn("unrecognized units in GDML");
-    }
-    return 1;
-  },
-
-  aunits: function(node) {
-    // take default unit as cm and radians
-    var u = node.getAttribute('aunit');
-    if(u===null) u = node.getAttribute("units");
-    if(u===null) return 1;
-    switch(u) {
-      case "deg": return Math.PI/180.;
-      default: console.warn("unrecognized units in GDML");
-    }
-    return 1;
   },
 
   parseDefines: function() {
@@ -163,29 +106,40 @@
 
         name = def.getAttribute('name');
 
-        var units = this.lunits(def);
+        var x = def.getAttribute('x');
 
-        var x = def.getAttribute('x')*units || 0.0;
-        var y = def.getAttribute('y')*units || 0.0;
-        var z = def.getAttribute('z')*units || 0.0;
+        if ( ! x ) {
+          x = 0.0;
+        }
+
+        var y = def.getAttribute('y');
+
+        if ( ! y ) {
+          y = 0.0;
+        }
+
+        var z = def.getAttribute('z');
+
+        if ( ! z ) {
+          z = 0.0;
+        }
 
         var position = new THREE.Vector3(x, y, z);
         this.defines[name] = position;
-      }
 
+      }
 
       if ( nodeName === 'rotation' ) {
 
         // Note: need to handle constants
         // before this can be implemented
-        var aunits = this.aunits(def);
 
         name = def.getAttribute('name');
 
-        var x = def.getAttribute('x')*aunits;
-        var y = def.getAttribute('y')*aunits;
-        var z = def.getAttribute('z')*aunits;
-        this.defines[name] = new THREE.Vector3(x, y, z);
+        var x = def.getAttribute('x');
+        var y = def.getAttribute('y');
+        var z = def.getAttribute('z');
+
       }
 
       if ( nodeName === 'quantity' ) {
@@ -208,29 +162,25 @@
   },
 
 
-  
   parseSolids: function() {
 
     var elements = GDML.querySelectorAll('solids');
     var solids = elements[0].childNodes;
+    var name = '';
 
     for ( var i = 0; i < solids.length; i++ ) {
 
       var type = solids[i].nodeName;
-      if(type=='#text') continue;
       var solid = solids[i];
-      var aunits = this.aunits(solid);
-      var lunits = this.lunits(solid);
-      var name = solid.getAttribute('name');
 
       if ( type === 'box' ) {
 
         name = solid.getAttribute('name');
         console.log(type, name);
 
-        var x = solid.getAttribute('x');
-        var y = solid.getAttribute('y');
-        var z = solid.getAttribute('z');
+        var x = solid.getAttribute('x') / 1e4;
+        var y = solid.getAttribute('y') / 1e4;
+        var z = solid.getAttribute('z') / 1e4;
 
         if ( this.defines[x] ) {
           x = this.defines[x];
@@ -245,23 +195,31 @@
         }
 
         // x,y,z in GDML are half-widths
-        var geometry = new THREE.BoxGeometry(2*x*lunits, 2*y*lunits, 2*z*lunits);
-        geometry.name=name;
+        var geometry = new THREE.BoxGeometry(2*x, 2*y, 2*z);
         this.geometries[name] = geometry;
 
       }
 
       if ( type === 'tube' ) {
 
+        // Note: need to handle units
+        var aunit = solid.getAttribute('aunit');
+        var lunit = solid.getAttribute('lunit');
+
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var rmin = solid.getAttribute('rmin') * lunits;
-        var rmax = solid.getAttribute('rmax') * lunits;
-        var z = solid.getAttribute('z') * lunits;
+        var rmin = solid.getAttribute('rmin') / 1e4;
+        var rmax = solid.getAttribute('rmax') / 1e4;
+        var z = solid.getAttribute('z') / 1e4;
 
-        var startphi = solid.getAttribute('startphi')*aunits;
-        var deltaphi = solid.getAttribute('deltaphi')*aunits;
+        var startphi = solid.getAttribute('startphi');
+        var deltaphi = solid.getAttribute('deltaphi');
+
+        if ( aunit === 'deg' ) {
+          startphi *= Math.PI/180.0;
+          deltaphi *= Math.PI/180.0;
+        }
 
         var shape = new THREE.Shape();
         // x,y, radius, startAngle, endAngle, clockwise, rotation
@@ -282,9 +240,8 @@
           curveSegments: 24
         };
 
-        var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        var geometry = new THREE.ExtrudeBufferGeometry(shape, extrudeSettings);
         geometry.center();
-        geometry.name = name;
         this.geometries[name] = geometry;
 
       }
@@ -294,18 +251,41 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var rmin = (solid.getAttribute('rmin')||0.0)*lunits;
-        var rmax = (solid.getAttribute('rmax')||0.0)*lunits;
+        var rmin = solid.getAttribute('rmin');
+        var rmax = solid.getAttribute('rmax');
 
-        var startphi = (solid.getAttribute('startphi')||0.0)*aunits;
-        var deltaphi = solid.getAttribute('deltaphi')*aunits;
+        var startphi = solid.getAttribute('startphi');
+        var deltaphi = solid.getAttribute('deltaphi');
 
-        var starttheta = (solid.getAttribute('starttheta')||0.0)*aunits;
-        var deltatheta = solid.getAttribute('deltatheta')*aunits;
+        var starttheta = solid.getAttribute('starttheta');
+        var deltatheta = solid.getAttribute('deltatheta');
+
+        var aunit = solid.getAttribute('aunit');
+
+        if ( ! rmin ) {
+          rmin = 0.0;
+        }
+
+        if ( ! startphi ) {
+          startphi = 0.0;
+        }
+
+        if ( ! starttheta ) {
+          starttheta = 0.0;
+        }
+
+        if ( aunit === 'deg' ) {
+
+          startphi *= Math.PI/180.0;
+          deltaphi *= Math.PI/180.0;
+
+          starttheta *= Math.PI/180.0;
+          deltatheta *= Math.PI/180.0;
+
+        }
 
         // radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength
         var sphere = new THREE.SphereGeometry(rmax, 32, 32, startphi, deltaphi, starttheta, deltatheta);
-        sphere.name = name;
         this.geometries[name] = sphere;
 
       }
@@ -315,10 +295,9 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var r = solid.getAttribute('r')*lunits;
+        var r = solid.getAttribute('r');
 
         var sphere = new THREE.SphereGeometry(r, 32, 32, 0.0, 2*Math.PI, 0.0, Math.PI);
-        sphere.name = name;
         this.geometries[name] = sphere;
 
       }
@@ -328,21 +307,29 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var rmin1 = solid.getAttribute('rmin1') * lunits;
-        var rmax1 = solid.getAttribute('rmax1') * lunits;
+        var rmin1 = solid.getAttribute('rmin1');
+        var rmax1 = solid.getAttribute('rmax1');
 
-        var rmin2 = solid.getAttribute('rmin2')* lunits;
-        var rmax2 = solid.getAttribute('rmax2')* lunits;
+        var rmin2 = solid.getAttribute('rmin2');
+        var rmax2 = solid.getAttribute('rmax2');
 
-        var z = solid.getAttribute('z') * lunits;
+        var z = solid.getAttribute('z');
 
-        var startphi = solid.getAttribute('startphi')*aunits;
-        var deltaphi = solid.getAttribute('deltaphi')*aunits;
+        var startphi = solid.getAttribute('startphi');
+        var deltaphi = solid.getAttribute('deltaphi');
+
+        var aunit = solid.getAttribute('aunit');
+
+        if ( aunit === 'deg' ) {
+
+          startphi *= Math.PI/180.0;
+          deltaphi *= Math.PI/180.0;
+
+        }
 
         // Note: ConeGeometry in THREE assumes inner radii of 0 and rmax1 = 0
         // radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength
         var cone = new THREE.ConeGeometry(rmax2, z, 32, 1, false, startphi, deltaphi);
-        cone.name = name;
         this.geometries[name] = cone;
 
       }
@@ -352,17 +339,25 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var rmin = solid.getAttribute('rmin')*lunits;
-        var rmax = solid.getAttribute('rmax')*lunits;
-        var rtor = solid.getAttribute('rtor')*lunits;
-        var startphi = solid.getAttribute('startphi')*aunits;
-        var deltaphi = solid.getAttribute('deltaphi')*aunits;
+        var rmin = solid.getAttribute('rmin');
+        var rmax = solid.getAttribute('rmax');
+        var rtor = solid.getAttribute('rtor');
+        var startphi = solid.getAttribute('startphi');
+        var deltaphi = solid.getAttribute('deltaphi');
+
+        var aunit = solid.getAttribute('aunit');
+
+        if ( aunit === 'deg' ) {
+
+          startphi *= Math.PI/180.0;
+          deltaphi *= Math.PI/180.0;
+
+        }
 
         // Note: There is no inner radius for a THREE.TorusGeometry
         // and start phi is always 0.0
         // radius, tube, radialSegments, tubularSegments, arc
         var torus = new THREE.TorusGeometry(1.0*rtor, rmax, 16, 100, deltaphi);
-        cone.name = name;
         this.geometries[name] = torus;
 
       }
@@ -385,15 +380,14 @@
           v4 = this.defines[v4];
 
           var tet = new THREE.Geometry();
-          tet.vertices = [v1*lunits,v2*lunits,v3*lunits,v4*lunits];
+          tet.vertices = [v1,v2,v3,v4];
 
           tet.faces.push(new THREE.Face3(0,3,1));
           tet.faces.push(new THREE.Face3(2,3,0));
           tet.faces.push(new THREE.Face3(1,2,0));
           tet.faces.push(new THREE.Face3(3,2,1));
-          tet.name = name;
-          this.geometries[name] = tet;
 
+          this.geometries[name] = tet;
 
         }
 
@@ -404,11 +398,11 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var x1 = solid.getAttribute('x1')*lunits;
-        var x2 = solid.getAttribute('x2')*lunits;
-        var y1 = solid.getAttribute('y1')*lunits;
-        var y2 = solid.getAttribute('y2')*lunits;
-        var z = solid.getAttribute('z')*lunits;
+        var x1 = solid.getAttribute('x1');
+        var x2 = solid.getAttribute('x2');
+        var y1 = solid.getAttribute('y1');
+        var y2 = solid.getAttribute('y2');
+        var z = solid.getAttribute('z');
 
         var trd = new THREE.Geometry();
 
@@ -440,7 +434,6 @@
         trd.faces.push(new THREE.Face3(2,3,7));
         trd.faces.push(new THREE.Face3(7,6,2));
 
-        trd.name = name;
         this.geometries[name] = trd;
 
       }
@@ -450,9 +443,9 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var dx = solid.getAttribute('dx')*lunits;
-        var dy = solid.getAttribute('dy')*lunits;
-        var dz = solid.getAttribute('dz')*lunits;
+        var dx = solid.getAttribute('dx');
+        var dy = solid.getAttribute('dy');
+        var dz = solid.getAttribute('dz');
 
         var shape = new THREE.Shape();
         // x, y, xRadius, yRadius, startAngle, endAngle, clockwise, rotation
@@ -465,9 +458,8 @@
           curveSegments: 24
         };
 
-        var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        var geometry = new THREE.ExtrudeBufferGeometry(shape, extrudeSettings);
         geometry.center();
-        geometry.name = name;
         this.geometries[name] = geometry;
 
       }
@@ -477,31 +469,31 @@
         name = solid.getAttribute('name');
         //console.log(type, name);
 
-        var dz = solid.getAttribute('dz')*lunits;
+        var dz = solid.getAttribute('dz');
 
-        var v1x = solid.getAttribute('v1x')*lunits;
-        var v1y = solid.getAttribute('v1y')*lunits;
+        var v1x = solid.getAttribute('v1x');
+        var v1y = solid.getAttribute('v1y');
 
-        var v2x = solid.getAttribute('v2x')*lunits;
-        var v2y = solid.getAttribute('v2y')*lunits;
+        var v2x = solid.getAttribute('v2x');
+        var v2y = solid.getAttribute('v2y');
 
-        var v3x = solid.getAttribute('v3x')*lunits;
-        var v3y = solid.getAttribute('v3y')*lunits;
+        var v3x = solid.getAttribute('v3x');
+        var v3y = solid.getAttribute('v3y');
 
-        var v4x = solid.getAttribute('v4x')*lunits;
-        var v4y = solid.getAttribute('v4y')*lunits;
+        var v4x = solid.getAttribute('v4x');
+        var v4y = solid.getAttribute('v4y');
 
-        var v5x = solid.getAttribute('v5x')*lunits;
-        var v5y = solid.getAttribute('v5y')*lunits;
+        var v5x = solid.getAttribute('v5x');
+        var v5y = solid.getAttribute('v5y');
 
-        var v6x = solid.getAttribute('v6x')*lunits;
-        var v6y = solid.getAttribute('v6y')*lunits;
+        var v6x = solid.getAttribute('v6x');
+        var v6y = solid.getAttribute('v6y');
 
-        var v7x = solid.getAttribute('v7x')*lunits;
-        var v7y = solid.getAttribute('v7y')*lunits;
+        var v7x = solid.getAttribute('v7x');
+        var v7y = solid.getAttribute('v7y');
 
-        var v8x = solid.getAttribute('v8x')*lunits;
-        var v8y = solid.getAttribute('v8y')*lunits;
+        var v8x = solid.getAttribute('v8x');
+        var v8y = solid.getAttribute('v8y');
 
         var trd = new THREE.Geometry();
 
@@ -533,166 +525,121 @@
         trd.faces.push(new THREE.Face3(2,3,7));
         trd.faces.push(new THREE.Face3(7,6,2));
 
-        trd.name = name;
         this.geometries[name] = trd;
 
       }
 
     }
-
-    // Now run through it again, dealing with unions.
-    // IMPORTANT: this DOES NOT work if the objects are BufferGeometries.
-    for ( var i = 0; i < solids.length; i++ ) {
-      var solid = solids[i];
-      var type = solid.nodeName;
-      if(type=='#text') continue;
-      if(type=='union' || type == 'subtraction') {
-        var name = solid.getAttribute('name');
-        var first = solid.querySelector('first');
-        var geom1 = this.geometries[first.getAttribute('ref')];
-
-        var second = solid.querySelector('second');
-        var geom2 = this.geometries[second.getAttribute('ref')];
-
-        var mesh1 = new THREE.Mesh(geom1);
-        var mesh2 = new THREE.Mesh(geom2);
-        console.log("merging ",first.getAttribute('ref'),second.getAttribute('ref'),'-->',name,mesh1.geometry,mesh2.geometry);
-
-        var position = solid.querySelector('position');
-        if(position) {
-          var lunits = this.lunits(position);
-          mesh2.position.x = (position.getAttribute('x')||0.0)*lunits;
-          mesh2.position.y = (position.getAttribute('y')||0.0)*lunits;
-          mesh2.position.z = (position.getAttribute('z')||0.0)*lunits;
-        }
-        var rotation = solid.querySelector('position');
-        if(rotation) {
-          var aunits = this.aunits(rotation);
-          mesh2.rotation.x = (rotation.getAttribute('x')||0.0)*aunits;
-          mesh2.rotation.y = (rotation.getAttribute('y')||0.0)*aunits;
-          mesh2.rotation.z = (rotation.getAttribute('z')||0.0)*aunits;
-        }
-        // merge. https://stackoverflow.com/questions/30245990/how-to-merge-two-geometries-or-meshes-using-three-js-r71
-        mesh1.updateMatrix();
-        mesh2.updateMatrix();
-        var singleGeometry = new THREE.Geometry();
-        singleGeometry.merge(mesh1.geometry,mesh1.matrix); 
-        singleGeometry.merge(mesh2.geometry,mesh2.matrix); 
-
-        singleGeometry.name = name;
-        this.geometries[name] = singleGeometry;
-      }
-    }
-
-  }, /// solids
-
-
-  parse_volume:  function(volume,threegroup,position,rotation) {
-    
-    // find our name.
-    var name = volume.getAttribute('name');
-    if(this.volumes[name]) return this.volumes[name];
-    console.log("parsing",name);
-
-    // Logical volumes contain materialref, solidref, physvol
-    
-    // What is this volume made of?
-    var meshMat = this.default_material;
-    var materialrefnode= volume.querySelector('materialref');
-    if(materialrefnode){
-      var ref = materialrefnode.getAttribute('ref');
-      if(ref) {
-        if(ref in this.materials) { meshMat = this.materials[ref] };
-      }
-    }
-
-    // What is the geometry?
-    var solidrefnode= volume.querySelector('solidref');
-    var geo = null;
-    if(solidrefnode){
-      var ref = solidrefnode.getAttribute('ref');
-      geo = this.geometries[ref];
-    }
-
-    // Create a mesh for this if we have both a geometry, and the material hasn't been voided by the user.
-    var obj;
-    if(geo && meshMat) obj = new THREE.Mesh(geo,meshMat);
-    else               obj = new THREE.Group();
-    obj.position.copy(position);
-    obj.rotation.copy(rotation);
-    obj.name = name;
-    // Now look for all the physvols.
-    var physvols = volume.querySelectorAll('physvol');
-    for(physvol of physvols) {
-      this.parse_physvol(physvol, obj);
-    }
-
-    if(name) this.volumes[name] = obj; // store in case it's reused
-    threegroup.add(obj);
-
-    return obj;
   },
 
+  parseVolumes: function() {
 
-  parse_physvol: function(physvol,threegroup)
-  {
-      var name = physvol.getAttribute('name');
+    var volumes = GDML.querySelectorAll('volume');
+
+    for ( var i = 0; i < volumes.length; i++ ) {
+
+      var name = volumes[i].getAttribute('name');
+      var solidrefs = volumes[i].childNodes;
+
+      for ( var j = 0; j < solidrefs.length; j++ ) {
+
+        var type = solidrefs[j].nodeName;
+
+        if ( type === 'solidref' ) {
+          var solidref = solidrefs[j].getAttribute('ref');
+          this.refs[name] = solidref;
+
+        }
+      }
+    }
+  },
+
+  parsePhysVols: function() {
+
+    var physvols = GDML.querySelectorAll('physvol');
+
+    for ( var i = 0; i < physvols.length; i++ ) {
+
+      var name = physvols[i].getAttribute('name');
+
       if ( ! name ) {
         name = 'JDoe';
       }
-      var children = physvol.childNodes;
-      var volumeref = null;
+
+      var children = physvols[i].childNodes;
+      var volumeref = '';
 
       var position = new THREE.Vector3(0,0,0);
       var rotation = new THREE.Vector3(0,0,0);
 
+      var geometry;
+
+      var material = new THREE.MeshPhongMaterial({
+        color:Math.random()*0xffffff,
+        transparent:true,
+        opacity:0.5,
+        wireframe:false
+      });
 
       for ( var j = 0; j < children.length; j++ ) {
 
         var type = children[j].nodeName;
 
         if ( type === 'volumeref' ) {
-          volumeref = children[j].getAttribute('ref');
+
+          var volumeref = children[j].getAttribute('ref');
+          geometry = this.geometries[this.refs[volumeref]];
+
         }
 
         if ( type === 'positionref' ) {
+
           var positionref = children[j].getAttribute('ref');
           position = this.defines[positionref];
 
         }
 
         if ( type === 'rotationref' ) {
+
           var rotationref = children[j].getAttribute('ref');
-          rotaion = this.defines[rotationref];
 
         }
 
         if ( type === 'position' ) {
-          var lunits = this.lunits(children[j]);
-          var x = children[j].getAttribute('x')*lunits;
-          var y = children[j].getAttribute('y')*lunits;
-          var z = children[j].getAttribute('z')*lunits;
-          position.set(x ,y, z);
+
+          var x = children[j].getAttribute('x');
+          var y = children[j].getAttribute('y');
+          var z = children[j].getAttribute('z');
+
+          // Note: how to handle units?
+          position.set(x / 1e4, y / 1e4, z / 1e4);
         }
 
         if ( type === 'rotation' ) {
-          var aunits = this.aunits(children[j]);
-          var x = children[j].getAttribute('x') * aunits;
-          var y = children[j].getAttribute('y') * aunits;
-          var z = children[j].getAttribute('z') * aunits;
+
+          var x = children[j].getAttribute('x') * Math.PI/180.0;
+          var y = children[j].getAttribute('y') * Math.PI/180.0;
+          var z = children[j].getAttribute('z') * Math.PI/180.0;
+
           rotation.set(x,y,z);
         }
 
       }
 
-      if(volumeref) {
-        // find the named volume
-        var volume = this.volume_nodes[volumeref];
-        if(!volume) throw "Can't find volumeref " + volumeref;
+      if ( geometry ) {
 
-        this.parse_volume(volume,threegroup,position,rotation);
+        var mesh = new THREE.Mesh(geometry, material);
+        mesh.name = name;
+        mesh.visible = true;
+
+        mesh.position.set(position.x, position.y, position.z);
+        mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+
+        this.group.add(mesh);
+
       }
-  },
+    }
 
+  }
 
 };

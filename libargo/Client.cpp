@@ -144,7 +144,7 @@ bool Client::send_request(const std::string& request_string, double timeout)
 
   if(timeout > 0){
     m_timeout_timer.cancel(); // just in case
-    m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(timeout*1000));
+    m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(int(timeout*1000)));
     m_timeout_timer.async_wait(boost::bind(&Client::did_not_get_response,this,_1));
   } else {
     m_timeout_timer.cancel(); // just in case   

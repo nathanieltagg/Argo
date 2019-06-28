@@ -133,7 +133,7 @@ function Pad3d( element, options )
   $(this.element) .bind('contextmenu', function(ev){ return false;} );
   
   var parent = $(this.element).parent();
-
+  var self = this;
 
   $(".trid-zoom-slider"  ,parent)
   .slider({

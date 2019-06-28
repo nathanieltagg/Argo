@@ -147,8 +147,14 @@ LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 
 
 # Needed to look the provenance / configuration history for hints.
-CPPFLAGS += -I ${ART_INC}
+ifneq ($(origin ART_ROOT_IO_INC), undefined)
+CPPFLAGS += -I ${ART_ROOT_IO_INC}
+LIBS     += -L ${ART_ROOT_IO_LIB} -l art_root_io -l art_root_io_RootDB
+else
 LIBS     += -L ${ART_LIB} -l art_Framework_IO_Root -l art_Framework_IO_RootVersion -l art_Framework_IO_Root_RootDB
+endif
+
+CPPFLAGS += -I ${ART_INC}
 LIBS     += -L ${FHICLCPP_LIB} -l fhiclcpp
 
 
@@ -162,7 +168,8 @@ ifneq ($(origin LARLITE_DIR), undefined)
   # ldpaths  += -Wl,-rpath,${LARLITE_LIBDIR}
 endif
 
-CPPFLAGS += -I/usr/local/include  # for png.h
+CPPFLAGS += -I/usr/local/include  # for png.h on Sierra
+CPPFLAGS += -I/usr/local/include/libpng16  # for png.h on Mojave
 
 packages:
 	@echo LIBS:

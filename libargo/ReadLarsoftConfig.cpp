@@ -1,7 +1,7 @@
 
-#include "art/Framework/IO/Root/GetFileFormatEra.h"
-#include "art/Framework/IO/Root/RootDB/SQLite3Wrapper.h"
-#include "art/Framework/IO/Root/RootDB/tkeyvfs.h"
+#include "art_root_io/GetFileFormatEra.h"
+#include "art_root_io/RootDB/SQLite3Wrapper.h"
+#include "art_root_io/RootDB/tkeyvfs.h"
 #include "canvas/Persistency/Provenance/FileFormatVersion.h"
 #include "canvas/Persistency/Provenance/ParameterSetBlob.h"
 #include "canvas/Persistency/Provenance/ParameterSetMap.h"
