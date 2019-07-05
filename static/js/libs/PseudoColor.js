@@ -222,6 +222,7 @@ PseudoColor.prototype.interpolate = function(x) {
     // if(Math.abs(x)<20) c.a = x*x/(20*20.); // this works pretty well.
   
   c.a = ('a' in c) ? c.a : 1.0;
+  if(x > this.cutoffLow && x < this.cutoffHigh) c.a=0;
   return c;
 };
 

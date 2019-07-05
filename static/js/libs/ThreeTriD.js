@@ -52,7 +52,8 @@ function ThreeTriD(element, options )
   }
   $.extend(true,defaults,options);
   ABoundObject.call(this, element, defaults); // Give settings to ABoundObject contructor.
-    
+  var self = this;
+
   $(element).addClass("ThreeTriD");
   $(this.element).css("position","relative");
   
@@ -76,26 +77,116 @@ function ThreeTriD(element, options )
 	this.scene.background = new THREE.Color( 0xffffff );
   // this.scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
   
-  this.camera = new THREE.PerspectiveCamera(  45, // field of view in degrees.
+  // Make two cameras.
+  this.perspective_camera = new THREE.PerspectiveCamera(  45, // field of view in degrees.
                                               this.width/this.height,
                                               1, 10000); // near, far
+
+  this.perspective_camera.position.set( -1000, 300, 50 );
+  this.scene.add(this.perspective_camera);
+
+  this.orthographic_camera = new THREE.OrthographicCamera( -1000, 1000, -1,1, -10000, 10000 );
+  this.orthographic_camera.position.set( -1000, 300, 50 );
+  this.scene.add(this.orthographic_camera);
+   
+
+  this.camera = this.perspective_camera;
+
+
   // Use my TRID math to update the camera position:
   // this.viewspec = $.extend({},default_viewspec);
   // UpdateCamera();
-  this.camera.name="PerspectiveCamera";
   this.scene.add(this.camera);
   // this.camera.position.set( 0, 0, 1300 );
 	this.camera.position.set( -1000, 300, 50 );
   this.Resize();  // creates or recreates the camera depending on dom size.
  
-  this.orbit_controls = new THREE.OrbitControls(this.camera,this.viewport);
+
+
+  this.orbit_controls = new ThreePadOrbitControls(this.camera,this.viewport);
+
+  function changeCamera(isPerspective) {
+    var oldCamera = self.camera;
+    if(isPerspective===false) self.camera = self.orthographic_camera;
+    else                      self.camera = self.perspective_camera; // default
+    if(oldCamera != self.camera) {
+      // Camera changed.
+      self.orbit_controls.object = self.camera;
+      if(isPerspective===false) {
+        // Change the ortho camera to match current view of othro. good notes at https://stackoverflow.com/questions/48758959/what-is-required-to-convert-threejs-perspective-camera-to-orthographic
+        // depth:
+        var sightline_vec = new THREE.Vector3();
+        oldCamera.getWorldDirection(sightline_vec);
+        var camera_to_target = self.orbit_controls.target.clone();
+        camera_to_target.sub(oldCamera.position);
+        var depth = camera_to_target.dot(sightline_vec);
+
+        var height_ortho = depth*2*Math.atan( oldCamera.fov*(Math.PI/180) /2 );
+        var width_ortho = height_ortho / oldCamera.aspect;
+        self.orthographic_camera.left  = width_ortho/-2;
+        self.orthographic_camera.right = width_ortho/2;
+        self.orthographic_camera.top   = height_ortho/2;
+        self.orthographic_camera.bottom= height_ortho/-2;
+        // debugger;
+      }
+      self.camera.position.copy(oldCamera);
+      self.camera.quaternion.copy( oldCamera.quaternion ); 
+      // self.camera.position.set(-1e9,-1e9,-1e9); // Goose position to make sure the orbitcontrols reset.
+      self.orbit_controls.update(true);
+
+    }
+    // self.camera.position.copy(oldCamera.position);
+    // self.camera.matrix.copy(oldCamera.matrix.clone());
+  }
+  function resetCamera(isPerspective) {
+    changeCamera(isPerspective);
+    self.orbit_controls.target.set(0,0,0);
+    self.camera.position.set( -1000, 300, 50 );
+    self.orbit_controls.setScale(1.0);
+    // Center on the middle-numbered TPC, rounded down. that's 0 for microboone, 6 for protodune.
+    var tpc = gGeo3.getTpc((Math.floor(gGeo3.numTpcs()/2)));
+    self.orbit_controls.target.set(...tpc.center);
+    self.orbit_controls.update();
+    self.Render();
+  }
+
+
+  function setView(mode)
+  {
+    if(mode=="3D") { changeCamera(true); self.orbit_controls.update(); return; }
+    if(mode=="XY") {
+      changeCamera(false);
+      self.camera.position.set(0,0,-1000);
+      self.orbit_controls.target.set(0,0,500);
+      self.orbit_controls.update();
+      return;
+    }
+    if(mode=="YZ") {
+      changeCamera(false);
+      self.camera.position.set(-1000,0,500);
+      self.orbit_controls.target.set(0,0,500);
+      self.orbit_controls.update();
+      return;
+    }
+    if(mode=="XZ") {
+      changeCamera(false);
+      self.camera.position.set(0,0,500);
+      self.orbit_controls.target.set(0,1000,500);
+      self.orbit_controls.update();
+      return;
+    }
+
+  }
+
+
 	this.orbit_controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
   this.orbit_controls.dampingFactor = 0.25;
 	this.orbit_controls.screenSpacePanning = false;
 	this.orbit_controls.minDistance = 100;
 	this.orbit_controls.maxDistance = 3000;
 	this.orbit_controls.maxPolarAngle = Math.PI ;
-  
+  resetCamera(true);
+
 
   // this.DrawOverlay();
   // this.overlay_dirty = true;
@@ -111,7 +202,6 @@ function ThreeTriD(element, options )
     this.orbit_controls.addEventListener( 'change', this.Render.bind(this)  );
   }
   // Resizing.
-  var self = this;
   $(this.element).resize(function(ev){
                          self.Resize(); 
                          self.Render();
@@ -123,6 +213,12 @@ function ThreeTriD(element, options )
   gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
   gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
   
+  // Wireimg!
+  gStateMachine.Bind('change-wireimg',  this.CreateWireimg.bind(this,false) );
+  gStateMachine.Bind('toggle-wireimg',  this.UpdateWireimg.bind(this,false) );
+  gStateMachine.Bind('zoomChange',      this.UpdateWireimg.bind(this,false) );
+  gStateMachine.Bind('zoomChangeFast',  this.UpdateWireimg.bind(this,false) );
+
   
   // Tracks
   this.ctl_track_shift        =  this.GetBestControl(".track-shift-window");
@@ -163,53 +259,78 @@ function ThreeTriD(element, options )
   
 
   // controls.
+  var self = this;
   var parent = $(this.element).parent()[0];
   $(".trid-zoom-slider"  ,parent)
   .slider({
     animate: "fast",
-    min:self.camera_distance_min,
-    max:self.camera_distance_max,
-    value: self.camera_distance,
+    min:0.01,
+    max:10.0,
+    value: 1,
     slide: function(ev,ui){
       console.log("slide",ui.value);
-      self.camera_distance = ui.value;
-      self.Draw();
+      self.orbit_controls.setScale(ui.value);
+      self.orbit_controls.update();
     }
   });
-  console.error(this.element);
-  console.error(parent);
-  console.error($(".trid-zoom-in"   ,parent));
+  var unitX = new THREE.Vector3(1,0,0);
+  var unitY = new THREE.Vector3(0,1,0);
+  var unitZ = new THREE.Vector3(0,0,1);
+  var pan_increment = 10; // 10 cm;
+
+  // Zoom in/out buttons for the scrollwheel impaired
   $(".trid-zoom-in"   ,parent)
     .button({icons: {primary: 'ui-icon-zoomin'},text: false})            
-    .mousehold(function(ev){self.scrollMe(ev,-1);});
+    .mousehold(function(ev){self.orbit_controls.dollyOut(self.orbit_controls.getZoomScale()); self.orbit_controls.update();});
 
   $(".trid-zoom-out"  ,parent)
     .button({icons: {primary: 'ui-icon-zoomout'},text: false})
-    .mousehold(function(ev){self.scrollMe(ev,+1);});
-   
+    .mousehold(function(ev){self.orbit_controls.dollyIn(self.orbit_controls.getZoomScale()); self.orbit_controls.update();});
+
+
+  // Pad controls: move in XYZ space.
   $(".trid-pan-left"  ,parent)
     .button({icons: {primary: 'ui-icon-arrowthick-1-w'},text: false})
-    .mousehold(function(ev){self.panMe(ev,-self.pan_increment,0,0);});
+    .mousehold(function(ev){
+      self.orbit_controls.target.addScaledVector(unitX,pan_increment);
+      self.orbit_controls.update();
+      });
   
   $(".trid-pan-right" ,parent)
     .button({icons: {primary: 'ui-icon-arrowthick-1-e'},text: false})
-    .mousehold(function(ev){self.panMe(ev,+self.pan_increment,0,0);});
-  
+    .mousehold(function(ev){
+      self.orbit_controls.target.addScaledVector(unitX,-pan_increment);
+      self.orbit_controls.update();
+      });
+
   $(".trid-pan-up"    ,parent)
     .button({icons: {primary: 'ui-icon-arrowthick-1-n'},text: false})           
-    .mousehold(function(ev){self.panMe(ev,0,-self.pan_increment,0);});
+    .mousehold(function(ev){
+      self.orbit_controls.target.addScaledVector(unitY,-pan_increment);
+      self.orbit_controls.update();
+      });
 
   $(".trid-pan-down"  ,parent)
     .button({icons: {primary: 'ui-icon-arrowthick-1-s'},text: false})           
-    .mousehold(function(ev){self.panMe(ev,0,+self.pan_increment,0);});
+    .mousehold(function(ev){      
+      self.orbit_controls.target.addScaledVector(unitY, pan_increment);
+      self.orbit_controls.update();
+      });
 
   $(".trid-pan-upstream"  ,parent)
       .button({icons: {primary: 'ui-icon-arrowthick-1-ne'},text: false})           
-      .mousehold(function(ev){self.panMe(ev,0,0,+self.pan_increment);});
+      .mousehold(function(ev){
+      self.orbit_controls.target.addScaledVector(unitZ,-pan_increment);
+      self.orbit_controls.update();
+      });
+
 
   $(".trid-pan-downstream"  ,parent)
       .button({icons: {primary: 'ui-icon-arrowthick-1-sw'},text: false})           
-      .mousehold(function(ev){self.panMe(ev,0,0,-self.pan_increment);});
+      .mousehold(function(ev){      
+        self.orbit_controls.target.addScaledVector(unitZ,pan_increment);
+      self.orbit_controls.update();
+      });
 
 
   $(".trid-autorotate" ,parent)
@@ -218,7 +339,7 @@ function ThreeTriD(element, options )
 
   $(".trid-reset"     ,parent)
     .button({icons: {primary: 'ui-icon-seek-first'},text: false})          
-    .click(function(ev){self.ResetView();self.Draw();});
+    .click(function(ev){resetCamera(true);});
 
   $(".trid-ctl-mouse-set"     ,parent)
       .buttonset({icons: {primary: 'ui-icon-seek-first'},text: false});
@@ -243,7 +364,8 @@ function ThreeTriD(element, options )
   $(".trid-ctl-view-set input[type='radio']"     ,parent)
       .button()
       .change(function(ev){
-          self.ChangeViewMode($(":checked",$(this).parent()).val());
+          var mode = $(":checked",$(this).parent()).val();
+          setView(mode);
         });
 
 
@@ -254,21 +376,26 @@ function ThreeTriD(element, options )
   $(".trid-projection-scale"     ,parent)
     .slider({
       animate: "fast",
-      min:0.2,
-      max:1.8,
-      step:0.05,
+      min:0,
+      max:1,
+      step:1,
       value: 1.0,
       slide: function(ev,ui){
-        // This is the same effect as doing a Dolly Zoom in cinema.
-        // https://en.wikipedia.org/wiki/Dolly_zoom
-        self.projection_scale = ui.value;
-        self.Draw();
+        //   // This is the same effect as doing a Dolly Zoom in cinema.
+        //   // https://en.wikipedia.org/wiki/Dolly_zoom
+        //   self.projection_scale = ui.value;
+        //   self.Draw();
+        // }
+        if(ui.value<0.5)  changeCamera(false);
+        else              changeCamera(true);
+        self.orbit_controls.update();
       }
+
     });
   
   
   this.line_materials = [
-    this.frameline_material     = new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 5, maxlinewidth:30, minlinewidth:0.1, dashed: false} ),
+    this.frameline_material     = new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 5, maxlinewidth:5, minlinewidth:0.1, dashed: false} ),
     this.track_material         = new THREE.PerspectiveLineMaterial( { color: 0x00aa00, worldlinewidth: 0.3, minlinewidth: 0.8, maxlinewidth: 3, dashed: false} ),
     this.track_material_hover   = new THREE.PerspectiveLineMaterial( { color: 0x008800, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
     this.track_material_selected= new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
@@ -289,15 +416,6 @@ function ThreeTriD(element, options )
   
 }
 
-// ThreeTriD.prototype.UpdateCamera() {
-//   // My version of OrbitControl.
-//   this.camera.position = this.viewspec.look_at;
-//   this.camera.position.z += this.viewspec.distance;
-//   // Now rotate.
-//   var quaternion = new THREE.Quaternion();
-//
-// }
-
 ThreeTriD.prototype.AnimationRender = function()
 {
   requestAnimationFrame(this.AnimationRender.bind(this));
@@ -312,7 +430,6 @@ ThreeTriD.prototype.CreateFrame = function()
   this.frame_group = new THREE.Group();
   
   for(var gtpc of gGeo3.data.tpcs) {
-     var tpc = gGeo.getTpc(0);
 
   
     function makeBoxOutlineGeo(x1,x2,y1,y2,z1,z2)
@@ -342,8 +459,6 @@ ThreeTriD.prototype.CreateFrame = function()
                                 gtpc.center[1]-gtpc.halfwidths[1], gtpc.center[1]+gtpc.halfwidths[1],
                                 gtpc.center[2]-gtpc.halfwidths[2], gtpc.center[2]+gtpc.halfwidths[2]);
     var box = new THREE.Line2(geo, this.frameline_material);
-    this.orbit_controls.target.set(...tpc.getCenter());
-    this.orbit_controls.update();
     this.frame_group.add(box);
     
     
@@ -442,8 +557,17 @@ ThreeTriD.prototype.Resize = function()
   this.renderer.setSize(width,height);
 
   this.resolution.set(this.width,this.height);
-  this.camera.aspect = this.width/this.height;
-  this.camera.updateProjectionMatrix();
+  this.perspective_camera.aspect = this.width/this.height;
+
+  var mid = (this.orthographic_camera.top + this.orthographic_camera.bottom)*0.5;
+  var span = (this.orthographic_camera.right - this.orthographic_camera.left)*0.5*this.height/this.width;
+  this.orthographic_camera.bottom = mid - span;
+  this.orthographic_camera.top    = mid + span;
+  this.orthographic_camera.updateProjectionMatrix();
+
+  this.perspective_camera.aspect = this.width/this.height;
+  this.perspective_camera.updateProjectionMatrix();
+
   this.UpdateResolution();
 
 
@@ -916,4 +1040,296 @@ ThreeTriD.prototype.HoverAndSelectionChange_Spacepoints = function()
     this.spacepoint_select_threeobj.visible = false;
   }
 }
- 
+
+
+ThreeTriD.prototype.create_image_meshgroup = function(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,x2,y1,y2,flip,userData)
+{
+  // returns a THREE.Group with all of the wire textures mapped in xy plane.
+  // mapper must contain a tile_urls[row][col] and tile_3textures[row][col]
+  // chan_start, chan_end are logical channel numbers from start to end for this region
+  // tdc_start, tdc_end are the range of TDC values we want to show
+  // x1,x2 are x positions of first and last channel respecitvely
+  // y1,y2 are y positions of the first and last tdc respectively
+  var wireimg_group = new THREE.Group();
+  wireimg_group.name=GetSelectedName("wireimg");
+  
+  console.log('create_image_meshgroup arguments',...arguments)
+
+  var tdc_scale = (y2-y1)/(tdc_end-tdc_start);     //console.log('tdc_scale',tdc_scale);
+  var chan_scale = (x2-x1) /(chan_end-chan_start); //console.log('chan_scale',chan_scale);
+  
+  for(var irow=0;irow<mapper.tile_3textures.length;irow++) {
+    // Do we need this row?
+    var elem = mapper.tile_urls[irow][0];
+    if(elem.y + elem.height <= chan_start) continue;
+    if(elem.y >= chan_end) continue;
+    // console.log('mapper row',irow,elem);
+    
+    // which are the samples this texture will provide to us?
+    var t_chan_start = Math.max(elem.y, chan_start);            //console.log('t_chan_start',t_chan_start);
+    var t_chan_end   = Math.min(elem.y+elem.height, chan_end);  //console.log('t_chan_end',t_chan_end);
+    
+    var t_x1 =  x1 + chan_scale * (t_chan_start-chan_start); //console.log('t_x1',t_x1);
+    var t_x2 =  x1 + chan_scale * (t_chan_end  -chan_start); //console.log('t_x2',t_x2);
+    var t_span_x = chan_scale * (t_chan_end-t_chan_start);
+
+    var geometry = new THREE.PlaneGeometry( t_span_x, y2-y1 , 128);
+
+    if(!gFalseColorControl.lut_texture) Error("No LUT texture!");
+    var uniforms = {
+            maptexture:   { type: "t", value: gFalseColorControl.lut_texture },
+            do_noise_reject:     { value: 0 },
+            do_bad_channel_flag: { value: 0 },
+            texture_start_chan:  { value: elem.y },
+            texture_size_chan:   { value: elem.height },
+            
+            chan_start: { value: t_chan_start },
+            chan_end:   { value: t_chan_end   },
+            tdc_start:  { value: tdc_start },
+            tdc_end:    { value: tdc_end  },
+            flip:       { type: "i", value: flip?1:0 },
+            trans_fade_width: {value: 10.}, 
+            trans_low_cut:    {value: -1e9},
+            trans_high_cut:   {value:  1e9},
+            do_trans_view_direction_flag: { value: 1},
+         };
+
+
+    // add all the textures in the time direction.
+    for(var icol=0;icol<mapper.tile_3textures[irow].length;icol++) {
+      var elem = mapper.tile_urls[irow][icol];
+      var key = "texture"  + (icol).toString();
+      //console.log("mapper column",icol,"elem",elem,"key",key);
+
+      var input_texture = mapper.tile_3textures[irow][icol];
+      input_texture.needsUpdate = true;
+
+      uniforms[key] = { type: "t", value: input_texture }
+      uniforms[key+"_start_tdc"] = {value: elem.x };
+      uniforms[key+"_size_tdc"] = {value: elem.width};
+    }
+
+    // null out the others.
+    for(var iccol=mapper.tile_3textures[irow].length;icol<=5;icol++){
+      var key = "texture"  + (icol).toString();
+      uniforms[key] = { type: "t", value: null }
+      uniforms[key+"_start_tdc"] = {value: -1e9 };
+      uniforms[key+"_size_tdc"]  = {value: -1e9};
+    }
+
+    //console.log('uniform',uniforms);
+
+    var material = new THREE.ShaderMaterial( {
+      vertexShader:   document.getElementById('three-vertex-shader').textContent,
+      fragmentShader: document.getElementById('three-fragment-shader-time-range').textContent,
+      // fragmentShader: document.getElementById('stupidfill').textContent,
+      uniforms: uniforms,
+      visible: true,
+      transparent: true,
+      side: THREE.DoubleSide    
+    });
+
+    var obj = new THREE.Mesh( geometry, material );
+    obj.renderOrder = 10;
+    obj.position.x = (t_x1+t_x2)/2;
+    obj.position.y = (y1+y2)/2;
+    //console.log("created wireimg with ",t_span_x,y2-y1,t_x1,t_x2,obj.position.x,obj.position.y);
+
+
+    if(!flip) {
+        // Just turn it upside down.
+        // obj.rotation.x = Math.PI;
+      }
+   obj.userData = userData;
+      
+      
+    // FIXME: when clearing event, dispose of all geometries, materials, and textures.
+    wireimg_group.add( obj );
+  }
+  return wireimg_group; //this.scene.add(this.wireimg_group);    
+}
+
+ThreeTriD.prototype.CreateWireimg = function()
+{
+  if(this.wireimg_group) {
+    this.scene.remove(this.wireimg_group); 
+     for(var grp of this.wireimg_group.children)
+      for(var thing of grp.children){
+          if(thing.material) thing.material.dispose();
+          if(thing.geometry) thing.geometry.dispose();
+      }
+  }
+  var mapper = null;
+
+  var wname = GetSelectedName("wireimg");
+  var wireimg = (((gRecord || {})["wireimg"]        || {})[wname] || {});
+  var wlowres = (((gRecord || {})["wireimg-lowres"] || {})[wname] || {});
+  if      (wireimg._glmapper) {mapper = wireimg._glmapper; }
+  else if (wlowres._glmapper) {mapper = wlowres._glmapper; }
+  
+  if(!mapper) return;
+  this.wireimg_group = new THREE.Group();
+  this.max_tdc = mapper.total_width*mapper.scale_x;
+
+  for(var view=0;view<3;view++) {
+
+    for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
+      var nwires = gGeo3.numWires(tpc,view);
+      var pitch  = gGeo3.wire_pitch(tpc,view);
+      console.log("wireimg ",tpc,view);
+
+      // Fixme: need to trim the time so I don't overlap times in different projections
+      for(var section of gGeo3.data.tpcs[tpc].views[view].sections) {
+        var chanstart = section[0].channel;
+        var chanend   = section[1].channel;
+
+        // This is where it goes in world space:
+        // horizontal (wire number/ transverse) = x on screen
+        var u1 = section[0].trans - pitch/2; // Ensure pixes are centered on the wire.
+        var u2 = section[1].trans - pitch/2;
+        //console.log("Creating wireimg tpc",tpc,"view",view,"trans",u1," to ",u2,section);
+
+        // vertical
+        // whole time view, correct for microboone:
+        // var tdc_start = 0; //gGeo3.getTDCofX(tpc,view,v1) + gZoomRegion.getTimeOffset();
+        // var tdc_end   = mapper.total_width*mapper.scale_x; //gGeo3.getTDCofX(tpc,view,v2) + gZoomRegion.getTimeOffset();
+        // var v1 = gGeo3.getXofTDC(tpc,view,tdc_start);
+        // var v2 = gGeo3.getXofTDC(tpc,view,tdc_end);
+
+        // Attempt for DUNE:
+        var gtpc = gGeo3.getTpc(tpc);
+        // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
+        // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+        var v1 =  gtpc.views[view].x; // position of wires
+        var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
+        var tdc_start = gGeo3.getTDCofX(tpc,view,v1) + gZoomRegion.getTimeOffset();
+        var tdc_end   = gGeo3.getTDCofX(tpc,view,v2) + gZoomRegion.getTimeOffset();
+
+        var flip = (gtpc.drift_dir > 0);
+
+        // metadata so we can get this back:
+        var userData = { wireimg: true, tpc: tpc, section: section, view: view};
+
+        var tpc_group = this.create_image_meshgroup(mapper,
+                          chanstart, chanend, // source pixel coord (when textures mapped out)
+                          tdc_start,tdc_end,  // source pixed coord
+                          u1,u2, // x coord (wire number) in viewer space
+                          v1,v2,
+                          flip,
+                          userData); // y coord (time) in viewer space
+        tpc_group.userData.tpc_group = tpc;
+        tpc_group.userData.view = view;
+        // this.wireimg_group.scale.y =  gGeo3.getDriftCmPerTick(0); // fixme tpc number
+        //console.log("wireimg ",tpc,, u1,u2,v1,v2);
+
+        // Rotate into the correct alignment.  The object is in the XY  (channel,drift) plane, but that's no good!  We need it on the XZ (drift,channel) plane.
+        // tpc_group.quaterion = new THREE.Quaternion(); 
+        var p = new THREE.Quaternion(); 
+        
+        tpc_group.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0), -Math.PI/2); // Rotate so Z is right
+        p.setFromAxisAngle(new THREE.Vector3(0,0,1), -Math.PI/2);        
+        tpc_group.quaternion.premultiply(p);
+        // Now rotate to the right view.
+        var vfrom = new THREE.Vector3(0,1,0);
+        var vto = new THREE.Vector3();   
+        vto.set(...gGeo3.data.basis.along_vectors[view]);
+        tpc_group.userData.alongVector = vto;
+        p.setFromUnitVectors(vfrom,vto);
+        tpc_group.quaternion.premultiply(p);
+
+        this.wireimg_group.add(tpc_group);
+      }
+    }
+
+  } // tpcs 
+  this.scene.add(this.wireimg_group);
+  this.UpdateWireimg();
+
+}
+
+ThreeTriD.prototype.UpdateWireimg = function()
+{
+  if(!this.wireimg_group)  this.CreateWireimg(); 
+  if(!this.wireimg_group)  return;
+
+  var do_filter        = $('#ctl-coherent-noise-filter').is(":checked") ? 1:0;
+  var bad_channel_flag = $('input:radio.ctl-bad-wire-filter:checked').val();
+  var edge_finder      = $('#ctl-gl-edge-finder').is(":checked") ? 1:0;
+  var do_smear = 0;
+  
+  var zoommode = $('input.zoommode:checked').val();
+  var center_y = gZoomRegion.getCenter().y;
+
+  for(var tpcgroup of this.wireimg_group.children) {
+
+    for(var mesh of tpcgroup.children) {
+      var mat = mesh.material;
+
+      var tpc = mesh.userData.tpc;
+      var gtpc = gGeo3.getTpc(tpc);
+      // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
+      // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+      // var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
+      // var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+
+      // change tdc offset.
+      var gtpc = gGeo3.getTpc(tpc);
+      var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
+      var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+      var driftspeed = gGeo3.getDriftCmPerTick(tpc);
+
+      var tdc_start = gGeo3.getTDCofX(tpc,mesh.userData.view,v1) + gZoomRegion.getTimeOffset();
+      var tdc_end   = gGeo3.getTDCofX(tpc,mesh.userData.view,v2) + gZoomRegion.getTimeOffset();
+
+      console.log("view",mesh.userData.view,"tdc_start",tdc_start,"tdc_end",tdc_end);
+      mat.uniforms.tdc_start.value = tdc_start;
+      mat.uniforms.tdc_end.value   = tdc_end;
+
+      // Change transverse cut
+      // if(zoommode == "crop") { // /always crop in 3d
+        // Drift crop:
+        var tdc_start = gGeo3.getTDCofX(tpc,mesh.userData.view,v1) + gZoomRegion.getTimeOffset();
+        var tdc_end   = gGeo3.getTDCofX(tpc,mesh.userData.view,v2) + gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value = tdc_start;
+        mat.uniforms.tdc_end.value = tdc_end;
+
+        // Transverse crop:
+        if(gGeo3.numTpcs()>1) {
+          var [u1,u2] = gGeo3.findTransCuts(tpc,mesh.userData.view, center_y);
+          mat.uniforms.trans_fade_width.value = 2;
+          mat.uniforms.trans_low_cut.value  = u1;
+          mat.uniforms.trans_high_cut.value = u2;
+          // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
+        } else {
+          mat.uniforms.trans_low_cut.value = -1e9;
+          mat.uniforms.trans_high_cut.value = 1e9;
+        }
+      // } 
+      // else if(zoommode == "full" ) {
+      //   mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
+      //   mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
+
+      //   mat.uniforms.trans_low_cut.value = -1e9;
+      //   mat.uniforms.trans_high_cut.value = 1e9;
+
+      // } else {
+      //   console.error("WFT?")
+      // }
+
+      // trigger channels
+      mat.uniforms.do_noise_reject    .value= do_filter;
+      mat.uniforms.do_bad_channel_flag.value= bad_channel_flag;
+
+      mat.needsUpdate = true;
+    }
+    // For each group, set the 3d coordinates.
+    // Use the current view center to tell us where to look:
+    tpcgroup.position.copy(gZoomRegion.getCenter());
+    tpcgroup.position.x = 0;
+    tpcgroup.position.projectOnVector(tpcgroup.userData.alongVector);
+  }
+  this.Render();
+}
+
+
+

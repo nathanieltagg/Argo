@@ -10,10 +10,13 @@
     fieldset
       label
         input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-full',value='full')
-        | Show full readout
+        | Full readout
+        select.zoomtpc
+
       label
         input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-crop',value='crop',checked='true')
-        | Crop to true geometry
+        | Real bounds
+
     span.ZoomControl-Controls.align-right
       button.zoom-auto(type='button') Auto
       button.zoom-full(type='button') Full

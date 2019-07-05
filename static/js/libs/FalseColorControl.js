@@ -228,7 +228,7 @@ FalseColorControl.prototype.NewRecord = function()
   
   gWirePseudoColor.dialOffset = parseFloat($('input.psuedoDialOffset',this.currentTabDiv).val() );
   gWirePseudoColor.adcScale   = parseFloat($('input.psuedoAdcScale',this.currentTabDiv).val() );
-  gWirePseudoColor.dialScale  = parseFloat($('input.psuedoDialScale',this.currentTabDiv).val() );
+  gWirePseudoColor.dialScale  = 0.5 ; parseFloat($('input.psuedoDialScale',this.currentTabDiv).val() );
   gWirePseudoColor.saturation = parseFloat($('input.psuedoSaturation',this.currentTabDiv).val() );
   gWirePseudoColor.cutoffLow  = parseFloat($('input.psuedoCutoffLow',this.currentTabDiv).val());
   gWirePseudoColor.cutoffHigh = parseFloat($('input.psuedoCutoffHigh',this.currentTabDiv).val());

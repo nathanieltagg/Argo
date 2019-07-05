@@ -74,7 +74,18 @@ function ZoomControl( element, options )
     gStateMachine.Trigger("zoomChange");    
   });
 
+  // set select options for number of TPCs.
+  $('input.zoomtpc').empty();
+  for(var i=0;i<gGeo3.numTpcs();i++) {
+    $("<option value='"+i+"'>TPC "+i+"</option>").appendTo('select.zoomtpc');
+  }
+  var select_tpc = Math.floor(gGeo3.numTpcs()/2);
+  $('select.zoomtpc').val(select_tpc);
+  gZoomRegion.setSelectedTpc( select_tpc );
+  // if(gGeo3.numTpcs()==0) $('select.zoomtpc').hide();
+
   $('input.zoommode').change( this.ChangeMode.bind(this) );
+  $('select.zoomtpc').change( this.ChangeMode.bind(this) );
   this.ChangeMode();
   
   $(this.ctl_zoom_auto  ).click(function(ev) { return self.AutoZoom(); });
@@ -144,6 +155,10 @@ ZoomControl.prototype.ChangeMode = function()
 {
   var mode = $('input.zoommode:checked').val();
   gZoomRegion.setMode(mode);
+  var tpc = parseInt ( $('select.zoomtpc').val() );
+  gZoomRegion.setSelectedTpc( tpc );
+  if(gZoomRegion.cropMode()) $('select.zoomtpc').attr('disabled',true);
+  else                       $('select.zoomtpc').removeAttr('disabled');
   gStateMachine.Trigger('changeViewMode');
 }
 

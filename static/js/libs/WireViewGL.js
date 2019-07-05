@@ -75,6 +75,7 @@ function WireViewGL(element, options )
   gStateMachine.Bind('colorWireMapsChanged', this.UpdateWireimg.bind(this,false) ); 
   gStateMachine.Bind('driftChange',          this.UpdateWireimg.bind(this) );  // REbuild since geometry is shot.  
   gStateMachine.Bind('toggle-wireimg',       this.UpdateVisibilities.bind(this) ); 
+  gStateMachine.Bind('changeViewMode',       this.CreateWireimg.bind(this,false) );
   $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
   $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
   $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
@@ -379,6 +380,8 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
             trans_fade_width: {value: 10.}, 
             trans_low_cut:    {value: -1e9},
             trans_high_cut:   {value:  1e9},
+            do_trans_view_direction_flag: { value: 0},
+
          };
 
 
@@ -457,6 +460,7 @@ WireViewGL.prototype.CreateWireimg = function()
   this.wireimg_group = new THREE.Group();
   this.max_tdc = mapper.total_width*mapper.scale_x;
 
+  console.error("CreateWireimg zoommode is full:",gZoomRegion.fullMode(),"tpc:",gZoomRegion.getSelectedTpc());
   for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
     var nwires = gGeo3.numWires(tpc,this.view);
     var pitch  = gGeo3.wire_pitch(tpc,this.view);
@@ -473,19 +477,23 @@ WireViewGL.prototype.CreateWireimg = function()
       var u2 = section[1].trans - pitch/2;
       //console.log("Creating wireimg tpc",tpc,"view",this.view,"trans",u1," to ",u2,section);
 
-      // vertical
-      // whole time view, correct for microboone:
-      // var tdc_start = 0; //gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-      // var tdc_end   = mapper.total_width*mapper.scale_x; //gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
-      // var v1 = gGeo3.getXofTDC(tpc,this.view,tdc_start);
-      // var v2 = gGeo3.getXofTDC(tpc,this.view,tdc_end);
-
-      // Attempt for DUNE:
       var gtpc = gGeo3.getTpc(tpc);
-      // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-      // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-      var v1 =  gtpc.views[this.view].x; // position of wires
-      var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
+
+      // vertical
+      if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
+        // whole time view, correct for microboone:
+        var tdc_start = 0; //gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
+        var tdc_end   = mapper.total_width*mapper.scale_x; //gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+        var v1 = gGeo3.getXofTDC(tpc,this.view,tdc_start);
+        var v2 = gGeo3.getXofTDC(tpc,this.view,tdc_end);
+      } else {
+        // Attempt for DUNE:
+        // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
+        // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+        var v1 =  gtpc.views[this.view].x; // position of wires
+        var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
+      }
+
       var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
       var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
 
@@ -546,7 +554,6 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
   var edge_finder      = $('#ctl-gl-edge-finder').is(":checked") ? 1:0;
   var do_smear = 0;
   
-  var zoommode = $('input.zoommode:checked').val();
   var center_y = gZoomRegion.getCenter().y;
 
   for(var tpcgroup of this.wireimg_group.children) {
@@ -575,7 +582,9 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       mat.uniforms.tdc_end.value   = tdc_end;
 
       // Change transverse cut
-      if(zoommode == "crop") {
+      if(gZoomRegion.cropMode() || gZoomRegion.setSelectedTpc() != mesh.userData.tpc) {
+        mesh.position.z=0.0; // Set to low position.
+
         // Drift crop:
         var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
         var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
@@ -593,16 +602,14 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
           mat.uniforms.trans_low_cut.value = -1e9;
           mat.uniforms.trans_high_cut.value = 1e9;
         }
-      } 
-      else if(zoommode == "full" ) {
+      } else {
+        // make it a bit higher
+        mesh.position.z=0.5;
         mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
         mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
 
         mat.uniforms.trans_low_cut.value = -1e9;
         mat.uniforms.trans_high_cut.value = 1e9;
-
-      } else {
-        console.error("WFT?")
       }
 
       // trigger channels
@@ -1025,10 +1032,9 @@ WireViewGL.prototype.CreateHits = function()
 
 WireViewGL.prototype.UpdateHits = function()
 {
-  var zoommode = $('input.zoommode:checked').val();
   for(var tpc=0; tpc<(this.hit_materials||[]).length; tpc++) {    
     // Update clipping planes.
-    if(zoommode="crop") {
+    if(gZoomRegion.cropMode()) {
       var gtpc = gGeo3.getTpc(tpc);
       this.hit_materials[tpc].clippingPlanes = [
                   new THREE.Plane( new THREE.Vector3( 0, 1, 0), -(gtpc.center[0]-gtpc.halfwidths[0]) ),  // detector x coordiate, view y

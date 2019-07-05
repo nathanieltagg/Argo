@@ -29,14 +29,18 @@ void main() {
 <script id="three-vertex-shader" type="x-shader/x-fragment">
   varying vec2 vUv;
   varying vec3 vPosition;
+  varying vec3 vNormal;
+  varying vec3 vViewDirection;
 
    void main() {
        vUv = uv;
+       vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
        vPosition = (modelMatrix *
            vec4(position,1.0)).xyz;
-       gl_Position = projectionMatrix *
-           modelViewMatrix *
-           vec4(position,1.0);
+       gl_Position = projectionMatrix * mvPosition;
+      vec3 transformedNormal = normalMatrix *  vec3( normal );
+      vNormal = normalize( transformedNormal );
+      vViewDirection = normalize(mvPosition.xyz);
    }
 </script>
 
@@ -75,6 +79,9 @@ uniform sampler2D maptexture;
 uniform int   do_noise_reject;
 uniform int   do_bad_channel_flag;
 
+// toggle transparency by view diretion:
+uniform int   do_trans_view_direction_flag;
+
 // the stuff I want to draw:
 uniform float chan_start;
 uniform float chan_end;
@@ -92,6 +99,8 @@ uniform int    flip;
 
 varying vec2  vUv;
 varying vec3  vPosition;
+varying vec3  vNormal;
+varying vec3  vViewDirection;
 
 void main() {
   // vUv is the normalized U,V coordinate in the object which nominally
@@ -203,10 +212,30 @@ void main() {
 
   if(b>=0xff && do_bad_channel_flag==2) { gl_FragColor.r = 0.; gl_FragColor.g = 0.; gl_FragColor.b=0.; gl_FragColor.a=1.;} // dead channel - black, no opacity.
 
+  // Are we looking at it face-on?
+  if(do_trans_view_direction_flag>0) {
+    float faceon =  abs(dot( vNormal, vViewDirection));
+    gl_FragColor.a *=faceon*faceon*faceon;
+  }
  
 } 
 
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 <script id="three-fragment-shader" type="x-shader/x-fragment">
