@@ -8,9 +8,9 @@
 #include <TROOT.h>
 
 
-using nlohmann::json;
+using ntagg::json;
 
-Composer::Composer() : m_result(nlohmann::json::object())
+Composer::Composer() : m_result(ntagg::json::object())
            , m_progress_target(1)
            , m_progress_so_far(0)
 {   
@@ -133,9 +133,9 @@ int64_t Composer::find_entry_in_tree(TTree* inTree, std::string& inSelection, in
   return jentry; // The matched event.
 }  
 
-nlohmann::json Composer::monitor_data()
+ntagg::json Composer::monitor_data()
 {
-  nlohmann::json monitor;
+  ntagg::json monitor;
   monitor["pid"] = gSystem->GetPid();
   // monitor["events_served"] = events_served;
   SysInfo_t sysinfo;  gSystem->GetSysInfo(&sysinfo);
@@ -196,9 +196,9 @@ std::string Composer::form_event_descriptor()
 }
 
 
-void Composer::dispatch_piece(const nlohmann::json& p) {
+void Composer::dispatch_piece(const ntagg::json& p) {
   if(m_output_callback) {
-     nlohmann::json out;
+     ntagg::json out;
      out["event_descriptor"] = m_cur_event_descriptor;
      out["piece"] = p;
      Output_t ot(new std::string(out.dump()));
@@ -213,7 +213,7 @@ void Composer::dispatch_piece(const nlohmann::json& p) {
 // Utility function to report an error and no other data.
 Output_t Composer::Error(const std::string& err) // {Error:err} as an Output_t
 {
-  nlohmann::json j;
+  ntagg::json j;
   j["error"] = err;
   std::cerr << err << std::endl;
   return Output_t(new std::string(j.dump()));
@@ -223,7 +223,7 @@ Output_t Composer::Error(const std::string& err) // {Error:err} as an Output_t
 Output_t Composer::Done() // {progress:1, state:"done"} as an Output_t
 {
   
-  nlohmann::json jdone;
+  ntagg::json jdone;
   jdone["progress"] = 1;
   jdone["state"] = "Done";
   return Output_t(new std::string(jdone.dump()));
@@ -238,7 +238,7 @@ void Composer::progress_made(const std::string msg,float increment) // {progress
     if(m_output_callback) 
       m_output_callback(kProgress,
                         Output_t(new std::string(
-                            nlohmann::json({ { "progress", frac }, {"state", msg}}).dump()
+                            ntagg::json({ { "progress", frac }, {"state", msg}}).dump()
                         ) )
                       );
     
@@ -262,7 +262,7 @@ void Composer::progress_made(const std::string msg,float increment) // {progress
 
 
 
-bool Composer::parse_pieces(nlohmann::json& request, pieces_t& outPieces)
+bool Composer::parse_pieces(ntagg::json& request, pieces_t& outPieces)
 {
   // Return 'true' if a piece of some kind is requested, indicating that an incremental build has been requested.
   json inpieces = json::array();

@@ -7,9 +7,9 @@
 
 namespace jsontool 
 {
-  inline nlohmann::json sigfig(double value, unsigned int sig_figs=3){
-    if(!std::isfinite(value)) { return nlohmann::json("nan"); }
-    if(value==0) { return nlohmann::json(0); }
+  inline ntagg::json sigfig(double value, unsigned int sig_figs=3){
+    if(!std::isfinite(value)) { return ntagg::json("nan"); }
+    if(value==0) { return ntagg::json(0); }
 
     // Find exponent
     int X = (int)floor(log10(value));
@@ -23,13 +23,13 @@ namespace jsontool
     }
     std::string s(buff);
     delete [] buff;
-    return nlohmann::json(nlohmann::json::unquoted_string,s);
+    return ntagg::json(ntagg::json::unquoted_string,s);
   }
 
-  inline nlohmann::json fixed(double value, unsigned int precision=3){
+  inline ntagg::json fixed(double value, unsigned int precision=3){
 
-    if(!std::isfinite(value)) { return nlohmann::json("nan"); }
-    if(value==0) { return nlohmann::json(0); }
+    if(!std::isfinite(value)) { return ntagg::json("nan"); }
+    if(value==0) { return ntagg::json(0); }
 
     const int maxchar = 30;
     char* buff = new char[maxchar];
@@ -44,7 +44,7 @@ namespace jsontool
     if(buff[p]=='.') buff[p]=0;
     std::string s(buff);
     delete [] buff;
-    return nlohmann::json(nlohmann::json::unquoted_string,s);
+    return ntagg::json(ntagg::json::unquoted_string,s);
   }
 
 }

@@ -30,10 +30,10 @@ public:
   // virtual Result_t composeManifestPart()
   
 private:
-  template<typename T> void     composeManifest(nlohmann::json& out);
-  void composeManifest(nlohmann::json& out);
+  template<typename T> void     composeManifest(ntagg::json& out);
+  void composeManifest(ntagg::json& out);
 
-  template<typename T> bool composePiece(const std::string& type, const std::string& name, nlohmann::json& out );
+  template<typename T> bool composePiece(const std::string& type, const std::string& name, ntagg::json& out );
 
   // virtual Json_t get_or_compose(std::string jsonPointer);
   //
@@ -50,24 +50,24 @@ protected:
 
   // Does everything!
   template<typename T>
-    void composeObject(const T&, nlohmann::json& out, const std::string& type="");
+    void composeObject(const T&, ntagg::json& out, const std::string& type="");
 
   // Specific override to do vectors of things
   template<typename TT> 
-    void composeObject(const std::vector<TT>&v, nlohmann::json& out, const std::string& name="");
+    void composeObject(const std::vector<TT>&v, ntagg::json& out, const std::string& name="");
 
   // Everything except the image-building, which needs a bit more.
   template<typename T> 
-    bool composePieceImage( const std::string& type, const std::string& name, nlohmann::json& out);
+    bool composePieceImage( const std::string& type, const std::string& name, ntagg::json& out);
   template <typename T>
-    void composeObjectImage(const std::vector<T>&v, const std::string& type, art::InputTag tag, nlohmann::json& out);
+    void composeObjectImage(const std::vector<T>&v, const std::string& type, art::InputTag tag, ntagg::json& out);
     
     
 
   // template <>
-  // void composeObject(const std::vector<recob::Wire>&v, nlohmann::json& out, const std::string& type);
+  // void composeObject(const std::vector<recob::Wire>&v, ntagg::json& out, const std::string& type);
   // template <>
-  // void composeObject(const std::vector<raw::Digit>&v, nlohmann::json& out, const std::string& type);
+  // void composeObject(const std::vector<raw::Digit>&v, ntagg::json& out, const std::string& type);
 
 public:
   // Expose this to helper classses
@@ -77,13 +77,13 @@ public:
 protected:  
 
   template<typename A, typename B>
-    bool composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, nlohmann::json& out);
+    bool composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out);
   template<typename A, typename B>
-    bool composeAssociationFromTo(Composer::piece_t& req, nlohmann::json& out);
+    bool composeAssociationFromTo(Composer::piece_t& req, ntagg::json& out);
   template<typename A>
-    bool composeAssociationFrom(Composer::piece_t& req, nlohmann::json& out);
+    bool composeAssociationFrom(Composer::piece_t& req, ntagg::json& out);
 
-  bool composeAssociation(Composer::piece_t& req, nlohmann::json& out);
+  bool composeAssociation(Composer::piece_t& req, ntagg::json& out);
 
 
   // Utility functions.
@@ -100,7 +100,7 @@ protected:
   boost::mutex m_output_mutex;
   boost::mutex m_gallery_mutex;
   
-  nlohmann::json  m_stats;
+  ntagg::json  m_stats;
   double          m_event_time;
   
   

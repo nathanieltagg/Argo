@@ -22,9 +22,9 @@ int findDivisor(int n, int m)
   return 1;
 }
 
-nlohmann::json getObjectInfo( TH1* hist )
+ntagg::json getObjectInfo( TH1* hist )
 {
-  nlohmann::json j;
+  ntagg::json j;
   TDirectory* dir = hist->GetDirectory();
   std::string name = hist->GetName();
   name += "_Info";
@@ -35,9 +35,9 @@ nlohmann::json getObjectInfo( TH1* hist )
   return j;
 }
 
-nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
+ntagg::json TH1ToHistogram( TH1* inHist, int maxbins )
 {
-  nlohmann::json h;
+  ntagg::json h;
   // Convert a histogram into a JSON file.
   h["name" ] = inHist->GetName();
   h["title"] = inHist->GetTitle();
@@ -58,7 +58,7 @@ nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
   h["ylabel"] = hist->GetYaxis()->GetTitle();
   // Custom axis labels.
   if(hist->GetXaxis()->GetLabels()) {
-    nlohmann::json binlabels;
+    ntagg::json binlabels;
     for(int i=1; i <= hist->GetNbinsX();i++) {
       binlabels.push_back(hist->GetXaxis()->GetBinLabel(i));
     }
@@ -66,7 +66,7 @@ nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
   }
   // Custom bin widths
   if(hist->GetXaxis()->IsVariableBinSize()) {
-    nlohmann::json xbins;
+    ntagg::json xbins;
     const TArrayD* Xbins = hist->GetXaxis()->GetXbins();
     for(int bin=0;bin<hist->GetNbinsX();bin++) xbins.push_back(Xbins->At(bin));
     h["x_bins"] = xbins;
@@ -87,8 +87,8 @@ nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
   h["max_content"] = jsontool::fixed(hist->GetMaximum(),4);
   h["min_content"] = jsontool::fixed(hist->GetMinimum(),4);
   h["time_on_x"] = hist->GetXaxis()->GetTimeDisplay();
-  nlohmann::json data;
-  nlohmann::json errs;
+  ntagg::json data;
+  ntagg::json errs;
   // Does it have errors that aren't just simple sqrt(N)?
   bool has_err = (hist->GetSumw2()->fN>0);
   double max_content_with_err = hist->GetMaximum();
@@ -115,9 +115,9 @@ nlohmann::json TH1ToHistogram( TH1* inHist, int maxbins )
 }
 
 
-nlohmann::json TH2ToHistogram( TH2* inHist, int maxbins )
+ntagg::json TH2ToHistogram( TH2* inHist, int maxbins )
 {
-  nlohmann::json h;
+  ntagg::json h;
 
   // Rebin if requested.
   TH2* hist = inHist;
@@ -134,14 +134,14 @@ nlohmann::json TH2ToHistogram( TH2* inHist, int maxbins )
         
   }
   if(hist->GetXaxis()->GetLabels()) {
-    nlohmann::json binlabels;
+    ntagg::json binlabels;
     for(int i=1; i <= hist->GetNbinsX();i++) {
       binlabels.push_back(hist->GetXaxis()->GetBinLabel(i));
     }
     h["binlabelsx"] = binlabels;
   }
   if(hist->GetYaxis()->GetLabels()) {
-    nlohmann::json binlabels;
+    ntagg::json binlabels;
     for(int i=1; i <= hist->GetNbinsY();i++) {
       binlabels.push_back(hist->GetYaxis()->GetBinLabel(i));
     }
@@ -177,16 +177,16 @@ nlohmann::json TH2ToHistogram( TH2* inHist, int maxbins )
   double tot = hist->GetSumOfWeights();
   h["total"] = tot;
 
-  nlohmann::json errs;
+  ntagg::json errs;
   // Does it have errors that aren't just simple sqrt(N)?
   bool has_err = (hist->GetSumw2()->fN>0);
 
   int nx = hist->GetNbinsX();
   int ny = hist->GetNbinsY();
-  nlohmann::json data;
+  ntagg::json data;
   for(int i=1; i <= nx;i++) {
-    nlohmann::json data2;
-    nlohmann::json errs2;
+    ntagg::json data2;
+    ntagg::json errs2;
     for(int j=1; j<= ny; j++) {
       int bin = hist->GetBin(i,j);
       data2.push_back(jsontool::sigfig(hist->GetBinContent(bin),3));
@@ -198,15 +198,15 @@ nlohmann::json TH2ToHistogram( TH2* inHist, int maxbins )
   h["data"] =data;
   if(has_err) h["errs"] = errs;
   
-  nlohmann::json underflow_x;
-  nlohmann::json overflow_x;
+  ntagg::json underflow_x;
+  ntagg::json overflow_x;
   for(int j=1; j <= ny;j++)  {
     underflow_x.push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(0,j)),3));
     overflow_x .push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(0,nx+1)),3));
   }
   
-  nlohmann::json overflow_y;
-  nlohmann::json underflow_y;
+  ntagg::json overflow_y;
+  ntagg::json underflow_y;
   for(int i=1; i <= nx;i++)  {
     underflow_y.push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(i,0)),3));
     overflow_y .push_back(jsontool::sigfig(hist->GetBinContent(hist->GetBin(i,ny+1)),3));

@@ -32,7 +32,7 @@ protected:
   
   
 
-  nlohmann::json  m_stats; // Processing metadata
+  ntagg::json  m_stats; // Processing metadata
   std::string     m_filename;
   long long       m_entry;
   std::string     m_options;

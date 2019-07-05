@@ -77,7 +77,9 @@ Output_t UniversalComposer::satisfy_request(Request_t request)
   
  
     m_composer.reset(); // releases old one if required.
-
+    std::cout << m_config->dump()  << std::endl;
+    std::cout << (*m_config)["forking"] << std::endl;
+    (*m_config)["forking"] = false;
     bool forking = m_config->value("forking",false);
     if(forking) {
       if     (is_daqfile) m_composer.reset(new ForkedComposer<UbdaqComposer       >()   );

@@ -9,10 +9,10 @@
 
 /*!
 @brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
+@see https://github.com/ntagg
 @since version 1.0.0
 */
-namespace nlohmann
+namespace ntagg
 {
 /*!
 @brief default JSONSerializer template argument
@@ -59,6 +59,6 @@ uses the standard template types.
 @since version 1.0.0
 */
 using json = basic_json<>;
-}  // namespace nlohmann
+}  // namespace ntagg
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_

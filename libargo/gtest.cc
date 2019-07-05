@@ -37,7 +37,7 @@ void do_one(Composer* c, Request_t req, Output_t& out)
 
 int main(int argc, char **argv)
 {
-  using nlohmann::json;
+  using ntagg::json;
   
   Config_t config(new json(json::object()));
 

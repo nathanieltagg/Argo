@@ -142,7 +142,7 @@ Nan::Persistent<v8::FunctionTemplate> ComposerWrapper::constructor;
 
 ComposerWrapper::ComposerWrapper(const std::string& config) : UniversalComposer()
 {
-  Config_t c(new nlohmann::json(nlohmann::json::parse(config)));
+  Config_t c(new ntagg::json(ntagg::json::parse(config)));
   std::cout << "Configure with " << c->dump(2) << std::endl;
   configure(c);
   m_running = false;
@@ -210,7 +210,7 @@ NAN_METHOD(ComposerWrapper::composeSync)
       Nan::JSON NanJSON;
       v8::Local<v8::String> v8string = NanJSON.Stringify(obj).ToLocalChecked();
       v8::String::Utf8Value s(isolate,v8string);
-      Request_t request(new nlohmann::json(nlohmann::json::parse(*s)));
+      Request_t request(new ntagg::json(ntagg::json::parse(*s)));
       if(composerWrap->m_running) std::cout << "OH NO TRIED TO START A SYNC REQUEST WHEN ONE WAS ALREADY RUNNING" << std::endl;
       composerWrap->m_running = true;
       Output_t output = composerWrap->satisfy_request_ref(request);
@@ -234,14 +234,14 @@ NAN_METHOD(ComposerWrapper::composeIncremental)
   if(!info[0]->IsObject()) {
     return Nan::ThrowError(Nan::New("Need a request object as first argument.").ToLocalChecked());
   }
-  Request_t request(new nlohmann::json(nlohmann::json::object()));
+  Request_t request(new ntagg::json(ntagg::json::object()));
   Nan::MaybeLocal<v8::Object> maybe_obj = Nan::To<v8::Object>(info[0]);
   if (!maybe_obj.IsEmpty()) {
     v8::Local<v8::Object> obj = maybe_obj.ToLocalChecked();
     Nan::JSON NanJSON;
     v8::Local<v8::String> v8string = NanJSON.Stringify(obj).ToLocalChecked();
     v8::String::Utf8Value s(isolate,v8string);
-    request = Request_t(new nlohmann::json(nlohmann::json::parse(*s)));
+    request = Request_t(new ntagg::json(ntagg::json::parse(*s)));
   }
     
   if(!info[1]->IsFunction()) {

@@ -2,11 +2,11 @@
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
 |  |  |__   |  |  | | | |  version 3.6.1
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
+|_____|_____|_____|_|___|  https://github.com/ntagg/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://ntagg.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -48,12 +48,12 @@ SOFTWARE.
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
-// #include <nlohmann/adl_serializer.hpp>
+// #include <ntagg/adl_serializer.hpp>
 
 
 #include <utility>
 
-// #include <nlohmann/detail/conversions/from_json.hpp>
+// #include <ntagg/detail/conversions/from_json.hpp>
 
 
 #include <algorithm> // transform
@@ -69,19 +69,19 @@ SOFTWARE.
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
 
 #include <exception> // exception
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
-// #include <nlohmann/detail/input/position_t.hpp>
+// #include <ntagg/detail/input/position_t.hpp>
 
 
 #include <cstddef> // size_t
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -103,10 +103,10 @@ struct position_t
 };
 
 } // namespace detail
-} // namespace nlohmann
+} // namespace ntagg
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -446,9 +446,9 @@ class other_error : public exception
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
 
 #include <utility> // pair
@@ -460,11 +460,11 @@ class other_error : public exception
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
     #if defined(__clang__)
         #if (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__) < 30400
-            #error "unsupported Clang version - see https://github.com/nlohmann/json#supported-compilers"
+            #error "unsupported Clang version - see https://github.com/ntagg/json#supported-compilers"
         #endif
     #elif defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
         #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40800
-            #error "unsupported GCC version - see https://github.com/nlohmann/json#supported-compilers"
+            #error "unsupported GCC version - see https://github.com/ntagg/json#supported-compilers"
         #endif
     #endif
 #endif
@@ -605,14 +605,14 @@ class other_error : public exception
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
 
 #include <ciso646> // not
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -668,9 +668,9 @@ struct static_const
 template<typename T>
 constexpr T static_const<T>::value;
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
 
 #include <ciso646> // not
@@ -678,15 +678,15 @@ constexpr T static_const<T>::value;
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
 
-// #include <nlohmann/detail/iterators/iterator_traits.hpp>
+// #include <ntagg/detail/iterators/iterator_traits.hpp>
 
 
 #include <iterator> // random_access_iterator_tag
 
-// #include <nlohmann/detail/meta/void_t.hpp>
+// #include <ntagg/detail/meta/void_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -696,12 +696,12 @@ template <typename ...Ts> struct make_void
 };
 template <typename ...Ts> using void_t = typename make_void<Ts...>::type;
 } // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -722,7 +722,7 @@ struct iterator_types <
 };
 
 // This is required as some compilers implement std::iterator_traits in a way that
-// doesn't work with SFINAE. See https://github.com/nlohmann/json/issues/1341.
+// doesn't work with SFINAE. See https://github.com/ntagg/json/issues/1341.
 template <typename T, typename = void>
 struct iterator_traits
 {
@@ -744,22 +744,22 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
     using reference = T&;
 };
 } // namespace detail
-} // namespace nlohmann
+} // namespace ntagg
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <ntagg/detail/meta/detected.hpp>
 
 
 #include <type_traits>
 
-// #include <nlohmann/detail/meta/void_t.hpp>
+// #include <ntagg/detail/meta/void_t.hpp>
 
 
 // http://en.cppreference.com/w/cpp/experimental/is_detected
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -809,9 +809,9 @@ template <class To, template <class...> class Op, class... Args>
 using is_detected_convertible =
     std::is_convertible<detected_t<Op, Args...>, To>;
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/json_fwd.hpp>
+// #include <ntagg/json_fwd.hpp>
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
 #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
@@ -823,10 +823,10 @@ using is_detected_convertible =
 
 /*!
 @brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
+@see https://github.com/ntagg
 @since version 1.0.0
 */
-namespace nlohmann
+namespace ntagg
 {
 /*!
 @brief default JSONSerializer template argument
@@ -873,12 +873,12 @@ uses the standard template types.
 @since version 1.0.0
 */
 using json = basic_json<>;
-}  // namespace nlohmann
+}  // namespace ntagg
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
 
-namespace nlohmann
+namespace ntagg
 {
 /*!
 @brief detail namespace with internal helper functions
@@ -1225,9 +1225,9 @@ template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
 #include <array> // array
@@ -1236,7 +1236,7 @@ struct is_compatible_type
 #include <cstdint> // uint8_t
 #include <string> // string
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -1305,10 +1305,10 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     return l_index < order.size() and r_index < order.size() and order[l_index] < order[r_index];
 }
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -1675,9 +1675,9 @@ namespace
 {
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
 } // namespace
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
+// #include <ntagg/detail/conversions/to_json.hpp>
 
 
 #include <algorithm> // copy
@@ -1690,7 +1690,7 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+// #include <ntagg/detail/iterators/iteration_proxy.hpp>
 
 
 #include <cstddef> // size_t
@@ -1698,12 +1698,12 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -1819,59 +1819,59 @@ template<typename IteratorType> class iteration_proxy
 };
 // Structured Bindings Support
 // For further reference see https://blog.tartanllama.xyz/structured-bindings/
-// And see https://github.com/nlohmann/json/pull/1391
+// And see https://github.com/ntagg/json/pull/1391
 template <std::size_t N, typename IteratorType, enable_if_t<N == 0, int> = 0>
-auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decltype(i.key())
+auto get(const ntagg::detail::iteration_proxy_value<IteratorType>& i) -> decltype(i.key())
 {
     return i.key();
 }
 // Structured Bindings Support
 // For further reference see https://blog.tartanllama.xyz/structured-bindings/
-// And see https://github.com/nlohmann/json/pull/1391
+// And see https://github.com/ntagg/json/pull/1391
 template <std::size_t N, typename IteratorType, enable_if_t<N == 1, int> = 0>
-auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decltype(i.value())
+auto get(const ntagg::detail::iteration_proxy_value<IteratorType>& i) -> decltype(i.value())
 {
     return i.value();
 }
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
 // The Addition to the STD Namespace is required to add
 // Structured Bindings Support to the iteration_proxy_value class
 // For further reference see https://blog.tartanllama.xyz/structured-bindings/
-// And see https://github.com/nlohmann/json/pull/1391
+// And see https://github.com/ntagg/json/pull/1391
 namespace std
 {
 #if defined(__clang__)
-    // Fix: https://github.com/nlohmann/json/issues/1401
+    // Fix: https://github.com/ntagg/json/issues/1401
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif
 template <typename IteratorType>
-class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
+class tuple_size<::ntagg::detail::iteration_proxy_value<IteratorType>>
             : public std::integral_constant<std::size_t, 2> {};
 
 template <std::size_t N, typename IteratorType>
-class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
+class tuple_element<N, ::ntagg::detail::iteration_proxy_value<IteratorType >>
 {
   public:
     using type = decltype(
                      get<N>(std::declval <
-                            ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
+                            ::ntagg::detail::iteration_proxy_value<IteratorType >> ()));
 };
 #if defined(__clang__)
     #pragma clang diagnostic pop
 #endif
 } // namespace std
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -2161,7 +2161,7 @@ void to_json(BasicJsonType& j, const std::pair<Args...>& p)
     j = { p.first, p.second };
 }
 
-// for https://github.com/nlohmann/json/pull/1134
+// for https://github.com/ntagg/json/pull/1134
 template < typename BasicJsonType, typename T,
            enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value, int> = 0>
 void to_json(BasicJsonType& j, const T& b)
@@ -2197,10 +2197,10 @@ namespace
 {
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 } // namespace
-}  // namespace nlohmann
+}  // namespace ntagg
 
 
-namespace nlohmann
+namespace ntagg
 {
 
 template<typename, typename>
@@ -2217,10 +2217,10 @@ struct adl_serializer
     */
     template<typename BasicJsonType, typename ValueType>
     static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
-    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())
+        noexcept(::ntagg::from_json(std::forward<BasicJsonType>(j), val)))
+    -> decltype(::ntagg::from_json(std::forward<BasicJsonType>(j), val), void())
     {
-        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
+        ::ntagg::from_json(std::forward<BasicJsonType>(j), val);
     }
 
     /*!
@@ -2234,22 +2234,22 @@ struct adl_serializer
     */
     template <typename BasicJsonType, typename ValueType>
     static auto to_json(BasicJsonType& j, ValueType&& val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
-    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)), void())
+        noexcept(::ntagg::to_json(j, std::forward<ValueType>(val))))
+    -> decltype(::ntagg::to_json(j, std::forward<ValueType>(val)), void())
     {
-        ::nlohmann::to_json(j, std::forward<ValueType>(val));
+        ::ntagg::to_json(j, std::forward<ValueType>(val));
     }
 };
 
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/conversions/from_json.hpp>
+// #include <ntagg/detail/conversions/from_json.hpp>
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
+// #include <ntagg/detail/conversions/to_json.hpp>
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/input/binary_reader.hpp>
+// #include <ntagg/detail/input/binary_reader.hpp>
 
 
 #include <algorithm> // generate_n
@@ -2265,9 +2265,9 @@ struct adl_serializer
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <ntagg/detail/input/input_adapters.hpp>
 
 
 #include <array> // array
@@ -2283,12 +2283,12 @@ struct adl_serializer
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
 
-// #include <nlohmann/detail/iterators/iterator_traits.hpp>
+// #include <ntagg/detail/iterators/iterator_traits.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -2708,9 +2708,9 @@ class input_adapter
     input_adapter_t ia = nullptr;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/input/json_sax.hpp>
+// #include <ntagg/detail/input/json_sax.hpp>
 
 
 #include <cassert> // assert
@@ -2719,18 +2719,18 @@ class input_adapter
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 
 /*!
 @brief SAX interface
 
-This class describes the SAX interface used by @ref nlohmann::json::sax_parse.
+This class describes the SAX interface used by @ref ntagg::json::sax_parse.
 Each function is called in different situations while the input is parsed. The
 boolean return value informs the parser whether to continue processing the
 input.
@@ -3288,7 +3288,7 @@ class json_sax_dom_callback_parser
         }
 
         // skip this value if we already decided to skip the parent
-        // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
+        // (https://github.com/ntagg/json/issues/971#issuecomment-413678360)
         if (not ref_stack.back())
         {
             return {false, nullptr};
@@ -3412,23 +3412,23 @@ class json_sax_acceptor
 };
 }  // namespace detail
 
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta/is_sax.hpp>
+// #include <ntagg/detail/meta/is_sax.hpp>
 
 
 #include <cstdint> // size_t
 #include <utility> // declval
 #include <string> // string
 
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <ntagg/detail/meta/detected.hpp>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -3560,12 +3560,12 @@ struct is_sax_static_asserts
         "std::string&, const exception&)");
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -5528,11 +5528,11 @@ class binary_reader
     json_sax_t* sax = nullptr;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <ntagg/detail/input/input_adapters.hpp>
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <ntagg/detail/input/lexer.hpp>
 
 
 #include <array> // array
@@ -5545,14 +5545,14 @@ class binary_reader
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <ntagg/detail/input/input_adapters.hpp>
 
-// #include <nlohmann/detail/input/position_t.hpp>
+// #include <ntagg/detail/input/position_t.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -7039,9 +7039,9 @@ scan_number_done:
     const char decimal_point_char = '.';
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/input/parser.hpp>
+// #include <ntagg/detail/input/parser.hpp>
 
 
 #include <cassert> // assert
@@ -7052,22 +7052,22 @@ scan_number_done:
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
+// #include <ntagg/detail/input/input_adapters.hpp>
 
-// #include <nlohmann/detail/input/json_sax.hpp>
+// #include <ntagg/detail/input/json_sax.hpp>
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <ntagg/detail/input/lexer.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta/is_sax.hpp>
+// #include <ntagg/detail/meta/is_sax.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -7544,18 +7544,18 @@ class parser
     const bool allow_exceptions = true;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
+// #include <ntagg/detail/iterators/internal_iterator.hpp>
 
 
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+// #include <ntagg/detail/iterators/primitive_iterator.hpp>
 
 
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -7669,10 +7669,10 @@ class primitive_iterator_t
     }
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -7680,7 +7680,7 @@ namespace detail
 @brief an iterator value
 
 @note This structure could easily be a union, but MSVC currently does not allow
-unions members with complex constructors, see https://github.com/nlohmann/json/pull/105.
+unions members with complex constructors, see https://github.com/ntagg/json/pull/105.
 */
 template<typename BasicJsonType> struct internal_iterator
 {
@@ -7692,31 +7692,31 @@ template<typename BasicJsonType> struct internal_iterator
     primitive_iterator_t primitive_iterator {};
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/iterators/iter_impl.hpp>
+// #include <ntagg/detail/iterators/iter_impl.hpp>
 
 
 #include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
+// #include <ntagg/detail/iterators/internal_iterator.hpp>
 
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+// #include <ntagg/detail/iterators/primitive_iterator.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -7738,7 +7738,7 @@ This class implements a both iterators (iterator and const_iterator) for the
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
 @since version 1.0.0, simplified in version 2.0.9, change to bidirectional
-       iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
+       iterators in version 3.0.0 (see https://github.com/ntagg/json/issues/593)
 */
 template<typename BasicJsonType>
 class iter_impl
@@ -7827,7 +7827,7 @@ class iter_impl
     @param[in] other const iterator to copy from
     @note This copy constuctor had to be defined explicitely to circumvent a bug
           occuring on msvc v19.0 compiler (VS 2015) debug build. For more
-          information refer to: https://github.com/nlohmann/json/issues/1608
+          information refer to: https://github.com/ntagg/json/issues/1608
     */
     iter_impl(const iter_impl<const BasicJsonType>& other) noexcept
         : m_object(other.m_object), m_it(other.m_it) {}
@@ -8324,18 +8324,18 @@ class iter_impl
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
 }  // namespace detail
-} // namespace nlohmann
+} // namespace ntagg
 
-// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+// #include <ntagg/detail/iterators/iteration_proxy.hpp>
 
-// #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
+// #include <ntagg/detail/iterators/json_reverse_iterator.hpp>
 
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -8447,11 +8447,11 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     }
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+// #include <ntagg/detail/iterators/primitive_iterator.hpp>
 
-// #include <nlohmann/detail/json_pointer.hpp>
+// #include <ntagg/detail/json_pointer.hpp>
 
 
 #include <algorithm> // all_of
@@ -8461,14 +8461,14 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 #include <utility> // move
 #include <vector> // vector
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 template<typename BasicJsonType>
 class json_pointer
@@ -9393,18 +9393,18 @@ class json_pointer
     /// the reference tokens
     std::vector<std::string> reference_tokens;
 };
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/json_ref.hpp>
+// #include <ntagg/detail/json_ref.hpp>
 
 
 #include <initializer_list>
 #include <utility>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -9465,15 +9465,15 @@ class json_ref
     const bool is_rvalue;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
+// #include <ntagg/detail/meta/type_traits.hpp>
 
-// #include <nlohmann/detail/output/binary_writer.hpp>
+// #include <ntagg/detail/output/binary_writer.hpp>
 
 
 #include <algorithm> // reverse
@@ -9483,9 +9483,9 @@ class json_ref
 #include <limits> // numeric_limits
 #include <string> // string
 
-// #include <nlohmann/detail/input/binary_reader.hpp>
+// #include <ntagg/detail/input/binary_reader.hpp>
 
-// #include <nlohmann/detail/output/output_adapters.hpp>
+// #include <ntagg/detail/output/output_adapters.hpp>
 
 
 #include <algorithm> // copy
@@ -9497,7 +9497,7 @@ class json_ref
 #include <string> // basic_string
 #include <vector> // vector
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -9604,10 +9604,10 @@ class output_adapter
     output_adapter_t<CharType> oa = nullptr;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -10884,7 +10884,7 @@ class binary_writer
     // The following to_char_type functions are implement the conversion
     // between uint8_t and CharType. In case CharType is not unsigned,
     // such a conversion is required to allow values greater than 128.
-    // See <https://github.com/nlohmann/json/issues/1286> for a discussion.
+    // See <https://github.com/ntagg/json/issues/1286> for a discussion.
     template < typename C = CharType,
                enable_if_t < std::is_signed<C>::value and std::is_signed<char>::value > * = nullptr >
     static constexpr CharType to_char_type(std::uint8_t x) noexcept
@@ -10929,11 +10929,11 @@ class binary_writer
     output_adapter_t<CharType> oa = nullptr;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/output/output_adapters.hpp>
+// #include <ntagg/detail/output/output_adapters.hpp>
 
-// #include <nlohmann/detail/output/serializer.hpp>
+// #include <ntagg/detail/output/serializer.hpp>
 
 
 #include <algorithm> // reverse, remove, fill, find, none_of
@@ -10950,7 +10950,7 @@ class binary_writer
 #include <type_traits> // is_same
 #include <utility> // move
 
-// #include <nlohmann/detail/conversions/to_chars.hpp>
+// #include <ntagg/detail/conversions/to_chars.hpp>
 
 
 #include <array> // array
@@ -10962,7 +10962,7 @@ class binary_writer
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -12047,22 +12047,22 @@ char* to_chars(char* first, const char* last, FloatType value)
 }
 
 } // namespace detail
-} // namespace nlohmann
+} // namespace ntagg
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <ntagg/detail/exceptions.hpp>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <ntagg/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
+// #include <ntagg/detail/meta/cpp_future.hpp>
 
-// #include <nlohmann/detail/output/binary_writer.hpp>
+// #include <ntagg/detail/output/binary_writer.hpp>
 
-// #include <nlohmann/detail/output/output_adapters.hpp>
+// #include <ntagg/detail/output/output_adapters.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace ntagg
 {
 namespace detail
 {
@@ -12751,7 +12751,7 @@ class serializer
     void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
         char* begin = number_buffer.data();
-        char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
+        char* end = ::ntagg::detail::to_chars(begin, begin + number_buffer.size(), x);
 
         o->write_characters(begin, static_cast<size_t>(end - begin));
     }
@@ -12884,19 +12884,19 @@ class serializer
     const error_handler_t error_handler;
 };
 }  // namespace detail
-}  // namespace nlohmann
+}  // namespace ntagg
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <ntagg/detail/value_t.hpp>
 
-// #include <nlohmann/json_fwd.hpp>
+// #include <ntagg/json_fwd.hpp>
 
 
 /*!
 @brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
+@see https://github.com/ntagg
 @since version 1.0.0
 */
-namespace nlohmann
+namespace ntagg
 {
 
 /*!
@@ -12989,48 +12989,48 @@ class basic_json
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
-    friend ::nlohmann::json_pointer<basic_json>;
-    friend ::nlohmann::detail::parser<basic_json>;
-    friend ::nlohmann::detail::serializer<basic_json>;
+    friend ::ntagg::json_pointer<basic_json>;
+    friend ::ntagg::detail::parser<basic_json>;
+    friend ::ntagg::detail::serializer<basic_json>;
     template<typename BasicJsonType>
-    friend class ::nlohmann::detail::iter_impl;
+    friend class ::ntagg::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
-    friend class ::nlohmann::detail::binary_writer;
+    friend class ::ntagg::detail::binary_writer;
     template<typename BasicJsonType, typename SAX>
-    friend class ::nlohmann::detail::binary_reader;
+    friend class ::ntagg::detail::binary_reader;
     template<typename BasicJsonType>
-    friend class ::nlohmann::detail::json_sax_dom_parser;
+    friend class ::ntagg::detail::json_sax_dom_parser;
     template<typename BasicJsonType>
-    friend class ::nlohmann::detail::json_sax_dom_callback_parser;
+    friend class ::ntagg::detail::json_sax_dom_callback_parser;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
     // convenience aliases for types residing in namespace detail;
-    using lexer = ::nlohmann::detail::lexer<basic_json>;
-    using parser = ::nlohmann::detail::parser<basic_json>;
+    using lexer = ::ntagg::detail::lexer<basic_json>;
+    using parser = ::ntagg::detail::parser<basic_json>;
 
-    using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
+    using primitive_iterator_t = ::ntagg::detail::primitive_iterator_t;
     template<typename BasicJsonType>
-    using internal_iterator = ::nlohmann::detail::internal_iterator<BasicJsonType>;
+    using internal_iterator = ::ntagg::detail::internal_iterator<BasicJsonType>;
     template<typename BasicJsonType>
-    using iter_impl = ::nlohmann::detail::iter_impl<BasicJsonType>;
+    using iter_impl = ::ntagg::detail::iter_impl<BasicJsonType>;
     template<typename Iterator>
-    using iteration_proxy = ::nlohmann::detail::iteration_proxy<Iterator>;
-    template<typename Base> using json_reverse_iterator = ::nlohmann::detail::json_reverse_iterator<Base>;
+    using iteration_proxy = ::ntagg::detail::iteration_proxy<Iterator>;
+    template<typename Base> using json_reverse_iterator = ::ntagg::detail::json_reverse_iterator<Base>;
 
     template<typename CharType>
-    using output_adapter_t = ::nlohmann::detail::output_adapter_t<CharType>;
+    using output_adapter_t = ::ntagg::detail::output_adapter_t<CharType>;
 
-    using binary_reader = ::nlohmann::detail::binary_reader<basic_json>;
-    template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
+    using binary_reader = ::ntagg::detail::binary_reader<basic_json>;
+    template<typename CharType> using binary_writer = ::ntagg::detail::binary_writer<basic_json, CharType>;
 
-    using serializer = ::nlohmann::detail::serializer<basic_json>;
+    using serializer = ::ntagg::detail::serializer<basic_json>;
 
   public:
     using value_t = detail::value_t;
-    /// JSON Pointer, see @ref nlohmann::json_pointer
-    using json_pointer = ::nlohmann::json_pointer<basic_json>;
+    /// JSON Pointer, see @ref ntagg::json_pointer
+    using json_pointer = ::ntagg::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// how to treat decoding errors
@@ -13039,7 +13039,7 @@ class basic_json
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
     using input_format_t = detail::input_format_t;
-    /// SAX interface type, see @ref nlohmann::json_sax
+    /// SAX interface type, see @ref ntagg::json_sax
     using json_sax_t = json_sax<basic_json>;
 
     ////////////////
@@ -13149,7 +13149,7 @@ class basic_json
 
         result["copyright"] = "(C) 2013-2017 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
-        result["url"] = "https://github.com/nlohmann/json";
+        result["url"] = "https://github.com/ntagg/json";
         result["version"]["string"] =
             std::to_string(NLOHMANN_JSON_VERSION_MAJOR) + "." +
             std::to_string(NLOHMANN_JSON_VERSION_MINOR) + "." +
@@ -17759,7 +17759,7 @@ class basic_json
     @note This function is required to resolve an ambiguous overload error,
           because pairs like `{"key", "value"}` can be both interpreted as
           `object_t::value_type` or `std::initializer_list<basic_json>`, see
-          https://github.com/nlohmann/json/issues/235 for more information.
+          https://github.com/ntagg/json/issues/235 for more information.
 
     @liveexample{The example shows how initializer lists are treated as
     objects when possible.,push_back__initializer_list}
@@ -17886,7 +17886,7 @@ class basic_json
 
     /// Helper for insertion of an iterator
     /// @note: This uses std::distance to support GCC 4.8,
-    ///        see https://github.com/nlohmann/json/pull/1257
+    ///        see https://github.com/ntagg/json/pull/1257
     template<typename... Args>
     iterator insert_iterator(const_iterator pos, Args&& ... args)
     {
@@ -18593,7 +18593,7 @@ class basic_json
             {
                 case value_t::array:
                     // note parentheses are necessary, see
-                    // https://github.com/nlohmann/json/issues/1530
+                    // https://github.com/ntagg/json/issues/1530
                     return (*lhs.m_value.array) < (*rhs.m_value.array);
 
                 case value_t::object:
@@ -20836,7 +20836,7 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 {
     return j.dump();
 }
-} // namespace nlohmann
+} // namespace ntagg
 
 ///////////////////////
 // nonmember support //
@@ -20848,35 +20848,35 @@ namespace std
 
 /// hash value for JSON objects
 template<>
-struct hash<nlohmann::json>
+struct hash<ntagg::json>
 {
     /*!
     @brief return a hash value for a JSON object
 
     @since version 1.0.0
     */
-    std::size_t operator()(const nlohmann::json& j) const
+    std::size_t operator()(const ntagg::json& j) const
     {
         // a naive hashing via the string representation
-        const auto& h = hash<nlohmann::json::string_t>();
+        const auto& h = hash<ntagg::json::string_t>();
         return h(j.dump());
     }
 };
 
 /// specialization for std::less<value_t>
 /// @note: do not remove the space after '<',
-///        see https://github.com/nlohmann/json/pull/679
+///        see https://github.com/ntagg/json/pull/679
 template<>
-struct less< ::nlohmann::detail::value_t>
+struct less< ::ntagg::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
     @since version 3.0.0
     */
-    bool operator()(nlohmann::detail::value_t lhs,
-                    nlohmann::detail::value_t rhs) const noexcept
+    bool operator()(ntagg::detail::value_t lhs,
+                    ntagg::detail::value_t rhs) const noexcept
     {
-        return nlohmann::detail::operator<(lhs, rhs);
+        return ntagg::detail::operator<(lhs, rhs);
     }
 };
 
@@ -20886,9 +20886,9 @@ struct less< ::nlohmann::detail::value_t>
 @since version 1.0.0
 */
 template<>
-inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
-    is_nothrow_move_constructible<nlohmann::json>::value and
-    is_nothrow_move_assignable<nlohmann::json>::value
+inline void swap<ntagg::json>(ntagg::json& j1, ntagg::json& j2) noexcept(
+    is_nothrow_move_constructible<ntagg::json>::value and
+    is_nothrow_move_assignable<ntagg::json>::value
 )
 {
     j1.swap(j2);
@@ -20909,9 +20909,9 @@ if no parse error occurred.
 
 @since version 1.0.0
 */
-inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+inline ntagg::json operator "" _json(const char* s, std::size_t n)
 {
-    return nlohmann::json::parse(s, s + n);
+    return ntagg::json::parse(s, s + n);
 }
 
 /*!
@@ -20927,12 +20927,12 @@ object if no parse error occurred.
 
 @since version 2.0.0
 */
-inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+inline ntagg::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
 {
-    return nlohmann::json::json_pointer(std::string(s, n));
+    return ntagg::json::json_pointer(std::string(s, n));
 }
 
-// #include <nlohmann/detail/macro_unscope.hpp>
+// #include <ntagg/detail/macro_unscope.hpp>
 
 
 // restore GCC/clang diagnostic settings

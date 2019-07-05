@@ -22,7 +22,7 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::map;
-using nlohmann::json;
+using ntagg::json;
   
 TreeReader::TreeReader(TTree* tree)
   : fTree(tree)

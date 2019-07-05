@@ -22,7 +22,7 @@ clean:
 
 pwd := $(shell pwd)
 
-CPP := g++ -std=c++17
+CPP := g++ -std=c++17 -g
 # CPP = clang++ -O0 -std=c++17
 LD := $(CPP)
 shlibsuffix=so

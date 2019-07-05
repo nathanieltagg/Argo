@@ -48,7 +48,7 @@
 #include "DataFormat/hit.h"
 
 using namespace std;
-using nlohmann::json;
+using ntagg::json;
 
 
 LarliteComposer::LarliteComposer()

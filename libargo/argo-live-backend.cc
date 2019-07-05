@@ -31,7 +31,7 @@ using namespace gov::fnal::uboone::dispatcher;
 using gov::fnal::uboone::datatypes::ub_EventRecord;
 
 using namespace std;
-using nlohmann::json;
+using ntagg::json;
 
 // Configuration globals.
 string oDispHost;

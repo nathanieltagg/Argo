@@ -33,7 +33,7 @@ public:
   protected:
   void compose();
   void composeHeader();
-  bool composeHeaderTrigger(nlohmann::json& trig);
+  bool composeHeaderTrigger(ntagg::json& trig);
   void composeTPC();
   void composeTPC_SN();
   void composeHits();
@@ -73,7 +73,7 @@ public:
   std::shared_ptr<wiremap_t> wireMap;
   std::shared_ptr<wiremap_t> noiseMap;
 
-  nlohmann::json  m_stats;  
+  ntagg::json  m_stats;  
 };
 
 extern gov::fnal::uboone::online::Plexus gPlexus;

@@ -36,18 +36,18 @@ public:
 
   std::string getStr(TLeaf* leaf, int index = 0, int second_index = -1);
 
-  nlohmann::json getJson(const std::string& leafname, int index = 0, int second_index = -1);
-  nlohmann::json getJson(TLeaf* leaf, int index = 0, int second_index = -1);
+  ntagg::json getJson(const std::string& leafname, int index = 0, int second_index = -1);
+  ntagg::json getJson(TLeaf* leaf, int index = 0, int second_index = -1);
   
-  nlohmann::json   makeArray(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs, int limit=9999999);
-  nlohmann::json   makeFArray(const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
+  ntagg::json   makeArray(const std::vector<std::pair< std::string,std::string> >& key_leaf_pairs, int limit=9999999);
+  ntagg::json   makeFArray(const std::vector<std::pair< std::string,std::string> >& key_formula_pairs);
 
-  nlohmann::json   makeSimpleFArray(const std::string& k);
+  ntagg::json   makeSimpleFArray(const std::string& k);
 
 
   // Commands to get values via TTreeFormulas.
   double         getF(const std::string& formula, int index = 0);
-  nlohmann::json jsonF(const std::string& formula, int index = 0);
+  ntagg::json jsonF(const std::string& formula, int index = 0);
 
 
   // 

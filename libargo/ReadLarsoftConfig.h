@@ -5,6 +5,6 @@
 class TFile;
 
 void ReadLarsoftConfigAsJson(TFile* file);
-void ReadLarsoftConfig(TFile* file, nlohmann::json& request); // request is IO.
+void ReadLarsoftConfig(TFile* file, ntagg::json& request); // request is IO.
 
 #endif

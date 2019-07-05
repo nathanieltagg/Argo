@@ -33,7 +33,7 @@ using gov::fnal::uboone::online::Plexus;
 
 gov::fnal::uboone::online::Plexus gPlexus;
 
-using nlohmann::json;
+using ntagg::json;
 
 UbdaqComposer::UbdaqComposer()
   : fmintdc(0)

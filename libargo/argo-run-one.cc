@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
 
 
-  Config_t configuration(new nlohmann::json);
+  Config_t configuration(new ntagg::json);
   ::mkdir(imagepath.c_str(), 0755); // don't check for success; path may already exist.
   (*configuration)["CacheStoragePath"] = imagepath;
   (*configuration)["CacheStorageUrl"]  = imageurl;
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
   cout << "    From:     --" << entrystart << " to " << entryend << endl;
   cout << "    Options:  --" << options << endl;
 
-  Request_t request(new nlohmann::json);
+  Request_t request(new ntagg::json);
   (*request)["options"] = options;
   (*request)["filename"] = filename;
   (*request)["selection"] = selection;

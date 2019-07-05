@@ -6,8 +6,8 @@
 #include <memory>
 
 
-typedef std::shared_ptr<nlohmann::json> Request_t ;
-typedef std::shared_ptr<nlohmann::json> Config_t  ;
+typedef std::shared_ptr<ntagg::json> Request_t ;
+typedef std::shared_ptr<ntagg::json> Config_t  ;
 typedef std::shared_ptr<std::string>    Output_t  ;
 
 
@@ -67,7 +67,7 @@ protected:
   Config_t       m_config;  // The global config - things to be applied to every event, not just the current one.
   boost::mutex   m_mutex;   // local mutex, maybe useless?
   Request_t      m_request; // Place to store the request
-  nlohmann::json m_result;  // Place to store all resulting data before transmission.
+  ntagg::json m_result;  // Place to store all resulting data before transmission.
   std::string    m_cur_event_descriptor; // Unique string for this event. Usually something like pathname+entry or run|sub|event
   
   OutputCallback_t   m_output_callback;   // Link to event you call when you have some data to deliver.
@@ -82,7 +82,7 @@ protected:
   int64_t find_entry_in_tree(TTree* inTree, std::string& inSelection, int64_t inStart, int64_t inEnd, std::string& outError);
 
   // Utility function for composing some monitoring data.
-  virtual nlohmann::json monitor_data();
+  virtual ntagg::json monitor_data();
 
   // Utilty function for returning entire assembled event.
   virtual Output_t       dump_result() { Output_t o(new std::string("{\"record\":")); o->append(m_result.dump()); o->append("}"); return o; }
@@ -99,7 +99,7 @@ protected:
   void progress_made(const std::string msg="",float increment=1); // {progress: m_progress+=increment, state:msg} sent to callback.
   
   // Sends a piece off as part of an incremental output.  Wraps in a "piece" object.
-  void dispatch_piece(const nlohmann::json& p);
+  void dispatch_piece(const ntagg::json& p);
   
   
   
@@ -111,7 +111,7 @@ protected:
   };
   
   typedef std::list<piece_t> pieces_t;
-  virtual bool parse_pieces(nlohmann::json& request, pieces_t& outPieces); // Return 'true' if a piece of some kind is requested, indicating that an incremental build has been requested.
+  virtual bool parse_pieces(ntagg::json& request, pieces_t& outPieces); // Return 'true' if a piece of some kind is requested, indicating that an incremental build has been requested.
   
   
   virtual bool dispatch_existing_pieces(pieces_t& ioPieces); // Look at each piece and see if something exists in the m_result that matches. if so, dispatch it.  Return true if everything could be satisfied. If not, return false and ioPieces contains undispatched items.
