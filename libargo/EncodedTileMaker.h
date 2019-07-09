@@ -27,8 +27,8 @@ public:
 
   void process();
   
-  nlohmann::json json() {
-    nlohmann::json j;
+  ntagg::json json() {
+    ntagg::json j;
     j["url"]=m_outUrl + m_filename;
     j["x"]=m_tdcStart;
     j["y"]=m_wireStart;
@@ -56,7 +56,7 @@ public:
   
 };
 
-void MakeEncodedTileset(nlohmann::json& output,
+void MakeEncodedTileset(ntagg::json& output,
                         std::shared_ptr<wiremap_t> wireMap, 
                         std::shared_ptr<wiremap_t> noiseWireMap,
                         size_t nwires,
@@ -67,7 +67,7 @@ void MakeEncodedTileset(nlohmann::json& output,
                         bool fill_empty_space=false,
                         size_t max_threads = 100);
 
-void MakeLowres(nlohmann::json& r,
+void MakeLowres(ntagg::json& r,
             std::shared_ptr<wiremap_t> wireMap, 
             std::shared_ptr<wiremap_t> noiseWireMap,
             size_t nwire,

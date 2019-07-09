@@ -15,7 +15,7 @@ public:
   TimeReporter(const std::string& name="") :fName(name), t() {};
   ~TimeReporter() { report(); }
   
-  void addto(nlohmann::json& stats) { stats[fName]=t.Count(); }
+  void addto(ntagg::json& stats) { stats[fName]=t.Count(); }
 };
 
 

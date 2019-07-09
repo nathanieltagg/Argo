@@ -30,7 +30,7 @@
 
 
 using namespace std;
-using nlohmann::json;
+using ntagg::json;
 
 AnalysisTreeComposer::AnalysisTreeComposer()
   : m_file(nullptr)

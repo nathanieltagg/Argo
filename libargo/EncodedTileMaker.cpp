@@ -14,7 +14,7 @@
 // threaded jobs
 
 
-void MakeLowres(nlohmann::json& r,
+void MakeLowres(ntagg::json& r,
               std::shared_ptr<wiremap_t> wireMap, 
               std::shared_ptr<wiremap_t> noiseWireMap, 
               size_t nwire,
@@ -72,8 +72,8 @@ void MakeLowres(nlohmann::json& r,
   }
   EncodedTileMaker tm(wireMap_out, noiseWireMap_out, 0, nwire_out, 0, nsamp_out, path, url, fill_empty_space);
   tm.process();
-  nlohmann::json jtiles;
-  nlohmann::json jrow;
+  ntagg::json jtiles;
+  ntagg::json jrow;
   jrow.push_back(tm.json());
   jtiles.push_back(jrow);      
   r.emplace("wireimg_scale_x",factor_x);
@@ -83,7 +83,7 @@ void MakeLowres(nlohmann::json& r,
 
 
 
-void MakeEncodedTileset(nlohmann::json& r,
+void MakeEncodedTileset(ntagg::json& r,
                         std::shared_ptr<wiremap_t> wireMap, 
                         std::shared_ptr<wiremap_t> noiseWireMap, 
                         size_t nwire,
@@ -146,10 +146,10 @@ void MakeEncodedTileset(nlohmann::json& r,
     thread_pool.JoinAll();
     std::cout << "Finished tile threads"<< std::endl;
 
-    nlohmann::json jtiles;
+    ntagg::json jtiles;
     for(int i=0;i<table.size();i++) {
       row_t& row = table[i];
-      nlohmann::json jrow;
+      ntagg::json jrow;
       for(int j=0;j<row.size();j++) {
         EncodedTileMaker& tilemaker = row[j];
         jrow.push_back(tilemaker.json());
@@ -213,7 +213,7 @@ void MakeEncodedTileset(nlohmann::json& r,
     for(int i=0;i<ntdc;i++) { timeProfile.Fill(i,timeProfileData[i]); }
   
     r.emplace("timeHist",TH1ToHistogram(&timeProfile));
-    nlohmann::json jPlaneHists;
+    ntagg::json jPlaneHists;
     jPlaneHists.push_back(TH1ToHistogram(planeProfile[0]));
     jPlaneHists.push_back(TH1ToHistogram(planeProfile[1]));
     jPlaneHists.push_back(TH1ToHistogram(planeProfile[2]));

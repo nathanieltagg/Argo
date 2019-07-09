@@ -29,7 +29,7 @@ protected:
   void composeTracks();
   void composeOpFlash();
   
-  nlohmann::json  m_stats;
+  ntagg::json  m_stats;
   std::string m_filename;
   TFile*      m_file;
   TTree*      m_tree;

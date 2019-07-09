@@ -82,8 +82,8 @@ public:
         Output_t request_str;
         OutputType_t type;
         read_from_pipe(_input_pipe,type,request_str);
-        Request_t req(new nlohmann::json);
-        *req = nlohmann::json::parse(*request_str);
+        Request_t req(new ntagg::json);
+        *req = ntagg::json::parse(*request_str);
         std::cout << "Doing request " << req->dump(2) << std::endl;
         try{
           Output_t result = _composer->satisfy_request(req);          

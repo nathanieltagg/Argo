@@ -3,7 +3,7 @@
 
 int main(void)
 {
-  using json = nlohmann::json;
+  using json = ntagg::json;
   // create an empty structure (null)
   json j;
 

@@ -40,7 +40,7 @@ extern "C" {
 using art::ParameterSetBlob;
 using art::ParameterSetMap;
 using fhicl::ParameterSet;
-using nlohmann::json;
+using ntagg::json;
 using std::back_inserter;
 using std::string;
 using std::vector;
@@ -163,7 +163,7 @@ read_all_parameter_sets(TFile& file, std::ostream& errors)
 
 boost::mutex g_larsoft_fcl_mutex;
 
-bool ReadLarsoftConfig_check(const ParameterSet& ps, nlohmann::json& conditions) 
+bool ReadLarsoftConfig_check(const ParameterSet& ps, ntagg::json& conditions) 
 {
 
   std::string keyvalue;
@@ -178,14 +178,14 @@ bool ReadLarsoftConfig_check(const ParameterSet& ps, nlohmann::json& conditions)
 
 
 
-using nlohmann::json;
+using ntagg::json;
 
 class JsonWalker: public fhicl::ParameterSetWalker
 {
 public:
-  nlohmann::json top;
-  std::vector<nlohmann::json*> stack;
-  nlohmann::json* jcur;
+  ntagg::json top;
+  std::vector<ntagg::json*> stack;
+  ntagg::json* jcur;
   JsonWalker() : top(json::object()) {jcur = &top;};
 
   virtual void enter_table(key_t const& k, any_t const&) {
@@ -272,7 +272,7 @@ void ReadLarsoftConfigAsJson(TFile* file)
 
 }
 
-void ReadLarsoftConfig(TFile* file, nlohmann::json& requests)
+void ReadLarsoftConfig(TFile* file, ntagg::json& requests)
 {
   ///
   /// requests is of format

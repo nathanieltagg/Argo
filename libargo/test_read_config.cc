@@ -13,7 +13,7 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
-using nlohmann::json;
+using ntagg::json;
 
 #include "gallery/Event.h"
 #include "GalleryComposer.h"

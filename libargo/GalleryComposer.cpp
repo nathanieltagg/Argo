@@ -53,7 +53,7 @@
 #include <iostream>
 // Utility functions:
 
-using nlohmann::json;
+using ntagg::json;
 using std::vector;
 using std::string;
 using std::endl;
@@ -80,7 +80,7 @@ bool match_piece_request(std::string& pname, const std::string& request_name, si
 }
 
 GalleryComposer::GalleryComposer() 
-  : m_stats(nlohmann::json::object())
+  : m_stats(ntagg::json::object())
   , m_Event(nullptr)
 {
     std::cout << "GalleryComposer ctor" << std::endl; 
@@ -89,7 +89,7 @@ GalleryComposer::GalleryComposer()
 
 GalleryComposer::~GalleryComposer() 
   // : m_Event(nullptr)
-  // , m_stats(nlohmann::json::object())
+  // , m_stats(ntagg::json::object())
 {
     std::cout << "GalleryComposer dtor" << std::endl; 
     // std::cout << "m_Event:" << ((m_Event)?"set":"unset") << std::endl; 
@@ -369,7 +369,7 @@ void GalleryComposer::composeHints()
 
 // default template for vectors:
 template<typename TT> 
-void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out, const std::string& type)
+void GalleryComposer::composeObject(const std::vector<TT>&v, ntagg::json& out, const std::string& type)
 {
   out = json::array();
   for(auto item: v) {
@@ -380,7 +380,7 @@ void GalleryComposer::composeObject(const std::vector<TT>&v, nlohmann::json& out
 } 
 
 template<>
-void GalleryComposer::composeObject(const recob::Hit& hit, nlohmann::json& h, const std::string&)
+void GalleryComposer::composeObject(const recob::Hit& hit, ntagg::json& h, const std::string&)
 {
   const auto& wid = hit.WireID();
   
@@ -574,7 +574,7 @@ void GalleryComposer::composeObject(const recob::EndPoint2D& endpoint, json& job
 
 
 
-template<typename T> bool GalleryComposer::composePieceImage( const std::string& type, const std::string& name, nlohmann::json& out)
+template<typename T> bool GalleryComposer::composePieceImage( const std::string& type, const std::string& name, ntagg::json& out)
 {
   bool got = false;
   auto products = findByType< std::vector<T> >(m_Event->getTTree());
@@ -600,7 +600,7 @@ template<typename T> bool GalleryComposer::composePieceImage( const std::string&
 }
 
 template <>
-void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const std::string& type, art::InputTag tag, nlohmann::json& out)
+void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const std::string& type, art::InputTag tag, ntagg::json& out)
 {
   bool is_supernova = (tag.label() == "sndaq");
   
@@ -686,7 +686,7 @@ void GalleryComposer::composeObjectImage(const std::vector<recob::Wire>&v, const
 //
 // Raw wires
 template <>
-void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, const std::string& type, art::InputTag /*tag*/, nlohmann::json& out)
+void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, const std::string& type, art::InputTag /*tag*/, ntagg::json& out)
 {
   TimeReporter tr("Raw digits");
   size_t nchannels = v.size();
@@ -1334,28 +1334,28 @@ void GalleryComposer::composeAssociations()
 
 
 // template <typename A> 
-// bool GalleryComposer::composeAssociationFromToMatch<A,A>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&)
+// bool GalleryComposer::composeAssociationFromToMatch<A,A>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&)
 // {
 //   return false;
 // }
 
 // don't allow specific combinations:
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Hit, recob::Hit>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::SpacePoint, recob::SpacePoint>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Cluster, recob::Cluster>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Shower, recob::Shower>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::EndPoint2D, recob::EndPoint2D>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Track, recob::Track>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::PFParticle, recob::PFParticle>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::OpFlash, recob::OpFlash>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<recob::OpHit, recob::OpHit>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<raw::OpDetPulse, raw::OpDetPulse>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<simb::GTruth, simb::GTruth>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCTruth, simb::MCTruth>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
-template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCParticle, simb::MCParticle>(const std::string&, const std::string&, Composer::piece_t&, nlohmann::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Hit, recob::Hit>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::SpacePoint, recob::SpacePoint>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Cluster, recob::Cluster>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Shower, recob::Shower>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::EndPoint2D, recob::EndPoint2D>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::Track, recob::Track>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::PFParticle, recob::PFParticle>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::OpFlash, recob::OpFlash>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<recob::OpHit, recob::OpHit>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<raw::OpDetPulse, raw::OpDetPulse>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<simb::GTruth, simb::GTruth>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCTruth, simb::MCTruth>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
+template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCParticle, simb::MCParticle>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
 
 template<typename A, typename B>
-bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, nlohmann::json& out)
+bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
 {
   // Get a specific association given product names.
   // Assumption: the first item in each association represents them all
@@ -1402,7 +1402,7 @@ bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, co
 
 
 template<typename A, typename B>
-bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, nlohmann::json& out)
+bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::json& out)
 {
   std::string aname = "*";
   if(req.size()>3) aname = req[3];
@@ -1418,7 +1418,7 @@ bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, nlohmann:
 }
 
 template<typename A>
-bool GalleryComposer::composeAssociationFrom(Composer::piece_t& req, nlohmann::json& out)
+bool GalleryComposer::composeAssociationFrom(Composer::piece_t& req, ntagg::json& out)
 {
   if(req.size()<2 || req[2] == "*") {
     // No second type specified, so send them all.
@@ -1455,7 +1455,7 @@ bool GalleryComposer::composeAssociationFrom(Composer::piece_t& req, nlohmann::j
   return false;
 }
 
-bool GalleryComposer::composeAssociation(Composer::piece_t& req, nlohmann::json& out)
+bool GalleryComposer::composeAssociation(Composer::piece_t& req, ntagg::json& out)
 {
   // Association pieces are requested slightly differently than others:
   // /associations/hits/tracks/HitName/TrackName
@@ -1492,7 +1492,7 @@ bool GalleryComposer::composeAssociation(Composer::piece_t& req, nlohmann::json&
 
 
 template<typename T>  void     
-GalleryComposer::composeManifest(nlohmann::json& out) {
+GalleryComposer::composeManifest(ntagg::json& out) {
   std::cout << "composeManifest " << boost::core::demangle( typeid(T).name() ) << std::endl;
   auto products = findByType< std::vector<T> >(m_Event->getTTree());
   for(auto product: products) {
@@ -1513,7 +1513,7 @@ GalleryComposer::composeManifest(nlohmann::json& out) {
   }
 }
 
-void GalleryComposer::composeManifest(nlohmann::json& out)
+void GalleryComposer::composeManifest(ntagg::json& out)
 {
   std::cout << "SKELETON" << std::endl;
   // wireimg is special:
@@ -1537,7 +1537,7 @@ void GalleryComposer::composeManifest(nlohmann::json& out)
 
 
 
-template<typename T> bool GalleryComposer::composePiece( const std::string& type, const std::string& name, nlohmann::json& out)
+template<typename T> bool GalleryComposer::composePiece( const std::string& type, const std::string& name, ntagg::json& out)
 {
   // Constructs part of the output.
   // T is a type. This looks for a vector<T> object in the file with InputTag matching 'name', and creates an

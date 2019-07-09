@@ -138,7 +138,7 @@ int main(int argc, char **argv)
       pidfile.close();
     }
     
-    Config_t configuration(new nlohmann::json);
+    Config_t configuration(new ntagg::json);
     (*configuration)["CacheStoragePath"] = "../datacache";
     (*configuration)["CacheStorageUrl"]  = "datacache";
     (*configuration)["plexus"] = { {"tpc_source", "sqlite ../db/current-plexus.db"}
@@ -211,7 +211,7 @@ int main(int argc, char **argv)
             long t1 = gSystem->Now();
             // Now do your stuff.
             
-            Request_t request(new nlohmann::json);
+            Request_t request(new ntagg::json);
             (*request)["options"] = options;
             (*request)["filename"] = filename;
             (*request)["selection"] = selection;

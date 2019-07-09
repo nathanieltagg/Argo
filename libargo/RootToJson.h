@@ -9,8 +9,8 @@
 class TH1;
 class TH2;
 
-nlohmann::json TH1ToHistogram( TH1* hist, int maxbins = 0 );
-nlohmann::json TH2ToHistogram( TH2* hist, int maxbins = 0 );
+ntagg::json TH1ToHistogram( TH1* hist, int maxbins = 0 );
+ntagg::json TH2ToHistogram( TH2* hist, int maxbins = 0 );
 
 
 
