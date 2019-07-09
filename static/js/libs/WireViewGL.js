@@ -65,6 +65,7 @@ function WireViewGL(element, options )
   this.kz_image = 1.2;
   this.kz_tracks = 3.0;
   
+  this.CreateFrame();
   this.renderer.setClearColor( 0xffffff,1);
   this.renderer.render( this.scene, this.camera );
   
@@ -284,47 +285,46 @@ WireViewGL.prototype.CreateFrame = function()
   this.frame_group = new THREE.Group();
 
  //  // var material = new THREE.MeshBasicMaterial({ color: 0xff00000, side: THREE.DoubleSide });
- // for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
+ for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
 
- //    // Fixme: need to trim the time so I don't overlap times in different projections
- //    var isection =0;
- //    for(var section of gGeo3.data.tpcs[tpc].views[this.view].sections) {
- //      let texture = new THREE.TextTexture({
- //        fontFamily: '"Times New Roman", Times, serif',
- //        fontSize: 100,
- //        text: [
- //          '',
- //          'TPC ',+tpc,
- //          'Section ',+(isection++),
- //          ''
- //        ].join('\n'),
- //        fillStyle: "#000"
- //      });
- //      var color = 0x000000;
- //      if(Math.floor(tpc/4) == 0) color = 0xff0000;        
- //      if(Math.floor(tpc/4) == 1) color = 0x00ff00;
- //      if(Math.floor(tpc/4) == 3) color = 0x0000ff;
- //      let material = new THREE.MeshBasicMaterial({   color:color, transparent:true, opacity: 0.2 });
+    // Fixme: need to trim the time so I don't overlap times in different projections
+    var u1 = 1e9;
+    var u2 = -1e9;
+    for(var section of gGeo3.data.tpcs[tpc].views[this.view].sections) {
+        if(section[0].trans<u1) u1 = section[0].trans;
+        if(section[1].trans>u2) u2 = section[1].trans;
+    }
+    var v1 = gGeo3.data.tpcs[tpc].center[0] - gGeo3.data.tpcs[tpc].halfwidths[0];
+    var v2 = gGeo3.data.tpcs[tpc].center[0] + gGeo3.data.tpcs[tpc].halfwidths[0];
 
+    var texture = null;
+    if(gGeo3.ntpc > 1)
+        texture = new THREE.TextTexture({
+          fontFamily: '"Times New Roman", Times, serif',
+          fontSize: 100,
+          text:  'TPC '+tpc,
+          fillStyle: "#FFF",
+          strokeStyle: "#000"
+    });
 
- //      var u1 = section[0].trans;
- //      var u2 = section[1].trans;
- //      // vertical
- //      var v1 = gGeo3.data.tpcs[tpc].center[0] - gGeo3.data.tpcs[tpc].halfwidths[0];
- //      var v2 = gGeo3.data.tpcs[tpc].center[0] + gGeo3.data.tpcs[tpc].halfwidths[0];
- //      console.warn("FRAME",tpc,this.view,' -> ',u1,u2,v1,v2)
+    let material  = new THREE.MeshBasicMaterial({   color:0xe0e0e0, transparent:true, opacity: 0.2 });
+    let material2 = new THREE.MeshBasicMaterial({   color:0xffffff, transparent:true, opacity: 0.2, map: texture });
 
- //      var geometry = new THREE.PlaneGeometry( Math.abs(u2-u1), v2-v1 );
- //      var mesh = new THREE.Mesh(geometry,material);
- //      mesh.position.x = (u1+u2)/2;
- //      mesh.position.y = (v1+v2)/2;
- //      mesh.position.z = tpc;
+    var geometry = new THREE.PlaneGeometry( Math.abs(u2-u1), v2-v1 );
+    var mesh1 = new THREE.Mesh(geometry,material);
+    var mesh2 = new THREE.Mesh(geometry,material2);
+    mesh1.position.x = (u1+u2)/2;
+    mesh1.position.y = (v1+v2)/2;
+    mesh1.position.z = tpc;
+    mesh2.position.x = (u1+u2)/2;
+    mesh2.position.y = (v1+v2)/2;
+    mesh2.position.z = tpc+0.001;
 
- //      this.frame_group.add(mesh);
- //    }
-
- //  }     
- //  this.scene.add(this.frame_group);
+    this.frame_group.add(mesh1);
+    this.frame_group.add(mesh2);
+  
+  }     
+  this.scene.add(this.frame_group);
 }
 
 
