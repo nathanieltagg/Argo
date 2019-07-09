@@ -146,7 +146,7 @@ function WireViewGL(element, options )
     this.track_material = new THREE.LineMaterial( { color: 0x00ff00, linewidth: 3, dashed: false} ),
     this.track_material_hover = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
 
-    this.selected_material_1 = new THREE.LineMaterial( { color: 0x000000, linewidth: 2, dashed: false} ),
+    this.selected_material_1 = new THREE.LineMaterial( { color: 0x500000, linewidth: 4, dashed: false} ),
     this.selected_material_2 = new THREE.LineMaterial( { color: 0xffff00, linewidth: 4, dashed: false} ),
 
     this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
@@ -158,8 +158,8 @@ function WireViewGL(element, options )
     this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
         
   ]; 
-  this.track_material_selected = [this.selected_material_1, this.selected_material_2];
-  this.mc_select_material      = [this.selected_material_1, this.selected_material_2];
+  this.track_material_selected = this.selected_material_1;//[this.selected_material_1, this.selected_material_2]; // Multiple materials don't work. would need duplicate object
+  this.mc_select_material      = this.selected_material_1;//[this.selected_material_1, this.selected_material_2];
   
   // Line materials all need to know the window size.
   for(var mat of this.line_materials) mat.resolution = this.resolution;
