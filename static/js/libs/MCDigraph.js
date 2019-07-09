@@ -27,6 +27,7 @@ function MCDigraph( element )
   gStateMachine.Bind("newRecord",this.NewRecord.bind(this));
   $(this.element).resize( this.Rebuild.bind(this) );
   gStateMachine.Bind('hoverChange',this.HoverChanged.bind(this));
+  gStateMachine.Bind('selectChange',this.SelectChanged.bind(this));
   gStateMachine.Bind('change-mcparticles',this.Rebuild.bind(this));
   gStateMachine.Bind('change-mctruth',this.Rebuild.bind(this));
   gStateMachine.Bind('change-gtruth',this.Rebuild.bind(this));
@@ -54,14 +55,22 @@ MCDigraph.prototype.HoverChanged = function()
 {
   // console.warn("MCDigraph::HoverChanged()",gHoverState.type);
   if(!this.st) return;
-  $('.mc-jit-node-hover').removeClass("mc-jit-node-hover"); // clear on any hover change.
+  $('.mc-jit-node-hover',this.element).removeClass("mc-jit-node-hover"); // clear on any hover change.
   // this.st.clearNodesInPath();
   if(gHoverState.type!="mcparticles") return;
   var id = "particle-track-"+gHoverState.obj.ftrackId;
   // this.st.addNodeInPath(id);
+  console.log($('#'+id)[0]);
    $('#'+id).addClass("mc-jit-node-hover");
 //   
 };
+MCDigraph.prototype.SelectChanged = function() 
+{
+    if(!this.st) return;
+    if(gHoverState.type!="mcparticles") return;
+    var id = "particle-track-"+gSelectState.obj.ftrackId;
+    this.st.select(id);
+}
 
 MCDigraph.prototype.NewRecord = function() 
 {

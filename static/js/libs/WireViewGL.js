@@ -274,7 +274,7 @@ WireViewGL.prototype.HoverAndSelectionChange = function()
   
   this.dirty=true;
   
-  // this.Render();
+  this.Render();
 }
 
 

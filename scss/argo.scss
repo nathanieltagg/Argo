@@ -459,8 +459,12 @@ div.portlet {
   cursor: pointer;
 }
 .mc-jit-node-hover {
-  background-color: $red;
+  background-color: yellow;
 }
+.mc-jit-node-select {
+  background-color: black; color: white;
+}
+
 .pf-jit-node-hover {
   background-color: $red;
 }
