@@ -239,6 +239,15 @@ function ThreeTriD(element, options )
   gStateMachine.Bind('toggle-spacepoints', this.UpdateVisibilities.bind(this) );  
   $(this.ctl_track_shift)       .change( this.UpdateSpacepoints.bind(this) );
   
+
+    // mc
+  gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
+  gStateMachine.Bind('driftChange',        this.UpdateMC.bind(this) );  
+  this.GetBestControl(".show-mc-neutrals") .change(this.UpdateMC.bind(this) );
+  this.GetBestControl(".ctl-mc-move-tzero").change(this.UpdateMC.bind(this) );
+  gStateMachine.Bind('toggle-mcparticles',this.UpdateVisibilities.bind(this) ); 
+
+
   // mouse callbacks.
   // var fn = this.MouseCallBack.bind(this);
   // if(!isIOS()){
@@ -401,10 +410,12 @@ function ThreeTriD(element, options )
     this.track_material_selected= new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
     this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
 
+     this.track_material_selected = new THREE.LineMaterial( { color: 0x500000, linewidth: 4, dashed: false} ),
+     this.mc_select_material      = new THREE.LineMaterial( { color: 0x500000, linewidth: 4, dashed: false} ),
+
     this.mc_material          = new THREE.LineMaterial( { color: 0x0000, linewidth: 1, dashed: false} ),
     this.mc_neutral_material  = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: true} ),
     this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
-    this.mc_select_material   = new THREE.LineMaterial( { color: 0xffffff, linewidth: 3, dashed: false}  ),  
     this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
   ]; 
   // Line materials all need to know the window size.
@@ -1041,6 +1052,97 @@ ThreeTriD.prototype.HoverAndSelectionChange_Spacepoints = function()
   }
 }
 
+
+
+/////////////////////////////////////////
+// MC
+/////////////////////////////////////////
+ThreeTriD.prototype.CreateMC = function()
+{
+
+   if(this.mc_group) {
+    this.scene.remove(this.mc_group);
+    for(var thing of this.mc_group.children) thing.geometry.dispose(); // delete old ones.
+  }
+  this.mc_group = new THREE.Group();
+  this.mc_group.name = "mc";
+
+  var particles = GetSelected("mcparticles");
+  if(!particles.length) return;
+  
+ // Deal with these in Update. 
+  var show_neutrals = $(this.ctl_show_mc_neutrals).is(":checked");
+  var move_t0       = $(this.ctl_mc_move_tzero).is(":checked");
+ 
+
+  var nparticles = particles.length;
+  // if(nparticles>10) nparticles=10;
+  for(var i=0;i<nparticles;i++)
+  {
+    var p= particles[i];
+    if(!p.trajectory || p.trajectory.length<2) continue;
+    if(p.trajectory[0].E - p.fmass < 0.001) continue; // Less than 1 MeV particles go less than 1 wire width.
+    // compile points
+    var pts = [];
+    var lastu = 1e99; var lastv = 1e99;
+
+    var data = []; // long list of coordinates, no vectoring
+    for(var j=0;j<p.trajectory.length-1;j++) {
+        var point = p.trajectory[j];
+        data.push(point.x,point.y,point.z);
+    }
+
+    var geometry = new THREE.LineGeometry();
+    geometry.setPositions(data);
+    geometry.raycast_fast = true; // Just take the first segment hit when raycasting.
+    
+    var pdg = Math.abs(p.fpdgCode);
+    var neutral = (pdg == 22 || pdg == 2112 || pdg == 12 || pdg == 14 || pdg == 16);
+    if(neutral) continue;
+    var mat = (neutral) ? this.mc_material : this.mc_neutral_material; 
+ 
+    var threeobj = new THREE.Line2(geometry, mat);
+    threeobj.userData = {
+      default_material: mat,
+      hover_material:   this.mc_hover_material,
+      select_material:  this.mc_select_material,
+      neutral: neutral,
+      t: p.trajectory[0].t
+    }
+    threeobj.raycast_fast = true;
+    
+    // Make it findable again.
+    threeobj.name = p._pointer;    
+    threeobj.matrixAutoUpdate=false; // Don't auto-compute each time. I'll tell you when your coords change
+    threeobj.updateMatrix();     // Oh, they changed.
+    this.mc_group.add(threeobj);
+  }
+  this.scene.add(this.mc_group);
+  this.UpdateMC();
+  this.dirty=true;
+  this.Render();
+}
+
+
+
+ThreeTriD.prototype.UpdateMC = function()
+{
+  if(!this.mc_group) return;
+  var show_neutrals = this.GetBestControl(".show-mc-neutrals").checked;
+  // var move_t0 =       this.GetBestControl(".ctl-mc-move-tzero").checked;
+
+  if(show_neutrals) this.mc_neutral_material.opacity = 0;
+  else              this.mc_neutral_material.opacity = 1;
+  // this.mc_neutral_material.needsUpdate = true;
+  
+  this.UpdateVisibilities();
+}
+
+
+
+/////////////////////////////////////////
+// Wireimg
+/////////////////////////////////////////
 
 ThreeTriD.prototype.create_image_meshgroup = function(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,x2,y1,y2,flip,userData)
 {
