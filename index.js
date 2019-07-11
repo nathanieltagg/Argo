@@ -488,8 +488,8 @@ var masterclass_browser = new browser({
     allowed_paths: ['/home','/Users','/pnfs','/uboone/data','/uboone/app'],
 
 });
-app.use("/mclass/browser/",masterclass_browser.router);
-app.get('/mclass', function (req, res) {  res.render('masterclass', { pagename: 'masterclass' }) }); // Main page.
+app.use("/masterclass/browser/",masterclass_browser.router);
+app.get('/masterclass', function (req, res) {  res.render('masterclass', { pagename: 'masterclass' }) }); // Main page.
 
 
 
