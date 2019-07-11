@@ -6,7 +6,7 @@ mixin portlet(pid,title,hidden=false)
       span.ui-icon.ui-icon-circle-arrow-s.download_img
       span.ui-icon.ui-icon-print
       span.ui-icon.ui-icon-arrow-4-diag.icon-explode
-    .portlet-content&attributes(attributes)
+    .portlet-content(style=(hidden?"display:none;":""))&attributes(attributes)
       block
         
 mixin modal(modalid)

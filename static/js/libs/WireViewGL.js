@@ -921,7 +921,7 @@ WireViewGL.prototype.DoMouse = function(ev)
         this.hitsum_circle.position.x = this.fMousePos.world.x;
         this.hitsum_circle.position.y = this.fMousePos.world.y;
         this.hitsum_circle.visible=true;
-        
+
         // find radius in tdc/wire space.
         var sumRadiusU =  sumRadius / gGeo3.wire_pitch(wireref.tpc,this.view);
         var sumRadiusV =  gGeo3.getTDCofX(wireref.tpc,this.view,x+sumRadius) + gZoomRegion.getTimeOffset() - match.sample;
@@ -939,11 +939,9 @@ WireViewGL.prototype.DoMouse = function(ev)
         var hh = gGeo3.wire_pitch(wireref.tpc,this.view)/2;
         var offset_hit_time = -gZoomRegion.getTimeOffset();
         if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
-
         var mouse_hit_tdc = match.sample - offset_hit_time;
-        console.log("hitsum near tdc",mouse_hit_tdc,"wire",match.wire,sumRadiusU,sumRadiusV);
-        var dx,dy;
 
+        var dx,dy;
         // find hits within radius.
         var hits = GetSelected("hits");
         for(var i=0;i<hits.length;i++){
@@ -973,15 +971,26 @@ WireViewGL.prototype.DoMouse = function(ev)
 
           }
         }
-        console.error("hitsum",hitsum_adc, hitsum_tdc, hitsum_n, hitsum_ntrk, whichtracks, whichtrack);
         this.UpdateHitColors(hilight_index_list,[255,165,0]); // orange.
+
+        if(ev.type=="dblclick")
+          if(gMasterClass) gMasterClass.SetTableData(
+                    ["Num Hits","ADC Sum","TDC Average","Hits on Track","Track ID","Circle Radius"],
+                    [hitsum_n, hitsum_adc, hitsum_tdc/hitsum_n, hitsum_ntrk, find_plurality_element(whichtracks),sumRadius]);
+        gStateMachine.Trigger("masterClass");
+
       } else {
         // We turned it off.
 
         if(this.hitsum_circle) {
-          if(this.hitsum_cicrcle.visible) this.UpdateHitColors(); // we need to turn off color
+          if(this.hitsum_circle.visible) this.UpdateHitColors(); // we need to turn off color
           this.hitsum_circle.visible = false;
         }
+      }
+
+      if(match.obj && ev.type=="dblclick") {
+        console.error("dblclick");
+        if(gMasterClass) gMasterClass.DoubleClick(match);
       }
 
       if(!match.obj) match.obj = "outside"+trans+"|"+x;
@@ -990,7 +999,7 @@ WireViewGL.prototype.DoMouse = function(ev)
       ChangeHover(match); // match might be null.
       if(ev.type=="click") { // Click, but not on just ordinary wire
         var offset = getAbsolutePosition(this.viewport);      
-        if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x, match.canvas_coords.y + offset.y);
+        if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x + 30, match.canvas_coords.y + offset.y);
         ChangeSelection(match);
       }
     }
@@ -1821,5 +1830,20 @@ WireViewGL.prototype.UpdateUserTrack = function()
   this.UpdateVisibilities();
   this.Render();
   
+}
+
+
+// Utility f'n
+function find_plurality_element(a)
+{
+  // a is an array. Find the most common element in it.
+  var obj = {};
+  var max = 0;
+  var best = null;
+  for(var i of a) {
+   obj[i] = 1+ (obj[i]||0); 
+   if(obj[i]>max)  { best = i; max = obj[i];}
+  }
+  return best;
 }
 

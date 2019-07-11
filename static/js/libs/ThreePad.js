@@ -165,6 +165,7 @@ function ThreePad(element, options )
   var fn = this.MouseCallBack.bind(this);
   if(!isIOS()){
     $(this.element).on('click.'     +this.NameSpace, fn);
+    $(this.element).on('dblclick.'  +this.NameSpace, fn);
     $(this.element).on('mousedown.' +this.NameSpace, fn);
     $(this.element).on('mouseenter.'+this.NameSpace, fn);
     $(this.element).on('mouseout.'  +this.NameSpace, fn);

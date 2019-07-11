@@ -474,6 +474,39 @@ clean_datacache();
 
 console.log("dirname is ",__dirname);
 
+var browser = require("./browser.js");
+
+
+///// Uboone Masterclass specific:
+var masterclass_browser = new browser({
+    targetlink:  "/",
+    extensions: {
+                '.ubdaq':"Raw UBDAQ files",
+                '.root':"Root files (Can read AnalysisTuple OR Larsoft OR Larlite files)"
+                },
+    default_path: '/uboone/data/users/sowjanya/MasterClass/BNBCosmics_et_MCC8p1',
+    allowed_paths: ['/home','/Users','/pnfs','/uboone/data','/uboone/app'],
+
+});
+app.use("/mclass/browser/",masterclass_browser.router);
+app.get('/mclass', function (req, res) {  res.render('masterclass', { pagename: 'masterclass' }) }); // Main page.
+
+
+
+
+///// Protodune specific:
+var atreides_browser = new browser({
+    targetlink:  "/atreides/",
+    extensions: {
+                '.root':"Root files (Can read Larsoft OR Larlite files)"
+                },
+    default_path: __dirname,
+    allowed_paths: ['/home','/Users','/pnfs','/dune/data','/dune/app'],
+
+});
+app.use("/atreides/browser/",atreides_browser.router);
+app.get('/atreides', function (req, res) { res.render('atreides', { pagename: 'atreides' }) }); // Main page.
+
 ///// MIcroboone specific:
 // File browser
 var browser = require("./browser.js");
@@ -491,29 +524,12 @@ var argo_browser = new browser({
 app.use("/browser/",argo_browser.router);
 app.use("/server/file_browser.cgi",argo_browser.router);
 
-
-///// Protodune specific:
-var atreides_browser = new browser({
-    targetlink:  "/atreides/",
-    extensions: {
-                '.root':"Root files (Can read Larsoft OR Larlite files)"
-                },
-    default_path: __dirname,
-    allowed_paths: ['/home','/Users','/pnfs','/dune/data','/dune/app'],
-
-});
-app.use("/atreides/browser/",atreides_browser.router);
-app.use("/atreides/server/file_browser.cgi",atreides_browser.router);
-
-
 // At end:
 app.get('/', function (req, res) {
   res.render('argo', { pagename: 'argo' })
 })
 
-app.get('/atreides', function (req, res) {
-  res.render('atreides', { pagename: 'atreides' })
-})
+
 
 
 process.send = process.send || function () {}; // in case there's no prcoess manager

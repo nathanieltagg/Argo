@@ -1,3 +1,5 @@
+include inc/mixins
+
 doctype html
 html
   head
@@ -5,99 +7,46 @@ html
     title Argo
     //(#)include virtual="basetag.inc"
     // My little icon in the link url 
-    link(rel='icon', type='image/png', href='images/ArgoIcon')
+    link(rel='icon', type='image/png', href='/images/ArgoIcon.png')
     // Activate some overrides to basic configuration. 
     //#set var="PageStyle" value="standard" 
-    script(type='text/javascript') // These lines pull the Server-side-include (SSI) strings.
-gPageName='<!--#echo encoding="none" var="PageStyle"-->';
-// This is used to get a query string supplied to the page on the server side, but hidden
-// from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
-// URI encoding (server side) and decoding (javascript/clientside) prevents XSS attacks.
-gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRING"-->');
+    block headerscript
+      script(type='text/javascript') 
+          |gPageName="#{pagename}";
+          |gDetector="uboone";
     // Main CSS sheet for basic layout, custom mods. 
-    link(rel='stylesheet', href='argo.css', type='text/css', media='all')
-    link(rel='stylesheet', href='selected-object-info.css', type='text/css', media='all')
-    link(rel='stylesheet', href='local.css', type='text/css', media='all')
+    //- link(rel='stylesheet', href='css/argo.css', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
     // Javascript libraries and code. 
-    //(#)include virtual="html/libraries.inc"
-    //#include virtual="libraries.cgi"
-    //#include virtual="shaders/shaders.inc" 
-    // (#)include virtual="shaders/shaders_padgl.inc" 
+    include inc/libraries 
+    include ../static/shaders/shaders.inc
   body
     #everything
+      include inc/ControlOverlay
       #content
         #content-top
-          .important-links(style='text-align:center;')
-            a(href='samspider/samspider.cgi') Browse SAM datasets
-            a(href='server/file_browser.cgi') /uboone/ File Browser
-            a(href='http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00') Raw data files
-            br
-            a(href='http://argo-microboone.fnal.gov/live') Almost-live Data (from anywhere)
-            a(href='http://ubdaq-prod-near2.fnal.gov/Argo/live') Live data (FNAL only)
-            br
-          div(style='float:left;')
-            div(style='font-family:Arial,Verdana; font-size: 16pt; text-align:center;') Argo 2.0
-            img(src='images/argo_logo_2.0.png', alt='Argo - the Microboone Web Event Display', style='height:200px;')
-            br
-          div(style='display: block; overflow:hidden; text-align:center;')
-            a(href='help') Help and Hints
-            a.align-left#Print(href='#') Print
-            span.align-right
-              a.linktothis Link to this event
-            br
-            span.align-right
-              a.linkzoom Link to this event with current zoom
-            br
-            span.align-right#email-this-event Email this event
-            br
-            span.align-right#download-this-event Download this event
-          div
-            span(style='width: 5%;') Status:
-            span#status(style='display:inline-block; width: 50%;') Script loading...
-          #event-id-info(style='float:right')
-            | Event:
-            span.event-run
-            | |
-            span.event-subrun
-            | |
-            span.event-event
-            br
-            span.val.event-date unknown
-            span.val.event-time unknown
-            | (
-            span.val.event-age unknown
-            | )
-          include inc/DataSource 
-        // content-top 
-        div(style='clear:both;')
+
+        //- div(style='clear:both;')
         #content-right.dock
           include inc/ZoomControl 
+          include inc/MasterClass
           include inc/FalseColorControl 
           include inc/WireInfo 
-          include inc/dEdXTool 
-          include inc/HoverInfo 
+          include inc/HitHistogram 
+          include inc/Configuration 
         // content-right 
         #content-main
-          #content-wide.dock
-            //include virtual="html/WireView.inc" 
-            include inc/WireViewBig 
-            //include virtual="html/TimeHistogram.inc" 
+          #content-wide-mc.dock
             include inc/TridView 
-          // content-wide 
-          #content-left.dock
-          // content-left 
-          #content-middle.dock
-            include inc/Configuration 
-          // content-middle 
-        // content-main 
-      // content 
-      // <div style="clear: both;"></div> 
+            +portlet('wireviewgl-port-2',"Collection Plane")
+             .pad.A-WireViewGL(style='width:100%; height:330px', data-options='{"plane":2,"view":2}')
+            +portlet('wireviewgl-port-0',"Induction Plane 0",true)
+              .pad.A-WireViewGL(style='width:100%; height:330px;', data-options='{"plane":0,"view":0}')
+            +portlet('wireviewgl-port-1',"Induction Plane 1",true)
+             .pad.A-WireViewGL(style='width:100%; height:330px', data-options='{"plane":1,"view":1}')
       #footer
-        include inc/Debugging 
         include inc/credits 
-      // footer 
-      // hidden stuff. 
-      include inc/HitHistogram 
       include inc/MOTD 
       include inc/Keyboard 
       #hitsum
@@ -107,5 +56,5 @@ gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRIN
         p#warning-dialog-message
       include inc/SelectionInfoOverlay 
       |  
-      img#watermark_logo(style='display:none;', src='images/uboone_logo_1.png')
-    // Everything 
+      img#watermark_logo(style='display:none;', src='/images/uboone_logo_1.png')
+      img#onepixel(style='display_none;', src='/images/1x1.png')

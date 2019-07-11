@@ -234,7 +234,7 @@ function ComposeTrackInfo(s)
   var id = trk._idx;
   var start =  trk.points[0];
   var end   =  trk.points[trk.points.length-1];
-  var listname = $('#ctl-TrackLists').val();
+  var listname = noColons(GetSelectedName('tracks'));
 
   var P = start.P;
   var x = start.x;
@@ -296,7 +296,7 @@ function ComposeTrackInfo(s)
   
 
   var h = "<h3>Track " + id+ "</h3>";
-  h += trk._owner + "</br>";
+  h += noColons(trk._owner) + "</br>";
   h += "<table class='hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
