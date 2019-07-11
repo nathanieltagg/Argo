@@ -192,10 +192,12 @@ function RequestPiece( _type, _name ) // call with piece address, or type,name
     if(!gRecord.hits) request.pieces.push("/hits/*");
   }
 
-  if(_type == "tracks" ) {
-    request.pieces.push("/associations/tracks/hits/"+_name);
-    // if(!gRecord.hits) request.pieces.push("/hits/*");
+  if(_type == "hits" ) {
+    request.pieces.push("/associations/hits/tracks/"+_name+"/*");
   }
+  // if(_type == "tracks" ) {
+  //   request.pieces.push("/associations/tracks/hits/"+_name+"/*");
+  // }
   
   if(_type.startsWith("mc")) {
     request.pieces.push("/associations/mctruth/mcparticles/"+_name);

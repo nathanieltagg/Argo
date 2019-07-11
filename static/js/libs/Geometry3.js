@@ -146,16 +146,18 @@ Geometry3 = function (data)
     {
       // return a list of wires that this channel connects to.
       var retval = [];
-      for(var s of this.data.tpcs[tpc].views[view].sections) {
+      var gview = this.data.tpcs[tpc].views[view];
+      for(var s of gview.sections) {
         if(channel>=s[0].channel && channel<s[1].channel) {
           // console.log("channel to wires internal")
+          var wire = s[0].planewire + (channel-s[0].channel);
           var r = {
             channel: channel,
             tpc:   s[0].tpc,
             plane: s[0].plane,
             view:  s[0].view,
-            wire:  s[0].planewire + (channel-s[0].channel),
-            trans: s[0].trans + (s[1].trans-s[1].trans)*(channel-s[0].channel)/(s[1].channel-s[0].channel), // interpolate. MIGHT BE BACKWARDS                
+            wire:  wire,
+            trans: gview.trans_offset + gview.trans_direction*gview.wire_pitch*wire
           }
           retval.push(r);
         }
@@ -192,8 +194,8 @@ Geometry3 = function (data)
       // Get the transverse coordinate of the given wire.
       // CANNOT do lookup without tpc+view, because multiple wires in same view
       // look at the same space.  (i.e. tpc 0 and 1 in protodune are in front of each other in x)
-      var view = this.data.tpcs[tpc].views[view];
-      return view.trans_offset + view.trans_direction*view.wire_pitch*wire;
+      var gview = this.data.tpcs[tpc].views[view];
+      return gview.trans_offset + gview.trans_direction*gview.wire_pitch*wire;
     }
 
 

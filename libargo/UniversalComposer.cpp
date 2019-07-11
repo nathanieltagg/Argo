@@ -13,7 +13,7 @@
 #include "ForkedComposer.h"
 #include <exception>
 
-using nlohmann::json;
+using ntagg::json;
 
 UniversalComposer::UniversalComposer()
 {

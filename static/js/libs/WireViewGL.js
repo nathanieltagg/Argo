@@ -106,7 +106,7 @@ function WireViewGL(element, options )
   // hits
   gStateMachine.Bind('change-hits', this.CreateHits.bind(this) );  
   gStateMachine.Bind('toggle-hits',          this.UpdateVisibilities.bind(this) ); 
-  gStateMachine.Bind('hitChange',    this.CreateHits.bind(this) ); // Could be improved: change vertex colors instead of recreation
+  gStateMachine.Bind('hitChange',    this.UpdateHits.bind(this) ); // Could be improved: change vertex colors instead of recreation
   gStateMachine.Bind('driftChange', this.UpdateHits.bind(this) );  // REbuild since geometry is shot.
   $('#ctl-shift-hits')      .change(this.UpdateHits.bind(this));
   $('#ctl-shift-hits-value').change(this.UpdateHits.bind(this));
@@ -156,8 +156,9 @@ function WireViewGL(element, options )
     this.mc_neutral_material  = new THREE.LineMaterial( { color: 0x0000ff, linewidth: 1, dashed: true} ),
     this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
     this.mc_select_material   = new THREE.LineMaterial( { color: 0xfffff0, linewidth: 3, dashed: false}  ),  
-    this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
-        
+    this.user_track_rim_material = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
+    this.hitsum_circle_material  = new THREE.LineMaterial( { color: new THREE.Color("rgb(255, 165, 0)").getHex(), linewidth: 2, dashed: false}  )
+
   ]; 
   this.track_material_selected = this.selected_material_1;//[this.selected_material_1, this.selected_material_2]; // Multiple materials don't work. would need duplicate object
   this.mc_select_material      = this.selected_material_1;//[this.selected_material_1, this.selected_material_2];
@@ -798,6 +799,7 @@ WireViewGL.prototype.DoMouse = function(ev)
     // Object picking for hover or selection
     if(this.fMouseInContentArea) {
     
+ 
       var match =  {obj: null, type:"wire"}; 
       var found_match = false;
       var match_tpc = undefined;
@@ -898,8 +900,90 @@ WireViewGL.prototype.DoMouse = function(ev)
         match.view = this.view;
       } else {
         // console.log("DoMouse no tpc",this.fMousePos.world,wireref);
-        
       }
+
+     // Code that highlights hits near the mouse. Used for MasterClass exercies.
+
+     if(wireref !== undefined && this.hit_group && this.hit_group.visible && ($('#ctl-hitsum-circle').is(':checked')) && wireref !== undefined) {
+        var sumRadius =  parseFloat($('#ctl-hitsum-circle-size').val()); // cm
+
+        //Draw circle indicator.
+        if(!this.hitsum_circle) {
+          var geo = new THREE.LineGeometry();
+          var coord = [];  
+          for(var i=0;i<32;i++) coord.push(Math.cos(Math.PI*2*i/31),Math.sin(Math.PI*2*i/31), 0);
+          geo.setPositions(coord);
+          this.hitsum_circle = new THREE.Line2(geo,this.hitsum_circle_material);          
+          this.hitsum_circle.position.z = 20;
+          this.scene.add(this.hitsum_circle);
+        }
+        this.hitsum_circle.scale.set(sumRadius,sumRadius,1);
+        this.hitsum_circle.position.x = this.fMousePos.world.x;
+        this.hitsum_circle.position.y = this.fMousePos.world.y;
+        this.hitsum_circle.visible=true;
+        
+        // find radius in tdc/wire space.
+        var sumRadiusU =  sumRadius / gGeo3.wire_pitch(wireref.tpc,this.view);
+        var sumRadiusV =  gGeo3.getTDCofX(wireref.tpc,this.view,x+sumRadius) + gZoomRegion.getTimeOffset() - match.sample;
+
+        var hitsum_adc = 0;
+        var hitsum_tdc = 0;
+        var hitsum_n = 0;
+        var hitsum_ntrk = 0;
+        var whichtracks = [];
+        var whichtrack = null;
+        var trackname = GetSelectedName("tracks"); 
+        var hitname   = GetSelectedName("hits");
+        var track_assn = (((gRecord||{}).associations||{})[hitname]||{})[trackname] || [];
+        var hilight_index_list = [];
+        var hh = gGeo3.wire_pitch(wireref.tpc,this.view)/2;
+        var offset_hit_time = -gZoomRegion.getTimeOffset();
+        if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
+
+        var mouse_hit_tdc = match.sample - offset_hit_time;
+        console.log("hitsum near tdc",mouse_hit_tdc,"wire",match.wire,sumRadiusU,sumRadiusV);
+        var dx,dy;
+
+        // find hits within radius.
+        var hits = GetSelected("hits");
+        for(var i=0;i<hits.length;i++){
+          var hit = hits[i];
+          for(var w of hit._wires) { // should exist, created in CreateHits above
+              if(w.view==this.view) {
+                dy = hit.t-mouse_hit_tdc;
+                dx = w.wire-match.wire;
+                if(  (Math.abs(dx)<sumRadiusU)
+                  && (Math.abs(dy)<sumRadiusV)
+                  && (dx*dx/sumRadiusU/sumRadiusU + dy*dy/sumRadiusV/sumRadiusV < 1.0) )
+              {
+                // add to hilight list
+                hilight_index_list.push(hit._idx);
+                // sum it.
+                hitsum_adc += hit.q;
+                hitsum_tdc += hit.t;
+                hitsum_n += 1;
+                // Is it associated with the current tracks?
+                if(track_assn[hit._idx] && track_assn[hit._idx].length>0) {
+                  hitsum_ntrk += 1;
+                  whichtracks.push(...track_assn[hit._idx]);
+                  whichtrack = track_assn[hit._idx][0]; // clumsy; assumes only 1 track associated with any of the hits.
+                }                
+              }
+            }
+
+          }
+        }
+        console.error("hitsum",hitsum_adc, hitsum_tdc, hitsum_n, hitsum_ntrk, whichtracks, whichtrack);
+        this.UpdateHitColors(hilight_index_list,[255,165,0]); // orange.
+      } else {
+        // We turned it off.
+
+        if(this.hitsum_circle) {
+          if(this.hitsum_cicrcle.visible) this.UpdateHitColors(); // we need to turn off color
+          this.hitsum_circle.visible = false;
+        }
+      }
+
       if(!match.obj) match.obj = "outside"+trans+"|"+x;
       match.trans = trans;
       match.x     = x;
@@ -919,6 +1003,45 @@ WireViewGL.prototype.DoMouse = function(ev)
 ////////////////////////////////////////
 // Hits
 ////////////////////////////////////////
+
+// // I'm going to need this in more than one place, so let's make a class.
+// function HitMesh(material, tpc, view)
+// {
+//   this.geo = new THREE.BufferGeometry(); 
+//   this.mesh = new THREE.Mesh(this.geo,material);
+//   var vertices = [];
+//   var normals  = [];
+//   var indices  = [];
+//   var colors   = [];
+//   var product_indicies = [];
+//   var nvertices = 0;
+
+//   var halfwidth = gGeo3.wire_pitch(tpc,this.view)/2; // FIXME TPC number
+
+
+//   this.addhit = function(hit,colorvals) {
+//         if(w.view==this.view) {
+//           addhit( i, w.trans-halfwidth, w.trans+halfwidth, hit.t1, hit.t2, cc);
+//         }
+//       var u1 = w.trans-halfwidth;
+//       var u2 = w.trans+halfwidth;
+//       var v1 = hit.t1;
+//       var v2 = hit.t2;
+
+//       vertices.push( u1, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+//       vertices.push( u2, v2, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+//       vertices.push( u1, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+//       vertices.push( u2, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
+//       indices.push( nvertices+0, nvertices+2, nvertices+1, nvertices+2, nvertices+3, nvertices+1 );  
+//       product_indices.push(hit._idx,hit._idx);
+//       nvertices += 4;
+
+//   };
+//   this.finish = function() {
+
+//   };
+//   return this;
+// }
 
 
 
@@ -983,30 +1106,19 @@ WireViewGL.prototype.CreateHits = function()
       var hit = hits[i];
       var hittpc = hit.tpc || 0;
       if(hittpc!=tpc) continue;
-      if(hit.Ch) {
-        // new version.
-        if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
-        for(var w of hit._wires) {
-          if(w.view==this.view) {
-            var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
-            var q = hit[field]; // The value being plotted for charge. 
-            var c = gHitColorScaler.GetColorValues(q);
-            var cc = [c[0]/255,c[1]/255,c[2]/255];
-            addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
-          }
-        }
-      } else {
-        // old version.
-        if(hit.plane != this.plane) continue;
-        // // hit object is in U,tdc space, needs scaling
-        var u = gGeo3.wireToTransverse(tpc,this.view,hit.wire); 
-        var q = hit[field]; // The value being plotted for charge. 
-        var c = gHitColorScaler.GetColorValues(q);
-        var cc = [c[0]/255,c[1]/255,c[2]/255];
-        addhit( i, u-halfwidth, u+halfwidth, hit.t1, hit.t2, cc);
+      // get list of possible positions in transverse space. Uboone = only 1, but in dune, wirewrapping means more.
+      if(!hit._wires) {
+        if(hit.Ch) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); 
+        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,this.view,hit.wire) }];
       }
-
-      
+      for(var w of hit._wires) {
+        if(w.view==this.view) {
+          var q = hit[field]; // The value being plotted for charge. 
+          var c = gHitColorScaler.GetColorValues(q);
+          var cc = [c[0]/255,c[1]/255,c[2]/255];
+          addhit( i, w.trans-halfwidth, w.trans+halfwidth, hit.t1, hit.t2, cc);
+        }
+      }
     }
     
     var geo = new THREE.BufferGeometry();
@@ -1054,46 +1166,83 @@ WireViewGL.prototype.UpdateHits = function()
     var tpc = mesh.userData.tpc || 0;
     gtpc = gGeo3.getTpc(tpc);
     mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc)*-1*gtpc.drift_dir; // Fixme tpc number  
-    mesh.position.y =  offset_hit_time * mesh.scale.y + gtpc.views[this.view].x; 
+    mesh.position.y =  offset_hit_time * mesh.scale.y + gtpc.views[this.view].x;     
+
   }
+  this.UpdateHitColors();
+
   this.dirty =true;
   this.Render();
 }
+
+WireViewGL.prototype.UpdateHitColors = function(hilite_list, hilite_color)
+{
+  if(!this.hit_group) return;
+  var field = $(this.GetBestControl(".hit-hist-field")).val();
+  hilite_list = hilite_list || [];
+  for(var mesh of this.hit_group.children) {
+    var tpc = mesh.userData.tpc || 0;
+
+    if(!mesh.userData.product_indices) continue;
+    var hits = jsonpointer.get(gRecord,mesh.name); // get hit list from object pointer
+    if(!hits) continue;
+    var vcolor = [];
+    for(var j=0; j< mesh.userData.product_indices.length; j+=2) {
+      var idx = mesh.userData.product_indices[j];
+      var c = hilite_color;
+      if(!hilite_list.includes(idx)) { 
+        var hit = hits[idx];
+        var q = hit[field]; // The value being plotted for charge. 
+        c = gHitColorScaler.GetColorValues(q);
+      } else {
+      }
+      vcolor.push( c[0]/255,c[1]/255,c[2]/255,
+                   c[0]/255,c[1]/255,c[2]/255,
+                   c[0]/255,c[1]/255,c[2]/255,
+                   c[0]/255,c[1]/255,c[2]/255 ); // 4 copies, 1 per vertex
+
+    }
+    mesh.geometry.getAttribute('color').set(vcolor);
+    mesh.geometry.getAttribute('color').needsUpdate = true;
+    mesh.geometry.needsUpdate = true;
+  }
+  this.dirty =true;
+}
+
+
 
 
 WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
 {
   console.log("HoverAndSelectionChange_Hits");
   // Draw a highlight box around the hit.
+
   if(!this.hit_hover_box) {
     var geometry = new THREE.LineGeometry();
     geometry.setPositions([-1,-1,0, -1,1,0, 1,1,0, 1,-1,0, -1,-1,0]);
     this.hit_hover_box = new THREE.Mesh(geometry,this.highlight_line_material);
+    this.hit_hover_box.name = "hoverbox";
     this.hit_group.add(this.hit_hover_box);
 
     this.hit_select_box = new THREE.Mesh(geometry,this.highlight_line_material);
+    this.hit_select_box.name = "selectbox";
+
+
     this.hit_group.add(this.hit_select_box);
   }
 
-  var hit = gHoverState.obj;
   if(gHoverState.type=='hits') {
+    var hit = gHoverState.obj;
     var tpc = hit.tpc || 0;
     var vertices = [];
-    if(hit.Ch) {
-        if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
-        for(var w of hit._wires) {
-          if(w.view==this.view) {
-            var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
-            var h = gGeo3.wire_pitch(tpc,this.view)/2;
-            vertices.push(u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0); 
-          }       
-        }
-    } else {
-      var u = gGeo3.wireToTransverse(tpc,this.view,hit.wire); 
-      var h = gGeo3.wire_pitch(tpc,this.view)/2; 
-      vertices = [u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0];
-    } 
-    console.log("hover hit box ",vertices);
+     for(var w of hit._wires) {
+      if(w.view==this.view) {
+        var u = w.trans;
+        var h = gGeo3.wire_pitch(tpc,this.view)/2;
+        vertices.push(u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0); 
+      }       
+    }
+    // console.log("hover hit box ",vertices);
     if(vertices.length>0) {
       var geometry = new THREE.LineGeometry();
 
@@ -1113,25 +1262,18 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
     this.hit_hover_box.visible = false;
   }
   
-  var hit = gSelectState.obj;
   if(gSelectState.type=='hits' ) { // fixme use channel number.
+    var hit = gSelectState.obj;
     var tpc = hit.tpc || 0;
     var vertices = [];
-    if(hit.Ch) {
-        if(!hit._wires) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); // need to put this in soon
-        for(var w of hit._wires) {
-          if(w.view==this.view) {
-            var u = gGeo3.wireToTransverse(tpc,this.view,w.wire); // FIXME TPC number
-            var h = gGeo3.wire_pitch(tpc,this.view)/2;
-            vertices.push(u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0); 
-          }       
-        }
-    } else {
-      var u = gGeo3.wireToTransverse(tpc,this.view,hit.wire); 
-      var h = gGeo3.wire_pitch(tpc,this.view)/2; 
-      vertices = [u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0];
-    } 
-    console.log("hover hit box ",vertices);
+    for(var w of hit._wires) {
+      if(w.view==this.view) {
+        var u = w.trans;
+        var h = gGeo3.wire_pitch(tpc,this.view)/2;
+        vertices.push(u-h,hit.t1,0, u-h,hit.t2,0, u+h,hit.t2,0, u+h,hit.t1,0, u-h,hit.t1,0); 
+      }       
+    }
+    console.log("hover select box ",vertices);
     if(vertices.length>0) {
       var geometry = new THREE.LineGeometry();
 

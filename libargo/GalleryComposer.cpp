@@ -1412,8 +1412,8 @@ bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::js
 
   // Try both ways.
   bool retval = false;
-  retval = retval || composeAssociationFromToMatch<A,B>(aname, bname, req, out);
-  retval = retval || composeAssociationFromToMatch<A,B>(bname, aname, req, out);
+  retval =  composeAssociationFromToMatch<A,B>(aname, bname, req, out) || retval;
+  retval =  composeAssociationFromToMatch<A,B>(bname, aname, req, out) || retval;
   return retval;
 }
 
@@ -1423,20 +1423,20 @@ bool GalleryComposer::composeAssociationFrom(Composer::piece_t& req, ntagg::json
   if(req.size()<2 || req[2] == "*") {
     // No second type specified, so send them all.
     bool retval = false;
-    retval = retval || composeAssociationFromTo<A,recob::Hit        >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::SpacePoint >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::Cluster    >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::Track      >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::Shower     >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::EndPoint2D >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::PFParticle >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::OpFlash    >( req, out  );
-    retval = retval || composeAssociationFromTo<A,recob::OpHit      >( req, out  );
-    retval = retval || composeAssociationFromTo<A,raw::OpDetPulse   >( req, out  );
-    retval = retval || composeAssociationFromTo<A,simb::GTruth      >( req, out  );
-    retval = retval || composeAssociationFromTo<A,simb::MCTruth     >( req, out  );
-    retval = retval || composeAssociationFromTo<A,simb::MCParticle  >( req, out  );
-    return retval;
+    retval =  composeAssociationFromTo<A,recob::Hit        >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::SpacePoint >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::Cluster    >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::Track      >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::Shower     >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::EndPoint2D >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::PFParticle >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::OpFlash    >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,recob::OpHit      >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,raw::OpDetPulse   >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,simb::GTruth      >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,simb::MCTruth     >( req, out  ) || retval;
+    retval =  composeAssociationFromTo<A,simb::MCParticle  >( req, out  ) || retval;
+    return retval; 
   }
   std::string btype = req[2];
   if(btype == "hits"       ) return composeAssociationFromTo<A,recob::Hit       >( req, out  );
