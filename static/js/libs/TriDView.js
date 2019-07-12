@@ -81,7 +81,8 @@ function TriDView( element, options ){
   
   $(this.element).children().on("focus",function(ev){this.blur();});
  
-  this.ResetView();
+ 
+  // this.ResetView();
 }
 
 TriDView.prototype.SelectChange = function()

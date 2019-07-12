@@ -4,5 +4,11 @@
     .A-MasterClass-data
       p cut and paste data goes here.
     .masterclass-controls
-      p Controls go here.
-  // slice-info 
+    div
+      label(for='ctl-hitsum-circle-size') Sum Hit Size:
+      input#ctl-hitsum-circle-size.saveable(type='text', value='4', size='5')
+      |  cm
+    div
+       button.do_hitsum(type='button', disabled="disabled") Sum Hits
+
+

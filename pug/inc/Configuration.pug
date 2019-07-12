@@ -5,14 +5,14 @@
       input#ctl-high-voltage(type='text', value='67.0', size='5')
       label kv
     div
-      input#ctl-shift-hits.saveable(type='checkbox', name='ctl-shift-hits', checked='')
+      input#ctl-shift-hits.saveable(type='checkbox', name='ctl-shift-hits', )
       label(for='ctl-shift-hits') Shift Hits
       label Ticks
       input#ctl-shift-hits-value(type='text', value='2400', size='5')
     div
-      input#ctl-track-shift-window.saveable.track-shift-window(type='checkbox', name='track-shift-window', checked='')
+      input#ctl-track-shift-window.saveable.track-shift-window(type='checkbox', name='track-shift-window', checked='checked')
       label(for='track-shift-window') Shift Tracks Ticks:
-      input.saveable.track-shift-value#ctl-track-shift-value(type='text', value='2400', size='5')
+      input.saveable.track-shift-value#ctl-track-shift-value(type='text', value='800', size='5')
     div
       input#ctl-magnifying-glass.saveable(type='checkbox', name='ctl-magnifying-glass', checked='')
       label(for='ctl-magnifying-glass')
@@ -32,10 +32,7 @@
       label(for='ctl-hitsum-circle')
         b (=)
         | Sum hits around mouse
-    div
-      label(for='ctl-hitsum-circle-size') Sum Hit Size:
-      input#ctl-hitsum-circle-size.saveable(type='text', value='2', size='5')
-      |  cm
+
     .mag-sliders
       #ctl-hitsum-size-slider
     div

@@ -66,7 +66,8 @@ jsonpointer.get = function get (obj, pointer) {
     for (var i = 0; i < refTokens.length; ++i) {
         var tok = refTokens[i];
         if (!(typeof obj == 'object' && tok in obj)) {
-            throw new Error('Invalid reference token: ' + tok);
+            return undefined;
+            // throw new Error('Invalid reference token: ' + tok);
         }
         obj = obj[tok];
     }

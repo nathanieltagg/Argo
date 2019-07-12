@@ -1193,6 +1193,8 @@ WireViewGL.prototype.UpdateHitColors = function(hilite_list, hilite_color)
     var tpc = mesh.userData.tpc || 0;
 
     if(!mesh.userData.product_indices) continue;
+    if(!mesh.name) continue;
+    if(!gRecord) continue;
     var hits = jsonpointer.get(gRecord,mesh.name); // get hit list from object pointer
     if(!hits) continue;
     var vcolor = [];

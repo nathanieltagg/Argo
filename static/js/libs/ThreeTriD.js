@@ -422,9 +422,7 @@ function ThreeTriD(element, options )
   for(var mat of this.line_materials) mat.resolution = this.resolution;
   
   this.CreateFrame();
-
-
-  
+  this.Render();  
 }
 
 ThreeTriD.prototype.AnimationRender = function()
@@ -1430,7 +1428,7 @@ ThreeTriD.prototype.UpdateWireimg = function()
     tpcgroup.position.x = 0;
     tpcgroup.position.projectOnVector(tpcgroup.userData.alongVector);
   }
-  this.Render();
+  this.UpdateVisibilities();
 }
 
 

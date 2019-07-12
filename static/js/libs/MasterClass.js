@@ -24,6 +24,8 @@ MasterClass.prototype.SetTableData = function(headers,data,lock)
   h += "<tr><td>" + data.join('</td><td>') + "</td></tr>";
   h+= "</table>";
   $(this.element).html(h).mySelectContents();
+    document.execCommand("copy");
+
 }
 
 
@@ -174,6 +176,8 @@ MasterClass.prototype.DoubleClick = function (s)
   h += "</table>";
 
     $(this.element).html(h).mySelectContents();
+      document.execCommand("copy");
+
   }
 
 };
