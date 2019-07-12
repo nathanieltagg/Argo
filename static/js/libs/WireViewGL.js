@@ -997,7 +997,7 @@ WireViewGL.prototype.DoMouse = function(ev)
       match.trans = trans;
       match.x     = x;
       ChangeHover(match); // match might be null.
-      if(ev.type=="click") { // Click, but not on just ordinary wire
+      if(ev.type=="click" || ev.type=="dblclick") { // Click, but not on just ordinary wire
         var offset = getAbsolutePosition(this.viewport);      
         if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x + 30, match.canvas_coords.y + offset.y);
         ChangeSelection(match);
