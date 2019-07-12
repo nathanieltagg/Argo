@@ -69,6 +69,8 @@ function WireViewGL(element, options )
   this.renderer.setClearColor( 0xffffff,1);
   this.renderer.render( this.scene, this.camera );
   
+  this.hilite_hit_list = [];
+  this.hilite_hit_color = [0,0,0];
   // Events and triggers:
   
   // Wireimg
@@ -107,10 +109,12 @@ function WireViewGL(element, options )
   gStateMachine.Bind('change-hits', this.CreateHits.bind(this) );  
   gStateMachine.Bind('toggle-hits',          this.UpdateVisibilities.bind(this) ); 
   gStateMachine.Bind('hitChange',    this.UpdateHits.bind(this) ); // Could be improved: change vertex colors instead of recreation
+  gStateMachine.Bind('hitSumChange',    this.UpdateHits.bind(this) ); // Could be improved: change vertex colors instead of recreation
+  gStateMachine.Bind('hitSumClear',     this.UpdateHits.bind(this,true) ); // Could be improved: change vertex colors instead of recreation
   gStateMachine.Bind('driftChange', this.UpdateHits.bind(this) );  // REbuild since geometry is shot.
   $('#ctl-shift-hits')      .change(this.UpdateHits.bind(this));
   $('#ctl-shift-hits-value').change(this.UpdateHits.bind(this));
-  
+  $('#ctl-shift-hits-')
   // clusters
   gStateMachine.Bind('change-clusters', this.CreateClusters.bind(this) );  
   gStateMachine.Bind('newPiece'       , this.CreateClusters.bind(this,true) );  // Need this because associations might come late...
@@ -760,6 +764,108 @@ WireViewGL.prototype.DoMouseWheel = function(ev) {
     return ThreePad.prototype.DoMouseWheel.call(this,ev);
 };
 
+
+WireViewGL.prototype.DoHitSumCircle = function(ev)
+{
+  var sumRadius;
+  if( gMasterClass && gMasterClass.circle_tracking ) {
+    var sumRadius =  gMasterClass.circle_size;
+    //Draw circle indicator.
+    if(!this.hitsum_circle) {
+      var geo = new THREE.LineGeometry();
+      var coord = [];  
+      for(var i=0;i<32;i++) coord.push(Math.cos(Math.PI*2*i/31),Math.sin(Math.PI*2*i/31), 0);
+      geo.setPositions(coord);
+      this.hitsum_circle = new THREE.Line2(geo,this.hitsum_circle_material);          
+      this.hitsum_circle.position.z = 20;
+      this.scene.add(this.hitsum_circle);
+    }
+    this.hitsum_circle.scale.set(sumRadius,sumRadius,1);
+    this.hitsum_circle.position.x = this.fMousePos.world.x;
+    this.hitsum_circle.position.y = this.fMousePos.world.y;
+    this.hitsum_circle.visible=true;
+
+
+    if(this.fMouse_wireref !== undefined && this.hit_group && this.hit_group.visible  && this.fMouse_wireref !== undefined) {
+
+      // find radius in tdc/wire space.
+      var sumRadiusU =  sumRadius / gGeo3.wire_pitch(this.fMouse_wireref.tpc,this.view);
+      var x = this.fMousePos.world.y;
+      var sumRadiusV =  gGeo3.getTDCofX(this.fMouse_wireref.tpc,this.view,x+sumRadius) + gZoomRegion.getTimeOffset() - this.fMouse_match.sample;
+
+      var hitsum_adc = 0;
+      var hitsum_tdc = 0;
+      var hitsum_n = 0;
+      var hitsum_ntrk = 0;
+      var whichtracks = [];
+      var whichtrack = null;
+      var trackname = GetSelectedName("tracks"); 
+      var hitname   = GetSelectedName("hits");
+      var track_assn = (((gRecord||{}).associations||{})[hitname]||{})[trackname] || [];
+      var hilight_index_list = [];
+      var hh = gGeo3.wire_pitch(this.fMouse_wireref.tpc,this.view)/2;
+      var offset_hit_time = -gZoomRegion.getTimeOffset();
+      if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
+      var mouse_hit_tdc = this.fMouse_match.sample - offset_hit_time;
+
+      var dx,dy;
+      // find hits within radius.
+      var hits = GetSelected("hits");
+      for(var i=0;i<hits.length;i++){
+        var hit = hits[i];
+        for(var w of hit._wires) { // should exist, created in CreateHits above
+            if(w.view==this.view) {
+              dy = hit.t-mouse_hit_tdc;
+              dx = w.wire-this.fMouse_match.wire;
+              if(  (Math.abs(dx)<sumRadiusU)
+                && (Math.abs(dy)<sumRadiusV)
+                && (dx*dx/sumRadiusU/sumRadiusU + dy*dy/sumRadiusV/sumRadiusV < 1.0) )
+            {
+              // add to hilight list
+              hilight_index_list.push(hit._idx);
+              // sum it.
+              hitsum_adc += hit.q;
+              hitsum_tdc += hit.t;
+              hitsum_n += 1;
+              // Is it associated with the current tracks?
+              if(track_assn[hit._idx] && track_assn[hit._idx].length>0) {
+                hitsum_ntrk += 1;
+                whichtracks.push(...track_assn[hit._idx]);
+                whichtrack = track_assn[hit._idx][0]; // clumsy; assumes only 1 track associated with any of the hits.
+              }                
+            }
+          }
+
+        }
+      }
+      this.hilite_hit_list = hilight_index_list;
+      this.hilite_hit_color= [255,165,0]; // orange.
+      this.UpdateHitColors(); // orange.
+
+      gMasterClass.SetTableData(
+          ["Num Hits","ADC Average","TDC Average"],
+          [hitsum_n, 
+          (hitsum_n>0)?(hitsum_adc/hitsum_n).toFixed(1):"",
+          (hitsum_n>0)?(hitsum_tdc/hitsum_n).toFixed(1):"",
+          // hitsum_ntrk, find_plurality_element(whichtracks)
+          ]);
+      console.error("update",(ev||{}).type)
+      if(ev && (ev.type=="click" || ev.type=="dblclick")) {
+        gMasterClass.Lock(); // freeze this one
+      }
+
+
+    }
+  } else {
+      // not tracking
+      if(this.hitsum_circle) {
+          if(this.hitsum_circle.visible) this.UpdateHitColors(); // we need to turn off color
+          this.hitsum_circle.visible = false;
+      }
+ }
+
+}
+
 WireViewGL.prototype.DoMouse = function(ev)
 {
   //  // pseudo-cursor.
@@ -878,7 +984,7 @@ WireViewGL.prototype.DoMouse = function(ev)
         match_tpc = gGeo3.xyzToTpc(x,y,z);
       }
       var wireref;
-      //match_tpc = 0;
+      if(!(match_tpc>=0)) match_tpc = 0; // FIXME - this is neccessary to allow mouse events outside of uboone strict volume
       if(match_tpc>=0) {
         wireref = { tpc: match_tpc };
         wireref.wire   = gGeo3.transverseToWire(match_tpc,this.view,trans);
@@ -902,96 +1008,11 @@ WireViewGL.prototype.DoMouse = function(ev)
         // console.log("DoMouse no tpc",this.fMousePos.world,wireref);
       }
 
-     // Code that highlights hits near the mouse. Used for MasterClass exercies.
+      this.fMouse_wireref = wireref;
+      this.fMouse_match = match;
+      // Code that highlights hits near the mouse. Used for MasterClass exercies.
+      this.DoHitSumCircle(ev);
 
-     if(wireref !== undefined && this.hit_group && this.hit_group.visible && ($('#ctl-hitsum-circle').is(':checked')) && wireref !== undefined) {
-        var sumRadius =  parseFloat($('#ctl-hitsum-circle-size').val()); // cm
-
-        //Draw circle indicator.
-        if(!this.hitsum_circle) {
-          var geo = new THREE.LineGeometry();
-          var coord = [];  
-          for(var i=0;i<32;i++) coord.push(Math.cos(Math.PI*2*i/31),Math.sin(Math.PI*2*i/31), 0);
-          geo.setPositions(coord);
-          this.hitsum_circle = new THREE.Line2(geo,this.hitsum_circle_material);          
-          this.hitsum_circle.position.z = 20;
-          this.scene.add(this.hitsum_circle);
-        }
-        this.hitsum_circle.scale.set(sumRadius,sumRadius,1);
-        this.hitsum_circle.position.x = this.fMousePos.world.x;
-        this.hitsum_circle.position.y = this.fMousePos.world.y;
-        this.hitsum_circle.visible=true;
-
-        // find radius in tdc/wire space.
-        var sumRadiusU =  sumRadius / gGeo3.wire_pitch(wireref.tpc,this.view);
-        var sumRadiusV =  gGeo3.getTDCofX(wireref.tpc,this.view,x+sumRadius) + gZoomRegion.getTimeOffset() - match.sample;
-
-        var hitsum_adc = 0;
-        var hitsum_tdc = 0;
-        var hitsum_n = 0;
-        var hitsum_ntrk = 0;
-        var whichtracks = [];
-        var whichtrack = null;
-        var trackname = GetSelectedName("tracks"); 
-        var hitname   = GetSelectedName("hits");
-        var track_assn = (((gRecord||{}).associations||{})[hitname]||{})[trackname] || [];
-        var hilight_index_list = [];
-        var hh = gGeo3.wire_pitch(wireref.tpc,this.view)/2;
-        var offset_hit_time = -gZoomRegion.getTimeOffset();
-        if($('#ctl-shift-hits').is(":checked")) offset_hit_time += parseFloat( $('#ctl-shift-hits-value').val() );  
-        var mouse_hit_tdc = match.sample - offset_hit_time;
-
-        var dx,dy;
-        // find hits within radius.
-        var hits = GetSelected("hits");
-        for(var i=0;i<hits.length;i++){
-          var hit = hits[i];
-          for(var w of hit._wires) { // should exist, created in CreateHits above
-              if(w.view==this.view) {
-                dy = hit.t-mouse_hit_tdc;
-                dx = w.wire-match.wire;
-                if(  (Math.abs(dx)<sumRadiusU)
-                  && (Math.abs(dy)<sumRadiusV)
-                  && (dx*dx/sumRadiusU/sumRadiusU + dy*dy/sumRadiusV/sumRadiusV < 1.0) )
-              {
-                // add to hilight list
-                hilight_index_list.push(hit._idx);
-                // sum it.
-                hitsum_adc += hit.q;
-                hitsum_tdc += hit.t;
-                hitsum_n += 1;
-                // Is it associated with the current tracks?
-                if(track_assn[hit._idx] && track_assn[hit._idx].length>0) {
-                  hitsum_ntrk += 1;
-                  whichtracks.push(...track_assn[hit._idx]);
-                  whichtrack = track_assn[hit._idx][0]; // clumsy; assumes only 1 track associated with any of the hits.
-                }                
-              }
-            }
-
-          }
-        }
-        this.UpdateHitColors(hilight_index_list,[255,165,0]); // orange.
-
-        if(ev.type=="dblclick")
-          if(gMasterClass) gMasterClass.SetTableData(
-                    ["Num Hits","ADC Sum","TDC Average","Hits on Track","Track ID","Circle Radius"],
-                    [hitsum_n, hitsum_adc, hitsum_tdc/hitsum_n, hitsum_ntrk, find_plurality_element(whichtracks),sumRadius]);
-        gStateMachine.Trigger("masterClass");
-
-      } else {
-        // We turned it off.
-
-        if(this.hitsum_circle) {
-          if(this.hitsum_circle.visible) this.UpdateHitColors(); // we need to turn off color
-          this.hitsum_circle.visible = false;
-        }
-      }
-
-      if(match.obj && ev.type=="dblclick") {
-        console.error("dblclick");
-        if(gMasterClass) gMasterClass.DoubleClick(match);
-      }
 
       if(!match.obj) match.obj = "outside"+trans+"|"+x;
       match.trans = trans;
@@ -1002,6 +1023,9 @@ WireViewGL.prototype.DoMouse = function(ev)
         if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x + 30, match.canvas_coords.y + offset.y);
         ChangeSelection(match);
       }
+    } else {
+      // Mouse NOT in content area:
+      if(this.hitsum_circle) this.hitsum_circle.visible=false;
     }
   }
 
@@ -1151,8 +1175,9 @@ WireViewGL.prototype.CreateHits = function()
   this.UpdateHits();
 }
 
-WireViewGL.prototype.UpdateHits = function()
+WireViewGL.prototype.UpdateHits = function(clear_hilite)
 {
+  if(clear_hilite) this.hilite_hit_list = [];
   for(var tpc=0; tpc<(this.hit_materials||[]).length; tpc++) {    
     // Update clipping planes.
     if(gZoomRegion.cropMode()) {
@@ -1184,11 +1209,10 @@ WireViewGL.prototype.UpdateHits = function()
   this.Render();
 }
 
-WireViewGL.prototype.UpdateHitColors = function(hilite_list, hilite_color)
+WireViewGL.prototype.UpdateHitColors = function()
 {
   if(!this.hit_group) return;
   var field = $(this.GetBestControl(".hit-hist-field")).val();
-  hilite_list = hilite_list || [];
   for(var mesh of this.hit_group.children) {
     var tpc = mesh.userData.tpc || 0;
 
@@ -1200,8 +1224,8 @@ WireViewGL.prototype.UpdateHitColors = function(hilite_list, hilite_color)
     var vcolor = [];
     for(var j=0; j< mesh.userData.product_indices.length; j+=2) {
       var idx = mesh.userData.product_indices[j];
-      var c = hilite_color;
-      if(!hilite_list.includes(idx)) { 
+      var c = this.hilite_hit_color;
+      if(!this.hilite_hit_list.includes(idx)) { 
         var hit = hits[idx];
         var q = hit[field]; // The value being plotted for charge. 
         c = gHitColorScaler.GetColorValues(q);

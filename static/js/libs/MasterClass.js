@@ -9,23 +9,61 @@ $(function(){
      gMasterClass = new MasterClass(this);
   });  
 });
+gMasterClass = new MasterClass();  // Object always exists, but may not have element.
 
-function MasterClass( element )
+function MasterClass(  )
 {
   // console.debug("MCInfo::ctor",element);
-  this.element = element;
-  $(this.element).html("<table<tr><td>blah</td></tr></table>").mySelectContents();
+  this.element = $('div.A-MasterClass-data').get(0);
+  this.circle_tracking = false;
+  this.circle_locked   = false;
+  var self = this;
+  this.values = [];
+
+  this.circle_size = 5.0; // cm
+
+  $("button.do_hitsum").button().on("click", function(){ 
+    console.error("hitsum tracking");
+    self.circle_tracking = true; 
+    self.circle_locked = false; 
+    gStateMachine.Trigger("hitSumChange"); // update view
+  });
+  $("button.do_hitsum_clear").button().on("click", function(){ 
+    console.error("hitsum clear");
+    self.circle_tracking = false; 
+    self.circle_locked = false; 
+    $(self.element).html("&nbsp;");
+    gStateMachine.Trigger("hitSumClear"); // update view
+  });
 }
+
 
 MasterClass.prototype.SetTableData = function(headers,data,lock)
 {
-  var h = "<table>";
-  h += "<tr><th>" + headers.join('</th><th>') + "</th></tr>";
-  h += "<tr><td>" + data.join('</td><td>') + "</td></tr>";
-  h+= "</table>";
-  $(this.element).html(h).mySelectContents();
-    document.execCommand("copy");
+console.error("hitsum update",data);
 
+  var h = "<table>";
+  h += "<tr><td>" + data.join('</td><td>') + "</td></tr>";
+  h += "<tr><th>" + headers.join('</th><th>') + "</th></tr>";
+  h+= "</table>";
+  $(this.element).html(h);
+}
+
+MasterClass.prototype.Lock = function()
+{
+  console.error("lock");
+  this.circle_tracking = false; 
+  this.circle_locked = true; 
+  this.SelectAndCopy();
+  gStateMachine.Trigger("hitChange"); // update view
+
+}
+
+
+MasterClass.prototype.SelectAndCopy = function()
+{
+  $(this.element).mySelectContents();
+  document.execCommand("copy");
 }
 
 
@@ -179,6 +217,5 @@ MasterClass.prototype.DoubleClick = function (s)
       document.execCommand("copy");
 
   }
-
 };
 

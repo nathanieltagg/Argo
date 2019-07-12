@@ -1,14 +1,25 @@
 // For the MasterClass stuff.
 +portlet('masterclass-port','MasterClass')
   .portlet-content
-    .A-MasterClass-data
-      p cut and paste data goes here.
     .masterclass-controls
-    div
-      label(for='ctl-hitsum-circle-size') Sum Hit Size:
-      input#ctl-hitsum-circle-size.saveable(type='text', value='4', size='5')
-      |  cm
-    div
-       button.do_hitsum(type='button', disabled="disabled") Sum Hits
+      div
+        //- label(for='ctl-hitsum-circle-size') Sum Hit Size:
+        //- input#ctl-hitsum-circle-size.saveable(type='text', value='4', size='5')
+        //- |  cm
+           .mag-sliders
+      //-   #ctl-hitsum-size-slider
+
+      //-       div
+      //- input#ctl-hitsum-circle.saveable(type='checkbox', name='ctl-hitsum-circle')
+      //- label(for='ctl-hitsum-circle')
+      //-   b (=)
+      //-   | Sum hits around mouse
+
+ 
+      div
+         button.do_hitsum(type='button') Sum Hits
+         button.do_hitsum_clear(type='button') Clear
+      br
+    .A-MasterClass-data(style='height:100px;')
 
 
