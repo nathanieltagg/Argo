@@ -479,7 +479,7 @@ var browser = require("./browser.js");
 
 ///// Uboone Masterclass specific:
 var masterclass_browser = new browser({
-    targetlink:  "/",
+    targetlink:  "/masterclass/",
     extensions: {
                 '.ubdaq':"Raw UBDAQ files",
                 '.root':"Root files (Can read AnalysisTuple OR Larsoft OR Larlite files)"
