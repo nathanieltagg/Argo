@@ -205,6 +205,13 @@ $(function(){
     
   });
 
+  headers.each(function(){
+    if($(this).parents(".portlet:first").find(".portlet-content").is(":hidden")) {
+      $('.icon-shrink',this).removeClass("ui-icon-minusthick").addClass("ui-icon-plusthick");
+    }
+    
+  });
+
   $(".portlet-header .ui-icon-print").click(function(){    
                                                       var portlet = $(this).parents(".portlet:first");
                                                       var content = $('.portlet-content',portlet);

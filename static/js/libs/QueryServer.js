@@ -122,9 +122,10 @@ function QueryServerStream( par )
   request.pieces = request.pieces || [ 
     "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
 
-    // Useful defaults for masterclass:
+    // Useful defaults for masterclass using MCC 9 data
     "/hits/recob::Hits_gaushit__DataRecoStage1Test",
     "/tracks/recob::Tracks_pandoraKalmanTrack__DataRecoStage2",
+    "/tracks/recob::Tracks_pandoraAllOutcomesTrack__DataRecoStage2",
   ];
       
   $('#status').attr('class', 'status-transition');

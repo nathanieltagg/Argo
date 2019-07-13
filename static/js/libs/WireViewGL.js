@@ -82,7 +82,6 @@ function WireViewGL(element, options )
   $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
   $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
   $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
-  $('input.zoommode:checked')         .on("change", this.UpdateWireimg.bind(this) );
 
   gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) );  // Re-render, but this doesn't require anything more.
   
