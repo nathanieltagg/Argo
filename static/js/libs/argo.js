@@ -538,13 +538,15 @@ $(function(){
 
   
   // Clear all cookies.
-  $(".ctl-restore-defaults,#ctl-restore-defaults").button().click(function(){
+  $("#ctl-restore-defaults").button();
+  $(".ctl-restore-defaults,#ctl-restore-defaults").click(function(){
     var Cookies = $.cookie();
     for (key in Cookies) {
       console.log("removing "+ key);
       $.removeCookie(key);
     }
-    myGrowl('Configuration restored to default.','(Reload to move windows to original positions')
+    location.reload();
+    // myGrowl('Configuration restored to default.','(Reload to move windows to original positions')
 
     // if(gUrlToThisEvent) window.location = gUrlToThisEvent;
     // else window.location.reload();
