@@ -1,22 +1,23 @@
 +portlet('zoomcontrol-port',"Zoom Control")
     .A-ZoomControl
-    span.ZoomControl-Info
-    div#time-offset-slider(style='clear:both;')
-    br
-    label
-      input#time-offset-text(type='text', value='0', size='4')
-      | T0 Offset
-    br
-    fieldset
-      label
-        input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-full',value='full',checked='true')
-        | Full readout
-        select.zoomtpc
+    -if(pagename!="masterclass") {
+      span.ZoomControl-Info
+      div#time-offset-slider(style='clear:both;')
+      div
+        label
+          input#time-offset-text(type='text', value='0', size='4')
+          | T0 Offset
+        br
+        fieldset
+          label
+            input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-full',value='full',checked='true')
+            | Full readout
+            select.zoomtpc
 
-      label
-        input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-crop',value='crop')
-        | Real bounds
-
+          label
+            input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-crop',value='crop')
+            | Real bounds
+    -}
     span.ZoomControl-Controls.align-right
       button.zoom-auto(type='button') Auto
       button.zoom-full(type='button') Full

@@ -21,6 +21,7 @@ style(type='text/css').
           a(href='#falsecolor-Rainbow') Rainbow
         li
           a(href='#falsecolor-Grayscale') Gray
+        -if(pagename != "masterclass") {
         li
           a(href='#falsecolor-LOCS') LOCS
         li
@@ -34,6 +35,7 @@ style(type='text/css').
         // <li><a href="#falsecolor-Interp3">Intp3</a></li> 
         li
           a(href='#falsecolor-Interp4') Intp4
+        -}
       #falsecolor-Rainbow.falsecolor-tab
         | Hue-rotation
         br
@@ -83,6 +85,8 @@ style(type='text/css').
           |   to   
           input#falsecolor-grayscale-cuthigh.psval.saveable.psuedoCutoffHigh(type='text', value='0', width='5')
           |   ADC  
+
+      -if(pagename != "masterclass") {
       #falsecolor-LOCS.falsecolor-tab
         | Linearized Optimal Color Scale
         br
@@ -98,9 +102,6 @@ style(type='text/css').
           span.pslabel Scale
           .psslide.psuedoDialScaleSlider
           input#falsecolor-grayscale-dialscale.psval.saveable.psuedoDialScale(type='text', value='-0.5', width='3')
-        //           <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
-                          <div class='psslide psuedoSaturationSlider'></div>
-                          <input id='falsecolor-locs-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div> 
         .psuedoColorRow
           | Cutoff:   
           input#falsecolor-locs-cutlow.psval.saveable.psuedoCutoffLow(type='text', value='0', width='5')
@@ -147,9 +148,6 @@ style(type='text/css').
           span.pslabel Scale
           .psslide.psuedoDialScaleSlider
           input#falsecolor-blackbody-dialscale.psval.saveable.psuedoDialScale(type='text', value='0.4', width='3')
-        //           <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
-                          <div class='psslide psuedoSaturationSlider'></div>
-                          <input id='falsecolor-locs-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div> 
         .psuedoColorRow
           | Cutoff:   
           input#falsecolor-blackbody-cutlow.psval.saveable.psuedoCutoffLow(type='text', value='0', width='5')
@@ -171,9 +169,6 @@ style(type='text/css').
           span.pslabel Scale
           .psslide.psuedoDialScaleSlider
           input#falsecolor-rootrainbow-dialscale.psval.saveable.psuedoDialScale(type='text', value='0.4', width='3')
-        //           <div class='psuedoColorRow' > <span class='pslabel'>Satr</span>
-                          <div class='psslide psuedoSaturationSlider'></div>
-                          <input id='falsecolor-locs-saturation' class='psval saveable psuedoSaturation'  type="text" value='0.9' width='3'/> </div> 
         .psuedoColorRow
           | Cutoff:   
           input#falsecolor-rootrainbow-cutlow.psval.saveable.psuedoCutoffLow(type='text', value='0', width='5')
@@ -274,6 +269,7 @@ style(type='text/css').
       //         <div class='psuedoColorRow' > <span class='pslabel'>CutRMS</span>
                         <div class='psslide psuedoPedWidthCutoffSlider'></div>
                         <input id='pedwidth-cutoff' class='psval saveable psuedoPedWidthCutoff'  type="text" value='3.0' width='2' style='width:20px'/> RMS</div> 
+      -}
       .psuedoColorRow
         input#ctl-coherent-noise-filter.saveable.ctl-coherent-noise-filter(type='checkbox', name='ctl-coherent-noise-filter', checked='')
         label(for='ctl-coherent-noise-filter')

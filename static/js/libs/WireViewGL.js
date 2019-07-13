@@ -842,11 +842,17 @@ WireViewGL.prototype.DoHitSumCircle = function(ev)
       this.hilite_hit_color= [255,165,0]; // orange.
       this.UpdateHitColors(); // orange.
 
+      var header = (gRecord||{}).header || {};
+      var event_number = header.event + "||" + header.run;
       gMasterClass.SetTableData(
-          ["Num Hits","ADC Average","TDC Average"],
-          [hitsum_n, 
+          ["Event","Trk ID","Num Hits","ADC Average","TDC Average"],
+          [
+          event_number,
+          find_plurality_element(whichtracks),
+          hitsum_n, 
           (hitsum_n>0)?(hitsum_adc/hitsum_n).toFixed(1):"",
           (hitsum_n>0)?(hitsum_tdc/hitsum_n).toFixed(1):"",
+
           // hitsum_ntrk, find_plurality_element(whichtracks)
           ]);
       console.error("update",(ev||{}).type)
