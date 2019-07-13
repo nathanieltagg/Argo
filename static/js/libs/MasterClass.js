@@ -2,40 +2,92 @@
 
 // Hover Info box, which appears as a regular Portlet.
 var gMasterClass = null;
-var gMasterClass_Data = null;
+
 
 $(function(){
-  $('div.A-MasterClass-data').each(function(){
-     gMasterClass = new MasterClass(this);
-  });  
-});
-gMasterClass = new MasterClass();  // Object always exists, but may not have element.
-
+  gMasterClass = new MasterClass();  // Object always exists, but may not have element.
+})
 function MasterClass(  )
 {
-  // console.debug("MCInfo::ctor",element);
+  console.error("make masterclass");
   this.element = $('div.A-MasterClass-data').get(0);
+
   this.circle_tracking = false;
   this.circle_locked   = false;
+  this.selecthit_tracking = false;
+  this.selecthit_which = 0;
   var self = this;
-  this.values = [];
 
   this.circle_size = 5.0; // cm
 
-  $("button.do_hitsum").button().on("click", function(){ 
-    console.error("hitsum tracking");
+  console.error($("input.do_hitsum"));
+  $(".mc_button.do_hitsum").on("click", function(){ 
+    console.error('do_hitsum ready');
+
     self.circle_tracking = true; 
     self.circle_locked = false; 
     gStateMachine.Trigger("hitSumChange"); // update view
+    $(this).addClass("mc_strobing");
   });
-  $("button.do_hitsum_clear").button().on("click", function(){ 
-    console.error("hitsum clear");
+  $(".mc_button.do_hitsum_clear").on("click", function(){ 
+    console.error('hitsum clear');
+
     self.circle_tracking = false; 
     self.circle_locked = false; 
+    self.selecthit_tracking = false; 
     $(self.element).html("&nbsp;");
     gStateMachine.Trigger("hitSumClear"); // update view
+    $(".mc_button.do_hitsum").removeClass("mc_strobing");
+    $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
+
   });
+
+   $(".mc_button.do_mc_selecthit").on("click", function() {
+    console.error('selecthit ready');
+    self.circle_tracking = false; 
+    self.circle_locked = false; 
+    gStateMachine.Trigger("hitSumClear"); // update view
+    self.selecthit_tracking = true;
+    self.selecthit_which = 0;
+    var h = "<table><tr><td class='t1'></td><td class='t2'></td></tr><tr><th>t1</th><th>t2</th></tr></table>";
+    $(self.element).html(h);
+    $(this).addClass("mc_strobing");
+  });
+
+  gStateMachine.Bind("hoverChange" ,this.HoverChange.bind(this));
+  gStateMachine.Bind("selectChange",this.SelectChange.bind(this));
 }
+
+MasterClass.prototype.HoverChange = function()
+{
+  console.error('hoverchange',gHoverState)
+  if(gHoverState.type=="hits" && this.selecthit_tracking) {
+    console.error(gHoverState.obj.t);
+    if(this.selecthit_which == 0){
+      $("td.t1",this.element).html(gHoverState.obj.t);
+    } else {
+      $("td.t2",this.element).html(gHoverState.obj.t);
+    }
+  }
+}
+
+MasterClass.prototype.SelectChange = function()
+{
+  if(gSelectState.type=="hits" && this.selecthit_tracking) {
+    if(this.selecthit_which == 0){
+      $("td.t1",this.element).html(gSelectState.obj.t);
+      this.selecthit_which++;
+    } else {
+      $("td.t2",this.element).html(gSelectState.obj.t);
+      this.selecthit_which++;
+      this.selecthit_tracking = false;
+      $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
+
+      this.SelectAndCopy();
+    }
+  }
+}
+
 
 
 MasterClass.prototype.SetTableData = function(headers,data,lock)
@@ -56,6 +108,8 @@ MasterClass.prototype.Lock = function()
   this.circle_locked = true; 
   this.SelectAndCopy();
   gStateMachine.Trigger("hitChange"); // update view
+  $(".mc_button.do_hitsum").removeClass("mc_strobing");
+
 
 }
 
@@ -218,4 +272,7 @@ MasterClass.prototype.DoubleClick = function (s)
 
   }
 };
+
+
+
 

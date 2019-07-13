@@ -736,8 +736,7 @@ ThreeTriD.prototype.HoverAndSelectionChange = function()
   }
   
   this.dirty=true;
-  
-  // this.Render();
+  this.Render();
 }
   
 
@@ -1395,7 +1394,7 @@ ThreeTriD.prototype.UpdateWireimg = function()
       mat.uniforms.tdc_end.value   = tdc_end;
 
       // Change transverse cut
-      // if(zoommode == "crop") { // /always crop in 3d
+      if(zoommode == "crop") { // /always crop in 3d
         // Drift crop:
         var tdc_start = gGeo3.getTDCofX(tpc,mesh.userData.view,v1) + gZoomRegion.getTimeOffset();
         var tdc_end   = gGeo3.getTDCofX(tpc,mesh.userData.view,v2) + gZoomRegion.getTimeOffset();
@@ -1413,17 +1412,17 @@ ThreeTriD.prototype.UpdateWireimg = function()
           mat.uniforms.trans_low_cut.value = -1e9;
           mat.uniforms.trans_high_cut.value = 1e9;
         }
-      // } 
-      // else if(zoommode == "full" ) {
-      //   mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
-      //   mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
+      } 
+      else if(zoommode == "full" ) {
+        mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
 
-      //   mat.uniforms.trans_low_cut.value = -1e9;
-      //   mat.uniforms.trans_high_cut.value = 1e9;
+        mat.uniforms.trans_low_cut.value = -1e9;
+        mat.uniforms.trans_high_cut.value = 1e9;
 
-      // } else {
-      //   console.error("WFT?")
-      // }
+      } else {
+        console.error("WFT?")
+      }
 
       // trigger channels
       mat.uniforms.do_noise_reject    .value= do_filter;

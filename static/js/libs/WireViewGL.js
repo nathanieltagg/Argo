@@ -1018,7 +1018,6 @@ WireViewGL.prototype.DoMouse = function(ev)
       // Code that highlights hits near the mouse. Used for MasterClass exercies.
       this.DoHitSumCircle(ev);
 
-
       if(!match.obj) match.obj = "outside"+trans+"|"+x;
       match.trans = trans;
       match.x     = x;
@@ -1027,6 +1026,7 @@ WireViewGL.prototype.DoMouse = function(ev)
         var offset = getAbsolutePosition(this.viewport);      
         if(match.canvas_coords) SetOverlayPosition(match.canvas_coords.x + offset.x + 30, match.canvas_coords.y + offset.y);
         ChangeSelection(match);
+
       }
     } else {
       // Mouse NOT in content area:

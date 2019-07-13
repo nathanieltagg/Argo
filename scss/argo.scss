@@ -829,3 +829,25 @@ div.modal {
 .tc3 { color: $c3; }
 .tc4 { color: $c4; }
 .tc5 { color: $c5; }
+
+.A-MasterClass-data table {
+  td { text-align:center; }
+  width:100%;
+}
+
+.mc_button {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+  border-radius: 8px;
+}
+.mc_strobing {
+  // background-color: red;
+  animation: mc_strobe linear 2s infinite;
+  @keyframes mc_strobe {
+  0% {background-color: white;  }
+  50% {background-color: #F44;  }
+  100% {background-color: white;  }
+}
+
+}
