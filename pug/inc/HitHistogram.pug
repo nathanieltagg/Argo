@@ -10,8 +10,8 @@
       option(value='plane') Plane
       option(value='m') Multiplicity
     select#ctl-hit-color-scale.saveable
-      option(value='RedBluePalette', selected='') Red-Blue
-      option(value='BrownPurplePalette') Brown-Purple
+      option(value='RedBluePalette',    selected=(pagename!="masterclass")?"selected":null) Red-Blue
+      option(value='BrownPurplePalette' selected=(pagename=="masterclass")?"selected":null) Brown-Purple
       option(value='GrayscalePalette') Grayscale
       option(value='CurtPalette') Curt's
       option(value='PhilipColorPalette') Philip's
