@@ -218,6 +218,12 @@ function ThreeTriD(element, options )
   gStateMachine.Bind('toggle-wireimg',  this.UpdateWireimg.bind(this,false) );
   gStateMachine.Bind('zoomChange',      this.UpdateWireimg.bind(this,false) );
   gStateMachine.Bind('zoomChangeFast',  this.UpdateWireimg.bind(this,false) );
+  gStateMachine.Bind('changeViewMode',       this.CreateWireimg.bind(this,false) );
+  $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
+  $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
+  $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
+  $('input.zoommode:checked')         .on("change", this.UpdateWireimg.bind(this) );
+  gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) );  // Re-render, but this doesn't require anything more.
 
   
   // Tracks
@@ -1191,7 +1197,7 @@ ThreeTriD.prototype.create_image_meshgroup = function(mapper,chan_start,chan_end
             trans_fade_width: {value: 10.}, 
             trans_low_cut:    {value: -1e9},
             trans_high_cut:   {value:  1e9},
-            do_trans_view_direction_flag: { value: 1},
+            do_trans_view_direction_flag: { value: 0},
          };
 
 
@@ -1287,21 +1293,24 @@ ThreeTriD.prototype.CreateWireimg = function()
         // horizontal (wire number/ transverse) = x on screen
         var u1 = section[0].trans - pitch/2; // Ensure pixes are centered on the wire.
         var u2 = section[1].trans - pitch/2;
-        //console.log("Creating wireimg tpc",tpc,"view",view,"trans",u1," to ",u2,section);
+
+        var gtpc = gGeo3.getTpc(tpc);
 
         // vertical
-        // whole time view, correct for microboone:
-        // var tdc_start = 0; //gGeo3.getTDCofX(tpc,view,v1) + gZoomRegion.getTimeOffset();
-        // var tdc_end   = mapper.total_width*mapper.scale_x; //gGeo3.getTDCofX(tpc,view,v2) + gZoomRegion.getTimeOffset();
-        // var v1 = gGeo3.getXofTDC(tpc,view,tdc_start);
-        // var v2 = gGeo3.getXofTDC(tpc,view,tdc_end);
+        if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
+          // whole time view, correct for microboone:
+          var tdc_start = 0; 
+          var tdc_end   = mapper.total_width*mapper.scale_x; 
+          var v1 = gGeo3.getXofTDC(tpc,view,tdc_start);
+          var v2 = gGeo3.getXofTDC(tpc,view,tdc_end);
+        } else {
+          // Attempt for DUNE:
+          // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
+          // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
+          var v1 =  gtpc.views[view].x; // position of wires
+          var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
+        }
 
-        // Attempt for DUNE:
-        var gtpc = gGeo3.getTpc(tpc);
-        // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-        // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-        var v1 =  gtpc.views[view].x; // position of wires
-        var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
         var tdc_start = gGeo3.getTDCofX(tpc,view,v1) + gZoomRegion.getTimeOffset();
         var tdc_end   = gGeo3.getTDCofX(tpc,view,v2) + gZoomRegion.getTimeOffset();
 
