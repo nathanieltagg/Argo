@@ -119,8 +119,12 @@ function QueryServerStream( par )
   request.tilesize = 2400;
 
   // Default: do file-and-entry read from parameters. Should check for other options first.
-  
-  request.pieces = request.pieces || [ "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
+  request.pieces = request.pieces || [ 
+    "/hits/recob::Hits_gaushit__DataApr2016GausFilterRecoStage1",
+
+    // Useful defaults for masterclass:
+    "/hits/recob::Hits_gaushit__DataRecoStage1Test",
+    "/tracks/recob::Tracks_pandoraKalmanTrack__DataRecoStage2",
   ];
       
   $('#status').attr('class', 'status-transition');

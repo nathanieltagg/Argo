@@ -1092,6 +1092,7 @@ WireViewGL.prototype.CreateHits = function()
     this.hit_group.name = "hit_group";    
     this.scene.add(this.hit_group);
   }
+  this.hilite_hit_list = []; // Wipe in case of product change
   for(var mesh of this.hit_group.children) {
     // dispose old hits object:
     this.hit_group.remove(mesh);

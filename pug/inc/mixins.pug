@@ -2,6 +2,7 @@ mixin portlet(pid,title,hidden=false)
   .portlet(id=pid)
     .portlet-header
       span.title=title
+      span(style="float:right;width:10px;") &nbsp;
       span.ui-icon.ui-icon-minusthick.icon-shrink        
       span.ui-icon.ui-icon-circle-arrow-s.download_img
       span.ui-icon.ui-icon-print
