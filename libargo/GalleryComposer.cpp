@@ -699,7 +699,8 @@ void GalleryComposer::composeObjectImage(const std::vector<raw::RawDigit>&v, con
 
   gov::fnal::uboone::online::Plexus plex;
   if(is_uboone) {
-    if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"../db/dead_channels.txt"));
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->RebuildFromTimestamp(m_event_time/1000.);
+    if(!gDeadChannelMap->ok()) gDeadChannelMap->Rebuild(m_config->value("DeadChannelDB" ,"db/dead_channels.txt"));
     if(!gDeadChannelMap->ok()) out["warning"].push_back("Could not initialize dead channel map");
     json plexus_config = m_config->value("plexus",json::object());
     plex.assignSources(
