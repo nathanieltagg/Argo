@@ -45,21 +45,21 @@ function WireViewGL(element, options )
     margin_bottom : 40,
     margin_top    : 5,
     margin_right  : 5,
-    margin_left   : 30,
+    margin_left   : 42,
     fMagnifierOn: true,
     
     draw_box : false,
     draw_grid_x:false,  // These don't work with magnifier!!!11!!
     draw_grid_y:false,  // 
 
-    xlabel : "Transverse position (cm)",
-    ylabel : "Drift Time (cm)",    
+    xlabel : "Wire position (cm)",
+    ylabel : "Drift Time  / X (cm)",    
   }  
   $.extend(true,defaults,options);
   ThreePad.call(this, element, defaults); // Give settings to ABoundObject contructor.
   this.view = this.view || this.plane;
   if(this.view === undefined || this.view === null) throw "No view assigned to WireView";
-
+  if(this.view == 2) this.xlabel = "Wire position / Z (cm)"
 
   // Layers definitions:
   this.kz_image = 1.2;
@@ -464,7 +464,7 @@ WireViewGL.prototype.CreateWireimg = function()
   this.wireimg_group = new THREE.Group();
   this.max_tdc = mapper.total_width*mapper.scale_x;
 
-  console.error("CreateWireimg zoommode is full:",gZoomRegion.fullMode(),"tpc:",gZoomRegion.getSelectedTpc());
+  // console.error("CreateWireimg zoommode is full:",gZoomRegion.fullMode(),"tpc:",gZoomRegion.getSelectedTpc());
   for(var tpc=0; tpc< gGeo3.ntpc; tpc++){
     var nwires = gGeo3.numWires(tpc,this.view);
     var pitch  = gGeo3.wire_pitch(tpc,this.view);
@@ -800,7 +800,14 @@ WireViewGL.prototype.DoHitSumCircle = function(ev)
       var whichtrack = null;
       var trackname = GetSelectedName("tracks"); 
       var hitname   = GetSelectedName("hits");
-      var track_assn = (((gRecord||{}).associations||{})[hitname]||{})[trackname] || [];
+      var assns =  (((gRecord||{}).associations||{})[hitname]||{});
+      var track_assn = assns[trackname];
+      if(!trackname || !track_assn) {
+        // that association not loaded, or tracks selected name not valid.
+        for(var nm in assns) {
+          if (nm.match(/^recob::Tracks_/)  ) { track_assn = assns[nm]; break; }
+        }
+      }
       var hilight_index_list = [];
       var hh = gGeo3.wire_pitch(this.fMouse_wireref.tpc,this.view)/2;
       var offset_hit_time = -gZoomRegion.getTimeOffset();
@@ -842,7 +849,7 @@ WireViewGL.prototype.DoHitSumCircle = function(ev)
       this.UpdateHitColors(); // orange.
 
       var header = (gRecord||{}).header || {};
-      var event_number = header.event + "||" + header.run;
+      var event_number = header.run + "|" + header.subrun + "|" + header.event;
       gMasterClass.SetTableData(
           ["Event","Trk ID","Num Hits","ADC Average","TDC Average"],
           [

@@ -270,27 +270,31 @@ style(type='text/css').
                         <div class='psslide psuedoPedWidthCutoffSlider'></div>
                         <input id='pedwidth-cutoff' class='psval saveable psuedoPedWidthCutoff'  type="text" value='3.0' width='2' style='width:20px'/> RMS</div> 
       -}
+      -if(pagename != "masterclass") {
       .psuedoColorRow
-        input#ctl-coherent-noise-filter.saveable.ctl-coherent-noise-filter(type='checkbox', name='ctl-coherent-noise-filter', checked='')
+        input#ctl-coherent-noise-filter.saveable.ctl-coherent-noise-filter(type='checkbox', name='ctl-coherent-noise-filter')
         label(for='ctl-coherent-noise-filter')
           b (f)
           | Coherent Noise Filter
+      -}
       .psuedoColorRow
         | Bad Channels:
         label
           input.ctl-bad-wire-filter#ctl-bad-wire-filter0(type='radio', name='radio-bad-wire-filter', value='0', checked='')
-          | Zero
+          | Blank
+        -if(pagename != "masterclass") {
         label
           input.ctl-bad-wire-filter#ctl-bad-wire-filter1(type='radio', name='radio-bad-wire-filter', value='1')
           | Show
+        -}
         label
           input.ctl-bad-wire-filter#ctl-bad-wire-filter2(type='radio', name='radio-bad-wire-filter', value='2')
           | Black
-      .psuedoColorRow
-        input#ctl-gl-edge-finder.saveable.ctl-gl-edge-finder(type='checkbox', name='ctl-gl-edge-finder')
-        label(for='ctl-gl-edge-finder')
-          b (/)
-          | WebGL edge finder
+      // .psuedoColorRow
+      //   input#ctl-gl-edge-finder.saveable.ctl-gl-edge-finder(type='checkbox', name='ctl-gl-edge-finder')
+      //   label(for='ctl-gl-edge-finder')
+      //     b (/)
+      //     | WebGL edge finder
     // A-FalseColorControl 
     .wireimg-encoded-progressbar(style='position: relative; text-align:center;')
       .wireimg-encoded-progressbar-text(style='position: absolute; color:black; width:100%')

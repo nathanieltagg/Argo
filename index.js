@@ -522,7 +522,7 @@ var argo_browser = new browser({
 
 });
 app.use("/browser/",argo_browser.router);
-app.use("/server/file_browser.cgi",argo_browser.router);
+// app.use("/server/file_browser.cgi",argo_browser.router);
 
 // At end:
 app.get('/', function (req, res) {
@@ -532,6 +532,10 @@ app.get('/', function (req, res) {
 
 
 
-process.send = process.send || function () {}; // in case there's no prcoess manager
-httpServer.listen(4590); // looks a little like 'argo'
-console.log(chalk.red("Port openend on 4590"));
+httpServer.listen(4590,function(){
+  process.send = process.send || function () {}; // in case there's no prcoess manager
+  process.send('ready');
+  console.log(chalk.red("Port openend on 4590"));
+
+}); // looks a little like 'argo'
+

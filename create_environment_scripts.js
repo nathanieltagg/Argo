@@ -23,7 +23,11 @@ var pm2 = {
             "name": "argo-node",
             "script": "index.js",
             "watch": false,
-            "cwd":'/home/argo/Argo_dev',
+            "cwd":__dirname,
+            "exec_mode" : "cluster",
+            "instances" : 2,
+            "wait_ready": true,
+            "listen_timeout": 20000,
             "env": {
               "NODE_ENV": "production",
             }
@@ -56,7 +60,8 @@ for(v in obj) {
 }
 pm2.apps[0].env["DYLD_LIBRARY_PATH"] = "";
 pm2.apps[0].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
+pm2
 
-fs.writeFileSync("environment.json",JSON.stringify(pm2,null,2));
+fs.writeFileSync("pm2.ecosystem.json",JSON.stringify(pm2,null,2));
 
           

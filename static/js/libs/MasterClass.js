@@ -60,7 +60,7 @@ function MasterClass(  )
 
 MasterClass.prototype.HoverChange = function()
 {
-  console.error('hoverchange',gHoverState)
+  // console.error('hoverchange',gHoverState)
   if(gHoverState.type=="hits" && this.selecthit_tracking) {
     console.error(gHoverState.obj.t);
     if(this.selecthit_which == 0){

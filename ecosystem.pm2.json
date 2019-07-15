@@ -4,8 +4,10 @@
            "name": "argo-node",
            "script": "index.js",
            "watch": false,
-           "cwd":'/home/argo/Argo_dev',
-           "env": {
+           //"cwd":'/home/argo/Argo_dev',
+	         "exec_mode" : "cluster",
+           "instances" :  2,
+                     "env": {
              "NODE_ENV": "production",
            }
          }

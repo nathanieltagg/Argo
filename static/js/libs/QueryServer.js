@@ -128,15 +128,15 @@ function QueryServerStream( par )
     "/tracks/recob::Tracks_pandoraAllOutcomesTrack__DataRecoStage2",
   ];
       
-  $('#status').attr('class', 'status-transition');
-  $("#status").text("Connecting to server...");
-  $('.progress-status').text();
-  
   
   gServerRequestTime = (new Date()).getTime();
   gStateMachine.Trigger("newRecord");
   
   if(!gSocket) {
+    $('#status').attr('class', 'status-transition');
+    $("#status").text("Connecting to server...");
+    $('.progress-status').text();
+
     // Open the socket.
     var wsurl = 'ws://'+window.location.host+'/ws/stream-event';
     if(window.location.protocol=="https:") wsurl = 'wss://'+window.location.host+'/wss/stream-event';
@@ -153,6 +153,7 @@ function QueryServerStream( par )
     };
     gSocket.onmessage = function(event) {
       // console.log("onmessage",event.timeStamp,event.data.length);
+
       try {
         var o = JSON.parse(event.data);
       } catch {
@@ -172,7 +173,7 @@ function QueryServerStream( par )
       $("#status").text('Connection broken');
     };
   } else {
-    // Socket already read
+
     if (gSocket.readyState !== 1) gSocket.onopen =  ()=>{gSocket.send(JSON.stringify(request));}
     else gSocket.send(JSON.stringify(request));  // Send the request along straight away    
   } 
