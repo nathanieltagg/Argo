@@ -29,6 +29,7 @@ defaults.composer_config = {
    "WorkingSuffix": "event",
    "CreateSubdirCache": true,
   "fork_logdir": __dirname+"/logs/",
+  "DeadChannelDB":__dirname+"/db/dead_channels.txt",
   plexus: {
     tpc_source:"sqlite "+__dirname+"/db/current-plexus.db",
     pmt_source:"sqlite "+__dirname+"/db/current-plexus.db",
