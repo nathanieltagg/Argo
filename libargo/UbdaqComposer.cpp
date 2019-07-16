@@ -779,18 +779,16 @@ void UbdaqComposer::composeHits()
       // }
       for(int16_t x : waveform) pf(x);
       pf.finish();
-      
-      std::cout <<  "Ch:" << waveform._Ch << " plane:" << waveform._plane << " thresh:" << thresh << " sign:" << sign << " hits:" << pf.size() << std::endl;
-
+    
       double scale = 0.1;
       if(waveform._plane==2) scale=0.2;
 
       json wirehits = json::array();
       for(auto peak: pf) {
         json hit = { 
-                     // {"Ch", waveform._Ch}
-                    {"wire", waveform._planewire}
-                   , {"plane", waveform._plane}
+                      {"Ch", waveform._Ch}
+                   // , {"wire", waveform._planewire}
+                   // , {"plane", waveform._plane}
                    , {"q", peak.integral*scale}
                    , {"t", peak.tpeak}
                    , {"t1", peak.tstart}
@@ -798,8 +796,6 @@ void UbdaqComposer::composeHits()
                   };
         wirehits.push_back(hit);
       }
-      if(wirehits.size()>0)
-       std::cout << wirehits[0].dump() << std::endl;
       {
         // Scope a lock, in case we're threading. Add this wire's hits onto the hit object.
         boost::mutex::scoped_lock lock(sChanMutex);
