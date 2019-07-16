@@ -484,7 +484,6 @@ WireViewGL.prototype.CreateWireimg = function()
       var gtpc = gGeo3.getTpc(tpc);
       var v1,v2;
       // vertical
-      console.error(gZoomRegion.fullMode(), gZoomRegion.getSelectedTpc() == tpc);
       if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
         // whole time view, correct for microboone:
         var tdc_start = 0; 
@@ -498,7 +497,6 @@ WireViewGL.prototype.CreateWireimg = function()
         v1 =  gtpc.views[this.view].x; // position of wires
         v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
       }
-      console.error(tpc,this.view,v1,v2);
 
       var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
       var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
@@ -864,7 +862,6 @@ WireViewGL.prototype.DoHitSumCircle = function(ev)
 
           // hitsum_ntrk, find_plurality_element(whichtracks)
           ]);
-      console.error("update",(ev||{}).type)
       if(ev && (ev.type=="click" || ev.type=="dblclick")) {
         gMasterClass.Lock(); // freeze this one
       }
@@ -1158,7 +1155,7 @@ WireViewGL.prototype.CreateHits = function()
       // get list of possible positions in transverse space. Uboone = only 1, but in dune, wirewrapping means more.
       if(!hit._wires) {
         if(hit.Ch) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); 
-        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, // ! uboone assumption hit.plane=hit.view
+        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, // ! uboone assumption hit
          wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,hit.plane,hit.wire) }];
       }
       for(var w of hit._wires) {
