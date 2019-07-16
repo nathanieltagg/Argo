@@ -10,7 +10,6 @@ ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 #fi
 
 # Set up your main larsoft directory.
-# source /Users/larsoft/setup
 source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
 
 # if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
@@ -20,6 +19,6 @@ setup larlite v06_70_00d -q e17:debug
 setup uboonecode v08_22_00 -q e17:debug
 
 # source ../backend/larlite/config/setup.sh
-export PATH=/home/argo/node-v10.15.0-linux-x64/bin:$PATH
+#export PATH=/home/argo/node-v10.15.0-linux-x64/bin:$PATH
 
 node ./create_environment_scripts.js

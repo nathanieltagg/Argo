@@ -43,6 +43,7 @@ console.log("config:",config);
 // NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
 
 // My backend instantiation (maps to a ComposerWithQueue object) 
+console.log(process.env.LD_LIBRARY_PATH);
 var argo = require("argonode");
 
 // var samweb_path = process.env.00
@@ -472,11 +473,21 @@ async function clean_datacache()
 
 // clean at program start.
 clean_datacache();
-
 console.log("dirname is ",__dirname);
 
-var browser = require("./browser.js");
 
+
+// samspider cgi
+var cgi = require('cgi');
+app.get("/samspider/samspider.cgi", cgi(__dirname+"/samspider/samspider.cgi",
+        {stderr: process.stderr}) );
+app.post("/samspider/samspider.cgi", cgi(__dirname+"/samspider/samspider.cgi",
+        {stderr: process.stderr}) );
+app.use('/samspider', express.static(__dirname + '/samspider'));
+
+
+
+var browser = require("./browser.js");
 
 ///// Uboone Masterclass specific:
 var masterclass_browser = new browser({
@@ -531,12 +542,32 @@ app.get('/', function (req, res) {
 })
 
 
+if(process.env.NODE_ENV=="production") {
+  var cluster = require('cluster');
+  var numCPUs = 4;
+
+  if (cluster.isMaster) {
+    for (var i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+  } else {
+   httpServer.listen(4590,function(){
+     process.send = process.send || function () {}; // in case there's no prcoess manager
+     process.send('ready');
+     console.log(chalk.red("Port openend on 4590"));
+
+    }); // looks a little like 'argo'
+  }
+} else {
+
+  httpServer.listen(4590,function(){
+     process.send = process.send || function () {}; // in case there's no prcoess manager
+     process.send('ready');
+     console.log(chalk.red("Port openend on 4590"));
+
+    }); // looks a little like 'argo'
+}
 
 
-httpServer.listen(4590,function(){
-  process.send = process.send || function () {}; // in case there's no prcoess manager
-  process.send('ready');
-  console.log(chalk.red("Port openend on 4590"));
 
-}); // looks a little like 'argo'
 

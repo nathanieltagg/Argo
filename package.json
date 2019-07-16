@@ -11,6 +11,7 @@
   "dependencies": {
     "argonode": "file:argonode",
     "browserify-middleware": "^8.1.1",
+    "cgi": "^0.3.1",
     "chalk": "^2.4.2",
     "compression": "^1.7.3",
     "cookie-parser": "^1.4.3",
