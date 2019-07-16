@@ -78,7 +78,7 @@ struct peak_finder : public std::vector< peak >
   peak_finder( int thresh, int sign=1, int minsamp=1 ) : _thresh(thresh), _sign(sign), _minsamp(minsamp),
     _count(0), _on(false) { };
   
-  void operator()(double x) 
+  void operator()(int x) 
   { 
     int _x = x*_sign;
     if(_x > _thresh) {
@@ -215,14 +215,14 @@ struct pedestal_computer
     _pedsigerr = var*var*2/(n-1);
   }
   
-  double ped() { return _ped; }
+  uint16_t ped() { return _ped; }
   double pedsig() { return _pedsig; }
   double pederr() { return _pederr; }
   double pedsigerr() { return _pedsigerr; }
 
   std::vector<uint16_t> _hist;
   uint16_t _ped_count;
-  size_t _ped;
+  uint16_t _ped;
   double _pedsig;
   double _pederr;
   double _pedsigerr;

@@ -9,7 +9,6 @@ $(function(){
 })
 function MasterClass(  )
 {
-  console.error("make masterclass");
   this.element = $('div.A-MasterClass-data').get(0);
 
   this.circle_tracking = false;
@@ -20,17 +19,14 @@ function MasterClass(  )
 
   this.circle_size = 5.0; // cm
 
-  console.error($("input.do_hitsum"));
   $(".mc_button.do_hitsum").on("click", function(){ 
-    console.error('do_hitsum ready');
-
+    
     self.circle_tracking = true; 
     self.circle_locked = false; 
     gStateMachine.Trigger("hitSumChange"); // update view
     $(this).addClass("mc_strobing");
   });
   $(".mc_button.do_hitsum_clear").on("click", function(){ 
-    console.error('hitsum clear');
 
     self.circle_tracking = false; 
     self.circle_locked = false; 
@@ -43,7 +39,6 @@ function MasterClass(  )
   });
 
    $(".mc_button.do_mc_selecthit").on("click", function() {
-    console.error('selecthit ready');
     self.circle_tracking = false; 
     self.circle_locked = false; 
     gStateMachine.Trigger("hitSumClear"); // update view
@@ -60,9 +55,7 @@ function MasterClass(  )
 
 MasterClass.prototype.HoverChange = function()
 {
-  // console.error('hoverchange',gHoverState)
   if(gHoverState.type=="hits" && this.selecthit_tracking) {
-    console.error(gHoverState.obj.t);
     if(this.selecthit_which == 0){
       $("td.t1",this.element).html(gHoverState.obj.t);
     } else {
@@ -92,7 +85,6 @@ MasterClass.prototype.SelectChange = function()
 
 MasterClass.prototype.SetTableData = function(headers,data,lock)
 {
-console.error("hitsum update",data);
 
   var h = "<table>";
   h += "<tr><td>" + data.join('</td><td>') + "</td></tr>";
@@ -103,7 +95,6 @@ console.error("hitsum update",data);
 
 MasterClass.prototype.Lock = function()
 {
-  console.error("lock");
   this.circle_tracking = false; 
   this.circle_locked = true; 
   this.SelectAndCopy();
@@ -123,7 +114,6 @@ MasterClass.prototype.SelectAndCopy = function()
 
 MasterClass.prototype.DoubleClick = function (s)
 { 
-  console.error("DoubleClick",s);
 
   if(s.type == 'tracks') {
     var trk = s.obj;

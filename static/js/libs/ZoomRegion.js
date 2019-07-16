@@ -31,7 +31,7 @@ function ZoomRegion() {
   var _selected_tpc = 0;
 
   this.setMode = function(mode) { _mode = mode; }
-  this.setSelectedTpc =function(tpc) { _selected_tpc = tpc };
+  this.setSelectedTpc =function(tpc) { _selected_tpc = tpc;  };
   this.getSelectedTpc = function() { return _selected_tpc; }
   this.cropMode = function() { return _mode=='crop'; }
   this.fullMode = function() { return _mode=='full'; }
