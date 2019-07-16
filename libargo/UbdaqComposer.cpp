@@ -145,6 +145,8 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
     if(complete) return Done();
   }
   
+
+  // This is a new event requested.
     
   std::string id = Form("r%08d_s%04d_e%08d"
                             ,m_record->getGlobalHeader().getRunNumber()    
@@ -201,7 +203,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   
   if(sn) {
     manifest["hits"] = json::object();
-    manifest["hits"]["hits_DAQ__libargo"] = true;
+    manifest["hits"]["hits_SNDAQ__libargo"] = true;
     manifest["wireimg"]["wireimg_SNDAQ__libargo"] = true;
   }
   if(tpc) {
@@ -224,6 +226,8 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
 
   if(sn ) try{ composeTPC_SN(); } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
   if(tpc) try{ composeTPC();    } catch(...) { std::cerr << "Caught exception in composeTPC();" << std::endl; }
+
+  // Do pedestals.
 
   if(tpc) composeHits(); // Works after coherenet noise!
   if(do_pieces)  dispatch_piece(json({{"hits",m_result["hits"]}}));
@@ -391,6 +395,7 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   channel_data.decompress(waveform);
   
   int wirenum = plek.wirenum();
+  waveform._Ch = wirenum;
   waveform._servicecard = plek._servicecard_id;
   waveform._status = gDeadChannelMap->status(wirenum);
   waveform._plane = plek.plane();
@@ -399,18 +404,17 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   // // Find the pedestal manually.
   waveform_tools::pedestal_computer pedcomp;
   for(const int16_t& x: waveform) pedcomp.fill(x);
+  pedcomp.finish(10); // auto-adjusted rms.
   int16_t ped = pedcomp.ped();
   waveform._ped = ped;
-  pedcomp.finish(100); // auto-adjusted rms.
-  double rms = pedcomp.pedsig();
-  waveform._pedwidth = std::min(rms*2.0,15.0); 
+  waveform._pedwidth =  pedcomp.pedsig();
   for(int16_t& x: waveform) x-=ped;
 
   
-  // {
-  //   boost::mutex::scoped_lock lock(sChanMutex);
-  //   std::cout << "wirenum:" << wirenum << "\t ped: " << ped << " rms: " << rms << " hits" << pf.size() << std::endl;
-  // }
+  {
+    boost::mutex::scoped_lock lock(sChanMutex);
+    std::cout << "wirenum:" << wirenum << "\t ped: " << ped << " rms: " << waveform._pedwidth  << std::endl;
+  }
 }
 
 
@@ -495,14 +499,6 @@ void UbdaqComposer::composeTPC()
     timer_read.addto(m_stats);
   }
 
-  // hits.
-  cout << "Created " << hits.size() << " hits" << endl;
-  cout.flush();
-  
-  json hits_lists;
-  hits_lists["hits_DAQ__libargo"] = hits;
-  m_result["hits"] = hits_lists;
-  
   timer.addto(m_stats);
 }
 
@@ -662,7 +658,7 @@ void UbdaqComposer::composeTPC_SN()
   cout << "Created " << hits.size() << " hits" << endl;  
 
   json hits_lists;
-  hits_lists["hits_SNDAQ__libargo"] = hits;
+  hits_lists["snhits_SNDAQ__libargo"] = hits;
   m_result["hits"] = hits_lists;
   
   timer.addto(m_stats);
@@ -736,7 +732,7 @@ void UbdaqComposer::composeWireImages(bool noisefilter, const std::string& name)
 
 void UbdaqComposer::composeHits()
 {
-  json hits;
+  json hits = json::array();
 
   if(!wireMap) return;
   waveform_t zeroes;
@@ -755,54 +751,66 @@ void UbdaqComposer::composeHits()
 
     if(waveform._status <0 || waveform._status>=4) { // It's a good channel, or unlisted in channel map
     
-      // Recompute rms
-      // double s = 0;
-      double ss = 0;
-      double n = waveform.size();
+      // waveform_t::const_iterator it1;
+      // waveform_t::const_iterator it2;
+      // waveform_t::const_iterator end1 = waveform.end();
       
-      waveform_t::const_iterator it1;
-      waveform_t::const_iterator it2;
-      waveform_t::const_iterator end1 = waveform.end();
-      
-      it1 = waveform.begin(); it2= waveform.end();
-      while(it1!=end1) {
-        int16_t x = *it1 - *it2;
-        ss += x*x;
-        it1++; it2++;
-      }
-      double rms = sqrt(ss/(n-1.0));
-  
-      int thresh = ceil(2.5*rms);
+      // it1 = waveform.begin(); it2= noiseform.begin();
+      // while(it1!=end1) {
+      //   int16_t x = *it1 - *it2;
+      //   ss += x*x;
+      //   it1++; it2++;
+      // }
+      // double rms = sqrt(ss/(n-1.0));
+      // pedestals have already been run.
+      float rms = waveform._pedwidth;
+
+      int thresh = ceil(4.0*rms);
       int sign = -1;
       if(waveform._plane==2) sign = 1;
 
-      waveform_tools::peak_finder pf(thresh,sign,3); // last is # of samples required over threshold.
-      it1 = waveform.begin(); it2= waveform.end();
-      while(it1!=end1) {
-        int16_t x = *it1 - *it2;
-        pf(x);
-        it1++; it2++;
-      }
-    
+      waveform_tools::peak_finder pf(thresh,sign,3); 
+
+      // it1 = waveform.begin(); it2= noiseform.begin();
+      // while(it1!=end1) {
+      //   int16_t x = *it1 - *it2;
+      //   pf(x);
+      //   it1++; it2++;
+      // }
+      for(int16_t x : waveform) pf(x);
+      pf.finish();
+      
+      std::cout <<  "Ch:" << waveform._Ch << " plane:" << waveform._plane << " thresh:" << thresh << " sign:" << sign << " hits:" << pf.size() << std::endl;
+
+      double scale = 0.1;
+      if(waveform._plane==2) scale=0.2;
+
+      json wirehits = json::array();
       for(auto peak: pf) {
-        json hit = { {"wire", waveform._planewire}
+        json hit = { 
+                     // {"Ch", waveform._Ch}
+                    {"wire", waveform._planewire}
                    , {"plane", waveform._plane}
-                   , {"q", peak.integral}
+                   , {"q", peak.integral*scale}
                    , {"t", peak.tpeak}
                    , {"t1", peak.tstart}
                    , {"t2", peak.tstop}
                   };
-        {
-          // Scope a lock.
-          boost::mutex::scoped_lock lock(sChanMutex);
-          hits.push_back(hit);
-        }
+        wirehits.push_back(hit);
       }
-    }
-  }
+      if(wirehits.size()>0)
+       std::cout << wirehits[0].dump() << std::endl;
+      {
+        // Scope a lock, in case we're threading. Add this wire's hits onto the hit object.
+        boost::mutex::scoped_lock lock(sChanMutex);
+        hits.insert(hits.end(),wirehits.begin(),wirehits.end());
+      }
+      
+    } // goodwire
+  } // loop wires
   
   
-  
+  std::cout << "Created " << hits.size() << " hits" << std::endl;
   m_result["hits"] = {{"hits_DAQ__libargo", hits}};
 }
 

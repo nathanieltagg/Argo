@@ -482,21 +482,23 @@ WireViewGL.prototype.CreateWireimg = function()
       //console.log("Creating wireimg tpc",tpc,"view",this.view,"trans",u1," to ",u2,section);
 
       var gtpc = gGeo3.getTpc(tpc);
-
+      var v1,v2;
       // vertical
+      console.error(gZoomRegion.fullMode(), gZoomRegion.getSelectedTpc() == tpc);
       if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
         // whole time view, correct for microboone:
-        var tdc_start = 0; //gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-        var tdc_end   = mapper.total_width*mapper.scale_x; //gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
-        var v1 = gGeo3.getXofTDC(tpc,this.view,tdc_start);
-        var v2 = gGeo3.getXofTDC(tpc,this.view,tdc_end);
+        var tdc_start = 0; 
+        var tdc_end   = this.max_tdc; 
+        v1 = gGeo3.getXofTDC(tpc,this.view,tdc_start);
+        v2 = gGeo3.getXofTDC(tpc,this.view,tdc_end);
       } else {
         // Attempt for DUNE:
         // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
         // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-        var v1 =  gtpc.views[this.view].x; // position of wires
-        var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
+        v1 =  gtpc.views[this.view].x; // position of wires
+        v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
       }
+      console.error(tpc,this.view,v1,v2);
 
       var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
       var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
@@ -586,7 +588,16 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       mat.uniforms.tdc_end.value   = tdc_end;
 
       // Change transverse cut
-      if(gZoomRegion.cropMode() || gZoomRegion.setSelectedTpc() != mesh.userData.tpc) {
+      if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == mesh.userData.tpc) {
+          // make it a bit higher
+        mesh.position.z=0.5;
+        mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
+
+        mat.uniforms.trans_low_cut.value = -1e9;
+        mat.uniforms.trans_high_cut.value = 1e9;
+
+      } else {
         mesh.position.z=0.0; // Set to low position.
 
         // Drift crop:
@@ -606,15 +617,7 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
           mat.uniforms.trans_low_cut.value = -1e9;
           mat.uniforms.trans_high_cut.value = 1e9;
         }
-      } else {
-        // make it a bit higher
-        mesh.position.z=0.5;
-        mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
-        mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
-
-        mat.uniforms.trans_low_cut.value = -1e9;
-        mat.uniforms.trans_high_cut.value = 1e9;
-      }
+      }      
 
       // trigger channels
       mat.uniforms.do_noise_reject    .value= do_filter;
@@ -1155,7 +1158,8 @@ WireViewGL.prototype.CreateHits = function()
       // get list of possible positions in transverse space. Uboone = only 1, but in dune, wirewrapping means more.
       if(!hit._wires) {
         if(hit.Ch) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); 
-        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,this.view,hit.wire) }];
+        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, // ! uboone assumption hit.plane=hit.view
+         wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,hit.plane,hit.wire) }];
       }
       for(var w of hit._wires) {
         if(w.view==this.view) {
@@ -1193,17 +1197,17 @@ WireViewGL.prototype.UpdateHits = function(clear_hilite)
   if(clear_hilite) this.hilite_hit_list = [];
   for(var tpc=0; tpc<(this.hit_materials||[]).length; tpc++) {    
     // Update clipping planes.
-    if(gZoomRegion.cropMode()) {
+    if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
+            this.hit_materials.clippingPlanes = null;
+    } else {
+      // crop mode
       var gtpc = gGeo3.getTpc(tpc);
       this.hit_materials[tpc].clippingPlanes = [
                   new THREE.Plane( new THREE.Vector3( 0, 1, 0), -(gtpc.center[0]-gtpc.halfwidths[0]) ),  // detector x coordiate, view y
                   new THREE.Plane( new THREE.Vector3( 0,-1,0), (gtpc.center[0]+gtpc.halfwidths[0]) ), 
               ];
 
-    } else {
-      this.hit_materials.clippingPlanes = null;
     }
-
   }
   if(!this.hit_group) return;
   var offset_hit_time = -gZoomRegion.getTimeOffset();
@@ -1304,6 +1308,7 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
       this.hit_hover_box.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * this.hit_hover_box.scale.y; 
       this.hit_hover_box.position.z = 20;
       this.hit_hover_box.visible = true;
+      this.UpdateHits();
     }
 
   } else {
@@ -1335,6 +1340,7 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
       this.hit_select_box.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * this.hit_hover_box.scale.y; 
       this.hit_select_box.position.z = 20;
       this.hit_select_box.visible = true;
+      this.UpdateHits();
     }
 
   } else {
