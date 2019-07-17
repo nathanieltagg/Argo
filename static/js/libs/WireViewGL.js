@@ -334,8 +334,10 @@ WireViewGL.prototype.CreateFrame = function()
 
 
 
-
-WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,x2,y1,y2,flip,userData)
+//
+// This utility function is also used by the ThreeTrid disply.
+// 
+function create_image_meshgroup(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,x2,y1,y2,flip,userData)
 {
   // returns a THREE.Group with all of the wire textures mapped in xy plane.
   // mapper must contain a tile_urls[row][col] and tile_3textures[row][col]
@@ -378,13 +380,18 @@ WireViewGL.prototype.create_image_meshgroup = function(mapper,chan_start,chan_en
             
             chan_start: { value: t_chan_start },
             chan_end:   { value: t_chan_end   },
+            trans_start:{ value: t_x1 },
+            trans_end:  { value: t_x2 },
             tdc_start:  { value: tdc_start },
             tdc_end:    { value: tdc_end  },
             flip:       { type: "i", value: flip?1:0 },
-            trans_fade_width: {value: 10.}, 
-            trans_low_cut:    {value: -1e9},
-            trans_high_cut:   {value:  1e9},
-            do_trans_view_direction_flag: { value: 0},
+            trans_cut_fade_width: {value: 0.}, 
+            trans_cut_low:    {value: -1e9},
+            trans_cut_high:   {value:  1e9},
+            tdc_cut_fade_width: {value: 0.},
+            tdc_cut_low:      {value: -1e9},
+            tdc_cut_high:     {value:  1e9},
+            do_trans_view_direction_flag: { type: "i", value: 0 },
 
          };
 
@@ -504,9 +511,9 @@ WireViewGL.prototype.CreateWireimg = function()
       var flip = (gtpc.drift_dir > 0);
 
       // metadata so we can get this back:
-      var userData = { wireimg: true, tpc: tpc, section: section};
+      var userData = { wireimg: true, tpc: tpc, section: section, v1: v1, v2: v2};
 
-      var tpc_group = this.create_image_meshgroup(mapper,
+      var tpc_group = create_image_meshgroup(mapper,
                         chanstart, chanend, // source pixel coord (when textures mapped out)
                         tdc_start,tdc_end,  // source pixed coord
                         u1,u2, // x coord (wire number) in viewer space
@@ -547,6 +554,8 @@ WireViewGL.prototype.CreateWireimg = function()
 WireViewGL.prototype.UpdateWireimg = function(fast)
 {
   // Create it if data doesn't exist.
+  console.log("WireViewGL UpdateWireimg");
+
   if(!this.wireimg_group)  this.CreateWireimg(); 
   if(!this.wireimg_group)  return;
 
@@ -567,53 +576,50 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
 
       var tpc = mesh.userData.tpc;
       var gtpc = gGeo3.getTpc(tpc);
-      // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-      // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-      // var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-      // var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
-
-      // change tdc offset.
-      var gtpc = gGeo3.getTpc(tpc);
-      var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-      var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-      var driftspeed = gGeo3.getDriftCmPerTick(tpc);
-
-      var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-      var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
-
-      console.log("view",this.view,"tdc_start",tdc_start,"tdc_end",tdc_end);
-      mat.uniforms.tdc_start.value = tdc_start;
-      mat.uniforms.tdc_end.value   = tdc_end;
 
       // Change transverse cut
       if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == mesh.userData.tpc) {
           // make it a bit higher
         mesh.position.z=0.5;
-        mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
-        mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
+        // This is naively correct, but remember that we may have scaled by HV changes.!
+        // mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
+        // mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
+        var t1 = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v1) +  gZoomRegion.getTimeOffset();
+        var t2 = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v2) +  gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value = Math.min(t1,t2);
+        mat.uniforms.tdc_end.value   = Math.max(t1,t2);
 
-        mat.uniforms.trans_low_cut.value = -1e9;
-        mat.uniforms.trans_high_cut.value = 1e9;
+        mat.uniforms.trans_cut_low.value = -1e9;
+        mat.uniforms.trans_cut_high.value = 1e9;
+        mat.uniforms.tdc_cut_low.value  = -1e9;
+        mat.uniforms.tdc_cut_high.value = 1e9;
 
       } else {
         mesh.position.z=0.0; // Set to low position.
 
         // Drift crop:
-        var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-        var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+        var tdc_start = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v1) + gZoomRegion.getTimeOffset();
+        var tdc_end   = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v2) + gZoomRegion.getTimeOffset();
         mat.uniforms.tdc_start.value = tdc_start;
-        mat.uniforms.tdc_end.value = tdc_end;
+
+        // Actual TPC bounds.
+        var v1 =  gtpc.views[this.view].x; // position of wires
+        var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode 
+        var t1 =  gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
+        var t2 =  gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_cut_low.value  = Math.min(t1,t2);
+        mat.uniforms.tdc_cut_high.value = Math.max(t1,t2);
 
         // Transverse crop:
         if(gGeo3.numTpcs()>1) {
           var [u1,u2] = gGeo3.findTransCuts(tpc,this.view, center_y);
           mat.uniforms.trans_fade_width.value = 2;
-          mat.uniforms.trans_low_cut.value  = u1;
-          mat.uniforms.trans_high_cut.value = u2;
+          mat.uniforms.trans_cut_low.value  = u1;
+          mat.uniforms.trans_cut_high.value = u2;
           // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
         } else {
-          mat.uniforms.trans_low_cut.value = -1e9;
-          mat.uniforms.trans_high_cut.value = 1e9;
+          mat.uniforms.trans_cut_low.value = -1e9;
+          mat.uniforms.trans_cut_high.value = 1e9;
         }
       }      
 

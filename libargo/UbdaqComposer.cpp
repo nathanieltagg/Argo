@@ -411,10 +411,10 @@ void unpack_channel(waveform_ptr_t waveform_ptr, const tpc_crate_data_t::card_t:
   for(int16_t& x: waveform) x-=ped;
 
   
-  {
-    boost::mutex::scoped_lock lock(sChanMutex);
-    std::cout << "wirenum:" << wirenum << "\t ped: " << ped << " rms: " << waveform._pedwidth  << std::endl;
-  }
+  // {
+  //   boost::mutex::scoped_lock lock(sChanMutex);
+  //   std::cout << "wirenum:" << wirenum << "\t ped: " << ped << " rms: " << waveform._pedwidth  << std::endl;
+  // }
 }
 
 

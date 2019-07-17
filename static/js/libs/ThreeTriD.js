@@ -1147,112 +1147,7 @@ ThreeTriD.prototype.UpdateMC = function()
 // Wireimg
 /////////////////////////////////////////
 
-ThreeTriD.prototype.create_image_meshgroup = function(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,x2,y1,y2,flip,userData)
-{
-  // returns a THREE.Group with all of the wire textures mapped in xy plane.
-  // mapper must contain a tile_urls[row][col] and tile_3textures[row][col]
-  // chan_start, chan_end are logical channel numbers from start to end for this region
-  // tdc_start, tdc_end are the range of TDC values we want to show
-  // x1,x2 are x positions of first and last channel respecitvely
-  // y1,y2 are y positions of the first and last tdc respectively
-  var wireimg_group = new THREE.Group();
-  wireimg_group.name=GetSelectedName("wireimg");
-  
-  console.log('create_image_meshgroup arguments',...arguments)
 
-  var tdc_scale = (y2-y1)/(tdc_end-tdc_start);     //console.log('tdc_scale',tdc_scale);
-  var chan_scale = (x2-x1) /(chan_end-chan_start); //console.log('chan_scale',chan_scale);
-  
-  for(var irow=0;irow<mapper.tile_3textures.length;irow++) {
-    // Do we need this row?
-    var elem = mapper.tile_urls[irow][0];
-    if(elem.y + elem.height <= chan_start) continue;
-    if(elem.y >= chan_end) continue;
-    // console.log('mapper row',irow,elem);
-    
-    // which are the samples this texture will provide to us?
-    var t_chan_start = Math.max(elem.y, chan_start);            //console.log('t_chan_start',t_chan_start);
-    var t_chan_end   = Math.min(elem.y+elem.height, chan_end);  //console.log('t_chan_end',t_chan_end);
-    
-    var t_x1 =  x1 + chan_scale * (t_chan_start-chan_start); //console.log('t_x1',t_x1);
-    var t_x2 =  x1 + chan_scale * (t_chan_end  -chan_start); //console.log('t_x2',t_x2);
-    var t_span_x = chan_scale * (t_chan_end-t_chan_start);
-
-    var geometry = new THREE.PlaneGeometry( t_span_x, y2-y1 , 128);
-
-    if(!gFalseColorControl.lut_texture) Error("No LUT texture!");
-    var uniforms = {
-            maptexture:   { type: "t", value: gFalseColorControl.lut_texture },
-            do_noise_reject:     { value: 0 },
-            do_bad_channel_flag: { value: 0 },
-            texture_start_chan:  { value: elem.y },
-            texture_size_chan:   { value: elem.height },
-            
-            chan_start: { value: t_chan_start },
-            chan_end:   { value: t_chan_end   },
-            tdc_start:  { value: tdc_start },
-            tdc_end:    { value: tdc_end  },
-            flip:       { type: "i", value: flip?1:0 },
-            trans_fade_width: {value: 10.}, 
-            trans_low_cut:    {value: -1e9},
-            trans_high_cut:   {value:  1e9},
-            do_trans_view_direction_flag: { value: 0},
-         };
-
-
-    // add all the textures in the time direction.
-    for(var icol=0;icol<mapper.tile_3textures[irow].length;icol++) {
-      var elem = mapper.tile_urls[irow][icol];
-      var key = "texture"  + (icol).toString();
-      //console.log("mapper column",icol,"elem",elem,"key",key);
-
-      var input_texture = mapper.tile_3textures[irow][icol];
-      input_texture.needsUpdate = true;
-
-      uniforms[key] = { type: "t", value: input_texture }
-      uniforms[key+"_start_tdc"] = {value: elem.x };
-      uniforms[key+"_size_tdc"] = {value: elem.width};
-    }
-
-    // null out the others.
-    for(var iccol=mapper.tile_3textures[irow].length;icol<=5;icol++){
-      var key = "texture"  + (icol).toString();
-      uniforms[key] = { type: "t", value: null }
-      uniforms[key+"_start_tdc"] = {value: -1e9 };
-      uniforms[key+"_size_tdc"]  = {value: -1e9};
-    }
-
-    //console.log('uniform',uniforms);
-
-    var material = new THREE.ShaderMaterial( {
-      vertexShader:   document.getElementById('three-vertex-shader').textContent,
-      fragmentShader: document.getElementById('three-fragment-shader-time-range').textContent,
-      // fragmentShader: document.getElementById('stupidfill').textContent,
-      uniforms: uniforms,
-      visible: true,
-      transparent: true,
-      side: THREE.DoubleSide    
-    });
-
-    var obj = new THREE.Mesh( geometry, material );
-    obj.renderOrder = 10;
-    obj.position.x = (t_x1+t_x2)/2;
-    obj.position.y = (y1+y2)/2;
-    //console.log("created wireimg with ",t_span_x,y2-y1,t_x1,t_x2,obj.position.x,obj.position.y);
-
-
-    if(!flip) {
-        // Just turn it upside down.
-        // obj.rotation.x = Math.PI;
-      }
-   obj.userData = userData;
-      
-      
-    // FIXME: when clearing event, dispose of all geometries, materials, and textures.
-    wireimg_group.add( obj );
-  }
-  return wireimg_group; //this.scene.add(this.wireimg_group);    
-}
 
 ThreeTriD.prototype.CreateWireimg = function()
 {
@@ -1296,18 +1191,21 @@ ThreeTriD.prototype.CreateWireimg = function()
         var gtpc = gGeo3.getTpc(tpc);
 
         // vertical
+        var v1, v2;
+
         if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
           // whole time view, correct for microboone:
           var tdc_start = 0; 
           var tdc_end   = mapper.total_width*mapper.scale_x; 
-          var v1 = gGeo3.getXofTDC(tpc,view,tdc_start);
-          var v2 = gGeo3.getXofTDC(tpc,view,tdc_end);
+          v1 = gGeo3.getXofTDC(tpc,view,tdc_start);
+          v2 = gGeo3.getXofTDC(tpc,view,tdc_end);
         } else {
+          // Crop mode.
           // Attempt for DUNE:
           // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
           // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-          var v1 =  gtpc.views[view].x; // position of wires
-          var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
+          v1 =  gtpc.views[view].x; // position of wires
+          v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode
         }
 
         var tdc_start = gGeo3.getTDCofX(tpc,view,v1) + gZoomRegion.getTimeOffset();
@@ -1316,16 +1214,16 @@ ThreeTriD.prototype.CreateWireimg = function()
         var flip = (gtpc.drift_dir > 0);
 
         // metadata so we can get this back:
-        var userData = { wireimg: true, tpc: tpc, section: section, view: view};
+        var userData = { wireimg: true, tpc: tpc, section: section, view: view, v1: v1, v2:v2};
 
-        var tpc_group = this.create_image_meshgroup(mapper,
+        var tpc_group = create_image_meshgroup(mapper,
                           chanstart, chanend, // source pixel coord (when textures mapped out)
                           tdc_start,tdc_end,  // source pixed coord
                           u1,u2, // x coord (wire number) in viewer space
                           v1,v2,
                           flip,
                           userData); // y coord (time) in viewer space
-        tpc_group.userData.tpc_group = tpc;
+        tpc_group.userData.tpc = tpc;
         tpc_group.userData.view = view;
         // this.wireimg_group.scale.y =  gGeo3.getDriftCmPerTick(0); // fixme tpc number
         //console.log("wireimg ",tpc,, u1,u2,v1,v2);
@@ -1370,59 +1268,55 @@ ThreeTriD.prototype.UpdateWireimg = function()
 
   for(var tpcgroup of this.wireimg_group.children) {
 
+    var tpc = tpcgroup.userData.tpc;
+    var view= tpcgroup.userData.view;
+
+    var gtpc = gGeo3.getTpc(tpc);
+
+    // For each group, set the 3d coordinates.
+    // Use the current view center to tell us where to look:
+    tpcgroup.position.copy(gZoomRegion.getCenter());
+    tpcgroup.position.x = 0;
+    tpcgroup.position.projectOnVector(tpcgroup.userData.alongVector);
+    if(gZoomRegion.fullMode()) {
+      tpcgroup.position.x = 0 - gZoomRegion.getTimeOffset()*-1*gtpc.drift_dir*gGeo3.drift_cm_per_tick 
+    }
+
+
     for(var mesh of tpcgroup.children) {
       var mat = mesh.material;
 
-      var tpc = mesh.userData.tpc;
-      var gtpc = gGeo3.getTpc(tpc);
-      // var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-      // var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-      // var tdc_start = gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-      // var tdc_end   = gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
-
-      // change tdc offset.
-      var gtpc = gGeo3.getTpc(tpc);
-      var v1 =  gtpc.center[0] - gtpc.halfwidths[0];
-      var v2 =  gtpc.center[0] + gtpc.halfwidths[0];
-      var driftspeed = gGeo3.getDriftCmPerTick(tpc);
-
-      var tdc_start = gGeo3.getTDCofX(tpc,mesh.userData.view,v1) + gZoomRegion.getTimeOffset();
-      var tdc_end   = gGeo3.getTDCofX(tpc,mesh.userData.view,v2) + gZoomRegion.getTimeOffset();
-
-      console.log("view",mesh.userData.view,"tdc_start",tdc_start,"tdc_end",tdc_end);
-      mat.uniforms.tdc_start.value = tdc_start;
-      mat.uniforms.tdc_end.value   = tdc_end;
+      var urange = gZoomRegion.getTransverseRange(view);
+      mat.uniforms.trans_cut_fade_width.value = Math.abs(urange[1]-urange[0])*0.02;
+      mat.uniforms.trans_cut_low.value  = urange[0] - mat.uniforms.trans_cut_fade_width.value/2;
+      mat.uniforms.trans_cut_high.value = urange[1] + mat.uniforms.trans_cut_fade_width.value/2;
+      console.error("limiting view",view,urange);
 
       // Change transverse cut
-      if(zoommode == "crop") { // /always crop in 3d
-        // Drift crop:
-        var tdc_start = gGeo3.getTDCofX(tpc,mesh.userData.view,v1) + gZoomRegion.getTimeOffset();
-        var tdc_end   = gGeo3.getTDCofX(tpc,mesh.userData.view,v2) + gZoomRegion.getTimeOffset();
-        mat.uniforms.tdc_start.value = tdc_start;
-        mat.uniforms.tdc_end.value = tdc_end;
+      if(gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
+        var t1 = gGeo3.getTDCofX(tpc,view,mesh.userData.v1) + gZoomRegion.getTimeOffset();
+        var t2 = gGeo3.getTDCofX(tpc,view,mesh.userData.v2) + gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value = Math.min(t1,t2);
+        mat.uniforms.tdc_end.value   = Math.max(t1,t2);
 
-        // Transverse crop:
-        if(gGeo3.numTpcs()>1) {
-          var [u1,u2] = gGeo3.findTransCuts(tpc,mesh.userData.view, center_y);
-          mat.uniforms.trans_fade_width.value = 2;
-          mat.uniforms.trans_low_cut.value  = u1;
-          mat.uniforms.trans_high_cut.value = u2;
-          // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
-        } else {
-          mat.uniforms.trans_low_cut.value = -1e9;
-          mat.uniforms.trans_high_cut.value = 1e9;
-        }
-      } 
-      else if(zoommode == "full" ) {
-        mat.uniforms.tdc_start.value = gZoomRegion.getTimeOffset();
-        mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
-
-        mat.uniforms.trans_low_cut.value = -1e9;
-        mat.uniforms.trans_high_cut.value = 1e9;
+        // This is incorrect: need to add a new tdc CILP value to shader to make it work, OR add clipping geometry (hard)
+        var xrange = gZoomRegion.getXRange(gWireViewGL[2].span_y/gWireViewGL[2].span_x); // Get from the main 2d window
+        t1 = gGeo3.getTDCofX(tpc,view,xrange[0]) +  gZoomRegion.getTimeOffset();
+        t2 = gGeo3.getTDCofX(tpc,view,xrange[1]) +  gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_cut_fade_width.value = Math.abs(t2-t1)*0.02;
+        mat.uniforms.tdc_cut_low.value = Math.min(t1,t2) - mat.uniforms.tdc_cut_fade_width.value/2;
+        mat.uniforms.tdc_cut_high.value= Math.max(t1,t2) + mat.uniforms.tdc_cut_fade_width.value/2;
+        console.error("tdc cut full",t1,t2, mesh.userData.v1,mesh.userData.v2, t1, t2);
 
       } else {
-        console.error("WFT?")
-      }
+        // Drift crop:
+        var tdc_start = gGeo3.getTDCofX(tpc,view,mesh.userData.v1) + gZoomRegion.getTimeOffset();
+        var tdc_end   = gGeo3.getTDCofX(tpc,view,mesh.userData.v2) + gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value = tdc_start;
+        mat.uniforms.tdc_end.value = tdc_end;
+        console.error("tdc cut crop",tdc_start,tdc_end);
+
+      } 
 
       // trigger channels
       mat.uniforms.do_noise_reject    .value= do_filter;
@@ -1430,13 +1324,10 @@ ThreeTriD.prototype.UpdateWireimg = function()
 
       mat.needsUpdate = true;
     }
-    // For each group, set the 3d coordinates.
-    // Use the current view center to tell us where to look:
-    tpcgroup.position.copy(gZoomRegion.getCenter());
-    tpcgroup.position.x = 0;
-    tpcgroup.position.projectOnVector(tpcgroup.userData.alongVector);
+
   }
   this.UpdateVisibilities();
+  this.Render();
 }
 
 

@@ -127,23 +127,23 @@ function ZoomRegion() {
   // and use to set scale.
   this.setXRange  = function(low, high, window_aspect_ratio_y_over_x) {
     _center.x = (low+high)/2;
-    if($('.ctl-lock-aspect-ratio:checked').length>0) {
+    // if($('.ctl-lock-aspect-ratio:checked').length>0) {
           _width = (high-low)/_aspect/window_aspect_ratio_y_over_x;
-    } else {
-      // We're changing the aspect ratio.
-      _aspect = _width/(high-low)*window_aspect_ratio_y_over_x;
-    }
+  //   } else {
+  //     // We're changing the aspect ratio.
+  //     _aspect = _width/(high-low)*window_aspect_ratio_y_over_x;
+  //   }
   }
   
   this.setXSpan  = function(span_x, window_aspect_ratio_y_over_x) {
     var height = span_x;
     if(height<0.5) height = 0.5; // Min 5mm.
-    if($('.ctl-lock-aspect-ratio:checked').length>0) {
+    // if($('.ctl-lock-aspect-ratio:checked').length>0) {
           _width = height*_aspect/window_aspect_ratio_y_over_x;
-    } else {
-      // We're changing the aspect ratio.
-      _aspect = _width/height*window_aspect_ratio_y_over_x;
-    }
+    // } else {
+    //   // We're changing the aspect ratio.
+    //   _aspect = _width/height*window_aspect_ratio_y_over_x;
+    // }
   }
   
   

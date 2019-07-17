@@ -87,10 +87,15 @@ uniform float chan_start;
 uniform float chan_end;
 uniform float tdc_start;
 uniform float tdc_end;
+uniform float trans_start;
+uniform float trans_end;
 
-uniform float trans_low_cut;
-uniform float trans_high_cut;
-uniform float trans_fade_width;
+uniform float trans_cut_low;
+uniform float trans_cut_high;
+uniform float trans_cut_fade_width;
+uniform float tdc_cut_low;
+uniform float tdc_cut_high;
+uniform float tdc_cut_fade_width;
 
 uniform int    flip;
 
@@ -106,17 +111,30 @@ void main() {
   // vUv is the normalized U,V coordinate in the object which nominally
   // maps to inputtexture(u,v).  However, we're going to manipulate it:
 
-  // invert the UV texture coordinates so that time is vertical.
+
   vec2 uv_final;
 
   // wire coordinate (x in source texture, y in UV coordinate system used by the polygon)
   float wire = mix(chan_start,chan_end,vUv.x); //(vUv.x*(chan_end-chan_start) + chan_start);   // x*end (1-x)*start
+  // invert the UV texture coordinates so that time is vertical.
   uv_final.y = 1.-(wire-texture_start_chan)/texture_size_chan;
 
   // tdc coordinate for this pixel
   float v = vUv.y;
   if(flip>0) v=1.-vUv.y;
   float tdc = v*(tdc_end-tdc_start)+tdc_start;
+
+
+  float trans = mix(trans_start,trans_end,vUv.x); 
+  float fade = smoothstep(trans_cut_low -trans_cut_fade_width, trans_cut_low +trans_cut_fade_width, trans);
+  fade *= (1.0-smoothstep(trans_cut_high-trans_cut_fade_width, trans_cut_high+trans_cut_fade_width, trans) );
+  fade *=      smoothstep(tdc_cut_low   -tdc_cut_fade_width,   tdc_cut_low   +tdc_cut_fade_width, tdc) ;
+  fade *= (1.0-smoothstep(tdc_cut_high  -tdc_cut_fade_width,   tdc_cut_high  +tdc_cut_fade_width, tdc) );
+
+  if(fade <= 0.01) discard;
+
+
+
 
   // find which texture
   vec4 inc;
@@ -159,10 +177,11 @@ void main() {
 
   // Now I want to see if I'm in a 'fade-out' region.
   // smoothstep is a builtin that makes a nice transition from 0 to 1
-  float fade = smoothstep(trans_low_cut-trans_fade_width, trans_low_cut+trans_fade_width, vPosition.x)
-              * (1.-smoothstep(trans_high_cut-trans_fade_width, trans_high_cut+trans_fade_width, vPosition.x));
 
-
+  // This code uses the true x position of the rendered 3d point (vPosition.x) to cut. 
+  // That's cool and all, but doesn't work if I'm using a different coordinate system....
+  // float fade = smoothstep(trans_low_cut-trans_fade_width, trans_low_cut+trans_fade_width, vPosition.x)
+              // * (1.-smoothstep(trans_high_cut-trans_fade_width, trans_high_cut+trans_fade_width, vPosition.x));
 
 
   // vec2 uv_texture;
