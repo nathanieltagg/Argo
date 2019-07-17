@@ -316,9 +316,8 @@ ThreePad.prototype.Resize = function()
   if(this.span_x < 10) this.span_x = 10;
   if(this.span_y < 10) this.span_y = 10;
   
-     
-  // }
-  // console.warn("ThreePad",this.width,this.height);
+  this.DrawOverlay();
+
 }
 
 
