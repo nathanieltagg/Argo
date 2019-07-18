@@ -24,10 +24,6 @@ var pm2 = {
             "script": "index.js",
             "watch": false,
             "cwd":__dirname,
-            "exec_mode" : "cluster",
-            "instances" : 2,
-            "wait_ready": true,
-            "listen_timeout": 20000,
             "env": {
               "NODE_ENV": "production",
             }
@@ -35,14 +31,21 @@ var pm2 = {
    ]
 }
 
+// node-cluster is responsible for clustering, not pm2
+// "exec_mode" : "cluster",
+// "instances" : 2,
+// "wait_ready": true,
+// "listen_timeout": 20000,
 
 
-var obj = { DYLD_LIBRARY_PATH :""
-          , DYLD_FALLBACK_LIBRARY_PATH: ""
-          , LD_LIBRARY_PATH   :""
-          , ROOT_INCLUDE_PATH :""
-          , PYTHONPATH        :""
-          , PATH              :""
+
+var obj = { DYLD_LIBRARY_PATH :null
+          , DYLD_FALLBACK_LIBRARY_PATH:null
+          , LD_LIBRARY_PATH   :null
+          , ROOT_INCLUDE_PATH :null
+          , PYTHONPATH        :null
+          , PYTHONHOME        :null
+          , PATH              :null	  
           };
 
 
@@ -62,6 +65,6 @@ pm2.apps[0].env["DYLD_LIBRARY_PATH"] = "";
 pm2.apps[0].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
 pm2
 
-fs.writeFileSync("pm2.ecosystem.json",JSON.stringify(pm2,null,2));
+fs.writeFileSync("pm2.json",JSON.stringify(pm2,null,2));
 
           

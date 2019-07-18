@@ -1,17 +1,15 @@
 {
-  "apps" : [
+  "apps": [
     {
-           "name": "argo-node",
-           "script": "index.js",
-           "watch": false,
-           //"cwd":'/home/argo/Argo_dev',
-	         "exec_mode" : "cluster",
-           "instances" :  2,
-                     "env": {
-             "NODE_ENV": "production",
-           }
-         }
-
-
+      "name": "argo-node",
+      "script": "index.js",
+      "watch": false,
+      "cwd": "/home/argo/Argo2.0",
+      "wait_ready": true,
+      "listen_timeout": 20000,
+      "env": {
+        "NODE_ENV": "production",
+      }
+    }
   ]
 }
