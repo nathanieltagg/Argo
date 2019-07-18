@@ -407,6 +407,22 @@ function ThreeTriD(element, options )
       }
 
     });
+
+
+  this.clip_plane_outer = new THREE.Plane(new THREE.Vector3(1,-1,1).normalize(),-500.); this.clip_plane_outer.name = "outer";
+  this.clip_plane_pmts  = new THREE.Plane(new THREE.Vector3(1,-1,1).normalize(),-200.); this.clip_plane_pmts.name = "pmts";
+  this.clip_plane_inner = new THREE.Plane(new THREE.Vector3(1,-1,1).normalize(),-100.); this.clip_plane_inner.name = "inner";
+
+
+  $(".trid-model-wipe"  ,parent).slider({
+    animate: "fast",
+    min:-1000,
+    max:200,
+    value: 200,
+    slide: function(ev,ui){
+      self.UpdateFullModel();
+    }
+  });
   
   
   this.line_materials = [
@@ -428,6 +444,7 @@ function ThreeTriD(element, options )
   for(var mat of this.line_materials) mat.resolution = this.resolution;
   
   this.CreateFrame();
+  this.CreateFullModel();
   this.Render();  
 }
 
@@ -497,10 +514,6 @@ ThreeTriD.prototype.CreateFrame = function()
     // var hov = {obj: det, type: "opdet", collection: gGeo3.opticalDetectors};
   }
   
-  var scalecubegeo = new THREE.BoxBufferGeometry(5,5,5);
-  var mat = new THREE.MeshBasicMaterial( { color: 0x00ff00 });
-  var scalecube    = new THREE.Mesh(scalecubegeo,mat );
-  this.frame_group.add(scalecube);
 
   
   // // a light
@@ -534,7 +547,117 @@ ThreeTriD.prototype.CreateFrame = function()
 
 ThreeTriD.prototype.UpdateFrame = function()
 {
-  
+}
+
+ThreeTriD.prototype.CreateFullModel = function()
+{
+  this.scene_light1 = new THREE.AmbientLight(0x050511);
+  this.scene.add(this.scene_light1);
+  var light = new THREE.PointLight(0xffffff,1);
+  light.position.set(400,300,500) 
+  this.scene.add(light);
+  this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
+
+  light = new THREE.PointLight(0xffffff,1);
+  light.position.set(-50,300,100) 
+  this.scene.add(light);
+  this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
+
+  light = new THREE.PointLight(0xffffff,1);
+  light.position.set(-500,300,900) 
+  this.scene.add(light);
+  this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
+
+
+
+
+  this.full_model = new THREE.Group();
+  this.full_model.name = "model";
+
+
+  var self = this;
+  var loader = new THREE.GLTFLoader();
+  loader.load( 'Models/TPC10.glb', function ( gltf ) {
+      self.renderer.gammaOutput = true;
+      self.renderer.gammaFactor = 2.2;
+      self.renderer.localClippingEnabled = true;
+      self.gltf = gltf;
+
+      var outer    = new THREE.Group();    outer.name = "outer";    self.full_model.add(outer);
+      var pmtgroup = new THREE.Group(); pmtgroup.name = "pmtgroup"; self.full_model.add(pmtgroup);
+      var inner    = new THREE.Group();    inner.name = "inner";    self.full_model.add(inner);
+      for(var j=0;j<gltf.scene.children.length;j++) {
+        console.log(j);
+        var o = gltf.scene.children[j];
+        console.error(o.name,o);
+        if(o.type=="Mesh") {
+          // True is for recursive cloning, so materials get separated.
+          if(o.name.startsWith("o_"))      {  outer.   add(o.clone(true)); } 
+          else if(o.name.startsWith("p_")) {  pmtgroup.add(o.clone(true)); }
+          else                             {  inner.   add(o.clone(true));  }
+        }
+      } 
+
+      for(var o of outer.children) {
+         console.error("outer",o.name);
+         o.material = o.material.clone();
+         o.material.clippingPlanes=[self.clip_plane_outer];
+      }
+      for(var o of pmtgroup.children) {
+         o.material = o.material.clone();
+         o.material.clippingPlanes=[self.clip_plane_pmts];
+      }
+      for(var o of inner.children) {
+         o.material = o.material.clone();
+        o.material.clippingPlanes =[self.clip_plane_inner];
+      }
+      // var defmat = new THREE.MeshLambertMaterial({color:0x6e93a5, shininess:57, specular:0x111111,side:THREE.DoubleSide});
+      // modify
+      // for(var o of self.full_model.children) { o.visible = false; }
+      // self.full_model.getChildByName("frame").visible=true;
+      // self.full_model.getChildByName("largePMTs").visible=true;
+
+      // for(var o of self.full_model.children) {
+      //   if(o.type =="Mesh") {
+      //     o.material = defmat;
+      //   }
+      // }
+
+
+      // var g = new THREE.BoxGeometry(30,30,30);
+      // var cube = new THREE.Mesh(g,defmat);
+      // self.full_model.add(cube);
+    
+      self.full_model.scale.set(10,10,10); // scale up from decimeters
+      self.full_model.rotation.y = -Math.PI/2;
+      self.full_model.position.x = 123.796;
+      self.full_model.position.z = 51.849998*10;
+
+
+
+      self.scene.add( self.full_model );
+      self.UpdateFullModel();
+
+    }, 
+    undefined, 
+    function ( error ) {
+      console.error( error );
+    } );
+}
+
+ThreeTriD.prototype.UpdateFullModel = function()
+{
+
+  this.clip_plane_outer.constant = $( ".trid-model-wipe-outer" ).slider( "option", "value" );
+  this.clip_plane_pmts.constant = $( ".trid-model-wipe-pmts" ).slider( "option", "value" );
+  this.clip_plane_inner.constant = $( ".trid-model-wipe-inner" ).slider( "option", "value" );
+  if(self.full_model){
+    for(g of self.full_model.children)
+      for(o of g.children)
+        if(o.material) o.material.needsUpdate = true;
+  }
+  this.dirty=true;
+  this.Render();
 }
 
 ThreeTriD.prototype.UpdateResolution = function(){

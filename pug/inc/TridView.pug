@@ -31,5 +31,9 @@
         label(for='trid-radio-view4' title="Isomorphic XY projection") XY
       .trid-projection-scale(title='Change projection', style='width: 50px; display: inline-block;')
       div.mouseover-text
-      //- input#ctl-show-trid-hits.show-trid-hits(type='checkbox', name='show-trid-hits')
-      //- label(for='ctl-show-trid-hits') Show 3D hits
+      div
+        .trid-model-wipe.trid-model-wipe-outer(title="Cryostat",style='width: 50px; display: inline-block; margin-right:10px;')
+        .trid-model-wipe.trid-model-wipe-pmts(title="PMT Array",style='width: 50px; display: inline-block;margin-right:10px;')
+        .trid-model-wipe.trid-model-wipe-inner(title="TPC",style='width: 50px; display: inline-block;margin-right:10px;')
+        //- input#ctl-show-trid-hits.show-trid-hits(type='checkbox', name='show-trid-hits')
+        //- label(for='ctl-show-trid-hits') Show 3D hits
