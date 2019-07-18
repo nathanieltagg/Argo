@@ -639,7 +639,9 @@ ThreeTriD.prototype.CreateFullModel = function()
       self.UpdateFullModel();
 
     }, 
-    undefined, 
+    function ( prog ) {
+      console.log( "progress",prog );
+    } 
     function ( error ) {
       console.error( error );
     } );
