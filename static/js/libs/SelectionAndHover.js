@@ -693,7 +693,7 @@ TrackInfo_dEdX.prototype.SelectChange = function()
   var hitname = null;
   var trk_assns = (gRecord.associations||{})[trk._owner] || [];
   for(var product in trk_assns) {
-    hitname = product;
+    if(product.includes("recob::Hit")) hitname = product;
     if(product == GetSelectedName("hits")) break; // best one!
   }
   if(!hitname) return this.Clear();

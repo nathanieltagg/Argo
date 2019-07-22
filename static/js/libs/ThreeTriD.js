@@ -85,7 +85,7 @@ function ThreeTriD(element, options )
   this.perspective_camera.position.set( -1000, 300, 50 );
   this.scene.add(this.perspective_camera);
 
-  this.orthographic_camera = new THREE.OrthographicCamera( -1000, 1000, -1,1, -10000, 10000 );
+  this.orthographic_camera = new THREE.OrthographicCamera( -1000, 1000, -1000,1000, -10000, 10000 );
   this.orthographic_camera.position.set( -1000, 300, 50 );
   this.scene.add(this.orthographic_camera);
    
@@ -105,73 +105,106 @@ function ThreeTriD(element, options )
 
   this.orbit_controls = new ThreePadOrbitControls(this.camera,this.viewport);
 
-  function changeCamera(isPerspective) {
-    var oldCamera = self.camera;
-    if(isPerspective===false) self.camera = self.orthographic_camera;
-    else                      self.camera = self.perspective_camera; // default
-    if(oldCamera != self.camera) {
-      // Camera changed.
-      self.orbit_controls.object = self.camera;
-      if(isPerspective===false) {
-        // Change the ortho camera to match current view of othro. good notes at https://stackoverflow.com/questions/48758959/what-is-required-to-convert-threejs-perspective-camera-to-orthographic
-        // depth:
-        var sightline_vec = new THREE.Vector3();
-        oldCamera.getWorldDirection(sightline_vec);
-        var camera_to_target = self.orbit_controls.target.clone();
-        camera_to_target.sub(oldCamera.position);
-        var depth = camera_to_target.dot(sightline_vec);
+  // function changeCamera(isPerspective) {
+  //   var oldCamera = self.camera;
+  //   if(isPerspective===false) self.camera = self.orthographic_camera;
+  //   else                      self.camera = self.perspective_camera; // default
+  //   if(oldCamera != self.camera) {
+  //     // Camera changed.
+  //     self.orbit_controls.object = self.camera;
+  //     if(isPerspective===false) {
+  //       // Change the ortho camera to match current view of othro. good notes at https://stackoverflow.com/questions/48758959/what-is-required-to-convert-threejs-perspective-camera-to-orthographic
+  //       // depth:
+  //       var sightline_vec = new THREE.Vector3();
+  //       oldCamera.getWorldDirection(sightline_vec);
+  //       var camera_to_target = self.orbit_controls.target.clone();
+  //       camera_to_target.sub(oldCamera.position);
+  //       var depth = camera_to_target.dot(sightline_vec);
 
-        var height_ortho = depth*2*Math.atan( oldCamera.fov*(Math.PI/180) /2 );
-        var width_ortho = height_ortho / oldCamera.aspect;
-        self.orthographic_camera.left  = width_ortho/-2;
-        self.orthographic_camera.right = width_ortho/2;
-        self.orthographic_camera.top   = height_ortho/2;
-        self.orthographic_camera.bottom= height_ortho/-2;
-        // debugger;
-      }
-      self.camera.position.copy(oldCamera);
-      self.camera.quaternion.copy( oldCamera.quaternion ); 
-      // self.camera.position.set(-1e9,-1e9,-1e9); // Goose position to make sure the orbitcontrols reset.
-      self.orbit_controls.update(true);
+  //       var height_ortho = depth*2*Math.atan( oldCamera.fov*(Math.PI/180) /2 );
+  //       var width_ortho = height_ortho / oldCamera.aspect;
+  //       self.orthographic_camera.left  = width_ortho/-2;
+  //       self.orthographic_camera.right = width_ortho/2;
+  //       self.orthographic_camera.top   = height_ortho/2;
+  //       self.orthographic_camera.bottom= height_ortho/-2;
+  //       // debugger;
+  //     }
+  //     self.camera.position.copy(oldCamera);
+  //     self.camera.quaternion.copy( oldCamera.quaternion ); 
+  //     // self.camera.position.set(-1e9,-1e9,-1e9); // Goose position to make sure the orbitcontrols reset.
+  //     self.orbit_controls.object = self.camera;
+  //     self.orbit_controls.enableRotate = true;
+  //     self.orbit_controls.target0 = self.orbit_controls.target.clone();
+  //     self.orbit_controls.position = self.orbit_controls.object.position.clone();
+  //     self.orbit_controls.zoom0 = self.orbit_controls.object.zoom;
 
-    }
-    // self.camera.position.copy(oldCamera.position);
-    // self.camera.matrix.copy(oldCamera.matrix.clone());
-  }
+  //     self.orbit_controls.update(true);
+
+  //   }
+  //   // self.camera.position.copy(oldCamera.position);
+  //   // self.camera.matrix.copy(oldCamera.matrix.clone());
+  // }
   function resetCamera(isPerspective) {
-    changeCamera(isPerspective);
+    self.camera = self.perspective_camera;
     self.orbit_controls.target.set(0,0,0);
     self.camera.position.set( -1000, 300, 50 );
     self.orbit_controls.setScale(1.0);
     // Center on the middle-numbered TPC, rounded down. that's 0 for microboone, 6 for protodune.
     var tpc = gGeo3.getTpc((Math.floor(gGeo3.numTpcs()/2)));
     self.orbit_controls.target.set(...tpc.center);
+    resetOrbitControls(true);
     self.orbit_controls.update();
     self.Render();
   }
 
+  function resetOrbitControls(enableRotate) 
+  {
+      self.orbit_controls.object = self.camera;
+      self.orbit_controls.enableRotate = enableRotate;
+      self.orbit_controls.target0 = self.orbit_controls.target.clone();
+      self.orbit_controls.position = self.orbit_controls.object.position.clone();
+      self.orbit_controls.zoom0 = self.orbit_controls.object.zoom;
+  }
 
   function setView(mode)
   {
-    if(mode=="3D") { changeCamera(true); self.orbit_controls.update(); return; }
+    if(mode=="3D") { 
+      self.camera = self.perspective_camera;
+      resetOrbitControls(true);
+      self.orbit_controls.update(); 
+      return; 
+    }
+
     if(mode=="XY") {
-      changeCamera(false);
+      self.camera = self.orthographic_camera;
       self.camera.position.set(0,0,-1000);
+      self.camera.rotation.set(0,0,0);
+      self.camera.quaternion.set(0,0,0,1);
+      self.camera.updateMatrixWorld(true);
       self.orbit_controls.target.set(0,0,500);
+      resetOrbitControls(false);
       self.orbit_controls.update();
       return;
     }
     if(mode=="YZ") {
-      changeCamera(false);
-      self.camera.position.set(-1000,0,500);
+      self.camera = self.orthographic_camera;
+      self.camera.position.set(-500,0,500);
+      self.camera.rotation.set(0,0,1.57);
+      self.camera.quaternion.set(0,0,0,1);
+      self.camera.updateMatrixWorld(true);
       self.orbit_controls.target.set(0,0,500);
+      resetOrbitControls(false);
       self.orbit_controls.update();
       return;
     }
     if(mode=="XZ") {
-      changeCamera(false);
-      self.camera.position.set(0,0,500);
-      self.orbit_controls.target.set(0,1000,500);
+      self.camera = self.orthographic_camera;
+      self.camera.position.set(0,500,500);
+      self.camera.rotation.set(0,1.57,0);
+      self.camera.quaternion.set(0,0,0,1);
+      self.camera.updateMatrixWorld(true);
+      self.orbit_controls.target.set(0,0,500);
+      resetOrbitControls(false);
       self.orbit_controls.update();
       return;
     }
@@ -199,8 +232,9 @@ function ThreeTriD(element, options )
   }
   else {
     this.Render = this.DoRender;  
-    this.orbit_controls.addEventListener( 'change', this.Render.bind(this)  );
   }
+  this.orbit_controls.addEventListener( 'change', this.Render.bind(this)  );
+  
   // Resizing.
   $(this.element).resize(function(ev){
                          self.Resize(); 
@@ -388,26 +422,9 @@ function ThreeTriD(element, options )
     .button({icons: {primary: 'ui-icon-note'},text: false})          
     .click(function(ev){self.CreateAnimation();});
 
-  $(".trid-projection-scale"     ,parent)
-    .slider({
-      animate: "fast",
-      min:0,
-      max:1,
-      step:1,
-      value: 1.0,
-      slide: function(ev,ui){
-        //   // This is the same effect as doing a Dolly Zoom in cinema.
-        //   // https://en.wikipedia.org/wiki/Dolly_zoom
-        //   self.projection_scale = ui.value;
-        //   self.Draw();
-        // }
-        if(ui.value<0.5)  changeCamera(false);
-        else              changeCamera(true);
-        self.orbit_controls.update();
-      }
 
-    });
 
+  $(window).on('DOMContentLoaded load resize scroll', this.Start3dModelRollbackAnimation.bind(this));
 
   this.clip_plane_outer = new THREE.Plane(new THREE.Vector3(1,-1,1).normalize(),-500.); this.clip_plane_outer.name = "outer";
   this.clip_plane_pmts  = new THREE.Plane(new THREE.Vector3(1,-1,1).normalize(),-200.); this.clip_plane_pmts.name = "pmts";
@@ -448,13 +465,6 @@ function ThreeTriD(element, options )
   this.Render();  
 }
 
-ThreeTriD.prototype.AnimationRender = function()
-{
-  requestAnimationFrame(this.AnimationRender.bind(this));
-	this.orbit_controls.update();
-  // if(this.dirty)
-     this.DoRender();
-}
 
 
 ThreeTriD.prototype.CreateFrame = function()
@@ -556,17 +566,17 @@ ThreeTriD.prototype.CreateFullModel = function()
   var light = new THREE.PointLight(0xffffff,1);
   light.position.set(400,300,500) 
   this.scene.add(light);
-  this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
+  // this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
 
   light = new THREE.PointLight(0xffffff,1);
   light.position.set(-50,300,100) 
   this.scene.add(light);
-  this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
+  // this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
 
   light = new THREE.PointLight(0xffffff,1);
   light.position.set(-500,300,900) 
   this.scene.add(light);
-  this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
+  // this.scene.add(new THREE.PointLightHelper(light,10,0xff00ff));
 
 
 
@@ -578,6 +588,7 @@ ThreeTriD.prototype.CreateFullModel = function()
       self.renderer.gammaOutput = true;
       self.renderer.gammaFactor = 2.2;
       self.renderer.localClippingEnabled = true;
+      self.full_model_loaded = true;
       self.gltf = gltf;
 
       var outer    = new THREE.Group();    outer.name = "outer";    self.full_model.add(outer);
@@ -634,20 +645,21 @@ ThreeTriD.prototype.CreateFullModel = function()
 
       self.scene.add( self.full_model );
       self.UpdateFullModel();
+      self.Start3dModelRollbackAnimation();
 
     }
   var t0 = new Date().getTime(); 
   var self = this;
   var loader = new THREE.GLTFLoader();
 
-  loader.load( 'Models/TPC10.glb', gltfLoad, 
+  loader.load( '/Models/TPC10.glb', gltfLoad, 
     function ( prog ) {
       var t = new Date().getTime();
       console.log( "progress",t-t0,prog );
     },
     function ( error ) {
             console.error( error );
-            loader.load('Models/TPC10.glb', gltfLoad) ; // try again?
+            loader.load('/Models/TPC10.glb', gltfLoad) ; // try again?
 
     } );
 }
@@ -1462,3 +1474,96 @@ ThreeTriD.prototype.UpdateWireimg = function()
 
 
 
+ThreeTriD.prototype.Start3dModelRollbackAnimation = function()
+{
+   if(this.animated_rollback) return;
+   if(!isElementInViewport(this.element)) return;
+   if(!this.full_model_loaded) return;
+   // We have the model and we're in view. Animate that sucker.
+   this.animated_rollback = true; // don't fire again.
+   console.error("Start 3d rollback!");
+   this.StartAnimation("3drollback");
+}
+
+ThreeTriD.prototype.StartAnimation = function(ani_name)
+{
+  this.animate = true;
+  this.Render = function(){}; // nullop
+
+  // only one animation so far.
+  this.t0 = Date.now();
+  this.last_frame_t = this.t0;
+  this.AnimationRender();
+}
+
+ThreeTriD.prototype.StopAnimation = function()
+{
+    this.animate = false;
+    this.Render = this.DoRender;  
+}
+
+ThreeTriD.prototype.AnimationRender = function()
+{
+  if(!this.animate) return;
+  this.orbit_controls.update();
+  var t = Date.now() - this.t0;
+  var dt = t-this.last_frame_t;
+  if(dt > 50) {
+   t=this.last_frame_t+50; this.t0=Date.now()-t;
+   console.log('reset t0'); 
+  } // reset scale.
+  dt = t-this.last_frame_t;
+  console.log(dt);
+
+  // Update things.
+  var reveal1 =     -t/3;
+  var reveal2 = 800 -t/3
+  var reveal3 = 1600-t/3
+  // console.error("animate t=",t,reveal1,reveal2,reveal3);
+  $( ".trid-model-wipe-outer" ).slider( { value:reveal1 });
+  $( ".trid-model-wipe-pmts"  ).slider( { value:reveal3 });
+  $( ".trid-model-wipe-inner" ).slider( { value:reveal2 });
+  this.UpdateFullModel();
+
+
+  this.DoRender();
+  this.last_frame_t = Date.now();
+
+  if(reveal3<-1100) this.animate = false;
+
+  if(this.animate) requestAnimationFrame(this.AnimationRender.bind(this));
+  else this.StopAnimation();
+}
+
+// 
+// Code to do cool stuff the first time the 3d comes into view.
+//
+function isElementInViewport (el) {
+
+    //special bonus for those using jQuery
+    if (typeof jQuery === "function" && el instanceof jQuery) {
+        el = el[0];
+    }
+
+    var rect = el.getBoundingClientRect();
+
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+    );
+}
+
+function onVisibilityChange(el, callback) {
+    var old_visible;
+    return function () {
+        var visible = isElementInViewport(el);
+        if (visible != old_visible) {
+            old_visible = visible;
+            if (typeof callback == 'function') {
+                callback();
+            }
+        }
+    }
+}

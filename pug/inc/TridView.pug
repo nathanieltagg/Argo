@@ -2,7 +2,7 @@
     //- #triD-view.pad.A-TriDView
     #triD-view.pad.A-ThreeTriD
     #triD-controls
-      .trid-zoom-slider(title='Zoom in/out', style='width: 50px; display: inline-block;')
+      //- .trid-zoom-slider(title='Zoom in/out', style='width: 50px; display: inline-block;')
       span.trid-ctl.trid-zoom-in(title='Zoom in') Zoom In
       span.trid-ctl.trid-zoom-out(title='Zoom out') Zoom Out
       span.trid-ctl.trid-pan-left(title='Pan left (-X)') Pan -X
@@ -29,11 +29,15 @@
         label(for='trid-radio-view3' title="Isomorphic YZ projection") YZ
         input.trid-ctl.trid-ctl-view-xy#trid-radio-view4(type='radio', name='trid-radio-view', value='XY')
         label(for='trid-radio-view4' title="Isomorphic XY projection") XY
-      .trid-projection-scale(title='Change projection', style='width: 50px; display: inline-block;')
-      div.mouseover-text
-      div
+      span(style="display:inline-block")
+        |Show cryostat: 
         .trid-model-wipe.trid-model-wipe-outer(title="Cryostat",style='width: 50px; display: inline-block; margin-right:10px;')
+      span(style="display:inline-block")
+        |Show PMT Array:
         .trid-model-wipe.trid-model-wipe-pmts(title="PMT Array",style='width: 50px; display: inline-block;margin-right:10px;')
+      span(style="display:inline-block")
+        |Show cage/wires:
         .trid-model-wipe.trid-model-wipe-inner(title="TPC",style='width: 50px; display: inline-block;margin-right:10px;')
         //- input#ctl-show-trid-hits.show-trid-hits(type='checkbox', name='show-trid-hits')
         //- label(for='ctl-show-trid-hits') Show 3D hits
+      div.mouseover-text
