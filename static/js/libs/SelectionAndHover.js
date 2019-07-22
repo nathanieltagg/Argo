@@ -777,7 +777,7 @@ TrackInfo_dEdX.prototype.Draw = function()
 
   this.ctx.restore();
 
-  $(".TrackInfo-dEdX-fit").text("Fit slope: "+this.fit_slope+" ADC/TDC")
+  $(".TrackInfo-dEdX-fit").text("Fit slope: "+this.fit_slope.toFixed(4)+" ADC/TDC")
 };
 
 

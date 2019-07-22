@@ -5,6 +5,7 @@ argo-backend
 argo-run-one
 notify-live.cgi
 argo-*-backend
+test_read_config
 myroot
 root
 larlite

@@ -327,15 +327,9 @@ void EncodedTileMaker::process() // Nice and wrapped up, ready to be called in a
         else {
           if(do_histogram) {
             int bin = floor( ((float)value)*hist_b + hist_a );
-            if(bin<0) {
-              std::cout << "UNDERFLOW: value"  << value << " bin " << bin << " ped " << waveform._ped << std::endl;
-              bin =0;
-            }
-            if(bin>=hist_size) {
-              std::cout << "OVERFLOW:  value"  << value << " bin " << bin << " ped " << waveform._ped << std::endl;
-              bin =hist_size-1;
-            }
-            (*m_histogram)[bin].fetch_add(1,std::memory_order_relaxed);
+            if(bin<0)  bin =0;
+            if(bin>=hist_size) bin = hist_size-1;
+            (*m_histogram)[bin].fetch_add(1,std::memory_order_relaxed); // atomic, so thread-safe
           }
         }
         encodeddata[k*3+2] = outnoise&0xff;
