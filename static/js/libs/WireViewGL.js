@@ -147,8 +147,9 @@ function WireViewGL(element, options )
  
   // Control callbacks.
   if(this.plane==2) {
-    this.GetBestControl(".wireview-zoom-out").click(this.DoAZoom.bind(this,+10) );
-    this.GetBestControl(".wireview-zoom-in") .click(this.DoAZoom.bind(this,-10) );
+    var c;
+    c = this.GetBestControl(".wireview-zoom-out"); if(c) c.click(this.DoAZoom.bind(this,+10) );
+    c = this.GetBestControl(".wireview-zoom-in");  if(c) c.click(this.DoAZoom.bind(this,-10) );
   }
   
   // ----------
