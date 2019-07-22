@@ -574,10 +574,7 @@ ThreeTriD.prototype.CreateFullModel = function()
   this.full_model = new THREE.Group();
   this.full_model.name = "model";
 
-
-  var self = this;
-  var loader = new THREE.GLTFLoader();
-  loader.load( 'Models/TPC10.glb', function ( gltf ) {
+  function gltfLoad( gltf ) {
       self.renderer.gammaOutput = true;
       self.renderer.gammaFactor = 2.2;
       self.renderer.localClippingEnabled = true;
@@ -638,12 +635,20 @@ ThreeTriD.prototype.CreateFullModel = function()
       self.scene.add( self.full_model );
       self.UpdateFullModel();
 
-    }, 
+    }
+  var t0 = new Date().getTime(); 
+  var self = this;
+  var loader = new THREE.GLTFLoader();
+
+  loader.load( 'Models/TPC10.glb', gltfLoad, 
     function ( prog ) {
-      console.log( "progress",prog );
+      var t = new Date().getTime();
+      console.log( "progress",t-t0,prog );
     },
     function ( error ) {
-      console.error( error );
+            console.error( error );
+            loader.load('Models/TPC10.glb', gltfLoad) ; // try again?
+
     } );
 }
 
