@@ -161,6 +161,8 @@ function ThreePad(element, options )
                          });         
   $('#ctl-magnifying-glass').on('change',this.Render.bind(this));
   
+
+
   // mouse callbacks.
   var fn = this.MouseCallBack.bind(this);
   if(!isIOS()){
@@ -179,6 +181,7 @@ function ThreePad(element, options )
   $(this.element).on('touchmove.' +this.NameSpace, fn);
   $(this.element).on('touchenter.'+this.NameSpace, fn);
   $(this.element).on('touchout.'  +this.NameSpace, fn);
+
 
 
  
@@ -405,6 +408,29 @@ ThreePad.prototype.MouseCallBack = function(ev)
 };
 
 
+ThreePad.prototype.DoAZoom = function(delta) {
+
+    var scale = 1;
+    if(delta<-250) delta = -250; // clamp it so I don't get crazy values.
+    if(delta>250)  delta = 250;  // ditto
+    if(delta<0) scale = 1+delta/500.;
+    if(delta>0) scale = 1/(1-delta/500.); // make it symmetrical
+    
+    var frame = this.GetWorldCoordsForFrame();
+    var newframe = {};
+    var avgu = (frame.minu+frame.maxu)/2;
+    newframe.minu = avgu*(1.0-scale) + frame.minu*scale;
+    newframe.maxu = (frame.maxu-frame.minu)*scale + newframe.minu;
+
+    var avgv = (frame.minv+frame.maxv)/2;
+    newframe.minv = avgv*(1.0-scale) + frame.minv*scale;
+    newframe.maxv = (frame.maxv-frame.minv)*scale + newframe.minv;
+    
+    this.SetWorldCoordsForFrame(newframe);
+    // gStateMachine.Trigger("zoomChange");
+    this.dirty = true;
+    this.Render();
+}
 
 ThreePad.prototype.DoMouseWheel = function(ev) {
   // Zoom in/out around the mouse.

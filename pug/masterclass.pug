@@ -43,6 +43,10 @@ html
           #content-wide-mc.dock
             +portlet('wireviewgl-port-2',"Collection Plane")
              .pad.A-WireViewGL(style='width:100%; height:330px', data-options='{"plane":2,"view":2}')
+             div
+               span.wireview-zoom-out.mybutton &#x1f50d;- Zoom out
+               span.wireview-zoom-in.mybutton &#x1f50d;+ Zoom in
+
             include inc/TridView 
             +portlet('wireviewgl-port-0',"Induction Plane 0",true)
               .pad.A-WireViewGL(style='width:100%; height:330px;', data-options='{"plane":0,"view":0}')

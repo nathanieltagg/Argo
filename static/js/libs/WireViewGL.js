@@ -143,6 +143,13 @@ function WireViewGL(element, options )
   $(this.ctl_dedx_path).change( this.UpdateUserTrack.bind(this) );
   gStateMachine.Bind('userTrackChange',  this.UpdateUserTrack.bind(this) );
   
+
+ 
+  // Control callbacks.
+  if(this.plane==2) {
+    this.GetBestControl(".wireview-zoom-out").click(this.DoAZoom.bind(this,+10) );
+    this.GetBestControl(".wireview-zoom-in") .click(this.DoAZoom.bind(this,-10) );
+  }
   
   // ----------
   // Materials.
