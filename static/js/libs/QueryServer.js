@@ -28,36 +28,6 @@ var gUrlToLastEvent = null;
 // Profiling
 var gSocket=0;
 
-
-  
-// Not doing this.
-// $(function(){
-//   $('#main-circleprogress').circleProgress({
-//       value: 0,
-//       thickness: 8,
-//       size: $('#main-circleprogress').width(),
-//       fill: {
-//           gradient: ["white","orange","red"]
-//         , gradientAngle: Math.PI / 2
-//       }
-//   });
-// })
-// $.circleProgress.defaults.setValue = function(newValue) {
-//     if (this.animation) {
-//         var canvas = $(this.canvas),
-//             q = canvas.queue();
-//
-//         if (q[0] == 'inprogress') {
-//             canvas.stop(true, true);
-//         }
-//
-//         this.animationStartValue = this.lastFrameValue;
-//     }
-//
-//     this.value = newValue;
-//     this.draw();
-// };
-
 var gLastHashState = {default: true};
 function objectdiff(a,b,ignore) 
 {
@@ -201,9 +171,9 @@ function RequestPiece( _type, _name ) // call with piece address, or type,name
   if(_type == "hits" ) {
     request.pieces.push("/associations/hits/tracks/"+_name+"/*");
   }
-  // if(_type == "tracks" ) {
-  //   request.pieces.push("/associations/tracks/hits/"+_name+"/*");
-  // }
+  if(_type == "tracks" ) {
+    request.pieces.push("/associations/tracks/hits/"+_name+"/*");
+  }
   
   if(_type.startsWith("mc")) {
     request.pieces.push("/associations/mctruth/mcparticles/"+_name);

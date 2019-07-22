@@ -20,7 +20,7 @@ function RecieveData(o)
     
   }
   else if("piece" in o) {
-    // console.warn("piece with components",Object.keys(o.piece));
+    console.log("got piece with components",Object.keys(o.piece));
     gServing = o;
     GotPiece(o);
     // $('#main-circleprogress').circleProgress('value', 0);

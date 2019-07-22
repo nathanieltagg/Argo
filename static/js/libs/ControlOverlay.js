@@ -99,7 +99,6 @@ ControlOverlay.prototype.NewRecord = function()
 
 ControlOverlay.prototype.NewPiece = function(piece)
 {
-  function simpleName(prod){ if(prod.includes('__')) return prod.split('_')[1]; else return prod; }
   function nameToTitle(prod){ var v = prod.split('_'); return "Type: "+v[0] + " Name: " + v[1] + " Process: " + v[3]; };
   
   // Called when a new piece arrives
@@ -309,5 +308,6 @@ ControlOverlay.prototype.OnChangeProductName = function(ev)
 
 // Utility
 function noColons(prod) {return prod.replace(/:/g,'');}
+function simpleName(prod){ if(prod.includes('__')) return prod.split('_')[1]; else return prod; }
 
   

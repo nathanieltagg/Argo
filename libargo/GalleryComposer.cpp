@@ -1154,7 +1154,7 @@ struct GalleryAssociationHelper {
       // std::cout << name1 << std::endl;
       
       for(auto& itr2: itr1.second) {
-        json j2;
+        json j2 = json::array();
         
         art::BranchDescription const& desc2 = event.getProductDescription(itr2.first);
         std::string name2 = stripdots(desc2.branchName());
@@ -1163,7 +1163,7 @@ struct GalleryAssociationHelper {
         
         
         for(auto& itr3: itr2.second) {
-          j2[std::to_string(itr3.first)] = itr3.second;
+          j2[itr3.first] = itr3.second;
         }
         
         j1[name2] = j2;
@@ -1363,7 +1363,8 @@ bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, co
   typedef art::Assns<A,B> assn_t;
 
   bool retval = false;
-  std::cout << "GalleryComposer::composeAssociationFromToMatch() " << typeid(A).name() << " " << typeid(B).name() << std::endl;
+  std::cout << "GalleryComposer::composeAssociationFromToMatch() " <<  art::TypeID(typeid(A)).friendlyClassName()  << " " << aname << " to " 
+                                                                   <<  art::TypeID(typeid(B)).friendlyClassName()  << " " << bname << std::endl;
   for(auto product: findByType<assn_t>(m_Event->getTTree())) {
    gallery::Handle< assn_t > assnhandle;
     {mutex::scoped_lock b(m_gallery_mutex); mutex::scoped_lock g(global_gallery_mutex);  m_Event->getByLabel(product.second,assnhandle);}
@@ -1414,7 +1415,7 @@ bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::js
   // Try both ways.
   bool retval = false;
   retval =  composeAssociationFromToMatch<A,B>(aname, bname, req, out) || retval;
-  retval =  composeAssociationFromToMatch<A,B>(bname, aname, req, out) || retval;
+  retval =  composeAssociationFromToMatch<B,A>(bname, aname, req, out) || retval;
   return retval;
 }
 

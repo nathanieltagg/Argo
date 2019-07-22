@@ -111,6 +111,11 @@ $(function(){
   });
 });
 
+
+
+
+
+
 function DrawObjectInfo() 
 {
   var e = $('#selected-object-info');
@@ -228,13 +233,118 @@ function ComposeMCParticleInfo(s)
 }
 
 
+
+
+// Track info parameters.
+// Muon energy loss in Argon.
+// http://pdg.lbl.gov/2019/AtomicNuclearProperties/MUE/muE_liquid_argon.txt
+    //   p     CSDA Range  
+    // [MeV/c]   [g/cm^2]  
+
+var muon_range_table = [
+  [6.802E+01, 3.321E+00],
+  [7.686E+01, 4.859E+00],
+  [8.509E+01, 6.598E+00],
+  [9.285E+01, 8.512E+00],
+  [1.003E+02, 1.058E+01],
+  [1.074E+02, 1.278E+01],
+  [1.143E+02, 1.510E+01],
+  [1.210E+02, 1.752E+01],
+  [1.276E+02, 2.004E+01],
+  [1.403E+02, 2.531E+01],
+  [1.527E+02, 3.084E+01],
+  [1.647E+02, 3.659E+01],
+  [1.764E+02, 4.250E+01],
+  [1.994E+02, 5.473E+01],
+  [2.218E+02, 6.732E+01],
+  [2.546E+02, 8.666E+01],
+  [2.868E+02, 1.063E+02],
+  [3.396E+02, 1.394E+02],
+  [3.917E+02, 1.725E+02],
+  [4.432E+02, 2.056E+02],
+  [4.945E+02, 2.385E+02],
+  [5.455E+02, 2.711E+02],
+  [5.964E+02, 3.035E+02],
+  [6.471E+02, 3.357E+02],
+  [6.977E+02, 3.677E+02],
+  [7.987E+02, 4.310E+02],
+  [8.995E+02, 4.934E+02],
+  [1.000E+03, 5.552E+02],
+  [1.101E+03, 6.163E+02],
+  [1.301E+03, 7.368E+02],
+  [1.502E+03, 8.552E+02],
+  [1.803E+03, 1.030E+03] ];
+
+var proton_range_table = [
+// PSTAR: Stopping Powers and Range Tables for Protons
+
+// ARGON                                                                   
+
+// Kinetic   CSDA      
+// Energy    Range     
+// MeV       g/cm2     
+  [2.750E+01, 1.111E+00],
+  [3.000E+01, 1.296E+00],
+  [3.500E+01, 1.704E+00],
+  [4.000E+01, 2.159E+00],
+  [4.500E+01, 2.661E+00],
+  [5.000E+01, 3.208E+00],
+  [5.500E+01, 3.799E+00],
+  [6.000E+01, 4.433E+00],
+  [6.500E+01, 5.108E+00],
+  [7.000E+01, 5.824E+00],
+  [7.500E+01, 6.580E+00],
+  [8.000E+01, 7.375E+00],
+  [8.500E+01, 8.207E+00],
+  [9.000E+01, 9.077E+00],
+  [9.500E+01, 9.983E+00],
+  [1.000E+02, 1.092E+01],
+  [1.250E+02, 1.614E+01],
+  [1.500E+02, 2.215E+01],
+  [1.750E+02, 2.888E+01],
+  [2.000E+02, 3.627E+01],
+  [2.250E+02, 4.426E+01],
+  [2.500E+02, 5.282E+01],
+  [2.750E+02, 6.189E+01],
+  [3.000E+02, 7.144E+01],
+  [3.500E+02, 9.184E+01],
+  [4.000E+02, 1.138E+02],
+  [4.500E+02, 1.370E+02],
+  [5.000E+02, 1.614E+02],
+  [5.500E+02, 1.869E+02],
+  [6.000E+02, 2.132E+02],
+  [6.500E+02, 2.403E+02],
+  [7.000E+02, 2.681E+02],
+  [7.500E+02, 2.965E+02],
+  [8.000E+02, 3.254E+02],
+  [8.500E+02, 3.548E+02],
+  [9.000E+02, 3.846E+02],
+  [9.500E+02, 4.148E+02],
+  [1.000E+03, 4.454E+02]
+];
+
+function interp_range(table,tracklength)
+{
+  // Convert tracklength to densitylength
+  var range = tracklength*1.396; // g/cm3
+  for(var i=0;i<table.length-1;i++) {
+    if(range >= table[i][1]) {
+      // linear interp y1 + (x-x1)/(x2-x1)*(y2-y1)
+      return table[i][0] + (range-table[i][1])/(table[i+1][1]-table[i][1])*(table[i+1][0]-table[i][0]);
+    }
+  }
+  return "???";
+}
+
+
+
+
 function ComposeTrackInfo(s)
 {
   var trk = s.obj;
   var id = trk._idx;
   var start =  trk.points[0];
   var end   =  trk.points[trk.points.length-1];
-  var listname = noColons(GetSelectedName('tracks'));
 
   var P = start.P;
   var x = start.x;
@@ -296,7 +406,7 @@ function ComposeTrackInfo(s)
   
 
   var h = "<h3>Track " + id+ "</h3>";
-  h += noColons(trk._owner) + "</br>";
+  h += simpleName(trk._owner) + "</br>";
   h += "<table class='hoverinfo'>";
   var a = "<tr><td class='hoverinfo-key'>";
   var b = "</td><td class='hoverinfo-val'>";
@@ -328,6 +438,13 @@ function ComposeTrackInfo(s)
   h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
   h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
+
+  var p_muon = interp_range(muon_range_table,trklen);
+  h+= a + "If stop-muon <span style='float:right;'>p=</span>" + b + p_muon.toFixed(1) + " MeV/c" + c;
+  var K_proton = interp_range(proton_range_table,trklen);
+  var p_proton = Math.sqrt(K_proton*K_proton - 938.28*938.28);
+  h+= a + "If stop-proton&nbsp; <span style='float:right;'>p=</span>" + b + p_proton.toFixed(1) + " MeV/c" + c;
+
   
   // horrible point info
   // Get associated hit info.
@@ -355,9 +472,9 @@ function ComposeTrackInfo(s)
     }
   
 
-    for ( n in gRecord.associations[trk._owner]) {
-      h+= a + n + b + gRecord.associations[trk._owner][n][trk._idx].length + c;
-    }
+    // for ( n in gRecord.associations[trk._owner]) {
+    //   h+= a + n + b + gRecord.associations[trk._owner][n][trk._idx].length + c;
+    // }
   }
 
   // h+= a + "Total &Delta;Q"  + b +
@@ -503,3 +620,164 @@ function selectByDescription(list,idx)
     }
   }
 }
+
+
+// Pattern: create global if not exists. If global exists, turn global into an array and append.
+var gTrackInfo_dEdX = null;
+$(function(){
+  $('div.A-TrackInfo-dEdX').each(function(){
+    if(gTrackInfo_dEdX) {
+      if(!Array.isArray(gTrackInfo_dEdX)) {
+        gTrackInfo_dEdX = [gTrackInfo_dEdX];
+      }
+      gTrackInfo_dEdX.push(new TrackInfo_dEdX(this));
+    } else {
+      gTrackInfo_dEdX = new TrackInfo_dEdX(this);
+    }
+  });  
+});
+
+TrackInfo_dEdX.prototype = new Pad(null);
+
+function TrackInfo_dEdX( element, options  )
+{
+   this.element = element;
+  var settings = {
+    label_font: "10pt",
+    xlabel: "Charge",
+    ylabel: "Hits",
+    ticlog_y : false,
+    suppress_zero: false,
+    draw_grid_y : false,
+    draw_grid_x : false,
+    margin_left : 50,
+    margin_bottom : 40,
+    draw_box : false,
+    margin_right : 10,
+    margin_top : 10,
+    xlabel : "TDC",
+    ylabel : "ADC",
+    marker: null,
+        adjuct_display: false,
+        adjunct_height: 0,
+                adunct_label: null,
+    pan_x_allow: true,
+    pan_y_allow: true,
+    scale_x_allow: true,
+    scale_y_allow: true,
+  };
+  this.data = [];
+  Pad.call(this, element, settings); // Give settings to Pad contructor.
+
+  gStateMachine.Bind('hoverChange',this.HoverChange.bind(this));
+  gStateMachine.Bind('selectChange',this.SelectChange.bind(this));
+
+}
+TrackInfo_dEdX.prototype.ClearHover = function()
+{
+}
+
+TrackInfo_dEdX.prototype.HoverChange = function()
+{}
+
+
+TrackInfo_dEdX.prototype.SelectChange = function()
+{
+  console.error("trackinfo_dedx SelectChange");
+  if(gSelectState.type!="tracks") return this.Clear();
+
+  var trk = gSelectState.obj;
+  console.error(trk._owner);
+  console.log(gRecord.associations[trk._owner]);
+  // find an association.
+  var hitname = null;
+  var trk_assns = (gRecord.associations||{})[trk._owner] || [];
+  for(var product in trk_assns) {
+    hitname = product;
+    if(product == GetSelectedName("hits")) break; // best one!
+  }
+  if(!hitname) return this.Clear();
+  var hits = gRecord.hits[hitname] || [];
+  if(hits.length == 0) return this.Clear();
+
+  var tmin = 1e99;
+  var tmax = -1e99;
+  var qmin = 1e99;
+  var qmax = -1e99;
+  this.data = [];
+
+  var sumx =0 ;
+  var sumx2=0;
+  var sumxy=0
+  var sumy =0;
+  var sumy2=0;
+
+  for(var ihit of (trk_assns[hitname][trk._idx] || [])) {
+    var hit = hits[ihit];
+    if(hit.plane!=2) continue; // collection hits only
+    if(hit.t<tmin) tmin = hit.t;
+    if(hit.t>tmax) tmax = hit.t;    
+    if(hit.q<qmin) qmin = hit.q;
+    if(hit.q>qmax) qmax = hit.q;
+    this.data.push([hit.t,hit.q]);
+    sumx +=hit.t;
+    sumx2+=hit.t*hit.t;
+    sumxy+=hit.t*hit.q;
+    sumy +=hit.q;
+    sumy2+=hit.q*hit.q;
+  }
+  this.min_u = tmin;
+  this.max_u = tmax;
+  this.min_v = qmin;
+  this.max_v = qmax;
+
+  var n = this.data.length;
+  var d = (n*sumx2 - sumx*sumx);
+  this.fit_slope = (n*sumxy - sumx*sumy)/d;
+  this.fit_intercept = (sumy*sumx2 - sumx*sumxy)/d;
+
+  var d =((this.data.length)*sumxy - sumx*sumy)
+  this.Draw();
+}
+
+TrackInfo_dEdX.prototype.Draw = function()
+{
+  // console.log("HistCanvas::Draw",this);
+  this.Clear();
+  this.DrawFrame();
+  // Clip region.
+  this.ctx.save();
+  this.ctx.beginPath();
+  this.ctx.moveTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.min_v));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.max_v));
+  this.ctx.lineTo(this.GetX(this.min_u), this.GetY(this.min_v));
+  this.ctx.clip();
+
+  this.ctx.strokeStyle='black';
+  this.ctx.lineWidth = 1; 
+  this.ctx.beginPath();
+  for( var datum of this.data) {
+    var x = this.GetX(datum[0]);
+    var y = this.GetY(datum[1]);
+    this.ctx.moveTo(x-2,y);
+    this.ctx.lineTo(x+2,y);
+    this.ctx.moveTo(x,y-2);
+    this.ctx.lineTo(x,y+2);
+  }
+  this.ctx.stroke();
+
+  this.ctx.strokeStyle = 'red';
+  this.ctx.lineWidth = 2;
+  this.ctx.beginPath();
+  this.ctx.moveTo(this.GetX(this.min_u), this.GetY(this.fit_intercept+this.fit_slope*this.min_u));
+  this.ctx.lineTo(this.GetX(this.max_u), this.GetY(this.fit_intercept+this.fit_slope*this.max_u));
+  this.ctx.stroke();
+
+  this.ctx.restore();
+
+  $(".TrackInfo-dEdX-fit").text("Fit slope: "+this.fit_slope+" ADC/TDC")
+};
+
+
