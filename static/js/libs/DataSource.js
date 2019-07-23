@@ -36,7 +36,7 @@ function DataSource()
       // tier:  $('#inRunTier').val(),
       nameinc: $('#inRunFilenameIncludes').val(),
       selection: "EventAuxiliary.id_.subRun_.run_.run_=="+$('#inRun').val()
-              +"&&EventAuxiliary.id_.run_EventAuxiliary.id_.event_=="+$('#inRunEvent').val()
+              +"&&EventAuxiliary.id_.event_=="+$('#inRunEvent').val()
     },2);
   }
     
@@ -105,7 +105,7 @@ DataSource.prototype.NewPiece = function()
   $('#inFilename').val(file);
   
   $(".inRun").val(((gRecord || {}).source || {}).run);
-  $(".inSubrun").val(((gRecord || {}).source || {}).subrun);
+  $(".inSubRun").val(((gRecord || {}).source || {}).subrun);
   $('.inEvent').val(((gRecord || {}).source || {}).event||-1);
   
   $('.inSamDimAncestor').val(

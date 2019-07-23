@@ -143,7 +143,9 @@ function QueryServerStream( par )
       $("#status").text('Connection broken');
     };
   } else {
+    // debugger;
 
+    console.log("sending request",request);
     if (gSocket.readyState !== 1) gSocket.onopen =  ()=>{gSocket.send(JSON.stringify(request));}
     else gSocket.send(JSON.stringify(request));  // Send the request along straight away    
   } 
