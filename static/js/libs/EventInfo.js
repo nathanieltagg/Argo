@@ -128,7 +128,9 @@ EventInfo.prototype.NewPiece = function()
   
   if(gRecord.source) {
     if("file" in gRecord.source){  $(".event-file").text(gRecord.source.file);
-                                   $(".event-basefilename").text(gRecord.source.file.split('/').pop()); }
+                                   $(".event-basefilename").text(gRecord.source.file.split('/').pop()); 
+                                   $(".event-shortfilename").html(shorten_stupid_fnal_filenames(gRecord.source.file)); 
+                                 }
     if("entry" in gRecord.source) $(".event-entry").text(gRecord.source.entry);
     if("numEntriesInFile" in gRecord.source) $(".event-numEntriesInFile").text(gRecord.source.numEntriesInFile);
   }
@@ -175,6 +177,17 @@ EventInfo.prototype.NewPiece = function()
   $(".event-hv").html(hv);
   
 };
+
+
+function shorten_stupid_fnal_filenames(path)
+{
+  var str = path.split('/').pop();
+  // take out uuids
+  str = str.replace(/[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}/g,"&mldr;");
+  // take out dates like 20171207T044933
+  str = str.replace(/[0-9]{8}T[0-9]{6}/g,"&mldr;");
+  return str;
+}
 
 
 

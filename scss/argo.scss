@@ -98,8 +98,8 @@ body {
   @extend %extend_1;
 }
 
-body textarea{ user-select: default; }
-body input[type="text"]{ user-select: default; }
+body textarea{ user-select: contain; }
+body input[type="text"]{ user-select: contain; }
 
 #event-id-info {
   margin-left: 30px;
