@@ -9,7 +9,7 @@ else
   libargo = libargo-backend.so
 endif
 
-buildtargets = gtest $(libargo) argo-backend argo-live-backend argo-run-one notify-live.cgi 
+buildtargets = $(libargo) argo-live-backend argo-run-one 
 .PHONY: bin
 bin: $(buildtargets)
 #bin: gtest
@@ -152,7 +152,7 @@ LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 # Needed to look the provenance / configuration history for hints.
 ifneq ($(origin ART_ROOT_IO_INC), undefined)
 CPPFLAGS += -I ${ART_ROOT_IO_INC}
-LSLIBS   +== -L ${ART_ROOT_IO_LIB} -l art_root_io -l art_root_io_RootDB
+LSLIBS   += -L ${ART_ROOT_IO_LIB} -l art_root_io -l art_root_io_RootDB
 else
 LSLIBS   += -L ${ART_LIB} -l art_Framework_IO_Root -l art_Framework_IO_RootVersion -l art_Framework_IO_Root_RootDB
 endif
@@ -235,7 +235,7 @@ Cint.cpp : $(RHEADERS) LinkDef.h
 	rootcint -v3 -f $@ -c -g -I./ -pthread -m64 $(RHEADERS) LinkDef.h
 	
 tmp/Cint.o : Cint.cpp
-	$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -fPIC -c $< -o $@
+	@$(CPP) $(shell ROOTSYS=${ROOTSYS} ${ROOTSYS}/bin/root-config --cflags) -fPIC -c $< -o $@
 
 
  
@@ -247,7 +247,7 @@ endif
 
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	@echo Building executable $@
-	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) $(LSLIBS)  += -o $@ \
+	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) $(LSLIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
 		#-Wl,--unresolved-symbols=ignore-in-shared-libs
@@ -281,7 +281,7 @@ config-dumper: $(OBJ) tmp/config_dumper.o Makefile
 # I NEED to have the full UPS chain set up. Grr.
 
 argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS)  $(LSLIBS)-o $@ \
+	@$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS)  $(LSLIBS)-o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
 		-Wl,-rpath,$$ORIGIN \
@@ -296,13 +296,11 @@ testdep:
 	@echo "SOURCES_RAW_ONLY "$(SOURCES_RAW_ONLY)
   
 argo-live-backend: $(OBJ_RAW_ONLY) tmp/argo-live-backend.o Makefile
-	@echo "OBJ_RAW_ONLY "$(OBJ_RAW_ONLY)
-	@echo "SOURCES_RAW_ONLY "$(SOURCES_RAW_ONLY)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+	@$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
 argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
-	$(CPP) $(LDFLAGS) \
+	@$(CPP) $(LDFLAGS) \
 	 $(filter %.o,$^) $(LIBS) $(BLIBS)  $(LSLIBS) -o $@
 	# -Wl,-rpath,@loader_path/deps/root/lib \
 	# -Wl,-rpath,@loader_path/deps/boost/lib \
@@ -322,7 +320,7 @@ endif
 
 $(libargo): $(OBJ) tmp/Cint.o Makefile
 	#$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS)  $(LSLIBS) -dynamiclib $(libflags) 
+	@$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS)  $(LSLIBS) -dynamiclib $(libflags) 
 	# $(ldpaths)
 
 
@@ -340,15 +338,15 @@ notify-live.cgi:  notify_live.cc
 
 testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS)  $(LSLIBS) -o $@
+	@$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS)  $(LSLIBS) -o $@
 
 
 my_config_dumper: tmp/config_dumper.o
-	$(CPP) $(LDFLAGS) tmp/config_dumper.o tmp/Timer.o $(LIBS)  $(LSLIBS) -o $@
+	@$(CPP) $(LDFLAGS) tmp/config_dumper.o tmp/Timer.o $(LIBS)  $(LSLIBS) -o $@
 
 test_read_config: $(OBJ) tmp/test_read_config.o 
 	# $(CPP) $(LDFLAGS) tmp/test_read_config.o tmp/Timer.o tmp/ReadLarsoftConfig.o $(LIBS) -o $@
-	$(CPP) $(LDFLAGS) \
+	@$(CPP) $(LDFLAGS) \
 	  $(filter %.o,$^) $(LIBS)  $(LSLIBS) $(BLIBS) -o $@
 
 

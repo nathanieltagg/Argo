@@ -1,0 +1,11 @@
+ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+#echo $ABSOLUTE_PATH
+
+source /datalocal/install/setup
+export PATH=/datalocal/nodejs/current/bin:$PATH
+
+setup larlite v06_70_00d -q e17:prof
+setup uboonecode v08_22_00 -q e17:prof
+unsetup python # to allow node-gyp to rebuild
+
+node  $ABSOLUTE_PATH/create_environment_scripts.js
