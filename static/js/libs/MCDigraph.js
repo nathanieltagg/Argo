@@ -92,6 +92,30 @@ MCDigraph.prototype.Rebuild = function()
     $(this.element).show();
   }
 
+  // Prebuild lookup tables
+  if(! particles._trkIdToIndex) {
+    particles._trkIdToIndex = {};
+    for(var i=0;i<particles.length;i++){
+      var p = particles[i];
+      if(p.ftrackId in particles._trkIdToIndex) console.error("duplicate trkid",p.ftrackId,i,particles._trkIdToIndex[p.ftrackId]);
+      particles._trkIdToIndex[p.ftrackId] = i;
+    }
+
+    for(var p of particles) {
+        p._children_idx = [];
+    }
+    for(var i=0;i<particles.length;i++){
+      var p = particles[i];
+      if(p.fmother!=0) {
+        var mother_idx = particles._trkIdToIndex[p.fmother];
+        if(mother_idx) {
+          particles[mother_idx]._children_idx.push(i);
+        }
+      }
+    }
+
+  }
+
   // var particle_by_track_id=[];
   // for(var it=0;it<particles.length;it++){
   //   particle_by_track_id[particles[it].ftrackId] = particles[it];
@@ -138,12 +162,18 @@ MCDigraph.prototype.Rebuild = function()
     node.name = nodeNameFromMCParticle(p);
     node.data = { particle: p };
   
-    // for(var i=0;i<particles.length; i++) {
-    for(var i=0;i<list.length; i++) {
-      if(particles[list[i]].fmother === trkid) { 
-        node.children.push(buildNestedObject(particles[list[i]],list));
-      }
+    // This is WAAAAY too slow. 
+    // for(var i=0;i<list.length; i++) {
+    //   if(particles[list[i]].fmother === trkid) { 
+    //     node.children.push(buildNestedObject(particles[list[i]],list));
+    //   }
+    // }
+
+    for(var idx of p._children_idx) {
+      // if(list.includes(idx))
+        node.children.push(buildNestedObject(particles[idx],list));      
     }
+
     return node;
   }
   
