@@ -142,8 +142,8 @@ int main(int argc, char **argv)
   oDispHost      = config.value("dispatcherHost","localhost");
   oDispPort      = std::to_string(config.value("dispatcherPort",2013));
   oOptions       = config.value("options","");
-  oCacheDir      = config.value("cacheDir","../live_event_cache");
-  oCacheUrl      = config.value("cacheUrl","live_event_cache");
+  oCacheDir      = config.value("CacheStoragePath","../live_event_cache");
+  oCacheUrl      = config.value("CacheStorageUrl","live_event_cache");
   oPeriod        = config.value("period",5.0);
   oMaxFiles      = config.value("maxFiles",30);
   oConfigJson = config;
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
     std::shared_ptr<DispatcherMessage> data;
     if(!client.wait_for_reply(metadata,data)) {
       logInfo << "Problem on retrieving reply";
-      SaveHeartbeat(heartbeatInfo, "Problem with recieving reply from dispatcher");
+      SaveHeartbeat(heartbeatInfo, "Problem with receiving reply from dispatcher");
       continue;
     }
     KvpSet md(metadata);

@@ -56,7 +56,7 @@ for(v in obj) {
 nodemon.env["DYLD_LIBRARY_PATH"] = "";
 nodemon.env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
 
-fs.writeFileSync("nodemon.json",JSON.stringify(nodemon,null,2));
+fs.writeFileSync(__dirname+"/nodemon.json",JSON.stringify(nodemon,null,2));
 
 for(v in obj) {
   pm2.apps[0].env[v] = process.env[v]; // get current variable.  
@@ -64,7 +64,7 @@ for(v in obj) {
 pm2.apps[0].env["DYLD_LIBRARY_PATH"] = "";
 pm2.apps[0].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
 
-fs.writeFileSync("pm2.json",JSON.stringify(pm2,null,2));
+fs.writeFileSync(__dirname+"/pm2.json",JSON.stringify(pm2,null,2));
 
 
 if(fs.existsSync("/etc/systemd/system"))
@@ -96,11 +96,11 @@ if(fs.existsSync("/etc/systemd/system"))
     if(old_cf == cf) need_to_redeploy = false;
   }
   if(need_to_redeploy) {
-    fs.writeFileSync(conf_file_name,cf);    
+    fs.writeFileSync(__dirname+"/"+conf_file_name,cf);    
     console.log("PM2 environment is not ready. To prepare:");
     if(!fs.existsSync(conf_file_path))
       console.log('   ksu -a -c "mkdir -m 755 '+conf_file_path+'"');
-    console.log  ('   ksu -a -c "cp ./'+conf_file_name+' '+conf_file_path+conf_file_name+ '" && rm ./'+conf_file_name );
+    console.log  ('   ksu -a -c "cp ./'+__dirname+"/"+conf_file_name+' '+conf_file_path+conf_file_name+ '" && rm '+__dirname+"/"+conf_file_name );
     console.log  ('   ksu -a -c "systemctl daemon-reload"');
     console.log  ('   ksu -a -c "systemctl restart pm2-'+process.env["USER"]+'.service"');
 

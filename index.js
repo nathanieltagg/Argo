@@ -146,7 +146,7 @@ async function resolve_request(event_req)
     var run = parseInt(event_req.run);
     if(isNan(run)) throw new Error("No run provided");
 
-    files = await samweb('list-files',
+    files = await samweb.samweb('list-files',
                           'defname:'+definition+' and run_number='+run+"."+subrun
                            +" and file_format artroot with limit 1");
     if(files.length<1) throw new Error("No files found matching"+spec);
