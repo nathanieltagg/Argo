@@ -216,7 +216,7 @@ endif
 tmp/%.o : %.cpp
 	@mkdir -p tmp
 	@echo "compiling $@ $<"
-	@$(CPP) $(CPPFLAGS) -o $@ -c $<
+	$(CPP) $(CPPFLAGS) -o $@ -c $<
 
 tmp/%.o : %.cc
 	@mkdir -p tmp

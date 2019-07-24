@@ -10,17 +10,18 @@ function samweb()
   //
   //
   var sam_args = [...config.sam_arguments,...arguments];
+  console.trace("samweb stack");
   return new Promise(function(resolve,reject) {
     console.time('samweb');
     spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
       if (error) {
-        console.log("Samweb call failed:"," samweb "+sam_args.join(' '));
+        console.log("Samweb call failed:"," samweb "+sam_args.join('**'));
         console.log(stdout);
         console.log(stderr);
-        return reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
+        return reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')+"*DONE*"));
       } else {
         console.timeEnd('samweb');
-        lines = stdout.split("\n");  // split newlines
+        var lines = stdout.split("\n");  // split newlines
         for(var i=0;i<lines.length;i++){
           lines[i] = lines[i].trim(); // trim each output line of whitespace
         }
@@ -100,9 +101,9 @@ function sam_get_raw_ancestor(filename)
 
 
 module.exports.samweb = samweb;
-module.exports.sam_locate_file = sam_locate_file();
-module.exports.sam_get_raw_ancestor = sam_get_raw_ancestor();
-module.exports.sam_find_event = sam_find_event();
+module.exports.sam_locate_file = sam_locate_file;
+module.exports.sam_get_raw_ancestor = sam_get_raw_ancestor;
+module.exports.sam_find_event = sam_find_event;
 
 
 // Samweb tests.
