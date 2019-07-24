@@ -1503,14 +1503,19 @@ ThreeTriD.prototype.AnimationRender = function()
 {
   if(!this.animate) return;
   this.orbit_controls.update();
-  var t = Date.now() - this.t0;
-  var dt = t-this.last_frame_t;
-  if(dt > 50) {
-   t=this.last_frame_t+50; this.t0=Date.now()-t;
+  var now = Date.now();
+  var dt = now-this.last_frame_t;
+  const max_dt = 50;  // If two frames are more than 50 ms apart, delay animation instead of jumping in time.
+  if(dt > max_dt) {
+    // want t = last+50,  and t=now-t0, so
+    // now-t0 = last+50
+   this.t0 = (now-this.last_frame_t- max_dt);
    console.log('reset t0'); 
   } // reset scale.
-  dt = t-this.last_frame_t;
-  console.log(dt);
+  var t = now - this.t0;
+  dt = now-this.last_frame_t;
+  // console.log("framedt",dt,t,this.last_frame_t,Date.now() - this.t0);
+
 
   // Update things.
   var reveal1 =     -t/3;
