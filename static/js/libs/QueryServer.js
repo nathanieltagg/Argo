@@ -50,10 +50,11 @@ function HashChanged(  )
 
   // This call tells it to look for differences from the last state, but IGNORING the zoom or other local variables:
   var changed = objectdiff(par,gLastHashState,['zoom']);
-  console.log("HashChange new state",par," old state ",gLastHashState," changed: ",changed);
+  console.log("HashChanged new state",par,)
+  console.log("HashChanged old state ",gLastHashState);
+  console.log("HashChanged changed: ",changed);
   if(!changed) return;
   gLastHashState = $.extend(true, {}, par);
-  console.log("HashChanged",par);
   
   if(par.reload) {  window.location.reload(); return; };// Force a reload! 
   

@@ -595,9 +595,7 @@ ThreeTriD.prototype.CreateFullModel = function()
       var pmtgroup = new THREE.Group(); pmtgroup.name = "pmtgroup"; self.full_model.add(pmtgroup);
       var inner    = new THREE.Group();    inner.name = "inner";    self.full_model.add(inner);
       for(var j=0;j<gltf.scene.children.length;j++) {
-        console.log(j);
         var o = gltf.scene.children[j];
-        console.error(o.name,o);
         if(o.type=="Mesh") {
           // True is for recursive cloning, so materials get separated.
           if(o.name.startsWith("o_"))      {  outer.   add(o.clone(true)); } 
@@ -607,7 +605,6 @@ ThreeTriD.prototype.CreateFullModel = function()
       } 
 
       for(var o of outer.children) {
-         console.error("outer",o.name);
          o.material = o.material.clone();
          o.material.clippingPlanes=[self.clip_plane_outer];
       }
@@ -655,7 +652,7 @@ ThreeTriD.prototype.CreateFullModel = function()
   loader.load( '/Models/TPC10.glb', gltfLoad, 
     function ( prog ) {
       var t = new Date().getTime();
-      console.log( "progress",t-t0,prog );
+      console.log( "3d model progress",t-t0,prog.loaded/prog.total*100+"%");
     },
     function ( error ) {
             console.error( error );
@@ -1432,7 +1429,7 @@ ThreeTriD.prototype.UpdateWireimg = function()
       mat.uniforms.trans_cut_fade_width.value = Math.abs(urange[1]-urange[0])*0.02;
       mat.uniforms.trans_cut_low.value  = urange[0] - mat.uniforms.trans_cut_fade_width.value/2;
       mat.uniforms.trans_cut_high.value = urange[1] + mat.uniforms.trans_cut_fade_width.value/2;
-      console.error("limiting view",view,urange);
+      // console.log("limiting view",view,urange);
 
       // Change transverse cut
       if(gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == tpc) {
@@ -1448,7 +1445,7 @@ ThreeTriD.prototype.UpdateWireimg = function()
         mat.uniforms.tdc_cut_fade_width.value = Math.abs(t2-t1)*0.02;
         mat.uniforms.tdc_cut_low.value = Math.min(t1,t2) - mat.uniforms.tdc_cut_fade_width.value/2;
         mat.uniforms.tdc_cut_high.value= Math.max(t1,t2) + mat.uniforms.tdc_cut_fade_width.value/2;
-        console.error("tdc cut full",t1,t2, mesh.userData.v1,mesh.userData.v2, t1, t2);
+        // console.log("tdc cut full",t1,t2, mesh.userData.v1,mesh.userData.v2, t1, t2);
 
       } else {
         // Drift crop:
@@ -1456,7 +1453,7 @@ ThreeTriD.prototype.UpdateWireimg = function()
         var tdc_end   = gGeo3.getTDCofX(tpc,view,mesh.userData.v2) + gZoomRegion.getTimeOffset();
         mat.uniforms.tdc_start.value = tdc_start;
         mat.uniforms.tdc_end.value = tdc_end;
-        console.error("tdc cut crop",tdc_start,tdc_end);
+        // console.log("tdc cut crop",tdc_start,tdc_end);
 
       } 
 
@@ -1481,7 +1478,7 @@ ThreeTriD.prototype.Start3dModelRollbackAnimation = function()
    if(!this.full_model_loaded) return;
    // We have the model and we're in view. Animate that sucker.
    this.animated_rollback = true; // don't fire again.
-   console.error("Start 3d rollback!");
+   // console.error("Start 3d rollback!");
    this.StartAnimation("3drollback");
 }
 

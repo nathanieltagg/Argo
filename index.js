@@ -1,7 +1,11 @@
+'use strict';
+
 console.log("starting")
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
+const fsPromises = require('fs').promises;
+
 var express = require('express');
 var logger = require('morgan');
 var compression = require('compression');
@@ -13,31 +17,10 @@ var moment = require('moment');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var chalk = require('chalk');
-var spawn = require('child_process');
 
-// conifig defaults:
-var defaults = {
-  datacache: __dirname + "/datacache",
-  datacache_max_files: 100,
-  datacache_max_age:   3600000, // one hour, in ms
-  sam_arguments :["-e","uboone"],
-}
-defaults.composer_config = {
-   "forking": false,
-   "CacheStoragePath": defaults.datacache,
-   "CacheStorageUrl": "/datacache",
-   "WorkingSuffix": "event",
-   "CreateSubdirCache": true,
-  "fork_logdir": __dirname+"/logs/",
-  "DeadChannelDB":__dirname+"/db/dead_channels.txt",
-  plexus: {
-    tpc_source:"sqlite "+__dirname+"/db/current-plexus.db",
-    pmt_source:"sqlite "+__dirname+"/db/current-plexus.db",
-  }
-}
-var config = require('deepmerge')(defaults,require('./config.js'));
 
-console.log("config:",config);
+var config = require("./configuration.js"); // loads config.js
+var samweb = require("./samweb.js");
 
 // IDEA: can do this right here: process.env.DYLD_LIBRARY_PATH="<stuff>"
 // NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
@@ -46,118 +29,9 @@ console.log("config:",config);
 console.log(process.env.LD_LIBRARY_PATH);
 var argo = require("argonode");
 
-// var samweb_path = process.env.00
 var app = express();
-httpServer = http.createServer(app);
-httpsServer = https.createServer(app);
-
-
-function samweb()
-{
-  // Utility function to return promise samweb, assuming it's in the current PATH (set up by sam_web_client)
-  // Returns array of lines.
-  //
-  //
-  var sam_args = [...config.sam_arguments,...arguments];
-  return new Promise(function(resolve,reject) {
-    console.time('samweb');
-    spawn.execFile("samweb",sam_args,(error, stdout, stderr) => {
-      if (error) {
-        console.log("Samweb call failed:"," samweb "+sam_args.join(' '));
-        console.log(stdout);
-        console.log(stderr);
-        return reject(Error("samweb failed "+error+" $ samweb "+sam_args.join(' ')));
-      } else {
-        console.timeEnd('samweb');
-        lines = stdout.split("\n");  // split newlines
-        for(var i=0;i<lines.length;i++){
-          lines[i] = lines[i].trim(); // trim each output line of whitespace
-        }
-        console.log("samweb command: $ samweb "+sam_args.join('**') );
-        console.log("result: ",lines);
-        return resolve(lines);
-      }
-    });
-  });
-}
-
-function sam_locate_file(filename)
-{
-  return new Promise(function(resolve,reject){
-    samweb("locate-file",filename).then(locs=>{
-      // returned string is enstore:/pnfs/.../dir(stuff)
-      var loc = locs[0] || '';
-      console.log("located "+loc);
-      var m = loc.match(/[^:]*:(.*)\(.*\)/);
-      if(!m) return reject(Error("File not found in SAM"));
-      if(m.length<2) return reject(Error("Could not parse SAM locate-file response "+loc));
-      var mypathname = path.join(m[1],filename);
-      console.log("locate-file looking for",mypathname)
-      
-      if(fs.existsSync(mypathname)) {
-        console.log("locate-file found it's target",mypathname)
-        return resolve(mypathname);
-      } else {
-        return reject(Error("SAM path doesn't exist on this computer:"+mypathname));
-        // FIXME: I could include code here that uses xrootd (xrdcp command) or idfh cp to get the file to the local computer. 
-        // However, those require custom installtion of either VOMS or globus-url-copy, which are a pain to get going on Mac OSX.
-      }
-    },
-    err=>{console.log("sam_locate_file fail",err); return reject(new Error("samweb could not locate-file "+filename))} );
-  });
-}
-
-function sam_get_raw_ancestor(filename)
-{
-  return new Promise(function(resolve,reject){
-    samweb('list-files',
-            "isancestorof:(file_name="+filename+") and availability:default and data_tier=raw and file_format=artroot")
-    .then(fn2 => sam_locate_file(fn2[0]), err=>reject(err))
-    .then(loc => resolve(loc), err=>reject(err))
-    .catch(err=>reject(err));
-
-    // samweb('file-lineage','ancestors',filename).then(lineage=>{
-    //   console.log(lineage);
-    //   // split into lines:
-    //   lines = lineage.split("\n");
-    //   lines.reverse(); // last first
-    //   for(l of lines) {
-    //     if(l.includes(".root")) { // We want the root ancestor who has a .root extension. This file SHOULD have raw wires.
-    //       return sam_locate_file(l.trim());
-    //     }
-    //   }
-    // })
-    // .catch(err=>{console.log(err); reject(err)});
-  });
-}
-
-
-// Samweb tests.
- // samweb("locate-file","PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
-//  sam_locate_file("PhysicsRun-2018_6_24_12_43_59-0017373-00195_20180718T082326_ext_bnb_3_20181127T205047_optfilter_20181201T010640_reco1_postwcct_postdl_20181201T021012_reco2_20181201T021832_slimmed.root")
-// . then( (o)=>{console.log(o);}  )
-// . catch();
-//
-// samweb_get_raw_ancestor("PhysicsRun-2016_5_10_15_21_12-0006234-00031_20160802T075516_ext_unbiased_20160802T110203_merged_20160802T121639_reco1_20160802T144807_reco2_20171030T150606_reco1_20171030T162925_reco2.root")
-// .then(m=>{console.log('file I want:',m)})
-// .catch(err=> console.log(err));
- 
-
-// // test file loading
-// // This takes only 12 ms to parse and 6 ms to redole (on mac). That indicates it makes sense for Node to read saved files and then piece them out just
-// // like the C++ code!
-// var default_event = {};
-// var default_event_text = fs.readFileSync("static/default_event.json");
-// console.time("parse json");
-// default_event = JSON.parse(default_event_text);
-// console.timeEnd("parse json")
-// console.time("redole json");
-// for(i in default_event) {
-//   var bit = JSON.stringify(default_event[i]);
-//   console.log(i,bit.length);
-// }
-// console.timeEnd("redole json");
-
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(app);
 
 
 mkdirp(config.datacache);
@@ -222,7 +96,7 @@ async function resolve_request(event_req)
     // var spec = `data_tier ${datatier} and (data_stream ${trigtype} or ub_project.stage ${trigtype}) and run_number=${run}.${subrun} and first_event<=${event} and last_event>=${event} and file_format artroot `;
     var files = [];
     console.log("trying spec:",spec);
-    files = await samweb('list-files',spec);
+    files = await samweb.samweb('list-files',spec);
     if(files.length<1) throw new Error("No files found matching "+spec);
     if(files[0].length<1) throw new Error("No files found matching "+spec);
     console.log("files:",files);
@@ -238,7 +112,7 @@ async function resolve_request(event_req)
     var filename = files2.reduce(shorter);
     
     console.log("trying file",filename);
-    loc = await samweb('locate-file',filename);
+    loc = await samweb.samweb('locate-file',filename);
     console.log("location",loc);
     // if it's an array, get the first one
     if(Array.isArray(loc)) loc = loc[0];
@@ -254,15 +128,33 @@ async function resolve_request(event_req)
     // Do special thing to find by sam defintion
     var samdim = event_req.samdim || "";
     if(samdim.length==0) throw new Error("No sam dimensions provided");
-    files = await samweb('list-files',samdim);
+    files = await samweb.samweb('list-files',samdim);
     if(files.length<1) throw new Error("No files found matching"+spec);
     var filename = files[0];
     event_req.filename = files[0];    // pass to logic below
+  }
 
-    // console.log("samdim found file",filename);
-    // loc = await samweb('locate-file',filename);
-    // console.log("location",loc);
-    // event_req.filename = loc;
+  if(event_req.what == "samrunevent") {
+    // Sam definition, run/sub/event.
+    var samdef = event_req.samdef || "";
+    if(samdim.length==0) throw new Error("No sam dimensions provided");
+    var event = parseInt(event_req.event);
+    if(isNan(event))  throw new Error("No Event provided");
+    var subrun = parseInt(event_req.subrun);
+    if(isNan(subrun))  throw new Error("No subrun provided");
+    var run = parseInt(event_req.run);
+    if(isNan(run)) throw new Error("No run provided");
+
+    files = await samweb('list-files',
+                          'defname:'+definition+' and run_number='+run+"."+subrun
+                           +" and file_format artroot with limit 1");
+    if(files.length<1) throw new Error("No files found matching"+spec);
+    var filename = files[0];
+    event_req.selection = event_req.selection || 
+                            "EventAuxiliary.id_.subRun_.run_.run_=="+subrun
+                           + "&&"
+                           + "EventAuxiliary.id_.event_=="+event;
+    event_req.filename = files[0];    // pass to logic below
   }
 
 
@@ -279,7 +171,7 @@ async function resolve_request(event_req)
 
   if(! reqfile.includes("/")) { 
     // We've been asked for a file, but we don't have a full path. This is a job for sam!
-    reqfile = await sam_locate_file(reqfile).catch(err=>{throw err;});
+    reqfile = await samweb.sam_locate_file(reqfile).catch(err=>{throw err;});
   }    
     
   if(!fs.existsSync(reqfile)) {
@@ -326,9 +218,9 @@ async function attach_stream(ws,req)
     console.log(chalk.red("Sending data"),datatype,data.length,data.substr(0,50));
     // dont' need this, but debugging:
     var o = JSON.parse(data);
-    for(k in o) {        
+    for(var k in o) {        
       console.log("  ",chalk.red(k.padEnd(10)));
-      if(typeof o[k] == 'object') for(kk in o[k])
+      if(typeof o[k] == 'object') for(var kk in o[k])
         console.log("    ",chalk.red(kk.padEnd(10)));
     }
     try{ ws.send(data); } catch(err) { console.error("Websocket error.",err); }
@@ -353,7 +245,11 @@ async function attach_stream(ws,req)
         (r)=>{ 
           console.log("Request sent to composer:",r);
           ws.my_composer.request(r);}) // And we're off and running again!  Or this is queued; the plug-in takes care of it.  
-        .catch(err=>{send_error_message(err.message)}); 
+        .catch(err=>{
+          console.log(err.message);
+          console.log(err.stack);
+          send_error_message(err.message);
+        }); 
     } else if(newreq.event_descriptor) {
       // This is an update request for more data.
       ws.my_composer.request(newreq);
@@ -446,9 +342,9 @@ async function clean_datacache()
   var maxAge = moment()
   var files = fs.readdirSync(config.datacache);
   var files_with_ages = [];
-  now = new Date().getTime();
+  var now = Date.now();
 
-  for(file of files) {
+  for(var file of files) {
     if(path.extname(file) == ".png") {
       var pathname = path.resolve(config.datacache,file);
       var stat = fs.statSync(pathname);
@@ -458,7 +354,7 @@ async function clean_datacache()
   files_with_ages.sort((a,b)=>{return b.age-a.age;})
   var n = files_with_ages.length;
   var n0 = n;
-  for(f of files_with_ages) {
+  for(var f of files_with_ages) {
     console.log(f);
     if( (n>config.datacache_max_files) ||
         (f.age > config.datacache_max_age) ) {
@@ -536,10 +432,34 @@ var argo_browser = new browser({
 app.use("/browser/",argo_browser.router);
 // app.use("/server/file_browser.cgi",argo_browser.router);
 
+
+app.get('/live',function(req,res) {
+  res.render('live', {pagename: 'live'});
+})
 // At end:
 app.get('/', function (req, res) {
   res.render('argo', { pagename: 'argo' })
 })
+
+
+const uploader = require('express-fileupload')({useTempFiles: true, tempFileDir:'/tmp/'});
+var sanitize = require("sanitize-filename");
+app.post("/live-event-upload",uploader,function(req,res) {
+  var heartbeat_data = body.heartbeat;
+  if(body.event_id) {
+    // Sanitize
+    var event_dir = sanitize(body.event_id);    
+    var full_event_dir = config.live_event_cache + "/" + event_dir;
+    console.log("receiving new live event in ",full_event_dir);
+    fs.mkdirSync(full_event_dir,{recursive:true});
+    for(var file in req.files) {
+      var fn = sanitize(file.name);
+      file.mv(full_event_dir+"/"+fn);
+    }
+    // FIXME Now notify clients there is a new event
+    // FIXME Now clean up the event cache.
+  }
+});
 
 
 if(process.env.NODE_ENV=="production") {
