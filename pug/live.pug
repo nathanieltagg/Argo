@@ -1,47 +1,29 @@
+include inc/mixins
+
 doctype html
 html
   head
     meta(http-equiv='content-type', content='text/html; charset=utf-8')
-    title Argo Live!
+    title Argo
     //(#)include virtual="basetag.inc"
     // My little icon in the link url 
-    link(rel='icon', type='image/png', href='images/ArgoIcon')
+    link(rel='icon', type='image/png', href='/images/ArgoIcon.png')
     // Activate some overrides to basic configuration. 
-    //#set var="PageStyle" value="live" 
-    script(type='text/javascript') // These lines pull the Server-side-include (SSI) strings.
-gPageName='<!--#echo encoding="none" var="PageStyle"-->';
-// This is used to get a query string supplied to the page on the server side, but hidden
-// from the javascript because of a URL rewrite_mod redirect, which makes URLs prettier.
-// URI encoding (server side) and decoding (javascript/clientside) prevents XSS attacks.
-gHiddenQueryString=decodeURIComponent('<!--#echo encoding="url" var="QUERY_STRING"-->');
+    //#set var="PageStyle" value="standard" 
+    block headerscript
+      script(type='text/javascript') 
+          |gPageName="#{pagename}-live";
+          |gDetector="uboone";
     // Main CSS sheet for basic layout, custom mods. 
-    link(rel='stylesheet', href='argo.css', type='text/css', media='all')
-    link(rel='stylesheet', href='live.css', type='text/css', media='all')
-    link(rel='stylesheet', href='selected-object-info.css', type='text/css', media='all')
-    link(rel='stylesheet', href='local.css', type='text/css', media='all')
-    style div.A-ZoomControl {
-  height: 100px;
-}
-div.A-TimeHistogram {
- height: 80px;
-}
+    //- link(rel='stylesheet', href='css/argo.css', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
     // Javascript libraries and code. 
-    //(#)include virtual="html/libraries.inc"
-    //#include virtual="libraries.cgi"
-    //#include virtual="shaders/shaders.inc" 
+    include inc/libraries 
+    include ../static/shaders/shaders.inc
   body
+
     #everything
-      div(style='float:left;')
-        // <span style="font-size: 10em;"><img src="images/argo.jpg" alt="Argo - the Microboone Web Event Display" style="height:100px;">Argo</span> 
-        |  
-        img(src='images/argo_logo_2.0.png', alt='Argo - the Microboone Web Event Display', style='height:50px;')
-        br
-      table(style='width: 50%;')
-        tbody
-          tr
-            td(style='width: 5%;') Status:
-            td
-              #status Script loading...
       #live-status
         | Backend Heartbeat:
         #heartbeat-status server not contacted yet

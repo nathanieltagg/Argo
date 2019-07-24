@@ -5,10 +5,11 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 const fsPromises = require('fs').promises;
-
 var express = require('express');
 var logger = require('morgan');
 var compression = require('compression');
+
+var events = require('events');
 var glob = require("glob");
 var cors = require('cors');
 var path = require("path");
@@ -442,6 +443,35 @@ app.get('/', function (req, res) {
 })
 
 
+
+////////////////////////////////////////////////
+/// LIVE
+
+
+
+var current_heartbeat = {dummy:"blah"};
+var heartbeat_emitter = new events.EventEmitter();
+
+setInterval(()=>{
+  current_heartbeat.server_time = Date.now();
+  heartbeat_emitter.emit("heartbeat");}
+  ,1500);
+
+app.ws('/ws/notify-live',  attach_notify_live_stream);
+app.ws('/wss/notify-live', attach_notify_live_stream);
+async function attach_notify_live_stream(ws,req)
+{
+  function send_heartbeat() {
+    var str = JSON.stringify(current_heartbeat);
+    try{ ws.send(str); } catch(err) { console.error("Websocket error.",err); }
+  }
+  // intial heartbeat
+  heartbeat_emitter.on('heartbeat',send_heartbeat);
+  ws.on('close',()=>{heartbeat_emitter.removeListener('heartbeat',send_heartbeat);});
+};
+
+
+
 const uploader = require('express-fileupload')({useTempFiles: true, tempFileDir:'/tmp/'});
 var sanitize = require("sanitize-filename");
 app.post("/live-event-upload",uploader,function(req,res) {
@@ -462,6 +492,8 @@ app.post("/live-event-upload",uploader,function(req,res) {
 });
 
 
+///////////////////////////////////////////////
+// Run the server
 if(process.env.NODE_ENV=="production") {
   var cluster = require('cluster');
   var numCPUs = 4;
