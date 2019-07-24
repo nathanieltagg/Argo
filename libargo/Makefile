@@ -43,9 +43,12 @@ endif
 
 # all library sources are cpp files.
 SOURCES = $(notdir $(wildcard *.cpp)) 
-
+SOURCES_RAW_ONLY = $(filter-out UniversalComposer.cpp AnalysisTreeComposer.cpp GalleryComposer.cpp ReadLarsoftConfig.cpp,$(SOURCES))
 # object files and dependency files
 OBJ =  $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES)) ) 
+OBJ_RAW_ONLY = $(addprefix tmp/, $(patsubst %.cpp,%.o,$(SOURCES_RAW_ONLY)) ) 
+
+
 DEPS = $(patsubst %.o,%.d,$(wildcard tmp/*.o))
 
 # Don't use the default FCL and messagelogger.
@@ -93,44 +96,44 @@ LIBS     += -L ${HEP_CONCURRENCY_LIB} -l hep_concurrency
 # ldpaths  += -Wl,-rpath,${HEP_CONCURRENCY_LIB}
 
 CPPFLAGS += -I ${CANVAS_ROOT_IO_INC}
-LIBS     += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io #-lcanvas_root_io_Dictionaries_wrapped_std_dict
+LSLIBS   += -L ${CANVAS_ROOT_IO_LIB} -l canvas_root_io #-lcanvas_root_io_Dictionaries_wrapped_std_dict
 # ldpaths  += -Wl,-rpath,${CANVAS_ROOT_IO_LIB}
 
 CPPFLAGS += -I ${GALLERY_INC}
-LIBS     += -L ${GALLERY_LIB} -l gallery
+LSLIBS   += -L ${GALLERY_LIB} -l gallery
 # ldpaths  += -Wl,-rpath,${GALLERY_LIB}
 
 CPPFLAGS += -I ${CANVAS_INC}
-LIBS     += -L ${CANVAS_LIB} -l canvas
+LSLIBS   += -L ${CANVAS_LIB} -l canvas
 # ldpaths  += -Wl,-rpath,${CANVAS_LIB}
 
 CPPFLAGS += -I ${LARDATAOBJ_INC}
-LIBS     += -L ${LARDATAOBJ_LIB} -l lardataobj_RawData -l lardataobj_RecoBase -l lardataobj_Simulation -l lardataobj_AnalysisBase
+LSLIBS   += -L ${LARDATAOBJ_LIB} -l lardataobj_RawData -l lardataobj_RecoBase -l lardataobj_Simulation -l lardataobj_AnalysisBase
 # ldpaths  += -Wl,-rpath,${LARDATAOBJ_LIB}
 
 CPPFLAGS += -I ${LARCOREALG_INC}
-LIBS     += -L ${LARCOREALG_LIB} -l larcorealg_Geometry
+LSLIBS   += -L ${LARCOREALG_LIB} -l larcorealg_Geometry
 # ldpaths  += -Wl,-rpath,${LARCOREALG_LIB}
 
 CPPFLAGS += -I ${LARCOREOBJ_INC} 
 
 CPPFLAGS += -I ${NUSIMDATA_INC}
-LIBS     += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
+LSLIBS   += -L ${NUSIMDATA_LIB} -l nusimdata_SimulationBase
 # ldpaths  += -Wl,-rpath,${NUSIMDATA_LIB}
 
 
 CPPFLAGS += -I ${UBOBJ_INC}
-LIBS     += -L ${UBOBJ_LIB} -l ubobj_Trigger
+LSLIBS   += -L ${UBOBJ_LIB} -l ubobj_Trigger
 # ldpaths  += -Wl,-rpath,${NUSIMDATA_LIB}
 
 CPPFLAGS += -I ${CETLIB_INC}  -I ${CETLIB_EXCEPT_INC}
 
 ifneq ($(origin CET_LIB_DIR), undefined)
-LIBS     += -L ${CETLIB_LIB_DIR} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+LSLIBS   += -L ${CETLIB_LIB_DIR} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
 # ldpaths  += -Wl,-rpath,${CETLIB_LIB_DIR} -Wl,-rpath,${CETLIB_EXCEPT_LIB}
 endif
 ifneq ($(origin CETLIB_LIB), undefined)
-LIBS     += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
+LSLIBS   += -L ${CETLIB_LIB} -lcetlib -L ${CETLIB_EXCEPT_LIB} -lcetlib_except
 # ldpaths  += -Wl,-rpath,${CETLIB_LIB} -Wl,-rpath,${CETLIB_EXCEPT_LIB}
 endif
 
@@ -149,9 +152,9 @@ LIBS     += -L ${SQLITE_LIB} -lsqlite3_ups
 # Needed to look the provenance / configuration history for hints.
 ifneq ($(origin ART_ROOT_IO_INC), undefined)
 CPPFLAGS += -I ${ART_ROOT_IO_INC}
-LIBS     += -L ${ART_ROOT_IO_LIB} -l art_root_io -l art_root_io_RootDB
+LSLIBS   +== -L ${ART_ROOT_IO_LIB} -l art_root_io -l art_root_io_RootDB
 else
-LIBS     += -L ${ART_LIB} -l art_Framework_IO_Root -l art_Framework_IO_RootVersion -l art_Framework_IO_Root_RootDB
+LSLIBS   += -L ${ART_LIB} -l art_Framework_IO_Root -l art_Framework_IO_RootVersion -l art_Framework_IO_Root_RootDB
 endif
 
 CPPFLAGS += -I ${ART_INC}
@@ -244,14 +247,14 @@ endif
 
 argo-backend: $(OBJ) tmp/argo-backend.o Makefile
 	@echo Building executable $@
-	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
+	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) $(LSLIBS)  += -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
 		#-Wl,--unresolved-symbols=ignore-in-shared-libs
 
 gtest: $(OBJ) tmp/gtest.o Makefile
 	@echo Building executable $@
-	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/gtest.o -W $(LIBS) -o $@ \
+	$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/gtest.o -W $(LIBS) $(LSLIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
 		-lCling  -lCore -lTreePlayer  \
@@ -259,7 +262,7 @@ gtest: $(OBJ) tmp/gtest.o Makefile
 
 config-dumper: $(OBJ) tmp/config_dumper.o Makefile
 	@echo Building executable $@
-	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) -o $@ \
+	@$(CPP) $(LDFLAGS)  -L. $(OBJ)  tmp/argo-backend.o -W $(LIBS) $(LSLIBS) -o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path -Wl,--unresolved-symbols=ignore-in-shared-libs
 
@@ -278,7 +281,7 @@ config-dumper: $(OBJ) tmp/config_dumper.o Makefile
 # I NEED to have the full UPS chain set up. Grr.
 
 argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS) -o $@ \
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -L. -largo-backend  -W $(LIBS)  $(LSLIBS)-o $@ \
 		-Wl,-rpath,@executable_path/../lib  \
 		-Wl,-rpath,@executable_path \
 		-Wl,-rpath,$$ORIGIN \
@@ -288,14 +291,19 @@ argo-backend-new: $(libargo) tmp/argo-backend.o Makefile
 	# cp argo-backend-new ../install/bin
   
 
-
-argo-live-backend: $(OBJ) tmp/argo-live-backend.o Makefile
+testdep:
+	@echo "OBJ_RAW_ONLY "$(OBJ_RAW_ONLY)
+	@echo "SOURCES_RAW_ONLY "$(SOURCES_RAW_ONLY)
+  
+argo-live-backend: $(OBJ_RAW_ONLY) tmp/argo-live-backend.o Makefile
+	@echo "OBJ_RAW_ONLY "$(OBJ_RAW_ONLY)
+	@echo "SOURCES_RAW_ONLY "$(SOURCES_RAW_ONLY)
 	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
 
 
 argo-run-one: $(OBJ) tmp/argo-run-one.o Makefile
 	$(CPP) $(LDFLAGS) \
-	 $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+	 $(filter %.o,$^) $(LIBS) $(BLIBS)  $(LSLIBS) -o $@
 	# -Wl,-rpath,@loader_path/deps/root/lib \
 	# -Wl,-rpath,@loader_path/deps/boost/lib \
 	# -Wl,-rpath,@loader_path/../../deps/root/lib\
@@ -314,7 +322,7 @@ endif
 
 $(libargo): $(OBJ) tmp/Cint.o Makefile
 	#$(CPP) -shared $(LDFLAGS) $(filter %.o,$^) -o $@  $(LIBS) $(BLIBS)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS) -dynamiclib $(libflags) 
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) -o $@ $(LIBS)  $(LSLIBS) -dynamiclib $(libflags) 
 	# $(ldpaths)
 
 
@@ -332,16 +340,16 @@ notify-live.cgi:  notify_live.cc
 
 testx: $(OBJ) tmp/test-main.o tmp/Cint.o Makefile
 	@echo "Building " $@ $(OBJ)
-	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS) -o $@
+	$(CPP) $(LDFLAGS) $(filter %.o,$^) $(LIBS)  $(LSLIBS) -o $@
 
 
 my_config_dumper: tmp/config_dumper.o
-	$(CPP) $(LDFLAGS) tmp/config_dumper.o tmp/Timer.o $(LIBS) -o $@
+	$(CPP) $(LDFLAGS) tmp/config_dumper.o tmp/Timer.o $(LIBS)  $(LSLIBS) -o $@
 
 test_read_config: $(OBJ) tmp/test_read_config.o 
 	# $(CPP) $(LDFLAGS) tmp/test_read_config.o tmp/Timer.o tmp/ReadLarsoftConfig.o $(LIBS) -o $@
 	$(CPP) $(LDFLAGS) \
-	  $(filter %.o,$^) $(LIBS) $(BLIBS) -o $@
+	  $(filter %.o,$^) $(LIBS)  $(LSLIBS) $(BLIBS) -o $@
 
 
 # This is a brute-force copy. This is now obsolete, since instead have these files committed to the argo repository.
@@ -349,6 +357,7 @@ test_read_config: $(OBJ) tmp/test_read_config.o
 # UBOONEDAQ_FILES +=DaqFile.h Plexus.h  Client.h DispatcherMessage.h KvpSet.h Logging.h ConvertDispatcherToEventRecord.h #Timer.h
 # copy: $(foreach f,$(UBOONEDAQ_FILES),$(wildcard $(uboonedaq)/*/$(f)))
 #   cp $? .
+
 
 
 
