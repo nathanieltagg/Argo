@@ -172,8 +172,9 @@ ComposerWithQueue.prototype.next_request = function()
     if(next) {
       this.running = true;
       if(!this.composer) {
-        if(next.what=='json') this.composer = new StaticComposer(this.config)
-          else                this.composer = new addon.Composer(this.config);
+        if((next.what=='json') 
+          ||(next.what=='live')) this.composer = new StaticComposer(this.config)
+          else                   this.composer = new addon.Composer(this.config);
       }
       this.composer.composeIncremental(next,
         this.do_end_of_request.bind(this),
