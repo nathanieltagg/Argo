@@ -11,6 +11,7 @@ var fs = require('fs');
 var nodemon = {
   "__comment" : "This file is auto-generated from create_environment_scripts.js. Make changes there!",
   verbose: true,
+  signal: "sighup",
   ext: "js pug inc dylib so",
   ignore: ["static/**", "logs/*"],
 }
