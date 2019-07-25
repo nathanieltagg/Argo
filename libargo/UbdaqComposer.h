@@ -25,7 +25,8 @@ public:
 
   // To be called by the LIVE system, with dispatcher input
   virtual Output_t satisfy_request(Request_t request, 
-                                    std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record);
+                                    std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record,
+                                    ntagg::json& source);
 
   std::string m_current_event_dir_name;
   std::string m_current_event_url;

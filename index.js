@@ -19,6 +19,7 @@ var path = require('path');
 var mkdirp = require('mkdirp');
 var chalk = require('chalk');
 
+var rimraf = require('rimraf');
 
 var config = require("./configuration.js"); // loads config.js
 var samweb = require("./samweb.js");
@@ -36,6 +37,7 @@ var httpsServer = https.createServer(app);
 
 
 mkdirp(config.datacache);
+mkdirp(config.live_event_cache);
 
 // app.use(morgan('tiny',{immediate:true}));
 app.use(morgan('tiny'));
@@ -62,140 +64,148 @@ function readTouch(filename)
 async function resolve_request(event_req)
 {
   /// Throw error if unable to return request.
-  ///
-  /// Return an object suitable for passing to the Composer, with completely-specified filepath.
-  /// Warning: modifies inReq
-  if(event_req.what=="live") {
-    // Do special live thing.
-  }
-  if(event_req.what=="json"){
-    // look at prebuild json file
-    if(!event_req.filename) event_req.filename=__dirname+"/static/default_event.json";
-  }
-
-  if(event_req.what == "run") {
-    // Do special thing to find by run number
-    var run = parseInt(event_req.run);
-    if(!run) throw new Error("Run not specified");
-    var subrun = (event_req.subrun) ? "." + parseInt(event_req.subrun) : "";
-    var spec = `file_format artroot and run_number=${run}${subrun}`;
-    
-    var event = parseInt(event_req.event);
-    if(!event) throw new Error("Event not specified"); // require.
-    spec += ` and first_event<=${event} and last_event>=${event} `;
-
-    if(event_req.nameinc) spec += " and file_name like %" + event_req.nameinc + "%";
-    
-    // not used at present:
-    if(event_req.trig) spec += "(data_stream ${trigtype} or ub_project.stage ${trigtype})"
-
-    // var datatier = event_req.tier || "raw";  // e.g. swizzled
-    spec += ` and (data_tier raw or ub_project.stage merge)`;
-    //
-    // //find the file.
-    // var notblind = "minus ub_blinding.blind true";
-    // var spec = `data_tier ${datatier} and (data_stream ${trigtype} or ub_project.stage ${trigtype}) and run_number=${run}.${subrun} and first_event<=${event} and last_event>=${event} and file_format artroot `;
-    var files = [];
-    console.log("trying spec:",spec);
-    files = await samweb.samweb('list-files',spec);
-    if(files.length<1) throw new Error("No files found matching "+spec);
-    if(files[0].length<1) throw new Error("No files found matching "+spec);
-    console.log("files:",files);
-    
-    // remove empty entries
-    var files2 = files.filter(function (el) {
-      return el.length>0;
-    });
-    console.log("files2:",files2);
-    
-    // Find shortest remaining filename.
-    const shorter = (left, right) => left.length <= right.length ? left : right
-    var filename = files2.reduce(shorter);
-    
-    console.log("trying file",filename);
-    loc = await samweb.samweb('locate-file',filename);
-    console.log("location",loc);
-    // if it's an array, get the first one
-    if(Array.isArray(loc)) loc = loc[0];
-    // strip off the stuff in parenths
-    loc = loc.replace(/\s*\(.*?\)\s*/g, '');
-    loc = loc.replace('enstore:', '');
-    console.log("Trimmed location:",loc);
-    event_req.filename = loc+'/'+filename;    // pass to logic below
-    console.log("final loc:",event_req.filename)
-  }
-
-  if(event_req.what == "samdim") {    
-    // Do special thing to find by sam defintion
-    var samdim = event_req.samdim || "";
-    if(samdim.length==0) throw new Error("No sam dimensions provided");
-    files = await samweb.samweb('list-files',samdim);
-    if(files.length<1) throw new Error("No files found matching"+spec);
-    var filename = files[0];
-    event_req.filename = files[0];    // pass to logic below
-  }
-
-  if(event_req.what == "samrunevent") {
-    // Sam definition, run/sub/event.
-    var samdef = event_req.samdef || "";
-    if(samdim.length==0) throw new Error("No sam dimensions provided");
-    var event = parseInt(event_req.event);
-    if(isNan(event))  throw new Error("No Event provided");
-    var subrun = parseInt(event_req.subrun);
-    if(isNan(subrun))  throw new Error("No subrun provided");
-    var run = parseInt(event_req.run);
-    if(isNan(run)) throw new Error("No run provided");
-
-    files = await samweb.samweb('list-files',
-                          'defname:'+definition+' and run_number='+run+"."+subrun
-                           +" and file_format artroot with limit 1");
-    if(files.length<1) throw new Error("No files found matching"+spec);
-    var filename = files[0];
-    event_req.selection = event_req.selection || 
-                            "EventAuxiliary.id_.subRun_.run_.run_=="+subrun
-                           + "&&"
-                           + "EventAuxiliary.id_.event_=="+event;
-    event_req.filename = files[0];    // pass to logic below
-  }
-
-
-  // Otherwise, we've been asked for a file.
-  event_req.pathglob= "";
-  event_req.selection=  event_req.selection || "1";
-  event_req.entrystart= parseInt(event_req.entry) || 0;
-  event_req.entryend= event_req.entryend || 1000000000;
-  event_req.options= event_req.options || "";
-
-
-  var reqfile = event_req.filename;
-  if(!reqfile) throw new Error("No file specified in request");
-
-  if(! reqfile.includes("/")) { 
-    // We've been asked for a file, but we don't have a full path. This is a job for sam!
-    reqfile = await samweb.sam_locate_file(reqfile).catch(err=>{throw err;});
-  }    
-    
-  if(!fs.existsSync(reqfile)) {
-    throw new Error("Cannot find file "+reqfile);
-  }
-  event_req.filename = reqfile;
-
-  // PNFS CHECK
-  if(event_req.filename.startsWith("/pnfs/")) {
-    var pnfs_dotfile = path.join( path.dirname(event_req.filename),  ".(get)("+path.basename(event_req.filename)+")(locality)");
-    var pnfs_status = String(fs.readFileSync(pnfs_dotfile));
-    console.log("PNFS status of file:",pnfs_status);
-    if(!pnfs_status.includes("ONLINE")) {
-      // Pin it. Tell pnfs to stage the file for 20 min minimum.  Update: doesn't work because, again, documentation is written only for gurus, not regular folk. 
-      // This gets permission-denied since it's a read-only filesystem (I think)
-      // fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(pin)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
-      readTouch(event_req.filename);
-      throw new Error("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
+  try {
+    ///
+    /// Return an object suitable for passing to the Composer, with completely-specified filepath.
+    /// Warning: modifies inReq
+    if(event_req.what=="live") {
+      if(!current_live_event) 
+        throw new Error("No live event available.");
+      if(!event_req.filename) 
+        event_req.filename=path.join(config.live_event_cache,current_live_event,"event.json");
+      if(!event_req.filename.includes(".json")) 
+        event_req.filename=path.join(config.live_event_cache,event_req.filename,"event.json");
+      
+      // Do special live thing.
     }
-  }
-  // Success, file exists (and if pnfs it's on disk)
-  return event_req;
+    if(event_req.what=="json"){
+      // look at prebuild json file
+      if(!event_req.filename) event_req.filename=__dirname+"/static/default_event.json";
+    }
 
+    if(event_req.what == "run") {
+      // Do special thing to find by run number
+      var run = parseInt(event_req.run);
+      if(!run) throw new Error("Run not specified");
+      var subrun = (event_req.subrun) ? "." + parseInt(event_req.subrun) : "";
+      var spec = `file_format artroot and run_number=${run}${subrun}`;
+      
+      var event = parseInt(event_req.event);
+      if(!event) throw new Error("Event not specified"); // require.
+      spec += ` and first_event<=${event} and last_event>=${event} `;
+
+      if(event_req.nameinc) spec += " and file_name like %" + event_req.nameinc + "%";
+      
+      // not used at present:
+      if(event_req.trig) spec += "(data_stream ${trigtype} or ub_project.stage ${trigtype})"
+
+      // var datatier = event_req.tier || "raw";  // e.g. swizzled
+      spec += ` and (data_tier raw or ub_project.stage merge)`;
+      //
+      // //find the file.
+      // var notblind = "minus ub_blinding.blind true";
+      // var spec = `data_tier ${datatier} and (data_stream ${trigtype} or ub_project.stage ${trigtype}) and run_number=${run}.${subrun} and first_event<=${event} and last_event>=${event} and file_format artroot `;
+      var files = [];
+      console.log("trying spec:",spec);
+      files = await samweb.samweb('list-files',spec);
+      if(files.length<1) throw new Error("No files found matching "+spec);
+      if(files[0].length<1) throw new Error("No files found matching "+spec);
+      console.log("files:",files);
+      
+      // remove empty entries
+      var files2 = files.filter(function (el) {
+        return el.length>0;
+      });
+      console.log("files2:",files2);
+      
+      // Find shortest remaining filename.
+      const shorter = (left, right) => left.length <= right.length ? left : right
+      var filename = files2.reduce(shorter);
+      
+      console.log("trying file",filename);
+      loc = await samweb.samweb('locate-file',filename);
+      console.log("location",loc);
+      // if it's an array, get the first one
+      if(Array.isArray(loc)) loc = loc[0];
+      // strip off the stuff in parenths
+      loc = loc.replace(/\s*\(.*?\)\s*/g, '');
+      loc = loc.replace('enstore:', '');
+      console.log("Trimmed location:",loc);
+      event_req.filename = loc+'/'+filename;    // pass to logic below
+      console.log("final loc:",event_req.filename)
+    }
+
+    if(event_req.what == "samdim") {    
+      // Do special thing to find by sam defintion
+      var samdim = event_req.samdim || "";
+      if(samdim.length==0) throw new Error("No sam dimensions provided");
+      files = await samweb.samweb('list-files',samdim);
+      if(files.length<1) throw new Error("No files found matching"+spec);
+      var filename = files[0];
+      event_req.filename = files[0];    // pass to logic below
+    }
+
+    if(event_req.what == "samrunevent") {
+      // Sam definition, run/sub/event.
+      var samdef = event_req.samdef || "";
+      if(samdim.length==0) throw new Error("No sam dimensions provided");
+      var event = parseInt(event_req.event);
+      if(isNan(event))  throw new Error("No Event provided");
+      var subrun = parseInt(event_req.subrun);
+      if(isNan(subrun))  throw new Error("No subrun provided");
+      var run = parseInt(event_req.run);
+      if(isNan(run)) throw new Error("No run provided");
+
+      files = await samweb.samweb('list-files',
+                            'defname:'+definition+' and run_number='+run+"."+subrun
+                             +" and file_format artroot with limit 1");
+      if(files.length<1) throw new Error("No files found matching"+spec);
+      var filename = files[0];
+      event_req.selection = event_req.selection || 
+                              "EventAuxiliary.id_.subRun_.run_.run_=="+subrun
+                             + "&&"
+                             + "EventAuxiliary.id_.event_=="+event;
+      event_req.filename = files[0];    // pass to logic below
+    }
+
+
+    // Otherwise, we've been asked for a file.
+    event_req.pathglob= "";
+    event_req.selection=  event_req.selection || "1";
+    event_req.entrystart= parseInt(event_req.entry) || 0;
+    event_req.entryend= event_req.entryend || 1000000000;
+    event_req.options= event_req.options || "";
+
+
+    var reqfile = event_req.filename;
+    if(!reqfile) throw new Error("No file specified in request");
+
+    if(! reqfile.includes("/")) { 
+      // We've been asked for a file, but we don't have a full path. This is a job for sam!
+      reqfile = await samweb.sam_locate_file(reqfile).catch(err=>{throw err;});
+    }    
+      
+    if(!fs.existsSync(reqfile)) {
+      throw new Error("Cannot find file "+reqfile);
+    }
+    event_req.filename = reqfile;
+
+    // PNFS CHECK
+    if(event_req.filename.startsWith("/pnfs/")) {
+      var pnfs_dotfile = path.join( path.dirname(event_req.filename),  ".(get)("+path.basename(event_req.filename)+")(locality)");
+      var pnfs_status = String(fs.readFileSync(pnfs_dotfile));
+      console.log("PNFS status of file:",pnfs_status);
+      if(!pnfs_status.includes("ONLINE")) {
+        // Pin it. Tell pnfs to stage the file for 20 min minimum.  Update: doesn't work because, again, documentation is written only for gurus, not regular folk. 
+        // This gets permission-denied since it's a read-only filesystem (I think)
+        // fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(pin)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
+        readTouch(event_req.filename);
+        throw new Error("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
+      }
+    }
+    // Success, file exists (and if pnfs it's on disk)
+    return event_req;
+  } catch (err) {console.trace("resolve_request throwing"); throw(Error(err));};
 }
 
 
@@ -331,6 +341,7 @@ app.use('/js',browserify(__dirname + '/client'))
 
 // static files.
 app.use(express.static(__dirname + '/static'));
+app.use('/live_event_cache',express.static(config.live_event_cache));
 
 // app.use("/server",express.static(__dirname+'/static'));
 
@@ -449,47 +460,101 @@ app.get('/', function (req, res) {
 
 
 
-var current_heartbeat = {dummy:"blah"};
-var heartbeat_emitter = new events.EventEmitter();
+var current_heartbeat = {};
+var current_heartbeat_time = 0;
+var current_live_event = null;
+var recent_live_events = fs.readdirSync(config.live_event_cache).sort();
+var current_live_event = recent_live_events.slice(-1)[0];
+
+var live_data_emitter = new events.EventEmitter();
 
 setInterval(()=>{
   current_heartbeat.server_time = Date.now();
-  heartbeat_emitter.emit("heartbeat");}
-  ,1500);
+  live_data_emitter.emit("heartbeat");}
+  ,5000);
 
 app.ws('/ws/notify-live',  attach_notify_live_stream);
 app.ws('/wss/notify-live', attach_notify_live_stream);
 async function attach_notify_live_stream(ws,req)
 {
   function send_heartbeat() {
-    var str = JSON.stringify(current_heartbeat);
+    var o = {};
+    o.heartbeat = current_heartbeat;
+    o.heartbeat_time = current_heartbeat_time;
+    o.server_time = Date.now();
+    o.recent_live_events = recent_live_events;
+    o.current_live_event = current_live_event;
+
+    var str = JSON.stringify(o);
     try{ ws.send(str); } catch(err) { console.error("Websocket error.",err); }
   }
   // intial heartbeat
-  heartbeat_emitter.on('heartbeat',send_heartbeat);
-  ws.on('close',()=>{heartbeat_emitter.removeListener('heartbeat',send_heartbeat);});
+  live_data_emitter.on('heartbeat',send_heartbeat);
+  ws.on('close',()=>{live_data_emitter.removeListener('heartbeat',send_heartbeat);});
 };
 
 
 
-const uploader = require('express-fileupload')({useTempFiles: true, tempFileDir:'/tmp/'});
+/// Code to allow the argo-live-backend executable to simply upload the most recent data!
+
+const uploader = require('express-fileupload')({
+  // useTempFiles: true, tempFileDir:'/tmp/' // this fills tmp.
+});
 var sanitize = require("sanitize-filename");
 app.post("/live-event-upload",uploader,function(req,res) {
-  var heartbeat_data = body.heartbeat;
-  if(body.event_id) {
-    // Sanitize
-    var event_dir = sanitize(body.event_id);    
-    var full_event_dir = config.live_event_cache + "/" + event_dir;
-    console.log("receiving new live event in ",full_event_dir);
-    fs.mkdirSync(full_event_dir,{recursive:true});
-    for(var file in req.files) {
-      var fn = sanitize(file.name);
-      file.mv(full_event_dir+"/"+fn);
-    }
-    // FIXME Now notify clients there is a new event
-    // FIXME Now clean up the event cache.
+  console.log("body of upload:",req.body,req.files && Object.keys(req.files).join(', '));
+  if(req.body.heartbeat) {
+    current_heartbeat = JSON.parse(req.body.heartbeat);
+    current_heartbeat_time = Date.now();
+    live_data_emitter.emit("heartbeat");
   }
+
+  if(req.body.event_dir) {
+    // there is data!
+    current_live_event = req.body.event_dir;
+    var current_path = path.join(config.live_event_cache,current_live_event);
+    // console.log(req.files);
+    if(req.files && Object.keys(req.files).length>0) {
+      fs.mkdirSync(current_path);
+      for(var i in req.files) {
+        var f = req.files[i];
+        if(f.size) {
+          var dest = path.join(current_path,sanitize(f.name));
+          console.log("moving ",f.name,dest);
+          f.mv(dest,console.err);
+        }      
+      }
+      // if we are responsible for this data, clean the cache (in a few mssec)
+      setTimeout(cleanLiveEventCache, 0);
+    }
+    recent_live_events.push()
+    live_data_emitter.emit('newevent',current_live_event);
+
+  }
+  res.status(400);
+  res.send("");
 });
+
+function cleanLiveEventCache()
+{
+  console.log("cleaning live event cache");
+  fs.readdir(config.live_event_cache,(err,dir)=>
+    {
+      dir = dir.sort(); // put in order of files in alphbetical order
+      while(dir.length> config.live_event_max_files) {
+        var basename = dir.shift();
+        console.log("cleaning out ",basename);
+        // Remove from list of recent results, if it's there.
+        var idx = recent_live_events.indexOf(basename);
+        if(idx>-1) recent_live_events.splice(idx,1);
+
+        // Remove the file.
+        var pathname = path.join(config.live_event_cache,basename);
+        rimraf(pathname,console.error); // rimraf does rm -rf
+      }
+
+  });
+}
 
 
 ///////////////////////////////////////////////
