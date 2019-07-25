@@ -476,20 +476,24 @@ async function attach_notify_live_stream(ws,req)
 const uploader = require('express-fileupload')({useTempFiles: true, tempFileDir:'/tmp/'});
 var sanitize = require("sanitize-filename");
 app.post("/live-event-upload",uploader,function(req,res) {
-  var heartbeat_data = body.heartbeat;
-  if(body.event_id) {
-    // Sanitize
-    var event_dir = sanitize(body.event_id);    
-    var full_event_dir = config.live_event_cache + "/" + event_dir;
-    console.log("receiving new live event in ",full_event_dir);
-    fs.mkdirSync(full_event_dir,{recursive:true});
-    for(var file in req.files) {
-      var fn = sanitize(file.name);
-      file.mv(full_event_dir+"/"+fn);
-    }
-    // FIXME Now notify clients there is a new event
-    // FIXME Now clean up the event cache.
-  }
+  console.log("body of upload:",req.body);
+  console.log("files",req.files);
+  // var heartbeat_data = req.body.heartbeat;
+  // if(req.body.event_id) {
+  //   // Sanitize
+  //   var event_dir = sanitize(req.body.event_id);    
+  //   var full_event_dir = config.live_event_cache + "/" + event_dir;
+  //   console.log("receiving new live event in ",full_event_dir);
+  //   fs.mkdirSync(full_event_dir,{recursive:true});
+  //   for(var file in req.files) {
+  //     var fn = sanitize(file.name);
+  //     file.mv(full_event_dir+"/"+fn);
+  //   }
+  //   // FIXME Now notify clients there is a new event
+  //   // FIXME Now clean up the event cache.
+  // }
+  res.status(400);
+  res.send("");
 });
 
 
