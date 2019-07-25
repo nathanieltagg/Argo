@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "SocketServer.h"
 #include "UbdaqComposer.h"
@@ -25,6 +27,14 @@
 #include <signal.h>
 #include <glob.h>
 #include "json.hpp"
+
+#include <curl/curl.h>
+
+// #include <filesystem>
+// namespace fs = std::filesystem;
+
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
 
 using namespace std; 
 using namespace gov::fnal::uboone::dispatcher;
@@ -43,6 +53,10 @@ double oPeriod;
 int    oMaxFiles;     
 json oConfigJson;
 
+std::vector< std::string > oHeartbeatNodes;
+std::vector< std::string > oFullDataNodes;
+
+json config;
 
 
 void TerminationHandler(int signal);
@@ -59,27 +73,56 @@ json KvpToJson(KvpSet& kvp)
 
 void CleanCacheDirectory(std::string dir, int max)
 {
-  std::string globstr = dir + "/*.event";
-  glob_t g;
-  int r = glob(globstr.c_str(),0, NULL, &g);
-  if(r) {
-    // logError << "Can't glob";
-    return;
+  {
+    std::string globstr = dir + "/*.event";
+    glob_t g;
+    int r = glob(globstr.c_str(),0, NULL, &g);
+    if(r) {
+      // logError << "Can't glob";
+      return;
+    }
+    int n = g.gl_pathc;
+    std::vector<std::string> events;
+    for(int i=0;i<n;i++) if(g.gl_pathv[i]) events.push_back(g.gl_pathv[i]);
+    // for(int i=0;i<events.size();i++) cout << events[i] << endl;
+    // These should already be sorted. Nuke some of them. 
+    while(events.size()>max) {
+      std::string todelete = events[0];
+      logInfo << "Deleting " << todelete;
+      events.erase(events.begin());
+      std::string cmd = "rm -rf ";
+      cmd += todelete;
+      system(cmd.c_str());
+    }
+    globfree(&g);
   }
-  int n = g.gl_pathc;
-  std::vector<std::string> events;
-  for(int i=0;i<n;i++) if(g.gl_pathv[i]) events.push_back(g.gl_pathv[i]);
-  // for(int i=0;i<events.size();i++) cout << events[i] << endl;
-  // These should already be sorted. Nuke some of them. 
-  while(events.size()>max) {
-    std::string todelete = events[0];
-    logInfo << "Deleting " << todelete;
-    events.erase(events.begin());
-    std::string cmd = "rm -rf ";
-    cmd += todelete;
-    system(cmd.c_str());
+
+  // Now delete all the 'working' directories; at this moment, there shouldn't be any.
+  {
+    std::string globstr = dir + "/*.working";
+    glob_t g;
+    int r = glob(globstr.c_str(),0, NULL, &g);
+    if(r) {
+      // logError << "Can't glob";
+      return;
+    }
+    int n = g.gl_pathc;
+    std::vector<std::string> events;
+    for(int i=0;i<n;i++) if(g.gl_pathv[i]) events.push_back(g.gl_pathv[i]);
+    // for(int i=0;i<events.size();i++) cout << events[i] << endl;
+    // These should already be sorted. Nuke some of them. 
+    while(events.size()>0) {
+      std::string todelete = events[0];
+      logInfo << "Deleting " << todelete;
+      events.erase(events.begin());
+      std::string cmd = "rm -rf ";
+      cmd += todelete;
+      system(cmd.c_str());
+    }
+    globfree(&g);
   }
-  globfree(&g);
+
+
 }
 
 
@@ -93,10 +136,72 @@ void SaveHeartbeat(json heartbeatInfo,const std::string& error = "")
   logInfo << "Saved heartbeat";
 }
 
+void SendHeartbeatOne(const std::string& hosturl ,bool allfiles, const json& heartbeatInfo,const std::string& data_dir = "")
+{
+    std::string short_dir_name =  fs::path(data_dir+"/event.json").parent_path().filename().string();
+    std::cout << "===>" << short_dir_name << std::endl;
+
+    std::vector< std::string > args;
+    args.push_back("-v");
+    args.push_back("--globoff");
+    args.push_back("--connect-timeout");
+      args.push_back("0.3"); // 300 ms to connect to server.11
+    // args.push_back("--output");
+      // args.push_back(hosturl+".send.log");
+    args.push_back("-F");
+      args.push_back(std::string("heartbeat=").append(heartbeatInfo.dump()));
+    if(data_dir.length()>0) {
+      args.push_back("-F");
+      args.push_back(std::string("event_dir=").append(short_dir_name)); // "r1e1.event"
+      if(allfiles) {
+        for(const auto& entry : fs::directory_iterator(data_dir)) {  // all files in /blah/live_event_cache/r1e1.event
+            args.push_back("-F");
+            std::string s = entry.path().filename().string();
+            s += "=@";
+            s += entry.path().string();
+            args.push_back(s);
+        }
+      }
+    }
+    args.push_back(hosturl);
+    std::cout << "Forking curl execv ";
+    for(auto& s: args) cout << " " << s;
+    std::cout << std::endl;
+
+    // Convert to char** for ancient system call.
+    std::vector<const char*> cargs{};
+    for(const auto& s : args) cargs.push_back(s.c_str());
+    cargs.push_back(NULL);
+
+    if(fork() == 0) {
+        std::cout << "Send to " << hosturl << " started" << std::endl;
+        execv("/usr/bin/curl",(char**)(cargs.data())); // If child of fork, execute and replace process.
+    }
+     int status = 0;
+     while (::wait(&status) > 0); // this way, the father waits for all the child processes
+
+}
+
+ 
+
+void SendHeartbeat(const json& heartbeatInfo,const std::string& data_dir = "")
+{
+  // File lists.
+  for(auto hosturl: oHeartbeatNodes)  SendHeartbeatOne(hosturl,false,heartbeatInfo,data_dir);
+  for(auto hosturl: oFullDataNodes)   SendHeartbeatOne(hosturl,true,heartbeatInfo,data_dir);
+
+  int status = 0;
+  while (::wait(&status) > 0); // this way, the father waits for all the child processes 
+  std::cout << "All sends complete" << std::endl;
+}
 
 
 int main(int argc, char **argv)
 {
+
+
+  curl_global_init(CURL_GLOBAL_ALL);
+
   
   // termination handling.
   signal (SIGINT, TerminationHandler);
@@ -111,6 +216,7 @@ int main(int argc, char **argv)
   pmt_crate_data_t::doDissect(true);
   tpc_crate_data_t::doDissect(true);
   trig_crate_data_t::doDissect(true);
+
 
   
   // write a PID file.
@@ -130,7 +236,6 @@ int main(int argc, char **argv)
 
   std::cout << "Loading config file " << configfilename << std::endl;
   ifstream configfile(configfilename);
-  json config;
   configfile >> config;
   configfile.close();
   std::cout << "----Configuration:----" << std::endl;
@@ -147,12 +252,16 @@ int main(int argc, char **argv)
   oPeriod        = config.value("period",5.0);
   oMaxFiles      = config.value("maxFiles",30);
   oConfigJson = config;
+  if(config["hearbeatNodes"].is_array())
+    for(auto& element:config["hearbeatNodes"]) oHeartbeatNodes.push_back(element);
+  if(config["fullDataNodes"].is_array())
+    for(auto& element:config["fullDataNodes"]) oFullDataNodes.push_back(element);
 
   json heartbeat_init;
   heartbeat_init["config"]=oConfigJson;
   heartbeat_init["starting"]=1;
   SaveHeartbeat(heartbeat_init);
-  
+
   Client client(false);
   client.connect(oDispHost,oDispPort); 
   Timer retryTimer(0); // Zero means time is up.
@@ -164,7 +273,7 @@ int main(int argc, char **argv)
   while(true) {
     
     json heartbeatInfo;
-    heartbeatInfo["config"]=oConfigJson;
+    // heartbeatInfo["config"]=oConfigJson;
     
     
     // Check for too many files. Delete as required
@@ -180,6 +289,8 @@ int main(int argc, char **argv)
     if(!client.is_good() ) {
       logInfo << "Connection to dispatcher failed.";
       SaveHeartbeat(heartbeatInfo, "Connection to dispatcher failed.");
+      SendHeartbeat(heartbeatInfo);
+
       continue;
     }
     logInfo << "Connected";
@@ -189,12 +300,14 @@ int main(int argc, char **argv)
     if(!client.send_request(request_str)) {
       logInfo << "Can't send request.";
       SaveHeartbeat(heartbeatInfo, "Failed to send request to dispatcher.");
+      SendHeartbeat(heartbeatInfo);
       continue;
     }
   
     if(!client.is_good() ) {
       logInfo << "Problem with client after request send.";
       SaveHeartbeat(heartbeatInfo, "Problem with dispatcher connection after request send.");
+      SendHeartbeat(heartbeatInfo);
       continue;
     }
 
@@ -203,6 +316,7 @@ int main(int argc, char **argv)
     if(!client.wait_for_reply(metadata,data)) {
       logInfo << "Problem on retrieving reply";
       SaveHeartbeat(heartbeatInfo, "Problem with receiving reply from dispatcher");
+      SendHeartbeat(heartbeatInfo);
       continue;
     }
     KvpSet md(metadata);
@@ -226,26 +340,34 @@ int main(int argc, char **argv)
     catch(...) {
        logInfo << "Error: could not unpack event record";
        SaveHeartbeat(heartbeatInfo, "Problems unpacking data from dispatcher.");
+       SendHeartbeat(heartbeatInfo);
        //continue;
     }
      
     if(!record) {
       logInfo << "Error: no record!"; 
       SaveHeartbeat(heartbeatInfo, "Dispatcher has no data.");
+      SendHeartbeat(heartbeatInfo);
       continue;
     }    
     
+
     Request_t request(new json(json::object()));
+
+    std::string finalDirName ="";
     (*request)["options"]=oOptions;
+
     try {
+       std::cout << "satisfy_request " << request->dump();
        Output_t payload = composer.satisfy_request(request,record);
        
        std::string filename = composer.m_current_event_dir_name + "/" + "event.json";
+       std::cout << "Writing " << filename << std::endl;
        ofstream jsonfile(filename,std::ios_base::trunc);
        jsonfile << *payload;
        jsonfile.close();
        // atomic rename from working area to final area.
-       std::string finalDirName = composer.m_current_event_dir_name;
+       finalDirName = composer.m_current_event_dir_name;
        size_t pos = finalDirName.find(".working",0);
        if(pos != std::string::npos) finalDirName.replace(pos,8,".event");
        rename(composer.m_current_event_dir_name.c_str(),finalDirName.c_str());
@@ -256,17 +378,20 @@ int main(int argc, char **argv)
       s+=error.what();
       logInfo << s;
       SaveHeartbeat(heartbeatInfo, s);
+      SendHeartbeat(heartbeatInfo);
       continue;
     }
     catch(...) {
         logInfo << "Error: could not compose JSON result";
         SaveHeartbeat(heartbeatInfo, "Could not compose JSON result");
+        SendHeartbeat(heartbeatInfo);
         continue;
     }
     
     heartbeatInfo["success"]=1;
     heartbeatInfo["timeToProcess"]=timeToProcess.Count();
     SaveHeartbeat(heartbeatInfo);
+    SendHeartbeat(heartbeatInfo,finalDirName);
      
   } // End main loop
   

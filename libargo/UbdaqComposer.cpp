@@ -72,7 +72,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   m_request = request;
   m_result["request"] = *request;
   
-  if(m_cur_event_descriptor.size()>0 && m_result["event_descriptor"] == m_cur_event_descriptor && m_record) return satisfy_request(request,m_record);
+  if(m_cur_event_descriptor.size()>0 &&  (request->value("event_descriptor","") == m_cur_event_descriptor) && m_record) return satisfy_request(request,m_record);
 
 
   // See if we can find the record in question.
@@ -140,7 +140,8 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   pieces_t pieces;
   bool do_pieces  = parse_pieces(*request,pieces);
   
-  if(m_cur_event_descriptor.size()>0 && m_result["event_descriptor"] == m_cur_event_descriptor && m_record) {
+  if(m_cur_event_descriptor.size()>0 && (request->value("event_descriptor","") == m_cur_event_descriptor) && m_record) {
+    std::cout << "UbdaqComposer just returning existing data for " << m_cur_event_descriptor << std::endl;
     bool complete = dispatch_existing_pieces(pieces);
     if(complete) return Done();
   }
