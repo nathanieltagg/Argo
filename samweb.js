@@ -2,6 +2,8 @@
 
 var spawn = require('child_process');
 var config = require("./configuration.js"); // loads config.js
+var path = require('path');
+var fs = require('fs');
 
 function samweb()
 {
