@@ -196,6 +196,17 @@ void SendHeartbeat(const json& heartbeatInfo,const std::string& data_dir = "")
 }
 
 
+void DoError(std::string err)
+{
+
+  logInfo << err;
+  json heartbeatInfo;
+  heartbeatInfo["error"]=err;
+  SaveHeartbeat(heartbeatInfo);
+  SendHeartbeat(heartbeatInfo);
+}
+
+
 int main(int argc, char **argv)
 {
 
@@ -287,10 +298,7 @@ int main(int argc, char **argv)
       client.connect(oDispHost,oDispPort); 
     }
     if(!client.is_good() ) {
-      logInfo << "Connection to dispatcher failed.";
-      SaveHeartbeat(heartbeatInfo, "Connection to dispatcher failed.");
-      SendHeartbeat(heartbeatInfo);
-
+      DoError("Connection to dispatcher failed.");
       continue;
     }
     logInfo << "Connected";
@@ -298,33 +306,27 @@ int main(int argc, char **argv)
     std::string request_str = "requestTime=0;requestStale=0;";
     logInfo << "Requesting. " << request_str;
     if(!client.send_request(request_str)) {
-      logInfo << "Can't send request.";
-      SaveHeartbeat(heartbeatInfo, "Failed to send request to dispatcher.");
-      SendHeartbeat(heartbeatInfo);
+      DoError("Can't send request.");
       continue;
     }
   
     if(!client.is_good() ) {
       logInfo << "Problem with client after request send.";
-      SaveHeartbeat(heartbeatInfo, "Problem with dispatcher connection after request send.");
-      SendHeartbeat(heartbeatInfo);
+      DoError("Problem with client after request send.");
       continue;
     }
 
     std::string metadata;
     std::shared_ptr<DispatcherMessage> data;
     if(!client.wait_for_reply(metadata,data)) {
-      logInfo << "Problem on retrieving reply";
-      SaveHeartbeat(heartbeatInfo, "Problem with receiving reply from dispatcher");
-      SendHeartbeat(heartbeatInfo);
+      DoError("Problem on retrieving reply");
       continue;
     }
     KvpSet md(metadata);
     json mdj = KvpToJson(md);
 
     json source;
-    // source["dispatcher"]=mdj;
-    // (*result)["source"]=source;
+    source["dispatcher"]=mdj;
 
     heartbeatInfo["dispatcher"]=mdj;
     logInfo << "Got reply: payload: " << data->payload_size() << " bytes, metadata: "
@@ -338,16 +340,11 @@ int main(int argc, char **argv)
      record = ConvertDispatcherToEventRecord(data.get());
     }
     catch(...) {
-       logInfo << "Error: could not unpack event record";
-       SaveHeartbeat(heartbeatInfo, "Problems unpacking data from dispatcher.");
-       SendHeartbeat(heartbeatInfo);
-       //continue;
+      DoError("Error: could not unpack event record");
     }
      
     if(!record) {
-      logInfo << "Error: no record!"; 
-      SaveHeartbeat(heartbeatInfo, "Dispatcher has no data.");
-      SendHeartbeat(heartbeatInfo);
+      DoError("Dispatcher has no data");
       continue;
     }    
     
@@ -359,7 +356,7 @@ int main(int argc, char **argv)
 
     try {
        std::cout << "satisfy_request " << request->dump();
-       Output_t payload = composer.satisfy_request(request,record);
+       Output_t payload = composer.satisfy_request(request,record,source);
        
        std::string filename = composer.m_current_event_dir_name + "/" + "event.json";
        std::cout << "Writing " << filename << std::endl;

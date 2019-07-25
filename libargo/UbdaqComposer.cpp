@@ -72,7 +72,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   m_request = request;
   m_result["request"] = *request;
   
-  if(m_cur_event_descriptor.size()>0 &&  (request->value("event_descriptor","") == m_cur_event_descriptor) && m_record) return satisfy_request(request,m_record);
+  if(m_cur_event_descriptor.size()>0 &&  (request->value("event_descriptor","") == m_cur_event_descriptor) && m_record) return satisfy_request(request,m_record,m_result["source"]);
 
 
   // See if we can find the record in question.
@@ -120,14 +120,14 @@ Output_t UbdaqComposer::satisfy_request(Request_t request)
   source["options"] = m_options;
   source["numEntriesInFile"] = daqfile.NumEvents();
   source["fileClosedCleanly"] = daqfile.ClosedCleanly();
-  m_result["source"] = source;
 
-  return satisfy_request(request,record);
+  return satisfy_request(request,record,source);
 }
 
 
 Output_t UbdaqComposer::satisfy_request(Request_t request, 
-     std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record)
+     std::shared_ptr<gov::fnal::uboone::datatypes::ub_EventRecord> record,
+     ntagg::json& source)
 {
   m_options = request->value("options",std::string(""));
   m_request = request;
@@ -136,7 +136,9 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   if(!m_record) {
     return Error("Bad record!");
   } 
-  
+ 
+   m_result["source"] = source;
+ 
   pieces_t pieces;
   bool do_pieces  = parse_pieces(*request,pieces);
   
@@ -251,7 +253,8 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
   m_result["stats"] = m_stats;
   if(do_pieces)   dispatch_piece(json({{"stats",m_result["stats"]}}));
   m_result["monitor"] = monitor_data();
-  
+  m_result["manifest"] = manifest;
+
   if(do_pieces){
     json jdone;
     jdone["progress"] = 1;
