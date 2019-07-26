@@ -11,9 +11,11 @@ var defaults = {
   datacache_max_files: 100,
   datacache_max_age:   3600000, // one hour, in ms
   sam_arguments :["-e","uboone"],
+  //      restrict_live_event_upload : [ '::ffff:131.225.237.41/24',  '131.225.237.255' ], // Set to restrict incoming uploads to the near2 DAQ system. enable in production.
   live_event_cache: __dirname + "/live_event_cache",
   live_event_max_files: 30,
   accept_live_data: true,
+
 }
 defaults.composer_config = {
    "forking": false,

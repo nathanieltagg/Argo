@@ -54,14 +54,15 @@
     //-   span.event-triggernames -
     //-   | &nbsp;SW Triggers:&nbsp;
     //-   span.event-swtriggernames - 
-  div
-    span.file-and-entry.clickable(title="Click to select file")
-      span.event-shortfilename loading...
-      span.event-entry ?
-      | &nbsp;of&nbsp;
-      span.event-numEntriesInFile ?
-    span.prev-event.clickable(title="Previous Event (keyboard shortcut: p)") &#9668;
-    span.next-event.clickable(title="Next Event (keyboard shortcut: n)") &#9658;
+  block control-file-navigation
+    div
+      span.file-and-entry.clickable(title="Click to select file")
+        span.event-shortfilename loading...
+        span.event-entry ?
+        | &nbsp;of&nbsp;
+        span.event-numEntriesInFile ?
+      span.prev-event.clickable(title="Previous Event (keyboard shortcut: p)") &#9668;
+      span.next-event.clickable(title="Next Event (keyboard shortcut: n)") &#9658;
   
   div.data-product-bar
     | &nbsp;

@@ -75,17 +75,7 @@ function LiveControl( element )
   // keep-up list:
   this.recent_live_update = {};
   // Open the socket.
-  var wsurl = 'ws://'+window.location.host+'/ws/notify-live';
-  if(window.location.protocol=="https:") wsurl = 'wss://'+window.location.host+'/wss/notify-live';
-  console.log("Starting socket calls:",wsurl);
-
-  gLiveSocket = new WebSocket(wsurl);    
-  gLiveSocket.onopen =  function (event) {
-      if (gSocket.readyState !== 1) {console.error("Websocket Not ready! THIS IS STUPID"); return;}
-      console.log("opened websocket");
-  };
-
-  gLiveSocket.onmessage = this.OnMessage.bind(this);
+  this.Reconnect();
     
   $('#recentEvents').on('click','span',this.RecentClicked.bind(this));
   
@@ -96,6 +86,31 @@ function LiveControl( element )
   }
   
 }
+LiveControl.prototype.Reconnect = function()
+{
+  var wsurl = 'ws://'+window.location.host+'/ws/notify-live';
+  if(window.location.protocol=="https:") wsurl = 'wss://'+window.location.host+'/wss/notify-live';
+  console.log("Starting socket calls:",wsurl);
+  
+  gLiveSocket = new WebSocket(wsurl);    
+  gLiveSocket.onopen =  function (event) {
+      if (gLiveSocket.readyState !== 1) {console.error("Websocket Not ready! THIS IS STUPID"); return;}
+      console.log("opened notify-live websocket");
+  };
+
+  var self = this;
+  gLiveSocket.onclose = function(e) {
+    console.log("notify-live socket closed. Restarting in a second.");
+    setTimeout(self.Reconnect.bind(self), 1000);
+  }
+
+  gLiveSocket.onerror = function(err){
+    console.log("notify-live socket encountered error",err.message,". Closing socket.");
+    gLiveSocket.close();
+  };
+
+  gLiveSocket.onmessage = this.OnMessage.bind(this);
+} 
 
 LiveControl.prototype.OnMessage = function(event) 
 {
@@ -103,28 +118,27 @@ LiveControl.prototype.OnMessage = function(event)
   try {
     data = JSON.parse(event.data);
   } catch {
-    console.error("onmessage Caught socket issue",event);
+    console.error("can't parse message data",event);
   }
+  console.log("notify-live update",data);
 
-  // UPdate things.
+  // Update things.
   var elem = $('#heartbeat-status');
   if(data.heartbeat) {
     if(data.heartbeat.error) {
       elem.text(data.heartbeat.error);    
     } else {
-
+      if(data.heartbeat_time) {
+        if(data.heartbeat_time == 0) {
+          $(elem).html("Event builder not reporting");
+        } else {      
+          $(elem).addClass("TimeAgo");
+          $(elem).html(CreateTimeAgoElement(data.heartbeat_time));
+        }
+      }
     }
 
-    if(data.heartbeat_time) {
-      if(data.heartbeat_time == 0) {
-        $(elem).html("Event builder not reporting");
-      } else {      
-        $(elem).addClass("TimeAgo");
-        $(elem).html(CreateTimeAgoElement(data.heartbeat_time*1000));
-      }
-    }  
-
-  }
+  }  
   this.recent_live_update = data;
   if(data.recent_live_events) {
     this.recent_events = data.recent_live_events;

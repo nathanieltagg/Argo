@@ -22,6 +22,7 @@
     "express": "^4.16.4",
     "express-compile-sass": "^4.0.0",
     "express-fileupload": "^1.1.5",
+    "express-ipfilter": "^1.0.1",
     "express-ws": "^4.0.0",
     "http": "0.0.0",
     "https": "^1.0.0",

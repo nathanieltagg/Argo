@@ -470,15 +470,16 @@ var live_data_emitter = new events.EventEmitter();
 
 setInterval(()=>{
   current_heartbeat.server_time = Date.now();
-  live_data_emitter.emit("heartbeat");}
+  live_data_emitter.emit("emit",'interval');}
   ,5000);
 
 app.ws('/ws/notify-live',  attach_notify_live_stream);
 app.ws('/wss/notify-live', attach_notify_live_stream);
 async function attach_notify_live_stream(ws,req)
 {
-  function send_heartbeat() {
+  function send_heartbeat(reason) {
     var o = {};
+    o.reason=reason;
     o.heartbeat = current_heartbeat;
     o.heartbeat_time = current_heartbeat_time;
     o.server_time = Date.now();
@@ -489,24 +490,32 @@ async function attach_notify_live_stream(ws,req)
     try{ ws.send(str); } catch(err) { console.error("Websocket error.",err); }
   }
   // intial heartbeat
-  live_data_emitter.on('heartbeat',send_heartbeat);
-  ws.on('close',()=>{live_data_emitter.removeListener('heartbeat',send_heartbeat);});
+  live_data_emitter.on('emit',send_heartbeat);
+  ws.on('close',()=>{live_data_emitter.removeListener('emit',send_heartbeat);});
 };
 
 
 
 /// Code to allow the argo-live-backend executable to simply upload the most recent data!
-
+var ipfilter = (req,res,next)=>{next()}; // default is no-op
+if(config.restrict_live_event_upload) {
+  console.log("Restricting live event uploads to whitelist:",config.restrict_live_event_upload);
+  ipfilter = require('express-ipfilter').IpFilter(config.restrict_live_event_upload,{ mode: 'allow' });
+}
 const uploader = require('express-fileupload')({
   // useTempFiles: true, tempFileDir:'/tmp/' // this fills tmp.
 });
 var sanitize = require("sanitize-filename");
-app.post("/live-event-upload",uploader,function(req,res) {
-  console.log("body of upload:",req.body,req.files && Object.keys(req.files).join(', '));
+app.post("/live-event-upload",
+  ipfilter,
+  uploader,
+  function(req,res) {
+  console.log("Received event upload from ",req.ip," with ",req.body,req.files && Object.keys(req.files).length);
+  // console.log("body of upload:",req.body,req.files && Object.keys(req.files).join(', '));
   if(req.body.heartbeat) {
     current_heartbeat = JSON.parse(req.body.heartbeat);
     current_heartbeat_time = Date.now();
-    live_data_emitter.emit("heartbeat");
+    live_data_emitter.emit("emit","heartbeat");
   }
 
   if(req.body.event_dir) {
@@ -520,7 +529,7 @@ app.post("/live-event-upload",uploader,function(req,res) {
         var f = req.files[i];
         if(f.size) {
           var dest = path.join(current_path,sanitize(f.name));
-          console.log("moving ",f.name,dest);
+          // console.log("moving ",f.name,dest);
           f.mv(dest,console.err);
         }      
       }
@@ -528,7 +537,7 @@ app.post("/live-event-upload",uploader,function(req,res) {
       setTimeout(cleanLiveEventCache, 0);
     }
     recent_live_events.push()
-    live_data_emitter.emit('newevent',current_live_event);
+    live_data_emitter.emit('emit','newevent');
 
   }
   res.status(400);
