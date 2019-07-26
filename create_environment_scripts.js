@@ -16,8 +16,9 @@ var nodemon = {
 }
 
 
-var pm2 = {
-  "__comment" : "This file is auto-generated from create_environment_scripts.js. Make changes there!",  
+var pm_scripts = {
+  pm2: {
+  "__comment" : "pm2.json This file is auto-generated from create_environment_scripts.js. Make changes there!",  
   "apps" : [
      {
             "name": "argo-node",
@@ -27,9 +28,37 @@ var pm2 = {
             "env": {
               "NODE_ENV": "production",
             }
-          }
+      },
+      {
+            name: 'argo-live-backend',
+            "cwd":__dirname,
+            script: 'libargo/run-live-backend.sh',
+            exec_interpreter: 'bash',
+            exec_mode: "fork_mode",
+            env : {
+
+            }
+      }
    ]
-}
+  },
+
+pm2_live: {
+  "__comment" : "pm2_live.json This file is auto-generated from create_environment_scripts.js. Make changes there!",  
+  "apps" : [
+      {
+            name: 'argo-live-backend',
+            "cwd":__dirname,
+            script: 'libargo/run-live-backend.sh',
+            exec_interpreter: 'bash',
+            exec_mode: "fork_mode",
+            args: "libargo/live.config.json",
+            env : {
+
+            }
+      }
+   ]  
+  }
+};
 
 // node-cluster is responsible for clustering, not pm2
 // "exec_mode" : "cluster",
@@ -49,6 +78,8 @@ var obj = { DYLD_LIBRARY_PATH :null
           };
 
 
+
+// Nodemon script.
 nodemon.env = {};
 for(v in obj) {
   nodemon.env[v] = process.env[v]; // get current variable.  
@@ -58,13 +89,23 @@ nodemon.env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
 
 fs.writeFileSync(__dirname+"/nodemon.json",JSON.stringify(nodemon,null,2));
 
-for(v in obj) {
-  pm2.apps[0].env[v] = process.env[v]; // get current variable.  
-}
-pm2.apps[0].env["DYLD_LIBRARY_PATH"] = "";
-pm2.apps[0].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
 
-fs.writeFileSync(__dirname+"/pm2.json",JSON.stringify(pm2,null,2));
+
+// Pm2 scripts.
+
+for(var scpt in pm_scripts) {
+    var pm2 = pm_scripts[scpt];
+    for(var iapp=0;iapp<pm2.apps.length;iapp++){
+      for(v in obj) {
+        pm2.apps[iapp].env[v] = process.env[v]; // get current variable.  
+      }
+      pm2.apps[iapp].env["DYLD_LIBRARY_PATH"] = "";
+      pm2.apps[iapp].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
+    }
+
+    fs.writeFileSync(__dirname+"/"+scpt+".json",JSON.stringify(pm2,null,2));
+}
+
 
 
 if(fs.existsSync("/etc/systemd/system"))

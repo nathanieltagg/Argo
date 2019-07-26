@@ -237,7 +237,7 @@ Output_t UbdaqComposer::satisfy_request(Request_t request,
 
 
   composeWireImages(tpc,manifest["wireimg"].begin().key());
-  if(do_pieces)  dispatch_piece(json({{"wireimg-lowres",m_result["wireimg-lowres"]}}));
+  // if(do_pieces)  dispatch_piece(json({{"wireimg-lowres",m_result["wireimg-lowres"]}}));
   if(do_pieces)  dispatch_piece(json({{"wireimg",m_result["wireimg"]}}));
 
   // Database lookup.
@@ -719,14 +719,15 @@ void UbdaqComposer::composeWireImages(bool noisefilter, const std::string& name)
   m_result["wireimg"] = json::object();
   m_result["wireimg"][name] = r;
     
-  json r2;
-  MakeLowres( r2,
-                 wireMap,
-                 noiseMap,
-                 nwire,
-                 ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_max_threads );
-  m_result["wireimg-lowres"] = json::object();
-  m_result["wireimg-lowres"]["wireimg_DAQ__libargoLowres"] = r2;
+  // turn off for speed.
+  // json r2;
+  // MakeLowres( r2,
+  //                wireMap,
+  //                noiseMap,
+  //                nwire,
+  //                ntdc, m_current_event_dir_name, m_current_event_url, tilesize, false, m_max_threads );
+  // m_result["wireimg-lowres"] = json::object();
+  // m_result["wireimg-lowres"]["wireimg_DAQ__libargoLowres"] = r2;
     
   
   timer.addto(m_stats);
@@ -792,7 +793,7 @@ void UbdaqComposer::composeHits()
         json hit = { 
                       {"Ch", waveform._Ch}
                    // , {"wire", waveform._planewire}
-                   // , {"plane", waveform._plane}
+                   , {"plane", waveform._plane}
                    , {"q", peak.integral*scale}
                    , {"t", peak.tpeak}
                    , {"t1", peak.tstart}
