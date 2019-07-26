@@ -25,14 +25,11 @@ Geometry3 = function (data)
 
     }
 
-    /////// Private variables ------------
-    opDetByChan = [];
-
     /////// Public functions --------------------
 
     /////// opdet
     this.OpDetByChannel = function(chan)
-    { return opDetByChan[chan%100]; };
+    { return this.data.opticalDetectors[chan%100]; };
     
     this.opDetPathYZ  = function(ctx, type)
     { 
