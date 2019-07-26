@@ -308,6 +308,11 @@ ControlOverlay.prototype.OnChangeProductName = function(ev)
 
 // Utility
 function noColons(prod) {return prod.replace(/:/g,'');}
-function simpleName(prod){ if(prod.includes('__')) return prod.split('_')[1]; else return prod; }
+function simpleName(prod){ 
+  var res = prod;
+  if(prod.includes('__')) res = prod.split('_')[1]; 
+  res = res.replace(/gaushit/i,"gausHit"); // for purient teenagers.
+  return res;
+}
 
   

@@ -1,4 +1,4 @@
-gLiveControl = null;
+var gLiveControl = null;
 
 // Automatic runtime configuration.
 $(function(){
@@ -7,7 +7,7 @@ $(function(){
   });  
 });
 
-
+var gLiveSocket = null;
 
 function LiveControl( element )
 {
@@ -69,35 +69,24 @@ function LiveControl( element )
       }
   });
 
-  gStateMachine.BindObj("newRecord",this,"NewRecord");
+  gStateMachine.BindObj("newPiece",this,"NewPiece");
 
 
   // keep-up list:
-  this.recent_events = [];
-  var source = new EventSource("server/notify-live.cgi");
-  source.onmessage = function (event) {
-      console.log("new message:",event);
-      if(event.data=='HEARTBEAT') return;
-      self.recent_events.push(event.data);
-      
-      function onlyUnique(value, index, s) { 
-          return s.indexOf(value) === index;
-      }
+  this.recent_live_update = {};
+  // Open the socket.
+  var wsurl = 'ws://'+window.location.host+'/ws/notify-live';
+  if(window.location.protocol=="https:") wsurl = 'wss://'+window.location.host+'/wss/notify-live';
+  console.log("Starting socket calls:",wsurl);
 
-      self.recent_events = self.recent_events.filter( onlyUnique );      
-      self.ShowRecent();
-      // keep-up mode:
-      if($('#ctl-live-keep-up').is(":checked")) {      
-        if(event.data != self.recent_cache_file) {
-          self.time_last_refresh = Date.now();
-          var par = { live:1, request_cache: event.data };
-          // window.location.hash = '#' + $.param(par);
-          location.reload();
-          //QueryServer(par,"server/serve_live.cgi");        
-        }
-      }
+  gLiveSocket = new WebSocket(wsurl);    
+  gLiveSocket.onopen =  function (event) {
+      if (gSocket.readyState !== 1) {console.error("Websocket Not ready! THIS IS STUPID"); return;}
+      console.log("opened websocket");
   };
-  
+
+  gLiveSocket.onmessage = this.OnMessage.bind(this);
+    
   $('#recentEvents').on('click','span',this.RecentClicked.bind(this));
   
   // Start the clock
@@ -106,6 +95,50 @@ function LiveControl( element )
     this.clockInterval = setInterval(do_clock,1000);    
   }
   
+}
+
+LiveControl.prototype.OnMessage = function(event) 
+{
+  var data = {};
+  try {
+    data = JSON.parse(event.data);
+  } catch {
+    console.error("onmessage Caught socket issue",event);
+  }
+
+  // UPdate things.
+  var elem = $('#heartbeat-status');
+  if(data.heartbeat) {
+    if(data.heartbeat.error) {
+      elem.text(data.heartbeat.error);    
+    } else {
+
+    }
+
+    if(data.heartbeat_time) {
+      if(data.heartbeat_time == 0) {
+        $(elem).html("Event builder not reporting");
+      } else {      
+        $(elem).addClass("TimeAgo");
+        $(elem).html(CreateTimeAgoElement(data.heartbeat_time*1000));
+      }
+    }  
+
+  }
+  this.recent_live_update = data;
+  if(data.recent_live_events) {
+    this.recent_events = data.recent_live_events;
+    this.ShowRecent();  
+  }
+  if(data.current_live_event) {
+    // keep-up mode:
+    if($('#ctl-live-keep-up').is(":checked")) {      
+      if(data.current_live_event != this.recent_cache_file) {
+        this.time_last_refresh = Date.now();
+        location.reload(); // start again all over...?
+      }
+    }
+  }
 }
 
 LiveControl.prototype.Refresh = function() 
@@ -149,8 +182,9 @@ LiveControl.prototype.stop_auto_refresh = function()
 
 
 
-LiveControl.prototype.NewRecord = function()
+LiveControl.prototype.NewPiece = function()
 {
+
   if(!gServing.live_cache_file) return;
   
   this.recent_cache_file = gServing.live_cache_file;

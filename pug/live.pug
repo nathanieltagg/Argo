@@ -24,6 +24,7 @@ html
   body
 
     #everything
+      include inc/ControlOverlay
       #live-status
         | Backend Heartbeat:
         #heartbeat-status server not contacted yet
@@ -115,7 +116,6 @@ html
           // portlet 
           include inc/FalseColorControl 
           include inc/WireInfo 
-          include inc/TimeHistogram 
           include inc/HitHistogram 
           include inc/ZoomControl 
         #main-column(style='flex: 5 70%; min-width: 300px;')

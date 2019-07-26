@@ -1,34 +1,14 @@
+extend argo
+
 include inc/mixins
 
-doctype html
-html
-  head
-    meta(http-equiv='content-type', content='text/html; charset=utf-8')
-    title Argo
-    //(#)include virtual="basetag.inc"
-    // My little icon in the link url 
-    link(rel='icon', type='image/png', href='/images/ArgoIcon.png')
-    // Activate some overrides to basic configuration. 
-    //#set var="PageStyle" value="standard" 
-    block headerscript
-      script(type='text/javascript') 
+block headerscript
+        script(type='text/javascript') 
           |gPageName="#{pagename}";
           |gDetector="uboone";
           |gAllowedDataTypes=['wireimg','hits','tracks'];
-    // Main CSS sheet for basic layout, custom mods. 
-    //- link(rel='stylesheet', href='css/argo.css', type='text/css', media='all')
-    link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
-    link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
-    // Javascript libraries and code. 
-    include inc/libraries 
-    include ../static/shaders/shaders.inc
-  body
-    #everything
-      include inc/ControlOverlay
-      #content
-        #content-top
 
-        //- div(style='clear:both;')
+block content
         #content-right.dock
           include inc/MasterClass
           include inc/ZoomControl 
@@ -52,16 +32,4 @@ html
               .pad.A-WireViewGL(style='width:100%; height:330px;', data-options='{"plane":0,"view":0}')
             +portlet('wireviewgl-port-1',"Induction Plane 1",true)
              .pad.A-WireViewGL(style='width:100%; height:330px', data-options='{"plane":1,"view":1}')
-      #footer
-        include inc/credits 
-      include inc/MOTD 
-      include inc/Keyboard 
-      #hitsum
-        form
-          .hitsumtext(style='user-select:text; -ms-user-select:text; -moz-user-select: text;-webkit-user-select: text;')
-      #warning-dialog(title='Warning')
-        p#warning-dialog-message
-      include inc/SelectionInfoOverlay 
-      |  
-      img#watermark_logo(style='display:none;', src='/images/uboone_logo_1.png')
-      img#onepixel(style='display_none;', src='/images/1x1.png')
+

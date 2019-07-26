@@ -19,6 +19,7 @@ var path = require('path');
 var mkdirp = require('mkdirp');
 var chalk = require('chalk');
 
+var rimraf = require('rimraf');
 
 var config = require("./configuration.js"); // loads config.js
 var samweb = require("./samweb.js");
@@ -36,6 +37,7 @@ var httpsServer = https.createServer(app);
 
 
 mkdirp(config.datacache);
+mkdirp(config.live_event_cache);
 
 // app.use(morgan('tiny',{immediate:true}));
 app.use(morgan('tiny'));
@@ -67,6 +69,13 @@ async function resolve_request(event_req)
     /// Return an object suitable for passing to the Composer, with completely-specified filepath.
     /// Warning: modifies inReq
     if(event_req.what=="live") {
+      if(!current_live_event) 
+        throw new Error("No live event available.");
+      if(!event_req.filename) 
+        event_req.filename=path.join(config.live_event_cache,current_live_event,"event.json");
+      if(!event_req.filename.includes(".json")) 
+        event_req.filename=path.join(config.live_event_cache,event_req.filename,"event.json");
+      
       // Do special live thing.
     }
     if(event_req.what=="json"){
@@ -332,6 +341,7 @@ app.use('/js',browserify(__dirname + '/client'))
 
 // static files.
 app.use(express.static(__dirname + '/static'));
+app.use('/live_event_cache',express.static(config.live_event_cache));
 
 // app.use("/server",express.static(__dirname+'/static'));
 
@@ -450,51 +460,101 @@ app.get('/', function (req, res) {
 
 
 
-var current_heartbeat = {dummy:"blah"};
-var heartbeat_emitter = new events.EventEmitter();
+var current_heartbeat = {};
+var current_heartbeat_time = 0;
+var current_live_event = null;
+var recent_live_events = fs.readdirSync(config.live_event_cache).sort();
+var current_live_event = recent_live_events.slice(-1)[0];
+
+var live_data_emitter = new events.EventEmitter();
 
 setInterval(()=>{
   current_heartbeat.server_time = Date.now();
-  heartbeat_emitter.emit("heartbeat");}
-  ,1500);
+  live_data_emitter.emit("heartbeat");}
+  ,5000);
 
 app.ws('/ws/notify-live',  attach_notify_live_stream);
 app.ws('/wss/notify-live', attach_notify_live_stream);
 async function attach_notify_live_stream(ws,req)
 {
   function send_heartbeat() {
-    var str = JSON.stringify(current_heartbeat);
+    var o = {};
+    o.heartbeat = current_heartbeat;
+    o.heartbeat_time = current_heartbeat_time;
+    o.server_time = Date.now();
+    o.recent_live_events = recent_live_events;
+    o.current_live_event = current_live_event;
+
+    var str = JSON.stringify(o);
     try{ ws.send(str); } catch(err) { console.error("Websocket error.",err); }
   }
   // intial heartbeat
-  heartbeat_emitter.on('heartbeat',send_heartbeat);
-  ws.on('close',()=>{heartbeat_emitter.removeListener('heartbeat',send_heartbeat);});
+  live_data_emitter.on('heartbeat',send_heartbeat);
+  ws.on('close',()=>{live_data_emitter.removeListener('heartbeat',send_heartbeat);});
 };
 
 
 
-const uploader = require('express-fileupload')({useTempFiles: true, tempFileDir:'/tmp/'});
+/// Code to allow the argo-live-backend executable to simply upload the most recent data!
+
+const uploader = require('express-fileupload')({
+  // useTempFiles: true, tempFileDir:'/tmp/' // this fills tmp.
+});
 var sanitize = require("sanitize-filename");
 app.post("/live-event-upload",uploader,function(req,res) {
-  console.log("body of upload:",req.body);
-  console.log("files",req.files);
-  // var heartbeat_data = req.body.heartbeat;
-  // if(req.body.event_id) {
-  //   // Sanitize
-  //   var event_dir = sanitize(req.body.event_id);    
-  //   var full_event_dir = config.live_event_cache + "/" + event_dir;
-  //   console.log("receiving new live event in ",full_event_dir);
-  //   fs.mkdirSync(full_event_dir,{recursive:true});
-  //   for(var file in req.files) {
-  //     var fn = sanitize(file.name);
-  //     file.mv(full_event_dir+"/"+fn);
-  //   }
-  //   // FIXME Now notify clients there is a new event
-  //   // FIXME Now clean up the event cache.
-  // }
+  console.log("body of upload:",req.body,req.files && Object.keys(req.files).join(', '));
+  if(req.body.heartbeat) {
+    current_heartbeat = JSON.parse(req.body.heartbeat);
+    current_heartbeat_time = Date.now();
+    live_data_emitter.emit("heartbeat");
+  }
+
+  if(req.body.event_dir) {
+    // there is data!
+    current_live_event = req.body.event_dir;
+    var current_path = path.join(config.live_event_cache,current_live_event);
+    // console.log(req.files);
+    if(req.files && Object.keys(req.files).length>0) {
+      fs.mkdirSync(current_path);
+      for(var i in req.files) {
+        var f = req.files[i];
+        if(f.size) {
+          var dest = path.join(current_path,sanitize(f.name));
+          console.log("moving ",f.name,dest);
+          f.mv(dest,console.err);
+        }      
+      }
+      // if we are responsible for this data, clean the cache (in a few mssec)
+      setTimeout(cleanLiveEventCache, 0);
+    }
+    recent_live_events.push()
+    live_data_emitter.emit('newevent',current_live_event);
+
+  }
   res.status(400);
   res.send("");
 });
+
+function cleanLiveEventCache()
+{
+  console.log("cleaning live event cache");
+  fs.readdir(config.live_event_cache,(err,dir)=>
+    {
+      dir = dir.sort(); // put in order of files in alphbetical order
+      while(dir.length> config.live_event_max_files) {
+        var basename = dir.shift();
+        console.log("cleaning out ",basename);
+        // Remove from list of recent results, if it's there.
+        var idx = recent_live_events.indexOf(basename);
+        if(idx>-1) recent_live_events.splice(idx,1);
+
+        // Remove the file.
+        var pathname = path.join(config.live_event_cache,basename);
+        rimraf(pathname,console.error); // rimraf does rm -rf
+      }
+
+  });
+}
 
 
 ///////////////////////////////////////////////

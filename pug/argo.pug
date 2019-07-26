@@ -5,112 +5,105 @@ html
   head
     meta(http-equiv='content-type', content='text/html; charset=utf-8')
     title Argo
-    //(#)include virtual="basetag.inc"
-    // My little icon in the link url 
-    link(rel='icon', type='image/png', href='/images/ArgoIcon.png')
-    // Activate some overrides to basic configuration. 
-    //#set var="PageStyle" value="standard" 
+    link(rel='icon', type='image/png', href='/images/Argo3icon.png')
     block headerscript
       script(type='text/javascript') 
           |gPageName="#{pagename}";
           |gDetector="uboone";
-    // Main CSS sheet for basic layout, custom mods. 
-    //- link(rel='stylesheet', href='css/argo.css', type='text/css', media='all')
     link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
     link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
-    // Javascript libraries and code. 
     include inc/libraries 
     include ../static/shaders/shaders.inc
   body
     #everything
       include inc/ControlOverlay
       #content
-        #content-top
-          //- .important-links(style='text-align:center;')
-          //-   a(href='samspider/samspider.cgi') Browse SAM datasets
-          //-   a(href='server/file_browser.cgi') /uboone/ File Browser
-          //-   a(href='http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00') Raw data files
-          //-   br
-          //-   a(href='http://argo-microboone.fnal.gov/live') Almost-live Data (from anywhere)
-          //-   a(href='http://ubdaq-prod-near2.fnal.gov/Argo/live') Live data (FNAL only)
-          //-   br
-          //- div(style='float:left;')
-          //-   div(style='font-family:Arial,Verdana; font-size: 16pt; text-align:center;') Argo 2.0
-          //-   img(src='images/argo_logo_2.0.png', alt='Argo - the Microboone Web Event Display', style='height:200px;')
-          //-   br
-          //- div(style='display: block; overflow:hidden; text-align:center;')
-          //-   a(href='help') Help and Hints
-          //-   a.align-left#Print(href='#') Print
-          //-   span.align-right
-          //-     a.linktothis Link to this event
-          //-   br
-          //-   span.align-right
-          //-     a.linkzoom Link to this event with current zoom
-          //-   br
-          //-   span.align-right#email-this-event Email this event
-          //-   br
-          //-   span.align-right#download-this-event Download this event
-          //- div
-          //-   span(style='width: 5%;') Status:
-          //-   span#status(style='display:inline-block; width: 50%;') Script loading...
-          //- #event-id-info(style='float:right')
-          //-   | Event:
-          //-   span.event-run
-          //-   | |
-          //-   span.event-subrun
-          //-   | |
-          //-   span.event-event
-          //-   br
-          //-   span.val.event-date unknown
-          //-   span.val.event-time unknown
-          //-   | (
-          //-   span.val.event-age unknown
-          //-   | )
-          //- include inc/DataSource
-        //- div(style='clear:both;')
-        #content-right.dock
-          include inc/ZoomControl 
-          include inc/FalseColorControl 
-          include inc/WireInfo 
-          include inc/HitHistogram 
-          include inc/SaveSelection 
-          include inc/Configuration 
-          include inc/EventInfo 
-          include inc/dEdXTool 
-          include inc/MCInfo 
-          include inc/HoverInfo 
-        // content-right 
-        #content-main
-          #content-wide.dock
-            include inc/WireViewGL            
-            +portlet("rgbwireview-port","RGB View")(style="background-color:white; display:none;")
-              //- .pad.A-RgbWireView(style='width:100%; height:330px')
-            //- include inc/WireView 
-            // include virtual="html/WireViewBig.inc" 
-            //include virtual="html/TimeHistogram.inc" 
-          // content-wide 
-          #content-left.dock
-            include inc/OpHits 
-            include inc/MRI 
-            include inc/MCDigraph 
-            include inc/PFDigraph 
-          // content-left 
-          #content-middle.dock
-            include inc/OpFlashes 
-            include inc/TridView 
-            //(#)include virtual="html/WireViewBig.inc" 
-            //include virtual="html/ArgoDreamyScan.inc" 
-      #footer
-        include inc/Debugging 
-        include inc/credits 
-      include inc/MOTD 
-      include inc/Keyboard 
-      #hitsum
-        form
-          .hitsumtext(style='user-select:text; -ms-user-select:text; -moz-user-select: text;-webkit-user-select: text;')
-      #warning-dialog(title='Warning')
-        p#warning-dialog-message
-      include inc/SelectionInfoOverlay 
-      |  
-      img#watermark_logo(style='display:none;', src='/images/uboone_logo_1.png')
-      img#onepixel(style='display_none;', src='/images/1x1.png')
+        block content
+          #content-top
+            //- .important-links(style='text-align:center;')
+            //-   a(href='samspider/samspider.cgi') Browse SAM datasets
+            //-   a(href='server/file_browser.cgi') /uboone/ File Browser
+            //-   a(href='http://argo-microboone.fnal.gov/server/file_browser.cgi?path=/pnfs/uboone/data/uboone/raw/online/assembler/v6_00_00') Raw data files
+            //-   br
+            //-   a(href='http://argo-microboone.fnal.gov/live') Almost-live Data (from anywhere)
+            //-   a(href='http://ubdaq-prod-near2.fnal.gov/Argo/live') Live data (FNAL only)
+            //-   br
+            //- div(style='float:left;')
+            //-   div(style='font-family:Arial,Verdana; font-size: 16pt; text-align:center;') Argo 2.0
+            //-   img(src='images/argo_logo_2.0.png', alt='Argo - the Microboone Web Event Display', style='height:200px;')
+            //-   br
+            //- div(style='display: block; overflow:hidden; text-align:center;')
+            //-   a(href='help') Help and Hints
+            //-   a.align-left#Print(href='#') Print
+            //-   span.align-right
+            //-     a.linktothis Link to this event
+            //-   br
+            //-   span.align-right
+            //-     a.linkzoom Link to this event with current zoom
+            //-   br
+            //-   span.align-right#email-this-event Email this event
+            //-   br
+            //-   span.align-right#download-this-event Download this event
+            //- div
+            //-   span(style='width: 5%;') Status:
+            //-   span#status(style='display:inline-block; width: 50%;') Script loading...
+            //- #event-id-info(style='float:right')
+            //-   | Event:
+            //-   span.event-run
+            //-   | |
+            //-   span.event-subrun
+            //-   | |
+            //-   span.event-event
+            //-   br
+            //-   span.val.event-date unknown
+            //-   span.val.event-time unknown
+            //-   | (
+            //-   span.val.event-age unknown
+            //-   | )
+            //- include inc/DataSource
+          //- div(style='clear:both;')
+          #content-right.dock
+            include inc/ZoomControl 
+            include inc/FalseColorControl 
+            include inc/WireInfo 
+            include inc/HitHistogram
+            include inc/SaveSelection 
+            include inc/Configuration 
+            include inc/EventInfo 
+            include inc/dEdXTool 
+            include inc/MCInfo 
+            include inc/HoverInfo 
+          // content-right 
+          #content-main
+            #content-wide.dock
+              include inc/WireViewGL            
+              +portlet("rgbwireview-port","RGB View")(style="background-color:white; display:none;")
+                //- .pad.A-RgbWireView(style='width:100%; height:330px')
+              //- include inc/WireView 
+              // include virtual="html/WireViewBig.inc" 
+              //include virtual="html/TimeHistogram.inc" 
+            // content-wide 
+            #content-left.dock
+              include inc/OpHits 
+              include inc/MRI 
+              include inc/MCDigraph 
+              include inc/PFDigraph 
+            // content-left 
+            #content-middle.dock
+              include inc/OpFlashes 
+              include inc/TridView 
+              //(#)include virtual="html/WireViewBig.inc" 
+              //include virtual="html/ArgoDreamyScan.inc" 
+        #footer
+          include inc/Debugging 
+          include inc/credits 
+        include inc/Keyboard 
+        #hitsum
+          form
+            .hitsumtext(style='user-select:text; -ms-user-select:text; -moz-user-select: text;-webkit-user-select: text;')
+        #warning-dialog(title='Warning')
+          p#warning-dialog-message
+        include inc/SelectionInfoOverlay 
+        |  
+        img#watermark_logo(style='display:none;', src='/images/uboone_logo_1.png')
+        img#onepixel(style='display_none;', src='/images/1x1.png')
