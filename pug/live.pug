@@ -9,27 +9,25 @@ block headerscript
 
 block control-file-navigation
   div Backend Heartbeat:
-          span#heartbeat-status server not contacted yet
+          span.heartbeat-status server not contacted yet
+
+          div(style="display:flex; width:100%; justify-content: space-between;align-items: center;")
+            div(style="flex:0 0 auto; width:130px;") Server speed: (fast)
+            div(style="flex:1 1 auto;")
+              div#live-event-update-slider(style="max-width:100%")
+                div.ui-slider-handle#live-event-update-slider-handle
+            div(style="flex:0 0 auto; width:80px;text-align:right;") (slow)
+
+  .A-LiveControl(style="display:flex;")
+      input.ui-state-default.ui-corner-all.go_livedata(type='button', value='Get Live Data!', style='flex:0 0 auto;margin:10px;')
+      div#live-visual-clock.piechart(style="flex: 0 0 auto;")
+                div.pie.spinner
+                div.pie.filler
+                div.mask
+      div.recentEvents(style="overflow-x:scroll;white-space: nowrap;display:inline-block;flex: 1 1 auto;")
+
 
 block content
-        .A-LiveControl(style='display: inline-block; width:500px;')
-          div(style='border: solid 1px black;')
-            input.ui-state-default.ui-corner-all#go_livedata(type='button', value='Get Live Data!', style='float:left; margin:10px')
-            #refresh-clock(style='float:left; width: 25px; margin:10px; display:inline-block;')
-            span
-              label(for='ctl-refresh-auto') Auto-refresh live data:
-              input#ctl-refresh-auto.saveable.auto-save-on-change(name='ctl-refresh-auto', type='checkbox', checked='')
-              br
-              label(for='ctl-refresh-period') Cycle event every:
-              input#ctl-refresh-period.saveable(name='ctl-refresh-period', type='text', size='5', value='60.0')
-              | seconds
-          div(style='clear:both; border: solid 1px black;')
-            label(for='ctl-live-keep-up') Keep up with all events:
-            input#ctl-live-keep-up(name='ctl-live-keep-up', type='checkbox')
-            |  (For laser / low event rate use)
-            #recentEvents
-
-        #expando-target(style='z-index:998;')
         #display-zone(style='display:flex; width:100%; align-items: stretch;')
           #live-rightbar2(style='flex: 1 auto; pading: 20px; min-width: 100px;')
             +portlet('trigger-info-port',"Trigger/Laser Info")
@@ -53,6 +51,7 @@ block content
             include inc/WireInfo 
             include inc/HitHistogram 
             include inc/ZoomControl 
+            include inc/Configuration
           #main-column(style='flex: 5 70%; min-width: 300px;')
             +portlet('wireviewgl-port-0',"U / Induction Plane 0",true)
               .pad.A-WireViewGL(style='width:100%; height:330px;', data-options='{"plane":0,"view":0}')
@@ -60,6 +59,7 @@ block content
               .pad.A-WireViewGL(style='width:100%; height:330px;', data-options='{"plane":1,"view":1}')
             +portlet('wireviewgl-port-1',"X / Collection Plane 2",false)
               .pad.A-WireViewGL(style='width:100%; height:330px;', data-options='{"plane":2,"view":2}')
+
             include inc/OpHits 
 
         #footer
@@ -67,114 +67,3 @@ block content
           include inc/credits 
         // footer 
         // hidden stuff. 
-        #static-config(style='display:none;')
-          div
-            input#ctl-magnifying-glass.saveable(type='checkbox', name='ctl-magnifying-glass', checked='')
-            label(for='ctl-magnifying-glass')
-              b (g)
-              | Magnifying glass
-          #mag-sliders
-            div
-              label(for='ctl-magnifier-size') Mag. Size:
-              input#ctl-magnifier-size.saveable(type='text', value='80', size='4')
-            #ctl-magnifier-size-slider
-            div
-              label(for='ctl-magnifier-mag') Magnification:
-              input#ctl-magnifier-mag.saveable(type='text', value='5', size='4')
-            #ctl-magnifier-mag-slider
-          div
-            input#ctl-histo-logscale.saveable.ctl-histo-logscale(type='checkbox', name='ctl-histo-logscale', checked='')
-            label(for='ctl-histo-logscale')
-              b (l)
-              | og-scale Histograms
-          div
-            input#ctl-show-labels.saveable(type='checkbox', name='ctl-show-labels', checked='')
-            label(for='ctl-show-labels') Draw Axis Labels
-          div
-            input#ctl-show-tick-labels.saveable(type='checkbox', name='ctl-show-tick-labels', checked='')
-            label(for='ctl-show-tick-labels') Draw Tick Values
-          div
-            input#ctl-lock-aspect-ratio.saveable(type='checkbox', name='ctl-lock-aspect-ratio')
-            label(for='ctl-lock-aspect-ratio') Lock TDC/Wire aspect ratio
-          div
-          div
-            b (Shift-W)
-            span.align-right
-              input#ctl-show-wireimg-raw.saveable.show-wireimg-raw(type='radio', value='raw', name='show-wireimg-type', checked='')
-              label(for='ctl-show-wireimg-raw') Raw
-              input#ctl-show-wireimg-cal.saveable.show-wireimg-cal(type='radio', value='cal', name='show-wireimg-type')
-              label(for='ctl-show-wireimg-cal') Calibrated
-            div(style='clear:both;')
-          div
-            input#ctl-show-clus.saveable.show-clus(type='checkbox', name='show-clus')
-            label(for='ctl-show-clus')
-              b (c)
-              | Show Clusters
-          div
-            b (shift-C)
-            select#ctl-ClusterLists.align-right
-            div(style='clear:both;')
-          div
-            b (shift-H)
-            select#ctl-HitLists.align-right
-            div(style='clear:both;')
-          div
-            input#ctl-show-endpoint2d.saveable.show-endpoint2d(type='checkbox', name='show-endpoint2d')
-            label(for='ctl-show-endpoint2d')
-              b (e)
-              | Show Endpoint2Ds
-          div
-            b (shift-E)
-            select#ctl-EndpointLists.align-right
-            div(style='clear:both;')
-          div
-            input#ctl-show-spoints.saveable.show-spoints(type='checkbox', name='show-spoints')
-            label(for='ctl-show-spoints')
-              b (s)
-              | Show Spacepoints
-          div
-            b (shift-S)
-            select#ctl-SpacepointLists.align-right
-            div(style='clear:both;')
-          div
-            input#ctl-show-tracks.saveable.show-tracks(type='checkbox', name='show-tracks')
-            label(for='ctl-show-tracks')
-              b (t)
-              | Show Tracks
-          div
-            b (shift-T)
-            select#ctl-TrackLists.align-right
-            div(style='clear:both;')
-          div
-            |   
-            input#ctl-track-shift-window.saveable.track-shift-window(type='checkbox', name='track-shift-window')
-            label(for='track-shift-window')
-              b (o)
-              | Shift Tracks 1 Window
-          div
-            label
-              input#ctl-show-pfparticles.saveable.show-pfparticles(type='checkbox', name='show-pfparticles')
-              b (f)
-              | Show PFParticles
-          div
-            b (shift-F)
-            select#ctl-PFParticleLists.align-right
-            div(style='clear:both;')
-          div
-            input#ctl-show-mc.saveable.show-mc(type='checkbox', name='show-mc')
-            label(for='ctl-show-mc')
-              b (m)
-              | Show MC
-          div
-            |   
-            input#ctl-show-mc-neutrals.saveable.show-mc-neutrals(type='checkbox', name='show-mc-neutrals')
-            label(for='ctl-show-mc')
-              b (M)
-              | Show neutral particles
-          div
-            |   
-            input#ctl-mc-move-tzero.saveable.ctl-mc-move-tzero(type='checkbox', name='ctl-mc-move-tzero')
-            label(for='ctl-mc-move-tzero')
-              b (z)
-              | Fake t-zero
-          // <div class="align-right"><div id="ctl-MCLists"></div><div style="clear:both;"></div></div> 

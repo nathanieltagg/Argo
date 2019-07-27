@@ -23,6 +23,7 @@ $c4: #DEF2F1;
 $c5: #FEFFFF;
 
 $ControlOverlay_height: 85px;
+$ControlOverlay_height: 295px;
 
 $unretrieved_color: $c1;
 $retrieved_color:   $c5;
@@ -503,7 +504,7 @@ div.portlet {
   background-color: $control_overlay_bg_color;
   color: $control_overlay_tx_color;
   width: 1000px;
-  height: $ControlOverlay_height;
+  // height: $ControlOverlay_height;
   div.status-line {
     display:flex;
     justify-content: space-between;
@@ -522,7 +523,58 @@ div.portlet {
   }
   .data-product-bar {
     height: 1em;
-    
+
+
+      // This stuff is used to remove the native checkmark from checkbox/radio buttons. the 
+    input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+      
+      &.unretrieved ~ label {
+          color: $unretrieved_color; //$color_storm_dust_approx;        
+      }
+      &.retrieved  ~ label {
+          color: $retrieved_color; //$color_storm_dust_approx;        
+      }
+      
+      &.pending + .checkmark {
+        background-color: transparent;
+        border-top: 2px solid $unretrieved_color;
+        border-right: 2px solid transparent;
+        animation: spinner .6s linear infinite;
+        
+      }
+      &:checked + .checkmark {
+        background-color: $checkmark_color !important;
+        
+      }
+      &.pending:checked + .checkmark {
+          background-color: transparent;
+          border-top: 2px solid $pending_color;
+          border-right: 2px solid transparent;
+          animation: spinner .6s linear infinite;
+      }
+    }
+    @keyframes spinner {
+      to {transform: rotate(360deg);}
+    }
+    .checkmark {
+      position: absolute;
+      top: 7px;
+      left: 4px;
+      height: 6px;
+      width: 6px;
+      //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
+      border-radius: 50%;
+      z-index: 1001;
+    }
+    fieldset {
+      border: none;
+    }
+
     label {
       &:hover {
         background-color: $hilite_control_color;
@@ -600,55 +652,7 @@ div.portlet {
     margin-left: 3px;
   }
   
-  // This stuff is used to remove the native checkmark from checkbox/radio buttons. the 
-  input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-    
-    &.unretrieved ~ label {
-        color: $unretrieved_color; //$color_storm_dust_approx;        
-    }
-    &.retrieved  ~ label {
-        color: $retrieved_color; //$color_storm_dust_approx;        
-    }
-    
-    &.pending + .checkmark {
-      background-color: transparent;
-      border-top: 2px solid $unretrieved_color;
-      border-right: 2px solid transparent;
-      animation: spinner .6s linear infinite;
-      
-    }
-    &:checked + .checkmark {
-      background-color: $checkmark_color !important;
-      
-    }
-    &.pending:checked + .checkmark {
-        background-color: transparent;
-        border-top: 2px solid $pending_color;
-        border-right: 2px solid transparent;
-        animation: spinner .6s linear infinite;
-    }
-  }
-  @keyframes spinner {
-    to {transform: rotate(360deg);}
-  }
-  .checkmark {
-    position: absolute;
-    top: 7px;
-    left: 4px;
-    height: 6px;
-    width: 6px;
-    //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
-    border-radius: 50%;
-    z-index: 1001;
-  }
-  fieldset {
-    border: none;
-  }
+
 }
 @keyframes pulse {
   0% {
@@ -812,7 +816,120 @@ div.modal {
   display:none;
 }
 
-// Colors
+// ---------------------------- LIve controls.
+
+div#live-event-update-slider {
+  background-color: $c2;
+  border-color: $c3;
+  height:10px;
+  margin-top:2px;
+  margin-bottom:2px;
+}
+div#live-event-update-slider-handle {
+  background:none;
+    background-color: $c2;
+    border-color:$c3;
+    color: $c5;
+    width: 3em;
+    height: 1.6em;
+    top: 50%;
+    margin-top: -.6em;
+    text-align: center;
+    line-height: 1.2em;
+    font: inherit;
+}
+
+
+
+
+/// Control this thing with:
+  // function set_pie(thing,p)
+  // {
+  //   $('.filler',thing).css("opacity",(p>0.5)?1:0);
+  //   $('.mask',thing).css("opacity",(p>.5)?0:1);
+  //   $('.spinner',thing).css("transform","rotate("+p*360+"deg)");  
+  // }
+
+.current-event-highlight {
+  background-color: $c2;
+}
+.recentEvents{
+  margin-top: 10px;
+  height:25px;
+}
+.recentEvents::-webkit-scrollbar {
+  margin-top:0px;
+   height: 6px;
+}
+.recentEvents::-webkit-scrollbar-track
+{
+  //  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  // border-radius: 10px;
+  background-color: $c2;
+}
+.recentEvents::-webkit-scrollbar-thumb
+{
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+  background-color: $c4;
+}
+
+#live-visual-clock {
+  position: relative;
+  margin-left: 3px;
+  margin-right: 3px;
+  background: $c3;
+  width: 25px;
+  height: 25px;
+  display:inline-block;
+}
+
+  .piechart { 
+    box-sizing: border-box;
+  }
+
+  .piechart .pie {
+    width: 50%;
+    height: 100%;
+    transform-origin: 100% 50%;
+    position: absolute;
+    background:  $c2;
+    border: 2px solid rgba(0,0,0,0.5);
+    box-sizing: border-box;
+  }
+
+  .piechart .spinner {
+    border-radius: 100% 0 0 100% / 50% 0 0 50%;
+    z-index: 200;
+    border-right: none;
+    box-sizing: border-box;
+  }
+
+
+  .piechart .filler {
+    border-radius: 0 100% 100% 0 / 0 50% 50% 0; 
+    left: 50%;
+    opacity: 0;
+    z-index: 100;
+    border-left: none;
+    box-sizing: border-box;
+  }
+
+  .piechart .mask {
+    width: 50%;
+    height: 100%;
+    position: absolute;
+    background: inherit;
+    opacity: 1;
+    z-index: 300;
+    box-sizing: border-box;
+    // animation: opa $duration + s steps(1,end) infinite;
+  }
+
+
+
+// ------------------------Color debuggging!
+
 #DebugColor {
   position: fixed;
   z-index: 1000;
@@ -830,6 +947,17 @@ div.modal {
 .tc3 { color: $c3; }
 .tc4 { color: $c4; }
 .tc5 { color: $c5; }
+
+
+
+
+
+
+
+
+
+
+/// Masterclass
 
 .A-MasterClass-data table {
   td { text-align:center; }

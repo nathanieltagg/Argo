@@ -490,7 +490,11 @@ async function attach_notify_live_stream(ws,req)
     try{ ws.send(str); } catch(err) { console.error("Websocket error.",err); }
   }
   // intial heartbeat
+  send_heartbeat('initial');
+  
+  // Emit to us when you get a beat
   live_data_emitter.on('emit',send_heartbeat);
+  // Don't emit to us if we close
   ws.on('close',()=>{live_data_emitter.removeListener('emit',send_heartbeat);});
 };
 

@@ -1,8 +1,10 @@
+'use strict';
+
 var gLiveControl = null;
 
 // Automatic runtime configuration.
 $(function(){
-  $('div.A-LiveControl').each(function(){
+  $('div.A-LiveControl').first().each(function(){
     gLiveControl = new LiveControl(this);
   });  
 });
@@ -28,64 +30,55 @@ function LiveControl( element )
   var self=this;
   this.latest_cache_file = "";
 
-  
-  $('#go_livedata',this.element).click(function(){
-    console.log("go_livedata");
-    self.refresh_live(true);
-  });
-  $('#ctl-refresh-auto').click(function(){
-    $(this).parents("div:first").effect("highlight", {}, 5000);
-    self.refresh_live.bind(self)
-  });
-  
-  $('#ctl-refresh-period').change(function() {
-    self.refresh_period = parseFloat($(this).val())*1000;
-  });
-  self.refresh_period = parseFloat($('#ctl-refresh-period').val())*1000;
-  
+  this.refresh_time = 20;
+  this.refresh_time
 
-  // Turn off auto-refresh if we're in keep-up mode, and vice versa.
-  $('#ctl-live-keep-up').click(function(){
-    if($(this).is(":checked")) {
-      $('#ctl-refresh-auto').prop('checked', false);
-      $('#refresh-clock').circleProgress('value', 0);      
-    }
-  });
-  $('#ctl-refresh-auto').click(function(){
-    if($(this).is(":checked")) {
-      $('#ctl-live-keep-up').prop('checked', false);
-    } else {
-      $('#refresh-clock').circleProgress('value', 0);
-    }
-  });
-  
-  
-  $('#refresh-clock').circleProgress({
-      value: 0,
-      thickness: 8,
-      size: $('#refresh-clock').width(),
-      fill: {
-          gradient: ["green"]
+  this.live_visual_clock = $('#live-visual-clock')[0];
+
+
+  var slowest_refresh_speed = 60;
+  var initial_refesh_speed = parseFloat(Cookies.get("save--live-event-update-slider")); // initial from cookie.
+  var handle = $( "#live-event-update-slider-handle" );
+
+  function slidertext(val)
+  {
+     var txt = val+" s";
+     if(val >= slowest_refresh_speed) txt ="Never";
+     if(val <= 0) txt="ALL";
+     handle.text( txt );
+  }
+
+  $("#live-event-update-slider").slider({
+      min: 0,
+      max: slowest_refresh_speed+1,
+      value: initial_refesh_speed,
+      create: function( event, ui) {  slidertext(initial_refesh_speed); },
+      slide: function( event, ui ) {  slidertext(ui.value); },
+      change: function(event, ui) {
+        slidertext(ui.value);
+        Cookies.set("save--live-event-update-slider", ui.value); // Autosave control.
+        var readback = Cookies.get("save--live-event-update-slider");
+       self.ChangeRefreshSpeed(ui.value, (ui.value >= slowest_refresh_speed));
       }
   });
+  // initial change.
+  this.ChangeRefreshSpeed(initial_refesh_speed, initial_refesh_speed >= slowest_refresh_speed);
 
+
+
+  $('.go_livedata').click(this.Refresh.bind(this,true));
+  
   gStateMachine.BindObj("newPiece",this,"NewPiece");
-
 
   // keep-up list:
   this.recent_live_update = {};
+
   // Open the socket.
   this.Reconnect();
-    
-  $('#recentEvents').on('click','span',this.RecentClicked.bind(this));
-  
-  // Start the clock
-  this.time_last_refresh = Date.now();
-  if($('#ctl-refresh-auto').is(":checked")) {
-    this.clockInterval = setInterval(do_clock,1000);    
-  }
-  
+
+  $('.recentEvents').on('click','span',this.RecentClicked.bind(this));    
 }
+
 LiveControl.prototype.Reconnect = function()
 {
   var wsurl = 'ws://'+window.location.host+'/ws/notify-live';
@@ -123,7 +116,7 @@ LiveControl.prototype.OnMessage = function(event)
   console.log("notify-live update",data);
 
   // Update things.
-  var elem = $('#heartbeat-status');
+  var elem = $('.heartbeat-status');
   if(data.heartbeat) {
     if(data.heartbeat.error) {
       elem.text(data.heartbeat.error);    
@@ -146,7 +139,7 @@ LiveControl.prototype.OnMessage = function(event)
   }
   if(data.current_live_event) {
     // keep-up mode:
-    if($('#ctl-live-keep-up').is(":checked")) {      
+    if($('.ctl-live-keep-up').is(":checked")) {      
       if(data.current_live_event != this.recent_cache_file) {
         this.time_last_refresh = Date.now();
         location.reload(); // start again all over...?
@@ -155,56 +148,86 @@ LiveControl.prototype.OnMessage = function(event)
   }
 }
 
-LiveControl.prototype.Refresh = function() 
+LiveControl.prototype.ChangeRefreshSpeed = function(newspeed,never)
 {
-  console.warn("LivecControl::Refresh()",this);
-  var par = {live: 1, reload: 1};
-  if(this.recent_cache_file) { 
-    par.latest_cache = this.latest_cache_file; 
-    par.recent_cache = this.recent_cache_file; 
+  // if newspeed = 0, do every incoming event.
+  // if never = true, never update.
+
+  if(this.clockInterval) clearInterval(this.clockInterval);
+  this.clockInterval = null;
+
+  if(newspeed<=0) {
+    this.refreshing = false; this.keeping_up=true;
+    this.SetPie(0);
+  } else if(never) {
+    this.refreshing = false; this.keeping_up=false;    
+    this.SetPie(0);
+  } else {
+    this.time_last_refresh = Date.now();
+    this.refreshing = true; this.keeping_up=false; this.refresh_period = newspeed*1000; //ms
+    this.clockInterval = setInterval(this.DoClock.bind(this),100);
   }
+} 
+
+
+
+
+
+
+LiveControl.prototype.Refresh = function(force_newest) 
+{
+  // Go get the next event.
+
+  // If there's new data we haven't seen yet, we should go look at that.  
+  // However, it's possible the data is stale: we're shut down, or the backend is crashed. In that case, look through historical stuff.
+// If we're already seen the most recent event
+  console.warn("LivecControl::Refresh()",this);
   this.time_last_refresh = Date.now();
 
-  // window.location.hash = '#' + $.param(par);  // old
-  location.reload();
-}
-
-LiveControl.prototype.refresh_live = function( force ) {
-  console.log("refresh_live","force=",force,"checkbox=",$('#ctl-refresh-auto').is(":checked"));
-
-  // if(this.refreshTimeout) clearTimeout(this.refreshTimeout);
-
-  if($('#ctl-refresh-auto').is(":checked")) {
-    this.clockInterval = setInterval(do_clock,1000);    
-  } else {
-    if(this.clockInterval) {
-      clearInterval(this.clockInterval);
-      $('#refresh-clock').circleProgress('value', 0);
+  var latest_event_seen = Cookies.get("save--latest_event");
+  if(!(force_newest) && this.current_event && this.recent_events && this.recent_events.length>0 && latest_event_seen) {
+    var latest_events = [...this.recent_events].sort().reverse();
+    var latest_event =  latest_events[0];
+    if(latest_event <= latest_event_seen) {
+      // There's nothing new.  Try going through list
+      for(var i=0;i<latest_events.length;i++) {
+        if(this.current_event > latest_events[i] ) {
+          $.bbq.pushState( {what:"json", filename:"live_event_cache/"+latest_events[i]+"/event.json"}, 2 );
+          return;
+        }
+      }
+      // Hmm. nothing, so just continue and pull the most recent again.
     }
   }
-  
-  if($('#ctl-refresh-auto').is(":checked") || force) this.Refresh();
+  // We either don't know or there's new data. Just pull.
+
+  // Push a new state into the hash. dummy changes just to force.
+  var newstate = {
+    what: 'live',
+    dummy: this.time_last_refresh,
+  }
+  $.bbq.pushState( newstate, 2 );
 }
-
-
-LiveControl.prototype.stop_auto_refresh = function()
-{
-  // Highlight to user that we have flipped the switch off.
-  $('#ctl-refresh-auto').parents("div:first").effect("highlight", {}, 5000);
-  $('#ctl-refresh-auto').attr('checked', false);
-}
-
 
 
 LiveControl.prototype.NewPiece = function()
 {
+  if(gRecord.event_descriptor != this.curr_event_descriptor) {
+    this.curr_event_descriptor = gRecord.event_descriptor
 
-  if(!gServing.live_cache_file) return;
-  
-  this.recent_cache_file = gServing.live_cache_file;
-  if(gServing.live_cache_file  > this.latest_cache_file) this.latest_cache_file = gServing.live_cache_file;
-  this.HighlightCurrentInRecent();
-  
+    this.current_event = null;
+
+    var reg = /r(\d*)_s(\d*)_e(\d*)\.event/;
+    var matches = reg.exec(gRecord.event_descriptor || "");
+    if(matches) {
+       this.current_event = matches[0];
+       console.warn("current event ",matches[0]);
+       if(!Cookies.get("save--latest_event")) Cookies.set("save--latest_event",this.current_event); 
+       if(this.current_event > Cookies.get("save--latest_event")) Cookies.set("save--latest_event",this.current_event); 
+    }
+    console.error("NewPiece/NewEvent");
+    this.HighlightCurrentInRecent();  
+  }
 }
 
 
@@ -215,16 +238,20 @@ LiveControl.prototype.ShowRecent = function()
   
   var h = "";
   var reg = /r(\d*)_s(\d*)_e(\d*)/
-  for(var i=this.recent_events.length-1;i>=0;i--) {
-    var matches = reg.exec(this.recent_events[i]);
+  for(var item of this.recent_events) {
+    var matches = reg.exec(item);
     if(matches) {
       var ev = parseInt(matches[1]) + "|" + parseInt(matches[2]) + "|" + parseInt(matches[3]);
-      h+= '<span data-event="'+ this.recent_events[i] + '">' + ev + '</span> ';      
+      var link = "#what=json&filename=live_event_cache/"+item+"/event.json";
+      h+= '<a '
+        + 'href="'+link+'"'
+        + ' data-event="'+ item + '">' + ev + '</a> ';  
     } else {
-      console.error("What the hell is this directory? ",this.recent_events[i]);
+      console.error("What the hell is this directory? ",item);
     }
   }
-  $('#recentEvents').html(h);
+  $('.recentEvents').html(h);
+  console.error("ShowRecent");
   this.HighlightCurrentInRecent();
   
 }
@@ -243,51 +270,55 @@ LiveControl.prototype.RecentClicked = function(ev)
   console.log(eventstr);
 }
 
+
 LiveControl.prototype.HighlightCurrentInRecent = function()
 {
-  $('#recentEvents span').removeClass('current-event-highlight');
-  if(gServing)
-    $('#recentEvents span[data-event="'+ gServing.live_cache_file +'"]').addClass('current-event-highlight');
-  
-  
+  var recentbox = $('.recentEvents');
+  $('.current-event-highlight',recentbox).removeClass('current-event-highlight');
+  var cur = $('a[data-event="'+this.current_event +'"]',recentbox);
+  cur.addClass('current-event-highlight');
+  if(cur.length<0) console.error("nothing yet");
+  recentbox.scrollTo( cur, 1000, {
+       interrupt:true, 
+      offset:-recentbox.width()/2, 
+      //limit:false
+      } 
+    );  // https://github.com/flesler/jquery.scrollTo
+  // if(cur.length>0){
+  //   cur.addClass('current-event-highlight');
+  //   // is it in the scroll area?
+  //   var pos = cur.offset().left;
+  //   var outer = recentbox.offset().left;
+  //   var prev = recentbox[0].scrollLeft;
+  //   // console.error(cur[0],"offsetLeft",abox,"scrollLeft",$(".recentEvents")[0].scrollLeft);
+  //   recentbox[0].scrollLeft += (pos - outer) - recentbox.width()/2;
+
+  // } else {
+  //   console.error("no current event in list.")
+  // }
+
 }
 
 
+LiveControl.prototype.SetPie = function(frac) {
+  // CSS trickery. Don't even attempt to understand it; it just works to make my pie chart move.
+  $('.filler',this.live_visual_clock).css("opacity",(frac>0.5)?1:0);
+  $('.mask',this.live_visual_clock).css("opacity",(frac>.5)?0:1);
+  $('.spinner',this.live_visual_clock).css("transform","rotate("+frac*360+"deg)");  
+}
 
-function do_clock()
+LiveControl.prototype.DoClock = function()
 {
-  if($('#ctl-refresh-auto').is(":checked")) {
-    var time_spent = Date.now() - gLiveControl.time_last_refresh;
-    var frac =time_spent / gLiveControl.refresh_period;
-    if(frac > 1 ) gLiveControl.refresh_live(false);
-    $('#refresh-clock').circleProgress('value', frac);    
+  if(this.refreshing) {
+    var time_spent = Date.now() - this.time_last_refresh;
+    var frac =time_spent / this.refresh_period;    
+    if(frac>1) {
+      this.Refresh();
+      frac=0;
+    }
+    this.SetPie(frac);
+  } else {
+    this.SetPie(0);
   }
-
-  // clockface('#refresh-clock',frac);
 }
-
-
-// function clockface(elem,frac) {
-//   // CSS cleverness.  Take 'elem' as object or as jquery specifyier.  Take 'frac' as fraction filled.
-//   // Element must have width,height set (as equal usually). You can change color by setting background-color and color on the object by css or style.
-//   var e = $(elem);
-//   var color1 = e.css('background-color');
-//   var color2 = e.css('color');
-//   // var color2 = "black";
-//   $(elem).css('border-radius','50%');
-//   // $(elem).css('border','1px solid '+color2);
-//   if(frac<0.5) {
-//     var angle2 = (frac*360 + 90);
-//     angle2 += 'deg';
-//     console.log('less',angle2);
-//     e.css('background-image',
-//     'linear-gradient(90deg,'+color1+'50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0)),linear-gradient('+angle2+','+color2+' 50% ,'+color1+' 50%, '+color1+')');
-//   } else {
-//     var angle1 = Math.round((frac-0.5)*360 - 90);
-//     angle1 += 'deg';
-//     console.log('more',angle1);
-//     e.css('background-image','linear-gradient('+angle1+','+color2+' 50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0)),linear-gradient(270deg,'+color2+' 50% ,'+color1+' 50%, '+color1+')');
-//    }
-//
-// }
 

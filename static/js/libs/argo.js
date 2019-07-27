@@ -361,7 +361,7 @@ function SaveAControl(el,slot)
     val = el.id;
   } 
   if(input.is(":checkbox")) val = input.is(":checked");
-  $.cookie(slot+":"+id,val);
+  Cookies.set(slot+"--"+id,val);
   console.log("Saved control",id,val);
 }
   
@@ -391,14 +391,14 @@ function SaveSettings( slot ) {
     else                                         unhidden_list.push(this.id);
   });
 
-  $.cookie(slot+":hidden-portlets",     hidden_list.join(","),{expires: expdate});
-  $.cookie(slot+":unhidden-portlets", unhidden_list.join(","),{expires: expdate});
+  Cookies.set(slot+"--hidden-portlets",     hidden_list.join(","),{expires: expdate});
+  Cookies.set(slot+"--unhidden-portlets", unhidden_list.join(","),{expires: expdate});
   // console.log("saving ","hidden-portlets",hidden_list.join(","));
   // console.log("saving ","unhidden-portlets",unhidden_list.join(","));
   
   // Save portlet positions.
   $(".dock").each(function(){
-    $.cookie(slot+":dock:"+this.id,
+    Cookies.set(slot+"--dock--"+this.id,
               $(this).sortable("toArray")
               ,{expires: expdate});
     // console.log("saving ","dock:"+this.id,$(this).sortable("toArray"));
@@ -424,7 +424,7 @@ function RestoreControlSettings( slot, elements, suppress_change_event ) {
   $(".saveable",elements).each(function(){
     var changed = false;
     if($(this).is(':radio')){
-      val = $.cookie(slot+':'+$(this).attr('name'));
+      val = Cookies.get(slot+'--'+$(this).attr('name'));
       if(val == this.id)
         if(!$(this).is(":checked")) { 
           $(this).prop("checked",true); changed = true;
@@ -432,7 +432,7 @@ function RestoreControlSettings( slot, elements, suppress_change_event ) {
           
         }
     } else {
-      var val = $.cookie(slot+":"+this.id);    
+      var val = Cookies.get(slot+"--"+this.id);    
       if(val!=null){
         // console.log("restoring:",this.id,val);
         if($(this).is(':checkbox')){
@@ -462,8 +462,8 @@ function RestoreSettings( slot, context, suppress_change_event ) {
   // console.log("RestoreSettings, slot=",slot);
   if(!context) context = $('body');
   // see ideas at http://www.shopdev.co.uk/blog/sortable-lists-using-jquery-ui/
-  var hidden_list_str   = $.cookie(slot+":hidden-portlets");
-  var unhidden_list_str = $.cookie(slot+":unhidden-portlets");
+  var hidden_list_str   = Cookies.get(slot+"--hidden-portlets");
+  var unhidden_list_str = Cookies.get(slot+"--unhidden-portlets");
   if(!hidden_list_str  ) hidden_list_str = "";
   if(!unhidden_list_str) unhidden_list_str = "";
   var hidden_list = hidden_list_str.split(',');
@@ -494,7 +494,7 @@ function RestoreSettings( slot, context, suppress_change_event ) {
    // console.log("RestoreSettings, slot=",slot);
    // The hard part: rebuilding the docks.
    $(".dock",context).each(function(){
-     var cval = $.cookie(slot+":dock:"+this.id);
+     var cval = Cookies.get(slot+"--dock--"+this.id);
      // console.log("evaluating cookie","dock:"+this.id,cval);
      if(!cval ) return;
      var list = cval.split(',');
@@ -540,10 +540,10 @@ $(function(){
   // Clear all cookies.
   $("#ctl-restore-defaults").button();
   $(".ctl-restore-defaults,#ctl-restore-defaults").click(function(){
-    var Cookies = $.cookie();
-    for (key in Cookies) {
+    var cookies = Cookies.get();
+    for (key in cookies) {
       console.log("removing "+ key);
-      $.removeCookie(key);
+      Cookies.remove(key);
     }
     location.reload();
     // myGrowl('Configuration restored to default.','(Reload to move windows to original positions')
