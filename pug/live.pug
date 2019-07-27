@@ -6,6 +6,7 @@ block headerscript
   script(type='text/javascript') 
       |gPageName="#{pagename}-live";
       |gDetector="uboone";
+  css
 
 block control-file-navigation
   div Backend Heartbeat:
@@ -28,10 +29,11 @@ block control-file-navigation
 
 
 block content
-        #display-zone(style='display:flex; width:100%; align-items: stretch;')
-          #live-rightbar2(style='flex: 1 auto; pading: 20px; min-width: 100px;')
+        #display-zone(style='display:flex; width:100%; align-items: stretch; margin-top:150px;')
+          #content-right.dock
+            //- #live-rightbar2(style='flex: 1 auto; pading: 20px; min-width: 100px;')
             +portlet('trigger-info-port',"Trigger/Laser Info")
-              .A-EventInfo
+              .A-EventInfo(style="height:150px")
                      table.eventinfo
                         tbody
                           tr
@@ -45,7 +47,7 @@ block content
                             td.val.event-swtriggernames
                           tr
                             td.key Laser
-                            td.val.event-laser-info -
+                            td.event-laser-info 
             // portlet 
             include inc/FalseColorControl 
             include inc/WireInfo 

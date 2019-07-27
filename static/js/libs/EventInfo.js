@@ -110,7 +110,7 @@ EventInfo.prototype.NewPiece = function()
         $(".event-triggernames").text(trignames.join(", "));
       }
       if(trig.sw_triggers) {
-        $(".event-swtriggernames").text(trig.sw_triggers.join(","));
+        $(".event-swtriggernames").text(trig.sw_triggers.join(", "));
       }
     }
     $(".event-daqversion").text(gRecord.header.DAQVersionLabel + gRecord.header.DAQVersionQualifiers); 
@@ -166,6 +166,8 @@ EventInfo.prototype.NewPiece = function()
       txt+="</table>";
     }
     $(".event-laser-info").html(txt);
+  } else {
+    $(".event-laser-info").text("(none)");
   }
   
   var hv = "unknown";
