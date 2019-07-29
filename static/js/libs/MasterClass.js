@@ -1,3 +1,5 @@
+"use strict";
+
 // Hoverstate should also hold "channel" and "sample" if it relates to a specific wire.
 
 // Hover Info box, which appears as a regular Portlet.
@@ -44,7 +46,7 @@ function MasterClass(  )
     gStateMachine.Trigger("hitSumClear"); // update view
     self.selecthit_tracking = true;
     self.selecthit_which = 0;
-    var h = "<table><tr><td class='t1'></td><td class='t2'></td></tr><tr><th>t1</th><th>t2</th></tr></table>";
+    var h = "<table><tr><td class='t1'></td><td class='t2'></td><td class='trkid'></td></tr><tr><th>t1</th><th>t2</th><th>Track ID</th></tr></table>";
     $(self.element).html(h);
     $(this).addClass("mc_strobing");
   });
@@ -70,8 +72,12 @@ MasterClass.prototype.SelectChange = function()
     if(this.selecthit_which == 0){
       $("td.t1",this.element).html(gSelectState.obj.t);
       this.selecthit_which++;
+      var trkid = HitToTrackIndex(gSelectState.obj);
+      if(trkid) $("td.trkid",this.element).text(trkid)
     } else {
       $("td.t2",this.element).html(gSelectState.obj.t);
+      var trkid = HitToTrackIndex(gSelectState.obj);
+      if(trkid) $("td.trkid",this.element).text(trkid)
       this.selecthit_which++;
       this.selecthit_tracking = false;
       $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
@@ -264,5 +270,23 @@ MasterClass.prototype.DoubleClick = function (s)
 };
 
 
+
+function HitToTrackIndex(hit)
+{
+  // Function to get the track number associated with a hit. Useful in a couple of places.
+  var hitname   =hit._owner;
+  var assns =  (((gRecord||{}).associations||{})[hitname]||{});
+  var trackname = GetSelectedName("tracks");  //look for the currently-selected tracks.
+  var track_assn = assns[trackname];
+  if(!trackname || !track_assn) {  // Maybe the current hits aren't associated with current tracks? If so, look for a track that IS associated.
+    // that association not loaded, or tracks selected name not valid.
+    for(var nm in assns) {
+      if (nm.match(/^recob::Tracks_/)  ) { track_assn = assns[nm]; break; }
+    }
+  }
+  if(!track_assn) return undefined;
+  var trks = track_assn[hit._idx] || [];
+  if(trks.length > 0) return trks[0];
+}
 
 
