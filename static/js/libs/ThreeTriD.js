@@ -477,7 +477,7 @@ function ThreeTriD(element, options )
 ThreeTriD.prototype.ZoomChange = function()
 {
   this.orbit_controls.target.copy(gZoomRegion.getCenter());
-  this.UpdateWireImage();
+  this.UpdateWireimg();
 }
 
 
