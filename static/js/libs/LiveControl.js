@@ -37,7 +37,7 @@ function LiveControl( element )
 
 
   var slowest_refresh_speed = 60;
-  var initial_refesh_speed = parseFloat(Cookies.get("save--live-event-update-slider")); // initial from cookie.
+  var initial_refesh_speed = parseFloat(Cookies.get("save--live-event-update-slider")||slowest_refresh_speed+1); // initial from cookie.
   var handle = $( "#live-event-update-slider-handle" );
 
   function slidertext(val)
