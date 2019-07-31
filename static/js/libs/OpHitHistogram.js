@@ -194,13 +194,15 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
   var i;
+  var ppulses;
+   var ophits;
   if(this.hist) {
     if(gHoverState.type == "opdet") {
       this.SetHist(this.hist,this.blandColorScale);
       // new histogram 
       this.highlight_hist = new Histogram(this.hist.n,this.hist.min,this.hist.max);
       
-      var ophits = GetSelected("ophits"); 
+      ophits = GetSelected("ophits"); 
       if(this.input == "ophits"  && ophits.length>0) {
         console.log("one pmt hist", ophits.length,gHoverState.obj);
         
@@ -213,9 +215,8 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
               this.highlight_hist.Fill(oh[gOpMode.hitVariable]*gOpMode.hitVariableScale);          
           }
         }
-      } else if (gRecord.oppulses && GetSelectedName("oppulses")) { // pulses
-        
-        var oppulses = gRecord.oppulses[GetSelectedName("oppulses")];      
+      } else if( oppulses = GetSelected("oppulses")) {        
+        var oppulses = GetSelected("oppulses");
         if(oppulses && oppulses.length) {
           for(i=0;i<oppulses.length;i++) {
             var p = oppulses[i];
@@ -234,8 +235,7 @@ OpHitHistogram.prototype.ResetAndDraw = function( )
       
     } else {
       this.SetHist(this.hist,gOpColorScaler);
-
-      
+ 
     }
   }
   

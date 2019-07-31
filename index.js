@@ -485,6 +485,7 @@ app.ws('/wss/notify-live', attach_notify_live_stream);
 async function attach_notify_live_stream(ws,req)
 {
   function send_heartbeat(reason) {
+    if(!ws.readyState != ws.OPEN) return; // This socket is closing or in error; it may take a while to terminate.
     var o = {};
     o.reason=reason;
     o.heartbeat = current_heartbeat;
@@ -503,6 +504,8 @@ async function attach_notify_live_stream(ws,req)
   live_data_emitter.on('emit',send_heartbeat);
   // Don't emit to us if we close
   ws.on('close',()=>{live_data_emitter.removeListener('emit',send_heartbeat);});
+  ws.on('error',()=>{ws.close()});
+
 };
 
 
@@ -546,7 +549,7 @@ app.post("/live-event-upload",
       // if we are responsible for this data, clean the cache (in a few mssec)
       setTimeout(cleanLiveEventCache, 0);
     }
-    recent_live_events.push()
+    recent_live_events.push(current_live_event);
     live_data_emitter.emit('emit','newevent');
 
   }
@@ -566,10 +569,14 @@ function cleanLiveEventCache()
         // Remove from list of recent results, if it's there.
         var idx = recent_live_events.indexOf(basename);
         if(idx>-1) recent_live_events.splice(idx,1);
+        else {
+          console.error("Couldn't find ", basename, " in array of recent live events:", recent_live_events);
+        }
+        console.log("new array of recent live events is",recent_live_events);
 
         // Remove the file.
         var pathname = path.join(config.live_event_cache,basename);
-        rimraf(pathname,console.error); // rimraf does rm -rf
+        rimraf(pathname,(err)=>{if(err) console.error;}); // rimraf does rm -rf
       }
 
   });
