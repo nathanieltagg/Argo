@@ -178,7 +178,10 @@ function ThreeTriD(element, options )
     .button({icons: {primary: 'ui-icon-seek-first'},text: false})          
     .click(function(ev){
       self.StopAnimations();
-      resetCamera(true);});
+      $("input.trid-model-wipe").val(-1000);
+      self.UpdateFullModel();
+      resetCamera(true);
+    });
 
   $(".trid-ctl-mouse-set"     ,parent)
       .buttonset({icons: {primary: 'ui-icon-seek-first'},text: false});
@@ -411,6 +414,9 @@ function ThreeTriD(element, options )
   gStateMachine.Bind('toggle-spacepoints', this.UpdateVisibilities.bind(this) );  
   $(this.ctl_track_shift)       .change( this.UpdateSpacepoints.bind(this) );
   
+  // flashes
+  gStateMachine.Bind('change-opflashes', this.CreateFlashes.bind(this) );  
+  gStateMachine.Bind('toggle-opflashes', this.UpdateVisibilities.bind(this) );  
 
     // mc
   gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
@@ -418,6 +424,7 @@ function ThreeTriD(element, options )
   this.GetBestControl(".show-mc-neutrals") .change(this.UpdateMC.bind(this) );
   this.GetBestControl(".ctl-mc-move-tzero").change(this.UpdateMC.bind(this) );
   gStateMachine.Bind('toggle-mcparticles',this.UpdateVisibilities.bind(this) ); 
+
 
 
   // controls.
@@ -1083,6 +1090,7 @@ ThreeTriD.prototype.UpdateVisibilities = function()
   setVis(this.spacepoints_group  ,   ".show-spacepoints");
   setVis(this.showers_group  ,   ".show-showers");
   setVis(this.user_track_group  ,   ".dEdX-Path");
+  setVis(this.opflashes_group  ,   ".show-opflashes");
 
   this.dirty=true;
   this.Render();
@@ -1200,6 +1208,73 @@ ThreeTriD.prototype.UpdateSpacepoints = function()
   this.dirty=true;
   this.Render();
 }
+
+///////////////////////////
+// Spacepoints
+///////////////////////////
+ThreeTriD.prototype.CreateFlashes = function()
+{
+  var opflashes = GetSelected("opflashes");
+  if(!opflashes.length) return;
+
+  if(this.opflashes_group) {
+    this.scene.remove(this.opflashes_group);
+    for(var thing of this.opflashes_group.children) {
+      thing.geometry.dispose(); // delete old ones.
+      thing.material.dispose();
+    }
+  }
+  
+  this.opflashes_group = new THREE.Group();
+  this.opflash_geo      = this.opflash_geo || new THREE.CylinderBufferGeometry(1,1,1,32);
+  this.opflash_geo.rotateZ(Math.PI/2); // turn on it's side;
+  this.opflash_hover_material = this.opflash_hover_material  || new THREE.MeshBasicMaterial({color: 0x0f0f00, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+  this.opflash_select_material= this.opflash_select_material || new THREE.MeshBasicMaterial({color: 0x5f5f00, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+
+  for(var flash of opflashes) {
+     var material = new THREE.MeshBasicMaterial({color: 0x000f00, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+     var mesh = new THREE.Mesh(this.opflash_geo,this.opflash_material );
+     mesh.position.y = flash.yCenter;
+     mesh.position.z = flash.zCenter;
+     mesh.scale.y = flash.yWidth/2;
+     mesh.scale.z = flash.zWidth/2;
+     var x1 = gGeo3.getXofTDC(0,2,flash.time*2); // 2 ticks per us
+     var x2 = x1+gGeo3.getTpc(0).halfwidths[0]*2;
+     // mesh.position.x = (x1+x2)/0.5;
+     // mesh.scale.x = x2-x1;
+     mesh.position.x = Math.max(Math.min(flash.time,30),-10); // shuffle them around a bit to show time dependence.
+     mesh.scale.x = 10;
+     mesh.name = flash._pointer;
+     mesh.userData = {
+      default_material:material, 
+      hover_material:  this.opflash_hover_material,
+      select_material: this.opflash_select_material,      
+    }
+    this.opflashes_group.add(mesh);
+  }
+
+  this.scene.add( this.opflashes_group );   
+  this.UpdateFlashes();
+};
+
+ThreeTriD.prototype.UpdateFlashes = function()
+{
+
+  for(var mesh of this.opflashes_group.children || [] ) {
+    var flash = jsonpointer.get(gRecord,mesh.name);
+    if(!flash) continue;
+    var c = gOpFlashColorScaler.GetColor(flash.totPe);
+    // mesh.material.userData.default_material.color = "rgb("+c+")";
+    mesh.userData.default_material.needsUpdate = true;
+  }
+  this.UpdateVisibilities();
+  this.dirty=true;
+  this.Render();
+};
+
+
+
+
 ThreeTriD.prototype.HoverAndSelectionChange_Spacepoints = function()
 {
   // Draw or remove  highlight points.
