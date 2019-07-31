@@ -476,16 +476,23 @@ var current_live_event = recent_live_events.slice(-1)[0];
 var live_data_emitter = new events.EventEmitter();
 
 setInterval(()=>{
+  console.log("Sending heartbeats...");
   current_heartbeat.server_time = Date.now();
-  live_data_emitter.emit("emit",'interval');}
+  live_data_emitter.emit("emit",'interval');
+}
   ,5000);
 
 app.ws('/ws/notify-live',  attach_notify_live_stream);
 app.ws('/wss/notify-live', attach_notify_live_stream);
+
 async function attach_notify_live_stream(ws,req)
 {
+  console.log("attaching to notify-stream",req.ip)
   function send_heartbeat(reason) {
-    if(!ws.readyState != ws.OPEN) return; // This socket is closing or in error; it may take a while to terminate.
+    if(ws.readyState != 1) { // 1 is WebSocket.OPEN
+      console.log('notify-stream not open',ws);
+      return; // This socket is closing or in error; it may take a while to terminate.
+    }
     var o = {};
     o.reason=reason;
     o.heartbeat = current_heartbeat;
@@ -495,7 +502,11 @@ async function attach_notify_live_stream(ws,req)
     o.current_live_event = current_live_event;
 
     var str = JSON.stringify(o);
-    try{ ws.send(str); } catch(err) { console.error("Websocket error.",err); }
+    try{ 
+      ws.send(str);
+      console.log("sent data to",req.ip); 
+    } catch(err) { console.error("Websocket error.",err); }
+
   }
   // intial heartbeat
   send_heartbeat('initial');
@@ -503,6 +514,7 @@ async function attach_notify_live_stream(ws,req)
   // Emit to us when you get a beat
   live_data_emitter.on('emit',send_heartbeat);
   // Don't emit to us if we close
+  ws.on('message',(ev)=>{console.log("notify-live mesg:",ev); send_heartbeat('requested');});
   ws.on('close',()=>{live_data_emitter.removeListener('emit',send_heartbeat);});
   ws.on('error',()=>{ws.close()});
 
