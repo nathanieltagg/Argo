@@ -32,8 +32,8 @@ StaticComposer.prototype.dispatch_piece = function(piecename)
   var _type = a[1];
   var _name = a[2];
   var p = null;
-  console.log("piece:",piecename,_type,_name);
-  console.log('doc',Object.keys(this.doc));
+  // console.log("piece:",piecename,_type,_name);
+  // console.log('doc',Object.keys(this.doc));
   if(this.doc[_type]){
     if(_name && this.doc[_type][_name]) {
       p = {}; 
@@ -44,10 +44,10 @@ StaticComposer.prototype.dispatch_piece = function(piecename)
       p[_type]=this.doc[_type];
     }
   }
-  console.log("piece p",p);
+  // console.log("piece p",p);
   if(p) {
     var out = {event_descriptor:this.event_descriptor, piece:p};
-    console.log("sending piece:",out);
+    // console.log("sending piece:",out);
     this.do_output(JSON.stringify(out));
   }
 }
@@ -84,7 +84,7 @@ StaticComposer.prototype.composeIncremental = function(req,end_callback,output_c
   if(req.filename) {
     this.do_output(JSON.stringify({progress:0,state:"Looking for file "+req.filename}));
     fs.readFile(req.filename,(err,data)=>{
-      console.log("readfile came back",err,data);
+      // console.log("readfile came back",err,data);
       if(err) {
         end_callback(JSON.stringify({error:"Couldn't read file "+req.filename}));
         return;
@@ -231,7 +231,7 @@ var test1 = function(filename){
 
   var composer = new addon.Composer(config);
 
-  console.log(composer);
+  console.log("New Composer created",composer);
 
   var request= {
     "filename":filename,

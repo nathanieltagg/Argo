@@ -63,7 +63,7 @@ function ThreePad(element, options )
     margin_top : 5,
     margin_right : 5,
     margin_left : 5,
-    bg_color : bgcolor_str,
+    bg_color : "255,255,255",
     draw_box : true,
     draw_axes : true,
     draw_ticks_x:true,
@@ -96,7 +96,6 @@ function ThreePad(element, options )
     
   $(element).addClass("threepad");
   $(this.element).css("position","relative");
-  
   // Initial sizing.
   this.width  = $(this.element).width();
   this.height = $(this.element).height();
@@ -160,7 +159,6 @@ function ThreePad(element, options )
                          self.Render();
                          });         
   $('#ctl-magnifying-glass').on('change',this.Render.bind(this));
-  
 
 
   // mouse callbacks.
@@ -171,11 +169,10 @@ function ThreePad(element, options )
     $(this.element).on('mousedown.' +this.NameSpace, fn);
     $(this.element).on('mouseenter.'+this.NameSpace, fn);
     $(this.element).on('mouseout.'  +this.NameSpace, fn);
-    $(window)      .on('mousemove.' +this.NameSpace, fn);
-    $(window)      .on('mouseup.'   +this.NameSpace, fn);
+    // $(window)      .on('mousemove.' +this.NameSpace, fn);
+    // $(window)      .on('mouseup.'   +this.NameSpace, fn);
     $(this.element).on('wheel.'+this.NameSpace, fn);//function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
   }
-
   $(this.element).on('touchstart.'+this.NameSpace, fn);
   $(this.element).on('touchend.'  +this.NameSpace, fn);
   $(this.element).on('touchmove.' +this.NameSpace, fn);
@@ -361,11 +358,21 @@ ThreePad.prototype.MouseCallBack = function(ev)
   this.dirty = false;  // flag that tells us if we need a draw or not.
 
 
+  if(ev.type === 'mousedown') {
+    // Start tracking mouse move events.
+    $(window).on('mousemove.' +this.NameSpace, this.MouseCallBack.bind(this));
+    $(window).on('mouseup.'   +this.NameSpace, this.MouseCallBack.bind(this));
+  } else if(ev.type === 'mouseup' ) {
+    $(window).off('mousemove.' +this.NameSpace);
+    $(window).off('mouseup.'   +this.NameSpace);
+  }
+
+
   if( (ev.type === 'mousemove' || ev.type === 'touchenter') &&
       ( ! this.fMouseInContentArea ) &&
       ( ! ev.which ) ) {
     // mouse move without buttons outside the content area. This is not relevant.
-    return;  
+    return false;  
   } 
 
   if(ev.type === 'mouseenter' || ev.type === 'touchenter') { 

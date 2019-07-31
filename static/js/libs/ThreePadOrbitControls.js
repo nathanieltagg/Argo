@@ -87,15 +87,17 @@ ThreePadOrbitControls = function ( object, domElement ) {
 	//
 
 	this.getPolarAngle = function () {
-
 		return spherical.phi;
-
 	};
 
 	this.getAzimuthalAngle = function () {
-
 		return spherical.theta;
+	};
 
+	this.setAngles = function(theta,phi) {
+		spherical.phi = phi;
+		spherical.theta = theta;
+		scope.update(true,{theta:theta,phi:phi});
 	};
 
 	this.saveState = function () {
@@ -123,18 +125,18 @@ ThreePadOrbitControls = function ( object, domElement ) {
 
 	// this method is exposed, but perhaps it would be better if we can make it private...
 	this.update = function () {
-
 		var offset = new THREE.Vector3();
 
+
 		// so camera.up is the orbit axis
-		var quat = new THREE.Quaternion().setFromUnitVectors( object.up, new THREE.Vector3( 0.01, 1, 0 ).normalize() );
+		var quat = new THREE.Quaternion().setFromUnitVectors( object.up, new THREE.Vector3( 0, 1, 0 ).normalize() );
 		var quatInverse = quat.clone().inverse();
 
 
 		var lastPosition = new THREE.Vector3();
 		var lastQuaternion = new THREE.Quaternion();
 
-		return function update(force) {
+		return function update(force,forceangles) {
 
 			var position = scope.object.position;
 
@@ -154,6 +156,12 @@ ThreePadOrbitControls = function ( object, domElement ) {
 
 			spherical.theta += sphericalDelta.theta;
 			spherical.phi += sphericalDelta.phi;
+			if(forceangles) {
+				spherical.theta = forceangles.theta;
+				spherical.phi   = forceangles.phi;
+				// console.log("force angles",forceangles, spherical.theta,spherical.phi);
+			}
+
 
 			// restrict theta to be between desired limits
 			spherical.theta = Math.max( scope.minAzimuthAngle, Math.min( scope.maxAzimuthAngle, spherical.theta ) );

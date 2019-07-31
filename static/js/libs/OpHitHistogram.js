@@ -190,6 +190,7 @@ OpHitHistogram.prototype.HoverChange = function()
 
 OpHitHistogram.prototype.ResetAndDraw = function( )
 {
+  if(!gRecord) return;
   this.log_y = $(this.ctl_histo_logscale).is(":checked");
   
   var i;

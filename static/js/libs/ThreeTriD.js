@@ -18,6 +18,7 @@
 
 
 
+
 var gThreeTriD = null;
 
 $(function(){
@@ -72,6 +73,9 @@ function ThreeTriD(element, options )
   this.viewport=this.renderer.domElement;
 
 
+  this.default_camera_position = new THREE.Vector3(-1000,300,50);
+
+
   // Create a new Three.js scene
   this.scene = new THREE.Scene();
 	this.scene.background = new THREE.Color( 0xffffff );
@@ -85,7 +89,7 @@ function ThreeTriD(element, options )
   this.perspective_camera.position.set( -1000, 300, 50 );
   this.scene.add(this.perspective_camera);
 
-  this.orthographic_camera = new THREE.OrthographicCamera( -1000, 1000, -1000,1000, -10000, 10000 );
+  this.orthographic_camera = new THREE.OrthographicCamera( -550, 550, -500,500, -10000, 10000 );
   this.orthographic_camera.position.set( -1000, 300, 50 );
   this.scene.add(this.orthographic_camera);
    
@@ -99,235 +103,15 @@ function ThreeTriD(element, options )
   this.scene.add(this.camera);
   // this.camera.position.set( 0, 0, 1300 );
 	this.camera.position.set( -1000, 300, 50 );
+  this.camera.rotation.z = Math.PI/2;
   this.Resize();  // creates or recreates the camera depending on dom size.
  
 
 
   this.orbit_controls = new ThreePadOrbitControls(this.camera,this.viewport);
 
-  // function changeCamera(isPerspective) {
-  //   var oldCamera = self.camera;
-  //   if(isPerspective===false) self.camera = self.orthographic_camera;
-  //   else                      self.camera = self.perspective_camera; // default
-  //   if(oldCamera != self.camera) {
-  //     // Camera changed.
-  //     self.orbit_controls.object = self.camera;
-  //     if(isPerspective===false) {
-  //       // Change the ortho camera to match current view of othro. good notes at https://stackoverflow.com/questions/48758959/what-is-required-to-convert-threejs-perspective-camera-to-orthographic
-  //       // depth:
-  //       var sightline_vec = new THREE.Vector3();
-  //       oldCamera.getWorldDirection(sightline_vec);
-  //       var camera_to_target = self.orbit_controls.target.clone();
-  //       camera_to_target.sub(oldCamera.position);
-  //       var depth = camera_to_target.dot(sightline_vec);
 
-  //       var height_ortho = depth*2*Math.atan( oldCamera.fov*(Math.PI/180) /2 );
-  //       var width_ortho = height_ortho / oldCamera.aspect;
-  //       self.orthographic_camera.left  = width_ortho/-2;
-  //       self.orthographic_camera.right = width_ortho/2;
-  //       self.orthographic_camera.top   = height_ortho/2;
-  //       self.orthographic_camera.bottom= height_ortho/-2;
-  //       // debugger;
-  //     }
-  //     self.camera.position.copy(oldCamera);
-  //     self.camera.quaternion.copy( oldCamera.quaternion ); 
-  //     // self.camera.position.set(-1e9,-1e9,-1e9); // Goose position to make sure the orbitcontrols reset.
-  //     self.orbit_controls.object = self.camera;
-  //     self.orbit_controls.enableRotate = true;
-  //     self.orbit_controls.target0 = self.orbit_controls.target.clone();
-  //     self.orbit_controls.position = self.orbit_controls.object.position.clone();
-  //     self.orbit_controls.zoom0 = self.orbit_controls.object.zoom;
-
-  //     self.orbit_controls.update(true);
-
-  //   }
-  //   // self.camera.position.copy(oldCamera.position);
-  //   // self.camera.matrix.copy(oldCamera.matrix.clone());
-  // }
-  function resetCamera(isPerspective) {
-    self.camera = self.perspective_camera;
-    self.orbit_controls.target.set(0,0,0);
-    self.camera.position.set( -1000, 300, 50 );
-    self.orbit_controls.setScale(1.0);
-    // Center on the middle-numbered TPC, rounded down. that's 0 for microboone, 6 for protodune.
-    var tpc = gGeo3.getTpc((Math.floor(gGeo3.numTpcs()/2)));
-    self.orbit_controls.target.set(...tpc.center);
-    resetOrbitControls(true);
-    self.orbit_controls.update();
-    self.Render();
-  }
-
-  function resetOrbitControls(enableRotate) 
-  {
-      self.orbit_controls.object = self.camera;
-      self.orbit_controls.enableRotate = enableRotate;
-      self.orbit_controls.target0 = self.orbit_controls.target.clone();
-      self.orbit_controls.position = self.orbit_controls.object.position.clone();
-      self.orbit_controls.zoom0 = self.orbit_controls.object.zoom;
-  }
-
-  function setView(mode)
-  {
-    if(mode=="3D") { 
-      self.camera = self.perspective_camera;
-      resetOrbitControls(true);
-      self.orbit_controls.update(); 
-      return; 
-    }
-
-    if(mode=="XY") {
-      self.camera = self.orthographic_camera;
-      self.camera.position.set(0,0,-1000);
-      self.camera.rotation.set(0,0,0);
-      self.camera.quaternion.set(0,0,0,1);
-      self.camera.updateMatrixWorld(true);
-      self.orbit_controls.target.set(0,0,500);
-      resetOrbitControls(false);
-      self.orbit_controls.update();
-      return;
-    }
-    if(mode=="YZ") {
-      self.camera = self.orthographic_camera;
-      self.camera.position.set(-500,0,500);
-      self.camera.rotation.set(0,0,1.57);
-      self.camera.quaternion.set(0,0,0,1);
-      self.camera.updateMatrixWorld(true);
-      self.orbit_controls.target.set(0,0,500);
-      resetOrbitControls(false);
-      self.orbit_controls.update();
-      return;
-    }
-    if(mode=="XZ") {
-      self.camera = self.orthographic_camera;
-      self.camera.position.set(0,500,500);
-      self.camera.rotation.set(0,1.57,0);
-      self.camera.quaternion.set(0,0,0,1);
-      self.camera.updateMatrixWorld(true);
-      self.orbit_controls.target.set(0,0,500);
-      resetOrbitControls(false);
-      self.orbit_controls.update();
-      return;
-    }
-
-  }
-
-
-	this.orbit_controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-  this.orbit_controls.dampingFactor = 0.25;
-	this.orbit_controls.screenSpacePanning = false;
-	this.orbit_controls.minDistance = 100;
-	this.orbit_controls.maxDistance = 3000;
-	this.orbit_controls.maxPolarAngle = Math.PI ;
-  resetCamera(true);
-
-
-  // this.DrawOverlay();
-  // this.overlay_dirty = true;
-  // Object picking via raycaster.
-  this.raycaster = new THREE.Raycaster();
-  
-  if(this.animate) {
-    // Render is a no-op. Instead, we animate!
-    this.AnimationRender();
-  }
-  else {
-    this.Render = this.DoRender;  
-  }
-  this.orbit_controls.addEventListener( 'change', this.Render.bind(this)  );
-  
-  // Resizing.
-  $(this.element).resize(function(ev){
-                         self.Resize(); 
-                         self.Render();
-                         });         
-  $(this.element).on('mousemove.' +this.NameSpace, this.MouseCallBack.bind(this));
-  $(this.element).on('click.' +this.NameSpace, this.MouseCallBack.bind(this));
-  
-  //
-  gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
-  gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
-  
-  // Wireimg!
-  gStateMachine.Bind('change-wireimg',  this.CreateWireimg.bind(this,false) );
-  gStateMachine.Bind('toggle-wireimg',  this.UpdateWireimg.bind(this,false) );
-  gStateMachine.Bind('zoomChange',      this.UpdateWireimg.bind(this,false) );
-  gStateMachine.Bind('zoomChangeFast',  this.UpdateWireimg.bind(this,false) );
-  gStateMachine.Bind('changeViewMode',       this.CreateWireimg.bind(this,false) );
-  $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
-  $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
-  $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
-  $('input.zoommode:checked')         .on("change", this.UpdateWireimg.bind(this) );
-  gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) );  // Re-render, but this doesn't require anything more.
-
-  
-  // Tracks
-  this.ctl_track_shift        =  this.GetBestControl(".track-shift-window");
-  this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
-  gStateMachine.Bind('change-tracks',  this.CreateTracks.bind(this,false) );
-  gStateMachine.Bind('toggle-tracks', this.UpdateVisibilities.bind(this,false) );
-  $(this.ctl_track_shift)       .change( this.UpdateTracks.bind(this) );
-  $(this.ctl_track_shift_value) .change( this.UpdateTracks.bind(this) );
-  gStateMachine.Bind('driftChange', this.UpdateTracks.bind(this) );  // REbuild since geometry is shot.
-  
-  // showers
-  gStateMachine.Bind('change-showers', this.CreateShowers.bind(this,false) );
-  gStateMachine.Bind('toggle-showers', this.UpdateVisibilities.bind(this,false) );
-  $(this.ctl_track_shift)       .change( this.UpdateShowers.bind(this) );
-  
-  // spacepoints
-  gStateMachine.Bind('change-spacepoints', this.CreateSpacepoints.bind(this) );  
-  gStateMachine.Bind('toggle-spacepoints', this.UpdateVisibilities.bind(this) );  
-  $(this.ctl_track_shift)       .change( this.UpdateSpacepoints.bind(this) );
-  
-
-    // mc
-  gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
-  gStateMachine.Bind('driftChange',        this.UpdateMC.bind(this) );  
-  this.GetBestControl(".show-mc-neutrals") .change(this.UpdateMC.bind(this) );
-  this.GetBestControl(".ctl-mc-move-tzero").change(this.UpdateMC.bind(this) );
-  gStateMachine.Bind('toggle-mcparticles',this.UpdateVisibilities.bind(this) ); 
-
-
-  // mouse callbacks.
-  // var fn = this.MouseCallBack.bind(this);
-  // if(!isIOS()){
-  //   $(this.element).on('click.'     +this.NameSpace, fn);
-  //   $(this.element).on('mousedown.' +this.NameSpace, fn);
-  //   $(this.element).on('mouseenter.'+this.NameSpace, fn);
-  //   $(this.element).on('mouseout.'  +this.NameSpace, fn);
-  //   $(window)      .on('mousemove.' +this.NameSpace, fn);
-  //   $(window)      .on('mouseup.'   +this.NameSpace, fn);
-  //   $(this.element).on('wheel.'+this.NameSpace, fn);//function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
-  // }
-  //
-  // $(this.element).on('touchstart.'+this.NameSpace, fn);
-  // $(this.element).on('touchend.'  +this.NameSpace, fn);
-  // $(this.element).on('touchmove.' +this.NameSpace, fn);
-  // $(this.element).on('touchenter.'+this.NameSpace, fn);
-  // $(this.element).on('touchout.'  +this.NameSpace, fn);
-  
-
-  // controls.
-  var self = this;
-  var parent = $(this.element).parent()[0];
-  $(".trid-zoom-slider"  ,parent)
-  .slider({
-    animate: "fast",
-    min:0.01,
-    max:10.0,
-    value: 1,
-    slide: function(ev,ui){
-      console.log("slide",ui.value);
-      self.orbit_controls.setScale(ui.value);
-      self.orbit_controls.update();
-    }
-  });
-  var unitX = new THREE.Vector3(1,0,0);
-  var unitY = new THREE.Vector3(0,1,0);
-  var unitZ = new THREE.Vector3(0,0,1);
-  var pan_increment = 10; // 10 cm;
-
-  // Zoom in/out buttons for the scrollwheel impaired
+    // Zoom in/out buttons for the scrollwheel impaired
   $(".trid-zoom-in"   ,parent)
     .button({icons: {primary: 'ui-icon-zoomin'},text: false})            
     .mousehold(function(ev){self.orbit_controls.dollyOut(self.orbit_controls.getZoomScale()); self.orbit_controls.update();});
@@ -384,11 +168,17 @@ function ThreeTriD(element, options )
 
   $(".trid-autorotate" ,parent)
     .button({icons: {primary: 'ui-icon-arrowrefresh-1-s'},text: false})
-    .change(function(ev){self.autoRotate($(this).is(':checked'));});
+    .change(function(ev){
+      if($(this).is(':checked')) self.StartAnimation("flyby",self.anime_FlyRotate());
+      else self.RemoveAnimation("flyby");
+
+    });
 
   $(".trid-reset"     ,parent)
     .button({icons: {primary: 'ui-icon-seek-first'},text: false})          
-    .click(function(ev){resetCamera(true);});
+    .click(function(ev){
+      self.StopAnimations();
+      resetCamera(true);});
 
   $(".trid-ctl-mouse-set"     ,parent)
       .buttonset({icons: {primary: 'ui-icon-seek-first'},text: false});
@@ -431,22 +221,232 @@ function ThreeTriD(element, options )
   this.clip_plane_inner = new THREE.Plane(new THREE.Vector3(1,-1,1).normalize(),-100.); this.clip_plane_inner.name = "inner";
 
 
-  $(".trid-model-wipe"  ,parent).slider({
-    animate: "fast",
-    min:-1000,
-    max:200,
-    value: 200,
-    slide: function(ev,ui){
-      self.UpdateFullModel();
+  // $(".trid-model-wipe"  ,parent).on({
+  //   animate: "fast",
+  //   min:-1000,
+  //   max:200,
+  //   value: 200,
+  //   slide: function(ev,ui){
+  //     self.UpdateFullModel();
+  //   }
+  // });
+  $("input.trid-model-wipe",parent).each((i,s)=>{s.oninput = self.UpdateFullModel.bind(self);
+                                                 s.onchange = self.UpdateFullModel.bind(self);});
+  $("input.trid-model-wipe",parent).on("change",this.UpdateFullModel.bind(this));
+
+
+
+  // function changeCamera(isPerspective) {
+  //   var oldCamera = self.camera;
+  //   if(isPerspective===false) self.camera = self.orthographic_camera;
+  //   else                      self.camera = self.perspective_camera; // default
+  //   if(oldCamera != self.camera) {
+  //     // Camera changed.
+  //     self.orbit_controls.object = self.camera;
+  //     if(isPerspective===false) {
+  //       // Change the ortho camera to match current view of othro. good notes at https://stackoverflow.com/questions/48758959/what-is-required-to-convert-threejs-perspective-camera-to-orthographic
+  //       // depth:
+  //       var sightline_vec = new THREE.Vector3();
+  //       oldCamera.getWorldDirection(sightline_vec);
+  //       var camera_to_target = self.orbit_controls.target.clone();
+  //       camera_to_target.sub(oldCamera.position);
+  //       var depth = camera_to_target.dot(sightline_vec);
+
+  //       var height_ortho = depth*2*Math.atan( oldCamera.fov*(Math.PI/180) /2 );
+  //       var width_ortho = height_ortho / oldCamera.aspect;
+  //       self.orthographic_camera.left  = width_ortho/-2;
+  //       self.orthographic_camera.right = width_ortho/2;
+  //       self.orthographic_camera.top   = height_ortho/2;
+  //       self.orthographic_camera.bottom= height_ortho/-2;
+  //       // debugger;
+  //     }
+  //     self.camera.position.copy(oldCamera);
+  //     self.camera.quaternion.copy( oldCamera.quaternion ); 
+  //     // self.camera.position.set(-1e9,-1e9,-1e9); // Goose position to make sure the orbitcontrols reset.
+  //     self.orbit_controls.object = self.camera;
+  //     self.orbit_controls.enableRotate = true;
+  //     self.orbit_controls.target0 = self.orbit_controls.target.clone();
+  //     self.orbit_controls.position = self.orbit_controls.object.position.clone();
+  //     self.orbit_controls.zoom0 = self.orbit_controls.object.zoom;
+
+  //     self.orbit_controls.update(true);
+
+  //   }
+  //   // self.camera.position.copy(oldCamera.position);
+  //   // self.camera.matrix.copy(oldCamera.matrix.clone());
+  // }
+  function resetCamera(isPerspective) {
+    $(".trid-ctl-view-set input[type='radio'][value='3D']").prop('checked',true).button( "refresh" );;
+    self.camera = self.perspective_camera;
+    self.orbit_controls.target.set(0,0,0);
+    self.camera.position.copy(self.default_camera_position);
+    self.orbit_controls.setScale(1.0);
+    // Center on the middle-numbered TPC, rounded down. that's 0 for microboone, 6 for protodune.
+    var tpc = gGeo3.getTpc((Math.floor(gGeo3.numTpcs()/2)));
+    self.orbit_controls.target.set(...tpc.center);
+    resetOrbitControls(true);
+    self.orbit_controls.update();
+    self.Render();
+  }
+
+  function resetOrbitControls(enableRotate) 
+  {
+      self.orbit_controls.object = self.camera;
+      self.orbit_controls.enableRotate = enableRotate;
+      self.orbit_controls.target0 = self.orbit_controls.target.clone();
+      self.orbit_controls.position = self.orbit_controls.object.position.clone();
+      self.orbit_controls.zoom0 = self.orbit_controls.object.zoom;
+  }
+
+  function setView(mode)
+  {
+    if(mode=="3D") { 
+      self.camera = self.perspective_camera;
+      resetOrbitControls(true);
+      self.orbit_controls.update(); 
+      return; 
     }
-  });
+
+    if(mode=="XY") {
+      self.camera = self.orthographic_camera;
+      self.camera.position.set(0,0,-1000);
+      self.camera.rotation.set(0,0,0);
+      self.camera.quaternion.set(0,0,0,1);
+      self.camera.updateMatrixWorld(true);
+      self.orbit_controls.target.set(0,0,500);
+      resetOrbitControls(false);
+      self.orbit_controls.update();
+      return;
+    }
+    if(mode=="YZ") {
+      self.camera = self.orthographic_camera;
+      self.camera.position.set(-500,0,500);
+      self.camera.rotation.set(0,0,1.57);
+      self.camera.quaternion.set(0,0,0,1);
+      self.camera.updateMatrixWorld(true);
+      self.orbit_controls.target.set(0,0,500);
+      resetOrbitControls(false);
+      self.orbit_controls.update();
+      return;
+    }
+    if(mode=="XZ") {
+      self.camera = self.orthographic_camera;
+      self.camera.position.set(0,500,500);
+      // self.camera.quaternion.setFromUnitVectors(self.camera.up,new THREE.Vector3(1,0,0));
+      self.camera.updateMatrixWorld(true);
+      resetOrbitControls(false);
+      self.orbit_controls.target.set(0,0,500);
+      self.orbit_controls.setAngles(-Math.PI/2,0);
+      // self.orbit_controls.update();
+      return;
+    }
+
+  }
+
+
+	this.orbit_controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+  this.orbit_controls.dampingFactor = 0.25;
+	this.orbit_controls.screenSpacePanning = false;
+	this.orbit_controls.minDistance = 100;
+	this.orbit_controls.maxDistance = 3000;
+	this.orbit_controls.maxPolarAngle = Math.PI ;
+  resetCamera(true);
+
+
+  // this.DrawOverlay();
+  // this.overlay_dirty = true;
+  // Object picking via raycaster.
+  this.raycaster = new THREE.Raycaster();
   
+  if(this.animate) {
+    // Render is a no-op. Instead, we animate!
+    this.AnimationRender();
+  }
+  else {
+    this.Render = this.DoRender;  
+  }
+  this.orbit_controls.addEventListener( 'change', this.Render.bind(this)  );
+  
+  // Resizing.
+  $(this.element).resize(function(ev){
+                         self.Resize(); 
+                         self.Render();
+                         });         
+  $(this.element).on('mousemove.' +this.NameSpace, this.MouseCallBack.bind(this));
+  $(this.element).on('click.' +this.NameSpace, this.MouseCallBack.bind(this));
+  
+  //
+  gStateMachine.Bind('hoverChange', this.HoverAndSelectionChange.bind(this));
+  gStateMachine.Bind('selectChange', this.HoverAndSelectionChange.bind(this));
+  
+  // Wireimg!
+  gStateMachine.Bind('change-wireimg',  this.CreateWireimg.bind(this,false) );
+  gStateMachine.Bind('toggle-wireimg',  this.ZoomChange.bind(this,false) );
+  gStateMachine.Bind('zoomChange',      this.ZoomChange.bind(this,false) );
+  gStateMachine.Bind('zoomChangeFast',  this.ZoomChange.bind(this,false) );
+  gStateMachine.Bind('changeViewMode',       this.CreateWireimg.bind(this,false) );
+  $('#ctl-coherent-noise-filter')     .on("change", this.UpdateWireimg.bind(this) );
+  $('input:radio.ctl-bad-wire-filter').on("change", this.UpdateWireimg.bind(this) );
+  $('#ctl-gl-edge-finder')            .on("change", this.UpdateWireimg.bind(this) );
+  $('input.zoommode:checked')         .on("change", this.UpdateWireimg.bind(this) );
+  gStateMachine.Bind('ChangePsuedoColor',    this.Render.bind(this,true) );  // Re-render, but this doesn't require anything more.
+
+  
+  // Tracks
+  this.ctl_track_shift        =  this.GetBestControl(".track-shift-window");
+  this.ctl_track_shift_value  =  this.GetBestControl("#ctl-track-shift-value");
+  gStateMachine.Bind('change-tracks',  this.CreateTracks.bind(this,false) );
+  gStateMachine.Bind('toggle-tracks', this.UpdateVisibilities.bind(this,false) );
+  $(this.ctl_track_shift)       .change( this.UpdateTracks.bind(this) );
+  $(this.ctl_track_shift_value) .change( this.UpdateTracks.bind(this) );
+  gStateMachine.Bind('driftChange', this.UpdateTracks.bind(this) );  // REbuild since geometry is shot.
+  
+  // showers
+  gStateMachine.Bind('change-showers', this.CreateShowers.bind(this,false) );
+  gStateMachine.Bind('toggle-showers', this.UpdateVisibilities.bind(this,false) );
+  $(this.ctl_track_shift)       .change( this.UpdateShowers.bind(this) );
+  
+  // spacepoints
+  gStateMachine.Bind('change-spacepoints', this.CreateSpacepoints.bind(this) );  
+  gStateMachine.Bind('toggle-spacepoints', this.UpdateVisibilities.bind(this) );  
+  $(this.ctl_track_shift)       .change( this.UpdateSpacepoints.bind(this) );
+  
+
+    // mc
+  gStateMachine.Bind('change-mcparticles', this.CreateMC.bind(this) );  
+  gStateMachine.Bind('driftChange',        this.UpdateMC.bind(this) );  
+  this.GetBestControl(".show-mc-neutrals") .change(this.UpdateMC.bind(this) );
+  this.GetBestControl(".ctl-mc-move-tzero").change(this.UpdateMC.bind(this) );
+  gStateMachine.Bind('toggle-mcparticles',this.UpdateVisibilities.bind(this) ); 
+
+
+  // controls.
+  var self = this;
+  var parent = $(this.element).parent()[0];
+  // $(".trid-zoom-slider"  ,parent)
+  // .slider({
+  //   animate: "fast",
+  //   min:0.01,
+  //   max:10.0,
+  //   value: 1,
+  //   slide: function(ev,ui){
+  //     console.log("slide",ui.value);
+  //     self.orbit_controls.setScale(ui.value);
+  //     self.orbit_controls.update();
+  //   }
+  // });
+  var unitX = new THREE.Vector3(1,0,0);
+  var unitY = new THREE.Vector3(0,1,0);
+  var unitZ = new THREE.Vector3(0,0,1);
+  var pan_increment = 10; // 10 cm;
+
+
   
   this.line_materials = [
-    this.frameline_material     = new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 5, maxlinewidth:5, minlinewidth:0.1, dashed: false} ),
+    this.frameline_material     = new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 5, maxlinewidth:2.1, minlinewidth:0.1, dashed: false} ),
     this.track_material         = new THREE.PerspectiveLineMaterial( { color: 0x00aa00, worldlinewidth: 0.3, minlinewidth: 0.8, maxlinewidth: 3, dashed: false} ),
-    this.track_material_hover   = new THREE.PerspectiveLineMaterial( { color: 0x008800, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
-    this.track_material_selected= new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 0.3, minlinewidth: 2,   maxlinewidth: 3, dashed: false} ),
+    this.track_material_hover   = new THREE.PerspectiveLineMaterial( { color: 0x008800, worldlinewidth: 0.3, minlinewidth: 2.1,   maxlinewidth: 3, dashed: false} ),
+    this.track_material_selected= new THREE.PerspectiveLineMaterial( { color: 0x000000, worldlinewidth: 0.3, minlinewidth: 2.1,   maxlinewidth: 3, dashed: false} ),
     this.highlight_line_material =  new THREE.LineMaterial( { color: 0xFF0000, linewidth: 2, dashed: false} ),
 
      this.track_material_selected = new THREE.LineMaterial( { color: 0x500000, linewidth: 4, dashed: false} ),
@@ -457,6 +457,14 @@ function ThreeTriD(element, options )
     this.mc_hover_material    = new THREE.LineMaterial( { color: 0xffff00, linewidth: 3, dashed: false}  ),
     this.user_track_rim_material    = new THREE.LineMaterial( { color: new THREE.Color("rgb(40, 92, 0)").getHex(), linewidth: 2, dashed: false}  ),
   ]; 
+  
+  this.point_materials = [
+    this.spacepoint_material = new THREE.PointsMaterial( { size:2, color: 0x009696 } ),
+    this.spacepoint_hover_material = new THREE.PointsMaterial( { size:3, color: 0xff0000 } ),
+    this.spacepoint_select_material = new THREE.PointsMaterial( { size:3, color: 0xffff00 } ), 
+       
+  ];
+
   // Line materials all need to know the window size.
   for(var mat of this.line_materials) mat.resolution = this.resolution;
   
@@ -465,6 +473,12 @@ function ThreeTriD(element, options )
   this.Render();  
 }
 
+
+ThreeTriD.prototype.ZoomChange = function()
+{
+  this.orbit_controls.target.copy(gZoomRegion.getCenter());
+  this.UpdateWireImage;
+}
 
 
 ThreeTriD.prototype.CreateFrame = function()
@@ -523,13 +537,24 @@ ThreeTriD.prototype.CreateFrame = function()
 
     // var hov = {obj: det, type: "opdet", collection: gGeo3.opticalDetectors};
   }
-  
 
+  // Create some visual cues
+  var texture, material;
+  texture = new THREE.TextTexture({
+    fontFamily: '"Times New Roman", Times, serif',
+    fontSize: 32,
+    fontStyle: 'italic',
+    text: 'Looking downstream'
+  });
+  material = new THREE.MeshBasicMaterial({ color: 0xffffbb });
   
-  // // a light
-  // var light = new THREE.HemisphereLight(0xfffff0, 0x101020, 1.25);
-  // light.position.set(157, 400, 125);
-  // this.scene.add(light);
+  this.label_downstream = new THREE.Mesh(material, new THREE.PlaneBufferGeometry(100,100));
+  this.label_downstream.name="label_downstream";
+  // this.label_downstream.position.set(123,-200,0);
+  // this.label_downstream.visible = false;
+  // this.frame_group.add(this.label_downstream); 
+
+
 
   // //cool but not working right yet  
   // this.gdmlloader = new THREE.GDMLLoader();
@@ -663,10 +688,9 @@ ThreeTriD.prototype.CreateFullModel = function()
 
 ThreeTriD.prototype.UpdateFullModel = function()
 {
-
-  this.clip_plane_outer.constant = $( ".trid-model-wipe-outer" ).slider( "option", "value" );
-  this.clip_plane_pmts.constant = $( ".trid-model-wipe-pmts" ).slider( "option", "value" );
-  this.clip_plane_inner.constant = $( ".trid-model-wipe-inner" ).slider( "option", "value" );
+  this.clip_plane_outer.constant = $( ".trid-model-wipe-outer" ).val();
+  this.clip_plane_pmts.constant =  $( ".trid-model-wipe-pmts"  ).val();
+  this.clip_plane_inner.constant = $( ".trid-model-wipe-inner" ).val();
   if(self.full_model){
     for(g of self.full_model.children)
       for(o of g.children)
@@ -704,6 +728,9 @@ ThreeTriD.prototype.Resize = function()
   // this.ctx.setTransform(1, 0, 0, 1, 0, 0);  // Reset all transforms
   // this.ctx.scale(this.padPixelScaling,this.padPixelScaling);
   
+  this.default_camera_position.set(-1000,300,50).multiplyScalar(500./this.width+0.1);
+  // if(this.width>1000)  this.default_camera_position.set(-1000,300,50).multiplyScalar(500./this.width+0.1);
+  // else                 this.default_camera_position.set(-1000,300,50);
 
   // if(this.viewport && (this.viewport.width !== width || this.viewport.height !== height)) {
   this.viewport.width = width;
@@ -1473,68 +1500,148 @@ ThreeTriD.prototype.UpdateWireimg = function()
 
 ThreeTriD.prototype.Start3dModelRollbackAnimation = function()
 {
+
    if(this.animated_rollback) return;
    if(!isElementInViewport(this.element)) return;
    if(!this.full_model_loaded) return;
    // We have the model and we're in view. Animate that sucker.
    this.animated_rollback = true; // don't fire again.
    // console.error("Start 3d rollback!");
-   this.StartAnimation("3drollback");
+   this.StartAnimation("model_rollback",this.anime_RevealModel());
+   // this.StartAnimation("flyby",this.anime_FlyRotate.bind(this));
 }
 
-ThreeTriD.prototype.StartAnimation = function(ani_name)
+
+ThreeTriD.prototype.anime_RevealModel = function()
 {
+  // Javascript magic: this function isn't what's called, it returns a function, wrapped in this scope which holds the state variables.
+  var t = 0
+  var trid = this;
+  return function(dt) {
+    t+=dt;
+    // console.log("reveal model t=",t)
+    var reveal1 =     -t/3;
+    var reveal2 = 500 -t/3
+    var reveal3 = 1000-t/3
+    // console.error("animate t=",t,reveal1,reveal2,reveal3);
+    $( ".trid-model-wipe-outer" ).val( reveal1 );
+    $( ".trid-model-wipe-pmts"  ).val( reveal3 );
+    $( ".trid-model-wipe-inner" ).val( reveal2 );
+    trid.UpdateFullModel();
+    var going = (reveal3>-1100); // True if animation continues.
+    return going;
+  }
+}
+
+
+
+ThreeTriD.prototype.anime_FlyRotate = function(t)
+{
+  var t = 0;
+  var trid = this;
+  var revealt = 30e3; // First reveal time, 30 sec
+  const t_per_station = 1000; // ms
+  const t_per_reveal  = 30e3; // 30 sec
+  var laststation = -1;
+  var flyrotate_stations =  [
+       // zenith,   azmiuth
+       [Math.PI/2,   -Math.PI/2  ] ,
+       [Math.PI/2,   -Math.PI/2  ] ,
+       [Math.PI/2,   0           ],
+       // [Math.PI/2,   0           ] ,
+       [0,           -Math.PI/2  ] ,
+       [0,           -Math.PI/2  ] ,
+       [Math.PI/2,   -Math.PI/2  ] ,
+       [Math.PI/2,   -Math.PI/2  ] ,
+       [Math.PI/2,   +Math.PI    ] ,
+       [Math.PI/2,   Math.PI     ] ,
+       [Math.PI*2/6,   Math.PI*1.5 ] ,
+       [Math.PI*2/6, Math.PI*2   ] ,
+       [Math.PI/2,   Math.PI*2.5 ] ,
+       [Math.PI/2,   Math.PI*3   ] ,
+       [Math.PI/2,   Math.PI*3.5 ] ,
+       [Math.PI/2,   -Math.PI/2  ] ,
+      ];
+  return function(dt){
+    t = t+dt;
+    var i = Math.floor((t/t_per_station)%(flyrotate_stations.length-1)); // which station
+
+    var f = (t%t_per_station)/t_per_station; // fraction of the way through one station
+    var theta = flyrotate_stations[i][0] + f * (flyrotate_stations[i+1][0]-flyrotate_stations[i][0]);
+    var phi   = flyrotate_stations[i][1] + f * (flyrotate_stations[i+1][1]-flyrotate_stations[i][1]);
+    // if(i!=laststation)  console.log('flyby',i,theta,phi);
+    laststation = i;
+    // Now to do the rotation...
+    trid.orbit_controls.setAngles(phi,theta);
+    if(t>revealt) {
+      trid.StartAnimation("model_rollback",trid.anime_RevealModel());
+      revealt+=t_per_reveal;
+    }
+    return true; // Never done!
+  }
+}
+
+
+
+ThreeTriD.prototype.StartAnimation = function(ani_name, ani_function, reset_time)
+{
+  console.log("Start Animation",ani_name);
+
   this.animate = true;
   this.Render = function(){}; // nullop
 
-  // only one animation so far.
-  this.t0 = Date.now();
-  this.last_frame_t = this.t0;
-  this.AnimationRender();
+
+  this.current_animations = this.current_animations || {};
+  if(Object.keys(this.current_animations).length>0) reset_time = true;
+  // Reset the clock.
+  if(reset_time || !(this.t0)) {
+    this.t0 = Date.now();
+    this.last_frame_t = this.t0;
+  }
+  this.current_animations[ani_name] = ani_function;
+
+  requestAnimationFrame(this.AnimationRender.bind(this));
 }
 
-ThreeTriD.prototype.StopAnimation = function()
+
+ThreeTriD.prototype.RemoveAnimation = function(ani_name)
+{
+  if(ani_name in this.current_animations||{}) {
+    delete this.current_animations[ani_name]; // Remove that property.
+    $("input.trid-animate").filter('.'+ani_name).prop('checked',false).button("refresh"); // turn off any similarly-named checkboxes.
+  }
+}
+
+ThreeTriD.prototype.StopAnimations = function()
 {
     this.animate = false;
     this.Render = this.DoRender;  
+    this.current_animations = {};
+    $("input.trid-animate").prop('checked',false).button("refresh")
 }
+
+
 
 ThreeTriD.prototype.AnimationRender = function()
 {
   if(!this.animate) return;
   this.orbit_controls.update();
-  var now = Date.now();
-  var dt = now-this.last_frame_t;
   const max_dt = 50;  // If two frames are more than 50 ms apart, delay animation instead of jumping in time.
-  if(dt > max_dt) {
-    // want t = last+50,  and t=now-t0, so
-    // now-t0 = last+50
-   this.t0 = (now-this.last_frame_t- max_dt);
-   console.log('reset t0'); 
-  } // reset scale.
-  var t = now - this.t0;
-  dt = now-this.last_frame_t;
-  // console.log("framedt",dt,t,this.last_frame_t,Date.now() - this.t0);
+  var dt = Math.min(Date.now() - this.last_frame_t,max_dt);
 
+  this.animate = false;
+  for(var animation_name in this.current_animations) {
+    var going = this.current_animations[animation_name](dt); // Call the callback function, give it the time delta.
+    if(!going) this.RemoveAnimation(animation_name);
 
-  // Update things.
-  var reveal1 =     -t/3;
-  var reveal2 = 800 -t/3
-  var reveal3 = 1600-t/3
-  // console.error("animate t=",t,reveal1,reveal2,reveal3);
-  $( ".trid-model-wipe-outer" ).slider( { value:reveal1 });
-  $( ".trid-model-wipe-pmts"  ).slider( { value:reveal3 });
-  $( ".trid-model-wipe-inner" ).slider( { value:reveal2 });
-  this.UpdateFullModel();
-
+    this.animate = going || this.animate; // If this animation is still going, keep up the draw requests.
+  }
 
   this.DoRender();
   this.last_frame_t = Date.now();
 
-  if(reveal3<-1100) this.animate = false;
-
   if(this.animate) requestAnimationFrame(this.AnimationRender.bind(this));
-  else this.StopAnimation();
+  else this.StopAnimations();
 }
 
 // 

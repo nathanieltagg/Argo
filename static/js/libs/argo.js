@@ -353,6 +353,7 @@ $(function() {
 ////////////////////////////////////////
 function SaveAControl(el,slot) 
 {
+
   var input = $(el);
   var val = input.val();
   var id = el.id
@@ -625,6 +626,11 @@ $(function(){
   })
 })
 
+$(function(){
+  // Polyfill for range slider, allowing styling. see https://rangeslider.js.org/
+  $('input[type="range"]').rangeslider();
+
+})
 
 
 
