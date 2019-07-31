@@ -221,8 +221,8 @@ function Pad( element, options )
     $(this.element).on('mousedown.' +this.NameSpace, fn);
     $(this.element).on('mouseenter.'+this.NameSpace, fn);
     $(this.element).on('mouseout.'  +this.NameSpace, fn);
-    $(window)      .on('mousemove.' +this.NameSpace, fn);
-    $(window)      .on('mouseup.'   +this.NameSpace, fn);
+    // $(window)      .on('mousemove.' +this.NameSpace, fn);
+    // $(window)      .on('mouseup.'   +this.NameSpace, fn);
     $(this.element).on('wheel.'+this.NameSpace, function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
   }
 
@@ -267,14 +267,14 @@ Pad.prototype.MouseCallBack = function(ev,scrollDist)
   // All mouse-related callbacks are routed through here.
   this.dirty = false;  // flag that tells us if we need a draw or not.
 
-
-  if( (ev.type === 'mousemove' || ev.type === 'touchenter') &&
-      ( ! this.fMouseInContentArea ) &&
-      ( ! ev.which ) ) {
-    // mouse move without buttons outside the content area. This is not relevant.
-    return;  
-  } 
-
+  if(ev.type === 'mousedown') {
+    // Start tracking mouse move events.
+    $(window).on('mousemove.' +this.NameSpace, this.MouseCallBack.bind(this));
+    $(window).on('mouseup.'   +this.NameSpace, this.MouseCallBack.bind(this));
+  } else if(ev.type === 'mouseup' ) {
+    $(window).off('mousemove.' +this.NameSpace);
+    $(window).off('mouseup.'   +this.NameSpace);
+  }
 
   if(ev.type === 'mouseenter' || ev.type === 'touchenter') { 
     this.fMouseInContentArea = true;
@@ -1192,3 +1192,50 @@ function RGBColor(color_string)
     }
 
 }
+
+
+
+
+/* @author Remy Sharp (leftlogic.com)
+ * @date 2006-12-15
+ * @example $("img").mousehold(200, function(i){  })
+ * @desc Repeats firing the passed function while the mouse is clicked down
+ *
+ * @name mousehold
+ * @type jQuery
+ * @param Number timeout The frequency to repeat the event in milliseconds
+ * @param Function fn A function to execute
+ * @cat Plugin
+ */
+
+jQuery.fn.mousehold = function(timeout, f) {
+  if (timeout && typeof timeout == 'function') {
+    f = timeout;
+    timeout = 100;
+  }
+  if (f && typeof f == 'function') {
+    var timer = 0;
+    var fireStep = 0;
+    return this.each(function() {
+      jQuery(this).mousedown(function() {
+        fireStep = 1;
+        var ctr = 0;
+        var t = this;
+        timer = setInterval(function() {
+          ctr++;
+          f.call(t, ctr);
+          fireStep = 2;
+        }, timeout);
+      });
+
+      clearMousehold = function() {
+        clearInterval(timer);
+        if (fireStep == 1) f.call(this, 1);
+        fireStep = 0;
+      };
+      
+      jQuery(this).mouseout(clearMousehold);
+      jQuery(this).mouseup(clearMousehold);
+    });
+  }
+};

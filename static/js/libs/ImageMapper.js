@@ -15,7 +15,7 @@ $(function(){
   //   'cal_lowres': gGLMapperCalLowres,
   // }
   //
-  gStateMachine.Bind('newPiece',CreateGLMappers);
+  gStateMachine.Bind('newPiece',CreateImageMappers);
   
 });
 
@@ -26,19 +26,11 @@ var kMaxTileSize = 3048;
 var testGLcanvas = document.createElement('canvas');
 var testGL = testGLcanvas.getContext('webgl');
 if(testGL) kMaxTileSize = testGL.getParameter(testGL.MAX_TEXTURE_SIZE);
-testGL = null; // release
-testGLcanvas = null;  //release
-  
-
-// Debugging functionality for gl contexts
-function logGLCall(functionName, args) {   
-   console.log("gl." + functionName + "(" + 
-      WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");   
-} 
+testGL = null;
+testGLcanvas = null;
 
 
-
-function CreateGLMappers()
+function CreateImageMappers()
 {
   if(!gRecord) return;
   // Create the tiled images. Do only for full images (not lowres)
@@ -48,7 +40,7 @@ function CreateGLMappers()
         if(_name.startsWith('_')) continue; // skip my index properites.
         if(! gRecord[_type][_name]._glmapper) {
           console.warn("Create GL mapper on ",_type,_name);
-          gRecord[_type][_name]._glmapper = new GLMapper(_type,_name);
+          gRecord[_type][_name]._glmapper = new ImageMapper(_type,_name);
         
         }
       }
@@ -88,7 +80,7 @@ Image.prototype.completedLoaded = 0;
 // Image.prototype.onprogress = function(e) { console.log("default onprogress",e); };
 
 
-function GLMapper(_type,_name) // "raw" or "cal"
+function ImageMapper(_type,_name) // "raw" or "cal"
 {
   this._type = _type; 
   this._name = _name; 
@@ -119,7 +111,7 @@ function GLMapper(_type,_name) // "raw" or "cal"
 
 
 
-GLMapper.prototype.StartLoad = function()
+ImageMapper.prototype.StartLoad = function()
 {
   // FIXME Could explicitly delete images and textures - might improve GPU memory, but not required.
   this.tile_images = [];
@@ -127,7 +119,7 @@ GLMapper.prototype.StartLoad = function()
   this.tile_rawdata = [];
   this.tile_canvases = [];
   
-  console.time("GLMapper.StartLoad",this._type,this._name);
+  console.time("ImageMapper.StartLoad",this._type,this._name);
   var self = this;
   
   this.loaded = false;
@@ -201,7 +193,7 @@ GLMapper.prototype.StartLoad = function()
   
 }
 
-GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
+ImageMapper.prototype.ImageProgress = function(jrow,jcol,e)
 {
   // Add up total progress.
   // if(e) console.log("ImageProgress",jrow,jcol,e.loaded,e.total,e);
@@ -228,7 +220,7 @@ GLMapper.prototype.ImageProgress = function(jrow,jcol,e)
   
 }
 
-GLMapper.prototype.ImageLoaded = function(jrow,jcol)
+ImageMapper.prototype.ImageLoaded = function(jrow,jcol)
 {
   this.ImageProgress(jrow,jcol);
   //Draw in this particular item.
@@ -278,19 +270,4 @@ GLMapper.prototype.ImageLoaded = function(jrow,jcol)
 
 
 
-
-GLMapper.prototype.RequestRendering = function(
-      x,
-      y,
-      w,
-      h,
-      dest_w,
-      dest_h
-      )
-{
-  // Do a limited rendering request.
-  if(!this.loaded) return;
-  // console.log('GLMapper::RequestRendering');
-  
-}
 

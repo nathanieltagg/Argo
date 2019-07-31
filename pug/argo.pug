@@ -12,7 +12,7 @@ html
           |gDetector="uboone";
     link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
     link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
-    include inc/libraries 
+    include ./libraries 
     include ../static/shaders/shaders.inc
   body
     #everything
@@ -34,28 +34,23 @@ html
           // content-right 
           #content-main
             #content-wide.dock
-              //- include inc/reco.pug
+              // experiments only:
+              //- include inc/reco.pug 
+  
               include inc/WireViewGL            
-              +portlet("rgbwireview-port","RGB View")(style="background-color:white; display:none;")
-                //- .pad.A-RgbWireView(style='width:100%; height:330px')
-              //- include inc/WireView 
-              // include virtual="html/WireViewBig.inc" 
-              //include virtual="html/TimeHistogram.inc" 
             // content-wide 
             #content-left.dock
               include inc/OpHits 
-              include inc/MRI 
               include inc/MCDigraph 
               include inc/PFDigraph 
             // content-left 
             #content-middle.dock
               include inc/OpFlashes 
               include inc/TridView 
-              //(#)include virtual="html/WireViewBig.inc" 
-              //include virtual="html/ArgoDreamyScan.inc" 
         #footer
           include inc/Debugging 
           include inc/credits 
+
         include inc/Keyboard 
         #hitsum
           form

@@ -23,6 +23,7 @@ var rimraf = require('rimraf');
 
 var config = require("./configuration.js"); // loads config.js
 var samweb = require("./samweb.js");
+var sanitize = require("sanitize-filename");
 
 // IDEA: can do this right here: process.env.DYLD_LIBRARY_PATH="<stuff>"
 // NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
@@ -43,10 +44,10 @@ mkdirp(config.live_event_cache);
 app.use(morgan('tiny'));
 var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
 
-app.get('/test', function(req,res,next){
-  console.log("test");
-  res.send("test");
-});
+// app.get('/test', function(req,res,next){
+//   console.log("test");
+//   res.send("test");
+// });
 
 function readTouch(filename)
 {
@@ -448,6 +449,12 @@ app.use("/browser/",argo_browser.router);
 app.get('/live',function(req,res) {
   res.render('live', {pagename: 'live'});
 })
+
+// At end:
+app.get('/:pagename', function (req, res) {
+  res.render(sanitize(req.params.pagename), { pagename: 'argo' })
+})
+
 // At end:
 app.get('/', function (req, res) {
   res.render('argo', { pagename: 'argo' })
@@ -512,7 +519,6 @@ if(config.restrict_live_event_upload) {
 const uploader = require('express-fileupload')({
   // useTempFiles: true, tempFileDir:'/tmp/' // this fills tmp.
 });
-var sanitize = require("sanitize-filename");
 app.post("/live-event-upload",
   ipfilter,
   uploader,
