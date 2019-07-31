@@ -381,7 +381,7 @@ function ThreeTriD(element, options )
   
   // Wireimg!
   gStateMachine.Bind('change-wireimg',  this.CreateWireimg.bind(this,false) );
-  gStateMachine.Bind('toggle-wireimg',  this.ZoomChange.bind(this,false) );
+  gStateMachine.Bind('toggle-wireimg',  this.UpdateWireimg.bind(this,false) );
   gStateMachine.Bind('zoomChange',      this.ZoomChange.bind(this,false) );
   gStateMachine.Bind('zoomChangeFast',  this.ZoomChange.bind(this,false) );
   gStateMachine.Bind('changeViewMode',       this.CreateWireimg.bind(this,false) );
@@ -477,7 +477,7 @@ function ThreeTriD(element, options )
 ThreeTriD.prototype.ZoomChange = function()
 {
   this.orbit_controls.target.copy(gZoomRegion.getCenter());
-  this.UpdateWireImage;
+  this.UpdateWireImage();
 }
 
 
