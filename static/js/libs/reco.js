@@ -1,6 +1,120 @@
 
+$(function(){
+  gStateMachine.Bind("newPiece", ()=>{setTimeout(BuildArgoSpacepoints,0)}); // Don't execute right away; wait a tick.
+})
+
+function BuildArgoSpacepoints()
+{
+  // console.log("BuildArgoSpacepoints");
+
+  // This code is expclitly for use with the LIVE data only, which has the label hits_DAQ__libargo. Don't run unless that exists.
+  var hits = ((gRecord||{}).hits||{})["hits_DAQ__libargo"] || []; //GetSelected("hits");
+  if(hits.length==0) return; 
+  if(((gRecord||{}).spacepoints||{})["argo::Spacepoints_ARGO__inTheViewer"]) return;  // already built, prevent infinite loop
+
+  for(hit of hits) {
+    if(!hit.wires) {
+        if(hit.Ch) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); 
+        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, // ! uboone assumption hit
+                                  wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,hit.plane,hit.wire) }];
+      }
+  }
+
+  var tpc = gGeo3.getTpc(0); // fixme any tpc
+  var ymin = tpc.center[1] - tpc.halfwidths[1];
+  var ymax = tpc.center[1] + tpc.halfwidths[1];
+
+ function FinishReco(results) {
+    if(results.spacepoints) {
+      var sp_t_off = parseFloat($('#ctl-track-shift-value').val());
+      // fix x positions.
+      for(var sp of results.spacepoints) {
+        sp.xyz[0] = gGeo3.getXofTDC(0,2,sp.t - sp_t_off);
+      }
+
+      // register the new data product.
+      gRecord.manifest.spacepoints = gRecord.manifest.spacepoint || [];
+      gRecord.manifest.spacepoints["argo::Spacepoints_ARGO__inTheViewer"] = true;
+      gRecord.spacepoints = gRecord.spacepoints || [];
+      gRecord.spacepoints["argo::Spacepoints_ARGO__inTheViewer"] = results.spacepoints;
+      gControlOverlay.waiting_for_manifest = true;
+      gStateMachine.Trigger("newPiece");
+
+    }
+  }
+
+
+ var cfg = {
+        ymin: tpc.center[1] - tpc.halfwidths[1],
+        ymax: tpc.center[1] + tpc.halfwidths[1],
+        toffsets: [1,-7], // delta t offset of plane 0 vs plane 2,  and plane 1 vs plane 2 respecitvely
+        dt_max: 2,       // maximum delta t between matched hits.
+        max_sp: 50000,   // maximum spacepoints to return - prevent memory overflow.
+      };
+
+  if (window.Worker) {
+    var myWorker = new Worker('js/libs/reco_spacepoints.js');
+    myWorker.onmessage = function(e) { FinishReco(e.data);  }
+    myWorker.postMessage([ hits, gGeo3.data.basis, cfg]);
+
+  } else {
+    FinishReco(
+      do_reco_spacepoints( hits, gGeo3.data.basis, cfg )
+    );
+  }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Automatic runtime configuration.
 // I should probably abstract this another level for a desktop-like build...
+
 
 $(function(){
   $('div.A-reco-pad').each(function(){
@@ -18,13 +132,14 @@ function Reco( element )
   
   var settings = {
   };
-  Pad.call(this, element, settings); // Give settings to Pad contructor.
+  // Pad.call(this, element, settings); // Give settings to Pad contructor.
+  this.pad_element  = element;
   this.text_element = $(this.element).siblings(".A-reco-text");
   
   var self = this;
 
-  $(this.element).siblings(".reco-go-button").click( this.DoReco.bind(this) );
-  $(this.element).siblings("#ctl-show-reco").click( this.DoReco.bind(this) );
+  $(element).siblings(".reco-go-button").click( this.DoReco.bind(this) );
+  $(element).siblings("#ctl-show-reco").click( this.DoReco.bind(this) );
  
   gStateMachine.Bind('change-hits',  this.NewRecord.bind(this));
 }
@@ -60,6 +175,79 @@ Reco.prototype.NewRecord = function()
   this.houghpoints = [];
   this.houghlines = [];
 };
+
+
+
+
+function minmax_trans(tpc,z,plane)
+{
+  // find minimum and maxmum u,v values for a given plane2 wire at location z.  
+  var tpc = gGeo3.getTpc(tpc);
+  var y1 = tpc.center[1] + tpc.halfwidths[1];
+  var y2 = tpc.center[1] - tpc.halfwidths[1];
+  var av = gGeo3.data.basis.along_vectors[plane];
+  var tv = gGeo3.data.basis.transverse_vectors[plane];
+  var t1 = y1*av[3]-av[2]*z / (tv[2]*av[3] - av[2]*tv[3])
+  var t2 = y2*av[3]-av[2]*z / (tv[2]*av[3] - av[2]*tv[3])
+  return [ Math.min(t1,t2), Math.max(t1,t2) ];
+}
+
+
+
+Reco.prototype.DoReco = function()
+{
+  // Currently this code is used to draw the histograms of time matches between times from the backend hit finder.
+  // This is used to tune the toffset values to get optimal matching.
+
+
+  console.log("DoReco");
+ // This code is expclitly for use with the LIVE data only, which has the label hits_DAQ__libargo. Don't run unless that exists.
+  var hits = ((gRecord||{}).hits||{})["hits_DAQ__libargo"] || []; //GetSelected("hits");
+  if(hits.length==0) return; 
+  // if(((gRecord||{}).spacepoints||{})["argo::Spacepoints_ARGO__inTheViewer"]) return;  // already built, prevent infinite loop
+
+  for(hit of hits) {
+    if(!hit.wires) {
+        if(hit.Ch) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); 
+        else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, // ! uboone assumption hit
+                                  wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,hit.plane,hit.wire) }];
+      }
+  }
+
+  var tpc = gGeo3.getTpc(0); // fixme any tpc
+  var ymin = tpc.center[1] - tpc.halfwidths[1];
+  var ymax = tpc.center[1] + tpc.halfwidths[1];
+
+  var pad = this.pad_element;
+  var histcanvas = new HistCanvas(pad);
+
+
+ var cfg = {
+        ymin: tpc.center[1] - tpc.halfwidths[1],
+        ymax: tpc.center[1] + tpc.halfwidths[1],
+        toffsets: [1,-7], // delta t offset of plane 0 vs plane 2,  and plane 1 vs plane 2 respecitvely
+        dt_max: 50,       // maximum delta t between matched hits.
+        max_sp: 0,   // maximum spacepoints to return - prevent memory overflow.
+        do_histograms: true,
+      };
+
+   var results = do_reco_spacepoints( hits, gGeo3.data.basis, cfg )
+
+   console.log("drawing hists");
+    if(results.hists) {
+      histcanvas.SetHist(results.hists[0],new ColorScaler());
+      histcanvas.AddHist(results.hists[1],new ColorScaler());
+      histcanvas.Draw();
+    }
+
+}
+
+
+
+
+
+
+
 
 
 Reco.prototype.Do3dMatchFinding = function(planes)
@@ -125,7 +313,12 @@ Reco.prototype.Do3dMatchFinding = function(planes)
   
 };
 
-Reco.prototype.DoReco = function()
+
+
+
+
+
+Reco.prototype.DoRecoOld = function()
 {
   // Sort by hit start time.
   var inhits = GetSelected("hits");

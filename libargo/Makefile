@@ -88,7 +88,7 @@ LIBS += -lcurl
 
 ### Products added via ups
 CPPFLAGS += -I ${BOOST_INC}
-LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options
+LIBS     += -L ${BOOST_LIB}  -lboost_serialization -lboost_system -lboost_thread -lboost_program_options -lboost_filesystem
 # ldpaths  += -Wl,-rpath,${BOOST_LIB}
 
 CPPFLAGS += -I ${HEP_CONCURRENCY_INC}

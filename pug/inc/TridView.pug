@@ -11,16 +11,16 @@
       span.trid-ctl.trid-pan-up(title='Pan up (+Y)') Pan Up 
       span.trid-ctl.trid-pan-downstream(title='Pan downstream (-Z)') Pan Downstream
       span.trid-ctl.trid-pan-upstream(title='Pan upstream (+Z)') Pan Upstream
-      input.trid-ctl.trid-autorotate#trid-check1(title='Auto-rotate', type='checkbox')
-      label(for='trid-check1') AutoRotate
+      input.trid-ctl.trid-animate.trid-autorotate.saveable.auto-save-on-change#trid-check1(title='Auto-rotate', type='checkbox')
+      label(for='trid-check1') Spin
       span.trid-ctl.trid-reset(title='Reset view') Reset
-      span.trid-ctl.trid-create-animation(title='Create animation (can take a long time)') Animate
-      span.trid-ctl-mouse-set
+      //- span.trid-ctl.trid-create-animation(title='Create animation (can take a long time)') Animate
+      span.trid-ctl-mouse-set(style='display:inline-block;')
         input.trid-ctl.trid-ctl-mouse-rotate#trid-radio1(type='radio', name='trid-radio', value='rotate', checked='')
         label(for='trid-radio1') Mouse Rotate
         input.trid-ctl.trid-ctl-mouse-pan#trid-radio2(type='radio', name='trid-radio', value='pan')
         label(for='trid-radio2') Mouse Pan
-      span.trid-ctl-view-set
+      span.trid-ctl-view-set(style='display:inline-block;')
         input.trid-ctl.trid-ctl-view-3D#trid-radio-view1(type='radio', name='trid-radio-view', value='3D', checked='')
         label(for='trid-radio-view1' title="3d Projection") 3D
         input.trid-ctl.trid-ctl-view-xz#trid-radio-view2(type='radio', name='trid-radio-view', value='XZ')
@@ -29,15 +29,30 @@
         label(for='trid-radio-view3' title="Isomorphic YZ projection") YZ
         input.trid-ctl.trid-ctl-view-xy#trid-radio-view4(type='radio', name='trid-radio-view', value='XY')
         label(for='trid-radio-view4' title="Isomorphic XY projection") XY
+
+      mixin wipeslider 
+          input.trid-model-wipe.saveable.auto-save-on-change(class!=attributes.class,type="range",min="-1000",max="200",default="-1000",step="1",style='width: 70px; display: inline-block; margin-right:10px;')
+
       span(style="display:inline-block")
-        |Show cryostat: 
-        .trid-model-wipe.trid-model-wipe-outer(title="Cryostat",style='width: 50px; display: inline-block; margin-right:10px;')
+          |Show cryostat: 
+          +wipeslider()(class='trid-model-wipe-outer',title="Cryostat")
       span(style="display:inline-block")
-        |Show PMT Array:
-        .trid-model-wipe.trid-model-wipe-pmts(title="PMT Array",style='width: 50px; display: inline-block;margin-right:10px;')
+          |Show PMT Array:
+          +wipeslider()(class='trid-model-wipe-pmts',title="PMTs")
       span(style="display:inline-block")
-        |Show cage/wires:
-        .trid-model-wipe.trid-model-wipe-inner(title="TPC",style='width: 50px; display: inline-block;margin-right:10px;')
-        //- input#ctl-show-trid-hits.show-trid-hits(type='checkbox', name='show-trid-hits')
+          |Show fieldcage:
+          +wipeslider()(class='trid-model-wipe-inner',title="Field Cage")
+
+
+      //- span(style="display:inline-block")
+      //-   |Show cryostat: 
+      //-   input.trid-model-wipe.trid-model-wipe-outer.saveable.auto-save-on-change(type="range",min="-1000",max="200"title="Cryostat",style='width: 50px; display: inline-block; margin-right:10px;')
+      //- span(style="display:inline-block")
+      //-   |Show PMT Array:
+      //-   input.trid-model-wipe.trid-model-wipe-pmts.saveable.auto-save-on-change(type="range",title="PMT Array",style='width: 50px; display: inline-block;margin-right:10px;')
+      //- span(style="display:inline-block")
+      //-   |Show cage/wires:
+      //-   input.trid-model-wipe.trid-model-wipe-inner.saveable.auto-save-on-change(type="range",title="TPC",style='width: 50px; display: inline-block;margin-right:10px;')
+      //-   //- input#ctl-show-trid-hits.show-trid-hits(type='checkbox', name='show-trid-hits')
         //- label(for='ctl-show-trid-hits') Show 3D hits
       div.mouseover-text

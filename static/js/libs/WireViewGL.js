@@ -435,7 +435,8 @@ function create_image_meshgroup(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,
       uniforms: uniforms,
       visible: true,
       transparent: true,
-      side: THREE.DoubleSide    
+      side: THREE.DoubleSide,
+      extensions: {derivatives: true},
     });
 
     var obj = new THREE.Mesh( geometry, material );
@@ -1583,6 +1584,8 @@ WireViewGL.prototype.CreateSpacepoints = function()
 
 WireViewGL.prototype.UpdateSpacepoints = function()
 {
+  
+  
   this.offset_track = 0;
   if(this.ctl_track_shift.is(":checked")) 
     this.offset_track = parseInt(this.ctl_track_shift_value.val())*gGeo3.getDriftCmPerTick(0); // Fixme tpc number ; // convert to position.
