@@ -1512,17 +1512,20 @@ ThreeTriD.prototype.Start3dModelRollbackAnimation = function()
 }
 
 
-ThreeTriD.prototype.anime_RevealModel = function()
+ThreeTriD.prototype.anime_RevealModel = function(speed,delay_between,delay_initial)
 {
   // Javascript magic: this function isn't what's called, it returns a function, wrapped in this scope which holds the state variables.
   var t = 0
   var trid = this;
+  speed = speed || 0.3;
+  delay_between = delay_between || 3000;
+  delay_initial = delay_initial || 2000;
   return function(dt) {
     t+=dt;
     // console.log("reveal model t=",t)
-    var reveal1 =     -t/3;
-    var reveal2 = 500 -t/3
-    var reveal3 = 1000-t/3
+    var reveal1 = -speed*(t-delay_initial);
+    var reveal2 = -speed*(t-delay_initial-delay_between);
+    var reveal3 = -speed*(t-delay_initial-2*delay_between);
     // console.error("animate t=",t,reveal1,reveal2,reveal3);
     $( ".trid-model-wipe-outer" ).val( reveal1 );
     $( ".trid-model-wipe-pmts"  ).val( reveal3 );
@@ -1574,7 +1577,7 @@ ThreeTriD.prototype.anime_FlyRotate = function(t)
     // Now to do the rotation...
     trid.orbit_controls.setAngles(phi,theta);
     if(t>revealt) {
-      trid.StartAnimation("model_rollback",trid.anime_RevealModel());
+      trid.StartAnimation("model_rollback",trid.anime_RevealModel(0.2));
       revealt+=t_per_reveal;
     }
     return true; // Never done!

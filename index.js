@@ -476,7 +476,7 @@ var current_live_event = recent_live_events.slice(-1)[0];
 var live_data_emitter = new events.EventEmitter();
 
 setInterval(()=>{
-  console.log("Sending heartbeats...");
+  // console.log("Sending heartbeats...");
   current_heartbeat.server_time = Date.now();
   live_data_emitter.emit("emit",'interval');
 }
@@ -490,7 +490,7 @@ async function attach_notify_live_stream(ws,req)
   console.log("attaching to notify-stream",req.ip)
   function send_heartbeat(reason) {
     if(ws.readyState != 1) { // 1 is WebSocket.OPEN
-      console.log('notify-stream not open',ws);
+      console.warn('notify-stream not open',ws.ip);
       return; // This socket is closing or in error; it may take a while to terminate.
     }
     var o = {};
@@ -504,7 +504,6 @@ async function attach_notify_live_stream(ws,req)
     var str = JSON.stringify(o);
     try{ 
       ws.send(str);
-      console.log("sent data to",req.ip); 
     } catch(err) { console.error("Websocket error.",err); }
 
   }
@@ -584,7 +583,7 @@ function cleanLiveEventCache()
         else {
           console.error("Couldn't find ", basename, " in array of recent live events:", recent_live_events);
         }
-        console.log("new array of recent live events is",recent_live_events);
+        // console.log("new array of recent live events is",recent_live_events);
 
         // Remove the file.
         var pathname = path.join(config.live_event_cache,basename);
