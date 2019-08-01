@@ -16,6 +16,7 @@ var defaults = {
   live_event_max_files: 30,
   accept_live_data: true,
 
+  http_server_port: 4590,
 }
 defaults.composer_config = {
    "forking": false,

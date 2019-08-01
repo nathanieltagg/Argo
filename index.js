@@ -25,6 +25,8 @@ var config = require("./configuration.js"); // loads config.js
 var samweb = require("./samweb.js");
 var sanitize = require("sanitize-filename");
 
+var cluster = require('cluster');
+
 // IDEA: can do this right here: process.env.DYLD_LIBRARY_PATH="<stuff>"
 // NOPE! Doesn't work. Tried it.  The dlopen fails; apparently the underlying engine doesn't give a shit about process.env when loading variables
 
@@ -482,6 +484,17 @@ setInterval(()=>{
 }
   ,5000);
 
+if(cluster.isWorker) {
+  process.on('message', function(msg) {
+    if(typeof msg === "object") {
+      if(msg.newevent) recent_live_events.push(msg.newevent);
+      live_data_emitter.emit("newevent");
+    }
+  });
+
+
+}
+
 app.ws('/ws/notify-live',  attach_notify_live_stream);
 app.ws('/wss/notify-live', attach_notify_live_stream);
 
@@ -515,7 +528,7 @@ async function attach_notify_live_stream(ws,req)
   // Don't emit to us if we close
   ws.on('message',(ev)=>{console.log("notify-live mesg:",ev); send_heartbeat('requested');});
   ws.on('close',()=>{live_data_emitter.removeListener('emit',send_heartbeat);});
-  ws.on('error',()=>{ws.close()});
+  ws.on('error',(err)=>{console.log(err); ws.close()});
 
 };
 
@@ -561,6 +574,7 @@ app.post("/live-event-upload",
       setTimeout(cleanLiveEventCache, 0);
     }
     recent_live_events.push(current_live_event);
+    if(cluster.isWorker) process.send({newevent:current_live_event});
     live_data_emitter.emit('emit','newevent');
 
   }
@@ -580,9 +594,6 @@ function cleanLiveEventCache()
         // Remove from list of recent results, if it's there.
         var idx = recent_live_events.indexOf(basename);
         if(idx>-1) recent_live_events.splice(idx,1);
-        else {
-          console.error("Couldn't find ", basename, " in array of recent live events:", recent_live_events);
-        }
         // console.log("new array of recent live events is",recent_live_events);
 
         // Remove the file.
@@ -594,30 +605,45 @@ function cleanLiveEventCache()
 }
 
 
+
+
+
 ///////////////////////////////////////////////
 // Run the server
 if(process.env.NODE_ENV=="production") {
-  var cluster = require('cluster');
   var numCPUs = 4;
 
   if (cluster.isMaster) {
-    for (var i = 0; i < numCPUs; i++) {
-        cluster.fork();
-    }
-  } else {
-   httpServer.listen(4590,function(){
-     process.send = process.send || function () {}; // in case there's no prcoess manager
-     process.send('ready');
-     console.log(chalk.red("Port openend on 4590"));
+    var workers = [];
 
-    }); // looks a little like 'argo'
+    function gotWorkerMsg(msg) {
+      for(var w in workers) {
+        w.send(msg);
+      }
+    }
+    for (var i = 0; i < numCPUs; i++) {
+        var worker = cluster.fork();
+        workers.push(worker);
+        worker.on("messsage",gotWorkerMsg);
+    }
+
+  } else {
+   // is worker.
+   httpServer.listen(config.http_server_port,function(){
+     process.send = process.send || function () {}; // in case there's no prcoess manager
+     process.send({ready:1});
+     console.log(chalk.red("Port openend on ",config.http_server_port));
+
+    }); 
   }
+
 } else {
 
-  httpServer.listen(4590,function(){
+  // no clusters.
+  httpServer.listen(config.http_server_port,function(){
      process.send = process.send || function () {}; // in case there's no prcoess manager
      process.send('ready');
-     console.log(chalk.red("Port openend on 4590"));
+     console.log(chalk.red("Port openend on ",config.http_server_port));
 
     }); // looks a little like 'argo'
 }

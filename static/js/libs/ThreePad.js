@@ -169,8 +169,8 @@ function ThreePad(element, options )
     $(this.element).on('mousedown.' +this.NameSpace, fn);
     $(this.element).on('mouseenter.'+this.NameSpace, fn);
     $(this.element).on('mouseout.'  +this.NameSpace, fn);
-    // $(window)      .on('mousemove.' +this.NameSpace, fn);
-    // $(window)      .on('mouseup.'   +this.NameSpace, fn);
+    $(this.element).on('mousemove.' +this.NameSpace, fn);
+    $(this.element).on('mouseup.'   +this.NameSpace, fn);
     $(this.element).on('wheel.'+this.NameSpace, fn);//function(ev,d){if (ev.ctrlKey){return fn(ev,d);} else return true;});
   }
   $(this.element).on('touchstart.'+this.NameSpace, fn);
