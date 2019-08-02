@@ -17,12 +17,23 @@
 /// 
 
 
-
+// if(WebVRPolyfill)
+//   var polyfill = new WebVRPolyfill({
+//           // Ensures the polyfill is always active on mobile, due to providing
+//           // a polyfilled CardboardVRDisplay when no native API is available,
+//           // and also polyfilling even when the native API is available, due to
+//           // providing a CardboardVRDisplay when no native VRDisplays exist.
+//           PROVIDE_MOBILE_VRDISPLAY: true,
+//           // Polyfill optimizations
+//           DIRTY_SUBMIT_FRAME_BINDINGS: true,
+//           BUFFER_SCALE: 0.75,
+// });
 
 var gThreeTriD = null;
+var vr = false;
 
 $(function(){
-  $('div.A-ThreeTriD').each(function(){
+  $('.A-ThreeTriD').each(function(){
     gThreeTriD = new ThreeTriD(this);
   });  
 });
@@ -477,6 +488,20 @@ function ThreeTriD(element, options )
   
   this.CreateFrame();
   this.CreateFullModel();
+
+  if(gPageName=="vr") {
+  //   this.vr = true;
+
+  //   var effect = new THREE.VREffect(this.renderer);
+  //   effect.setSize(this.width, this.height);
+
+  // // Create a VR manager helper to enter and exit VR mode
+  //   var manager = new WebVRManager(renderer, effect);
+  //   this.AnimationRender();
+  //   this.Render = function(){}; 
+    // this.DoRender(); 
+  }
+
   this.Render();  
 }
 
@@ -1617,9 +1642,9 @@ ThreeTriD.prototype.anime_FlyRotate = function(t)
 {
   var t = 0;
   var trid = this;
-  var revealt = 30e3; // First reveal time, 30 sec
   const t_per_station = 1000; // ms
-  const t_per_reveal  = 30e3; // 30 sec
+  const t_per_reveal  = 15e3; // 30 sec
+  var revealt = t_per_reveal; // First reveal time, 30 sec
   var laststation = -1;
   var flyrotate_stations =  [
        // zenith,   azmiuth
@@ -1665,7 +1690,6 @@ ThreeTriD.prototype.StartAnimation = function(ani_name, ani_function, reset_time
 {
   console.log("Start Animation",ani_name);
 
-  this.animate = true;
   this.Render = function(){}; // nullop
 
 
@@ -1677,8 +1701,11 @@ ThreeTriD.prototype.StartAnimation = function(ani_name, ani_function, reset_time
     this.last_frame_t = this.t0;
   }
   this.current_animations[ani_name] = ani_function;
-
-  requestAnimationFrame(this.AnimationRender.bind(this));
+  if(!  this.animate ) {
+    this.animate = true;
+  requestAnimationFrame(this.AnimationRender.bind(this));//  this.AnimationRender(); // starts animation.
+  }
+  
 }
 
 
