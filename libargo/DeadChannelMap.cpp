@@ -66,6 +66,8 @@ bool DeadChannelMap::Rebuild(const std::string& filename)
 bool DeadChannelMap::Read(std::istream& in) 
 {
   _ok = false;
+  int nchan = 0;
+  int nbad = 0;
   _map.clear();
   try {
     if(!in.good()) {
@@ -74,17 +76,20 @@ bool DeadChannelMap::Read(std::istream& in)
     }
     // First four lines are header: validity, validity, names, types.
     char dummy[256];
-    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy;
-    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy;
-    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy;
-    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy;
+    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy << std::endl;
+    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy << std::endl;
+    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy << std::endl;
+    in.getline(dummy,256); std::cout << "DEADCHANNEL MAP HEADER " << dummy << std::endl;
     while(!in.eof()) {
       int chan, status;
       char dum;
       in >> chan >> dum >> status;
       _map[chan] = status;
+      nchan++;
+      if(status<4) nbad++;
     }
     _ok = true;
+    std::cout << "Loaded bad channel map with " << nchan << " channels, of which " << nbad << " are bad" << std::endl;
     return _ok;      
   } catch(...) {};
   return _ok;

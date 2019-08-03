@@ -143,7 +143,7 @@ void MakeEncodedTileset(ntagg::json& r,
       }
     }
     // tile_threads.join_all();
-    thread_pool.JoinAll();
+    thread_pool.WaitAll();
     std::cout << "Finished tile threads"<< std::endl;
 
     ntagg::json jtiles;
