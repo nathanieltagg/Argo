@@ -454,7 +454,7 @@ app.get('/live',function(req,res) {
 
 // At end:
 app.get('/:pagename', function (req, res) {
-  res.render(sanitize(req.params.pagename), { pagename: 'argo' })
+  res.render(sanitize(req.params.pagename), { pagename: req.params.pagename })
 })
 
 // At end:
