@@ -499,7 +499,7 @@ void UbdaqComposer::composeTPC()
       
     } // loop seb/crate
   
-    thread_pool.JoinAll();
+    thread_pool.WaitAll();
     timer_read.addto(m_stats);
   }
 

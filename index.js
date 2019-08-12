@@ -3,6 +3,7 @@
 console.log("starting")
 var http = require('http');
 var https = require('https');
+var util = require('util');
 var fs = require('fs');
 const fsPromises = require('fs').promises;
 var express = require('express');
@@ -477,8 +478,12 @@ var current_live_event = recent_live_events.slice(-1)[0];
 
 var live_data_emitter = new events.EventEmitter();
 
-setInterval(()=>{
+const readdirAsync = util.promisify(fs.readdir);
+
+setInterval(async ()=>{
   // console.log("Sending heartbeats...");
+  recent_live_events = await readdirAsync(config.live_event_cache);
+  recent_live_events.sort();
   current_heartbeat.server_time = Date.now();
   live_data_emitter.emit("emit",'interval');
 }
