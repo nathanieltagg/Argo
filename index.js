@@ -73,14 +73,14 @@ async function resolve_request(event_req)
     /// Return an object suitable for passing to the Composer, with completely-specified filepath.
     /// Warning: modifies inReq
     if(event_req.what=="live") {
-      if(!current_live_event) 
-        throw new Error("No live event available.");
-      if(!event_req.filename) 
+      // Do special live thing.  Set the json file name to either the most recent cache or the named cache.
+      if(!event_req.filename) {
+        await checkLiveCache();
+        if(!current_live_event)  throw new Error("No live event available.");
         event_req.filename=path.join(config.live_event_cache,current_live_event,"event.json");
+      }
       if(!event_req.filename.includes(".json")) 
-        event_req.filename=path.join(config.live_event_cache,event_req.filename,"event.json");
-      
-      // Do special live thing.
+        event_req.filename=path.join(config.live_event_cache,event_req.filename,"event.json");      
     }
     if(event_req.what=="json"){
       // look at prebuild json file
@@ -468,22 +468,25 @@ app.get('/', function (req, res) {
 ////////////////////////////////////////////////
 /// LIVE
 
-
-
+var recent_live_events = null;
+var current_live_event = null;
+const readdirAsync = util.promisify(fs.readdir);
+async function checkLiveCache()
+{
+  recent_live_events = await readdirAsync(config.live_event_cache);
+  recent_live_events.sort();
+  current_live_event = recent_live_events.slice(-1)[0];
+}
+checkLiveCache().then();
 var current_heartbeat = {};
 var current_heartbeat_time = 0;
-var current_live_event = null;
-var recent_live_events = fs.readdirSync(config.live_event_cache).sort();
-var current_live_event = recent_live_events.slice(-1)[0];
 
 var live_data_emitter = new events.EventEmitter();
 
-const readdirAsync = util.promisify(fs.readdir);
 
 setInterval(async ()=>{
   // console.log("Sending heartbeats...");
-  recent_live_events = await readdirAsync(config.live_event_cache);
-  recent_live_events.sort();
+  await checkLiveCache();
   current_heartbeat.server_time = Date.now();
   live_data_emitter.emit("emit",'interval');
 }

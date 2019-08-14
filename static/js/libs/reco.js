@@ -14,6 +14,7 @@ function BuildArgoSpacepoints()
 
   for(hit of hits) {
     if(!hit.wires) {
+        var tpc = hit.tpc || 0;
         if(hit.Ch) hit._wires = gGeo3.channelToWires(hit.Ch,tpc); 
         else       hit._wires = [{tpc: tpc, plane: hit.plane, view: hit.plane, // ! uboone assumption hit
                                   wire: hit.wire, trans: gGeo3.wireToTransverse(tpc,hit.plane,hit.wire) }];

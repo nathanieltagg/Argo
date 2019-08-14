@@ -29,9 +29,9 @@ function LiveControl( element )
 
   var self=this;
   this.latest_cache_file = "";
+  this.last_reload_time = Date.now();
 
   this.refresh_time = 20;
-  this.refresh_time
 
   this.live_visual_clock = $('#live-visual-clock')[0];
 
@@ -141,8 +141,7 @@ LiveControl.prototype.OnMessage = function(event)
     // keep-up mode:
     if($('.ctl-live-keep-up').is(":checked")) {      
       if(data.current_live_event != this.recent_cache_file) {
-        this.time_last_refresh = Date.now();
-        location.reload(); // start again all over...?
+        this.Refresh(true);
       }
     }
   }
@@ -181,7 +180,12 @@ LiveControl.prototype.Refresh = function(force_newest)
   // If there's new data we haven't seen yet, we should go look at that.  
   // However, it's possible the data is stale: we're shut down, or the backend is crashed. In that case, look through historical stuff.
 // If we're already seen the most recent event
-  console.warn("LivecControl::Refresh()",this);
+  // console.warn("LivecControl::Refresh()",this);
+  
+  // Every 10 minutes, just reload the whole page. It looks like memory issues are causing gradual slowdown.
+  if(Date.now() - this.last_reload_time > 600000) { 
+    location.reload();
+  }
   this.time_last_refresh = Date.now();
 
   var latest_event_seen = Cookies.get("save--latest_event");
@@ -189,6 +193,7 @@ LiveControl.prototype.Refresh = function(force_newest)
     var latest_events = [...this.recent_events].sort().reverse();
     var latest_event =  latest_events[0];
     if(latest_event <= latest_event_seen) {
+      console.log("no new events. Latest one seen is",latest_event_seen," and most recent available is",latest_event);
       // There's nothing new.  Try going through list
       for(var i=0;i<latest_events.length;i++) {
         if(this.current_event > latest_events[i] ) {
