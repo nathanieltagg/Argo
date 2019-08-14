@@ -1108,17 +1108,18 @@ WireViewGL.prototype.DoMouse = function(ev)
 WireViewGL.prototype.CreateHits = function()
 {
 
-  if(!this.hit_group) {
-    this.hit_group = new THREE.Group();
-    this.hit_group.name = "hit_group";    
-    this.scene.add(this.hit_group);
+  if(this.hit_group) {
+    for(var mesh of this.hit_group.children) {
+      mesh.geometry.dispose();
+      // removing the meshes is problematic, because it breaks the loop!  Need to loop backwards... or just recreate
+      // the whole bloody group.
+    }
+    this.scene.remove(this.hit_group);
   }
+  this.hit_group = new THREE.Group(); // Nuke the old one
+  this.hit_group.name = "hit_group";    
+  this.scene.add(this.hit_group);
   this.hilite_hit_list = []; // Wipe in case of product change
-  for(var mesh of this.hit_group.children) {
-    // dispose old hits object:
-    this.hit_group.remove(mesh);
-    mesh.geometry.dispose();
-  }
 
   var hits = GetSelected("hits");
   if(!hits.length) return;
@@ -1288,16 +1289,16 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
   if(!this.hit_hover_box) {
     var geometry = new THREE.LineGeometry();
     geometry.setPositions([-1,-1,0, -1,1,0, 1,1,0, 1,-1,0, -1,-1,0]);
+
     this.hit_hover_box = new THREE.Mesh(geometry,this.highlight_line_material);
     this.hit_hover_box.name = "hoverbox";
-    this.hit_group.add(this.hit_hover_box);
 
     this.hit_select_box = new THREE.Mesh(geometry,this.highlight_line_material);
     this.hit_select_box.name = "selectbox";
-
-
-    this.hit_group.add(this.hit_select_box);
   }
+  
+  this.hit_group.add(this.hit_hover_box); // in case the group got deleted
+  this.hit_group.add(this.hit_select_box); // in case the group got deleted
 
   if(gHoverState.type=='hits') {
     var hit = gHoverState.obj;
