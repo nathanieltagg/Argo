@@ -174,7 +174,7 @@ void main() {
   fade *=      smoothstep(tdc_cut_low   -tdc_cut_fade_width,   tdc_cut_low   +tdc_cut_fade_width, tdc) ;
   fade *= (1.0-smoothstep(tdc_cut_high  -tdc_cut_fade_width,   tdc_cut_high  +tdc_cut_fade_width, tdc) );
 
-  if(fade <= 0.01) discard;
+  if(fade <= 0.99) discard;
 
   // How far zoomed in are we?  If we're zoomed out, it's hard to see detail.
   // for now, concentrate only on the TDC coordinate, since it's the most compressed when looking at a perspective view 

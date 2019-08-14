@@ -309,31 +309,30 @@ WireViewGL.prototype.CreateFrame = function()
     var v1 = gGeo3.data.tpcs[tpc].center[0] - gGeo3.data.tpcs[tpc].halfwidths[0];
     var v2 = gGeo3.data.tpcs[tpc].center[0] + gGeo3.data.tpcs[tpc].halfwidths[0];
 
-    var texture = null;
-    if(gGeo3.ntpc > 1)
-        texture = new THREE.TextTexture({
-          fontFamily: '"Times New Roman", Times, serif',
-          fontSize: 100,
-          text:  'TPC '+tpc,
-          fillStyle: "#FFF",
-          strokeStyle: "#000"
-    });
 
     let material  = new THREE.MeshBasicMaterial({   color:0xe0e0e0, transparent:true, opacity: 0.2 });
-    let material2 = new THREE.MeshBasicMaterial({   color:0xffffff, transparent:true, opacity: 0.2, map: texture });
 
     var geometry = new THREE.PlaneGeometry( Math.abs(u2-u1), v2-v1 );
     var mesh1 = new THREE.Mesh(geometry,material);
-    var mesh2 = new THREE.Mesh(geometry,material2);
     mesh1.position.x = (u1+u2)/2;
     mesh1.position.y = (v1+v2)/2;
-    mesh1.position.z = tpc;
-    mesh2.position.x = (u1+u2)/2;
-    mesh2.position.y = (v1+v2)/2;
-    mesh2.position.z = tpc+0.001;
+    mesh1.position.z = -20+tpc;
 
     this.frame_group.add(mesh1);
-    this.frame_group.add(mesh2);
+
+    //     var texture = null;
+    // if(gGeo3.ntpc > 1)
+    //     texture = new THREE.TextTexture({
+    //       fontFamily: '"Times New Roman", Times, serif',
+    //       fontSize: 100,
+    //       text:  'TPC '+tpc,
+    //       fillStyle: "#FFF",
+    //       strokeStyle: "#000"
+    // });
+    // let material2 = new THREE.MeshBasicMaterial({   color:0xffffff, transparent:true, opacity: 0.2, map: texture });
+    // var mesh2 = new THREE.Mesh(geometry,material2);
+    // mesh2.position.copy(mesh1.position);
+    // this.frame_group.add(mesh2);
   
   }     
   this.scene.add(this.frame_group);
@@ -443,9 +442,9 @@ function create_image_meshgroup(mapper,chan_start,chan_end,tdc_start,tdc_end,x1,
     obj.position.x = (t_x1+t_x2)/2;
     obj.position.y = (y1+y2)/2;
     //console.log("created wireimg with ",t_span_x,y2-y1,t_x1,t_x2,obj.position.x,obj.position.y);
-    if(!flip) {
+    if(flip) {
         // Just turn it upside down.
-        // obj.rotation.x = Math.PI;
+        obj.rotation.x = Math.PI;
       }
    obj.userData = userData;
       
@@ -585,6 +584,7 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
 
       var tpc = mesh.userData.tpc;
       var gtpc = gGeo3.getTpc(tpc);
+      if(!gtpc) console.error("no geo tpc data for tpc",tpc,"mesh",mesh);
 
       // Change transverse cut
       if( gZoomRegion.fullMode() && gZoomRegion.getSelectedTpc() == mesh.userData.tpc) {
@@ -595,6 +595,8 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
         // mat.uniforms.tdc_end.value   = gZoomRegion.getTimeOffset() + this.max_tdc; // found when looking at wireimg stuff.
         var t1 = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v1) +  gZoomRegion.getTimeOffset();
         var t2 = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v2) +  gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value    = Math.min(t1,t2);
+        mat.uniforms.tdc_end.value      = Math.max(t1,t2);
         mat.uniforms.tdc_start.value = Math.min(t1,t2);
         mat.uniforms.tdc_end.value   = Math.max(t1,t2);
 
@@ -606,23 +608,21 @@ WireViewGL.prototype.UpdateWireimg = function(fast)
       } else {
         mesh.position.z=0.0; // Set to low position.
 
-        // Drift crop:
-        var tdc_start = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v1) + gZoomRegion.getTimeOffset();
-        var tdc_end   = gGeo3.getTDCofX(tpc,this.view,mesh.userData.v2) + gZoomRegion.getTimeOffset();
-        mat.uniforms.tdc_start.value = tdc_start;
-
         // Actual TPC bounds.
         var v1 =  gtpc.views[this.view].x; // position of wires
         var v2 =  gtpc.center[0] - gtpc.drift_dir*gtpc.halfwidths[0]; // position of cathode 
-        var t1 =  gGeo3.getTDCofX(tpc,this.view,v1) + gZoomRegion.getTimeOffset();
-        var t2 =  gGeo3.getTDCofX(tpc,this.view,v2) + gZoomRegion.getTimeOffset();
+        // if(gtpc.drift_dir>1) {var tmp = v2; v2=v1; v1=tmp;}
+        var t1 = gGeo3.getTDCofX(tpc,this.view,v1) +  gZoomRegion.getTimeOffset();
+        var t2 = gGeo3.getTDCofX(tpc,this.view,v2) +  gZoomRegion.getTimeOffset();
+        mat.uniforms.tdc_start.value    = t1;
+        mat.uniforms.tdc_end.value      = t2;
         mat.uniforms.tdc_cut_low.value  = Math.min(t1,t2);
         mat.uniforms.tdc_cut_high.value = Math.max(t1,t2);
 
         // Transverse crop:
         if(gGeo3.numTpcs()>1) {
           var [u1,u2] = gGeo3.findTransCuts(tpc,this.view, center_y);
-          mat.uniforms.trans_fade_width.value = 2;
+          mat.uniforms.trans_cut_fade_width.value = 2;
           mat.uniforms.trans_cut_low.value  = u1;
           mat.uniforms.trans_cut_high.value = u2;
           // console.log("fadecut tpc",tpc,"view",this.view,"trans low",u1,"trans high",u2,"tdc start",tdc_start,"tdc end",tdc_end);
@@ -1118,7 +1118,6 @@ WireViewGL.prototype.CreateHits = function()
     // dispose old hits object:
     this.hit_group.remove(mesh);
     mesh.geometry.dispose();
-    mesh.material.dispose();      
   }
 
   var hits = GetSelected("hits");
@@ -1128,18 +1127,23 @@ WireViewGL.prototype.CreateHits = function()
   //        new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 100 ),
   // ];
 
-  if(this.hit_materials) {
-    for(var m of this.hit_materials) m.dispose();
-  }
-  this.hit_materials = [];
+  // if(this.hit_materials) {
+  //   for(var m of this.hit_materials) m.dispose();
+  // }
+  // this.hit_materials = [];
 
-  for(var tpc = 0;tpc<gGeo3.numTpcs();tpc++) {
-    this.hit_materials[tpc] = new THREE.MeshBasicMaterial( {
+  // for(var tpc = 0;tpc<gGeo3.numTpcs();tpc++) {
+  //   this.hit_materials[tpc] = new THREE.MeshBasicMaterial( {
+  //     color: 0xFFFFFF,
+  //     side: THREE.DoubleSide, 
+  //     vertexColors: THREE.VertexColors
+  //   } );
+  // }
+  if(!this.hit_material) this.hit_material =  new THREE.MeshBasicMaterial( {
       color: 0xFFFFFF,
       side: THREE.DoubleSide, 
       vertexColors: THREE.VertexColors
     } );
-  }
 
   var field = $(this.GetBestControl(".hit-hist-field")).val();
 
@@ -1157,7 +1161,7 @@ WireViewGL.prototype.CreateHits = function()
       vertices.push( u1, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
       vertices.push( u2, v1, 0 ); normals.push(0,0,1); colors.push(...colorvals);
       indices.push( nvertices+0, nvertices+2, nvertices+1, nvertices+2, nvertices+3, nvertices+1 );  
-      product_indices.push(ihit,ihit);
+      product_indices.push(ihit,ihit); // 2 polys per rectangle
       nvertices += 4;
     }
 
@@ -1189,13 +1193,13 @@ WireViewGL.prototype.CreateHits = function()
     geo.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
     geo.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
     geo.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-    var mesh = new THREE.Mesh(geo,this.hit_materials[tpc]);
+    var mesh = new THREE.Mesh(geo,this.hit_material);
     mesh.position.z = 10;
     mesh.scale.y =  gGeo3.getDriftCmPerTick(tpc);
     mesh.name = hits._pointer;
     mesh.userData = {
       product_indices:  product_indices,
-      default_material: this.hit_materials[tpc],
+      default_material: this.hit_material,
       tpc: tpc,
     }
     this.hit_group.add(mesh);
@@ -1256,9 +1260,9 @@ WireViewGL.prototype.UpdateHitColors = function()
       var c = this.hilite_hit_color;
       if(!this.hilite_hit_list.includes(idx)) { 
         var hit = hits[idx];
+        if(!hit) debugger;
         var q = hit[field]; // The value being plotted for charge. 
         c = gHitColorScaler.GetColorValues(q);
-      } else {
       }
       vcolor.push( c[0]/255,c[1]/255,c[2]/255,
                    c[0]/255,c[1]/255,c[2]/255,
@@ -1320,6 +1324,7 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
       this.hit_hover_box.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * this.hit_hover_box.scale.y; 
       this.hit_hover_box.position.z = 20;
       this.hit_hover_box.visible = true;
+      this.hit_hover_box.userData = {tpc:hit.tpc};
       this.UpdateHits();
     }
 
@@ -1352,6 +1357,8 @@ WireViewGL.prototype.HoverAndSelectionChange_Hits = function()
       this.hit_select_box.position.y = -gGeo3.getTpc(tpc).drift_dir * offset_hit_time * this.hit_hover_box.scale.y; 
       this.hit_select_box.position.z = 20;
       this.hit_select_box.visible = true;
+      this.hit_select_box.userData = {tpc:hit.tpc};
+
       this.UpdateHits();
     }
 

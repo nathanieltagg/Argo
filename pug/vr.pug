@@ -1,0 +1,32 @@
+include inc/mixins
+
+doctype html
+html
+  head
+    meta(http-equiv='content-type', content='text/html; charset=utf-8')
+    title Argo
+    link(rel='icon', type='image/png', href='/images/Argo3icon.png')
+    block headerscript
+      script(type='text/javascript') 
+          |gPageName="#{pagename}";
+          |gDetector="uboone";
+          |    WebVRConfig = {  FORCE_ENABLE_VR: true, };
+    link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
+    include ./libraries 
+    script(type="text/javascript", src="/js/third-party/WebVR.js")
+    script(type="text/javascript", src="/js/third-party/HelioWebXRPolyfill.js")
+    <meta http-equiv="origin-trial" content="Ai1/G787sugfmWtk1xQExa8N6OqwDsJyNn+OwpA1J4PozR1lixRYIQ4Tmp00vrGWS8FQQ2iDyqjwaewrOfYvPAUAAABTeyJvcmlnaW4iOiJodHRwczovL3RocmVlanMub3JnOjQ0MyIsImZlYXR1cmUiOiJXZWJYUkRldmljZU03NiIsImV4cGlyeSI6MTU2ODAyMzQ3OH0=">
+
+    include ../static/shaders/shaders.inc
+
+    // Extra scripts for webvr
+
+  body
+      div.A-ThreeTriD(style='height:100vh;')
+
+      div(style="display:none;")
+         include inc/ControlOverlay
+         include inc/Configuration
+         include inc/HitHistogram
+         include inc/FalseColorControl

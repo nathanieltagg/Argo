@@ -17,18 +17,6 @@
 /// 
 
 
-// if(WebVRPolyfill)
-//   var polyfill = new WebVRPolyfill({
-//           // Ensures the polyfill is always active on mobile, due to providing
-//           // a polyfilled CardboardVRDisplay when no native API is available,
-//           // and also polyfilling even when the native API is available, due to
-//           // providing a CardboardVRDisplay when no native VRDisplays exist.
-//           PROVIDE_MOBILE_VRDISPLAY: true,
-//           // Polyfill optimizations
-//           DIRTY_SUBMIT_FRAME_BINDINGS: true,
-//           BUFFER_SCALE: 0.75,
-// });
-
 var gThreeTriD = null;
 var vr = false;
 
@@ -67,6 +55,7 @@ function ThreeTriD(element, options )
   var self = this;
 
   $(element).addClass("ThreeTriD");
+  $(element).addClass("threepad");
   $(this.element).css("position","relative");
   
   // Initial sizing.
@@ -375,8 +364,29 @@ function ThreeTriD(element, options )
   if(this.animate) {
     // Render is a no-op. Instead, we animate!
     this.AnimationRender();
-  }
-  else {
+  } else if (gPageName=="vr") {
+
+    // if(typeof WebVRPolyfill !== "undefined")
+    //   var gWebVrPolyfill  = new WebVRPolyfill({
+    //           // Ensures the polyfill is always active on mobile, due to providing
+    //           // a polyfilled CardboardVRDisplay when no native API is available,
+    //           // and also polyfilling even when the native API is available, due to
+    //           // providing a CardboardVRDisplay when no native VRDisplays exist.
+    //           PROVIDE_MOBILE_VRDISPLAY: true,
+    //           // Polyfill optimizations
+    //           DIRTY_SUBMIT_FRAME_BINDINGS: true,
+    //           BUFFER_SCALE: 0.75,
+    // });
+    this.vr = true;
+    this.renderer.vr.enabled = true;
+    document.body.appendChild( THREE.WEBVR.createButton( this.renderer ) );
+    this.Render = function(){};
+    this.renderer.setAnimationLoop( function() {
+      // console.log("animation loop");
+      self.AnimationRender(this);
+    });
+  //   this.vr = true;
+  } else {
     this.Render = this.DoRender;  
   }
   this.orbit_controls.addEventListener( 'change', this.Render.bind(this)  );
@@ -489,20 +499,9 @@ function ThreeTriD(element, options )
   this.CreateFrame();
   this.CreateFullModel();
 
-  if(gPageName=="vr") {
-  //   this.vr = true;
 
-  //   var effect = new THREE.VREffect(this.renderer);
-  //   effect.setSize(this.width, this.height);
+  this.DoRender();  
 
-  // // Create a VR manager helper to enter and exit VR mode
-  //   var manager = new WebVRManager(renderer, effect);
-  //   this.AnimationRender();
-  //   this.Render = function(){}; 
-    // this.DoRender(); 
-  }
-
-  this.Render();  
 }
 
 
@@ -1041,10 +1040,10 @@ ThreeTriD.prototype.DrawOverlay = function(){};
 ThreeTriD.prototype.CreateTracks = function()
 {
   if(this.track_group) { // Delete it.
-    this.scene.remove(this.track_group);
     for(var obj of this.track_group.children) {
       if(obj.geometry) obj.geometry.dispose();
     }
+    this.scene.remove(this.track_group);
   }
 
   var tracks = GetSelected("tracks");
@@ -1128,12 +1127,12 @@ ThreeTriD.prototype.UpdateVisibilities = function()
 ThreeTriD.prototype.CreateShowers = function()
 {  
   if(this.showers_group) {
-    this.scene.remove(this.showers_group);
     for(var thing of this.showers_group.children) thing.geometry.dispose(); // delete old ones.
+    this.scene.remove(this.showers_group);
   }
-  this.shower_material = new THREE.MeshBasicMaterial( { color: 0xff00ff, transparent: true, opacity: 0.9});
-  this.shower_hover_material =  new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
-  this.shower_select_material = new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
+  this.shower_material        = this.shower_material        || new THREE.MeshBasicMaterial( { color: 0xff00ff, transparent: true, opacity: 0.9});
+  this.shower_hover_material  = this.shower_hover_material  || new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
+  this.shower_select_material = this.shower_select_material || new THREE.MeshBasicMaterial( { color: 0xffff00, transparent: true,opacity: 0.9});
   var showers = GetSelected("showers");
   if(!showers.length) return;
   
@@ -1182,12 +1181,13 @@ ThreeTriD.prototype.UpdateShowers = function()
 ///////////////////////////
 ThreeTriD.prototype.CreateSpacepoints = function()
 {
+  if(this.spacepoints_group) {
+    for(var thing of this.spacepoints_group.children) thing.geometry.dispose(); // delete old ones.
+    this.scene.remove(this.spacepoints_group);
+  }
+
   var sps = GetSelected("spacepoints");
   if(!sps.length) return;
-  if(this.spacepoints_group) {
-    this.scene.remove(this.spacepoints_group);
-    for(var thing of this.spacepoints_group.children) thing.geometry.dispose(); // delete old ones.
-  }
   
   this.spacepoints_group = new THREE.Group();
 
@@ -1239,16 +1239,17 @@ ThreeTriD.prototype.UpdateSpacepoints = function()
 ///////////////////////////
 ThreeTriD.prototype.CreateFlashes = function()
 {
-  var opflashes = GetSelected("opflashes");
-  if(!opflashes.length) return;
-
   if(this.opflashes_group) {
-    this.scene.remove(this.opflashes_group);
     for(var thing of this.opflashes_group.children) {
       thing.geometry.dispose(); // delete old ones.
       thing.material.dispose();
     }
+    this.scene.remove(this.opflashes_group);
   }
+
+  var opflashes = GetSelected("opflashes");
+  if(!opflashes.length) return;
+
   
   this.opflashes_group = new THREE.Group();
   this.opflash_geo      = this.opflash_geo || new THREE.CylinderBufferGeometry(1,1,1,32);
@@ -1256,7 +1257,7 @@ ThreeTriD.prototype.CreateFlashes = function()
   this.opflash_hover_material = this.opflash_hover_material  || new THREE.MeshBasicMaterial({color: 0x0f0f00, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
   this.opflash_select_material= this.opflash_select_material || new THREE.MeshBasicMaterial({color: 0x5f5f00, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
 
-  for(var flash of opflashes) {
+  for(var flash of opflashes) { 
      var material = new THREE.MeshBasicMaterial({color: 0x000f00, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
      var mesh = new THREE.Mesh(this.opflash_geo,this.opflash_material );
      mesh.position.y = flash.yCenter;
@@ -1330,8 +1331,8 @@ ThreeTriD.prototype.CreateMC = function()
 {
 
    if(this.mc_group) {
+    for(var thing of this.mc_group.children) {thing.geometry.dispose(); this.mc_group.remove(thing);}// delete old ones.
     this.scene.remove(this.mc_group);
-    for(var thing of this.mc_group.children) thing.geometry.dispose(); // delete old ones.
   }
   this.mc_group = new THREE.Group();
   this.mc_group.name = "mc";
@@ -1418,12 +1419,13 @@ ThreeTriD.prototype.UpdateMC = function()
 ThreeTriD.prototype.CreateWireimg = function()
 {
   if(this.wireimg_group) {
-    this.scene.remove(this.wireimg_group); 
-     for(var grp of this.wireimg_group.children)
+    for(var grp of this.wireimg_group.children) {
       for(var thing of grp.children){
           if(thing.material) thing.material.dispose();
           if(thing.geometry) thing.geometry.dispose();
       }
+      this.scene.remove(this.wireimg_group); 
+    }
   }
   var mapper = null;
 
@@ -1745,6 +1747,7 @@ ThreeTriD.prototype.AnimationRender = function()
   this.DoRender();
   this.last_frame_t = Date.now();
 
+  if(this.vr) return;
   if(this.animate) requestAnimationFrame(this.AnimationRender.bind(this));
   else this.StopAnimations();
 }
@@ -1781,3 +1784,4 @@ function onVisibilityChange(el, callback) {
         }
     }
 }
+

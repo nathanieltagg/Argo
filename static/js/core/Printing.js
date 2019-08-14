@@ -16,6 +16,7 @@ function DownloadImage(portlet) {
     var boundobject = $(this).data("BoundObject");
     console.log("bound object is",boundobject);
     if(boundobject.Render) boundobject.Render();
+    if(boundobject.DoRender) boundobject.DoRender();
   });
   
   // ok, convert to a canvas

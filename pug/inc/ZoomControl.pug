@@ -10,12 +10,12 @@
           br
           fieldset
             label
-              input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-full',value='full',checked='true')
+              input.zoommode.saveable.auto-save(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-full',value='full',checked='true')
               | Full readout
-              select.zoomtpc
+              select.zoomtpc.saveable.auto-save
 
             label
-              input.zoommode(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-crop',value='crop')
+              input.zoommode.saveable.auto-save(type='radio',name='zoomcontrol-radio-wireviewmode',id='zoomcontrol-wireviewmode-crop',value='crop')
               | Real bounds
     span.ZoomControl-Controls.align-right
       //- button.zoom-auto(type='button') Auto
