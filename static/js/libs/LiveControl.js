@@ -183,7 +183,9 @@ LiveControl.prototype.Refresh = function(force_newest)
   // console.warn("LivecControl::Refresh()",this);
   
   // Every 10 minutes, just reload the whole page. It looks like memory issues are causing gradual slowdown.
-  if(Date.now() - this.last_reload_time > 600000) { 
+  var t_since_browser_refresh = (Date.now() - this.last_reload_time);
+  console.log("Refreshing. Seconds since browser refresh is ",t_since_browser_refresh/1000.);
+  if(t_since_browser_refresh > 600000) { // ms
     location.reload();
   }
   this.time_last_refresh = Date.now();
@@ -318,6 +320,7 @@ LiveControl.prototype.DoClock = function()
     var time_spent = Date.now() - this.time_last_refresh;
     var frac =time_spent / this.refresh_period;    
     if(frac>1) {
+      this.SetPie(1);
       this.Refresh();
       frac=0;
     }
