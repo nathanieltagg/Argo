@@ -57,7 +57,7 @@ function BuildArgoSpacepoints()
     var myWorker = new Worker('js/libs/reco_spacepoints.js');
     myWorker.onmessage = function(e) { FinishReco(e.data);  }
     myWorker.postMessage([ hits, gGeo3.data.basis, cfg]);
-
+    myWorker.terminate();
   } else {
     FinishReco(
       do_reco_spacepoints( hits, gGeo3.data.basis, cfg )
