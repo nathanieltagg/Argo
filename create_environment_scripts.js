@@ -25,19 +25,11 @@ var pm_scripts = {
             "name": "argo-node",
             "script": "index.js",
             "watch": false,
+            "error_file":__dirname+"/logs/argo.err",
+            "out_file":__dirname+"/logs/argo.out",
             "cwd":__dirname,
             "env": {
               "NODE_ENV": "production",
-            }
-      },
-      {
-            name: 'argo-live-backend',
-            "cwd":__dirname,
-            script: 'libargo/run-live-backend.sh',
-            exec_interpreter: 'bash',
-            exec_mode: "fork_mode",
-            env : {
-
             }
       }
    ]
