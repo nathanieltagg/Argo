@@ -25,7 +25,7 @@ var rimraf = require('rimraf');
 var config = require("./configuration.js"); // loads config.js
 var samweb = require("./samweb.js");
 var sanitize = require("sanitize-filename");
-
+var child_process = require('child_process');
 var cluster = require('cluster');
 
 // IDEA: can do this right here: process.env.DYLD_LIBRARY_PATH="<stuff>"
@@ -52,18 +52,43 @@ var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDefla
 //   res.send("test");
 // });
 
-function readTouch(filename)
-{
-  // Try to read the first byte of a file.  Do absolutely nothing with it - this is just there to pin a pnfs file
-  fs.open(filename,'r',function(err,fd){
-    var buff = Buffer.alloc(10);;
-    fs.read(fd,buff,0,1,null,function(err,bytes,buffer){
-      if(err)   console.log("Got error reading ",filename,err);
-      if(bytes) console.log("Succesfully read data on ",filename);
-    })
-  })
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function pin_pnfs_file(filename)
+{
+  // dccp -P should pin a file, but this fails with cryptic error messages
+  var dccp = "/usr/bin/dccp";
+  var dcap_file = filename.replace(/^\/pnfs/,"dcap://fndca1.fnal.gov:24137//pnfs/fnal.gov/usr");
+  console.log("pinning file with dcap url:",dcap_file);
+  const child = child_process.execFile(dccp,['-P',dcap_file],(error,stdout,stderr)=> {
+    if(error) throw error;
+    console.log("DCCP OUTPUT:",stdout,"\nDCCP STDERR:",stderr);
+  })
+
+  // Kirby suggests: do an ifdh cp, then killl the job. Doesn't seem to work.
+  // const child = child_process.spawn("ifdh",['cp',filename,'/dev/null'],{shell:true,env:process.env});
+  // await sleep(5000); // wait 5 seconds.
+  // console.log("kill ifdh process for file",filename);
+  // child.kill();
+
+  // dccp -P should pin a file, but this fails with cryptic error messages
+  // var dccp = "/usr/bin/dccp";
+  // const child = child_process.execFile(dccp,['-P',filename],(error,stdout,stderr)=> {
+  //   if(error) throw error;
+  //   console.log("DCCP OUTPUT:",stdout,"\nDCCP STDERR:",stderr);
+  // })
+
+  // Try to read the first byte of a file.  Do absolutely nothing with it - this is just there to pin a pnfs file
+  // fs.open(filename,'r',function(err,fd){
+  //   var buff = Buffer.alloc(10);;
+  //   fs.read(fd,buff,0,1,null,function(err,bytes,buffer){
+  //     if(err)   console.log("Got error reading ",filename,err);
+  //     if(bytes) console.log("Succesfully read data on ",filename);
+  //   })
+  // })
+}
 
 async function resolve_request(event_req)
 {
@@ -203,7 +228,7 @@ async function resolve_request(event_req)
         // Pin it. Tell pnfs to stage the file for 20 min minimum.  Update: doesn't work because, again, documentation is written only for gurus, not regular folk. 
         // This gets permission-denied since it's a read-only filesystem (I think)
         // fs.closeSync(fs.openSync(path.join( path.dirname(event_req.filename),  ".(pin)("+path.basename(event_req.filename)+")(stage)(1200)"), 'w'));
-        readTouch(event_req.filename);
+        pin_pnfs_file(event_req.filename);
         throw new Error("UNSTAGED - The file you requested is in tape storage. It's being fetched now; please reload in a minute or two.")
       }
     }
