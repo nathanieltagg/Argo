@@ -416,9 +416,9 @@ console.log("dirname is ",__dirname);
 
 // samspider cgi
 var cgi = require('cgi');
-app.get("/samspider/samspider.cgi", cgi(__dirname+"/samspider/samspider.cgi",
+app.all("/samspider/samspider.cgi", cgi(__dirname+"/samspider/samspider.cgi",
         {stderr: process.stderr}) );
-app.post("/samspider/samspider.cgi", cgi(__dirname+"/samspider/samspider.cgi",
+app.all("/samspider", cgi(__dirname+"/samspider/samspider.cgi",
         {stderr: process.stderr}) );
 app.use('/samspider', express.static(__dirname + '/samspider'));
 
