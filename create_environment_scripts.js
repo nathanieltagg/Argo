@@ -7,6 +7,7 @@
 /// Creates the file ups_env.json
 var fs = require('fs');
 
+
 // Template for nodemon file
 var nodemon = {
   "__comment" : "This file is auto-generated from create_environment_scripts.js. Make changes there!",
@@ -86,6 +87,11 @@ fs.writeFileSync(__dirname+"/nodemon.json",JSON.stringify(nodemon,null,2));
 
 // Pm2 scripts.
 
+if(__dirname.includes("_dev")) {
+  // Development version!  Rename the output exec
+  pm_scripts.pm2.apps[0].name="argo-dev";
+}
+
 for(var scpt in pm_scripts) {
     var pm2 = pm_scripts[scpt];
     for(var iapp=0;iapp<pm2.apps.length;iapp++){
@@ -95,7 +101,6 @@ for(var scpt in pm_scripts) {
       pm2.apps[iapp].env["DYLD_LIBRARY_PATH"] = "";
       pm2.apps[iapp].env["DYLD_FALLBACK_LIBRARY_PATH"] = process.env["DYLD_LIBRARY_PATH"];
     }
-
     fs.writeFileSync(__dirname+"/"+scpt+".json",JSON.stringify(pm2,null,2));
 }
 
