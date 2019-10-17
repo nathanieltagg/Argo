@@ -1,0 +1,5 @@
+On argo-microboone, 
+source /grid/fermiapp/products/uboone/setup_uboone.sh
+setup sam_web_client
+samweb list-definitions > defs.txt
+LC_ALL=C sort defs.txt > defs_sorted.txt
