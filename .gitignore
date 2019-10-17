@@ -15,4 +15,4 @@ pm2_live.json
 pm2.ecosystem.json
 argo-environment.conf
 argonode/*.log
-
+config.js
