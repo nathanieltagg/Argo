@@ -15,8 +15,15 @@ source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
 # if desired, you can add your own verson of ubooon by doing 'mrb install' in an mrb area:
 #export PRODUCTS=/Users/tagg/lar680/localProducts_uboone_v06_80_00_c2_debug/:$PRODUCTS
 
-setup larlite v06_70_00d -q e17:debug
-setup uboonecode v08_22_00 -q e17:debug
+
+#setup larlite v06_70_00d -q e17:debug
+#setup uboonecode v08_30_00 -q e17:debug
+
+# Using the c2 build for now, because of failed e17 binaries oct 2019
+setup larlite v06_70_00h -q c2:prof
+setup uboonecode v08_30_00 -q c2:prof
+# tell node-gyp to use the right executable:
+export CXX=`which clang++`
 
 # source ../backend/larlite/config/setup.sh
 #export PATH=/home/argo/node-v10.15.0-linux-x64/bin:$PATH

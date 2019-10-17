@@ -22,7 +22,13 @@ clean:
 
 pwd := $(shell pwd)
 
-CPP := g++ -std=c++17 -g
+# is this a g77 or a clang build?
+ifneq (,$(findstring c2:,$(SETUP_ROOT)))
+	CPP = clang++ -std=c++17  -g
+else
+	CPP = g++ -std=c++17 -g
+endif
+
 # CPP = clang++ -O0 -std=c++17
 LD := $(CPP)
 shlibsuffix=so
@@ -30,7 +36,7 @@ LDFLAGS = -g
 
 
 ifeq ($(UNAME),Darwin)
-  CPP = clang++ -O0
+  #   CPP = clang++ -O0
   # -gdwarf-4 -std=c++98 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk 
   # LD = clang++ -std=c++1y
   # CPPFLAGS += -fPIC -g
