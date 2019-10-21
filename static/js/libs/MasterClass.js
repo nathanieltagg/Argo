@@ -46,7 +46,7 @@ function MasterClass(  )
     gStateMachine.Trigger("hitSumClear"); // update view
     self.selecthit_tracking = true;
     self.selecthit_which = 0;
-    var h = "<table><tr><td class='t1'></td><td class='t2'></td><td class='trkid'></td></tr><tr><th>t1</th><th>t2</th><th>Track ID</th></tr></table>";
+    var h = "<table><tr><td class='t1'></td><td class='t2'></td><td class='trkid'></td><td class='masterclasseventid'></td></tr><tr><th>t1</th><th>t2</th><th>Track ID</th><th>Event ID</th></tr></table>";
     $(self.element).html(h);
     $(this).addClass("mc_strobing");
   });
@@ -73,7 +73,8 @@ MasterClass.prototype.SelectChange = function()
       $("td.t1",this.element).html(gSelectState.obj.t);
       this.selecthit_which++;
       var trkid = HitToTrackIndex(gSelectState.obj);
-      if(trkid) $("td.trkid",this.element).text(trkid)
+      if(trkid) $("td.trkid",this.element).text(trkid);
+      $("td.masterclasseventid",this.element).text(gRecord.header.run + ' | ' + gRecord.header.subrun + ' | ' + gRecord.header.event )
     } else {
       $("td.t2",this.element).html(gSelectState.obj.t);
       var trkid = HitToTrackIndex(gSelectState.obj);
