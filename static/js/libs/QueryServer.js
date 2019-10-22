@@ -96,7 +96,7 @@ function QueryServerStream( par )
     // Useful defaults for masterclass using MCC 9 data
     "/hits/recob::Hits_gaushit__DataRecoStage1Test",
     "/tracks/recob::Tracks_pandoraKalmanTrack__DataRecoStage2",
-    "/tracks/recob::Tracks_pandoraAllOutcomesTrack__DataRecoStage2",
+    // "/tracks/recob::Tracks_pandoraAllOutcomesTrack__DataRecoStage2",
   ];
       
   

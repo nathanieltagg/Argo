@@ -29,6 +29,9 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCFlux.h"
 
+#include "lardataobj/RecoBase/TrackHitMeta.h"
+#include "lardataobj/RecoBase/VertexAssnMeta.h"
+
 // Uboone specific:
 #include "ubobj/Trigger/ubdaqSoftwareTriggerData.h"
 
@@ -1355,20 +1358,22 @@ template <> bool GalleryComposer::composeAssociationFromToMatch<simb::GTruth, si
 template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCTruth, simb::MCTruth>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
 template <> bool GalleryComposer::composeAssociationFromToMatch<simb::MCParticle, simb::MCParticle>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&){return false;}
 
-template<typename A, typename B>
+template<typename A, typename B, typename C>
 bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
 {
   // Get a specific association given product names.
   // Assumption: the first item in each association represents them all
-  typedef art::Assns<A,B> assn_t;
+  typedef art::Assns<A,B,C> assn_t;
 
   bool retval = false;
   std::cout << "GalleryComposer::composeAssociationFromToMatch() " <<  art::TypeID(typeid(A)).friendlyClassName()  << " " << aname << " to " 
-                                                                   <<  art::TypeID(typeid(B)).friendlyClassName()  << " " << bname << std::endl;
+                                                                   <<  art::TypeID(typeid(B)).friendlyClassName()  << " " << bname << " with meta "
+                                                                   <<  art::TypeID(typeid(C)).friendlyClassName()  << std::endl;
   for(auto product: findByType<assn_t>(m_Event->getTTree())) {
-   gallery::Handle< assn_t > assnhandle;
+    std::cout << " .. found " << product.second << std::endl;
+    gallery::Handle< assn_t > assnhandle;
     {mutex::scoped_lock b(m_gallery_mutex); mutex::scoped_lock g(global_gallery_mutex);  m_Event->getByLabel(product.second,assnhandle);}
-
+    
     // Make a one-shot helper.
     GalleryAssociationHelper assnhelper;
 
@@ -1403,6 +1408,7 @@ bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, co
 }
 
 
+
 template<typename A, typename B>
 bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::json& out)
 {
@@ -1414,9 +1420,36 @@ bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::js
 
   // Try both ways.
   bool retval = false;
-  retval =  composeAssociationFromToMatch<A,B>(aname, bname, req, out) || retval;
-  retval =  composeAssociationFromToMatch<B,A>(bname, aname, req, out) || retval;
+  retval =  retval || composeAssociationFromToMatch<A,B>(aname, bname, req, out);
+  retval =  retval || composeAssociationFromToMatch<B,A>(bname, aname, req, out);
+
   return retval;
+}
+
+
+// Specific override to above, which looks for hit-track associations with the trackhitmeta.
+// todo: 
+// recob::Trackrecob::Vertexrecob::VertexAssnMeta
+// recob::Clusterrecob::EndPoint2Dushort
+// recob::Clusterrecob::Vertexushort
+
+template<> bool GalleryComposer::composeAssociationFromTo<recob::Hit,recob::Track>(Composer::piece_t& req, ntagg::json& out)
+{
+  std::string aname = "*";
+  if(req.size()>3) aname = req[3];
+
+  std::string bname = "*";
+  if(req.size()>4) bname = req[4];
+
+  // Try both ways.
+  bool retval = false;
+  retval =  retval || composeAssociationFromToMatch<recob::Hit,recob::Track>(aname, bname, req, out);
+  retval =  retval || composeAssociationFromToMatch<recob::Track,recob::Hit>(bname, aname, req, out);
+  
+  // Try other patterns
+  retval =  retval || composeAssociationFromToMatch<recob::Hit,recob::Track,recob::TrackHitMeta>(aname, bname, req, out);
+  return retval;
+  
 }
 
 template<typename A>

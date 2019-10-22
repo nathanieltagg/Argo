@@ -100,8 +100,12 @@ function GotPiece(o)
   for(n1 in o.piece) {
     gRecord[n1] = gRecord[n1] || {}
     for(n2 in o.piece[n1]) {
-      if(!gRecord[n1][n2]) // disallow overcopy
+      console.log("piece piece",n1,n2);
+      if(!gRecord[n1][n2]) {// disallow overcopy
         gRecord[n1][n2] = o.piece[n1][n2];
+      } else {
+        console.error("data conflict",n1,n2);
+      }
     }
   }
   // gStateMachine.Trigger('newPiece',o.piece); // Add the piece to the trigger call, so that consumers can look to see if they need to change.

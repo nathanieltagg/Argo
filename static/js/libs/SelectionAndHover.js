@@ -696,7 +696,6 @@ TrackInfo_dEdX.prototype.SelectChange = function()
 
   var trk = gSelectState.obj;
   console.error(trk._owner);
-  console.log(gRecord.associations[trk._owner]);
   // find an association.
   var hitname = null;
   var trk_assns = (gRecord.associations||{})[trk._owner] || [];
@@ -740,6 +739,7 @@ TrackInfo_dEdX.prototype.SelectChange = function()
   this.max_v = qmax;
 
   var n = this.data.length;
+  console.log("n points:",n);
   var d = (n*sumx2 - sumx*sumx);
   this.fit_slope = (n*sumxy - sumx*sumy)/d;
   this.fit_intercept = (sumy*sumx2 - sumx*sumxy)/d;

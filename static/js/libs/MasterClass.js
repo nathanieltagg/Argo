@@ -83,10 +83,19 @@ function MasterClass(  )
     $(".mc_button.do_hitsum").removeClass("mc_strobing");
     $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
     
+
     var tracks = GetSelected("tracks");
     
     var h = "<table><tr><td>Track ID</td><td>Zenith Angle</td></tr>";
     for(var trk of tracks) {
+      // compute length of track:
+      var last = trk.points.length-1;
+      var dx = trk.points[0].x - trk.points[last].x;
+      var dy = trk.points[0].y - trk.points[last].y;
+      var dz = trk.points[0].z - trk.points[last].z;
+      var len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+  
+      if(len<5.0) continue;
        h += "<tr><td>" + trk.id + "</td><td>" +(Math.acos(trk.points[0].vy)*180/Math.PI).toFixed(2) + "</td></tr>";
     }
     h+= "</table>";
