@@ -26,6 +26,8 @@ function MasterClass(  )
     self.circle_tracking = true; 
     self.circle_locked = false; 
     gStateMachine.Trigger("hitSumChange"); // update view
+    $(".mc_button.do_hitsum").removeClass("mc_strobing");
+    $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");    
     $(this).addClass("mc_strobing");
   });
   $(".mc_button.do_hitsum_clear").on("click", function(){ 
@@ -48,6 +50,8 @@ function MasterClass(  )
     self.selecthit_which = 0;
     var h = "<table><tr><td class='t1'></td><td class='t2'></td><td class='trkid'></td><td class='masterclasseventid'></td></tr><tr><th>t1</th><th>t2</th><th>Track ID</th><th>Event ID</th></tr></table>";
     $(self.element).html(h);
+    $(".mc_button.do_hitsum").removeClass("mc_strobing");
+    $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
     $(this).addClass("mc_strobing");
   });
 
