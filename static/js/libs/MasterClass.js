@@ -51,6 +51,30 @@ function MasterClass(  )
     $(this).addClass("mc_strobing");
   });
 
+
+  $(".mc_button.do_mc_zenith_angles").on("click", function() {
+    self.circle_tracking = false; 
+    self.circle_locked = false; 
+    self.selecthit_tracking = false; 
+    $(self.element).html("&nbsp;");
+    gStateMachine.Trigger("hitSumClear"); // update view
+    $(".mc_button.do_hitsum").removeClass("mc_strobing");
+    $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
+    
+    var tracks = GetSelected("tracks");
+    
+    var h = "<table><tr><td>Track ID</td><td>Zenith Angle</td></tr>";
+    for(var trk of tracks) {
+       h += "<tr><td>" + trk.id + "</td><td>" +(Math.acos(trk.points[0].vy)*180/Math.PI).toFixed(2) + "</td></tr>";
+    }
+    h+= "</table>";
+   
+    $(self.element).html(h);
+    self.SelectAndCopy();
+ });
+
+
+
   gStateMachine.Bind("hoverChange" ,this.HoverChange.bind(this));
   gStateMachine.Bind("selectChange",this.SelectChange.bind(this));
 }

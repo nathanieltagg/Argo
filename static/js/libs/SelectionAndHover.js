@@ -442,7 +442,8 @@ function ComposeTrackInfo(s)
                       + "<tr><td>vz:</td><td>" +  (vz).toFixed(3) + "</td><td>cm</td></tr>" 
                       + "</table>" + c;
 
-  h+= a + "&theta;beam" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
+  h+= a + "&theta;<sub>zenith</sub>" + b    + (Math.acos(vy)*180/Math.PI).toFixed(0) + "<sup>o</sup>" + c;
+  h+= a + "&theta;<sub>beam</sub>" + b    + (Math.acos(vz)*180/Math.PI).toFixed(2) + "<sup>o</sup>" + c;
 
   h+= a + "Length" + b    + trklen.toFixed(1) + " cm" + c;
 
