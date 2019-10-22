@@ -17,9 +17,21 @@ function MasterClass(  )
   this.circle_locked   = false;
   this.selecthit_tracking = false;
   this.selecthit_which = 0;
+  this.notify = $('.A-MasterClass-notify').get(0);
   var self = this;
 
   this.circle_size = 5.0; // cm
+
+  function clear() {
+    $(self.notify).html(" ");
+    self.circle_tracking = false; 
+    self.circle_locked = false; 
+    self.selecthit_tracking = false; 
+    $(self.element).html("&nbsp;");
+    $(".mc_button.do_hitsum").removeClass("mc_strobing");
+    $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
+  }
+
 
   $(".mc_button.do_hitsum").on("click", function(){ 
     
@@ -29,6 +41,8 @@ function MasterClass(  )
     $(".mc_button.do_hitsum").removeClass("mc_strobing");
     $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");    
     $(this).addClass("mc_strobing");
+    $(self.notify).html(" ");
+    
   });
   $(".mc_button.do_hitsum_clear").on("click", function(){ 
 
@@ -39,6 +53,8 @@ function MasterClass(  )
     gStateMachine.Trigger("hitSumClear"); // update view
     $(".mc_button.do_hitsum").removeClass("mc_strobing");
     $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
+    $(self.notify).html(" ");
+  
 
   });
 
@@ -53,6 +69,8 @@ function MasterClass(  )
     $(".mc_button.do_hitsum").removeClass("mc_strobing");
     $(".mc_button.do_mc_selecthit").removeClass("mc_strobing");
     $(this).addClass("mc_strobing");
+    $(self.notify).html(" ");
+    
   });
 
 
@@ -144,6 +162,10 @@ MasterClass.prototype.SelectAndCopy = function()
 {
   $(this.element).mySelectContents();
   document.execCommand("copy");
+  $(this.notify).html("Copied to clipboard");
+  $(this.notify).css("opacity",1);
+  $(this.notify).animate({opacity:"-=1"},5000);
+  
 }
 
 
