@@ -88,11 +88,37 @@ function GotPiece(o)
     gStateMachine.Trigger('newRecord');
     
   }
+
+  // Explicitly deal with associations data, which can be inverted.
+  if(o.piece.associations) {
+    for(n1 in o.piece.associations) {
+      for (n2 in o.piece.associations[n1]) {
+            // Does inverse already exist?
+            if(!o.piece.associations[n2] || !o.piece.associations[n2][n1]) {
+
+              // console.error("inverting associations for ",n1,n2);
+              var data = o.piece.associations[n1][n2];
+              var inverse = [];
+              for(var i=0;i<data.length;i++){
+                if(data[i] instanceof Array)
+                  for(var j of data[i]) {
+                    inverse[j] = inverse[j] || [];
+                    inverse[j].push(i);
+                  }
+              }
+              o.piece.associations[n2] = o.piece.associations[n2] || {};
+              o.piece.associations[n2][n1] = inverse;
+            }
+
+      }
+    }
+  }
+
   indexArraysIn(o.piece);
     
   // add a json pointer to objects up to the depth level.
-    function doi(obj,p) { if(obj) obj._pointer=p; } 
-    jsonpointer.walk(o.piece,doi,null,3); 
+  function doi(obj,p) { if(obj) obj._pointer=p; } 
+  jsonpointer.walk(o.piece,doi,null,3); 
 
   // Problem: if we request the same piece twice, we should get identical data.
   // However, any existing object references will now all be stale! 
@@ -100,14 +126,15 @@ function GotPiece(o)
   for(n1 in o.piece) {
     gRecord[n1] = gRecord[n1] || {}
     for(n2 in o.piece[n1]) {
-      console.log("piece piece",n1,n2);
       if(!gRecord[n1][n2]) {// disallow overcopy
         gRecord[n1][n2] = o.piece[n1][n2];
       } else {
-        console.error("data conflict",n1,n2);
+        console.error("data conflict",n1,o.piece[n1]);
       }
     }
   }
+
+
   // gStateMachine.Trigger('newPiece',o.piece); // Add the piece to the trigger call, so that consumers can look to see if they need to change.
   gStateMachine.Trigger('newPiece');  
   

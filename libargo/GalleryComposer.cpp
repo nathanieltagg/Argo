@@ -1337,8 +1337,9 @@ void GalleryComposer::composeAssociations()
 
 
 
-// template <typename A> 
-// bool GalleryComposer::composeAssociationFromToMatch<A,A>(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&)
+// https://stackoverflow.com/questions/58523155/is-there-a-way-to-override-a-template-method-matching-only-when-two-template-par
+// template <typename A, A> 
+// bool GalleryComposer::composeAssociationFromToMatch(const std::string&, const std::string&, Composer::piece_t&, ntagg::json&)
 // {
 //   return false;
 // }
@@ -1395,6 +1396,10 @@ bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, co
           for(const auto& assnpair: *assnhandle) {
             assnhelper.add( assnpair.first.id(), assnpair.first.key(), assnpair.second.id(), assnpair.second.key());
           }
+          // do in javascript, see ArgoData.js
+          // for(const auto& assnpair: *assnhandle) {
+          //   assnhelper.add( assnpair.second.id(), assnpair.second.key(), assnpair.first.id(), assnpair.first.key());
+          // }
           assnhelper.output(*m_Event,out);
           // assnhelper->output(m_Event,m_result["associations"]); // Needed?
           retval = true;
@@ -1407,8 +1412,37 @@ bool GalleryComposer::composeAssociationFromToMatch(const std::string& aname, co
   return retval;
 }
 
+// This is a simple passthrough function for most cases; no metadata in the associations are expected.
+template<typename A, typename B>
+bool GalleryComposer::composeAssociationFromToMeta(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
+{
+  return false;
+}
+
+// But in special cases, we can add a metadata type to search for.
+template<> bool GalleryComposer::composeAssociationFromToMeta<recob::Hit,recob::Track>(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
+{
+  return composeAssociationFromToMatch<recob::Hit,recob::Track,recob::TrackHitMeta>(aname, bname, req, out);
+}
 
 
+template<> bool GalleryComposer::composeAssociationFromToMeta<recob::Track,recob::Vertex>(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
+{
+  return composeAssociationFromToMatch<recob::Track,recob::Vertex,recob::VertexAssnMeta>(aname, bname, req, out);
+}
+
+template<> bool GalleryComposer::composeAssociationFromToMeta<recob::Cluster,recob::EndPoint2D>(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
+{
+  return composeAssociationFromToMatch<recob::Cluster,recob::EndPoint2D,ushort>(aname, bname, req, out);
+}
+
+template<> bool GalleryComposer::composeAssociationFromToMeta<recob::Cluster,recob::Vertex>(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out)
+{
+  return composeAssociationFromToMatch<recob::Cluster,recob::Vertex,ushort>(aname, bname, req, out);
+}
+
+
+// Try a->b, then b->a
 template<typename A, typename B>
 bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::json& out)
 {
@@ -1422,35 +1456,13 @@ bool GalleryComposer::composeAssociationFromTo(Composer::piece_t& req, ntagg::js
   bool retval = false;
   retval =  retval || composeAssociationFromToMatch<A,B>(aname, bname, req, out);
   retval =  retval || composeAssociationFromToMatch<B,A>(bname, aname, req, out);
+  retval =  retval || composeAssociationFromToMeta<A,B>(aname, bname, req, out);
+  retval =  retval || composeAssociationFromToMeta<B,A>(bname, aname, req, out);
 
   return retval;
 }
 
 
-// Specific override to above, which looks for hit-track associations with the trackhitmeta.
-// todo: 
-// recob::Trackrecob::Vertexrecob::VertexAssnMeta
-// recob::Clusterrecob::EndPoint2Dushort
-// recob::Clusterrecob::Vertexushort
-
-template<> bool GalleryComposer::composeAssociationFromTo<recob::Hit,recob::Track>(Composer::piece_t& req, ntagg::json& out)
-{
-  std::string aname = "*";
-  if(req.size()>3) aname = req[3];
-
-  std::string bname = "*";
-  if(req.size()>4) bname = req[4];
-
-  // Try both ways.
-  bool retval = false;
-  retval =  retval || composeAssociationFromToMatch<recob::Hit,recob::Track>(aname, bname, req, out);
-  retval =  retval || composeAssociationFromToMatch<recob::Track,recob::Hit>(bname, aname, req, out);
-  
-  // Try other patterns
-  retval =  retval || composeAssociationFromToMatch<recob::Hit,recob::Track,recob::TrackHitMeta>(aname, bname, req, out);
-  return retval;
-  
-}
 
 template<typename A>
 bool GalleryComposer::composeAssociationFrom(Composer::piece_t& req, ntagg::json& out)

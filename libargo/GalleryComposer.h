@@ -79,6 +79,8 @@ protected:
   template<typename A, typename B, typename C = void>
     bool composeAssociationFromToMatch(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out);
   template<typename A, typename B>
+    bool composeAssociationFromToMeta(const std::string& aname, const std::string& bname, Composer::piece_t& req, ntagg::json& out);
+  template<typename A, typename B>
     bool composeAssociationFromTo(Composer::piece_t& req, ntagg::json& out);
   template<typename A>
     bool composeAssociationFrom(Composer::piece_t& req, ntagg::json& out);
