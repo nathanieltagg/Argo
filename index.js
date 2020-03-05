@@ -45,7 +45,7 @@ mkdirp(config.live_event_cache);
 
 // app.use(morgan('tiny',{immediate:true}));
 app.use(morgan('tiny'));
-var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
+// var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
 
 // app.get('/test', function(req,res,next){
 //   console.log("test");
@@ -239,8 +239,25 @@ async function resolve_request(event_req)
 
 
 // Deal with WS connections.
-app.ws('/ws/stream-event', attach_stream);
-app.ws('/wss/stream-event', attach_stream);
+// app.ws('/ws/stream-event', attach_stream);
+// app.ws('/wss/stream-event', attach_stream);
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({ noServer: true });
+
+
+httpServer.on('upgrade', function upgrade(request, socket, head) {
+
+    wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit('connection', ws, request);
+    });
+});
+
+wss.on('connection', async function(ws,req) {
+  if(req.url.includes("stream-event"))  return await attach_stream(ws,req);
+  if(req.url.includes("notify-stream")) return await attach_notify_live_stream(ws,req);
+});
+
+
 async function attach_stream(ws,req)
 {
   console.log("attach stream");
@@ -249,9 +266,6 @@ async function attach_stream(ws,req)
     var p = {"error":message};
     try{ ws.send(JSON.stringify(p)); } catch(err) { console.error("Websocket error.",err); }    
   }
-  
-  // ws might be wss or ws
-  console.log("ws server hit!",req.query)
 
   function send_data(data,datatype) {
     // This is the do_output callback, called either on progress, piece, or finished.
@@ -531,8 +545,8 @@ if(cluster.isWorker) {
 
 }
 
-app.ws('/ws/notify-live',  attach_notify_live_stream);
-app.ws('/wss/notify-live', attach_notify_live_stream);
+// app.ws('/ws/notify-live',  attach_notify_live_stream);
+// app.ws('/wss/notify-live', attach_notify_live_stream);
 
 async function attach_notify_live_stream(ws,req)
 {
