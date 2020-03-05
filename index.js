@@ -254,7 +254,7 @@ httpServer.on('upgrade', function upgrade(request, socket, head) {
 
 wss.on('connection', async function(ws,req) {
   if(req.url.includes("stream-event"))  return await attach_stream(ws,req);
-  if(req.url.includes("notify-stream")) return await attach_notify_live_stream(ws,req);
+  if(req.url.includes("notify-live")) return await attach_notify_live_stream(ws,req);
 });
 
 
