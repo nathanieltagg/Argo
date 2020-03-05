@@ -5,12 +5,12 @@ $(function(){
 
 function BuildArgoSpacepoints()
 {
-  // console.log("BuildArgoSpacepoints");
 
   // This code is expclitly for use with the LIVE data only, which has the label hits_DAQ__libargo. Don't run unless that exists.
   var hits = ((gRecord||{}).hits||{})["hits_DAQ__libargo"] || []; //GetSelected("hits");
   if(hits.length==0) return; 
   if(((gRecord||{}).spacepoints||{})["argo::Spacepoints_ARGO__inTheViewer"]) return;  // already built, prevent infinite loop
+  console.log("BuildArgoSpacepoints");
 
   for(hit of hits) {
     if(!hit.wires) {
@@ -26,6 +26,7 @@ function BuildArgoSpacepoints()
   var ymax = tpc.center[1] + tpc.halfwidths[1];
 
  function FinishReco(results) {
+   console.log("FinishReco");
     if(results.spacepoints) {
       var sp_t_off = parseFloat($('#ctl-track-shift-value').val());
       // fix x positions.
@@ -54,10 +55,11 @@ function BuildArgoSpacepoints()
       };
 
   if (window.Worker) {
+    console.log("starting web worker");
     var myWorker = new Worker('js/libs/reco_spacepoints.js');
     myWorker.onmessage = function(e) { FinishReco(e.data);  }
     myWorker.postMessage([ hits, gGeo3.data.basis, cfg]);
-    myWorker.terminate();
+    // myWorker.terminate();  // Why did I put this line here? Am I stupid?
   } else {
     FinishReco(
       do_reco_spacepoints( hits, gGeo3.data.basis, cfg )

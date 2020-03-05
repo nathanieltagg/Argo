@@ -479,8 +479,11 @@ app.get('/live',function(req,res) {
 })
 
 // At end:
+//May be causing errors.
 app.get('/:pagename', function (req, res) {
-  res.render(sanitize(req.params.pagename), { pagename: req.params.pagename })
+  console.error("Got request for ",req.params.pagename)
+  return res.status(404).send("404");
+  // res.render(sanitize(req.params.pagename), { pagename: req.params.pagename })
 })
 
 // At end:
