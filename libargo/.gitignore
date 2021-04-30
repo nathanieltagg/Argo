@@ -1,4 +1,5 @@
 libargo-backend.so
+libargo-backend.a
 argo-raw-backend
 argo-backend-new
 argo-backend
