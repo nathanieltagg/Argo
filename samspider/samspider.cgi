@@ -7,6 +7,11 @@ use File::Spec;
 
 my $cgi = $CGI::Q;
 
+sub sanitize_number {
+	$val = $_[0];
+	$val =~ s/[^0-9]//g;
+}
+
 $|=1;
 
 use File::Basename;
@@ -26,9 +31,9 @@ for my $p (url_param){
 #                    or die CGI::Session::errstr;
 
 $title = 'SamWebSpider ';
-if(param("file")) { $title .= param('file');}
-elsif(param("def"))  { $title .= param('def');}
-elsif(param("def_starts_with"))  { $title .= param('def_starts_with');}
+if(param("file")) { $title .= param('file');  $title =~ s/[^A-Za-z0-9._ ]*//g;}
+elsif(param("def"))  { $title .= param('def');  $title =~ s/[^A-Za-z0-9._ ]*//g;}
+elsif(param("def_starts_with"))  { $title .= param('def_starts_with'); $title =~ s/[^A-Za-z0-9._ ]*//g;}
 
 print header . 
 	CGI::start_html( -title=>$title, 
@@ -45,6 +50,7 @@ print h1("SamSpider");
 
 if(param("file")) {
   $samfile = param("file");
+  $samfile  =~ s/[^A-Za-z0-9.-_ ]*//g; 
   $absolute_filename = "";
   $dirname = "";
   my $cmd = "$samweb locate-file $samfile";
@@ -133,6 +139,7 @@ if(param("file")) {
 	$nbatch = 50; # results to show on one page.
 
 	my $definition = param('def');
+	$title =~ s/[^A-Za-z0-9.-_ ]*//g;
 	print h3("Using data defintion: " . $definition);
 
 	open(my $fh, "$samweb count-files \"defname: $definition\" |") or die "Can't open samweb. Contact Nathaniel";
@@ -157,15 +164,19 @@ if(param("file")) {
 	print end_div;
 
 	$query = "defname:$definition";
-	if(param('minsize')) { $query .= " and file_size > " . param('minsize')}
-	if(param("run")) { $query .= " and run_number=" . param("run"); }
-	if(param("run") && param("subrun")) { $query .= " and run_number=" . param("run") . "." . param("subrun"); }
-	if(param("date")) { 
-		$d = "'" . param('date') . 'T' . param('time') . "'";
+	if(param('minsize')) { $query .= " and file_size > " . sanitize_number(param('minsize')) }
+	if(param("run")) { $query .= " and run_number=" . sanitize_number(param("run")); }
+	if(param("run") && param("subrun")) { $query .= " and run_number=" . sanitize_number(param("run")). "." . sanitize_number(param("subrun")); }
+	if(param("date")) {
+		$datestr  = param("date");
+		$datestr =~ s/[^0-9-]*//g; 
+		$timestr  = param("time");
+		$timestr =~ s/[^0-9:]*//g; 
+		$d = "'" . $datestr . 'T' . param('time') . "'";
 		$query .= " and start_time<=" . $d . " and end_time>" . $d; 
 	}
 
-	my $nskip = param("skip") || 0;
+	my $nskip = sanitize_number(param("skip")) || 0;
 	if(param("skip")) { $query .= " with offset " . $nskip; }
 	$query .= " with limit $nbatch";
 
@@ -202,6 +213,7 @@ if(param("file")) {
         # No definition set defined. Give the user options.
         print h3("Click through the list below to find your desired dataset defintion.");
         my $def_prefix = param("def_starts_with") || "";
+        $def_prefix =~ s/[^0-9a-zA-Z._]*//g; 
         print start_div({-class=>"samweb_definitions"});
 		system("./samdef-organizer $def_prefix");
 		print end_div;
