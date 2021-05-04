@@ -139,7 +139,7 @@ if(param("file")) {
 	$nbatch = 50; # results to show on one page.
 
 	my $definition = param('def');
-	$title =~ s/[^A-Za-z0-9.-_ ]*//g;
+	$definition =~ s/[^A-Za-z0-9.-_ ]*//g;
 	print h3("Using data defintion: " . $definition);
 
 	open(my $fh, "$samweb count-files \"defname: $definition\" |") or die "Can't open samweb. Contact Nathaniel";
