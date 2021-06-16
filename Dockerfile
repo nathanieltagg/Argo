@@ -23,7 +23,6 @@ CMD /bin/bash
 
 FROM builder as argo-built
 # install node requirements, build the shim code that runs libargo
-RUN mkdir /Argo
 WORKDIR /Argo
 COPY . .
 RUN touch config.js
@@ -34,26 +33,26 @@ FROM argo-built as argo
 
 # delete some crap 
 # Dont' use indvidual RUN directives since each one will cause some effect.
-# RUN rm -rf /products/*/*/source \
-#  && rm -rf /products/larreco \ 
-#   /products/cmake \ 
-#   /products/genie_xsec \ 
-#   /products/ubana \
-#   /products/valgrind \
-#   /products/g4tendl \
-#   /products/g4neutron \
-#   /products/wirecell \
-#   /products/geant4 \
-#   /products/genie \
-#   /products/gdb \
-#   /products/larpandora \
-#   /products/fftw \
-#   /products/g4emlow \
-#   /products/g4photon \
-#   /products/tensorflow \
-#   /products/artg4tk /products/xerces_c \
-#   /products/ubcrt /products/protobuf/ \
-#  && rm /Argo/libargo/tmp/*
+RUN rm -rf /products/*/*/source \
+ && rm -rf /products/larreco \ 
+  /products/cmake \ 
+  /products/genie_xsec \ 
+  /products/ubana \
+  /products/valgrind \
+  /products/g4tendl \
+  /products/g4neutron \
+  /products/wirecell \
+  /products/geant4 \
+  /products/genie \
+  /products/gdb \
+  /products/larpandora \
+  /products/fftw \
+  /products/g4emlow \
+  /products/g4photon \
+  /products/tensorflow \
+  /products/artg4tk /products/xerces_c \
+  /products/ubcrt /products/protobuf/ \
+ && rm /Argo/libargo/tmp/*
 
 # port on host will be port on container
 
