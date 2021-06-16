@@ -72,7 +72,7 @@ The actual source files reside outside the container and so can be edited as nor
 `apache` contains files useful for configuring an apache reverseproxy
 `index.js` is the main code for serving event data
 `browser.js` is the main code for serving the file browser
-`configuration.js` includes default configuration, and will load `config.js` to override those settings.
+`configuration.js` includes default configuration, and will load `config.js` to override those settings.git pu
 
 # About
 This code was written by Nathaniel Tagg (nathaniel.tagg@gmail.com) and with contributions from undergraduate students, including Jiyu Li, Phillip Kellogg, Curtis Brown, Molly Clairemont, Jack Brangham, and Erin Cochran.
