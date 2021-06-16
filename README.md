@@ -43,10 +43,36 @@ Installation on your own system requires these steps:
 # Development via docker
 
 To develop the code via docker, these steps work:
-- From this directory, construct a docker image with the base installation
+- From this directory, construct a docker image with the base installation  
   `cat Dockerfile | docker build --target builder -t argodev -`
-- Start the instance:
-```docker run -it  -p 4590:4590 -v "$(pwd):/Argo" -v "/Users/tagg/argo-test-files:/data" argodev```
+- Start the instance:  
+  `docker run -it  -p 4590:4590 -v "$(pwd):/Argo" -v "/Users/tagg/argo-test-files:/data" argodev`
+- From inside the container,  
+  ```
+   source setup.sh.docker
+   touch setup.sh
+   cd libargo && make
+   cd /Argo && npm install
+   nodemon
+   ```
+The actual source files reside outside the container and so can be edited as normal, so this process isn't too arduous.
+
+# Directory Structure
+
+`libargo` contains the C++ code that is used to change a larsoft event into a JSON file.  This code is extremely complex now, since it allows incremental unpacking of the single event.
+`argonode` contains the shim code to hook the C++ into node javascript wrappers. Building this requires node-gyp
+`db` contains my version of the channel mapping for MicroBooNE
+`pug` contains the Pug templates for the important pages
+`samspider` contains some hybrid code for walking through SAMWEB definitions, since it's impossible to navigate by hand...
+`scss` has scss style sheets, which are compiled dynamically at runtime
+`static` contains all files served to clients statically, including all the client-side javascript code, images, and 3d models
+`tools` are some offline tools for development work
+`masterclass_data` contains links to useful events for the Argo MasterClass exercises
+`datacache` is a directory which caches image data (wire view images) on load
+`apache` contains files useful for configuring an apache reverseproxy
+`index.js` is the main code for serving event data
+`browser.js` is the main code for serving the file browser
+`configuration.js` includes default configuration, and will load `config.js` to override those settings.
 
 # About
 This code was written by Nathaniel Tagg (nathaniel.tagg@gmail.com) and with contributions from undergraduate students, including Jiyu Li, Phillip Kellogg, Curtis Brown, Molly Clairemont, Jack Brangham, and Erin Cochran.
