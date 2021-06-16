@@ -7,7 +7,6 @@ logs
 *.root
 *.ubdaq
 node_modules
-package-lock.json
 nodemon.json
 environment.json
 pm2.json
