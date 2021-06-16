@@ -1,0 +1,8 @@
+libargo/tmp/*
+datacache/*.png
+.git
+libargo/*.a
+libargo/*.so
+libargo/build
+libargo/node_modules
+node_modules
