@@ -1,1 +1,0 @@
-kill_ntuple_server.cgi

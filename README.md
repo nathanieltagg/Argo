@@ -40,6 +40,13 @@ Installation on your own system requires these steps:
 - If those steps succeed, then you're ready to run, using  `node index.js` or use nodemon
 - Connect to your local server as above on http://localhost:4590
 
+# Development via docker
+
+To develop the code via docker, these steps work:
+- From this directory, construct a docker image with the base installation
+  `cat Dockerfile | docker build --target builder -t argodev -`
+- Start the instance:
+```docker run -it  -p 4590:4590 -v "$(pwd):/Argo" -v "/Users/tagg/argo-test-files:/data" argodev```
 
 # About
 This code was written by Nathaniel Tagg (nathaniel.tagg@gmail.com) and with contributions from undergraduate students, including Jiyu Li, Phillip Kellogg, Curtis Brown, Molly Clairemont, Jack Brangham, and Erin Cochran.

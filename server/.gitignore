@@ -1,8 +1,0 @@
-serve_live.cgi
-server_config.pl
-*.root
-*.ubdaq
-*.log.?
-*.log
-*.pid
-live.config
