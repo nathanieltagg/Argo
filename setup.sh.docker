@@ -1,0 +1,16 @@
+#!/bin/bash
+ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+
+
+source /products/setup
+setup uboonecode v08_30_02 -q e17:prof
+setup larlite v06_70_00d -q e17:prof
+unset PYTHONPATH
+unset PYTHONHOME
+
+# node  $ABSOLUTE_PATH/create_environment_scripts.js
+
+# cd "$ABSOLUTE_PATH/libargo"
+# make
+# cd $ABSOLUTE_PATH
+# npm install-clean
