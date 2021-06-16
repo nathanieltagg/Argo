@@ -161,8 +161,9 @@ NAN_MODULE_INIT(ComposerWrapper::Init) {
   ctor->SetClassName(Nan::New("Composer").ToLocalChecked());
   Nan::SetPrototypeMethod(ctor, "composeSync", composeSync);
   Nan::SetPrototypeMethod(ctor, "composeIncremental", composeIncremental);
-  
-  target->Set(Nan::New("Composer").ToLocalChecked(), ctor->GetFunction());
+  // target->Set(Nan::New("Composer").ToLocalChecked(), ctor->GetFunction(context));
+  Nan::Set(target, Nan::New<v8::String>("Composer").ToLocalChecked(),
+    Nan::GetFunction(ctor).ToLocalChecked());
  }
 
 
@@ -215,7 +216,7 @@ NAN_METHOD(ComposerWrapper::composeSync)
       composerWrap->m_running = true;
       Output_t output = composerWrap->satisfy_request_ref(request);
       composerWrap->m_running = false;
-      Local<String> retval = String::NewFromUtf8(isolate, output->c_str());
+      Local<String> retval = String::NewFromUtf8(isolate, output->c_str()).ToLocalChecked();
       info.GetReturnValue().Set(retval);
     }
   } else {
