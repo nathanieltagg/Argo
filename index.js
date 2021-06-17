@@ -2,7 +2,6 @@
 
 console.log("starting")
 var http = require('http');
-var https = require('https');
 var util = require('util');
 var fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -12,7 +11,6 @@ var compression = require('compression');
 
 var events = require('events');
 var glob = require("glob");
-var cors = require('cors');
 var path = require("path");
 var morgan = require('morgan');
 var moment = require('moment');
@@ -37,7 +35,6 @@ var argo = require("argonode");
 
 var app = express();
 var httpServer = http.createServer(app);
-var httpsServer = https.createServer(app);
 
 
 mkdirp(config.datacache);
@@ -47,8 +44,9 @@ mkdirp(config.live_event_cache);
 app.use(morgan('tiny'));
 
 // Does some security-ish things
-var helmet = require('helmet')
-app.use(helmet())
+// var helmet = require('helmet')
+// app.use(helmet())
+
 
 // var expressWs = require('express-ws')(app,httpServer,{wsOptions:{perMessageDeflate:true}});
 
@@ -387,24 +385,39 @@ var pug = require('pug');
 app.set('view engine', 'pug')
 app.set('views','pug');
 
+// security for inline scripts
+const uuid = require('uuid');
+app.use((req,res,next)=>{ res.locals.nonce = uuid.v4(); next();})
+// const csp = require(`helmet-csp`)
 
+// app.use(csp({
+//   directives: {
+//     defaultSrc: [`'self'`],
+//     scriptSrc: [`'self'`, (req, res) => `'nonce-${ res.locals.nonce }'`]
+//   }
+// }))
 
 
 // CSS precompiler. needs to come before /static call
-var compileSass = require('express-compile-sass');
-app.use('/css',compileSass({
-    root: __dirname+'/scss',
-    sourceMap: true, // Includes Base64 encoded source maps in output css
-    sourceComments: true, // Includes source comments in output css
-    watchFiles: true, // Watches sass files and updates mtime on main files for each change
-    logToConsole: false // If true, will log to console.error on errors
-}));
+// var compileSass = require('express-compile-sass');
+// app.use('/css',compileSass({
+//     root: __dirname+'/scss',
+//     sourceMap: true, // Includes Base64 encoded source maps in output css
+//     sourceComments: true, // Includes source comments in output css
+//     watchFiles: true, // Watches sass files and updates mtime on main files for each change
+//     logToConsole: false // If true, will log to console.error on errors
+// }));
+
+var sass = require('sass');
+var sass_result = sass.renderSync({file: __dirname+"/scss/argo.scss",  outFile: "css/argo.css"})
+fs.writeFileSync(__dirname+"/scss/argo.css",sass_result.css.toString(),{flags:"w+"});
+// console.log("sas result",result)
 app.use('/css',express.static(__dirname + '/scss'));
 
 
 // Browserify middleware.
-var browserify = require('browserify-middleware');
-app.use('/js',browserify(__dirname + '/client'))
+// var browserify = require('browserify-middleware');
+// app.use('/js',browserify(__dirname + '/client'))
 
 
 // static files.

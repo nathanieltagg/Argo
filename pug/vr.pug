@@ -7,11 +7,11 @@ html
     title Argo
     link(rel='icon', type='image/png', href='/images/Argo3icon.png')
     block headerscript
-      script(type='text/javascript') 
+      script(type='text/javascript', nonce=nonce) 
           |gPageName="#{pagename}";
           |gDetector="uboone";
           |    WebVRConfig = {  FORCE_ENABLE_VR: true, };
-    link(rel='stylesheet', href='/css/argo.scss', type='text/css', media='all')
+    link(rel='stylesheet', href='/css/argo.css', type='text/css', media='all')
     link(rel='stylesheet', href='/css/selected-object-info.css', type='text/css', media='all')
     include ./libraries 
     script(type="text/javascript", src="/js/third-party/WebVR.js")

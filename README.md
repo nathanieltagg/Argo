@@ -44,9 +44,13 @@ Installation on your own system requires these steps:
 
 To develop the code via docker, these steps work:
 - From this directory, construct a docker image with the base installation  
-  `cat Dockerfile | docker build --target builder -t argodev -`
+  ```
+  cat Dockerfile | docker build --target builder -t argodev -
+  ```
 - Start the instance:  
-  `docker run -it  -p 4590:4590 -v "$(pwd):/Argo" -v "/Users/tagg/argo-test-files:/data" argodev`
+  ```
+  docker run -it  -p 4590:4590 -v "$(pwd):/Argo" -v "/Users/tagg/argo-test-files:/data" argodev
+  ```
 - From inside the container,  
   ```
    source setup.sh.docker
